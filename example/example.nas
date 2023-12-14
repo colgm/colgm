@@ -2,10 +2,47 @@ use std::json::{stringify, parse}
 use std::out::println
 use std::io::*
 
-enum example_enum {
+pub enum example_enum {
     aaa,
     bbb,
     ccc
+}
+
+pub struct position {
+    pub line: u64,
+    pub column: u64
+}
+
+pub struct span {
+    pub begin: position,
+    pub end: position
+}
+
+pub struct example {
+    type: example_enum,
+    content: str,
+    location: span
+}
+
+impl example {
+    pub func new() -> example {
+        var begin = position {line: 1, column: 1};
+        var end = position {line: 2, column: 2};
+        return example {
+            type: example_enum::aaa,
+            content: "test",
+            location: span {begin: begin, end: end}
+        };
+    }
+    pub func get_type(self) -> example_enum {
+        return self.type;
+    }
+    pub func get_content(self) -> str {
+        return self.str;
+    }
+    pub func get_location(self) -> span {
+        return self.span;
+    }
 }
 
 func void_test_function(a: i8, b: i16, c: i32, d: i64) {
