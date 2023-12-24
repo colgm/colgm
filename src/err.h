@@ -18,6 +18,8 @@ struct span {
     std::string file;
 };
 
+std::ostream& operator<<(std::ostream&, const span&);
+
 std::ostream& back_white(std::ostream&);
 std::ostream& red(std::ostream&);
 std::ostream& cyan(std::ostream&);
@@ -39,17 +41,17 @@ public:
     usize size() const {return res.size();}
 };
 
-class error:public flstream {
+class error: public flstream {
 private:
     u32 cnt; // counter for errors
 
     std::string identation(usize len) {
-        return std::string(len,' ');
+        return std::string(len, ' ');
     }
     std::string leftpad(u32 num, usize len) {
         auto tmp = std::to_string(num);
         while(tmp.length()<len) {
-            tmp=" "+tmp;
+            tmp = " "+tmp;
         }
         return tmp;
     }

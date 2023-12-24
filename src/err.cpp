@@ -2,6 +2,11 @@
 
 namespace colgm {
 
+std::ostream& operator<<(std::ostream& out, const span& self) {
+    out << self.file << ":" << self.begin_line << ":" << self.begin_column;
+    return out;
+}
+
 #ifdef _WIN32
 #include <windows.h> // use SetConsoleTextAttribute
 struct for_reset {
