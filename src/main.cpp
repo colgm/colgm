@@ -34,7 +34,12 @@ std::ostream& help(std::ostream& out) {
 
 std::ostream& logo(std::ostream& out) {
     out
-    << "colgm compiler\n"
+    << "                __              \n"
+    << "    _________  / /___ _____ ___ \n"
+    << "   / ___/ __ \\/ / __ `/ __ `__ \\\n"
+    << "  / /__/ /_/ / / /_/ / / / / / /\n"
+    << "  \\___/\\____/_/\\__, /_/ /_/ /_/ \n"
+    << "              /____/            \n"
     << "ver : " << __colgm_ver__
     << " " << colgm::get_platform() << " " << colgm::get_arch()
     << " (" << __DATE__ << " " << __TIME__ << ")\n"

@@ -1,3 +1,3 @@
-# llvm-experiment colgm
+# colgm compiler project
 
-experimental project
+experimental llvm project
