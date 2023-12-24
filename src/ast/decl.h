@@ -3,10 +3,10 @@
 #include "ast/ast.h"
 namespace colgm {
 
-class decl: public ast_node {
+class decl: public node {
 public:
-    decl(ast_type type, const span& loc): ast_node(type, loc) {}
-    virtual ~decl() = default;
+    decl(ast_type type, const span& loc): node(type, loc) {}
+    virtual ~decl() override = default;
     virtual void accept(visitor*) override;
 };
 

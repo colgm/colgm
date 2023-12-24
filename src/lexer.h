@@ -73,6 +73,7 @@ enum class tok:u32 {
     leq,      // operator <=
     grt,      // operator >
     geq,      // operator >=
+    arrow,    // operator ->
     eof       // <eof> end of token list
 };
 
@@ -154,7 +155,8 @@ private:
         {"<"       ,tok::less    },
         {"<="      ,tok::leq     },
         {">"       ,tok::grt     },
-        {">="      ,tok::geq     }
+        {">="      ,tok::geq     },
+        {"->"      ,tok::arrow   }
     };
 
     tok get_type(const std::string&);
@@ -166,6 +168,7 @@ private:
     bool is_str(char);
     bool is_single_opr(char);
     bool is_calc_opr(char);
+    bool is_arrow(char);
 
     void skip_note();
     void err_char();
@@ -175,6 +178,7 @@ private:
     token id_gen();
     token num_gen();
     token str_gen();
+    token arrow_gen();
     token single_opr();
     token dots();
     token colons();
@@ -182,7 +186,7 @@ private:
 public:
     lexer(): line(1), column(0), ptr(0), filename(""), res(""), invalid_char(0) {}
     const error& scan(const std::string&);
-    const std::vector<token>& result() const {return toks;}
+    const auto& result() const { return toks; }
 };
 
 }

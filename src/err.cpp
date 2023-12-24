@@ -3,7 +3,7 @@
 namespace colgm {
 
 std::ostream& operator<<(std::ostream& out, const span& self) {
-    out << self.file << ":" << self.begin_line << ":" << self.begin_column;
+    out << self.file << ":" << self.begin_line << ":" << self.begin_column+1;
     return out;
 }
 

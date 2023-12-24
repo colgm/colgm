@@ -1,12 +1,15 @@
 #include "colgm.h"
 #include "err.h"
 #include "lexer.h"
+#include "parse.h"
+#include "ast/dumper.h"
 
 #include <unordered_map>
 #include <thread>
 #include <cstdlib>
 
 const u32 COMPILE_VIEW_TOKEN = 1;
+const u32 COMPILE_VIEW_AST = 1<<1;
 
 std::ostream& help(std::ostream& out) {
     out
@@ -24,6 +27,7 @@ std::ostream& help(std::ostream& out) {
     << "\ncolgm [option] <file> [argv]\n"
     << "option:\n"
     << "   -l,   --lex      | view analysed tokens.\n"
+    << "   -a,   --ast      | view ast.\n"
     << "file:\n"
     << "   <filename>       | imput file.\n"
     << "argv:\n"
@@ -73,14 +77,22 @@ void execute(
     using clk = std::chrono::high_resolution_clock;
     const auto den = clk::duration::period::den;
 
-    colgm::lexer lex;
+    colgm::lexer lexer;
+    colgm::parse parser;
 
     // lexer scans file to get tokens
-    lex.scan(file).chkerr();
+    lexer.scan(file).chkerr();
     if (cmd&COMPILE_VIEW_TOKEN) {
-        for(const auto& token : lex.result()) {
+        for(const auto& token : lexer.result()) {
             std::cout << token.loc << ": " << token.str << "\n";
         }
+    }
+
+    // parser
+    parser.analyse(lexer.result()).chkerr();
+    if (cmd&COMPILE_VIEW_AST) {
+        colgm::dumper dump;
+        parser.get_result()->accept(&dump);
     }
 }
 
@@ -110,6 +122,8 @@ i32 main(i32 argc, const char* argv[]) {
     const std::unordered_map<std::string, u32> cmdlst = {
         {"--lex", COMPILE_VIEW_TOKEN},
         {"-l", COMPILE_VIEW_TOKEN},
+        {"--ast", COMPILE_VIEW_AST},
+        {"-a", COMPILE_VIEW_AST}
     };
     u32 cmd = 0;
     std::string filename = "";
