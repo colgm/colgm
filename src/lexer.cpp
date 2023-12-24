@@ -23,15 +23,15 @@ bool lexer::is_dec(char c) {
 }
 
 bool lexer::is_str(char c) {
-    return c=='\'' || c=='\"' || c=='`';
+    return c=='\'' || c=='\"';
 }
 
 bool lexer::is_single_opr(char c) {
     return (
         c=='(' || c==')' || c=='[' || c==']' ||
         c=='{' || c=='}' || c==',' || c==';' ||
-        c==':' || c=='?' || c=='`' || c=='@' ||
-        c=='%' || c=='$' || c=='\\'
+        c=='?' || c=='`' || c=='@' || c=='$' ||
+        c=='\\'
     );
 }
 
@@ -39,7 +39,8 @@ bool lexer::is_calc_opr(char c) {
     return (
         c=='=' || c=='+' || c=='-' || c=='*' ||
         c=='!' || c=='/' || c=='<' || c=='>' ||
-        c=='~' || c=='|' || c=='&' || c=='^'
+        c=='~' || c=='|' || c=='&' || c=='^' ||
+        c=='%'
     );
 }
 
@@ -273,10 +274,10 @@ token lexer::str_gen() {
     ++column;
 
     // if is not utf8, 1+utf8_hdchk should be 1
-    if (begin=='`' && str.length()!=1+utf8_hdchk(str[0])) {
+    if (begin=='\'' && str.length()!=1+utf8_hdchk(str[0])) {
         err.err("lexer",
             {begin_line, begin_column, line, column, filename},
-            "\'`\' is used for string including one character"
+            "\"\'\" is used for single character"
         );
     }
     return {{begin_line, begin_column, line, column, filename}, tok::str, str};
@@ -304,6 +305,18 @@ token lexer::dots() {
     std::string str = ".";
     if (ptr+2<res.size() && res[ptr+1]=='.' && res[ptr+2]=='.') {
         str += "..";
+    }
+    ptr += str.length();
+    column += str.length();
+    return {{begin_line, begin_column, line, column, filename}, get_type(str), str};
+}
+
+token lexer::colons() {
+    u32 begin_line = line;
+    u32 begin_column = column;
+    std::string str = ":";
+    if (ptr+1<res.size() && res[ptr+1]==':') {
+        str += ":";
     }
     ptr += str.length();
     column += str.length();
@@ -351,6 +364,8 @@ const error& lexer::scan(const std::string& file) {
             toks.push_back(single_opr());
         } else if (res[ptr]=='.') {
             toks.push_back(dots());
+        } else if (res[ptr]==':') {
+            toks.push_back(colons());
         } else if (is_calc_opr(res[ptr])) {
             toks.push_back(calc_opr());
         } else if (res[ptr]=='#') {

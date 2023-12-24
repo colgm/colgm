@@ -12,13 +12,25 @@ endif
 HEADER = \
 	src/err.h\
 	src/lexer.h\
-	src/colgm.h
+	src/colgm.h\
+	src/parse.h\
+	src/ast/ast.h\
+	src/ast/decl.h\
+	src/ast/expr.h\
+	src/ast/stmt.h\
+	src/ast/visitor.h
 
 OBJECT = \
 	build/err.o\
 	build/lexer.o\
 	build/misc.o\
-	build/main.o
+	build/main.o\
+	build/parse.o\
+	build/ast.o\
+	build/decl.o\
+	build/expr.o\
+	build/stmt.o\
+	build/visitor.o
 
 
 # for test
@@ -47,8 +59,32 @@ build/err.o: src/colgm.h src/err.h src/err.cpp | build
 build/lexer.o: src/colgm.h src/err.h src/lexer.h src/lexer.cpp | build
 	$(CXX) $(CXXFLAGS) src/lexer.cpp -o build/lexer.o
 
+build/parse.o: src/colgm.h src/err.h src/lexer.h src/parse.h src/parse.cpp | build
+	$(CXX) $(CXXFLAGS) src/parse.cpp -o build/parse.o
+
+build/ast.o: src/colgm.h src/err.h src/ast/ast.h src/ast/ast.cpp | build
+	$(CXX) $(CXXFLAGS) src/ast/ast.cpp -o build/ast.o -I src
+
+build/decl.o: src/colgm.h src/err.h src/ast/ast.h src/ast/decl.h src/ast/decl.cpp | build
+	$(CXX) $(CXXFLAGS) src/ast/decl.cpp -o build/decl.o -I src
+
+build/expr.o: src/colgm.h src/err.h src/ast/ast.h src/ast/expr.h src/ast/expr.cpp | build
+	$(CXX) $(CXXFLAGS) src/ast/expr.cpp -o build/expr.o -I src
+
+build/stmt.o: src/colgm.h src/err.h src/ast/ast.h src/ast/stmt.h src/ast/stmt.cpp | build
+	$(CXX) $(CXXFLAGS) src/ast/stmt.cpp -o build/stmt.o -I src
+
+build/visitor.o: $(HEADER) src/ast/visitor.cpp | build
+	$(CXX) $(CXXFLAGS) src/ast/visitor.cpp -o build/visitor.o -I src
+
 .PHONY: clean
 clean:
 	@ echo "[clean] colgm" && if [ -e colgm ]; then rm colgm; fi
 	@ echo "[clean] colgm.exe" && if [ -e colgm.exe ]; then rm colgm.exe; fi
 	@ rm $(OBJECT)
+
+.PHONY: test
+test: colgm
+	./colgm test/example.colgm -l
+	./colgm test/operator.colgm -l
+	./colgm test/use_stmt.colgm -l

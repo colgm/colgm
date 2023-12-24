@@ -23,6 +23,7 @@ enum class tok:u32 {
     foreach,  // loop keyword foreach
     rwhile,   // loop keyword while
     var,      // keyword for definition
+    pub,      // keyword pub
     func,     // keyword for definition of function
     brk,      // loop keyword break
     cont,     // loop keyword continue
@@ -45,10 +46,12 @@ enum class tok:u32 {
     ellipsis, // ...
     quesmark, // ?
     colon,    // :
+    double_colon, // ::
     add,      // operator +
     sub,      // operator -
     mult,     // operator *
     div,      // operator /
+    mod,      // operator %
     floater,  // operator ~ and binary operator ~
     btand,    // bitwise operator &
     btor,     // bitwise operator |
@@ -59,6 +62,7 @@ enum class tok:u32 {
     subeq,    // operator -=
     multeq,   // operator *=
     diveq,    // operator /=
+    modeq,    // operator %=
     lnkeq,    // operator ~=
     btandeq,  // operator &=
     btoreq,   // operator |=
@@ -101,6 +105,7 @@ private:
         {"foreach" ,tok::foreach },
         {"while"   ,tok::rwhile  },
         {"var"     ,tok::var     },
+        {"pub"     ,tok::pub     },
         {"func"    ,tok::func    },
         {"break"   ,tok::brk     },
         {"continue",tok::cont    },
@@ -123,10 +128,12 @@ private:
         {"..."     ,tok::ellipsis},
         {"?"       ,tok::quesmark},
         {":"       ,tok::colon   },
+        {"::"      ,tok::double_colon},
         {"+"       ,tok::add     },
         {"-"       ,tok::sub     },
         {"*"       ,tok::mult    },
         {"/"       ,tok::div     },
+        {"%"       ,tok::mod     },
         {"~"       ,tok::floater },
         {"&"       ,tok::btand   },
         {"|"       ,tok::btor    },
@@ -137,6 +144,7 @@ private:
         {"-="      ,tok::subeq   },
         {"*="      ,tok::multeq  },
         {"/="      ,tok::diveq   },
+        {"%="      ,tok::modeq   },
         {"~="      ,tok::lnkeq   },
         {"&="      ,tok::btandeq },
         {"|="      ,tok::btoreq  },
@@ -169,6 +177,7 @@ private:
     token str_gen();
     token single_opr();
     token dots();
+    token colons();
     token calc_opr();
 public:
     lexer(): line(1), column(0), ptr(0), filename(""), res(""), invalid_char(0) {}
