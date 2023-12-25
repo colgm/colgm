@@ -16,6 +16,7 @@ public:
     virtual bool visit_identifier(identifier*);
     virtual bool visit_stmt(stmt*);
     virtual bool visit_use_stmt(use_stmt*);
+    virtual bool visit_specified_use(specified_use*);
 };
 
 }

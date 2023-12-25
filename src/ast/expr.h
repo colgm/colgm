@@ -10,8 +10,8 @@ namespace colgm {
 class expr: public node {
 public:
     expr(ast_type type, const span& loc): node(type, loc) {}
-    virtual ~expr() override = default;
-    virtual void accept(visitor*) override;
+    ~expr() override = default;
+    void accept(visitor*) override;
 };
 
 class identifier: public expr {

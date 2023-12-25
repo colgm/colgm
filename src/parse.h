@@ -88,7 +88,6 @@ private:
         }
     }
     bool look_ahead(tok);
-    bool look_ahead_single_use();
     identifier* identifier_gen();
     use_stmt* use_statement_gen();
 

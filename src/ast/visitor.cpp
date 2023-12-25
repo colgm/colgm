@@ -42,13 +42,15 @@ bool visitor::visit_use_stmt(use_stmt* node) {
     }
     switch(node->get_use_kind()) {
         case use_stmt::use_kind::use_all: break;
-        case use_stmt::use_kind::use_single:
-            node->get_single_use()->accept(this); break;
         case use_stmt::use_kind::use_specify:
-            for(auto i : node->get_specified_use()) {
-                i->accept(this);
-            }
-            break;
+            node->get_specified()->accept(this); break;
+    }
+    return true;
+}
+
+bool visitor::visit_specified_use(specified_use* node) {
+    for(auto i : node->get_symbols()) {
+        i->accept(this);
     }
     return true;
 }

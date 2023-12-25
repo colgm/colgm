@@ -10,7 +10,8 @@ enum class ast_type {
     ast_null = 0,
     ast_root,
     ast_identifier,
-    ast_use_stmt
+    ast_use_stmt,
+    ast_specified_use,
 };
 
 class visitor;
@@ -19,6 +20,7 @@ class decl;
 class expr;
 class stmt;
 class use_stmt;
+class specified_use;
 
 class node {
 private:

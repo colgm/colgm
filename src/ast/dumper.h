@@ -43,6 +43,7 @@ public:
     bool visit_root(root*) override;
     bool visit_identifier(identifier*) override;
     bool visit_use_stmt(use_stmt*) override;
+    bool visit_specified_use(specified_use*) override;
 };
 
 }

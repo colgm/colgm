@@ -42,21 +42,23 @@ bool dumper::visit_use_stmt(use_stmt* node) {
             dump_indent();
             std::cout << "use all\n";
             break;
-        case use_stmt::use_kind::use_single:
-            node->get_single_use()->accept(this);
-            break;
         case use_stmt::use_kind::use_specify:
-            dump_indent();
-            std::cout << "use specified\n";
-            push_indent();
-            for(auto i : node->get_specified_use()) {
-                if (i==node->get_specified_use().back()) {
-                    set_last();
-                }
-                i->accept(this);
-            }
-            pop_indent();
+            node->get_specified()->accept(this);
             break;
+    }
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_specified_use(specified_use* node) {
+    dump_indent();
+    std::cout << "specified use " << format_location(node->get_location());
+    push_indent();
+    for(auto i : node->get_symbols()) {
+        if (i==node->get_symbols().back()) {
+            set_last();
+        }
+        i->accept(this);
     }
     pop_indent();
     return true;

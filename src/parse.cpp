@@ -41,10 +41,6 @@ bool parse::look_ahead(tok type) {
     return type==toks[ptr].type;
 }
 
-bool parse::look_ahead_single_use() {
-    return toks[ptr].type==tok::id && toks[ptr+1].type==tok::semi;
-}
-
 identifier* parse::identifier_gen() {
     auto result = new identifier(toks[ptr].loc, toks[ptr].str);
     match(tok::id);
@@ -57,9 +53,6 @@ use_stmt* parse::use_statement_gen() {
     result->add_path(identifier_gen());
     while(look_ahead(tok::double_colon)) {
         match(tok::double_colon);
-        if (look_ahead_single_use()) {
-            break;
-        }
         if (look_ahead(tok::id)) {
             result->add_path(identifier_gen());
         } else {
@@ -69,14 +62,13 @@ use_stmt* parse::use_statement_gen() {
     if (look_ahead(tok::mult)) {
         match(tok::mult);
         result->set_use_kind(use_stmt::use_kind::use_all);
-    } else if (look_ahead(tok::id)) {
-        result->set_use_kind(use_stmt::use_kind::use_single);
-        result->set_single_use(identifier_gen());
     } else if (look_ahead(tok::lbrace)) {
         match(tok::lbrace);
         result->set_use_kind(use_stmt::use_kind::use_specify);
+        auto specified = new specified_use(toks[ptr].loc);
+        result->set_specified(specified);
         while(!look_ahead(tok::rbrace)) {
-            result->add_specified_use(identifier_gen());
+            specified->add_symbol(identifier_gen());
             if (!look_ahead(tok::rbrace) || look_ahead(tok::comma)) {
                 match(tok::comma);
             }
@@ -85,6 +77,13 @@ use_stmt* parse::use_statement_gen() {
             }
         }
         match(tok::rbrace);
+    } else if (look_ahead(tok::semi)) {
+        auto back = result->get_path().back();
+        result->get_path().pop_back();
+        auto specified = new specified_use(back->get_location());
+        specified->add_symbol(back);
+        result->set_use_kind(use_stmt::use_kind::use_specify);
+        result->set_specified(specified);
     }
     match(tok::semi);
     return result;
