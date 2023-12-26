@@ -22,7 +22,7 @@ public:
     identifier(const span& loc, const std::string& id_name):
         expr(ast_type::ast_identifier, loc), name(id_name) {}
     ~identifier() override = default;
-    virtual void accept(visitor*);
+    void accept(visitor*) override;
 
     const auto& get_name() const { return name; }
 };

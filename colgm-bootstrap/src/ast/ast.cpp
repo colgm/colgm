@@ -4,9 +4,6 @@
 namespace colgm {
 
 root::~root() {
-    for(auto i : use_statements) {
-        delete i;
-    }
     for(auto i : declarations) {
         delete i;
     }

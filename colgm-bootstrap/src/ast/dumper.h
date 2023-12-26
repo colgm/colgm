@@ -42,8 +42,11 @@ public:
     dumper(): indent({}) {}
     bool visit_root(root*) override;
     bool visit_identifier(identifier*) override;
-    bool visit_use_stmt(use_stmt*) override;
-    bool visit_specified_use(specified_use*) override;
+    bool visit_type_def(type_def*) override;
+    bool visit_param(param*) override;
+    bool visit_param_list(param_list*) override;
+    bool visit_func_decl(func_decl*) override;
+    bool visit_code_block(code_block*) override;
 };
 
 }

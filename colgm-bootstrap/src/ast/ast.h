@@ -10,17 +10,24 @@ enum class ast_type {
     ast_null = 0,
     ast_root,
     ast_identifier,
-    ast_use_stmt,
-    ast_specified_use,
+    ast_type_def,
+    ast_param,
+    ast_param_list,
+    ast_func_decl,
+    ast_code_block
 };
 
 class visitor;
 
 class decl;
+class type_def;
+class param;
+class param_list;
+class func_decl;
 class expr;
+class identifier;
 class stmt;
-class use_stmt;
-class specified_use;
+class code_block;
 
 class node {
 private:
@@ -37,7 +44,6 @@ public:
 
 class root: public node {
 private:
-    std::vector<use_stmt*> use_statements;
     std::vector<decl*> declarations;
 
 public:
@@ -45,9 +51,8 @@ public:
     ~root() override;
     void accept(visitor*) override;
 
-    void add_use_statement(use_stmt* node) { use_statements.push_back(node); }
-    const auto& get_use_statements() const { return use_statements; }
-    const auto& get_declarations() const { return declarations; }
+    void add_decl(decl* node) { declarations.push_back(node); }
+    const auto& get_decls() const { return declarations; }
 };
 
 }
