@@ -32,6 +32,31 @@ bool dumper::visit_type_def(type_def* node) {
     return true;
 }
 
+bool dumper::visit_struct_field(struct_field* node) {
+    dump_indent();
+    std::cout << "field " << format_location(node->get_location());
+    push_indent();
+    node->get_name()->accept(this);
+    set_last();
+    node->get_type()->accept(this);
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_struct_decl(struct_decl* node) {
+    dump_indent();
+    std::cout << "struct " << node->get_name() << format_location(node->get_location());
+    push_indent();
+    for(auto i : node->get_fields()) {
+        if (i==node->get_fields().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_param(param* node) {
     dump_indent();
     std::cout << "param " << format_location(node->get_location());

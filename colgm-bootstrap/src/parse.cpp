@@ -57,6 +57,32 @@ type_def* parse::type_gen() {
     return result;
 }
 
+struct_field* parse::struct_field_gen() {
+    auto result = new struct_field(toks[ptr].loc);
+    result->set_name(identifier_gen());
+    match(tok::colon);
+    result->set_type(type_gen());
+    return result;
+}
+
+struct_decl* parse::struct_gen() {
+    auto result = new struct_decl(toks[ptr].loc);
+    match(tok::stct);
+    result->set_name(toks[ptr].str);
+    match(tok::id);
+    match(tok::lbrace);
+    while(!look_ahead(tok::rbrace)) {
+        result->add_field(struct_field_gen());
+        if (look_ahead(tok::comma)) {
+            match(tok::comma);
+        } else {
+            break;
+        }
+    }
+    match(tok::rbrace);
+    return result;
+}
+
 param* parse::param_gen() {
     auto result = new param(toks[ptr].loc);
     result->set_name(identifier_gen());
@@ -72,6 +98,8 @@ param_list* parse::param_list_gen() {
         result->add_param(param_gen());
         if (look_ahead(tok::comma)) {
             match(tok::comma);
+        } else {
+            break;
         }
     }
     match(tok::rcurve);
@@ -108,6 +136,10 @@ const error& parse::analyse(const std::vector<token>& token_list) {
     while (!look_ahead(tok::eof)) {
         if (look_ahead(tok::func)) {
             result->add_decl(function_gen());
+            continue;
+        }
+        if (look_ahead(tok::stct)) {
+            result->add_decl(struct_gen());
             continue;
         }
         err.err("parse", toks[ptr].loc,

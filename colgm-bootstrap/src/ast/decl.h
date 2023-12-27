@@ -31,6 +31,41 @@ public:
     auto get_pointer_level() { return pointer_level; }
 };
 
+class struct_field: public decl {
+private:
+    identifier* name;
+    type_def* type;
+
+public:
+    struct_field(const span& loc):
+        decl(ast_type::ast_struct_field, loc),
+        name(nullptr), type(nullptr) {}
+    ~struct_field() override;
+    void accept(visitor*) override;
+
+    void set_name(identifier* node) { name = node; }
+    auto get_name() { return name; }
+    void set_type(type_def* node) { type = node; }
+    auto get_type() { return type; }
+};
+
+class struct_decl: public decl {
+private:
+    std::vector<struct_field*> fields;
+    std::string name;
+
+public:
+    struct_decl(const span& loc):
+        decl(ast_type::ast_struct_decl, loc) {}
+    ~struct_decl() override;
+    void accept(visitor*) override;
+
+    void add_field(struct_field* node) { fields.push_back(node); }
+    const auto& get_fields() const { return fields; }
+    void set_name(const std::string& n) { name = n; }
+    const auto& get_name() const { return name; }
+};
+
 class param: public decl {
 private:
     identifier* name;

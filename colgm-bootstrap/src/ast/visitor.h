@@ -13,6 +13,8 @@ public:
     virtual bool visit_root(root*);
     virtual bool visit_decl(decl*);
     virtual bool visit_type_def(type_def*);
+    virtual bool visit_struct_field(struct_field*);
+    virtual bool visit_struct_decl(struct_decl*);
     virtual bool visit_param(param*);
     virtual bool visit_param_list(param_list*);
     virtual bool visit_func_decl(func_decl*);

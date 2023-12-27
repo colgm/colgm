@@ -22,6 +22,7 @@ private:
 
     const std::unordered_map<tok, std::string> tokname {
         {tok::use     ,"use"     },
+        {tok::stct    ,"struct"  },
         {tok::rfor    ,"for"     },
         {tok::forindex,"forindex"},
         {tok::foreach ,"foreach" },
@@ -90,6 +91,8 @@ private:
     bool look_ahead(tok);
     identifier* identifier_gen();
     type_def* type_gen();
+    struct_field* struct_field_gen();
+    struct_decl* struct_gen();
     param* param_gen();
     param_list* param_list_gen();
     func_decl* function_gen();

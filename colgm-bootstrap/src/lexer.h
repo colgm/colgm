@@ -23,6 +23,7 @@ enum class tok:u32 {
     foreach,  // loop keyword foreach
     rwhile,   // loop keyword while
     var,      // keyword for definition
+    stct,     // keyword for struct
     pub,      // keyword pub
     func,     // keyword for definition of function
     brk,      // loop keyword break
@@ -106,6 +107,7 @@ private:
         {"foreach" ,tok::foreach },
         {"while"   ,tok::rwhile  },
         {"var"     ,tok::var     },
+        {"struct"  ,tok::stct    },
         {"pub"     ,tok::pub     },
         {"func"    ,tok::func    },
         {"break"   ,tok::brk     },

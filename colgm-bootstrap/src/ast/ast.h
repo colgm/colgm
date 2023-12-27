@@ -11,6 +11,8 @@ enum class ast_type {
     ast_root,
     ast_identifier,
     ast_type_def,
+    ast_struct_field,
+    ast_struct_decl,
     ast_param,
     ast_param_list,
     ast_func_decl,
@@ -21,6 +23,8 @@ class visitor;
 
 class decl;
 class type_def;
+class struct_field;
+class struct_decl;
 class param;
 class param_list;
 class func_decl;

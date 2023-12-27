@@ -15,6 +15,23 @@ bool codegen::visit_type_def(type_def* node) {
     return true;
 }
 
+bool codegen::visit_struct_field(struct_field* node) {
+    node->get_type()->accept(this);
+    return true;
+}
+
+bool codegen::visit_struct_decl(struct_decl* node) {
+    out << "%struct." << node->get_name() << " = type {";
+    for(auto i : node->get_fields()) {
+        i->accept(this);
+        if (i!=node->get_fields().back()) {
+            out << ", ";
+        }
+    }
+    out << "}\n\n";
+    return true;
+}
+
 bool codegen::visit_param(param* node) {
     node->get_type()->accept(this);
     out << " %";
@@ -43,7 +60,7 @@ bool codegen::visit_func_decl(func_decl* node) {
     out << "  ret ";
     node->get_return_type()->accept(this);
     out << " 0\n";
-    out << "}\n";
+    out << "}\n\n";
     return true;
 }
 

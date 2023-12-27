@@ -24,6 +24,19 @@ bool visitor::visit_type_def(type_def* node) {
     return true;
 }
 
+bool visitor::visit_struct_field(struct_field* node) {
+    node->get_name()->accept(this);
+    node->get_type()->accept(this);
+    return true;
+}
+
+bool visitor::visit_struct_decl(struct_decl* node) {
+    for(auto i : node->get_fields()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_param(param* node) {
     node->get_name()->accept(this);
     node->get_type()->accept(this);
