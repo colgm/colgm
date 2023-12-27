@@ -14,6 +14,7 @@ HEADER = \
 	src/lexer.h\
 	src/colgm.h\
 	src/parse.h\
+	src/codegen.h\
 	src/ast/ast.h\
 	src/ast/decl.h\
 	src/ast/expr.h\
@@ -27,6 +28,7 @@ OBJECT = \
 	build/misc.o\
 	build/main.o\
 	build/parse.o\
+	build/codegen.o\
 	build/ast.o\
 	build/decl.o\
 	build/expr.o\
@@ -63,6 +65,9 @@ build/lexer.o: src/colgm.h src/err.h src/lexer.h src/lexer.cpp | build
 
 build/parse.o: $(HEADER) src/parse.cpp | build
 	$(CXX) $(CXXFLAGS) src/parse.cpp -o build/parse.o -I src
+
+build/codegen.o: $(HEADER) src/codegen.cpp | build
+	$(CXX) $(CXXFLAGS) src/codegen.cpp -o build/codegen.o -I src
 
 build/ast.o: $(HEADER) src/ast/ast.cpp | build
 	$(CXX) $(CXXFLAGS) src/ast/ast.cpp -o build/ast.o -I src

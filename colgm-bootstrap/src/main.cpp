@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include "parse.h"
 #include "ast/dumper.h"
+#include "codegen.h"
 
 #include <unordered_map>
 #include <thread>
@@ -79,6 +80,7 @@ void execute(
 
     colgm::lexer lexer;
     colgm::parse parser;
+    colgm::codegen code("colgm.ll");
 
     // lexer scans file to get tokens
     lexer.scan(file).chkerr();
@@ -94,6 +96,8 @@ void execute(
         colgm::dumper dump;
         parser.get_result()->accept(&dump);
     }
+
+    parser.get_result()->accept(&code);
 }
 
 i32 main(i32 argc, const char* argv[]) {
