@@ -66,13 +66,48 @@ bool visitor::visit_identifier(identifier* node) {
     return true;
 }
 
+bool visitor::visit_number_literal(number_literal* node) {
+    return true;
+}
+
+bool visitor::visit_string_literal(string_literal* node) {
+    return true;
+}
+
+bool visitor::visit_call_index(call_index* node) {
+    node->get_index()->accept(this);
+    return true;
+}
+
+bool visitor::visit_call_field(call_field* node) {
+    if (node->get_args()) {
+        node->get_args()->accept(this);
+    }
+    return true;
+}
+
+bool visitor::visit_call(call* node) {
+    node->get_head()->accept(this);
+    for(auto i : node->get_chain()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_stmt(stmt* node) {
     node->accept(this);
     return true;
 }
 
+bool visitor::visit_ret_stmt(ret_stmt* node) {
+    node->get_value()->accept(this);
+    return true;
+}
+
 bool visitor::visit_code_block(code_block* node) {
-    // TODO
+    for(auto i : node->get_stmts()) {
+        i->accept(this);
+    }
     return true;
 }
 

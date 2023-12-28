@@ -42,12 +42,15 @@ public:
     dumper(): indent({}) {}
     bool visit_root(root*) override;
     bool visit_identifier(identifier*) override;
+    bool visit_number_literal(number_literal*) override;
+    bool visit_string_literal(string_literal*) override;
     bool visit_type_def(type_def*) override;
     bool visit_struct_field(struct_field*) override;
     bool visit_struct_decl(struct_decl*) override;
     bool visit_param(param*) override;
     bool visit_param_list(param_list*) override;
     bool visit_func_decl(func_decl*) override;
+    bool visit_ret_stmt(ret_stmt*) override;
     bool visit_code_block(code_block*) override;
 };
 

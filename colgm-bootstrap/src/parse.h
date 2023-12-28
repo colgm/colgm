@@ -90,12 +90,16 @@ private:
     }
     bool look_ahead(tok);
     identifier* identifier_gen();
+    number_literal* number_gen();
+    string_literal* string_gen();
     type_def* type_gen();
     struct_field* struct_field_gen();
     struct_decl* struct_gen();
     param* param_gen();
     param_list* param_list_gen();
     func_decl* function_gen();
+    code_block* block_gen();
+    ret_stmt* return_gen();
 
 public:
     const error& analyse(const std::vector<token>&);

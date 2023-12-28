@@ -47,6 +47,18 @@ identifier* parse::identifier_gen() {
     return result;
 }
 
+number_literal* parse::number_gen() {
+    auto result = new number_literal(toks[ptr].loc, toks[ptr].str);
+    match(tok::num);
+    return result;
+}
+
+string_literal* parse::string_gen() {
+    auto result = new string_literal(toks[ptr].loc, toks[ptr].str);
+    match(tok::str);
+    return result;
+}
+
 type_def* parse::type_gen() {
     auto result = new type_def(toks[ptr].loc);
     result->set_name(identifier_gen());
@@ -120,9 +132,28 @@ func_decl* parse::function_gen() {
         match(tok::arrow);
         result->set_return_type(type_gen());
     }
-    result->set_code_block(new code_block(toks[ptr].loc));
+    result->set_code_block(block_gen());
+    return result;
+}
+
+code_block* parse::block_gen() {
+    auto result = new code_block(toks[ptr].loc);
     match(tok::lbrace);
+    while(!look_ahead(tok::rbrace)) {
+        switch(toks[ptr].type) {
+            case tok::ret: result->add_stmt(return_gen()); break;
+            default: match(toks[ptr].type); break;
+        }
+    }
     match(tok::rbrace);
+    return result;
+}
+
+ret_stmt* parse::return_gen() {
+    auto result = new ret_stmt(toks[ptr].loc);
+    match(tok::ret);
+    result->set_value(number_gen());
+    match(tok::semi);
     return result;
 }
 
@@ -134,18 +165,11 @@ const error& parse::analyse(const std::vector<token>& token_list) {
         return err;
     }
     while (!look_ahead(tok::eof)) {
-        if (look_ahead(tok::func)) {
-            result->add_decl(function_gen());
-            continue;
-        }
-        if (look_ahead(tok::stct)) {
-            result->add_decl(struct_gen());
-            continue;
-        }
-        err.err("parse", toks[ptr].loc,
-            "unknown token \"" + toks[ptr].str + "\"."
-        );
-        match(toks[ptr].type);
+        switch(toks[ptr].type) {
+            case tok::func: result->add_decl(function_gen()); break;
+            case tok::stct: result->add_decl(struct_gen()); break;
+            default: match(toks[ptr].type); break;
+        }    
     }
     return err;
 }

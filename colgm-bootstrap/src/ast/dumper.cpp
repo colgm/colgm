@@ -22,6 +22,18 @@ bool dumper::visit_identifier(identifier* node) {
     return true;
 }
 
+bool dumper::visit_number_literal(number_literal* node) {
+    dump_indent();
+    std::cout << "number " << node->get_number() << format_location(node->get_location());
+    return true;
+}
+
+bool dumper::visit_string_literal(string_literal* node) {
+    dump_indent();
+    std::cout << "string " << node->get_string() << format_location(node->get_location());
+    return true;
+}
+
 bool dumper::visit_type_def(type_def* node) {
     dump_indent();
     std::cout << "type ptr " << node->get_pointer_level() << format_location(node->get_location());
@@ -94,10 +106,29 @@ bool dumper::visit_func_decl(func_decl* node) {
     return true;
 }
 
+bool dumper::visit_ret_stmt(ret_stmt* node) {
+    dump_indent();
+    std::cout << "return " << format_location(node->get_location());
+    push_indent();
+    set_last();
+    if (node->get_value()) {
+        node->get_value()->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_code_block(code_block* node) {
-    // TODO
     dump_indent();
     std::cout << "code block " << format_location(node->get_location());
+    push_indent();
+    for(auto i : node->get_stmts()) {
+        if (i==node->get_stmts().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
     return true;
 }
 

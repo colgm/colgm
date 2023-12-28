@@ -10,12 +10,18 @@ enum class ast_type {
     ast_null = 0,
     ast_root,
     ast_identifier,
+    ast_number_literal,
+    ast_string_literal,
+    ast_call_index,
+    ast_call_field,
+    ast_call,
     ast_type_def,
     ast_struct_field,
     ast_struct_decl,
     ast_param,
     ast_param_list,
     ast_func_decl,
+    ast_ret_stmt,
     ast_code_block
 };
 
@@ -30,7 +36,13 @@ class param_list;
 class func_decl;
 class expr;
 class identifier;
+class number_literal;
+class string_literal;
+class call_index;
+class call_field;
+class call;
 class stmt;
+class ret_stmt;
 class code_block;
 
 class node {
