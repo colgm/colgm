@@ -7,6 +7,14 @@ void stmt::accept(visitor* v) {
     v->visit_stmt(this);
 }
 
+in_stmt_expr::~in_stmt_expr() {
+    delete calculation;
+}
+
+void in_stmt_expr::accept(visitor* v) {
+    v->visit_in_stmt_expr(this);
+}
+
 ret_stmt::~ret_stmt() {
     delete value;
 }

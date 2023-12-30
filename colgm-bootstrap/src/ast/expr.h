@@ -14,6 +14,24 @@ public:
     void accept(visitor*) override;
 };
 
+class binary_operator: public expr {
+private:
+    expr* left;
+    expr* right;
+
+public:
+    binary_operator(const span& loc):
+        expr(ast_type::ast_binary_operator, loc),
+        left(nullptr), right(nullptr) {}
+    ~binary_operator() override;
+    void accept(visitor*) override;
+
+    void set_left(expr* node) { left = node; }
+    auto get_left() const { return left; }
+    void set_right(expr* node) { right = node; }
+    auto get_right() const { return right; }
+};
+
 class identifier: public expr {
 private:
     std::string name;
@@ -67,10 +85,24 @@ public:
     auto get_index() const { return index; }
 };
 
+class call_func_args: public expr {
+private:
+    std::vector<expr*> args;
+
+public:
+    call_func_args(const span& loc):
+        expr(ast_type::ast_call_func_args, loc) {}
+    ~call_func_args() override;
+    void accept(visitor*) override;
+
+    void add_arg(expr* node) { args.push_back(node); }
+    const auto& get_args() const { return args; }
+};
+
 class call_field: public expr {
 private:
     std::string name;
-    expr* func_call_args;
+    call_func_args* func_call_args;
 
 public:
     call_field(const span& loc, const std::string& f):

@@ -14,6 +14,21 @@ public:
     void accept(visitor*) override;  
 };
 
+class in_stmt_expr: public stmt {
+private:
+    expr* calculation;
+
+public:
+    in_stmt_expr(const span& loc):
+        stmt(ast_type::ast_in_stmt_expr, loc),
+        calculation(nullptr) {}
+    ~in_stmt_expr() override;
+    void accept(visitor*) override;
+
+    void set_expr(expr* node) { calculation = node; }
+    auto get_expr() const { return calculation; }
+};
+
 class ret_stmt: public stmt {
 private:
     expr* value;

@@ -95,6 +95,6 @@ clean:
 
 .PHONY: test
 test: colgm
-	./colgm test/example.colgm -l
-	./colgm test/operator.colgm -l
-	./colgm test/use_stmt.colgm -l
+	./colgm ../test/example.colgm -a
+	./colgm ../test/operator.colgm -a
+	./colgm ../test/use_stmt.colgm -a

@@ -62,6 +62,12 @@ bool visitor::visit_expr(expr* node) {
     return true;
 }
 
+bool visitor::visit_binary_operator(binary_operator* node) {
+    node->get_left()->accept(this);
+    node->get_right()->accept(this);
+    return true;
+}
+
 bool visitor::visit_identifier(identifier* node) {
     return true;
 }
@@ -76,6 +82,13 @@ bool visitor::visit_string_literal(string_literal* node) {
 
 bool visitor::visit_call_index(call_index* node) {
     node->get_index()->accept(this);
+    return true;
+}
+
+bool visitor::visit_call_func_args(call_func_args* node) {
+    for(auto i : node->get_args()) {
+        i->accept(this);
+    }
     return true;
 }
 
@@ -96,6 +109,11 @@ bool visitor::visit_call(call* node) {
 
 bool visitor::visit_stmt(stmt* node) {
     node->accept(this);
+    return true;
+}
+
+bool visitor::visit_in_stmt_expr(in_stmt_expr* node) {
+    node->get_expr()->accept(this);
     return true;
 }
 

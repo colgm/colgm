@@ -7,6 +7,15 @@ void expr::accept(visitor* v) {
     v->visit_expr(this);
 }
 
+binary_operator::~binary_operator() {
+    delete left;
+    delete right;
+}
+
+void binary_operator::accept(visitor* v) {
+    v->visit_binary_operator(this);
+}
+
 void identifier::accept(visitor* v) {
     v->visit_identifier(this);
 }
@@ -25,6 +34,16 @@ call_index::~call_index() {
 
 void call_index::accept(visitor* v) {
     v->visit_call_index(this);
+}
+
+call_func_args::~call_func_args() {
+    for(auto i : args) {
+        delete i;
+    }
+}
+
+void call_func_args::accept(visitor* v) {
+    v->visit_call_func_args(this);
 }
 
 call_field::~call_field() {
