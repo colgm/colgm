@@ -106,6 +106,83 @@ bool dumper::visit_func_decl(func_decl* node) {
     return true;
 }
 
+bool dumper::visit_binary_operator(binary_operator* node) {
+    dump_indent();
+    std::cout << "binary ";
+    switch(node->get_opr()) {
+        case binary_operator::kind::add: std::cout << "+"; break;
+        case binary_operator::kind::sub: std::cout << "-"; break;
+        case binary_operator::kind::mod: std::cout << "%"; break;
+        case binary_operator::kind::mult: std::cout << "*"; break;
+        case binary_operator::kind::div: std::cout << "/"; break;
+    }
+    std::cout << " " << format_location(node->get_location());
+    push_indent();
+    node->get_left()->accept(this);
+    set_last();
+    node->get_right()->accept(this);
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_call_index(call_index* node) {
+    dump_indent();
+    std::cout << "call index " << format_location(node->get_location());
+    push_indent();
+    set_last();
+    node->get_index()->accept(this);
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_call_func_args(call_func_args* node) {
+    dump_indent();
+    std::cout << "call func " << format_location(node->get_location());
+    push_indent();
+    for(auto i : node->get_args()) {
+        if (i==node->get_args().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_call_field(call_field* node) {
+    dump_indent();
+    std::cout << "call field @" << node->get_name() << " " << format_location(node->get_location());
+    return true;
+}
+
+bool dumper::visit_call(call* node) {
+    dump_indent();
+    std::cout << "call " << format_location(node->get_location());
+    push_indent();
+    if (node->get_chain().empty()) {
+        set_last();
+    }
+    node->get_head()->accept(this);
+    for(auto i : node->get_chain()) {
+        if (i==node->get_chain().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_in_stmt_expr(in_stmt_expr* node) {
+    dump_indent();
+    std::cout << "in statement " << format_location(node->get_location());
+    push_indent();
+    set_last();
+    node->get_expr()->accept(this);
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_ret_stmt(ret_stmt* node) {
     dump_indent();
     std::cout << "return " << format_location(node->get_location());

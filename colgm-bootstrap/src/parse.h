@@ -90,8 +90,13 @@ private:
     }
     bool look_ahead(tok);
     identifier* identifier_gen();
+    call* call_gen();
     number_literal* number_gen();
     string_literal* string_gen();
+    expr* scalar_gen();
+    expr* multive_gen();
+    expr* additive_gen();
+    expr* calculation_gen();
     type_def* type_gen();
     struct_field* struct_field_gen();
     struct_decl* struct_gen();
@@ -99,6 +104,7 @@ private:
     param_list* param_list_gen();
     func_decl* function_gen();
     code_block* block_gen();
+    in_stmt_expr* in_stmt_expr_gen();
     ret_stmt* return_gen();
 
 public:

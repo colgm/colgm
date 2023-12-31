@@ -46,10 +46,6 @@ void call_func_args::accept(visitor* v) {
     v->visit_call_func_args(this);
 }
 
-call_field::~call_field() {
-    delete func_call_args;
-}
-
 void call_field::accept(visitor* v) {
     v->visit_call_field(this);
 }

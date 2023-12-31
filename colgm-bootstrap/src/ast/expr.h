@@ -15,7 +15,17 @@ public:
 };
 
 class binary_operator: public expr {
+public:
+    enum class kind {
+        add,
+        sub,
+        mult,
+        div,
+        mod
+    };
+
 private:
+    kind opr;
     expr* left;
     expr* right;
 
@@ -26,6 +36,8 @@ public:
     ~binary_operator() override;
     void accept(visitor*) override;
 
+    void set_opr(kind t) { opr = t; }
+    auto get_opr() const { return opr; }
     void set_left(expr* node) { left = node; }
     auto get_left() const { return left; }
     void set_right(expr* node) { right = node; }
@@ -102,16 +114,14 @@ public:
 class call_field: public expr {
 private:
     std::string name;
-    call_func_args* func_call_args;
 
 public:
     call_field(const span& loc, const std::string& f):
-        expr(ast_type::ast_call_field, loc), name(f), func_call_args(nullptr) {}
-    ~call_field() override;
+        expr(ast_type::ast_call_field, loc), name(f) {}
+    ~call_field() override = default;
     void accept(visitor*) override;
 
     const auto& get_name() const { return name; }
-    auto get_args() const { return func_call_args; }
 };
 
 class call: public expr {

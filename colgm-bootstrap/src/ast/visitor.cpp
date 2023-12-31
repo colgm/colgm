@@ -93,9 +93,6 @@ bool visitor::visit_call_func_args(call_func_args* node) {
 }
 
 bool visitor::visit_call_field(call_field* node) {
-    if (node->get_args()) {
-        node->get_args()->accept(this);
-    }
     return true;
 }
 

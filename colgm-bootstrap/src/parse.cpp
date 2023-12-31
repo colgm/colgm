@@ -47,6 +47,30 @@ identifier* parse::identifier_gen() {
     return result;
 }
 
+call* parse::call_gen() {
+    auto result = new call(toks[ptr].loc);
+    result->set_head(identifier_gen());
+    while(look_ahead(tok::lcurve) || look_ahead(tok::lbracket) || look_ahead(tok::dot)) {
+        if (look_ahead(tok::lcurve)) {
+            // TODO
+        }
+        if (look_ahead(tok::lbracket)) {
+            match(tok::lbracket);
+            auto new_call_index = new call_index(toks[ptr].loc);
+            new_call_index->set_index(calculation_gen());
+            match(tok::rbracket);
+            result->add_chain(new_call_index);
+        }
+        if (look_ahead(tok::dot)) {
+            match(tok::dot);
+            auto new_call_field = new call_field(toks[ptr].loc, toks[ptr].str);
+            match(tok::id);
+            result->add_chain(new_call_field);
+        }
+    }
+    return result;
+}
+
 number_literal* parse::number_gen() {
     auto result = new number_literal(toks[ptr].loc, toks[ptr].str);
     match(tok::num);
@@ -57,6 +81,66 @@ string_literal* parse::string_gen() {
     auto result = new string_literal(toks[ptr].loc, toks[ptr].str);
     match(tok::str);
     return result;
+}
+
+expr* parse::scalar_gen() {
+    if (look_ahead(tok::lcurve)) {
+        match(tok::lcurve);
+        auto result = calculation_gen();
+        match(tok::rcurve);
+        return result;
+    }
+    if (look_ahead(tok::num)) {
+        return number_gen();
+    }
+    if (look_ahead(tok::str)) {
+        return string_gen();
+    }
+    if (look_ahead(tok::id)) {
+        return call_gen();
+    }
+    err.err("parse", toks[ptr].loc, "expected scalar here.");
+    next();
+    return nullptr;
+}
+
+expr* parse::multive_gen() {
+    auto result = scalar_gen();
+    while(look_ahead(tok::mult) || look_ahead(tok::div) || look_ahead(tok::mult)) {
+        auto binary = new binary_operator(toks[ptr].loc);
+        binary->set_left(result);
+        switch(toks[ptr].type) {
+            case tok::mult: binary->set_opr(binary_operator::kind::mult); break;
+            case tok::div: binary->set_opr(binary_operator::kind::div); break;
+            case tok::mod: binary->set_opr(binary_operator::kind::mod); break;
+            default: break;
+        }
+        match(toks[ptr].type);
+        binary->set_right(scalar_gen());
+        result = binary;
+    }
+    return result;
+}
+
+expr* parse::additive_gen() {
+    auto result = multive_gen();
+    while(look_ahead(tok::add) || look_ahead(tok::sub)) {
+        auto binary = new binary_operator(toks[ptr].loc);
+        binary->set_left(result);
+        switch(toks[ptr].type) {
+            case tok::add: binary->set_opr(binary_operator::kind::add); break;
+            case tok::sub: binary->set_opr(binary_operator::kind::sub); break;
+            default: break;
+        }
+        match(toks[ptr].type);
+        binary->set_right(multive_gen());
+        result = binary;
+    }
+    return result;
+}
+
+expr* parse::calculation_gen() {
+    return additive_gen();
 }
 
 type_def* parse::type_gen() {
@@ -141,6 +225,10 @@ code_block* parse::block_gen() {
     match(tok::lbrace);
     while(!look_ahead(tok::rbrace)) {
         switch(toks[ptr].type) {
+            case tok::lcurve:
+            case tok::num:
+            case tok::str:
+            case tok::id: result->add_stmt(in_stmt_expr_gen()); break;
             case tok::ret: result->add_stmt(return_gen()); break;
             default: match(toks[ptr].type); break;
         }
@@ -149,10 +237,16 @@ code_block* parse::block_gen() {
     return result;
 }
 
+in_stmt_expr* parse::in_stmt_expr_gen() {
+    auto result = new in_stmt_expr(toks[ptr].loc);
+    result->set_expr(calculation_gen());
+    return result;
+}
+
 ret_stmt* parse::return_gen() {
     auto result = new ret_stmt(toks[ptr].loc);
     match(tok::ret);
-    result->set_value(number_gen());
+    result->set_value(calculation_gen());
     match(tok::semi);
     return result;
 }
