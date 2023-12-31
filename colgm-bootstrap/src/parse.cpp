@@ -52,7 +52,18 @@ call* parse::call_gen() {
     result->set_head(identifier_gen());
     while(look_ahead(tok::lcurve) || look_ahead(tok::lbracket) || look_ahead(tok::dot)) {
         if (look_ahead(tok::lcurve)) {
-            // TODO
+            match(tok::lcurve);
+            auto new_call_func = new call_func_args(toks[ptr].loc);
+            while(!look_ahead(tok::rcurve)) {
+                new_call_func->add_arg(calculation_gen());
+                if (look_ahead(tok::comma)) {
+                    match(tok::comma);
+                } else {
+                    break;
+                }
+            }
+            match(tok::rcurve);
+            result->add_chain(new_call_func);
         }
         if (look_ahead(tok::lbracket)) {
             match(tok::lbracket);
