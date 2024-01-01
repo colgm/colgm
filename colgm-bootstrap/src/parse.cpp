@@ -150,8 +150,48 @@ expr* parse::additive_gen() {
     return result;
 }
 
-expr* parse::calculation_gen() {
+expr* parse::compare_gen() {
     auto result = additive_gen();
+    while(look_ahead(tok::cmpeq) || look_ahead(tok::neq) ||
+        look_ahead(tok::less) || look_ahead(tok::leq) ||
+        look_ahead(tok::grt) || look_ahead(tok::geq)) {
+        auto binary = new binary_operator(toks[ptr].loc);
+        binary->set_left(result);
+        switch(toks[ptr].type) {
+            case tok::cmpeq: binary->set_opr(binary_operator::kind::cmpeq); break;
+            case tok::neq: binary->set_opr(binary_operator::kind::cmpneq); break;
+            case tok::less: binary->set_opr(binary_operator::kind::less); break;
+            case tok::leq: binary->set_opr(binary_operator::kind::leq); break;
+            case tok::grt: binary->set_opr(binary_operator::kind::grt); break;
+            case tok::geq: binary->set_opr(binary_operator::kind::geq); break;
+            default: break;
+        }
+        match(toks[ptr].type);
+        binary->set_right(additive_gen());
+        result = binary;
+    }
+    return result;
+}
+
+expr* parse::condition_expression_gen() {
+    auto result = compare_gen();
+    while(look_ahead(tok::opand) || look_ahead(tok::opor)) {
+        auto binary = new binary_operator(toks[ptr].loc);
+        binary->set_left(result);
+        switch(toks[ptr].type) {
+            case tok::opand: binary->set_opr(binary_operator::kind::cmpand); break;
+            case tok::opor: binary->set_opr(binary_operator::kind::cmpor); break;
+            default: break;
+        }
+        match(toks[ptr].type);
+        binary->set_right(compare_gen());
+        result = binary;
+    }
+    return result;
+}
+
+expr* parse::calculation_gen() {
+    auto result = condition_expression_gen();
     if (!result) {
         return result;
     }

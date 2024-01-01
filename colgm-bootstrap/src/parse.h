@@ -96,6 +96,8 @@ private:
     expr* scalar_gen();
     expr* multive_gen();
     expr* additive_gen();
+    expr* compare_gen();
+    expr* condition_expression_gen();
     expr* calculation_gen();
     type_def* type_gen();
     struct_field* struct_field_gen();

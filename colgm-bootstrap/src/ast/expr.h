@@ -21,7 +21,15 @@ public:
         sub,
         mult,
         div,
-        mod
+        mod,
+        cmpeq,
+        cmpneq,
+        less,
+        leq,
+        grt,
+        geq,
+        cmpand,
+        cmpor
     };
 
 private:

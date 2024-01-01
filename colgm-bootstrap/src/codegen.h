@@ -1,4 +1,5 @@
 #include "ast/visitor.h"
+#include "semantic.h"
 
 #include <fstream>
 #include <cstring>
@@ -7,11 +8,6 @@
 #include <unordered_map>
 
 namespace colgm {
-
-struct colgm_struct {
-    std::string name;
-    std::unordered_map<std::string, uint32_t> field;
-};
 
 class codegen: public visitor {
 private:
