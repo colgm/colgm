@@ -17,6 +17,7 @@ enum class ast_type {
     ast_call_func_args,
     ast_call_field,
     ast_call,
+    ast_assignment,
     ast_type_def,
     ast_struct_field,
     ast_struct_decl,
@@ -46,6 +47,7 @@ class call_index;
 class call_func_args;
 class call_field;
 class call;
+class assignment;
 class stmt;
 class definition;
 class in_stmt_expr;
@@ -63,6 +65,7 @@ public:
     virtual void accept(visitor*) = 0;
 
     const auto& get_location() const { return location; }
+    const auto get_ast_type() const { return node_type; }
 };
 
 class root: public node {

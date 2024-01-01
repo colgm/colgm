@@ -55,6 +55,7 @@ public:
     bool visit_call_func_args(call_func_args*) override;
     bool visit_call_field(call_field*) override;
     bool visit_call(call*) override;
+    bool visit_assignment(assignment*) override;
     bool visit_definition(definition*) override;
     bool visit_in_stmt_expr(in_stmt_expr*) override;
     bool visit_ret_stmt(ret_stmt*) override;

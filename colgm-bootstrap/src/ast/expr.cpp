@@ -61,4 +61,13 @@ void call::accept(visitor* v) {
     v->visit_call(this);
 }
 
+assignment::~assignment() {
+    delete left;
+    delete right;
+}
+
+void assignment::accept(visitor* v) {
+    v->visit_assignment(this);
+}
+
 }

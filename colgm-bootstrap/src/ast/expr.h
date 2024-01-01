@@ -141,4 +141,34 @@ public:
     const auto& get_chain() const { return chain; }
 };
 
+class assignment: public expr {
+public:
+    enum class kind {
+        addeq,
+        subeq,
+        multeq,
+        diveq,
+        modeq
+    };
+
+private:
+    kind type;
+    call* left;
+    expr* right;
+
+public:
+    assignment(const span& loc):
+        expr(ast_type::ast_assignment, loc),
+        left(nullptr), right(nullptr) {}
+    ~assignment() override;
+    void accept(visitor*) override;
+
+    void set_type(kind t) { type = t; }
+    auto get_type() const { return type; }
+    void set_left(call* node) { left = node; }
+    auto get_left() const { return left; }
+    void set_right(expr* node) { right = node; }
+    auto get_right() const { return right; }
+};
+
 }

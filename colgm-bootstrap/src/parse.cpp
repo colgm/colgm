@@ -151,7 +151,27 @@ expr* parse::additive_gen() {
 }
 
 expr* parse::calculation_gen() {
-    return additive_gen();
+    auto result = additive_gen();
+    if (result->get_ast_type()!=ast_type::ast_call) {
+        return result;
+    }
+    if (look_ahead(tok::addeq) || look_ahead(tok::subeq) || look_ahead(tok::multeq) ||
+        look_ahead(tok::diveq) || look_ahead(tok::modeq)) {
+        auto new_assignment = new assignment(toks[ptr].loc);
+        new_assignment->set_left(reinterpret_cast<call*>(result));
+        switch(toks[ptr].type) {
+            case tok::addeq: new_assignment->set_type(assignment::kind::addeq); break;
+            case tok::subeq: new_assignment->set_type(assignment::kind::subeq); break;
+            case tok::multeq: new_assignment->set_type(assignment::kind::multeq); break;
+            case tok::diveq: new_assignment->set_type(assignment::kind::diveq); break;
+            case tok::modeq: new_assignment->set_type(assignment::kind::modeq); break;
+            default: break;
+        }
+        match(toks[ptr].type);
+        new_assignment->set_right(calculation_gen());
+        return new_assignment;
+    }
+    return result;
 }
 
 type_def* parse::type_gen() {
@@ -264,6 +284,7 @@ code_block* parse::block_gen() {
 in_stmt_expr* parse::in_stmt_expr_gen() {
     auto result = new in_stmt_expr(toks[ptr].loc);
     result->set_expr(calculation_gen());
+    match(tok::semi);
     return result;
 }
 

@@ -104,6 +104,12 @@ bool visitor::visit_call(call* node) {
     return true;
 }
 
+bool visitor::visit_assignment(assignment* node) {
+    node->get_left()->accept(this);
+    node->get_right()->accept(this);
+    return true;
+}
+
 bool visitor::visit_stmt(stmt* node) {
     node->accept(this);
     return true;
