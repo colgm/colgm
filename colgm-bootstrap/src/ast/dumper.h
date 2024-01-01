@@ -51,10 +51,11 @@ public:
     bool visit_param_list(param_list*) override;
     bool visit_func_decl(func_decl*) override;
     bool visit_binary_operator(binary_operator*) override;
-    bool visit_call_index(call_index*);
-    bool visit_call_func_args(call_func_args*);
-    bool visit_call_field(call_field*);
-    bool visit_call(call*);
+    bool visit_call_index(call_index*) override;
+    bool visit_call_func_args(call_func_args*) override;
+    bool visit_call_field(call_field*) override;
+    bool visit_call(call*) override;
+    bool visit_definition(definition*) override;
     bool visit_in_stmt_expr(in_stmt_expr*) override;
     bool visit_ret_stmt(ret_stmt*) override;
     bool visit_code_block(code_block*) override;

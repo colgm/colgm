@@ -231,11 +231,24 @@ func_decl* parse::function_gen() {
     return result;
 }
 
+definition* parse::definition_gen() {
+    match(tok::var);
+    auto result = new definition(toks[ptr].loc, toks[ptr].str);
+    match(tok::id);
+    match(tok::colon);
+    result->set_type(type_gen());
+    match(tok::eq);
+    result->set_init_value(calculation_gen());
+    match(tok::semi);
+    return result;
+}
+
 code_block* parse::block_gen() {
     auto result = new code_block(toks[ptr].loc);
     match(tok::lbrace);
     while(!look_ahead(tok::rbrace)) {
         switch(toks[ptr].type) {
+            case tok::var: result->add_stmt(definition_gen()); break;
             case tok::lcurve:
             case tok::num:
             case tok::str:

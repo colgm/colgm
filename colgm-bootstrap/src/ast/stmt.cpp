@@ -7,6 +7,15 @@ void stmt::accept(visitor* v) {
     v->visit_stmt(this);
 }
 
+definition::~definition() {
+    delete type;
+    delete init_value;
+}
+
+void definition::accept(visitor* v) {
+    v->visit_definition(this);
+}
+
 in_stmt_expr::~in_stmt_expr() {
     delete calculation;
 }

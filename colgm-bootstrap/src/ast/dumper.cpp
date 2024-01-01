@@ -173,6 +173,18 @@ bool dumper::visit_call(call* node) {
     return true;
 }
 
+bool dumper::visit_definition(definition* node) {
+    dump_indent();
+    std::cout << "define @" << node->get_name() << " ";
+    std::cout << format_location(node->get_location());
+    push_indent();
+    node->get_type()->accept(this);
+    set_last();
+    node->get_init_value()->accept(this);
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_in_stmt_expr(in_stmt_expr* node) {
     dump_indent();
     std::cout << "in statement " << format_location(node->get_location());

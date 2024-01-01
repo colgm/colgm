@@ -23,6 +23,7 @@ enum class ast_type {
     ast_param,
     ast_param_list,
     ast_func_decl,
+    ast_definition,
     ast_in_stmt_expr,
     ast_ret_stmt,
     ast_code_block
@@ -46,6 +47,7 @@ class call_func_args;
 class call_field;
 class call;
 class stmt;
+class definition;
 class in_stmt_expr;
 class ret_stmt;
 class code_block;

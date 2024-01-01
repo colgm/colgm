@@ -28,6 +28,7 @@ public:
     virtual bool visit_call_field(call_field*);
     virtual bool visit_call(call*);
     virtual bool visit_stmt(stmt*);
+    virtual bool visit_definition(definition*);
     virtual bool visit_in_stmt_expr(in_stmt_expr*);
     virtual bool visit_ret_stmt(ret_stmt*);
     virtual bool visit_code_block(code_block*);

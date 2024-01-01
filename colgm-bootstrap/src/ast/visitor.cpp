@@ -109,6 +109,12 @@ bool visitor::visit_stmt(stmt* node) {
     return true;
 }
 
+bool visitor::visit_definition(definition* node) {
+    node->get_type()->accept(this);
+    node->get_init_value()->accept(this);
+    return true;
+}
+
 bool visitor::visit_in_stmt_expr(in_stmt_expr* node) {
     node->get_expr()->accept(this);
     return true;
