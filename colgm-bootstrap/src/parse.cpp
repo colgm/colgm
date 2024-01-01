@@ -152,6 +152,9 @@ expr* parse::additive_gen() {
 
 expr* parse::calculation_gen() {
     auto result = additive_gen();
+    if (!result) {
+        return result;
+    }
     if (result->get_ast_type()!=ast_type::ast_call) {
         return result;
     }
@@ -263,6 +266,43 @@ definition* parse::definition_gen() {
     return result;
 }
 
+cond_stmt* parse::cond_stmt_gen() {
+    auto result = new cond_stmt(toks[ptr].loc);
+    auto new_if = new if_stmt(toks[ptr].loc);
+    match(tok::rif);
+    match(tok::lcurve);
+    new_if->set_condition(calculation_gen());
+    match(tok::rcurve);
+    new_if->set_block(block_gen());
+    result->add_stmt(new_if);
+    while(look_ahead(tok::elsif)) {
+        auto new_elsif = new if_stmt(toks[ptr].loc);
+        match(tok::elsif);
+        match(tok::lcurve);
+        new_elsif->set_condition(calculation_gen());
+        match(tok::rcurve);
+        new_elsif->set_block(block_gen());
+        result->add_stmt(new_elsif);
+    }
+    if (look_ahead(tok::relse)) {
+        auto new_else = new if_stmt(toks[ptr].loc);
+        match(tok::relse);
+        new_else->set_block(block_gen());
+        result->add_stmt(new_else);
+    }
+    return result;
+}
+
+while_stmt* parse::while_stmt_gen() {
+    auto result = new while_stmt(toks[ptr].loc);
+    match(tok::rwhile);
+    match(tok::lcurve);
+    result->set_condition(calculation_gen());
+    match(tok::rcurve);
+    result->set_block(block_gen());
+    return result;
+}
+
 code_block* parse::block_gen() {
     auto result = new code_block(toks[ptr].loc);
     match(tok::lbrace);
@@ -273,6 +313,8 @@ code_block* parse::block_gen() {
             case tok::num:
             case tok::str:
             case tok::id: result->add_stmt(in_stmt_expr_gen()); break;
+            case tok::rif: result->add_stmt(cond_stmt_gen()); break;
+            case tok::rwhile: result->add_stmt(while_stmt_gen()); break;
             case tok::ret: result->add_stmt(return_gen()); break;
             default: match(toks[ptr].type); break;
         }
@@ -291,7 +333,9 @@ in_stmt_expr* parse::in_stmt_expr_gen() {
 ret_stmt* parse::return_gen() {
     auto result = new ret_stmt(toks[ptr].loc);
     match(tok::ret);
-    result->set_value(calculation_gen());
+    if (!look_ahead(tok::semi)) {
+        result->set_value(calculation_gen());
+    }
     match(tok::semi);
     return result;
 }

@@ -121,13 +121,36 @@ bool visitor::visit_definition(definition* node) {
     return true;
 }
 
+bool visitor::visit_cond_stmt(cond_stmt* node) {
+    for(auto i : node->get_stmts()) {
+        i->accept(this);
+    }
+    return true;
+}
+
+bool visitor::visit_if_stmt(if_stmt* node) {
+    if (node->get_condition()) {
+        node->get_condition()->accept(this);
+    }
+    node->get_block()->accept(this);
+    return true;
+}
+
+bool visitor::visit_while_stmt(while_stmt* node) {
+    node->get_condition()->accept(this);
+    node->get_block()->accept(this);
+    return true;
+}
+
 bool visitor::visit_in_stmt_expr(in_stmt_expr* node) {
     node->get_expr()->accept(this);
     return true;
 }
 
 bool visitor::visit_ret_stmt(ret_stmt* node) {
-    node->get_value()->accept(this);
+    if (node->get_value()) {
+        node->get_value()->accept(this);
+    }
     return true;
 }
 

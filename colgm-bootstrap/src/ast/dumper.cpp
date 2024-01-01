@@ -196,6 +196,49 @@ bool dumper::visit_definition(definition* node) {
     return true;
 }
 
+bool dumper::visit_cond_stmt(cond_stmt* node) {
+    dump_indent();
+    std::cout << "condition " << format_location(node->get_location());
+    push_indent();
+    for(auto i : node->get_stmts()) {
+        if (i==node->get_stmts().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_if_stmt(if_stmt* node) {
+    dump_indent();
+    if (node->get_condition()) {
+        std::cout << "if";
+    } else {
+        std::cout << "else";
+    }
+    std::cout << "-statement " << format_location(node->get_location());
+    push_indent();
+    if (node->get_condition()) {
+        node->get_condition()->accept(this);
+    }
+    set_last();
+    node->get_block()->accept(this);
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_while_stmt(while_stmt* node) {
+    dump_indent();
+    std::cout << "while " << format_location(node->get_location());
+    push_indent();
+    node->get_condition()->accept(this);
+    set_last();
+    node->get_block()->accept(this);
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_in_stmt_expr(in_stmt_expr* node) {
     dump_indent();
     std::cout << "in statement " << format_location(node->get_location());

@@ -57,6 +57,9 @@ public:
     bool visit_call(call*) override;
     bool visit_assignment(assignment*) override;
     bool visit_definition(definition*) override;
+    bool visit_cond_stmt(cond_stmt*) override;
+    bool visit_if_stmt(if_stmt*) override;
+    bool visit_while_stmt(while_stmt*) override;
     bool visit_in_stmt_expr(in_stmt_expr*) override;
     bool visit_ret_stmt(ret_stmt*) override;
     bool visit_code_block(code_block*) override;

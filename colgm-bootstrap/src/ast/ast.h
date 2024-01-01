@@ -25,6 +25,9 @@ enum class ast_type {
     ast_param_list,
     ast_func_decl,
     ast_definition,
+    ast_cond_stmt,
+    ast_if_stmt,
+    ast_while_stmt,
     ast_in_stmt_expr,
     ast_ret_stmt,
     ast_code_block
@@ -50,6 +53,9 @@ class call;
 class assignment;
 class stmt;
 class definition;
+class cond_stmt;
+class if_stmt;
+class while_stmt;
 class in_stmt_expr;
 class ret_stmt;
 class code_block;

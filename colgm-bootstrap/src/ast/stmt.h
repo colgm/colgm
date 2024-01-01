@@ -34,6 +34,56 @@ public:
     auto get_init_value() const { return init_value; }
 };
 
+class cond_stmt: public stmt {
+private:
+    std::vector<if_stmt*> stmts;
+
+public:
+    cond_stmt(const span& loc):
+        stmt(ast_type::ast_cond_stmt, loc) {}
+    ~cond_stmt() override;
+    void accept(visitor*) override;
+
+    void add_stmt(if_stmt* node) { stmts.push_back(node); }
+    const auto& get_stmts() const { return stmts; }
+};
+
+class if_stmt: public stmt {
+private:
+    expr* condition;
+    code_block* block;
+
+public:
+    if_stmt(const span& loc):
+        stmt(ast_type::ast_if_stmt, loc),
+        condition(nullptr), block(nullptr) {}
+    ~if_stmt() override;
+    void accept(visitor*) override;
+
+    void set_condition(expr* node) { condition = node; }
+    auto get_condition() const { return condition; }
+    void set_block(code_block* node) { block = node; }
+    auto get_block() const { return block; }
+};
+
+class while_stmt: public stmt {
+private:
+    expr* condition;
+    code_block* block;
+
+public:
+    while_stmt(const span& loc):
+        stmt(ast_type::ast_while_stmt, loc),
+        condition(nullptr), block(nullptr) {}
+    ~while_stmt() override;
+    void accept(visitor*) override;
+
+    void set_condition(expr* node) { condition = node; }
+    auto get_condition() const { return condition; }
+    void set_block(code_block* node) { block = node; }
+    auto get_block() const { return block; }
+};
+
 class in_stmt_expr: public stmt {
 private:
     expr* calculation;

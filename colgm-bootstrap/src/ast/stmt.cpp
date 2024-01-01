@@ -16,6 +16,34 @@ void definition::accept(visitor* v) {
     v->visit_definition(this);
 }
 
+cond_stmt::~cond_stmt() {
+    for(auto i : stmts) {
+        delete i;
+    }
+}
+
+void cond_stmt::accept(visitor* v) {
+    v->visit_cond_stmt(this);
+}
+
+if_stmt::~if_stmt() {
+    delete condition;
+    delete block;
+}
+
+void if_stmt::accept(visitor* v) {
+    v->visit_if_stmt(this);
+}
+
+while_stmt::~while_stmt() {
+    delete condition;
+    delete block;
+}
+
+void while_stmt::accept(visitor* v) {
+    v->visit_while_stmt(this);
+}
+
 in_stmt_expr::~in_stmt_expr() {
     delete calculation;
 }

@@ -104,6 +104,8 @@ private:
     param_list* param_list_gen();
     func_decl* function_gen();
     definition* definition_gen();
+    cond_stmt* cond_stmt_gen();
+    while_stmt* while_stmt_gen();
     code_block* block_gen();
     in_stmt_expr* in_stmt_expr_gen();
     ret_stmt* return_gen();
