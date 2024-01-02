@@ -4,6 +4,7 @@
 #include "parse.h"
 #include "ast/dumper.h"
 #include "codegen.h"
+#include "semantic.h"
 
 #include <unordered_map>
 #include <thread>
@@ -81,6 +82,7 @@ void execute(
     colgm::lexer lexer;
     colgm::parse parser;
     colgm::codegen code("colgm.ll");
+    colgm::semantic sema;
 
     // lexer scans file to get tokens
     lexer.scan(file).chkerr();
@@ -98,6 +100,10 @@ void execute(
     }
 
     parser.get_result()->accept(&code);
+
+    // simple semantic
+    sema.analyse(parser.get_result()).chkerr();
+    sema.dump();
 }
 
 i32 main(i32 argc, const char* argv[]) {

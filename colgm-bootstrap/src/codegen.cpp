@@ -38,10 +38,12 @@ bool codegen::visit_struct_decl(struct_decl* node) {
     structs.insert({node->get_name(), {}});
     structs.at(node->get_name()).name = "%struct." + node->get_name();
     out << "%struct." << node->get_name() << " = type {";
-    uint32_t index = 0;
     for(auto i : node->get_fields()) {
-        structs.at(node->get_name()).field.insert({i->get_name()->get_name(), index});
-        ++index;
+        structs.at(node->get_name()).field.push_back({
+            i->get_name()->get_name(),
+            i->get_type()->get_name()->get_name(),
+            i->get_type()->get_pointer_level()
+        });
         i->accept(this);
         if (i!=node->get_fields().back()) {
             out << ", ";
@@ -78,7 +80,11 @@ bool codegen::visit_func_decl(func_decl* node) {
     out << " {\n";
     out << "  ret ";
     node->get_return_type()->accept(this);
-    out << " 0\n";
+    if (node->get_return_type()->get_name()->get_name()!="void") {
+        out << " 0\n";
+    } else {
+        out << "\n";
+    }
     out << "}\n\n";
     return true;
 }
