@@ -25,15 +25,16 @@ struct symbol {
 
 std::ostream& operator<<(std::ostream&, const symbol&);
 
-struct colgm_struct {
-    std::string name;
-    std::vector<symbol> field;
-};
-
 struct colgm_func {
     std::string name;
     symbol return_type;
     std::vector<symbol> parameters;
+};
+
+struct colgm_struct {
+    std::string name;
+    std::vector<symbol> field;
+    std::unordered_map<std::string, colgm_func> method;
 };
 
 class semantic {
@@ -48,10 +49,15 @@ private:
     void analyse_structs(root*);
     void analyse_single_func(func_decl*);
     void analyse_functions(root*);
+    void analyse_single_impl(impl_struct*);
+    void analyse_impls(root*);
 
 public:
     const error& analyse(root*);
     void dump();
+    const auto& get_structs() const { return structs; }
+    const auto& get_functions() const { return functions; }
+    const auto& get_symbols() const { return symbols; }
 };
 
 }

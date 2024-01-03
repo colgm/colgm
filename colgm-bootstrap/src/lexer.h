@@ -25,6 +25,7 @@ enum class tok:u32 {
     var,      // keyword for definition
     stct,     // keyword for struct
     pub,      // keyword pub
+    impl,     // keyword impl
     func,     // keyword for definition of function
     brk,      // loop keyword break
     cont,     // loop keyword continue
@@ -100,6 +101,7 @@ private:
 
     const std::unordered_map<std::string, tok> typetbl {
         {"use"     ,tok::use     },
+        {"impl"    ,tok::impl    },
         {"true"    ,tok::tktrue  },
         {"false"   ,tok::tkfalse },
         {"for"     ,tok::rfor    },

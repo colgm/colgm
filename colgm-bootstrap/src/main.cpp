@@ -12,6 +12,7 @@
 
 const u32 COMPILE_VIEW_TOKEN = 1;
 const u32 COMPILE_VIEW_AST = 1<<1;
+const u32 COMPILE_VIEW_SEMA = 1<<2;
 
 std::ostream& help(std::ostream& out) {
     out
@@ -30,6 +31,7 @@ std::ostream& help(std::ostream& out) {
     << "option:\n"
     << "   -l,   --lex      | view analysed tokens.\n"
     << "   -a,   --ast      | view ast.\n"
+    << "   -s,   --sema     | view semantic result.\n"
     << "file:\n"
     << "   <filename>       | imput file.\n"
     << "argv:\n"
@@ -99,11 +101,14 @@ void execute(
         parser.get_result()->accept(&dump);
     }
 
-    parser.get_result()->accept(&code);
-
     // simple semantic
     sema.analyse(parser.get_result()).chkerr();
-    sema.dump();
+    if (cmd&COMPILE_VIEW_SEMA) {
+        sema.dump();
+    }
+
+    // generate code
+    code.generate(parser.get_result(), &sema);
 }
 
 i32 main(i32 argc, const char* argv[]) {
@@ -133,7 +138,9 @@ i32 main(i32 argc, const char* argv[]) {
         {"--lex", COMPILE_VIEW_TOKEN},
         {"-l", COMPILE_VIEW_TOKEN},
         {"--ast", COMPILE_VIEW_AST},
-        {"-a", COMPILE_VIEW_AST}
+        {"-a", COMPILE_VIEW_AST},
+        {"--sema", COMPILE_VIEW_SEMA},
+        {"-s", COMPILE_VIEW_SEMA}
     };
     u32 cmd = 0;
     std::string filename = "";

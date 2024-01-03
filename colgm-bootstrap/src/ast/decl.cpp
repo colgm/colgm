@@ -63,4 +63,14 @@ void func_decl::accept(visitor* v) {
     v->visit_func_decl(this);
 }
 
+impl_struct::~impl_struct() {
+    for(auto i : methods) {
+        delete i;
+    }
+}
+
+void impl_struct::accept(visitor* v) {
+    v->vissit_impl_struct(this);
+}
+
 }

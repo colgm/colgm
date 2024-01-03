@@ -152,6 +152,7 @@ public:
 class assignment: public expr {
 public:
     enum class kind {
+        eq,
         addeq,
         subeq,
         multeq,

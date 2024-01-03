@@ -123,4 +123,20 @@ public:
     auto get_code_block() { return block; }
 };
 
+class impl_struct: public decl {
+private:
+    std::string struct_name;
+    std::vector<func_decl*> methods;
+
+public:
+    impl_struct(const span& loc, const std::string& sn):
+        decl(ast_type::ast_impl, loc), struct_name(sn) {}
+    ~impl_struct() override;
+    void accept(visitor*) override;
+
+    const auto& get_struct_name() const { return struct_name; }
+    void add_method(func_decl* node) { methods.push_back(node); }
+    const auto& get_methods() const { return methods; }
+};
+
 }

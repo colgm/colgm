@@ -24,6 +24,7 @@ enum class ast_type {
     ast_param,
     ast_param_list,
     ast_func_decl,
+    ast_impl,
     ast_definition,
     ast_cond_stmt,
     ast_if_stmt,
@@ -42,6 +43,7 @@ class struct_decl;
 class param;
 class param_list;
 class func_decl;
+class impl_struct;
 class expr;
 class identifier;
 class number_literal;

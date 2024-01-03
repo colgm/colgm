@@ -22,6 +22,7 @@ private:
 
     const std::unordered_map<tok, std::string> tokname {
         {tok::use     ,"use"     },
+        {tok::impl    ,"impl"    },
         {tok::stct    ,"struct"  },
         {tok::rfor    ,"for"     },
         {tok::forindex,"forindex"},
@@ -105,6 +106,7 @@ private:
     param* param_gen();
     param_list* param_list_gen();
     func_decl* function_gen();
+    impl_struct* impl_gen();
     definition* definition_gen();
     cond_stmt* cond_stmt_gen();
     while_stmt* while_stmt_gen();

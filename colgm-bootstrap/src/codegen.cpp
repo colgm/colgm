@@ -22,7 +22,15 @@ bool codegen::visit_string_literal(string_literal* node) {
 }
 
 bool codegen::visit_type_def(type_def* node) {
-    node->get_name()->accept(this);
+    const auto& type_name = node->get_name()->get_name();
+    if (ctx->get_structs().count(type_name)) {
+        out << "%struct." << type_name;
+    } else {
+        out << (
+            basic_type_convert_mapper.count(type_name)?
+            basic_type_convert_mapper.at(type_name):type_name
+        );
+    }
     for(size_t i = 0; i<node->get_pointer_level(); ++i) {
         out << "*";
     }
@@ -75,18 +83,40 @@ bool codegen::visit_param_list(param_list* node) {
 bool codegen::visit_func_decl(func_decl* node) {
     out << "define ";
     node->get_return_type()->accept(this);
-    out << " @" << node->get_name();
+    out << " @";
+    if (!impl_struct_name.empty()) {
+        out << impl_struct_name << ".";
+    }
+    out << node->get_name();
     node->get_params()->accept(this);
     out << " {\n";
     out << "  ret ";
     node->get_return_type()->accept(this);
     if (node->get_return_type()->get_name()->get_name()!="void") {
-        out << " 0\n";
+        if (node->get_return_type()->get_pointer_level()) {
+            out << " null\n";
+        } else {
+            out << " 0\n";
+        }
     } else {
         out << "\n";
     }
     out << "}\n\n";
     return true;
+}
+
+bool codegen::vissit_impl_struct(impl_struct* node) {
+    impl_struct_name = node->get_struct_name();
+    for(auto i : node->get_methods()) {
+        i->accept(this);
+    }
+    impl_struct_name = "";
+    return true;
+}
+
+void codegen::generate(root* ast_root, semantic* sema) {
+    ctx = sema;
+    ast_root->accept(this);
 }
 
 }

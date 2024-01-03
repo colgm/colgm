@@ -57,6 +57,13 @@ bool visitor::visit_func_decl(func_decl* node) {
     return true;
 }
 
+bool visitor::vissit_impl_struct(impl_struct* node) {
+    for(auto i : node->get_methods()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_expr(expr* node) {
     node->accept(this);
     return true;

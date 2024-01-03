@@ -30,7 +30,7 @@ bool dumper::visit_number_literal(number_literal* node) {
 
 bool dumper::visit_string_literal(string_literal* node) {
     dump_indent();
-    std::cout << "string " << node->get_string() << format_location(node->get_location());
+    std::cout << "string " << rawstr(node->get_string()) << format_location(node->get_location());
     return true;
 }
 
@@ -102,6 +102,20 @@ bool dumper::visit_func_decl(func_decl* node) {
     node->get_return_type()->accept(this);
     set_last();
     node->get_code_block()->accept(this);
+    pop_indent();
+    return true;
+}
+
+bool dumper::vissit_impl_struct(impl_struct* node) {
+    dump_indent();
+    std::cout << "impl " << node->get_struct_name() << format_location(node->get_location());
+    push_indent();
+    for(auto i : node->get_methods()) {
+        if (i==node->get_methods().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
     pop_indent();
     return true;
 }
@@ -185,6 +199,7 @@ bool dumper::visit_assignment(assignment* node) {
     dump_indent();
     std::cout << "assignment ";
     switch(node->get_type()) {
+        case assignment::kind::eq: std::cout << "="; break;
         case assignment::kind::addeq: std::cout << "+= "; break;
         case assignment::kind::diveq: std::cout << "/= "; break;
         case assignment::kind::modeq: std::cout << "%= "; break;

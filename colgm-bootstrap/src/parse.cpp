@@ -50,7 +50,7 @@ identifier* parse::identifier_gen() {
 call* parse::call_gen() {
     auto result = new call(toks[ptr].loc);
     result->set_head(identifier_gen());
-    while(look_ahead(tok::lcurve) || look_ahead(tok::lbracket) || look_ahead(tok::dot)) {
+    while(look_ahead(tok::lcurve) || look_ahead(tok::lbracket) || look_ahead(tok::dot) || look_ahead(tok::arrow)) {
         if (look_ahead(tok::lcurve)) {
             match(tok::lcurve);
             auto new_call_func = new call_func_args(toks[ptr].loc);
@@ -72,8 +72,8 @@ call* parse::call_gen() {
             match(tok::rbracket);
             result->add_chain(new_call_index);
         }
-        if (look_ahead(tok::dot)) {
-            match(tok::dot);
+        if (look_ahead(tok::dot) || look_ahead(tok::arrow)) {
+            match(toks[ptr].type);
             auto new_call_field = new call_field(toks[ptr].loc, toks[ptr].str);
             match(tok::id);
             result->add_chain(new_call_field);
@@ -199,10 +199,11 @@ expr* parse::calculation_gen() {
         return result;
     }
     if (look_ahead(tok::addeq) || look_ahead(tok::subeq) || look_ahead(tok::multeq) ||
-        look_ahead(tok::diveq) || look_ahead(tok::modeq)) {
+        look_ahead(tok::diveq) || look_ahead(tok::modeq) || look_ahead(tok::eq)) {
         auto new_assignment = new assignment(toks[ptr].loc);
         new_assignment->set_left(reinterpret_cast<call*>(result));
         switch(toks[ptr].type) {
+            case tok::eq: new_assignment->set_type(assignment::kind::eq); break;
             case tok::addeq: new_assignment->set_type(assignment::kind::addeq); break;
             case tok::subeq: new_assignment->set_type(assignment::kind::subeq); break;
             case tok::multeq: new_assignment->set_type(assignment::kind::multeq); break;
@@ -291,6 +292,18 @@ func_decl* parse::function_gen() {
         result->set_return_type(type_gen());
     }
     result->set_code_block(block_gen());
+    return result;
+}
+
+impl_struct* parse::impl_gen() {
+    match(tok::impl);
+    auto result = new impl_struct(toks[ptr].loc, toks[ptr].str);
+    match(tok::id);
+    match(tok::lbrace);
+    while(look_ahead(tok::func)) {
+        result->add_method(function_gen());
+    }
+    match(tok::rbrace);
     return result;
 }
 
@@ -391,6 +404,7 @@ const error& parse::analyse(const std::vector<token>& token_list) {
         switch(toks[ptr].type) {
             case tok::func: result->add_decl(function_gen()); break;
             case tok::stct: result->add_decl(struct_gen()); break;
+            case tok::impl: result->add_decl(impl_gen()); break;
             default: match(toks[ptr].type); break;
         }    
     }

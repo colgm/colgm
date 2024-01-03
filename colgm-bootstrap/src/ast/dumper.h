@@ -50,6 +50,7 @@ public:
     bool visit_param(param*) override;
     bool visit_param_list(param_list*) override;
     bool visit_func_decl(func_decl*) override;
+    bool vissit_impl_struct(impl_struct*) override;
     bool visit_binary_operator(binary_operator*) override;
     bool visit_call_index(call_index*) override;
     bool visit_call_func_args(call_func_args*) override;
