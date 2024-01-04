@@ -21,7 +21,8 @@ HEADER = \
 	src/ast/expr.h\
 	src/ast/stmt.h\
 	src/ast/visitor.h\
-	src/ast/dumper.h
+	src/ast/dumper.h\
+	src/code/ir.h
 
 OBJECT = \
 	build/err.o\
@@ -36,7 +37,8 @@ OBJECT = \
 	build/expr.o\
 	build/stmt.o\
 	build/visitor.o\
-	build/dumper.o
+	build/dumper.o\
+	build/ir.o
 
 
 # for test
@@ -91,6 +93,9 @@ build/visitor.o: $(HEADER) src/ast/visitor.cpp | build
 
 build/dumper.o: $(HEADER) src/ast/dumper.cpp | build
 	$(CXX) $(CXXFLAGS) src/ast/dumper.cpp -o build/dumper.o -I src
+
+build/ir.o: $(HEADER) src/code/ir.cpp | build
+	$(CXX) $(CXXFLAGS) src/code/ir.cpp -o build/ir.o -I src
 
 .PHONY: clean
 clean:

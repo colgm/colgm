@@ -10,6 +10,25 @@ std::ostream& operator<<(std::ostream& out, const symbol& s) {
     return out;
 }
 
+bool semantic::visit_struct_decl(struct_decl* node) {
+    auto new_ir = new ir_struct(node->get_name());
+    for(auto i : node->get_fields()) {
+        auto sym = symbol({
+            "",
+            i->get_type()->get_name()->get_name(),
+            i->get_type()->get_pointer_level()
+        });
+        if (structs.count(sym.type)) {
+            sym.type = "%struct." + sym.type;
+        } else if (basic_type_convert_mapper.count(sym.type)) {
+            sym.type = basic_type_convert_mapper.at(sym.type);
+        }
+        new_ir->add_field_type(sym.type_to_string());
+    }
+    emit(new_ir);
+    return true;
+}
+
 void semantic::analyse_single_struct(struct_decl* node) {
     if (structs.count(node->get_name())) {
         err.err(
@@ -46,14 +65,8 @@ void semantic::analyse_structs(root* ast_root) {
     }
 }
 
-void semantic::analyse_single_func(func_decl* node) {
-    if (functions.count(node->get_name())) {
-        err.err("sema", node->get_location(),
-            "function \"" + node->get_name() + "\" already exists."
-        );
-    }
-    functions.insert({node->get_name(), {}});
-    auto& func_self = functions.at(node->get_name());
+colgm_func semantic::analyse_single_func(func_decl* node) {
+    auto func_self = colgm_func();
     for(auto i : node->get_params()->get_params()) {
         if (!symbols.count(i->get_type()->get_name()->get_name())) {
             err.err("sema", i->get_type()->get_location(),
@@ -76,6 +89,7 @@ void semantic::analyse_single_func(func_decl* node) {
         node->get_return_type()->get_name()->get_name(),
         node->get_return_type()->get_pointer_level()
     };
+    return func_self;
 }
 
 void semantic::analyse_functions(root* ast_root) {
@@ -85,7 +99,16 @@ void semantic::analyse_functions(root* ast_root) {
         }
         auto func_decl_node = reinterpret_cast<func_decl*>(i);
         symbols.insert({func_decl_node->get_name(), symbol_kind::func_kind});
-        analyse_single_func(func_decl_node);
+        if (functions.count(func_decl_node->get_name())) {
+            err.err("sema", func_decl_node->get_location(),
+                "function \"" + func_decl_node->get_name() + "\" already exists."
+            );
+            continue;
+        }
+        functions.insert({
+            func_decl_node->get_name(),
+            analyse_single_func(func_decl_node)
+        });
     }
 }
 
@@ -102,31 +125,9 @@ void semantic::analyse_single_impl(impl_struct* node) {
             err.err("sema", i->get_location(),
                 "method \"" + i->get_name() + "\" already exists."
             );
+            continue;
         }
-        stct.method.insert({i->get_name(), {}});
-        auto& func_self = stct.method.at(i->get_name());
-        for(auto j : i->get_params()->get_params()) {
-            if (!symbols.count(j->get_type()->get_name()->get_name())) {
-                err.err("sema", j->get_type()->get_location(),
-                    "undefined symbol."
-                );
-            }
-            func_self.parameters.push_back({
-                j->get_name()->get_name(),
-                j->get_type()->get_name()->get_name(),
-                j->get_type()->get_pointer_level()
-            });
-        }
-        if (!symbols.count(i->get_return_type()->get_name()->get_name())) {
-            err.err("sema", i->get_return_type()->get_location(),
-                "undefined symbol."
-            );
-        }
-        func_self.return_type = {
-            "",
-            i->get_return_type()->get_name()->get_name(),
-            i->get_return_type()->get_pointer_level()
-        };
+        stct.method.insert({i->get_name(), analyse_single_func(i)});
     }
 }
 
@@ -161,6 +162,7 @@ const error& semantic::analyse(root* ast_root) {
     analyse_functions(ast_root);
 
     analyse_impls(ast_root);
+    ast_root->accept(this);
     return err;
 }
 
@@ -200,6 +202,12 @@ void semantic::dump() {
             }
         }
         std::cout << ") -> " << i.second.return_type << "\n";
+    }
+}
+
+void semantic::dump_code() {
+    for(auto i : generated_codes) {
+        i->dump(std::cout);
     }
 }
 

@@ -13,6 +13,7 @@
 const u32 COMPILE_VIEW_TOKEN = 1;
 const u32 COMPILE_VIEW_AST = 1<<1;
 const u32 COMPILE_VIEW_SEMA = 1<<2;
+const u32 COMPILE_VIEW_IR = 1<<3;
 
 std::ostream& help(std::ostream& out) {
     out
@@ -27,15 +28,14 @@ std::ostream& help(std::ostream& out) {
     << "option:\n"
     << "   -h,   --help     | get help.\n"
     << "   -v,   --version  | get version.\n"
-    << "\ncolgm [option] <file> [argv]\n"
+    << "\ncolgm [option] <file>\n"
     << "option:\n"
     << "   -l,   --lex      | view analysed tokens.\n"
     << "   -a,   --ast      | view ast.\n"
     << "   -s,   --sema     | view semantic result.\n"
+    << "   -i,   --ir       | view semantic generated ir.\n"
     << "file:\n"
     << "   <filename>       | imput file.\n"
-    << "argv:\n"
-    << "   <args>           | cmd arguments used in program.\n"
     << "\n";
     return out;
 }
@@ -106,6 +106,9 @@ void execute(
     if (cmd&COMPILE_VIEW_SEMA) {
         sema.dump();
     }
+    if (cmd&COMPILE_VIEW_IR) {
+        sema.dump_code();
+    }
 
     // generate code
     code.generate(parser.get_result(), &sema);
@@ -140,7 +143,9 @@ i32 main(i32 argc, const char* argv[]) {
         {"--ast", COMPILE_VIEW_AST},
         {"-a", COMPILE_VIEW_AST},
         {"--sema", COMPILE_VIEW_SEMA},
-        {"-s", COMPILE_VIEW_SEMA}
+        {"-s", COMPILE_VIEW_SEMA},
+        {"--ir", COMPILE_VIEW_IR},
+        {"-i", COMPILE_VIEW_IR}
     };
     u32 cmd = 0;
     std::string filename = "";
