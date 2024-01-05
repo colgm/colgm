@@ -70,7 +70,7 @@ impl_struct::~impl_struct() {
 }
 
 void impl_struct::accept(visitor* v) {
-    v->vissit_impl_struct(this);
+    v->visit_impl_struct(this);
 }
 
 }

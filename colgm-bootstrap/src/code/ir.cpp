@@ -13,4 +13,16 @@ void ir_struct::dump(std::ostream& out) {
     out << "}\n";
 }
 
+void ir_func_decl::dump(std::ostream& out) {
+    out << "define " << return_type << " " << name << "(";
+    for(const auto& i : params) {
+        out << i.second << " %" << i.first;
+        if (i.first!=params.back().first) {
+            out << ", ";
+        }
+    }
+    out << ") {\n";
+    out << "}\n";
+}
+
 }

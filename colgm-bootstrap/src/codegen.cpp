@@ -105,7 +105,7 @@ bool codegen::visit_func_decl(func_decl* node) {
     return true;
 }
 
-bool codegen::vissit_impl_struct(impl_struct* node) {
+bool codegen::visit_impl_struct(impl_struct* node) {
     impl_struct_name = node->get_struct_name();
     for(auto i : node->get_methods()) {
         i->accept(this);

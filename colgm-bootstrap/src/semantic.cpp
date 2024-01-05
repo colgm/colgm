@@ -10,22 +10,52 @@ std::ostream& operator<<(std::ostream& out, const symbol& s) {
     return out;
 }
 
+std::string semantic::generate_type_string(type_def* node) {
+    auto sym = symbol({
+        "",
+        node->get_name()->get_name(),
+        node->get_pointer_level()
+    });
+    if (structs.count(sym.type)) {
+        sym.type = "%struct." + sym.type;
+    } else if (basic_type_convert_mapper.count(sym.type)) {
+        sym.type = basic_type_convert_mapper.at(sym.type);
+    }
+    return sym.type_to_string();
+}
+
 bool semantic::visit_struct_decl(struct_decl* node) {
     auto new_ir = new ir_struct(node->get_name());
     for(auto i : node->get_fields()) {
-        auto sym = symbol({
-            "",
-            i->get_type()->get_name()->get_name(),
-            i->get_type()->get_pointer_level()
-        });
-        if (structs.count(sym.type)) {
-            sym.type = "%struct." + sym.type;
-        } else if (basic_type_convert_mapper.count(sym.type)) {
-            sym.type = basic_type_convert_mapper.at(sym.type);
-        }
-        new_ir->add_field_type(sym.type_to_string());
+        new_ir->add_field_type(generate_type_string(i->get_type()));
     }
     emit(new_ir);
+    return true;
+}
+
+bool semantic::visit_func_decl(func_decl* node) {
+    auto name = node->get_name();
+    if (impl_struct_name.length()) {
+        name = impl_struct_name + "." + name;
+    }
+    auto new_ir = new ir_func_decl("@" + name);
+    new_ir->set_return_type(generate_type_string(node->get_return_type()));
+    for(auto i : node->get_params()->get_params()) {
+        new_ir->add_param(
+            i->get_name()->get_name(),
+            generate_type_string(i->get_type())
+        );
+    }
+    emit(new_ir);
+    return true;
+}
+
+bool semantic::visit_impl_struct(impl_struct* node) {
+    impl_struct_name = node->get_struct_name();
+    for(auto i : node->get_methods()) {
+        i->accept(this);
+    }
+    impl_struct_name = "";
     return true;
 }
 

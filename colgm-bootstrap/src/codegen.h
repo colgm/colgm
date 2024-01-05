@@ -38,7 +38,7 @@ private:
     bool visit_param(param*) override;
     bool visit_param_list(param_list*) override;
     bool visit_func_decl(func_decl*) override;
-    bool vissit_impl_struct(impl_struct*) override;
+    bool visit_impl_struct(impl_struct*) override;
 
 public:
     codegen(const std::string& file):
