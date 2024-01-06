@@ -69,12 +69,18 @@ private:
 private:
     std::vector<ir*> generated_codes;
     std::string impl_struct_name = "";
+    ir_code_block* cb = nullptr;
 
     void emit(ir* i) { generated_codes.push_back(i); }
     std::string generate_type_string(type_def*);
     bool visit_struct_decl(struct_decl*) override;
     bool visit_func_decl(func_decl*) override;
     bool visit_impl_struct(impl_struct*) override;
+    bool visit_number_literal(number_literal*) override;
+    bool visit_string_literal(string_literal*) override;
+    bool visit_call(call*) override;
+    bool visit_binary_operator(binary_operator*) override;
+    bool visit_ret_stmt(ret_stmt*) override;
 
 private:
     void analyse_single_struct(struct_decl*);

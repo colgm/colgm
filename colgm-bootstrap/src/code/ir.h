@@ -11,7 +11,13 @@ namespace colgm {
 
 enum class ir_kind {
     cir_struct,
-    cir_func_decl
+    cir_func_decl,
+    cir_code_block,
+    cir_ret,
+    cir_number,
+    cir_string,
+    cir_get_variable,
+    cir_binary
 };
 
 class ir {
@@ -39,22 +45,92 @@ public:
     void add_field_type(const std::string& type) { field_type.push_back(type); }
 };
 
+class ir_code_block: public ir {
+private:
+    std::vector<ir*> stmts;
+
+public:
+    ir_code_block(): ir(ir_kind::cir_code_block) {}
+    ~ir_code_block() override;
+    void dump(std::ostream&) override;
+
+    void add_stmt(ir* node) { stmts.push_back(node); }
+};
+
+class ir_ret: public ir {
+private:
+    bool has_return_value;
+
+public:
+    ir_ret(bool rv_flag):
+        ir(ir_kind::cir_ret), has_return_value(rv_flag) {}
+    ~ir_ret() override = default;
+    void dump(std::ostream&) override;
+};
+
 class ir_func_decl: public ir {
 private:
     std::string name;
     std::vector<std::pair<std::string, std::string>> params;
     std::string return_type;
+    ir_code_block* cb;
 
 public:
     ir_func_decl(const std::string& n):
-        ir(ir_kind::cir_func_decl), name(n) {}
-    ~ir_func_decl() override = default;
+        ir(ir_kind::cir_func_decl), name(n), cb(nullptr) {}
+    ~ir_func_decl() override;
     void dump(std::ostream&) override;
 
     void add_param(const std::string& pname, const std::string& ptype) {
         params.push_back({pname, ptype});
     }
+    void set_code_block(ir_code_block* node) { cb = node; }
+    auto get_code_block() { return cb; }
     void set_return_type(const std::string& rtype) { return_type = rtype; }
+};
+
+class ir_number: public ir {
+private:
+    std::string literal;
+
+public:
+    ir_number(const std::string& n):
+        ir(ir_kind::cir_number), literal(n) {}
+    ~ir_number() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_string: public ir {
+private:
+    std::string literal;
+
+public:
+    ir_string(const std::string& s):
+        ir(ir_kind::cir_string), literal(s) {}
+    ~ir_string() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_get_var: public ir {
+private:
+    std::string name;
+
+public:
+    ir_get_var(const std::string& n):
+        ir(ir_kind::cir_get_variable), name(n) {}
+    ~ir_get_var() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_binary: public ir {
+private:
+    std::string opr;
+
+public:
+    ir_binary(const std::string& o):
+        ir(ir_kind::cir_binary), opr(o) {}
+    ~ir_binary() override = default;
+    void dump(std::ostream&) override;
 };
 
 }

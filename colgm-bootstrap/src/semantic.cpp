@@ -47,6 +47,14 @@ bool semantic::visit_func_decl(func_decl* node) {
         );
     }
     emit(new_ir);
+    if (node->get_code_block()) {
+        new_ir->set_code_block(new ir_code_block);
+    } else {
+        return true;
+    }
+    cb = new_ir->get_code_block();
+    node->get_code_block()->accept(this);
+    cb = nullptr;
     return true;
 }
 
@@ -56,6 +64,53 @@ bool semantic::visit_impl_struct(impl_struct* node) {
         i->accept(this);
     }
     impl_struct_name = "";
+    return true;
+}
+
+bool semantic::visit_number_literal(number_literal* node) {
+    cb->add_stmt(new ir_number(node->get_number()));
+    return true;
+}
+
+bool semantic::visit_string_literal(string_literal* node) {
+    cb->add_stmt(new ir_string(node->get_string()));
+    return true;
+}
+
+bool semantic::visit_call(call* node) {
+    cb->add_stmt(new ir_get_var(node->get_head()->get_name()));
+    for(auto i : node->get_chain()) {
+        i->accept(this);
+    }
+    return true;
+}
+
+bool semantic::visit_binary_operator(binary_operator* node) {
+    node->get_left()->accept(this);
+    node->get_right()->accept(this);
+    switch(node->get_opr()) {
+        case binary_operator::kind::add: cb->add_stmt(new ir_binary("+")); break;
+        case binary_operator::kind::cmpand: cb->add_stmt(new ir_binary("&&")); break;
+        case binary_operator::kind::cmpeq: cb->add_stmt(new ir_binary("==")); break;
+        case binary_operator::kind::cmpneq: cb->add_stmt(new ir_binary("!=")); break;
+        case binary_operator::kind::cmpor: cb->add_stmt(new ir_binary("||")); break;
+        case binary_operator::kind::div: cb->add_stmt(new ir_binary("/")); break;
+        case binary_operator::kind::geq: cb->add_stmt(new ir_binary(">=")); break;
+        case binary_operator::kind::grt: cb->add_stmt(new ir_binary(">")); break;
+        case binary_operator::kind::leq: cb->add_stmt(new ir_binary("<=")); break;
+        case binary_operator::kind::less: cb->add_stmt(new ir_binary("<")); break;
+        case binary_operator::kind::mod: cb->add_stmt(new ir_binary("%")); break;
+        case binary_operator::kind::mult: cb->add_stmt(new ir_binary("*")); break;
+        case binary_operator::kind::sub: cb->add_stmt(new ir_binary("-")); break;
+    }
+    return true;
+}
+
+bool semantic::visit_ret_stmt(ret_stmt* node) {
+    if (node->get_value()) {
+        node->get_value()->accept(this);
+    }
+    cb->add_stmt(new ir_ret(node->get_value()));
     return true;
 }
 
