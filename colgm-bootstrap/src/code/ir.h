@@ -63,6 +63,7 @@ public:
     void dump(std::ostream&) override;
 
     void add_stmt(ir* node) { stmts.push_back(node); }
+    auto size() const { return stmts.size(); }
 };
 
 class ir_ret: public ir {
@@ -184,10 +185,10 @@ public:
 
 class ir_label: public ir {
 private:
-    uint64_t label_count;
+    size_t label_count;
 
 public:
-    ir_label(uint64_t count):
+    ir_label(size_t count):
         ir(ir_kind::cir_label), label_count(count) {}
     ~ir_label() override = default;
     void dump(std::ostream&) override;
@@ -206,10 +207,10 @@ public:
 
 class ir_br_direct: public ir {
 private:
-    uint64_t destination;
+    size_t destination;
 
 public:
-    ir_br_direct(uint64_t dst):
+    ir_br_direct(size_t dst):
         ir(ir_kind::cir_br_direct), destination(dst) {}
     ~ir_br_direct() override = default;
     void dump(std::ostream&) override;
@@ -217,8 +218,8 @@ public:
 
 class ir_br_cond: public ir {
 private:
-    uint64_t destination_true;
-    uint64_t destination_false;
+    size_t destination_true;
+    size_t destination_false;
 
 public:
     ir_br_cond(uint64_t dst_true, uint64_t dst_false):
@@ -228,6 +229,9 @@ public:
     ~ir_br_cond() override = default;
     void dump(std::ostream&) override;
 
+    void set_true_label(uint64_t dst_true) {
+        destination_true = dst_true;
+    }
     void set_false_label(uint64_t dst_false) {
         destination_false = dst_false;
     }

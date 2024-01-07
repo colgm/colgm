@@ -73,7 +73,6 @@ private:
     std::vector<ir*> generated_codes;
     std::string impl_struct_name = "";
     ir_code_block* cb = nullptr;
-    uint64_t jmp_label_count = 0;
 
     void emit(ir* i) { generated_codes.push_back(i); }
     void emit_struct_decl(ir_struct* s) { struct_decls.push_back(s); }

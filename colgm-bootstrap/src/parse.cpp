@@ -175,27 +175,31 @@ expr* parse::compare_gen() {
 
 expr* parse::and_expression_gen() {
     auto result = compare_gen();
-    while(look_ahead(tok::opand)) {
-        auto binary = new binary_operator(toks[ptr].loc);
-        binary->set_left(result);
-        binary->set_opr(binary_operator::kind::cmpand);
-        match(tok::opand);
-        binary->set_right(compare_gen());
-        result = binary;
+    if (!look_ahead(tok::opand)) {
+        return result;
     }
+
+    auto binary = new binary_operator(toks[ptr].loc);
+    binary->set_left(result);
+    binary->set_opr(binary_operator::kind::cmpand);
+    match(tok::opand);
+    binary->set_right(and_expression_gen());
+    result = binary;
     return result;
 }
 
 expr* parse::or_expression_gen() {
     auto result = and_expression_gen();
-    while(look_ahead(tok::opor)) {
-        auto binary = new binary_operator(toks[ptr].loc);
-        binary->set_left(result);
-        binary->set_opr(binary_operator::kind::cmpor);
-        match(tok::opor);
-        binary->set_right(and_expression_gen());
-        result = binary;
+    if (!look_ahead(tok::opor)) {
+        return result;
     }
+
+    auto binary = new binary_operator(toks[ptr].loc);
+    binary->set_left(result);
+    binary->set_opr(binary_operator::kind::cmpor);
+    match(tok::opor);
+    binary->set_right(or_expression_gen());
+    result = binary;
     return result;
 }
 
@@ -418,7 +422,12 @@ const error& parse::analyse(const std::vector<token>& token_list) {
             case tok::func: result->add_decl(function_gen()); break;
             case tok::stct: result->add_decl(struct_gen()); break;
             case tok::impl: result->add_decl(impl_gen()); break;
-            default: match(toks[ptr].type); break;
+            default:
+                err.err("parse", toks[ptr].loc,
+                    "unexpected token \"" + toks[ptr].str + "\"."
+                );
+                match(toks[ptr].type);
+                break;
         }    
     }
     return err;
