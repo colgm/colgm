@@ -29,7 +29,7 @@ bool semantic::visit_struct_decl(struct_decl* node) {
     for(auto i : node->get_fields()) {
         new_ir->add_field_type(generate_type_string(i->get_type()));
     }
-    emit(new_ir);
+    emit_struct_decl(new_ir);
     return true;
 }
 
@@ -113,6 +113,20 @@ bool semantic::visit_definition(definition* node) {
     return true;
 }
 
+bool semantic::visit_assignment(assignment* node) {
+    node->get_left()->accept(this);
+    node->get_right()->accept(this);
+    switch(node->get_type()) {
+        case assignment::kind::addeq: cb->add_stmt(new ir_assign("+=")); break;
+        case assignment::kind::diveq: cb->add_stmt(new ir_assign("/=")); break;
+        case assignment::kind::eq: cb->add_stmt(new ir_assign("=")); break;
+        case assignment::kind::modeq: cb->add_stmt(new ir_assign("%=")); break;
+        case assignment::kind::multeq: cb->add_stmt(new ir_assign("*=")); break;
+        case assignment::kind::subeq: cb->add_stmt(new ir_assign("-=")); break;
+    }
+    return true;
+}
+
 bool semantic::visit_binary_operator(binary_operator* node) {
     node->get_left()->accept(this);
     node->get_right()->accept(this);
@@ -139,6 +153,47 @@ bool semantic::visit_ret_stmt(ret_stmt* node) {
         node->get_value()->accept(this);
     }
     cb->add_stmt(new ir_ret(node->get_value()));
+    return true;
+}
+
+bool semantic::visit_while_stmt(while_stmt* node) {
+    auto while_begin_label = jmp_label_count;
+    // condition
+    cb->add_stmt(new ir_label(jmp_label_count));
+    jmp_label_count++;
+
+    node->get_condition()->accept(this);
+    auto cond_branch_ir = new ir_br_cond(jmp_label_count, 0);
+    cb->add_stmt(cond_branch_ir);
+
+    // loop begin
+    cb->add_stmt(new ir_label(jmp_label_count));
+    jmp_label_count++;
+    node->get_block()->accept(this);
+    cb->add_stmt(new ir_br_direct(while_begin_label));
+
+    // loop exit
+    cond_branch_ir->set_false_label(jmp_label_count);
+    cb->add_stmt(new ir_label(jmp_label_count));
+    jmp_label_count++;
+    return true;
+}
+
+bool semantic::visit_if_stmt(if_stmt* node) {
+    ir_br_cond* br_cond = nullptr;
+    if (node->get_condition()) {
+        node->get_condition()->accept(this);
+        br_cond = new ir_br_cond(jmp_label_count, 0);
+        cb->add_stmt(br_cond);
+    }
+    cb->add_stmt(new ir_label(jmp_label_count));
+    jmp_label_count++;
+    node->get_block()->accept(this);
+    if (br_cond) {
+        br_cond->set_false_label(jmp_label_count);
+    }
+    cb->add_stmt(new ir_label(jmp_label_count));
+    jmp_label_count++;
     return true;
 }
 
@@ -267,6 +322,7 @@ const error& semantic::analyse(root* ast_root) {
     symbols.insert({"f32", symbol_kind::basic_kind});
     symbols.insert({"f64", symbol_kind::basic_kind});
     symbols.insert({"void", symbol_kind::basic_kind});
+    symbols.insert({"bool", symbol_kind::basic_kind});
 
     structs.clear();
     analyse_structs(ast_root);
@@ -318,9 +374,12 @@ void semantic::dump() {
     }
 }
 
-void semantic::dump_code() {
+void semantic::dump_code(std::ostream& out) {
+    for(auto i : struct_decls) {
+        i->dump(out);
+    }
     for(auto i : generated_codes) {
-        i->dump(std::cout);
+        i->dump(out);
     }
 }
 

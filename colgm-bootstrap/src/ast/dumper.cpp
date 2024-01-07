@@ -99,9 +99,14 @@ bool dumper::visit_func_decl(func_decl* node) {
     std::cout << "func " << node->get_name() << format_location(node->get_location());
     push_indent();
     node->get_params()->accept(this);
+    if (!node->get_code_block()) {
+        set_last();
+    }
     node->get_return_type()->accept(this);
     set_last();
-    node->get_code_block()->accept(this);
+    if (node->get_code_block()) {
+        node->get_code_block()->accept(this);
+    }
     pop_indent();
     return true;
 }

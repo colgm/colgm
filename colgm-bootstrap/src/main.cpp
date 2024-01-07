@@ -3,7 +3,6 @@
 #include "lexer.h"
 #include "parse.h"
 #include "ast/dumper.h"
-#include "codegen.h"
 #include "semantic.h"
 
 #include <unordered_map>
@@ -76,7 +75,6 @@ void execute(
 
     colgm::lexer lexer;
     colgm::parse parser;
-    colgm::codegen code("colgm.ll");
     colgm::semantic sema;
 
     // lexer scans file to get tokens
@@ -100,11 +98,12 @@ void execute(
         sema.dump();
     }
     if (cmd&COMPILE_VIEW_IR) {
-        sema.dump_code();
+        sema.dump_code(std::cout);
     }
 
     // generate code
-    code.generate(parser.get_result(), &sema);
+    std::ofstream out("colgm.ll");
+    sema.dump_code(out);
 }
 
 i32 main(i32 argc, const char* argv[]) {

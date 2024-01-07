@@ -63,15 +63,20 @@ private:
         {"u16", "i16"},
         {"u8", "i8"},
         {"f64", "double"},
-        {"f32", "float"}
+        {"f32", "float"},
+        {"void", "void"},
+        {"bool", "i1"}
     };
 
 private:
+    std::vector<ir_struct*> struct_decls;
     std::vector<ir*> generated_codes;
     std::string impl_struct_name = "";
     ir_code_block* cb = nullptr;
+    uint64_t jmp_label_count = 0;
 
     void emit(ir* i) { generated_codes.push_back(i); }
+    void emit_struct_decl(ir_struct* s) { struct_decls.push_back(s); }
     std::string generate_type_string(type_def*);
     bool visit_struct_decl(struct_decl*) override;
     bool visit_func_decl(func_decl*) override;
@@ -85,6 +90,9 @@ private:
     bool visit_binary_operator(binary_operator*) override;
     bool visit_ret_stmt(ret_stmt*) override;
     bool visit_definition(definition*) override;
+    bool visit_assignment(assignment*) override;
+    bool visit_while_stmt(while_stmt*) override;
+    bool visit_if_stmt(if_stmt*) override;
 
 private:
     void analyse_single_struct(struct_decl*);
@@ -96,13 +104,16 @@ private:
 
 public:
     ~semantic() {
+        for(auto i : struct_decls) {
+            delete i;
+        }
         for(auto i : generated_codes) {
             delete i;
         }
     }
     const error& analyse(root*);
     void dump();
-    void dump_code();
+    void dump_code(std::ostream&);
     const auto& get_structs() const { return structs; }
     const auto& get_functions() const { return functions; }
     const auto& get_symbols() const { return symbols; }

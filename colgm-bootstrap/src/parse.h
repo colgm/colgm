@@ -98,7 +98,8 @@ private:
     expr* multive_gen();
     expr* additive_gen();
     expr* compare_gen();
-    expr* condition_expression_gen();
+    expr* and_expression_gen();
+    expr* or_expression_gen();
     expr* calculation_gen();
     type_def* type_gen();
     struct_field* struct_field_gen();

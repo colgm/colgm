@@ -22,7 +22,7 @@ ir_code_block::~ir_code_block() {
 
 void ir_code_block::dump(std::ostream& out) {
     for(auto i : stmts) {
-        out << "  ";
+        out << "  ; ";
         i->dump(out);
     }
 }
@@ -92,6 +92,24 @@ void ir_get_var::dump(std::ostream& out) {
 
 void ir_binary::dump(std::ostream& out) {
     out << "calculation  " << opr << "\n";
+}
+
+void ir_label::dump(std::ostream& out) {
+    out << "label " << label_count << ":\n";
+}
+
+void ir_assign::dump(std::ostream& out) {
+    out << "store_value  " << opr << "\n";
+}
+
+void ir_br_direct::dump(std::ostream& out) {
+    out << "br_direct    label " << destination << "\n";
+}
+
+void ir_br_cond::dump(std::ostream& out) {
+    out << "br_cond      ";
+    out << "label_true " << destination_true << ", ";
+    out << "label_false " << destination_false << "\n";
 }
 
 }

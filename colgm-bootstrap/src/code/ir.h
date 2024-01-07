@@ -21,7 +21,11 @@ enum class ir_kind {
     cir_call_index,
     cir_call_field,
     cir_call_func,
-    cir_binary
+    cir_binary,
+    cir_label,
+    cir_assign,
+    cir_br_direct,
+    cir_br_cond
 };
 
 class ir {
@@ -176,6 +180,57 @@ public:
         ir(ir_kind::cir_binary), opr(o) {}
     ~ir_binary() override = default;
     void dump(std::ostream&) override;
+};
+
+class ir_label: public ir {
+private:
+    uint64_t label_count;
+
+public:
+    ir_label(uint64_t count):
+        ir(ir_kind::cir_label), label_count(count) {}
+    ~ir_label() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_assign: public ir {
+private:
+    std::string opr;
+
+public:
+    ir_assign(const std::string& o):
+        ir(ir_kind::cir_assign), opr(o) {}
+    ~ir_assign() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_br_direct: public ir {
+private:
+    uint64_t destination;
+
+public:
+    ir_br_direct(uint64_t dst):
+        ir(ir_kind::cir_br_direct), destination(dst) {}
+    ~ir_br_direct() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_br_cond: public ir {
+private:
+    uint64_t destination_true;
+    uint64_t destination_false;
+
+public:
+    ir_br_cond(uint64_t dst_true, uint64_t dst_false):
+        ir(ir_kind::cir_br_cond),
+        destination_true(dst_true),
+        destination_false(dst_false) {}
+    ~ir_br_cond() override = default;
+    void dump(std::ostream&) override;
+
+    void set_false_label(uint64_t dst_false) {
+        destination_false = dst_false;
+    }
 };
 
 }

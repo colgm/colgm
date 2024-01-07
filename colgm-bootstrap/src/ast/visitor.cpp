@@ -53,7 +53,9 @@ bool visitor::visit_param_list(param_list* node) {
 bool visitor::visit_func_decl(func_decl* node) {
     node->get_params()->accept(this);
     node->get_return_type()->accept(this);
-    node->get_code_block()->accept(this);
+    if (node->get_code_block()) {
+        node->get_code_block()->accept(this);
+    }
     return true;
 }
 

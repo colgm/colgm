@@ -173,25 +173,34 @@ expr* parse::compare_gen() {
     return result;
 }
 
-expr* parse::condition_expression_gen() {
+expr* parse::and_expression_gen() {
     auto result = compare_gen();
-    while(look_ahead(tok::opand) || look_ahead(tok::opor)) {
+    while(look_ahead(tok::opand)) {
         auto binary = new binary_operator(toks[ptr].loc);
         binary->set_left(result);
-        switch(toks[ptr].type) {
-            case tok::opand: binary->set_opr(binary_operator::kind::cmpand); break;
-            case tok::opor: binary->set_opr(binary_operator::kind::cmpor); break;
-            default: break;
-        }
-        match(toks[ptr].type);
+        binary->set_opr(binary_operator::kind::cmpand);
+        match(tok::opand);
         binary->set_right(compare_gen());
         result = binary;
     }
     return result;
 }
 
+expr* parse::or_expression_gen() {
+    auto result = and_expression_gen();
+    while(look_ahead(tok::opor)) {
+        auto binary = new binary_operator(toks[ptr].loc);
+        binary->set_left(result);
+        binary->set_opr(binary_operator::kind::cmpor);
+        match(tok::opor);
+        binary->set_right(and_expression_gen());
+        result = binary;
+    }
+    return result;
+}
+
 expr* parse::calculation_gen() {
-    auto result = condition_expression_gen();
+    auto result = or_expression_gen();
     if (!result) {
         return result;
     }
@@ -290,6 +299,10 @@ func_decl* parse::function_gen() {
     } else {
         match(tok::arrow);
         result->set_return_type(type_gen());
+    }
+    if (look_ahead(tok::semi)) {
+        match(tok::semi);
+        return result;
     }
     result->set_code_block(block_gen());
     return result;
