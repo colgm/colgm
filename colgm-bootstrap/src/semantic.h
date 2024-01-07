@@ -79,8 +79,12 @@ private:
     bool visit_number_literal(number_literal*) override;
     bool visit_string_literal(string_literal*) override;
     bool visit_call(call*) override;
+    bool visit_call_index(call_index*) override;
+    bool visit_call_field(call_field*) override;
+    bool visit_call_func_args(call_func_args*) override;
     bool visit_binary_operator(binary_operator*) override;
     bool visit_ret_stmt(ret_stmt*) override;
+    bool visit_definition(definition*) override;
 
 private:
     void analyse_single_struct(struct_decl*);

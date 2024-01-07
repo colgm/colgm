@@ -14,9 +14,13 @@ enum class ir_kind {
     cir_func_decl,
     cir_code_block,
     cir_ret,
-    cir_number,
-    cir_string,
-    cir_get_variable,
+    cir_def,
+    cir_num,
+    cir_str,
+    cir_get_var,
+    cir_call_index,
+    cir_call_field,
+    cir_call_func,
     cir_binary
 };
 
@@ -68,6 +72,18 @@ public:
     void dump(std::ostream&) override;
 };
 
+class ir_def: public ir {
+private:
+    std::string name;
+    std::string type;
+
+public:
+    ir_def(const std::string& n, const std::string& t):
+        ir(ir_kind::cir_def), name(n), type(t) {}
+    ~ir_def() override = default;
+    void dump(std::ostream&) override;
+};
+
 class ir_func_decl: public ir {
 private:
     std::string name;
@@ -95,7 +111,7 @@ private:
 
 public:
     ir_number(const std::string& n):
-        ir(ir_kind::cir_number), literal(n) {}
+        ir(ir_kind::cir_num), literal(n) {}
     ~ir_number() override = default;
     void dump(std::ostream&) override;
 };
@@ -106,7 +122,7 @@ private:
 
 public:
     ir_string(const std::string& s):
-        ir(ir_kind::cir_string), literal(s) {}
+        ir(ir_kind::cir_str), literal(s) {}
     ~ir_string() override = default;
     void dump(std::ostream&) override;
 };
@@ -117,8 +133,37 @@ private:
 
 public:
     ir_get_var(const std::string& n):
-        ir(ir_kind::cir_get_variable), name(n) {}
+        ir(ir_kind::cir_get_var), name(n) {}
     ~ir_get_var() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_call_index: public ir {
+public:
+    ir_call_index(): ir(ir_kind::cir_call_index) {}
+    ~ir_call_index() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_call_field: public ir {
+private:
+    std::string field_name;
+
+public:
+    ir_call_field(const std::string& n):
+        ir(ir_kind::cir_call_field), field_name(n) {}
+    ~ir_call_field() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_call_func: public ir {
+private:
+    size_t argc;
+
+public:
+    ir_call_func(size_t ac):
+        ir(ir_kind::cir_call_func), argc(ac) {}
+    ~ir_call_func() override = default;
     void dump(std::ostream&) override;
 };
 

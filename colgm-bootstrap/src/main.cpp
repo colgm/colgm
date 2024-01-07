@@ -17,13 +17,6 @@ const u32 COMPILE_VIEW_IR = 1<<3;
 
 std::ostream& help(std::ostream& out) {
     out
-    << "\n"
-    << "     ,--#-,\n"
-    << "<3  / \\____\\  <3\n"
-    << "    |_|__A_|\n"
-#ifdef _WIN32
-    << "use command <chcp 65001> to use unicode.\n"
-#endif
     << "\ncolgm <option>\n"
     << "option:\n"
     << "   -h,   --help     | get help.\n"

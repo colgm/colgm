@@ -85,6 +85,34 @@ bool semantic::visit_call(call* node) {
     return true;
 }
 
+bool semantic::visit_call_index(call_index* node) {
+    node->get_index()->accept(this);
+    cb->add_stmt(new ir_call_index);
+    return true;
+}
+
+bool semantic::visit_call_field(call_field* node) {
+    cb->add_stmt(new ir_call_field(node->get_name()));
+    return true;
+}
+
+bool semantic::visit_call_func_args(call_func_args* node) {
+    for(auto i : node->get_args()) {
+        i->accept(this);
+    }
+    cb->add_stmt(new ir_call_func(node->get_args().size()));
+    return true;
+}
+
+bool semantic::visit_definition(definition* node) {
+    node->get_init_value()->accept(this);
+    cb->add_stmt(new ir_def(
+        node->get_name(),
+        generate_type_string(node->get_type())
+    ));
+    return true;
+}
+
 bool semantic::visit_binary_operator(binary_operator* node) {
     node->get_left()->accept(this);
     node->get_right()->accept(this);

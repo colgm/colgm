@@ -35,6 +35,10 @@ void ir_ret::dump(std::ostream& out) {
     out << "\n";
 }
 
+void ir_def::dump(std::ostream& out) {
+    out << "define_local " << name << " = alloca " << type << "\n";
+}
+
 ir_func_decl::~ir_func_decl() {
     delete cb;
 }
@@ -68,6 +72,18 @@ void ir_number::dump(std::ostream& out) {
 
 void ir_string::dump(std::ostream& out) {
     out << "push_string  \"" << rawstr(literal) << "\"\n";
+}
+
+void ir_call_index::dump(std::ostream& out) {
+    out << "call_index\n";
+}
+
+void ir_call_field::dump(std::ostream& out) {
+    out << "call_field   " << field_name << "\n";
+}
+
+void ir_call_func::dump(std::ostream& out) {
+    out << "call_funct   " << argc << "\n";
 }
 
 void ir_get_var::dump(std::ostream& out) {
