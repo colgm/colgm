@@ -30,11 +30,13 @@ private:
 
 private:
     std::vector<ir_struct*> struct_decls;
+    std::vector<ir_func_decl*> func_decls;
     std::vector<ir*> generated_codes;
     std::string impl_struct_name = "";
     ir_code_block* cb = nullptr;
 
     void emit(ir* i) { generated_codes.push_back(i); }
+    void emit_func_decl(ir_func_decl* f) { func_decls.push_back(f); }
     void emit_struct_decl(ir_struct* s) { struct_decls.push_back(s); }
     std::string generate_type_string(type_def*);
     bool visit_struct_decl(struct_decl*) override;
@@ -57,6 +59,9 @@ public:
     ir_gen(const semantic_context& c): ctx(c) {}
     ~ir_gen() {
         for(auto i : struct_decls) {
+            delete i;
+        }
+        for(auto i : func_decls) {
             delete i;
         }
         for(auto i : generated_codes) {

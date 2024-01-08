@@ -39,10 +39,11 @@ bool ir_gen::visit_func_decl(func_decl* node) {
             generate_type_string(i->get_type())
         );
     }
-    emit(new_ir);
     if (node->get_code_block()) {
+        emit(new_ir);
         new_ir->set_code_block(new ir_code_block);
     } else {
+        emit_func_decl(new_ir);
         return true;
     }
     cb = new_ir->get_code_block();
@@ -208,6 +209,15 @@ bool ir_gen::visit_if_stmt(if_stmt* node) {
 void ir_gen::dump_code(std::ostream& out) {
     for(auto i : struct_decls) {
         i->dump(out);
+    }
+    if (struct_decls.size()) {
+        out << "\n";
+    }
+    for(auto i : func_decls) {
+        i->dump(out);
+    }
+    if (func_decls.size()) {
+        out << "\n";
     }
     for(auto i : generated_codes) {
         i->dump(out);
