@@ -16,6 +16,7 @@ enum class ast_type {
     ast_call_index,
     ast_call_func_args,
     ast_call_field,
+    ast_ptr_call_field,
     ast_call,
     ast_assignment,
     ast_type_def,
@@ -51,6 +52,7 @@ class string_literal;
 class call_index;
 class call_func_args;
 class call_field;
+class ptr_call_field;
 class call;
 class assignment;
 class stmt;
@@ -66,14 +68,22 @@ class node {
 private:
     ast_type node_type;
     span location;
+    std::string resolve;
 
 public:
-    node(ast_type type, const span& loc): node_type(type), location(loc) {}
+    node(ast_type type, const span& loc):
+        node_type(type), location(loc), resolve("") {}
     virtual ~node() = default;
     virtual void accept(visitor*) = 0;
 
     const auto& get_location() const { return location; }
     const auto get_ast_type() const { return node_type; }
+    const auto& get_resolve() const { return resolve; }
+    void set_resolve_type(const std::string& rs) { resolve = rs; }
+    void update_location(const span& end) {
+        location.end_line = end.end_line;
+        location.end_column = end.end_column;
+    }
 };
 
 class root: public node {

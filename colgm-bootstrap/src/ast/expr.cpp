@@ -50,6 +50,10 @@ void call_field::accept(visitor* v) {
     v->visit_call_field(this);
 }
 
+void ptr_call_field::accept(visitor* v) {
+    v->visit_ptr_call_field(this);
+}
+
 call::~call() {
     delete head;
     for(auto i : chain) {

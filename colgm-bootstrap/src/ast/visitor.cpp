@@ -105,6 +105,10 @@ bool visitor::visit_call_field(call_field* node) {
     return true;
 }
 
+bool visitor::visit_ptr_call_field(ptr_call_field* node) {
+    return true;
+}
+
 bool visitor::visit_call(call* node) {
     node->get_head()->accept(this);
     for(auto i : node->get_chain()) {

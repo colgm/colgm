@@ -82,6 +82,10 @@ void ir_call_field::dump(std::ostream& out) {
     out << "call_field   " << field_name << "\n";
 }
 
+void ir_ptr_call_field::dump(std::ostream& out) {
+    out << "ptr_callfld  " << field_name << "\n";
+}
+
 void ir_call_func::dump(std::ostream& out) {
     out << "call_funct   " << argc << "\n";
 }

@@ -41,6 +41,10 @@ bool parse::look_ahead(tok type) {
     return type==toks[ptr].type;
 }
 
+void parse::update_location(node* n) {
+    n->update_location(toks[ptr-1].loc);
+}
+
 identifier* parse::identifier_gen() {
     auto result = new identifier(toks[ptr].loc, toks[ptr].str);
     match(tok::id);
@@ -63,22 +67,30 @@ call* parse::call_gen() {
                 }
             }
             match(tok::rcurve);
+            update_location(new_call_func);
             result->add_chain(new_call_func);
-        }
-        if (look_ahead(tok::lbracket)) {
+        } else if (look_ahead(tok::lbracket)) {
             match(tok::lbracket);
             auto new_call_index = new call_index(toks[ptr].loc);
             new_call_index->set_index(calculation_gen());
             match(tok::rbracket);
+            update_location(new_call_index);
             result->add_chain(new_call_index);
-        }
-        if (look_ahead(tok::dot) || look_ahead(tok::arrow)) {
-            match(toks[ptr].type);
+        } else if (look_ahead(tok::dot)) {
+            match(tok::dot);
             auto new_call_field = new call_field(toks[ptr].loc, toks[ptr].str);
             match(tok::id);
+            update_location(new_call_field);
+            result->add_chain(new_call_field);
+        } else if (look_ahead(tok::arrow)) {
+            match(tok::arrow);
+            auto new_call_field = new ptr_call_field(toks[ptr].loc, toks[ptr].str);
+            match(tok::id);
+            update_location(new_call_field);
             result->add_chain(new_call_field);
         }
     }
+    update_location(result);
     return result;
 }
 
@@ -130,6 +142,7 @@ expr* parse::multive_gen() {
         binary->set_right(scalar_gen());
         result = binary;
     }
+    update_location(result);
     return result;
 }
 
@@ -147,6 +160,7 @@ expr* parse::additive_gen() {
         binary->set_right(multive_gen());
         result = binary;
     }
+    update_location(result);
     return result;
 }
 
@@ -170,6 +184,7 @@ expr* parse::compare_gen() {
         binary->set_right(additive_gen());
         result = binary;
     }
+    update_location(result);
     return result;
 }
 
@@ -185,6 +200,7 @@ expr* parse::and_expression_gen() {
     match(tok::opand);
     binary->set_right(and_expression_gen());
     result = binary;
+    update_location(result);
     return result;
 }
 
@@ -200,6 +216,7 @@ expr* parse::or_expression_gen() {
     match(tok::opor);
     binary->set_right(or_expression_gen());
     result = binary;
+    update_location(result);
     return result;
 }
 
@@ -226,8 +243,10 @@ expr* parse::calculation_gen() {
         }
         match(toks[ptr].type);
         new_assignment->set_right(calculation_gen());
+        update_location(new_assignment);
         return new_assignment;
     }
+    update_location(result);
     return result;
 }
 
@@ -238,6 +257,7 @@ type_def* parse::type_gen() {
         result->add_pointer_level();
         match(tok::mult);
     }
+    update_location(result);
     return result;
 }
 
@@ -246,6 +266,7 @@ struct_field* parse::struct_field_gen() {
     result->set_name(identifier_gen());
     match(tok::colon);
     result->set_type(type_gen());
+    update_location(result);
     return result;
 }
 
@@ -264,6 +285,7 @@ struct_decl* parse::struct_gen() {
         }
     }
     match(tok::rbrace);
+    update_location(result);
     return result;
 }
 
@@ -272,6 +294,7 @@ param* parse::param_gen() {
     result->set_name(identifier_gen());
     match(tok::colon);
     result->set_type(type_gen());
+    update_location(result);
     return result;
 }
 
@@ -287,6 +310,7 @@ param_list* parse::param_list_gen() {
         }
     }
     match(tok::rcurve);
+    update_location(result);
     return result;
 }
 
@@ -299,6 +323,7 @@ func_decl* parse::function_gen() {
     if (!look_ahead(tok::arrow)) {
         auto ret = new type_def(toks[ptr].loc);
         ret->set_name(new identifier(toks[ptr].loc, "void"));
+        update_location(ret);
         result->set_return_type(ret);
     } else {
         match(tok::arrow);
@@ -306,9 +331,11 @@ func_decl* parse::function_gen() {
     }
     if (look_ahead(tok::semi)) {
         match(tok::semi);
+        update_location(result);
         return result;
     }
     result->set_code_block(block_gen());
+    update_location(result);
     return result;
 }
 
@@ -321,6 +348,7 @@ impl_struct* parse::impl_gen() {
         result->add_method(function_gen());
     }
     match(tok::rbrace);
+    update_location(result);
     return result;
 }
 
@@ -333,6 +361,7 @@ definition* parse::definition_gen() {
     match(tok::eq);
     result->set_init_value(calculation_gen());
     match(tok::semi);
+    update_location(result);
     return result;
 }
 
@@ -344,6 +373,7 @@ cond_stmt* parse::cond_stmt_gen() {
     new_if->set_condition(calculation_gen());
     match(tok::rcurve);
     new_if->set_block(block_gen());
+    update_location(new_if);
     result->add_stmt(new_if);
     while(look_ahead(tok::elsif)) {
         auto new_elsif = new if_stmt(toks[ptr].loc);
@@ -352,14 +382,17 @@ cond_stmt* parse::cond_stmt_gen() {
         new_elsif->set_condition(calculation_gen());
         match(tok::rcurve);
         new_elsif->set_block(block_gen());
+        update_location(new_elsif);
         result->add_stmt(new_elsif);
     }
     if (look_ahead(tok::relse)) {
         auto new_else = new if_stmt(toks[ptr].loc);
         match(tok::relse);
         new_else->set_block(block_gen());
+        update_location(new_else);
         result->add_stmt(new_else);
     }
+    update_location(result);
     return result;
 }
 
@@ -370,6 +403,7 @@ while_stmt* parse::while_stmt_gen() {
     result->set_condition(calculation_gen());
     match(tok::rcurve);
     result->set_block(block_gen());
+    update_location(result);
     return result;
 }
 
@@ -390,6 +424,7 @@ code_block* parse::block_gen() {
         }
     }
     match(tok::rbrace);
+    update_location(result);
     return result;
 }
 
@@ -397,6 +432,7 @@ in_stmt_expr* parse::in_stmt_expr_gen() {
     auto result = new in_stmt_expr(toks[ptr].loc);
     result->set_expr(calculation_gen());
     match(tok::semi);
+    update_location(result);
     return result;
 }
 
@@ -407,6 +443,7 @@ ret_stmt* parse::return_gen() {
         result->set_value(calculation_gen());
     }
     match(tok::semi);
+    update_location(result);
     return result;
 }
 
@@ -430,6 +467,7 @@ const error& parse::analyse(const std::vector<token>& token_list) {
                 break;
         }    
     }
+    update_location(result);
     return err;
 }
 

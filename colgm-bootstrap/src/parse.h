@@ -90,6 +90,9 @@ private:
         }
     }
     bool look_ahead(tok);
+    void update_location(node*);
+
+private:
     identifier* identifier_gen();
     call* call_gen();
     number_literal* number_gen();

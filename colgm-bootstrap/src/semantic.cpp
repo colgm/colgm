@@ -122,6 +122,32 @@ void semantic::analyse_impls(root* ast_root) {
     }
 }
 
+void semantic::resolve_func(func_decl* node) {
+    if (!node->get_code_block()) {
+        return;
+    }
+    for(auto i : node->get_code_block()->get_stmts()) {
+        // TODO
+    }
+}
+
+void semantic::resolve_impl(impl_struct* node) {
+    for(auto i : node->get_methods()) {
+        resolve_func(i);
+    }
+}
+
+void semantic::resolve_function_block(root* ast_root) {
+    for(auto i : ast_root->get_decls()) {
+        if (i->get_ast_type()==ast_type::ast_impl) {
+            resolve_impl(reinterpret_cast<impl_struct*>(i));
+        }
+        if (i->get_ast_type()==ast_type::ast_func_decl) {
+            resolve_func(reinterpret_cast<func_decl*>(i));
+        }
+    }
+}
+
 const error& semantic::analyse(root* ast_root) {
     ctx.symbols.clear();
     ctx.symbols.insert({"i64", symbol_kind::basic_kind});
@@ -144,6 +170,7 @@ const error& semantic::analyse(root* ast_root) {
     analyse_functions(ast_root);
 
     analyse_impls(ast_root);
+    resolve_function_block(ast_root);
     return err;
 }
 

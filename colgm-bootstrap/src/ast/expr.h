@@ -132,6 +132,19 @@ public:
     const auto& get_name() const { return name; }
 };
 
+class ptr_call_field: public expr {
+private:
+    std::string name;
+
+public:
+    ptr_call_field(const span& loc, const std::string& f):
+        expr(ast_type::ast_ptr_call_field, loc), name(f) {}
+    ~ptr_call_field() override = default;
+    void accept(visitor*) override;
+
+    const auto& get_name() const { return name; }
+};
+
 class call: public expr {
 private:
     identifier* head;

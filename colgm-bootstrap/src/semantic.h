@@ -66,6 +66,11 @@ private:
     void analyse_single_impl(impl_struct*);
     void analyse_impls(root*);
 
+private:
+    void resolve_func(func_decl*);
+    void resolve_impl(impl_struct*);
+    void resolve_function_block(root*);
+
 public:
     const error& analyse(root*);
     void dump();

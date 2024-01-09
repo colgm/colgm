@@ -20,6 +20,7 @@ enum class ir_kind {
     cir_get_var,
     cir_call_index,
     cir_call_field,
+    cir_ptr_call_field,
     cir_call_func,
     cir_binary,
     cir_label,
@@ -158,6 +159,17 @@ public:
     ir_call_field(const std::string& n):
         ir(ir_kind::cir_call_field), field_name(n) {}
     ~ir_call_field() override = default;
+    void dump(std::ostream&) override;
+};
+
+class ir_ptr_call_field: public ir {
+private:
+    std::string field_name;
+
+public:
+    ir_ptr_call_field(const std::string& n):
+        ir(ir_kind::cir_ptr_call_field), field_name(n) {}
+    ~ir_ptr_call_field() override = default;
     void dump(std::ostream&) override;
 };
 
