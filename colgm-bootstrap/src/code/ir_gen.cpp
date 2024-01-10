@@ -1,20 +1,20 @@
 #include "code/ir_gen.h"
+#include "sema/symbol.h"
 #include "semantic.h"
 
 namespace colgm {
 
 std::string ir_gen::generate_type_string(type_def* node) {
-    auto sym = symbol({
-        "",
+    auto ty = type({
         node->get_name()->get_name(),
         node->get_pointer_level()
     });
-    if (ctx.structs.count(sym.type)) {
-        sym.type = "%struct." + sym.type;
-    } else if (basic_type_convert_mapper.count(sym.type)) {
-        sym.type = basic_type_convert_mapper.at(sym.type);
+    if (ctx.structs.count(ty.name)) {
+        ty.name = "%struct." + ty.name;
+    } else if (basic_type_convert_mapper.count(ty.name)) {
+        ty.name = basic_type_convert_mapper.at(ty.name);
     }
-    return sym.type_to_string();
+    return ty.type_to_string();
 }
 
 bool ir_gen::visit_struct_decl(struct_decl* node) {
@@ -91,7 +91,7 @@ bool ir_gen::visit_call_field(call_field* node) {
 }
 
 bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
-    cb->add_stmt(new ir_call_field(node->get_name()));
+    cb->add_stmt(new ir_ptr_call_field(node->get_name()));
     return true;
 }
 

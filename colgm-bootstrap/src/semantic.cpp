@@ -2,14 +2,6 @@
 
 namespace colgm {
 
-std::ostream& operator<<(std::ostream& out, const symbol& s) {
-    out << s.type;
-    for(uint64_t i = 0; i < s.type_pointer_level; ++i) {
-        out << "*";
-    }
-    return out;
-}
-
 void semantic::analyse_single_struct(struct_decl* node) {
     if (ctx.structs.count(node->get_name())) {
         err.err(
@@ -21,10 +13,12 @@ void semantic::analyse_single_struct(struct_decl* node) {
     ctx.structs.insert({node->get_name(), {}});
     auto& struct_self = ctx.structs.at(node->get_name());
     for(auto i : node->get_fields()) {
-        if (!ctx.symbols.count(i->get_type()->get_name()->get_name())) {
+        auto type_node = i->get_type();
+        auto type_name = type_node->get_name();
+        if (!ctx.symbols.count(type_name->get_name())) {
             err.err(
-                "sema", i->get_type()->get_location(),
-                "undefined symbol."
+                "sema", type_name->get_location(),
+                "undefined type \"" + type_name->get_name() + "\"."
             );
         }
         struct_self.field.push_back({
@@ -66,7 +60,6 @@ colgm_func semantic::analyse_single_func(func_decl* node) {
         );
     }
     func_self.return_type = {
-        "",
         node->get_return_type()->get_name()->get_name(),
         node->get_return_type()->get_pointer_level()
     };
@@ -122,13 +115,58 @@ void semantic::analyse_impls(root* ast_root) {
     }
 }
 
+type semantic::resolve_expression(expr* node) {
+    // TODO
+    return {"i8", 0};
+}
+
+type semantic::resolve_type_def(type_def* node) {
+    const auto& name = node->get_name()->get_name();
+    if (!ctx.symbols.count(name)) {
+        err.err("sema", node->get_name()->get_location(),
+            "unknown type \"" + name + "\"."
+        );
+        return {"<err>", 0};
+    }
+    return {name, node->get_pointer_level()};
+}
+
+void semantic::resolve_parameter(param* node) {
+    const auto& name = node->get_name()->get_name();
+    if (ctx.find_symbol(name)) {
+        err.err("sema", node->get_name()->get_location(),
+            "redefinition of variable \"" + name + "\"."
+        );
+        return;
+    }
+
+    const auto infer_type = resolve_type_def(node->get_type());
+    ctx.add_symbol(name, infer_type);
+}
+
+void semantic::resolve_parameter_list(param_list* node) {
+    for(auto i : node->get_params()) {
+        resolve_parameter(i);
+    }
+}
+
 void semantic::resolve_func(func_decl* node) {
     if (!node->get_code_block()) {
         return;
     }
+    ctx.push_new_level();
+    resolve_parameter_list(node->get_params());
     for(auto i : node->get_code_block()->get_stmts()) {
-        // TODO
+        switch(i->get_ast_type()) {
+            case ast_type::ast_definition: break;
+            case ast_type::ast_cond_stmt: break;
+            case ast_type::ast_while_stmt: break;
+            case ast_type::ast_in_stmt_expr: break;
+            case ast_type::ast_ret_stmt: break;
+            default: break;
+        }
     }
+    ctx.pop_new_level();
 }
 
 void semantic::resolve_impl(impl_struct* node) {
@@ -178,7 +216,7 @@ void semantic::dump() {
     for(const auto& i : ctx.structs) {
         std::cout << "struct " << i.first << " {\n";
         for(const auto& field : i.second.field) {
-            std::cout << "  " << field.name << ": " << field;
+            std::cout << "  " << field.name << ": " << field.symbol_type;
             if (field.name!=i.second.field.back().name) {
                 std::cout << ",";
             }
@@ -192,7 +230,7 @@ void semantic::dump() {
         for(const auto& method : i.second.method) {
             std::cout << "  func " << method.first << "(";
             for(const auto& param : method.second.parameters) {
-                std::cout << param.name << ": " << param;
+                std::cout << param.name << ": " << param.symbol_type;
                 if (param.name!=method.second.parameters.back().name) {
                     std::cout << ", ";
                 }
@@ -204,7 +242,7 @@ void semantic::dump() {
     for(const auto& i : ctx.functions) {
         std::cout << "func " << i.first << "(";
         for(const auto& param : i.second.parameters) {
-            std::cout << param.name << ": " << param;
+            std::cout << param.name << ": " << param.symbol_type;
             if (param.name!=i.second.parameters.back().name) {
                 std::cout << ", ";
             }
