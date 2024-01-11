@@ -40,29 +40,31 @@ void semantic::analyse_structs(root* ast_root) {
     }
 }
 
+void semantic::analyse_parameter(param* node, colgm_func& func_self) {
+    const auto& name = node->get_name()->get_name();
+    if (func_self.find_parameter(name)) {
+        err.err("sema", node->get_name()->get_location(),
+            "redefinition of parameter \"" + name + "\"."
+        );
+        return;
+    }
+    func_self.add_parameter(name, resolve_type_def(node->get_type()));
+}
+
+void semantic::analyse_parameter_list(param_list* node, colgm_func& func_self) {
+    for(auto i : node->get_params()) {
+        analyse_parameter(i, func_self);
+    }
+}
+
+void semantic::analyse_return_type(type_def* node, colgm_func& func_self) {
+    func_self.return_type = resolve_type_def(node);
+}
+
 colgm_func semantic::analyse_single_func(func_decl* node) {
     auto func_self = colgm_func();
-    for(auto i : node->get_params()->get_params()) {
-        if (!ctx.symbols.count(i->get_type()->get_name()->get_name())) {
-            err.err("sema", i->get_type()->get_location(),
-                "undefined symbol."
-            );
-        }
-        func_self.parameters.push_back({
-            i->get_name()->get_name(),
-            i->get_type()->get_name()->get_name(),
-            i->get_type()->get_pointer_level()
-        });
-    }
-    if (!ctx.symbols.count(node->get_return_type()->get_name()->get_name())) {
-        err.err("sema", node->get_return_type()->get_location(),
-            "undefined symbol."
-        );
-    }
-    func_self.return_type = {
-        node->get_return_type()->get_name()->get_name(),
-        node->get_return_type()->get_pointer_level()
-    };
+    analyse_parameter_list(node->get_params(), func_self);
+    analyse_return_type(node->get_return_type(), func_self);
     return func_self;
 }
 
@@ -131,47 +133,86 @@ type semantic::resolve_type_def(type_def* node) {
     return {name, node->get_pointer_level()};
 }
 
-void semantic::resolve_parameter(param* node) {
-    const auto& name = node->get_name()->get_name();
-    if (ctx.find_symbol(name)) {
-        err.err("sema", node->get_name()->get_location(),
-            "redefinition of variable \"" + name + "\"."
+void semantic::resolve_definition(definition* node, const colgm_func& func_self) {
+    // TODO
+}
+
+void semantic::resolve_cond_stmt(cond_stmt* node, const colgm_func& func_self) {
+    // TODO
+}
+
+void semantic::resolve_while_stmt(while_stmt* node, const colgm_func& func_self) {
+    // TODO
+}
+
+void semantic::resolve_in_stmt_expr(in_stmt_expr* node, const colgm_func& func_self) {
+    node->set_resolve_type(resolve_expression(node->get_expr()));
+}
+
+void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
+    // TODO
+}
+
+void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
+    switch(node->get_ast_type()) {
+    case ast_type::ast_definition:
+        resolve_definition(reinterpret_cast<definition*>(node), func_self);
+        break;
+    case ast_type::ast_cond_stmt:
+        resolve_cond_stmt(reinterpret_cast<cond_stmt*>(node), func_self);
+        break;
+    case ast_type::ast_while_stmt:
+        resolve_while_stmt(reinterpret_cast<while_stmt*>(node), func_self);
+        break;
+    case ast_type::ast_in_stmt_expr:
+        resolve_in_stmt_expr(reinterpret_cast<in_stmt_expr*>(node), func_self);
+        break;
+    case ast_type::ast_ret_stmt:
+        resolve_ret_stmt(reinterpret_cast<ret_stmt*>(node), func_self);
+        break;
+    default:
+        err.err("sema", node->get_location(),
+            "unreachable, please report compiler bug."
         );
-        return;
-    }
-
-    const auto infer_type = resolve_type_def(node->get_type());
-    ctx.add_symbol(name, infer_type);
-}
-
-void semantic::resolve_parameter_list(param_list* node) {
-    for(auto i : node->get_params()) {
-        resolve_parameter(i);
+        break;
     }
 }
 
-void semantic::resolve_func(func_decl* node) {
+void semantic::resolve_global_func(func_decl* node) {
     if (!node->get_code_block()) {
         return;
     }
     ctx.push_new_level();
-    resolve_parameter_list(node->get_params());
+    const auto& func_self = ctx.functions.at(node->get_name());
+    for(const auto& p : func_self.parameters) {
+        ctx.add_symbol(p.name, p.symbol_type);
+    }
     for(auto i : node->get_code_block()->get_stmts()) {
-        switch(i->get_ast_type()) {
-            case ast_type::ast_definition: break;
-            case ast_type::ast_cond_stmt: break;
-            case ast_type::ast_while_stmt: break;
-            case ast_type::ast_in_stmt_expr: break;
-            case ast_type::ast_ret_stmt: break;
-            default: break;
-        }
+        resolve_statement(i, func_self);
+    }
+    ctx.pop_new_level();
+}
+
+void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) {
+    if (!node->get_code_block()) {
+        err.err("sema", node->get_location(), "should be implemented here.");
+        return;
+    }
+    ctx.push_new_level();
+    const auto& method_self = struct_self.method.at(node->get_name());
+    for(const auto& p : method_self.parameters) {
+        ctx.add_symbol(p.name, p.symbol_type);
+    }
+    for(auto i : node->get_code_block()->get_stmts()) {
+        resolve_statement(i, method_self);
     }
     ctx.pop_new_level();
 }
 
 void semantic::resolve_impl(impl_struct* node) {
+    const auto& struct_self = ctx.structs.at(node->get_struct_name());
     for(auto i : node->get_methods()) {
-        resolve_func(i);
+        resolve_method(i, struct_self);
     }
 }
 
@@ -181,7 +222,7 @@ void semantic::resolve_function_block(root* ast_root) {
             resolve_impl(reinterpret_cast<impl_struct*>(i));
         }
         if (i->get_ast_type()==ast_type::ast_func_decl) {
-            resolve_func(reinterpret_cast<func_decl*>(i));
+            resolve_global_func(reinterpret_cast<func_decl*>(i));
         }
     }
 }

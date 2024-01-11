@@ -1,6 +1,7 @@
 #pragma once
 
 #include "err.h"
+#include "sema/symbol.h"
 
 #include <vector>
 
@@ -68,18 +69,18 @@ class node {
 private:
     ast_type node_type;
     span location;
-    std::string resolve;
+    type resolve;
 
 public:
     node(ast_type type, const span& loc):
-        node_type(type), location(loc), resolve("") {}
+        node_type(type), location(loc), resolve({"", 0}) {}
     virtual ~node() = default;
     virtual void accept(visitor*) = 0;
 
     const auto& get_location() const { return location; }
     const auto get_ast_type() const { return node_type; }
     const auto& get_resolve() const { return resolve; }
-    void set_resolve_type(const std::string& rs) { resolve = rs; }
+    void set_resolve_type(const type& rs) { resolve = rs; }
     void update_location(const span& end) {
         location.end_line = end.end_line;
         location.end_column = end.end_column;

@@ -32,6 +32,9 @@ struct colgm_func {
     std::string name;
     type return_type;
     std::vector<symbol> parameters;
+
+    bool find_parameter(const std::string&);
+    void add_parameter(const std::string&, const type&);
 };
 
 struct colgm_struct {
