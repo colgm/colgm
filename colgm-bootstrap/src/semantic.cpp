@@ -4,20 +4,19 @@ namespace colgm {
 
 void semantic::analyse_single_struct(struct_decl* node) {
     if (ctx.structs.count(node->get_name())) {
-        err.err(
-            "sema", node->get_location(),
+        err.err("sema", node->get_location(),
             "struct \"" + node->get_name() + "\" already exists."
         );
         return;
     }
     ctx.structs.insert({node->get_name(), {}});
     auto& struct_self = ctx.structs.at(node->get_name());
+    struct_self.name = node->get_name();
     for(auto i : node->get_fields()) {
         auto type_node = i->get_type();
         auto type_name = type_node->get_name();
         if (!ctx.symbols.count(type_name->get_name())) {
-            err.err(
-                "sema", type_name->get_location(),
+            err.err("sema", type_name->get_location(),
                 "undefined type \"" + type_name->get_name() + "\"."
             );
         }
@@ -35,7 +34,10 @@ void semantic::analyse_structs(root* ast_root) {
             continue;
         }
         auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
-        ctx.symbols.insert({struct_decl_node->get_name(), symbol_kind::struct_kind});
+        ctx.symbols.insert({
+            struct_decl_node->get_name(),
+            symbol_kind::struct_kind
+        });
         analyse_single_struct(struct_decl_node);
     }
 }
@@ -51,7 +53,32 @@ void semantic::analyse_parameter(param* node, colgm_func& func_self) {
     func_self.add_parameter(name, resolve_type_def(node->get_type()));
 }
 
-void semantic::analyse_parameter_list(param_list* node, colgm_func& func_self) {
+void semantic::analyse_method_parameter_list(param_list* node,
+                                             colgm_func& func_self,
+                                             const colgm_struct& stct) {
+    for(auto i : node->get_params()) {
+        if (i->get_name()->get_name()=="self" &&
+            i!=node->get_params().front()) {
+            err.err("sema", i->get_name()->get_location(),
+                "\"self\" must be the first parameter."
+            );
+        }
+        analyse_parameter(i, func_self);
+    }
+    if (func_self.parameters.empty() ||
+        func_self.parameters.front().name!="self") {
+        return;
+    }
+    const auto& self_type = func_self.parameters.front().symbol_type;
+    if (self_type.name!=stct.name || self_type.pointer_level!=1) {
+        err.err("sema", node->get_params().front()->get_location(),
+            "\"self\" should be \"" + stct.name + "*\", but get \"" +
+            self_type.to_string() + "\"."
+        );
+    }
+}
+
+void semantic::analyse_func_parameter_list(param_list* node, colgm_func& func_self) {
     for(auto i : node->get_params()) {
         analyse_parameter(i, func_self);
     }
@@ -61,9 +88,17 @@ void semantic::analyse_return_type(type_def* node, colgm_func& func_self) {
     func_self.return_type = resolve_type_def(node);
 }
 
+colgm_func semantic::analyse_single_method(func_decl* node,
+                                           const colgm_struct& stct) {
+    auto func_self = colgm_func();
+    analyse_method_parameter_list(node->get_params(), func_self, stct);
+    analyse_return_type(node->get_return_type(), func_self);
+    return func_self;
+}
+
 colgm_func semantic::analyse_single_func(func_decl* node) {
     auto func_self = colgm_func();
-    analyse_parameter_list(node->get_params(), func_self);
+    analyse_func_parameter_list(node->get_params(), func_self);
     analyse_return_type(node->get_return_type(), func_self);
     return func_self;
 }
@@ -103,7 +138,10 @@ void semantic::analyse_single_impl(impl_struct* node) {
             );
             continue;
         }
-        stct.method.insert({i->get_name(), analyse_single_func(i)});
+        stct.method.insert({
+            i->get_name(),
+            analyse_single_method(i, stct)
+        });
     }
 }
 

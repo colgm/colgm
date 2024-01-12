@@ -19,7 +19,7 @@ struct type {
     std::string name;
     uint64_t pointer_level;
 
-    std::string type_to_string();
+    std::string to_string() const;
     friend std::ostream& operator<<(std::ostream&, const type&);
 };
 

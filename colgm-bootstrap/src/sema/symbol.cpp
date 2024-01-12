@@ -2,7 +2,7 @@
 
 namespace colgm {
 
-std::string type::type_to_string() {
+std::string type::to_string() const {
     auto result = name;
     for(uint64_t i = 0; i<pointer_level; ++i) {
         result += "*";

@@ -14,7 +14,7 @@ std::string ir_gen::generate_type_string(type_def* node) {
     } else if (basic_type_convert_mapper.count(ty.name)) {
         ty.name = basic_type_convert_mapper.at(ty.name);
     }
-    return ty.type_to_string();
+    return ty.to_string();
 }
 
 bool ir_gen::visit_struct_decl(struct_decl* node) {
