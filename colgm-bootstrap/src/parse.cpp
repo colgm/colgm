@@ -54,7 +54,9 @@ identifier* parse::identifier_gen() {
 call* parse::call_gen() {
     auto result = new call(toks[ptr].loc);
     result->set_head(identifier_gen());
-    while(look_ahead(tok::lcurve) || look_ahead(tok::lbracket) || look_ahead(tok::dot) || look_ahead(tok::arrow)) {
+    while(look_ahead(tok::lcurve) || look_ahead(tok::lbracket) ||
+          look_ahead(tok::dot) || look_ahead(tok::arrow) ||
+          look_ahead(tok::double_colon)) {
         if (look_ahead(tok::lcurve)) {
             match(tok::lcurve);
             auto new_call_func = new call_func_args(toks[ptr].loc);
@@ -88,6 +90,12 @@ call* parse::call_gen() {
             match(tok::id);
             update_location(new_call_field);
             result->add_chain(new_call_field);
+        } else if (look_ahead(tok::double_colon)) {
+            match(tok::double_colon);
+            auto new_call_path = new call_path(toks[ptr].loc, toks[ptr].str);
+            match(tok::id);
+            update_location(new_call_path);
+            result->add_chain(new_call_path);
         }
     }
     update_location(result);
@@ -124,7 +132,7 @@ expr* parse::scalar_gen() {
     }
     err.err("parse", toks[ptr].loc, "expected scalar here.");
     next();
-    return nullptr;
+    return new null();
 }
 
 expr* parse::multive_gen() {

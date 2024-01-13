@@ -95,6 +95,11 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
     return true;
 }
 
+bool ir_gen::visit_call_path(call_path* node) {
+    cb->add_stmt(new ir_call_path(node->get_name()));
+    return true;
+}
+
 bool ir_gen::visit_call_func_args(call_func_args* node) {
     for(auto i : node->get_args()) {
         i->accept(this);

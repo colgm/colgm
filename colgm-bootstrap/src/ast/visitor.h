@@ -28,6 +28,7 @@ public:
     virtual bool visit_call_func_args(call_func_args*);
     virtual bool visit_call_field(call_field*);
     virtual bool visit_ptr_call_field(ptr_call_field*);
+    virtual bool visit_call_path(call_path*);
     virtual bool visit_call(call*);
     virtual bool visit_assignment(assignment*);
     virtual bool visit_stmt(stmt*);

@@ -188,6 +188,12 @@ bool dumper::visit_ptr_call_field(ptr_call_field* node) {
     return true;
 }
 
+bool dumper::visit_call_path(call_path* node) {
+    dump_indent();
+    std::cout << "call path @" << node->get_name() << format_location(node->get_location());
+    return true;
+}
+
 bool dumper::visit_call(call* node) {
     dump_indent();
     std::cout << "call" << format_location(node->get_location());

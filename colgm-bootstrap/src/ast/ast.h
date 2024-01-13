@@ -18,6 +18,7 @@ enum class ast_type {
     ast_call_func_args,
     ast_call_field,
     ast_ptr_call_field,
+    ast_call_path,
     ast_call,
     ast_assignment,
     ast_type_def,
@@ -47,6 +48,7 @@ class param_list;
 class func_decl;
 class impl_struct;
 class expr;
+class null;
 class identifier;
 class number_literal;
 class string_literal;
@@ -54,6 +56,7 @@ class call_index;
 class call_func_args;
 class call_field;
 class ptr_call_field;
+class call_path;
 class call;
 class assignment;
 class stmt;

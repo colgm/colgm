@@ -14,6 +14,13 @@ public:
     void accept(visitor*) override;
 };
 
+class null: public expr {
+public:
+    null(): expr(ast_type::ast_null, span::null()) {}
+    ~null() override = default;
+    void accept(visitor*) override { return; }
+};
+
 class binary_operator: public expr {
 public:
     enum class kind {
@@ -140,6 +147,19 @@ public:
     ptr_call_field(const span& loc, const std::string& f):
         expr(ast_type::ast_ptr_call_field, loc), name(f) {}
     ~ptr_call_field() override = default;
+    void accept(visitor*) override;
+
+    const auto& get_name() const { return name; }
+};
+
+class call_path: public expr {
+private:
+    std::string name;
+
+public:
+    call_path(const span& loc, const std::string& f):
+        expr(ast_type::ast_call_path, loc), name(f) {}
+    ~call_path() override = default;
     void accept(visitor*) override;
 
     const auto& get_name() const { return name; }
