@@ -1,18 +1,27 @@
+#include "colgm.h"
 #include "sema/symbol.h"
 
 namespace colgm {
 
 std::string type::to_string() const {
     auto result = name;
-    for(uint64_t i = 0; i<pointer_level; ++i) {
+    for(u64 i = 0; i<pointer_level; ++i) {
         result += "*";
     }
     return result;
 }
 
+bool type::operator==(const type& another) const {
+    return name==another.name && pointer_level==another.pointer_level;
+}
+
+bool type::operator!=(const type& another) const {
+    return name!=another.name || pointer_level!=another.pointer_level;
+}
+
 std::ostream& operator<<(std::ostream& out, const type& t) {
     out << t.name;
-    for(uint64_t i = 0; i < t.pointer_level; ++i) {
+    for(u64 i = 0; i < t.pointer_level; ++i) {
         out << "*";
     }
     return out;

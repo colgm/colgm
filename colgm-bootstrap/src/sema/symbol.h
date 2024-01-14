@@ -1,5 +1,7 @@
 #pragma once
 
+#include "colgm.h"
+
 #include <ostream>
 #include <cstdint>
 #include <cstring>
@@ -17,9 +19,11 @@ enum class symbol_kind {
 
 struct type {
     std::string name;
-    uint64_t pointer_level;
+    u64 pointer_level;
 
     std::string to_string() const;
+    bool operator==(const type&) const;
+    bool operator!=(const type&) const;
     friend std::ostream& operator<<(std::ostream&, const type&);
 };
 

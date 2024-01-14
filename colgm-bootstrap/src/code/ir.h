@@ -1,5 +1,7 @@
 #pragma once
 
+#include "colgm.h"
+
 #include <cstdint>
 #include <cstring>
 #include <sstream>
@@ -187,10 +189,10 @@ public:
 
 class ir_call_func: public ir {
 private:
-    size_t argc;
+    usize argc;
 
 public:
-    ir_call_func(size_t ac):
+    ir_call_func(usize ac):
         ir(ir_kind::cir_call_func), argc(ac) {}
     ~ir_call_func() override = default;
     void dump(std::ostream&) override;
@@ -209,10 +211,10 @@ public:
 
 class ir_label: public ir {
 private:
-    size_t label_count;
+    usize label_count;
 
 public:
-    ir_label(size_t count):
+    ir_label(usize count):
         ir(ir_kind::cir_label), label_count(count) {}
     ~ir_label() override = default;
     void dump(std::ostream&) override;
@@ -231,10 +233,10 @@ public:
 
 class ir_br_direct: public ir {
 private:
-    size_t destination;
+    usize destination;
 
 public:
-    ir_br_direct(size_t dst):
+    ir_br_direct(usize dst):
         ir(ir_kind::cir_br_direct), destination(dst) {}
     ~ir_br_direct() override = default;
     void dump(std::ostream&) override;
@@ -242,21 +244,21 @@ public:
 
 class ir_br_cond: public ir {
 private:
-    size_t destination_true;
-    size_t destination_false;
+    usize destination_true;
+    usize destination_false;
 
 public:
-    ir_br_cond(uint64_t dst_true, uint64_t dst_false):
+    ir_br_cond(u64 dst_true, u64 dst_false):
         ir(ir_kind::cir_br_cond),
         destination_true(dst_true),
         destination_false(dst_false) {}
     ~ir_br_cond() override = default;
     void dump(std::ostream&) override;
 
-    void set_true_label(uint64_t dst_true) {
+    void set_true_label(u64 dst_true) {
         destination_true = dst_true;
     }
-    void set_false_label(uint64_t dst_false) {
+    void set_false_label(u64 dst_false) {
         destination_false = dst_false;
     }
 };

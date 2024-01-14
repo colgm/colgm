@@ -156,6 +156,16 @@ void semantic::analyse_impls(root* ast_root) {
 }
 
 type semantic::resolve_expression(expr* node) {
+    switch(node->get_ast_type()) {
+    case ast_type::ast_binary_operator: break;
+    case ast_type::ast_number_literal: break;
+    case ast_type::ast_string_literal: return {"i8", 1};
+    case ast_type::ast_call: break;
+    case ast_type::ast_assignment: break;
+    default:
+        err.err("sema", node->get_location(), "unimplemented");
+        break;
+    }
     // TODO
     return {"i8", 0};
 }
@@ -172,7 +182,22 @@ type semantic::resolve_type_def(type_def* node) {
 }
 
 void semantic::resolve_definition(definition* node, const colgm_func& func_self) {
-    // TODO
+    const auto& name = node->get_name();
+    if (ctx.find_symbol(name)) {
+        err.err("sema", node->get_location(),
+            "redefinition of variable \"" + name + "\"."
+        );
+        return;
+    }
+    const auto expected_type = resolve_type_def(node->get_type());
+    const auto real_type = resolve_expression(node->get_init_value());
+    if (expected_type!=real_type) {
+        err.err("sema", node->get_type()->get_location(),
+            "expected \"" + expected_type.to_string() + "\", " +
+            "but get \"" + real_type.to_string() + "\"."
+        );
+    }
+    ctx.add_symbol(name, real_type);
 }
 
 void semantic::resolve_cond_stmt(cond_stmt* node, const colgm_func& func_self) {

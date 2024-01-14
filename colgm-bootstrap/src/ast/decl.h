@@ -1,5 +1,6 @@
 #pragma once
 
+#include "colgm.h"
 #include "ast/ast.h"
 
 #include <cstring>
@@ -16,7 +17,7 @@ public:
 class type_def: public decl {
 private:
     identifier* name;
-    uint64_t pointer_level;
+    u64 pointer_level;
 
 public:
     type_def(const span& loc):

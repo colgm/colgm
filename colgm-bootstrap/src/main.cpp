@@ -106,7 +106,7 @@ void execute(
         gen.dump_code(std::cout);
     }
 
-    std::ofstream out("colgm.ll");
+    std::ofstream out("out.ll");
     gen.dump_code(out);
 }
 
