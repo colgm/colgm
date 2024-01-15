@@ -49,6 +49,15 @@ bool semantic_context::find_symbol(const std::string& name) {
     return false;
 }
 
+type semantic_context::get_symbol(const std::string& name) {
+    for(auto i = scope.rbegin(); i!=scope.rend(); ++i) {
+        if (i->count(name)) {
+            return i->at(name);
+        }
+    }
+    return type::error_type();
+}
+
 void semantic_context::add_symbol(const std::string& name, const type& t) {
     scope.back().insert({name, t});
 }

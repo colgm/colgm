@@ -20,6 +20,17 @@ private:
     semantic_context ctx;
 
 private:
+    void report(node* n, const std::string& info) {
+        err.err("sema", n->get_location(), info);
+    }
+    void unimplemented(node* n) {
+        err.err("sema", n->get_location(), "unimplemented, please report a bug.");
+    }
+    void unreachable(node* n) {
+        err.err("sema", n->get_location(), "unreachable, please report a bug.");
+    }
+
+private:
     void analyse_single_struct(struct_decl*);
     void analyse_structs(root*);
     void analyse_parameter(param*, colgm_func&);
@@ -39,6 +50,12 @@ private:
     type resolve_number_literal(number_literal*);
     type resolve_string_literal(string_literal*);
     type resolve_bool_literal(bool_literal*);
+    type resolve_identifier(identifier*);
+    type resolve_call_field(const type&, call_field*);
+    type resolve_call_func_args(const type&, call_func_args*);
+    type resolve_call_index(const type&, call_index*);
+    type resolve_call_path(const type&, call_path*);
+    type resolve_ptr_call_field(const type&, ptr_call_field*);
     type resolve_call(call*);
     type resolve_assignment(assignment*);
     type resolve_expression(expr*);

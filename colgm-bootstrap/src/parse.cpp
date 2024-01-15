@@ -145,9 +145,10 @@ expr* parse::scalar_gen() {
 }
 
 expr* parse::multive_gen() {
+    const auto begin_location = toks[ptr].loc;
     auto result = scalar_gen();
     while(look_ahead(tok::mult) || look_ahead(tok::div) || look_ahead(tok::mult)) {
-        auto binary = new binary_operator(toks[ptr].loc);
+        auto binary = new binary_operator(begin_location);
         binary->set_left(result);
         switch(toks[ptr].type) {
             case tok::mult: binary->set_opr(binary_operator::kind::mult); break;
@@ -164,9 +165,10 @@ expr* parse::multive_gen() {
 }
 
 expr* parse::additive_gen() {
+    const auto begin_location = toks[ptr].loc;
     auto result = multive_gen();
     while(look_ahead(tok::add) || look_ahead(tok::sub)) {
-        auto binary = new binary_operator(toks[ptr].loc);
+        auto binary = new binary_operator(begin_location);
         binary->set_left(result);
         switch(toks[ptr].type) {
             case tok::add: binary->set_opr(binary_operator::kind::add); break;
@@ -182,11 +184,12 @@ expr* parse::additive_gen() {
 }
 
 expr* parse::compare_gen() {
+    const auto begin_location = toks[ptr].loc;
     auto result = additive_gen();
     while(look_ahead(tok::cmpeq) || look_ahead(tok::neq) ||
         look_ahead(tok::less) || look_ahead(tok::leq) ||
         look_ahead(tok::grt) || look_ahead(tok::geq)) {
-        auto binary = new binary_operator(toks[ptr].loc);
+        auto binary = new binary_operator(begin_location);
         binary->set_left(result);
         switch(toks[ptr].type) {
             case tok::cmpeq: binary->set_opr(binary_operator::kind::cmpeq); break;
@@ -206,12 +209,13 @@ expr* parse::compare_gen() {
 }
 
 expr* parse::and_expression_gen() {
+    const auto begin_location = toks[ptr].loc;
     auto result = compare_gen();
     if (!look_ahead(tok::opand)) {
         return result;
     }
 
-    auto binary = new binary_operator(toks[ptr].loc);
+    auto binary = new binary_operator(begin_location);
     binary->set_left(result);
     binary->set_opr(binary_operator::kind::cmpand);
     match(tok::opand);
@@ -222,12 +226,13 @@ expr* parse::and_expression_gen() {
 }
 
 expr* parse::or_expression_gen() {
+    const auto begin_location = toks[ptr].loc;
     auto result = and_expression_gen();
     if (!look_ahead(tok::opor)) {
         return result;
     }
 
-    auto binary = new binary_operator(toks[ptr].loc);
+    auto binary = new binary_operator(begin_location);
     binary->set_left(result);
     binary->set_opr(binary_operator::kind::cmpor);
     match(tok::opor);
@@ -238,6 +243,7 @@ expr* parse::or_expression_gen() {
 }
 
 expr* parse::calculation_gen() {
+    const auto begin_location = toks[ptr].loc;
     auto result = or_expression_gen();
     if (!result) {
         return result;
@@ -247,7 +253,7 @@ expr* parse::calculation_gen() {
     }
     if (look_ahead(tok::addeq) || look_ahead(tok::subeq) || look_ahead(tok::multeq) ||
         look_ahead(tok::diveq) || look_ahead(tok::modeq) || look_ahead(tok::eq)) {
-        auto new_assignment = new assignment(toks[ptr].loc);
+        auto new_assignment = new assignment(begin_location);
         new_assignment->set_left(reinterpret_cast<call*>(result));
         switch(toks[ptr].type) {
             case tok::eq: new_assignment->set_type(assignment::kind::eq); break;

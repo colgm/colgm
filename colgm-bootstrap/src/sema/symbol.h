@@ -74,6 +74,7 @@ struct semantic_context {
 
     bool find_symbol(const std::string&);
     void add_symbol(const std::string&, const type&);
+    type get_symbol(const std::string&);
     void push_new_level() { scope.push_back({}); }
     void pop_new_level() { scope.pop_back(); }
 
