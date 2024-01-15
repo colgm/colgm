@@ -15,7 +15,7 @@ void semantic::analyse_single_struct(struct_decl* node) {
     for(auto i : node->get_fields()) {
         auto type_node = i->get_type();
         auto type_name = type_node->get_name();
-        if (!ctx.symbols.count(type_name->get_name())) {
+        if (!ctx.global_symbol.count(type_name->get_name())) {
             err.err("sema", type_name->get_location(),
                 "undefined type \"" + type_name->get_name() + "\"."
             );
@@ -34,7 +34,7 @@ void semantic::analyse_structs(root* ast_root) {
             continue;
         }
         auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
-        ctx.symbols.insert({
+        ctx.global_symbol.insert({
             struct_decl_node->get_name(),
             symbol_kind::struct_kind
         });
@@ -91,6 +91,7 @@ void semantic::analyse_return_type(type_def* node, colgm_func& func_self) {
 colgm_func semantic::analyse_single_method(func_decl* node,
                                            const colgm_struct& stct) {
     auto func_self = colgm_func();
+    func_self.name = node->get_name();
     analyse_method_parameter_list(node->get_params(), func_self, stct);
     analyse_return_type(node->get_return_type(), func_self);
     return func_self;
@@ -98,6 +99,7 @@ colgm_func semantic::analyse_single_method(func_decl* node,
 
 colgm_func semantic::analyse_single_func(func_decl* node) {
     auto func_self = colgm_func();
+    func_self.name = node->get_name();
     analyse_func_parameter_list(node->get_params(), func_self);
     analyse_return_type(node->get_return_type(), func_self);
     return func_self;
@@ -109,7 +111,7 @@ void semantic::analyse_functions(root* ast_root) {
             continue;
         }
         auto func_decl_node = reinterpret_cast<func_decl*>(i);
-        ctx.symbols.insert({func_decl_node->get_name(), symbol_kind::func_kind});
+        ctx.global_symbol.insert({func_decl_node->get_name(), symbol_kind::func_kind});
         if (ctx.functions.count(func_decl_node->get_name())) {
             err.err("sema", func_decl_node->get_location(),
                 "function \"" + func_decl_node->get_name() + "\" already exists."
@@ -231,7 +233,7 @@ type semantic::resolve_expression(expr* node) {
 
 type semantic::resolve_type_def(type_def* node) {
     const auto& name = node->get_name()->get_name();
-    if (!ctx.symbols.count(name)) {
+    if (!ctx.global_symbol.count(name)) {
         err.err("sema", node->get_name()->get_location(),
             "unknown type \"" + name + "\"."
         );
@@ -248,6 +250,12 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         );
         return;
     }
+    if (ctx.global_symbol.count(name)) {
+        err.err("sema", node->get_location(),
+            "variable \"" + name + "\" conflicts with global symbol."
+        );
+        return;
+    }
     const auto expected_type = resolve_type_def(node->get_type());
     const auto real_type = resolve_expression(node->get_init_value());
     if (expected_type!=real_type) {
@@ -259,12 +267,38 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     ctx.add_symbol(name, real_type);
 }
 
+void semantic::resolve_if_stmt(if_stmt* node, const colgm_func& func_self) {
+    if (node->get_condition()) {
+        const auto infer = resolve_expression(node->get_condition());
+        if (infer!=type::bool_type()) {
+            err.err("sema", node->get_condition()->get_location(),
+                "condition should be \"bool\" type but get \"" +
+                infer.to_string() + "\"."
+            );
+        }
+    }
+    if (node->get_block()) {
+        resolve_code_block(node->get_block(), func_self);
+    }
+}
+
 void semantic::resolve_cond_stmt(cond_stmt* node, const colgm_func& func_self) {
-    // TODO
+    for(auto i : node->get_stmts()) {
+        resolve_if_stmt(i, func_self);
+    }
 }
 
 void semantic::resolve_while_stmt(while_stmt* node, const colgm_func& func_self) {
-    // TODO
+    const auto infer = resolve_expression(node->get_condition());
+    if (infer!=type::bool_type()) {
+        err.err("sema", node->get_condition()->get_location(),
+            "condition should be \"bool\" type but get \"" +
+            infer.to_string() + "\"."
+        );
+    }
+    if (node->get_block()) {
+        resolve_code_block(node->get_block(), func_self);
+    }
 }
 
 void semantic::resolve_in_stmt_expr(in_stmt_expr* node, const colgm_func& func_self) {
@@ -272,7 +306,23 @@ void semantic::resolve_in_stmt_expr(in_stmt_expr* node, const colgm_func& func_s
 }
 
 void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
-    // TODO
+    if (!node->get_value() && func_self.return_type!=type::void_type()) {
+        err.err("sema", node->get_location(),
+            "expected return type \"" + func_self.return_type.to_string() +
+            "\" but get \"void\"."
+        );
+        return;
+    }
+    if (!node->get_value()) {
+        return;
+    }
+    const auto infer = resolve_expression(node->get_value());
+    if (infer!=func_self.return_type) {
+        err.err("sema", node->get_location(),
+            "expected return type \"" + func_self.return_type.to_string() +
+            "\" but get \"" + infer.to_string() + "\"."
+        );
+    }
 }
 
 void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
@@ -298,6 +348,15 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
         );
         break;
     }
+}
+
+void semantic::resolve_code_block(code_block* node, const colgm_func& func_self) {
+    // should not be called to resolve function's top code block
+    ctx.push_new_level();
+    for(auto i : node->get_stmts()) {
+        resolve_statement(i, func_self);
+    }
+    ctx.pop_new_level();
 }
 
 void semantic::resolve_global_func(func_decl* node) {
@@ -350,19 +409,19 @@ void semantic::resolve_function_block(root* ast_root) {
 }
 
 const error& semantic::analyse(root* ast_root) {
-    ctx.symbols.clear();
-    ctx.symbols.insert({"i64", symbol_kind::basic_kind});
-    ctx.symbols.insert({"i32", symbol_kind::basic_kind});
-    ctx.symbols.insert({"i16", symbol_kind::basic_kind});
-    ctx.symbols.insert({"i8", symbol_kind::basic_kind});
-    ctx.symbols.insert({"u64", symbol_kind::basic_kind});
-    ctx.symbols.insert({"u32", symbol_kind::basic_kind});
-    ctx.symbols.insert({"u16", symbol_kind::basic_kind});
-    ctx.symbols.insert({"u8", symbol_kind::basic_kind});
-    ctx.symbols.insert({"f32", symbol_kind::basic_kind});
-    ctx.symbols.insert({"f64", symbol_kind::basic_kind});
-    ctx.symbols.insert({"void", symbol_kind::basic_kind});
-    ctx.symbols.insert({"bool", symbol_kind::basic_kind});
+    ctx.global_symbol.clear();
+    ctx.global_symbol.insert({"i64", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"i32", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"i16", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"i8", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"u64", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"u32", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"u16", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"u8", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"f32", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"f64", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"void", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"bool", symbol_kind::basic_kind});
 
     ctx.structs.clear();
     analyse_structs(ast_root);
@@ -376,42 +435,8 @@ const error& semantic::analyse(root* ast_root) {
 }
 
 void semantic::dump() {
-    for(const auto& i : ctx.structs) {
-        std::cout << "struct " << i.first << " {\n";
-        for(const auto& field : i.second.field) {
-            std::cout << "  " << field.name << ": " << field.symbol_type;
-            if (field.name!=i.second.field.back().name) {
-                std::cout << ",";
-            }
-            std::cout << "\n";
-        }
-        std::cout << "}\n";
-        if (i.second.method.empty()) {
-            continue;
-        }
-        std::cout << "impl " << i.first << " {\n";
-        for(const auto& method : i.second.method) {
-            std::cout << "  func " << method.first << "(";
-            for(const auto& param : method.second.parameters) {
-                std::cout << param.name << ": " << param.symbol_type;
-                if (param.name!=method.second.parameters.back().name) {
-                    std::cout << ", ";
-                }
-            }
-            std::cout << ") -> " << method.second.return_type << "\n";
-        }
-        std::cout << "}\n";
-    }
-    for(const auto& i : ctx.functions) {
-        std::cout << "func " << i.first << "(";
-        for(const auto& param : i.second.parameters) {
-            std::cout << param.name << ": " << param.symbol_type;
-            if (param.name!=i.second.parameters.back().name) {
-                std::cout << ", ";
-            }
-        }
-        std::cout << ") -> " << i.second.return_type << "\n";
-    }
+    ctx.dump_structs();
+    ctx.dump_functions();
 }
 
 }
