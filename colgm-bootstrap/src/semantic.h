@@ -35,6 +35,12 @@ private:
     void analyse_impls(root*);
 
 private:
+    type resolve_binary_operator(binary_operator*);
+    type resolve_number_literal(number_literal*);
+    type resolve_string_literal(string_literal*);
+    type resolve_bool_literal(bool_literal*);
+    type resolve_call(call*);
+    type resolve_assignment(assignment*);
     type resolve_expression(expr*);
     type resolve_type_def(type_def*);
     void resolve_definition(definition*, const colgm_func&);

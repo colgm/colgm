@@ -34,6 +34,12 @@ bool dumper::visit_string_literal(string_literal* node) {
     return true;
 }
 
+bool dumper::visit_bool_literal(bool_literal* node) {
+    dump_indent();
+    std::cout << "bool " << (node->get_flag()? "true":"false") << format_location(node->get_location());
+    return true;
+}
+
 bool dumper::visit_type_def(type_def* node) {
     dump_indent();
     std::cout << "type ptr " << node->get_pointer_level() << format_location(node->get_location());

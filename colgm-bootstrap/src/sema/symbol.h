@@ -8,6 +8,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace colgm {
 
@@ -20,11 +21,15 @@ enum class symbol_kind {
 struct type {
     std::string name;
     u64 pointer_level;
+    bool is_global = false;
 
     std::string to_string() const;
     bool operator==(const type&) const;
     bool operator!=(const type&) const;
     friend std::ostream& operator<<(std::ostream&, const type&);
+    static type error_type() { return {"<err>", 0}; }
+
+    bool is_error() const { return name=="<err>"; }
 };
 
 struct symbol {
@@ -48,6 +53,7 @@ struct colgm_struct {
 };
 
 struct semantic_context {
+    std::unordered_set<std::string> constant_string;
     std::unordered_map<std::string, colgm_struct> structs;
     std::unordered_map<std::string, colgm_func> functions;
     std::unordered_map<std::string, symbol_kind> symbols;

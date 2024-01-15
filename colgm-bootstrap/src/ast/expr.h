@@ -98,6 +98,19 @@ public:
     const auto& get_string() const { return literal; }
 };
 
+class bool_literal: public expr {
+private:
+    bool flag;
+
+public:
+    bool_literal(const span& loc, bool f):
+        expr(ast_type::ast_bool_literal, loc), flag(f) {}
+    ~bool_literal() override = default;
+    void accept(visitor*) override;
+
+    auto get_flag() const { return flag; }
+};
+
 class call_index: public expr {
 private:
     expr* index;

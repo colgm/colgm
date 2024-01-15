@@ -89,6 +89,10 @@ bool visitor::visit_string_literal(string_literal* node) {
     return true;
 }
 
+bool visitor::visit_bool_literal(bool_literal* node) {
+    return true;
+}
+
 bool visitor::visit_call_index(call_index* node) {
     node->get_index()->accept(this);
     return true;

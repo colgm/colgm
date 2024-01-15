@@ -28,6 +28,10 @@ void string_literal::accept(visitor* v) {
     v->visit_string_literal(this);
 }
 
+void bool_literal::accept(visitor* v) {
+    v->visit_bool_literal(this);
+}
+
 call_index::~call_index() {
     delete index;
 }

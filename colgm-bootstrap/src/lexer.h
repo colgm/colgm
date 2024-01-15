@@ -11,7 +11,7 @@
 namespace colgm {
 
 enum class tok:u32 {
-    null=0,   // null token (default token type)
+    null = 0, // null token (default token type)
     num,      // number literal
     str,      // string literal
     id,       // identifier

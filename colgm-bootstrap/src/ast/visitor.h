@@ -24,6 +24,7 @@ public:
     virtual bool visit_identifier(identifier*);
     virtual bool visit_number_literal(number_literal*);
     virtual bool visit_string_literal(string_literal*);
+    virtual bool visit_bool_literal(bool_literal*);
     virtual bool visit_call_index(call_index*);
     virtual bool visit_call_func_args(call_func_args*);
     virtual bool visit_call_field(call_field*);

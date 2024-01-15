@@ -155,19 +155,78 @@ void semantic::analyse_impls(root* ast_root) {
     }
 }
 
+type semantic::resolve_binary_operator(binary_operator* node) {
+    // TODO
+    return type::error_type();
+}
+
+type semantic::resolve_number_literal(number_literal* node) {
+    const auto& literal_string = node->get_number();
+    if (literal_string.find(".")!=std::string::npos ||
+        literal_string.find("e")!=std::string::npos) {
+        node->set_resolve_type({"f64", 0});
+        return {"f64", 0};
+    }
+    f64 result = atof(literal_string.c_str());
+    if (std::isinf(result) || std::isnan(result)) {
+        err.err("sema", node->get_location(),
+            "invalid number \"" + literal_string + "\"."
+        );
+        return type::error_type();
+    }
+    if (result <= 2147483647) {
+        node->set_resolve_type({"i32", 0});
+        return {"i32", 0};
+    }
+    node->set_resolve_type({"i64", 0});
+    return {"i64", 0};
+}
+
+type semantic::resolve_string_literal(string_literal* node) {
+    ctx.constant_string.insert(node->get_string());
+    node->set_resolve_type({"i8", 1});
+    return {"i8", 1};
+}
+
+type semantic::resolve_bool_literal(bool_literal* node) {
+    node->set_resolve_type({"bool", 0});
+    return {"bool", 0};
+}
+
+type semantic::resolve_call(call* node) {
+    // TODO
+    return type::error_type();
+}
+
+type semantic::resolve_assignment(assignment* node) {
+    // TODO
+    return type::error_type();
+}
+
 type semantic::resolve_expression(expr* node) {
     switch(node->get_ast_type()) {
-    case ast_type::ast_binary_operator: break;
-    case ast_type::ast_number_literal: break;
-    case ast_type::ast_string_literal: return {"i8", 1};
-    case ast_type::ast_call: break;
-    case ast_type::ast_assignment: break;
+    case ast_type::ast_binary_operator:
+        return resolve_binary_operator(reinterpret_cast<binary_operator*>(node));
+    case ast_type::ast_number_literal:
+        return resolve_number_literal(reinterpret_cast<number_literal*>(node));
+    case ast_type::ast_string_literal:
+        return resolve_string_literal(reinterpret_cast<string_literal*>(node));
+    case ast_type::ast_bool_literal:
+        return resolve_bool_literal(reinterpret_cast<bool_literal*>(node));
+    case ast_type::ast_call:
+        return resolve_call(reinterpret_cast<call*>(node));
+    case ast_type::ast_assignment:
+        return resolve_assignment(reinterpret_cast<assignment*>(node));
     default:
-        err.err("sema", node->get_location(), "unimplemented");
-        break;
+        err.err("sema", node->get_location(),
+            "unimplemented, please report a bug."
+        );
+        return type::error_type();
     }
-    // TODO
-    return {"i8", 0};
+    err.err("sema", node->get_location(),
+        "unreachable, please report a bug."
+    );
+    return type::error_type();
 }
 
 type semantic::resolve_type_def(type_def* node) {
@@ -176,7 +235,7 @@ type semantic::resolve_type_def(type_def* node) {
         err.err("sema", node->get_name()->get_location(),
             "unknown type \"" + name + "\"."
         );
-        return {"<err>", 0};
+        return type::error_type();
     }
     return {name, node->get_pointer_level()};
 }
