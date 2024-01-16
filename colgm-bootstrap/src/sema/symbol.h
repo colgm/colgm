@@ -15,13 +15,22 @@ namespace colgm {
 enum class symbol_kind {
     basic_kind,
     struct_kind,
-    func_kind
+    func_kind,
+    module_kind
+};
+
+struct struct_static_method {
+    bool flag_is_ssm = false;
+    std::string struct_name;
+    std::string method_name;
 };
 
 struct type {
     std::string name;
     u64 pointer_level;
     bool is_global = false;
+
+    struct_static_method ssm_info;
 
     std::string to_string() const;
     bool operator==(const type&) const;

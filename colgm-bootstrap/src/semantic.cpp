@@ -145,6 +145,13 @@ void semantic::analyse_impls(root* ast_root) {
     }
 }
 
+type semantic::struct_static_method_infer(const std::string& st_name,
+                                          const std::string& fn_name) {
+    auto infer = type({"", 0, true});
+    infer.ssm_info = {true, st_name, fn_name};
+    return infer;
+}
+
 type semantic::resolve_binary_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
@@ -208,6 +215,10 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
 
 type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // TODO
+    if (prev.ssm_info.flag_is_ssm) {
+        // TODO
+        report(node, "call ssm, true.");
+    }
     return type::error_type();
 }
 
@@ -234,8 +245,17 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         report(node, "cannot get path from a value.");
         return type::error_type();
     }
-    if (ctx.structs.count(prev.name)) {
-        // TODO
+    if (ctx.structs.count(prev.name) && prev.is_global) {
+        const auto& st = ctx.structs.at(prev.name);
+        if (st.method.count(node->get_name())) {
+            return struct_static_method_infer(prev.name, node->get_name());
+        } else {
+            report(node,
+                "cannot find static method \"" + node->get_name() +
+                "\" in \"" + prev.name + "\"."
+            );
+            return type::error_type();
+        }
     }
     return type::error_type();
 }

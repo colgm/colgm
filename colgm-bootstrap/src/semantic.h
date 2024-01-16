@@ -46,6 +46,9 @@ private:
     void analyse_impls(root*);
 
 private:
+    type struct_static_method_infer(const std::string&, const std::string&);
+
+private:
     type resolve_binary_operator(binary_operator*);
     type resolve_number_literal(number_literal*);
     type resolve_string_literal(string_literal*);

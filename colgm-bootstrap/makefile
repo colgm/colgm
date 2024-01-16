@@ -4,9 +4,9 @@ ifndef OS
 	OS = $(shell uname)
 endif
 ifeq ($(OS), Darwin)
-	CXXFLAGS = -std=$(STD) -c -O3 -fno-exceptions -fPIC -mmacosx-version-min=10.15
+	CXXFLAGS = -std=$(STD) -c -O3 -fno-exceptions -fPIC -mmacosx-version-min=10.15 -Wall
 else
-	CXXFLAGS = -std=$(STD) -c -O3 -fno-exceptions -fPIC
+	CXXFLAGS = -std=$(STD) -c -O3 -fno-exceptions -fPIC -Wall
 endif
 
 HEADER = \

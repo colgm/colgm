@@ -71,8 +71,8 @@ void execute(
     const std::vector<std::string>& argv,
     const u32 cmd = 0) {
 
-    using clk = std::chrono::high_resolution_clock;
-    const auto den = clk::duration::period::den;
+    // using clk = std::chrono::high_resolution_clock;
+    // const auto den = clk::duration::period::den;
 
     colgm::lexer lexer;
     colgm::parse parser;
