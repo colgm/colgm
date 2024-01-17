@@ -6,6 +6,12 @@ bool dumper::visit_root(root* node) {
     dump_indent();
     std::cout << "root" << format_location(node->get_location());
     push_indent();
+    for(auto i : node->get_use_stmts()) {
+        if (i==node->get_use_stmts().back() && node->get_decls().empty()) {
+            set_last();
+        }
+        i->accept(this);
+    }
     for(auto i : node->get_decls()) {
         if (i==node->get_decls().back()) {
             set_last();
@@ -234,6 +240,32 @@ bool dumper::visit_assignment(assignment* node) {
     node->get_left()->accept(this);
     set_last();
     node->get_right()->accept(this);
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_use_stmt(use_stmt* node) {
+    dump_indent();
+    std::cout << "use " << format_location(node->get_location());
+    push_indent();
+    for(auto i : node->get_module_path()) {
+        i->accept(this);
+    }
+    set_last();
+    dump_indent();
+    if (node->get_import_symbol().empty()) {
+        std::cout << "import all\n";
+    } else {
+        std::cout << "import symbol\n";
+        push_indent();
+        for(auto i : node->get_import_symbol()) {
+            if (i==node->get_import_symbol().back()) {
+                set_last();
+            }
+            i->accept(this);
+        }
+        pop_indent();
+    }
     pop_indent();
     return true;
 }

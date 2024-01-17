@@ -14,6 +14,24 @@ public:
     void accept(visitor*) override;  
 };
 
+class use_stmt: public stmt {
+private:
+    std::vector<identifier*> module_path;
+    std::vector<identifier*> import_symbol;
+
+public:
+    use_stmt(const span& loc):
+        stmt(ast_type::ast_use_stmt, loc) {}
+    ~use_stmt() override;
+    void accept(visitor*) override;
+
+    void add_path(identifier* node) { module_path.push_back(node); }
+    void add_import_symbol(identifier* node) { import_symbol.push_back(node); }
+
+    auto& get_module_path() { return module_path; }
+    auto& get_import_symbol() { return import_symbol; }
+};
+
 class definition: public stmt {
 private:
     std::string name;

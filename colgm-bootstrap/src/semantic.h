@@ -76,6 +76,10 @@ private:
     void resolve_impl(impl_struct*);
     void resolve_function_block(root*);
 
+private:
+    void resolve_single_use(use_stmt*);
+    void resolve_use_stmt(root*);
+
 public:
     const error& analyse(root*);
     void dump();

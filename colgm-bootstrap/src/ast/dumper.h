@@ -60,6 +60,7 @@ public:
     bool visit_call_path(call_path*) override;
     bool visit_call(call*) override;
     bool visit_assignment(assignment*) override;
+    bool visit_use_stmt(use_stmt*) override;
     bool visit_definition(definition*) override;
     bool visit_cond_stmt(cond_stmt*) override;
     bool visit_if_stmt(if_stmt*) override;

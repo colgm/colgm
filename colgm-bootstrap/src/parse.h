@@ -114,6 +114,7 @@ private:
     param_list* param_list_gen();
     func_decl* function_gen();
     impl_struct* impl_gen();
+    use_stmt* use_stmt_gen();
     definition* definition_gen();
     cond_stmt* cond_stmt_gen();
     while_stmt* while_stmt_gen();

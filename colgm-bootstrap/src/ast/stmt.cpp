@@ -7,6 +7,19 @@ void stmt::accept(visitor* v) {
     v->visit_stmt(this);
 }
 
+use_stmt::~use_stmt() {
+    for(auto i : module_path) {
+        delete i;
+    }
+    for(auto i : import_symbol) {
+        delete i;
+    }
+}
+
+void use_stmt::accept(visitor* v) {
+    v->visit_use_stmt(this);
+}
+
 definition::~definition() {
     delete type;
     delete init_value;

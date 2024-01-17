@@ -8,6 +8,9 @@ bool visitor::visit_node(node* node) {
 }
 
 bool visitor::visit_root(root* node) {
+    for(auto i : node->get_use_stmts()) {
+        i->accept(this);
+    }
     for(auto i : node->get_decls()) {
         i->accept(this);
     }
@@ -133,6 +136,16 @@ bool visitor::visit_assignment(assignment* node) {
 
 bool visitor::visit_stmt(stmt* node) {
     node->accept(this);
+    return true;
+}
+
+bool visitor::visit_use_stmt(use_stmt* node) {
+    for(auto i : node->get_module_path()) {
+        i->accept(this);
+    }
+    for(auto i : node->get_import_symbol()) {
+        i->accept(this);
+    }
     return true;
 }
 

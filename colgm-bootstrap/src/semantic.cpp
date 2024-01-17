@@ -551,6 +551,19 @@ void semantic::resolve_function_block(root* ast_root) {
     }
 }
 
+void semantic::resolve_single_use(use_stmt* node) {
+    if (node->get_module_path().empty()) {
+        report(node, "must import at least one symbol from this module.");
+        return;
+    }
+}
+
+void semantic::resolve_use_stmt(root* node) {
+    for(auto i : node->get_use_stmts()) {
+        resolve_single_use(i);
+    }
+}
+
 const error& semantic::analyse(root* ast_root) {
     ctx.global_symbol.clear();
     ctx.global_symbol.insert({"i64", symbol_kind::basic_kind});
@@ -565,6 +578,7 @@ const error& semantic::analyse(root* ast_root) {
     ctx.global_symbol.insert({"f64", symbol_kind::basic_kind});
     ctx.global_symbol.insert({"void", symbol_kind::basic_kind});
     ctx.global_symbol.insert({"bool", symbol_kind::basic_kind});
+    resolve_use_stmt(ast_root);
 
     ctx.structs.clear();
     analyse_structs(ast_root);

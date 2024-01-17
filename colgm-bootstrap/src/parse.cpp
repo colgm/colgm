@@ -375,6 +375,40 @@ impl_struct* parse::impl_gen() {
     return result;
 }
 
+use_stmt* parse::use_stmt_gen() {
+    auto result = new use_stmt(toks[ptr].loc);
+    match(tok::use);
+    result->add_path(identifier_gen());
+    while(look_ahead(tok::double_colon)) {
+        match(tok::double_colon);
+        if (look_ahead(tok::lbrace) || look_ahead(tok::mult)) {
+            break;
+        }
+        result->add_path(identifier_gen());
+    }
+    if (look_ahead(tok::lbrace)) {
+        match(tok::lbrace);
+        while(look_ahead(tok::id)) {
+            result->add_import_symbol(identifier_gen());
+            if (look_ahead(tok::comma)) {
+                match(tok::comma);
+            } else {
+                break;
+            }
+        }
+        match(tok::rbrace);
+    } else if (!look_ahead(tok::mult)) {
+        auto tmp = result->get_module_path().back();
+        result->get_module_path().pop_back();
+        result->add_import_symbol(tmp);
+    } else {
+        match(tok::mult);
+    }
+    update_location(result);
+    match(tok::semi);
+    return result;
+}
+
 definition* parse::definition_gen() {
     match(tok::var);
     auto result = new definition(toks[ptr].loc, toks[ptr].str);
@@ -476,6 +510,9 @@ const error& parse::analyse(const std::vector<token>& token_list) {
     result = new root(token_list[0].loc);
     if (look_ahead(tok::eof)) {
         return err;
+    }
+    while (look_ahead(tok::use)) {
+        result->add_use_stmt(use_stmt_gen());
     }
     while (!look_ahead(tok::eof)) {
         switch(toks[ptr].type) {

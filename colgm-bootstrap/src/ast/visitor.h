@@ -33,6 +33,7 @@ public:
     virtual bool visit_call(call*);
     virtual bool visit_assignment(assignment*);
     virtual bool visit_stmt(stmt*);
+    virtual bool visit_use_stmt(use_stmt*);
     virtual bool visit_definition(definition*);
     virtual bool visit_cond_stmt(cond_stmt*);
     virtual bool visit_if_stmt(if_stmt*);

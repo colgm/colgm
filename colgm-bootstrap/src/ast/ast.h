@@ -29,6 +29,7 @@ enum class ast_type {
     ast_param_list,
     ast_func_decl,
     ast_impl,
+    ast_use_stmt,
     ast_definition,
     ast_cond_stmt,
     ast_if_stmt,
@@ -62,6 +63,7 @@ class call_path;
 class call;
 class assignment;
 class stmt;
+class use_stmt;
 class definition;
 class cond_stmt;
 class if_stmt;
@@ -94,6 +96,7 @@ public:
 
 class root: public node {
 private:
+    std::vector<use_stmt*> imports;
     std::vector<decl*> declarations;
 
 public:
@@ -102,7 +105,9 @@ public:
     void accept(visitor*) override;
 
     void add_decl(decl* node) { declarations.push_back(node); }
+    void add_use_stmt(use_stmt* node) { imports.push_back(node); }
     const auto& get_decls() const { return declarations; }
+    const auto& get_use_stmts() const { return imports; }
 };
 
 }
