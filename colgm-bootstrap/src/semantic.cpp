@@ -147,8 +147,12 @@ void semantic::analyse_impls(root* ast_root) {
 
 type semantic::struct_static_method_infer(const std::string& st_name,
                                           const std::string& fn_name) {
-    auto infer = type({"", 0, true});
-    infer.ssm_info = {true, st_name, fn_name};
+    auto infer = type({st_name, 0, true});
+    infer.stm_info = {
+        .flag_is_static = true,
+        .flag_is_normal = false,
+        .method_name = fn_name
+    };
     return infer;
 }
 
@@ -202,22 +206,76 @@ type semantic::resolve_identifier(identifier* node) {
         return ctx.get_symbol(name);
     }
     if (ctx.global_symbol.count(name)) {
-        return {name, 0, true};
+        return {
+            .name = name,
+            .pointer_level = 0,
+            .is_global = true,
+            .is_global_func = ctx.global_symbol.at(name)==symbol_kind::func_kind
+        };
     }
     report(node, "undefined symbol \"" + name + "\".");
     return type::error_type();
 }
 
 type semantic::resolve_call_field(const type& prev, call_field* node) {
-    // TODO
+    if (prev.is_global) {
+        report(node,
+            "cannot get field from global symbol \"" + prev.to_string() + "\"."
+        );
+        return type::error_type();
+    }
+    if (prev.pointer_level!=0) {
+        report(node,
+            "cannot use this way to get field from \"" +
+            prev.to_string() + "\"."
+        );
+        return type::error_type();
+    }
+
+    if (!ctx.structs.count(prev.name)) {
+        report(node, "cannot get field from \"" + prev.to_string() + "\".");
+        return type::error_type();
+    }
+
+    const auto& struct_self = ctx.structs.at(prev.name);
+    for (const auto& field : struct_self.field) {
+        if (node->get_name()==field.name) {
+            return field.symbol_type;
+        }
+    }
+    for (const auto& method : struct_self.method) {
+        if (node->get_name()==method.first) {
+            auto infer = type({prev.name, 0, false});
+            infer.stm_info = {
+                .flag_is_static = false,
+                .flag_is_normal = true,
+                .method_name = node->get_name()
+            };
+            return infer;
+        }
+    }
+    report(node,
+        "cannot find field \"" + node->get_name() +
+        "\" in \"" + prev.name + "\"."
+    );
     return type::error_type();
 }
 
 type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // TODO
-    if (prev.ssm_info.flag_is_ssm) {
+    if (prev.is_global_func) {
         // TODO
-        report(node, "call ssm, true.");
+        return ctx.functions.at(prev.name).return_type;
+    }
+    if (prev.stm_info.flag_is_static) {
+        // TODO
+        const auto& st = ctx.structs.at(prev.name);
+        return st.method.at(prev.stm_info.method_name).return_type;
+    }
+    if (prev.stm_info.flag_is_normal) {
+        // TODO
+        const auto& st = ctx.structs.at(prev.name);
+        return st.method.at(prev.stm_info.method_name).return_type;
     }
     return type::error_type();
 }
@@ -285,8 +343,13 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
     }
     for (const auto& method : struct_self.method) {
         if (node->get_name()==method.first) {
-            // TODO
-            return type::error_type();
+            auto infer = type({prev.name, 0, false});
+            infer.stm_info = {
+                .flag_is_static = false,
+                .flag_is_normal = true,
+                .method_name = node->get_name()
+            };
+            return infer;
         }
     }
     report(node,
@@ -409,7 +472,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
             "but get \"" + real_type.to_string() + "\"."
         );
     }
-    ctx.add_symbol(name, real_type);
+    ctx.add_symbol(name, expected_type);
 }
 
 void semantic::resolve_if_stmt(if_stmt* node, const colgm_func& func_self) {

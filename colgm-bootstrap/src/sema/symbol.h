@@ -19,9 +19,9 @@ enum class symbol_kind {
     module_kind
 };
 
-struct struct_static_method {
-    bool flag_is_ssm = false;
-    std::string struct_name;
+struct struct_method {
+    bool flag_is_static = false; // mark static method
+    bool flag_is_normal = false; // mark normal method
     std::string method_name;
 };
 
@@ -29,8 +29,9 @@ struct type {
     std::string name;
     u64 pointer_level;
     bool is_global = false;
+    bool is_global_func = false;
 
-    struct_static_method ssm_info;
+    struct_method stm_info;
 
     std::string to_string() const;
     bool operator==(const type&) const;
