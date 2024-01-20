@@ -23,6 +23,7 @@ HEADER = \
 	src/ast/dumper.h\
 	src/code/ir.h\
 	src/code/ir_gen.h\
+	src/package/package.h\
 	src/sema/symbol.h
 
 OBJECT = \
@@ -40,6 +41,7 @@ OBJECT = \
 	build/dumper.o\
 	build/ir.o\
 	build/ir_gen.o\
+	build/package.o\
 	build/symbol.o
 
 
@@ -98,6 +100,9 @@ build/ir.o: $(HEADER) src/code/ir.cpp | build
 
 build/ir_gen.o: $(HEADER) src/code/ir_gen.cpp | build
 	$(CXX) $(CXXFLAGS) src/code/ir_gen.cpp -o build/ir_gen.o -I src
+
+build/package.o: $(HEADER) src/package/package.cpp | build
+	$(CXX) $(CXXFLAGS) src/package/package.cpp -o build/package.o -I src
 
 build/symbol.o: $(HEADER) src/sema/symbol.cpp | build
 	$(CXX) $(CXXFLAGS) src/sema/symbol.cpp -o build/symbol.o -I src

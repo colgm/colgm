@@ -10,6 +10,7 @@ void semantic::analyse_single_struct(struct_decl* node) {
     ctx.structs.insert({node->get_name(), {}});
     auto& struct_self = ctx.structs.at(node->get_name());
     struct_self.name = node->get_name();
+    struct_self.location = node->get_location();
     for(auto i : node->get_fields()) {
         auto type_node = i->get_type();
         auto type_name = type_node->get_name();
@@ -84,6 +85,7 @@ colgm_func semantic::analyse_single_method(func_decl* node,
                                            const colgm_struct& stct) {
     auto func_self = colgm_func();
     func_self.name = node->get_name();
+    func_self.location = node->get_location();
     analyse_method_parameter_list(node->get_params(), func_self, stct);
     analyse_return_type(node->get_return_type(), func_self);
     return func_self;
@@ -92,6 +94,7 @@ colgm_func semantic::analyse_single_method(func_decl* node,
 colgm_func semantic::analyse_single_func(func_decl* node) {
     auto func_self = colgm_func();
     func_self.name = node->get_name();
+    func_self.location = node->get_location();
     analyse_func_parameter_list(node->get_params(), func_self);
     analyse_return_type(node->get_return_type(), func_self);
     return func_self;

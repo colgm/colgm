@@ -1,6 +1,7 @@
 #pragma once
 
 #include "colgm.h"
+#include "err.h"
 
 #include <ostream>
 #include <cstdint>
@@ -16,6 +17,7 @@ enum class symbol_kind {
     basic_kind,
     struct_kind,
     func_kind,
+    package_kind,
     module_kind
 };
 
@@ -60,8 +62,13 @@ struct symbol {
     type symbol_type;
 };
 
+struct colgm_module {};
+
+struct colgm_package {};
+
 struct colgm_func {
     std::string name;
+    span location;
     type return_type;
     std::vector<symbol> parameters;
 
@@ -71,6 +78,7 @@ struct colgm_func {
 
 struct colgm_struct {
     std::string name;
+    span location;
     std::vector<symbol> field;
     std::unordered_map<std::string, colgm_func> method;
 };
