@@ -5,6 +5,7 @@
 #include "ast/dumper.h"
 #include "semantic.h"
 #include "code/ir_gen.h"
+#include "package/package.h"
 
 #include <unordered_map>
 #include <thread>
@@ -19,16 +20,17 @@ std::ostream& help(std::ostream& out) {
     out
     << "\ncolgm <option>\n"
     << "option:\n"
-    << "   -h,   --help     | get help.\n"
-    << "   -v,   --version  | get version.\n"
+    << "   -h,   --help           | get help.\n"
+    << "   -v,   --version        | get version.\n"
     << "\ncolgm [option] <file>\n"
     << "option:\n"
-    << "   -l,   --lex      | view analysed tokens.\n"
-    << "   -a,   --ast      | view ast.\n"
-    << "   -s,   --sema     | view semantic result.\n"
-    << "   -i,   --ir       | view semantic generated ir.\n"
+    << "   -l,   --lex            | view analysed tokens.\n"
+    << "   -a,   --ast            | view ast.\n"
+    << "   -s,   --sema           | view semantic result.\n"
+    << "   -i,   --ir             | view semantic generated ir.\n"
+    << "   -L,   --library <path> | add library path.\n"
     << "file:\n"
-    << "   <filename>       | imput file.\n"
+    << "   <filename>             | input file.\n"
     << "\n";
     return out;
 }
@@ -145,10 +147,16 @@ i32 main(i32 argc, const char* argv[]) {
     };
     u32 cmd = 0;
     std::string filename = "";
+    std::string library_path = "";
     std::vector<std::string> vm_argv;
     for(i32 i = 1; i<argc; ++i) {
         if (cmdlst.count(argv[i])) {
             cmd |= cmdlst.at(argv[i]);
+        } else if (argv[i]==std::string("-L") || argv[i]==std::string("--library")) {
+            if (i+1<argc) {
+                library_path = argv[i+1];
+                ++i;
+            }
         } else if (!filename.length()) {
             filename = argv[i];
         } else {
@@ -157,6 +165,11 @@ i32 main(i32 argc, const char* argv[]) {
     }
     if (!filename.length()) {
         err();
+    }
+
+    if (!library_path.empty()) {
+        colgm::package_manager::singleton()->scan(library_path).chkerr();
+        colgm::package_manager::singleton()->dump_packages();
     }
     execute(filename, vm_argv, cmd);
     return 0;

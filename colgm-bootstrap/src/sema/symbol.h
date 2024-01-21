@@ -62,10 +62,6 @@ struct symbol {
     type symbol_type;
 };
 
-struct colgm_module {};
-
-struct colgm_package {};
-
 struct colgm_func {
     std::string name;
     span location;
