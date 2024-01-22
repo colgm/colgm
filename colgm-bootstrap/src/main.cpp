@@ -13,8 +13,9 @@
 
 const u32 COMPILE_VIEW_TOKEN = 1;
 const u32 COMPILE_VIEW_AST = 1<<1;
-const u32 COMPILE_VIEW_SEMA = 1<<2;
-const u32 COMPILE_VIEW_IR = 1<<3;
+const u32 COMPILE_VIEW_LIB = 1<<2;
+const u32 COMPILE_VIEW_SEMA = 1<<3;
+const u32 COMPILE_VIEW_IR = 1<<4;
 
 std::ostream& help(std::ostream& out) {
     out
@@ -29,6 +30,7 @@ std::ostream& help(std::ostream& out) {
     << "   -s,   --sema           | view semantic result.\n"
     << "   -i,   --ir             | view semantic generated ir.\n"
     << "   -L,   --library <path> | add library path.\n"
+    << "         --dump-lib       | view libraries.\n"
     << "file:\n"
     << "   <filename>             | input file.\n"
     << "\n";
@@ -143,7 +145,8 @@ i32 main(i32 argc, const char* argv[]) {
         {"--sema", COMPILE_VIEW_SEMA},
         {"-s", COMPILE_VIEW_SEMA},
         {"--ir", COMPILE_VIEW_IR},
-        {"-i", COMPILE_VIEW_IR}
+        {"-i", COMPILE_VIEW_IR},
+        {"--dump-lib", COMPILE_VIEW_LIB}
     };
     u32 cmd = 0;
     std::string filename = "";
@@ -169,7 +172,9 @@ i32 main(i32 argc, const char* argv[]) {
 
     if (!library_path.empty()) {
         colgm::package_manager::singleton()->scan(library_path).chkerr();
-        colgm::package_manager::singleton()->dump_packages();
+        if (cmd&COMPILE_VIEW_LIB) {
+            colgm::package_manager::singleton()->dump_packages();
+        }
     }
     execute(filename, vm_argv, cmd);
     return 0;

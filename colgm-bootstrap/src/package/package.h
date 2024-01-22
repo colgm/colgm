@@ -18,6 +18,7 @@ struct colgm_module {
 };
 
 struct colgm_package {
+    std::string package_name;
     std::unordered_map<std::string, colgm_package*> sub_pack;
     std::unordered_map<std::string, colgm_module*> sub_mod;
 
@@ -31,9 +32,11 @@ struct colgm_package {
     }
     void add_new_package(const std::string& name) {
         sub_pack.insert({name, new colgm_package});
+        sub_pack.at(name)->package_name = name;
     }
-    void add_new_module(const std::string& name) {
-        sub_mod.insert({name, new colgm_module});
+    void add_new_module(const std::string& mn, const std::string& fn) {
+        sub_mod.insert({mn, new colgm_module});
+        sub_mod.at(mn)->file_name = fn;
     }
 };
 
@@ -52,11 +55,10 @@ private:
     std::unordered_map<std::string, std::string> file_to_module;
     std::unordered_map<std::string, std::string> module_to_file;
 
-    void add_new_module(const std::string& module_name, const std::string& file_name) {
-        file_to_module.insert({file_name, module_name});
-        module_to_file.insert({module_name, file_name});
-    }
+    void recursive_dump_modules(colgm_package*, const std::string&);
+    void recursive_dump_modules_root();
     void add_new_file(const std::filesystem::path&);
+    std::string replace_string(const std::string&);
 
 public:
     static package_manager* singleton() {
