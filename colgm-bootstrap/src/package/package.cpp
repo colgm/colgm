@@ -37,6 +37,7 @@ void package_manager::recursive_dump_modules(colgm_package* pkg,
         const auto mod_path = parent_path + pkg->package_name + "::" + i.first;
         file_to_module.insert({i.second->file_name, mod_path});
         module_to_file.insert({mod_path, i.second->file_name});
+        analyse_status_map.insert({i.second->file_name, analyse_status::not_used});
     }
 }
 
@@ -47,12 +48,14 @@ void package_manager::recursive_dump_modules_root() {
     for(const auto& i : root_package.sub_mod) {
         file_to_module.insert({i.second->file_name, i.first});
         module_to_file.insert({i.first, i.second->file_name});
+        analyse_status_map.insert({i.second->file_name, analyse_status::not_used});
     }
 }
 
-void package_manager::add_new_file(const std::filesystem::path& fp) {
+void package_manager::add_new_file(const std::filesystem::path& canonical_path,
+                                   const std::filesystem::path& real_path) {
     std::vector<std::filesystem::path> parent_path_split;
-    const auto parent = fp.parent_path().string();
+    const auto parent = canonical_path.parent_path().string();
     size_t last = 0;
     size_t sep = parent.find_first_of("/\\", last);
     while(sep!=std::string::npos) {
@@ -73,9 +76,9 @@ void package_manager::add_new_file(const std::filesystem::path& fp) {
             pkg = pkg->sub_pack.at(pkg_name);
         }
     }
-    const auto mod_name = replace_string(fp.stem().string());
+    const auto mod_name = replace_string(canonical_path.stem().string());
     if (!pkg->sub_mod.count(mod_name)) {
-        pkg->add_new_module(mod_name, fp.string());
+        pkg->add_new_module(mod_name, real_path.string());
     }
 }
 
@@ -99,7 +102,7 @@ const error& package_manager::scan(const std::string& directory) {
     for(auto i : std::filesystem::recursive_directory_iterator(directory)) {
         if (i.is_regular_file()) {
             if (i.path().extension()==".colgm") {
-                add_new_file(std::filesystem::relative(i.path(), directory));
+                add_new_file(std::filesystem::relative(i.path(), directory), i.path());
             }
         }
     }

@@ -1,0 +1,34 @@
+use std::libc::malloc;
+
+struct str {
+    c_str: i8*,
+    size: u32
+}
+
+impl str {
+    func new() -> str* {
+        var res: str* = malloc(sizeof(str));
+        res->c_str = malloc(128);
+        res->size = 0;
+        res->c_str[0] = 0;
+        return res;
+    }
+
+    func empty(self: str*) -> u8 {
+        if (self->size == 0) {
+            return 1;
+        }
+        return 0;
+    }
+
+    func copy(self: str*) -> str* {
+        var new_str: str* = str::new();
+        new_str->size = self->size;
+        new_str->c_str = malloc(self->size);
+        var i: u32 = 0;
+        while (i<self->size) {
+            new_str->c_str[i] = self->c_str[i];
+        }
+        return new_str;
+    }
+}

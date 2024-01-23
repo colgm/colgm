@@ -6,6 +6,7 @@
 #include "code/ir.h"
 #include "ast/visitor.h"
 #include "sema/symbol.h"
+#include "package/package.h"
 
 #include <unordered_map>
 #include <cstring>

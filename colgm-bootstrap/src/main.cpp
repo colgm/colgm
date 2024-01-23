@@ -72,7 +72,6 @@ void err() {
 
 void execute(
     const std::string& file,
-    const std::vector<std::string>& argv,
     const u32 cmd = 0) {
 
     // using clk = std::chrono::high_resolution_clock;
@@ -151,7 +150,6 @@ i32 main(i32 argc, const char* argv[]) {
     u32 cmd = 0;
     std::string filename = "";
     std::string library_path = "";
-    std::vector<std::string> vm_argv;
     for(i32 i = 1; i<argc; ++i) {
         if (cmdlst.count(argv[i])) {
             cmd |= cmdlst.at(argv[i]);
@@ -163,7 +161,7 @@ i32 main(i32 argc, const char* argv[]) {
         } else if (!filename.length()) {
             filename = argv[i];
         } else {
-            vm_argv.push_back(argv[i]);
+            err();
         }
     }
     if (!filename.length()) {
@@ -176,6 +174,6 @@ i32 main(i32 argc, const char* argv[]) {
             colgm::package_manager::singleton()->dump_packages();
         }
     }
-    execute(filename, vm_argv, cmd);
+    execute(filename, cmd);
     return 0;
 }

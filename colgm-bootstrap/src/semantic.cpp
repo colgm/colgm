@@ -1,3 +1,5 @@
+#include "lexer.h"
+#include "parse.h"
 #include "semantic.h"
 
 namespace colgm {
@@ -622,6 +624,41 @@ void semantic::resolve_single_use(use_stmt* node) {
         report(node, "must import at least one symbol from this module.");
         return;
     }
+    auto mp = std::string("");
+    for(auto i : node->get_module_path()) {
+        mp += i->get_name();
+        if (i!=node->get_module_path().back()) {
+            mp += "::";
+        }
+    }
+    const auto& fn = package_manager::singleton()->get_file_name(mp);
+    if (fn.empty()) {
+        report(node, "cannot find module \"" + mp + "\".");
+        return;
+    }
+    if (package_manager::singleton()->get_analyse_status(fn)==package_manager::analyse_status::analysing) {
+        report(node, "module \"" + mp + "\" is not totally analysed, maybe encounter self-reference.");
+        return;
+    }
+    if (package_manager::singleton()->get_analyse_status(fn)==package_manager::analyse_status::not_used) {
+        package_manager::singleton()->set_analyse_status(fn, package_manager::analyse_status::analysing);
+        lexer lex;
+        parse par;
+        semantic sema;
+        if (lex.scan(fn).geterr()) {
+            report(node, "error ocurred when analysing module \"" + mp + "\".");
+            return;
+        }
+        if (par.analyse(lex.result()).geterr()) {
+            report(node, "error ocurred when analysing module \"" + mp + "\".");
+            return;
+        }
+        if (sema.analyse(par.get_result()).geterr()) {
+            report(node, "error ocurred when analysing module \"" + mp + "\".");
+            return;
+        }
+        package_manager::singleton()->set_analyse_status(fn, package_manager::analyse_status::analysed);
+    }
 }
 
 void semantic::resolve_use_stmt(root* node) {
@@ -645,6 +682,9 @@ const error& semantic::analyse(root* ast_root) {
     ctx.global_symbol.insert({"void", symbol_kind::basic_kind});
     ctx.global_symbol.insert({"bool", symbol_kind::basic_kind});
     resolve_use_stmt(ast_root);
+    if (err.geterr()) {
+        return err;
+    }
 
     ctx.structs.clear();
     analyse_structs(ast_root);
