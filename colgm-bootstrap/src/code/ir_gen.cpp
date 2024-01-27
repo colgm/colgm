@@ -7,13 +7,14 @@ namespace colgm {
 std::string ir_gen::generate_type_string(type_def* node) {
     auto ty = type({
         node->get_name()->get_name(),
+        node->get_location().file,
         node->get_pointer_level()
     });
-    if (ctx.structs.count(ty.name)) {
-        ty.name = "%struct." + ty.name;
-    } else if (basic_type_convert_mapper.count(ty.name)) {
-        ty.name = basic_type_convert_mapper.at(ty.name);
-    }
+    // if (ctx.structs.count(ty.name)) {
+    //     ty.name = "%struct." + ty.name;
+    // } else if (basic_type_convert_mapper.count(ty.name)) {
+    //     ty.name = basic_type_convert_mapper.at(ty.name);
+    // }
     return ty.to_string();
 }
 

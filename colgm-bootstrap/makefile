@@ -24,6 +24,7 @@ HEADER = \
 	src/code/ir.h\
 	src/code/ir_gen.h\
 	src/package/package.h\
+	src/sema/context.h\
 	src/sema/symbol.h
 
 OBJECT = \
@@ -42,6 +43,7 @@ OBJECT = \
 	build/ir.o\
 	build/ir_gen.o\
 	build/package.o\
+	build/context.o\
 	build/symbol.o
 
 
@@ -103,6 +105,9 @@ build/ir_gen.o: $(HEADER) src/code/ir_gen.cpp | build
 
 build/package.o: $(HEADER) src/package/package.cpp | build
 	$(CXX) $(CXXFLAGS) src/package/package.cpp -o build/package.o -I src
+
+build/context.o: $(HEADER) src/sema/context.cpp | build
+	$(CXX) $(CXXFLAGS) src/sema/context.cpp -o build/context.o -I src
 
 build/symbol.o: $(HEADER) src/sema/symbol.cpp | build
 	$(CXX) $(CXXFLAGS) src/sema/symbol.cpp -o build/symbol.o -I src

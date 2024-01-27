@@ -7,6 +7,7 @@
 #include "ast/visitor.h"
 #include "sema/symbol.h"
 #include "package/package.h"
+#include "sema/context.h"
 
 #include <unordered_map>
 #include <cstring>
@@ -19,6 +20,7 @@ class semantic {
 private:
     error err;
     semantic_context ctx;
+    std::string this_file;
 
 private:
     void report(node* n, const std::string& info) {
@@ -47,7 +49,9 @@ private:
     void analyse_impls(root*);
 
 private:
-    type struct_static_method_infer(const std::string&, const std::string&);
+    type struct_static_method_infer(const std::string&,
+                                    const std::string&,
+                                    const std::string&);
 
 private:
     type resolve_binary_operator(binary_operator*);

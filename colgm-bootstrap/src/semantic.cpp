@@ -5,24 +5,30 @@
 namespace colgm {
 
 void semantic::analyse_single_struct(struct_decl* node) {
-    if (ctx.structs.count(node->get_name())) {
+    const auto& name = node->get_name();
+    if (ctx.global.domain.at(this_file).structs.count(name)) {
         report(node, "struct \"" + node->get_name() + "\" already exists.");
         return;
     }
-    ctx.structs.insert({node->get_name(), {}});
-    auto& struct_self = ctx.structs.at(node->get_name());
+    ctx.global.domain.at(this_file).structs.insert({name, {}});
+    auto& struct_self = ctx.global.domain.at(this_file).structs.at(node->get_name());
     struct_self.name = node->get_name();
     struct_self.location = node->get_location();
     for(auto i : node->get_fields()) {
         auto type_node = i->get_type();
-        auto type_name = type_node->get_name();
-        if (!ctx.global_symbol.count(type_name->get_name())) {
-            report(type_name, "undefined type \"" + type_name->get_name() + "\".");
+        auto type_name_node = type_node->get_name();
+        if (!ctx.global_symbol.count(type_name_node->get_name())) {
+            report(type_name_node,
+                "undefined type \"" + type_name_node->get_name() + "\"."
+            );
+            continue;
         }
         struct_self.field.push_back({
-            i->get_name()->get_name(),
-            i->get_type()->get_name()->get_name(),
-            i->get_type()->get_pointer_level()
+            i->get_name()->get_name(), {
+                i->get_type()->get_name()->get_name(),
+                ctx.global_symbol.at(type_name_node->get_name()).loc_file,
+                i->get_type()->get_pointer_level()
+            }
         });
     }
 }
@@ -35,7 +41,7 @@ void semantic::analyse_structs(root* ast_root) {
         auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
         ctx.global_symbol.insert({
             struct_decl_node->get_name(),
-            symbol_kind::struct_kind
+            {symbol_kind::struct_kind, ast_root->get_location().file}
         });
         analyse_single_struct(struct_decl_node);
     }
@@ -108,14 +114,17 @@ void semantic::analyse_functions(root* ast_root) {
             continue;
         }
         auto func_decl_node = reinterpret_cast<func_decl*>(i);
-        ctx.global_symbol.insert({func_decl_node->get_name(), symbol_kind::func_kind});
-        if (ctx.functions.count(func_decl_node->get_name())) {
+        ctx.global_symbol.insert({
+            func_decl_node->get_name(),
+            {symbol_kind::func_kind, ast_root->get_location().file}
+        });
+        if (ctx.global.domain.at(this_file).functions.count(func_decl_node->get_name())) {
             report(func_decl_node,
                 "function \"" + func_decl_node->get_name() + "\" already exists."
             );
             continue;
         }
-        ctx.functions.insert({
+        ctx.global.domain.at(this_file).functions.insert({
             func_decl_node->get_name(),
             analyse_single_func(func_decl_node)
         });
@@ -123,11 +132,11 @@ void semantic::analyse_functions(root* ast_root) {
 }
 
 void semantic::analyse_single_impl(impl_struct* node) {
-    if (!ctx.structs.count(node->get_struct_name())) {
+    if (!ctx.global.domain.at(this_file).structs.count(node->get_struct_name())) {
         report(node, "undefined struct \"" + node->get_struct_name() + "\".");
         return;
     }
-    auto& stct = ctx.structs.at(node->get_struct_name());
+    auto& stct = ctx.global.domain.at(this_file).structs.at(node->get_struct_name());
     for(auto i : node->get_methods()) {
         if (stct.method.count(i->get_name())) {
             report(i, "method \"" + i->get_name() + "\" already exists.");
@@ -151,8 +160,9 @@ void semantic::analyse_impls(root* ast_root) {
 }
 
 type semantic::struct_static_method_infer(const std::string& st_name,
+                                          const std::string& loc_file,
                                           const std::string& fn_name) {
-    auto infer = type({st_name, 0, true});
+    auto infer = type({st_name, loc_file, 0, true});
     infer.stm_info = {
         .flag_is_static = true,
         .flag_is_normal = false,
@@ -178,8 +188,8 @@ type semantic::resolve_number_literal(number_literal* node) {
     const auto& literal_string = node->get_number();
     if (literal_string.find(".")!=std::string::npos ||
         literal_string.find("e")!=std::string::npos) {
-        node->set_resolve_type({"f64", 0});
-        return {"f64", 0};
+        node->set_resolve_type({"f64", "", 0});
+        return {"f64", "", 0};
     }
     f64 result = atof(literal_string.c_str());
     if (std::isinf(result) || std::isnan(result)) {
@@ -187,22 +197,22 @@ type semantic::resolve_number_literal(number_literal* node) {
         return type::error_type();
     }
     if (result <= 2147483647) {
-        node->set_resolve_type({"i32", 0});
-        return {"i32", 0};
+        node->set_resolve_type({"i32", "", 0});
+        return {"i32", "", 0};
     }
-    node->set_resolve_type({"i64", 0});
-    return {"i64", 0};
+    node->set_resolve_type({"i64", "", 0});
+    return {"i64", "", 0};
 }
 
 type semantic::resolve_string_literal(string_literal* node) {
-    ctx.constant_string.insert(node->get_string());
-    node->set_resolve_type({"i8", 1});
-    return {"i8", 1};
+    ctx.global.constant_string.insert(node->get_string());
+    node->set_resolve_type({"i8", "", 1});
+    return {"i8", "", 1};
 }
 
 type semantic::resolve_bool_literal(bool_literal* node) {
-    node->set_resolve_type({"bool", 0});
-    return {"bool", 0};
+    node->set_resolve_type({"bool", "", 0});
+    return {"bool", "", 0};
 }
 
 type semantic::resolve_identifier(identifier* node) {
@@ -213,9 +223,10 @@ type semantic::resolve_identifier(identifier* node) {
     if (ctx.global_symbol.count(name)) {
         return {
             .name = name,
+            .loc_file = ctx.global_symbol.at(name).loc_file,
             .pointer_level = 0,
             .is_global = true,
-            .is_global_func = ctx.global_symbol.at(name)==symbol_kind::func_kind
+            .is_global_func = ctx.global_symbol.at(name).kind==symbol_kind::func_kind
         };
     }
     report(node, "undefined symbol \"" + name + "\".");
@@ -237,12 +248,12 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
         return type::error_type();
     }
 
-    if (!ctx.structs.count(prev.name)) {
+    if (!ctx.global.domain.at(this_file).structs.count(prev.name)) {
         report(node, "cannot get field from \"" + prev.to_string() + "\".");
         return type::error_type();
     }
 
-    const auto& struct_self = ctx.structs.at(prev.name);
+    const auto& struct_self = ctx.global.domain.at(this_file).structs.at(prev.name);
     for (const auto& field : struct_self.field) {
         if (node->get_name()==field.name) {
             return field.symbol_type;
@@ -270,16 +281,19 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // TODO
     if (prev.is_global_func) {
         // TODO
-        return ctx.functions.at(prev.name).return_type;
+        const auto& domain = ctx.global.domain.at(prev.loc_file);
+        return domain.functions.at(prev.name).return_type;
     }
     if (prev.stm_info.flag_is_static) {
         // TODO
-        const auto& st = ctx.structs.at(prev.name);
+        const auto& domain = ctx.global.domain.at(prev.loc_file);
+        const auto& st =domain.structs.at(prev.name);
         return st.method.at(prev.stm_info.method_name).return_type;
     }
     if (prev.stm_info.flag_is_normal) {
         // TODO
-        const auto& st = ctx.structs.at(prev.name);
+        const auto& domain = ctx.global.domain.at(prev.loc_file);
+        const auto& st = domain.structs.at(prev.name);
         return st.method.at(prev.stm_info.method_name).return_type;
     }
     return type::error_type();
@@ -308,10 +322,11 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         report(node, "cannot get path from a value.");
         return type::error_type();
     }
-    if (ctx.structs.count(prev.name) && prev.is_global) {
-        const auto& st = ctx.structs.at(prev.name);
+    const auto& domain = ctx.global.domain.at(prev.loc_file);
+    if (domain.structs.count(prev.name) && prev.is_global) {
+        const auto& st = domain.structs.at(prev.name);
         if (st.method.count(node->get_name())) {
-            return struct_static_method_infer(prev.name, node->get_name());
+            return struct_static_method_infer(prev.name, prev.loc_file, node->get_name());
         } else {
             report(node,
                 "cannot find static method \"" + node->get_name() +
@@ -335,12 +350,13 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
         return type::error_type();
     }
 
-    if (!ctx.structs.count(prev.name)) {
+    const auto& domain = ctx.global.domain.at(prev.loc_file);
+    if (!domain.structs.count(prev.name)) {
         report(node, "cannot get field from \"" + prev.to_string() + "\".");
         return type::error_type();
     }
 
-    const auto& struct_self = ctx.structs.at(prev.name);
+    const auto& struct_self = domain.structs.at(prev.name);
     for (const auto& field : struct_self.field) {
         if (node->get_name()==field.name) {
             return field.symbol_type;
@@ -348,7 +364,7 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
     }
     for (const auto& method : struct_self.method) {
         if (node->get_name()==method.first) {
-            auto infer = type({prev.name, 0, false});
+            auto infer = type({prev.name, prev.loc_file, 0, false});
             infer.stm_info = {
                 .flag_is_static = false,
                 .flag_is_normal = true,
@@ -407,7 +423,7 @@ type semantic::resolve_call(call* node) {
             return infer;
         }
     }
-    if (ctx.functions.count(infer.name)) {
+    if (ctx.global.domain.at(this_file).functions.count(infer.name)) {
         report(node, "function should be called here.");
         return type::error_type();
     }
@@ -456,7 +472,7 @@ type semantic::resolve_type_def(type_def* node) {
         report(node->get_name(), "unknown type \"" + name + "\".");
         return type::error_type();
     }
-    return {name, node->get_pointer_level()};
+    return {name, ctx.global_symbol.at(name).loc_file, node->get_pointer_level()};
 }
 
 void semantic::resolve_definition(definition* node, const colgm_func& func_self) {
@@ -574,8 +590,13 @@ void semantic::resolve_global_func(func_decl* node) {
     if (!node->get_code_block()) {
         return;
     }
+    const auto& domain = ctx.global.domain.at(this_file);
+    if (!domain.functions.count(node->get_name())) {
+        report(node, "cannot find function \"" + node->get_name() + "\".");
+        return;
+    }
     ctx.push_new_level();
-    const auto& func_self = ctx.functions.at(node->get_name());
+    const auto& func_self = domain.functions.at(node->get_name());
     for(const auto& p : func_self.parameters) {
         ctx.add_symbol(p.name, p.symbol_type);
     }
@@ -602,7 +623,15 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
 }
 
 void semantic::resolve_impl(impl_struct* node) {
-    const auto& struct_self = ctx.structs.at(node->get_struct_name());
+    const auto& domain = ctx.global.domain.at(this_file);
+    if (!domain.structs.count(node->get_struct_name())) {
+        report(node,
+            "cannot implement \"" + node->get_struct_name() +
+            "\", this struct is not defined in this file."
+        );
+        return;
+    }
+    const auto& struct_self = domain.structs.at(node->get_struct_name());
     for(auto i : node->get_methods()) {
         resolve_method(i, struct_self);
     }
@@ -631,17 +660,20 @@ void semantic::resolve_single_use(use_stmt* node) {
             mp += "::";
         }
     }
+    
     const auto& fn = package_manager::singleton()->get_file_name(mp);
     if (fn.empty()) {
         report(node, "cannot find module \"" + mp + "\".");
         return;
     }
-    if (package_manager::singleton()->get_analyse_status(fn)==package_manager::analyse_status::analysing) {
+
+    auto pkgman = package_manager::singleton();
+    if (pkgman->get_analyse_status(fn)==package_manager::status::analysing) {
         report(node, "module \"" + mp + "\" is not totally analysed, maybe encounter self-reference.");
         return;
     }
-    if (package_manager::singleton()->get_analyse_status(fn)==package_manager::analyse_status::not_used) {
-        package_manager::singleton()->set_analyse_status(fn, package_manager::analyse_status::analysing);
+    if (pkgman->get_analyse_status(fn)==package_manager::status::not_used) {
+        pkgman->set_analyse_status(fn, package_manager::status::analysing);
         lexer lex;
         parse par;
         semantic sema;
@@ -657,7 +689,38 @@ void semantic::resolve_single_use(use_stmt* node) {
             report(node, "error ocurred when analysing module \"" + mp + "\".");
             return;
         }
-        package_manager::singleton()->set_analyse_status(fn, package_manager::analyse_status::analysed);
+        pkgman->set_analyse_status(fn, package_manager::status::analysed);
+    }
+
+    const auto& domain = ctx.global.domain.at(fn);
+    if (node->get_import_symbol().empty()) {
+        for(const auto& i : domain.structs) {
+            ctx.global_symbol.insert({
+                i.second.name,
+                {symbol_kind::struct_kind, fn}
+            });
+        }
+        for(const auto& i : domain.functions) {
+            ctx.global_symbol.insert({
+                i.second.name,
+                {symbol_kind::func_kind, fn}
+            });
+        }
+    } else {
+        for(auto i : node->get_import_symbol()) {
+            if (domain.structs.count(i->get_name())) {
+                ctx.global_symbol.insert({
+                    i->get_name(),
+                    {symbol_kind::struct_kind, fn}
+                });
+            }
+            if (domain.functions.count(i->get_name())) {
+                ctx.global_symbol.insert({
+                    i->get_name(),
+                    {symbol_kind::func_kind, fn}
+                });
+            }
+        }
     }
 }
 
@@ -668,28 +731,33 @@ void semantic::resolve_use_stmt(root* node) {
 }
 
 const error& semantic::analyse(root* ast_root) {
+    this_file = ast_root->get_location().file;
+    if (!ctx.global.domain.count(this_file)) {
+        ctx.global.domain.insert({this_file, {}});
+    }
+
     ctx.global_symbol.clear();
-    ctx.global_symbol.insert({"i64", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"i32", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"i16", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"i8", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"u64", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"u32", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"u16", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"u8", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"f32", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"f64", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"void", symbol_kind::basic_kind});
-    ctx.global_symbol.insert({"bool", symbol_kind::basic_kind});
+    ctx.global_symbol.insert({"i64", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"i32", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"i16", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"i8", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"u64", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"u32", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"u16", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"u8", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"f32", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"f64", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"void", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"bool", {symbol_kind::basic_kind, ""}});
     resolve_use_stmt(ast_root);
     if (err.geterr()) {
         return err;
     }
 
-    ctx.structs.clear();
+    ctx.global.domain.at(this_file).structs.clear();
     analyse_structs(ast_root);
 
-    ctx.functions.clear();
+    ctx.global.domain.at(this_file).functions.clear();
     analyse_functions(ast_root);
 
     analyse_impls(ast_root);

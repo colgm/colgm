@@ -37,7 +37,7 @@ void package_manager::recursive_dump_modules(colgm_package* pkg,
         const auto mod_path = parent_path + pkg->package_name + "::" + i.first;
         file_to_module.insert({i.second->file_name, mod_path});
         module_to_file.insert({mod_path, i.second->file_name});
-        analyse_status_map.insert({i.second->file_name, analyse_status::not_used});
+        analyse_status_map.insert({i.second->file_name, status::not_used});
     }
 }
 
@@ -48,7 +48,7 @@ void package_manager::recursive_dump_modules_root() {
     for(const auto& i : root_package.sub_mod) {
         file_to_module.insert({i.second->file_name, i.first});
         module_to_file.insert({i.first, i.second->file_name});
-        analyse_status_map.insert({i.second->file_name, analyse_status::not_used});
+        analyse_status_map.insert({i.second->file_name, status::not_used});
     }
 }
 

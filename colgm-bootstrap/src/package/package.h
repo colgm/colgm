@@ -52,7 +52,7 @@ public:
     void dump_packages();
 
 public:
-    enum class analyse_status {
+    enum class status {
         not_used,
         not_exist,
         analysed,
@@ -62,7 +62,7 @@ public:
 private:
     std::unordered_map<std::string, std::string> file_to_module;
     std::unordered_map<std::string, std::string> module_to_file;
-    std::unordered_map<std::string, analyse_status> analyse_status_map;
+    std::unordered_map<std::string, status> analyse_status_map;
 
     void recursive_dump_modules(colgm_package*, const std::string&);
     void recursive_dump_modules_root();
@@ -92,15 +92,14 @@ public:
         if (analyse_status_map.count(file_name)) {
             return analyse_status_map.at(file_name);
         }
-        return analyse_status::not_exist;
+        return status::not_exist;
     }
-    void set_analyse_status(const std::string& file_name, analyse_status as) {
+    void set_analyse_status(const std::string& file_name, status as) {
         if (analyse_status_map.count(file_name)) {
             analyse_status_map.at(file_name) = as;
         }
     }
     const error& scan(const std::string&);
-    
 };
 
 }

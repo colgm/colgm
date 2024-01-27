@@ -80,7 +80,7 @@ private:
 
 public:
     node(ast_type type, const span& loc):
-        node_type(type), location(loc), resolve({"", 0}) {}
+        node_type(type), location(loc), resolve({"", "", 0}) {}
     virtual ~node() = default;
     virtual void accept(visitor*) = 0;
 
