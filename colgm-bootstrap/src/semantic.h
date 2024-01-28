@@ -26,6 +26,9 @@ private:
     void report(node* n, const std::string& info) {
         err.err("sema", n->get_location(), info);
     }
+    void warning(node* n, const std::string& info) {
+        err.warn("sema", n->get_location(), info);
+    }
     void unimplemented(node* n) {
         err.err("sema", n->get_location(), "unimplemented, please report a bug.");
     }

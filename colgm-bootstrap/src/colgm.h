@@ -51,7 +51,7 @@ f64 oct_to_f64(const char*);
 f64 dec_to_f64(const char*);
 
 f64 str_to_num(const char*);
-i32 utf8_hdchk(const char);
+usize utf8_hdchk(const char);
 std::string char_to_hex(const char);
 std::string rawstr(const std::string&, const usize maxlen = 0);
 

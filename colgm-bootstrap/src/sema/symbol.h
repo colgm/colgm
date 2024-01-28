@@ -56,6 +56,13 @@ struct type {
     static const type bool_type(u64 ptrlvl = 0) { return {"bool", "", ptrlvl}; }
 
     bool is_error() const { return name=="<err>"; }
+    bool is_integer() const {
+        const auto& t = *this;
+        return t==type::i8_type() || t==type::u8_type() ||
+               t==type::i16_type() || t==type::u16_type() ||
+               t==type::i32_type() || t==type::u32_type() ||
+               t==type::i64_type() || t==type::u64_type();
+    }
 };
 
 struct symbol {
