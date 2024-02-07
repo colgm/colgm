@@ -109,6 +109,7 @@ colgm_func semantic::analyse_single_func(func_decl* node) {
 }
 
 void semantic::analyse_functions(root* ast_root) {
+    auto& domain = ctx.global.domain.at(this_file);
     for(auto i : ast_root->get_decls()) {
         if (i->get_ast_type()!=ast_type::ast_func_decl) {
             continue;
@@ -118,13 +119,13 @@ void semantic::analyse_functions(root* ast_root) {
             func_decl_node->get_name(),
             {symbol_kind::func_kind, ast_root->get_location().file}
         });
-        if (ctx.global.domain.at(this_file).functions.count(func_decl_node->get_name())) {
+        if (domain.functions.count(func_decl_node->get_name())) {
             report(func_decl_node,
                 "function \"" + func_decl_node->get_name() + "\" already exists."
             );
             continue;
         }
-        ctx.global.domain.at(this_file).functions.insert({
+        domain.functions.insert({
             func_decl_node->get_name(),
             analyse_single_func(func_decl_node)
         });
@@ -216,10 +217,6 @@ type semantic::resolve_number_literal(number_literal* node) {
         report(node, "invalid number \"" + literal_string + "\".");
         return type::error_type();
     }
-    if (result <= 2147483647) {
-        node->set_resolve_type({"i32", "", 0});
-        return {"i32", "", 0};
-    }
     node->set_resolve_type({"i64", "", 0});
     return {"i64", "", 0};
 }
@@ -307,7 +304,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     if (prev.stm_info.flag_is_static) {
         // TODO
         const auto& domain = ctx.global.domain.at(prev.loc_file);
-        const auto& st =domain.structs.at(prev.name);
+        const auto& st = domain.structs.at(prev.name);
         return st.method.at(prev.stm_info.method_name).return_type;
     }
     if (prev.stm_info.flag_is_normal) {
@@ -830,6 +827,8 @@ const error& semantic::analyse(root* ast_root) {
     analyse_functions(ast_root);
 
     analyse_impls(ast_root);
+
+    // resolve pass
     resolve_function_block(ast_root);
     return err;
 }
