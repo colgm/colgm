@@ -37,8 +37,14 @@ struct type {
     struct_method stm_info;
 
     std::string to_string() const;
-    bool operator==(const type&) const;
-    bool operator!=(const type&) const;
+    bool operator==(const type& another) const {
+        return name==another.name &&
+               pointer_level==another.pointer_level;
+    }
+    bool operator!=(const type& another) const {
+        return name!=another.name ||
+               pointer_level!=another.pointer_level;
+    }
     friend std::ostream& operator<<(std::ostream&, const type&);
     
     static const type error_type() { return {"<err>", "", 0}; }
@@ -63,6 +69,7 @@ struct type {
                t==type::i32_type() || t==type::u32_type() ||
                t==type::i64_type() || t==type::u64_type();
     }
+    bool is_pointer() const { return pointer_level; }
 };
 
 struct symbol {
@@ -75,6 +82,7 @@ struct colgm_func {
     span location;
     type return_type;
     std::vector<symbol> parameters;
+    std::unordered_map<std::string, symbol> unordered_params;
 
     bool find_parameter(const std::string&);
     void add_parameter(const std::string&, const type&);

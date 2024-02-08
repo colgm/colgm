@@ -251,6 +251,7 @@ expr* parse::calculation_gen() {
     if (result->get_ast_type()!=ast_type::ast_call) {
         return result;
     }
+    // if is call node, check assignment syntax
     if (look_ahead(tok::addeq) || look_ahead(tok::subeq) || look_ahead(tok::multeq) ||
         look_ahead(tok::diveq) || look_ahead(tok::modeq) || look_ahead(tok::eq)) {
         auto new_assignment = new assignment(begin_location);

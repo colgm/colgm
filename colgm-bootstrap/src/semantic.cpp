@@ -1,6 +1,7 @@
 #include "lexer.h"
 #include "parse.h"
 #include "semantic.h"
+#include "code/ir_gen.h"
 
 namespace colgm {
 
@@ -257,10 +258,10 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
         );
         return type::error_type();
     }
-    if (prev.pointer_level!=0) {
+    if (prev.is_pointer()) {
         report(node,
-            "cannot use this way to get field from \"" +
-            prev.to_string() + "\"."
+            "cannot use \".\" to get field from pointer \"" +
+            prev.to_string() + "\". maybe you mean \"->\"?"
         );
         return type::error_type();
     }
@@ -323,7 +324,7 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
         );
         return type::error_type();
     }
-    if (!prev.pointer_level) {
+    if (!prev.is_pointer()) {
         report(node,
             "cannot get index from \"" + prev.to_string() + "\"."
         );
@@ -363,7 +364,10 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
         return type::error_type();
     }
     if (prev.pointer_level!=1) {
-        report(node, "cannot get field from \"" + prev.to_string() + "\".");
+        report(node,
+            "cannot use \"->\" to get field from \"" +
+            prev.to_string() + "\"."
+        );
         return type::error_type();
     }
 
@@ -451,7 +455,7 @@ type semantic::resolve_call(call* node) {
 type semantic::resolve_assignment(assignment* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
-    if (left.pointer_level && right.pointer_level) {
+    if (left.is_pointer() && right.is_pointer()) {
         if (left!=right) {
             warning(node,
                 "get \"" + left.to_string() +
@@ -522,7 +526,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     }
     const auto expected_type = resolve_type_def(node->get_type());
     const auto real_type = resolve_expression(node->get_init_value());
-    if (expected_type.pointer_level && real_type.pointer_level) {
+    if (expected_type.is_pointer() && real_type.is_pointer()) {
         if (expected_type!=real_type) {
             warning(node,
                 "expected \"" + expected_type.to_string() +
@@ -595,7 +599,7 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
         return;
     }
     const auto infer = resolve_expression(node->get_value());
-    if (infer.pointer_level && func_self.return_type.pointer_level) {
+    if (infer.is_pointer() && func_self.return_type.is_pointer()) {
         if (infer!=func_self.return_type) {
             warning(node,
                 "expected return type \"" + func_self.return_type.to_string() +
@@ -743,6 +747,7 @@ void semantic::resolve_single_use(use_stmt* node) {
         lexer lex;
         parse par;
         semantic sema;
+        ir_gen gen(sema.get_context());
         if (lex.scan(fn).geterr()) {
             report(node, "error ocurred when analysing module \"" + mp + "\".");
             return;
@@ -756,6 +761,7 @@ void semantic::resolve_single_use(use_stmt* node) {
             return;
         }
         pkgman->set_analyse_status(fn, package_manager::status::analysed);
+        gen.generate(par.get_result());
     }
 
     const auto& domain = ctx.global.domain.at(fn);

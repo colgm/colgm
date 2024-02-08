@@ -217,7 +217,7 @@ bool ir_gen::visit_if_stmt(if_stmt* node) {
     return true;
 }
 
-void ir_gen::dump_code(std::ostream& out) {
+void ir_context::dump_code(std::ostream& out) const {
     for(auto i : struct_decls) {
         i->dump(out);
     }
@@ -232,6 +232,7 @@ void ir_gen::dump_code(std::ostream& out) {
     }
     for(auto i : generated_codes) {
         i->dump(out);
+        out << "\n";
     }
 }
 

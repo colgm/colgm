@@ -70,6 +70,16 @@ void err() {
     std::exit(1);
 }
 
+void scan_package(const std::string& library_path, const u32 cmd) {
+    if (library_path.empty()) {
+        return;
+    }
+    colgm::package_manager::singleton()->scan(library_path).chkerr();
+    if (cmd&COMPILE_VIEW_LIB) {
+        colgm::package_manager::singleton()->dump_packages();
+    }
+}
+
 void execute(
     const std::string& file,
     const u32 cmd = 0) {
@@ -106,11 +116,11 @@ void execute(
     // generate code
     gen.generate(parser.get_result());
     if (cmd&COMPILE_VIEW_IR) {
-        gen.dump_code(std::cout);
+        gen.get_ir().dump_code(std::cout);
     }
 
     std::ofstream out("out.ll");
-    gen.dump_code(out);
+    gen.get_ir().dump_code(out);
 }
 
 i32 main(i32 argc, const char* argv[]) {
@@ -168,12 +178,7 @@ i32 main(i32 argc, const char* argv[]) {
         err();
     }
 
-    if (!library_path.empty()) {
-        colgm::package_manager::singleton()->scan(library_path).chkerr();
-        if (cmd&COMPILE_VIEW_LIB) {
-            colgm::package_manager::singleton()->dump_packages();
-        }
-    }
+    scan_package(library_path, cmd);
     execute(filename, cmd);
     return 0;
 }
