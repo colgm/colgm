@@ -1,5 +1,7 @@
 #include "lexer.h"
 
+#include <filesystem>
+
 namespace colgm {
 
 bool lexer::skip(char c) {
@@ -72,7 +74,7 @@ void lexer::err_char() {
 
 void lexer::open(const std::string& file) {
     // check file exsits and it is a regular file
-    if (!fs::is_regular(file)) {
+    if (!std::filesystem::is_regular_file(file)) {
         err.err("lexer", "<"+file+"> is not a regular file");
         err.chkerr();
     }

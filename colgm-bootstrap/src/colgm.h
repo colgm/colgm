@@ -37,9 +37,6 @@ bool is_superh();
 const char* get_platform();
 const char* get_arch();
 
-// virtual machine stack depth, both global depth and value stack depth
-const u32 STACK_DEPTH = 4096;
-
 f64 hex_to_f64(const char*);
 f64 oct_to_f64(const char*);
 // we have the same reason not using atof here
@@ -54,28 +51,5 @@ f64 str_to_num(const char*);
 usize utf8_hdchk(const char);
 std::string char_to_hex(const char);
 std::string rawstr(const std::string&, const usize maxlen = 0);
-
-namespace fs {
-
-class path {
-private:
-    std::string file_system_path;
-
-public:
-    path(const path&) = default;
-    path(const std::string& file_path): file_system_path(file_path) {}
-    path& operator/(const path&);
-    const char* c_str() const {
-        return file_system_path.c_str();
-    }
-    std::string str() const {
-        return file_system_path;
-    }
-};
-
-bool exists(const path&);
-bool is_regular(const path&);
-
-}
 
 }

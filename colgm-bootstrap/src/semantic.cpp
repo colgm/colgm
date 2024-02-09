@@ -201,6 +201,11 @@ type semantic::resolve_binary_operator(binary_operator* node) {
         case binary_operator::kind::less:
             // TODO
             return type::bool_type();
+        case binary_operator::kind::add:
+        case binary_operator::kind::sub:
+        case binary_operator::kind::div:
+        case binary_operator::kind::mult:
+        case binary_operator::kind::mod:
         default: unimplemented(node); break;
     }
     return type::error_type();
