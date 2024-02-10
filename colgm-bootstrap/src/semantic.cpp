@@ -8,13 +8,18 @@ namespace colgm {
 void semantic::analyse_single_struct(struct_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global.domain.at(this_file).structs.count(name)) {
-        report(node, "struct \"" + node->get_name() + "\" already exists.");
+        report(node, "struct \"" + node->get_name() +
+            "\" conflicts with a exist symbol."
+        );
         return;
     }
     ctx.global.domain.at(this_file).structs.insert({name, {}});
+    ctx.global_symbol.insert({name, {symbol_kind::struct_kind, this_file}});
+
     auto& struct_self = ctx.global.domain.at(this_file).structs.at(node->get_name());
     struct_self.name = node->get_name();
     struct_self.location = node->get_location();
+    // load fields
     for(auto i : node->get_fields()) {
         auto type_node = i->get_type();
         auto type_name_node = type_node->get_name();
@@ -40,6 +45,12 @@ void semantic::analyse_structs(root* ast_root) {
             continue;
         }
         auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
+        if (ctx.global_symbol.count(struct_decl_node->get_name())) {
+            report(i, "\"" + struct_decl_node->get_name() +
+                "\" conflicts with a exist symbol."
+            );
+            continue;
+        }
         ctx.global_symbol.insert({
             struct_decl_node->get_name(),
             {symbol_kind::struct_kind, ast_root->get_location().file}
@@ -116,13 +127,20 @@ void semantic::analyse_functions(root* ast_root) {
             continue;
         }
         auto func_decl_node = reinterpret_cast<func_decl*>(i);
+        if (ctx.global_symbol.count(func_decl_node->get_name())) {
+            report(i, "\"" + func_decl_node->get_name() +
+                "\" conflicts with a exist symbol."
+            );
+            continue;
+        }
         ctx.global_symbol.insert({
             func_decl_node->get_name(),
             {symbol_kind::func_kind, ast_root->get_location().file}
         });
         if (domain.functions.count(func_decl_node->get_name())) {
             report(func_decl_node,
-                "function \"" + func_decl_node->get_name() + "\" already exists."
+                "function \"" + func_decl_node->get_name() +
+                "\" conflicts with a exist symbol."
             );
             continue;
         }
@@ -319,6 +337,8 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         const auto& st = domain.structs.at(prev.name);
         return st.method.at(prev.stm_info.method_name).return_type;
     }
+
+    unimplemented(node);
     return type::error_type();
 }
 
@@ -723,6 +743,20 @@ void semantic::resolve_function_block(root* ast_root) {
     }
 }
 
+void semantic::import_global_symbol(node* n, 
+                                    const std::string& name,
+                                    const symbol_info& sym) {
+    if (ctx.global_symbol.count(name)) {
+        const auto& info = ctx.global_symbol.at(name);
+        report(n, "\"" + name +
+            "\" conflicts, another declaration is in \"" +
+            info.loc_file + "\"."
+        );
+        return;
+    }
+    ctx.global_symbol.insert({name, sym});
+}
+
 void semantic::resolve_single_use(use_stmt* node) {
     if (node->get_module_path().empty()) {
         report(node, "must import at least one symbol from this module.");
@@ -736,24 +770,26 @@ void semantic::resolve_single_use(use_stmt* node) {
         }
     }
     
-    const auto& fn = package_manager::singleton()->get_file_name(mp);
-    if (fn.empty()) {
+    const auto& file = package_manager::singleton()->get_file_name(mp);
+    if (file.empty()) {
         report(node, "cannot find module \"" + mp + "\".");
         return;
     }
 
     auto pkgman = package_manager::singleton();
-    if (pkgman->get_analyse_status(fn)==package_manager::status::analysing) {
-        report(node, "module \"" + mp + "\" is not totally analysed, maybe encounter self-reference.");
+    if (pkgman->get_analyse_status(file)==package_manager::status::analysing) {
+        report(node, "module \"" + mp +
+            "\" is not totally analysed, maybe encounter self-reference."
+        );
         return;
     }
-    if (pkgman->get_analyse_status(fn)==package_manager::status::not_used) {
-        pkgman->set_analyse_status(fn, package_manager::status::analysing);
+    if (pkgman->get_analyse_status(file)==package_manager::status::not_used) {
+        pkgman->set_analyse_status(file, package_manager::status::analysing);
         lexer lex;
         parse par;
         semantic sema;
         ir_gen gen(sema.get_context());
-        if (lex.scan(fn).geterr()) {
+        if (lex.scan(file).geterr()) {
             report(node, "error ocurred when analysing module \"" + mp + "\".");
             return;
         }
@@ -765,38 +801,27 @@ void semantic::resolve_single_use(use_stmt* node) {
             report(node, "error ocurred when analysing module \"" + mp + "\".");
             return;
         }
-        pkgman->set_analyse_status(fn, package_manager::status::analysed);
+        pkgman->set_analyse_status(file, package_manager::status::analysed);
         gen.generate(par.get_result());
     }
 
-    const auto& domain = ctx.global.domain.at(fn);
+    const auto& domain = ctx.global.domain.at(file);
     if (node->get_import_symbol().empty()) {
         for(const auto& i : domain.structs) {
-            ctx.global_symbol.insert({
-                i.second.name,
-                {symbol_kind::struct_kind, fn}
-            });
+            import_global_symbol(node, i.second.name, {symbol_kind::struct_kind, file});
         }
         for(const auto& i : domain.functions) {
-            ctx.global_symbol.insert({
-                i.second.name,
-                {symbol_kind::func_kind, fn}
-            });
+            import_global_symbol(node, i.second.name, {symbol_kind::func_kind, file});
         }
-    } else {
-        for(auto i : node->get_import_symbol()) {
-            if (domain.structs.count(i->get_name())) {
-                ctx.global_symbol.insert({
-                    i->get_name(),
-                    {symbol_kind::struct_kind, fn}
-                });
-            }
-            if (domain.functions.count(i->get_name())) {
-                ctx.global_symbol.insert({
-                    i->get_name(),
-                    {symbol_kind::func_kind, fn}
-                });
-            }
+        return;
+    }
+    // specified import
+    for(auto i : node->get_import_symbol()) {
+        if (domain.structs.count(i->get_name())) {
+            import_global_symbol(i, i->get_name(), {symbol_kind::struct_kind, file});
+        }
+        if (domain.functions.count(i->get_name())) {
+            import_global_symbol(i, i->get_name(), {symbol_kind::func_kind, file});
         }
     }
 }

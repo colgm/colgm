@@ -120,6 +120,4 @@ clean:
 
 .PHONY: test
 test: colgm
-	./colgm ../test/example.colgm -a
-	./colgm ../test/operator.colgm -a
-	./colgm ../test/use_stmt.colgm -a
+	./colgm ../src/main.colgm -L ../src

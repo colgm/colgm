@@ -85,6 +85,7 @@ private:
     void resolve_function_block(root*);
 
 private:
+    void import_global_symbol(node* n, const std::string&, const symbol_info&);
     void resolve_single_use(use_stmt*);
     void resolve_use_stmt(root*);
 

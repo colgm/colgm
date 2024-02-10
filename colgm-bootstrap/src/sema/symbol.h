@@ -69,6 +69,9 @@ struct type {
                t==type::i32_type() || t==type::u32_type() ||
                t==type::i64_type() || t==type::u64_type();
     }
+    bool is_boolean() const {
+        return *this==type::bool_type();
+    }
     bool is_pointer() const { return pointer_level; }
 };
 
