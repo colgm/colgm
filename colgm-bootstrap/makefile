@@ -120,4 +120,4 @@ clean:
 
 .PHONY: test
 test: colgm
-	./colgm ../src/main.colgm -L ../src
+	./colgm ../src/main.colgm -L ../src -Wi

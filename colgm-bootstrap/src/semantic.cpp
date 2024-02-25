@@ -191,7 +191,26 @@ type semantic::struct_static_method_infer(const std::string& st_name,
     return infer;
 }
 
-type semantic::resolve_binary_operator(binary_operator* node) {
+type semantic::resolve_logical_operator(binary_operator* node) {
+    const auto left = resolve_expression(node->get_left());
+    const auto right = resolve_expression(node->get_right());
+    if (left.is_boolean() && right.is_boolean()) {
+        return type::bool_type();
+    }
+    if (!left.is_boolean()) {
+        report(node->get_left(),
+            "expect \"bool\" type, but get \"" + left.to_string() + "\"."
+        );
+    }
+    if (!right.is_boolean()) {
+        report(node->get_right(),
+            "expect \"bool\" type, but get \"" + right.to_string() + "\"."
+        );
+    }
+    return type::bool_type();
+}
+
+type semantic::resolve_comparison_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
     if (left.is_integer() && right.is_integer()) {
@@ -208,22 +227,47 @@ type semantic::resolve_binary_operator(binary_operator* node) {
         );
     }
     // TODO
+    return type::bool_type();
+}
+
+type semantic::resolve_arithmetic_operator(binary_operator* node) {
+    const auto left = resolve_expression(node->get_left());
+    const auto right = resolve_expression(node->get_right());
+    if (left.is_integer() && right.is_integer()) {
+        if (left!=right && flag_enable_integer_type_warning) {
+            warning(node,
+                "get \"" + left.to_string() +
+                "\" and \"" + right.to_string() + "\"."
+            );
+        }
+    } else if (left!=right) {
+        report(node,
+            "get \"" + left.to_string() +
+            "\" and \"" + right.to_string() + "\"."
+        );
+    }
+    // TODO
+    return left;
+}
+
+type semantic::resolve_binary_operator(binary_operator* node) {
     switch(node->get_opr()) {
         case binary_operator::kind::cmpeq:
         case binary_operator::kind::cmpneq:
-        case binary_operator::kind::cmpand:
-        case binary_operator::kind::cmpor:
         case binary_operator::kind::geq:
         case binary_operator::kind::grt:
         case binary_operator::kind::leq:
         case binary_operator::kind::less:
-            // TODO
-            return type::bool_type();
+            return resolve_comparison_operator(node);
+        case binary_operator::kind::cmpand:
+        case binary_operator::kind::cmpor:
+            return resolve_logical_operator(node);
         case binary_operator::kind::add:
         case binary_operator::kind::sub:
         case binary_operator::kind::div:
         case binary_operator::kind::mult:
         case binary_operator::kind::mod:
+            return resolve_arithmetic_operator(node);
         default: unimplemented(node); break;
     }
     return type::error_type();
@@ -489,7 +533,7 @@ type semantic::resolve_assignment(assignment* node) {
         }
         return type::bool_type();
     } else if (left.is_integer() && right.is_integer()) {
-        if (left!=right) {
+        if (left!=right && flag_enable_integer_type_warning) {
             warning(node,
                 "get \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
@@ -559,7 +603,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
             );
         }
     } else if (expected_type.is_integer() && real_type.is_integer()) {
-        if (expected_type!=real_type) {
+        if (expected_type!=real_type && flag_enable_integer_type_warning) {
             warning(node,
                 "expected \"" + expected_type.to_string() +
                 "\", but get \"" + real_type.to_string() + "\"."
@@ -633,7 +677,7 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
         }
         return;
     } else if (infer.is_integer() && func_self.return_type.is_integer()) {
-        if (infer!=func_self.return_type) {
+        if (infer!=func_self.return_type && flag_enable_integer_type_warning) {
             warning(node,
                 "expected return type \"" + func_self.return_type.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."

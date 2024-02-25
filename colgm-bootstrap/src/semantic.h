@@ -37,6 +37,14 @@ private:
     }
 
 private:
+    bool flag_enable_integer_type_warning = false;
+
+public:
+    void enable_integer_type_warning() {
+        flag_enable_integer_type_warning = true;
+    }
+
+private:
     void analyse_single_struct(struct_decl*);
     void analyse_structs(root*);
     void analyse_parameter(param*, colgm_func&);
@@ -57,6 +65,9 @@ private:
                                     const std::string&);
 
 private:
+    type resolve_logical_operator(binary_operator*);
+    type resolve_comparison_operator(binary_operator*);
+    type resolve_arithmetic_operator(binary_operator*);
     type resolve_binary_operator(binary_operator*);
     type resolve_number_literal(number_literal*);
     type resolve_string_literal(string_literal*);
