@@ -207,6 +207,7 @@ type semantic::resolve_logical_operator(binary_operator* node) {
             "expect \"bool\" type, but get \"" + right.to_string() + "\"."
         );
     }
+    node->set_resolve_type(type::bool_type());
     return type::bool_type();
 }
 
@@ -214,19 +215,40 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
     if (left.is_integer() && right.is_integer()) {
-        if (left!=right) {
+        if (left!=right && flag_enable_integer_type_warning) {
             warning(node,
                 "get \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
             );
         }
-    } else if (left!=right) {
+        node->set_resolve_type(type::bool_type());
+        return type::bool_type();
+    }
+    if (left!=right) {
         report(node,
             "get \"" + left.to_string() +
             "\" and \"" + right.to_string() + "\"."
         );
+        node->set_resolve_type(type::bool_type());
+        return type::bool_type();
     }
-    // TODO
+    if (!left.is_integer() && !left.is_float() && !left.is_pointer()) {
+        report(node,
+            "cannot compare \"" + left.to_string() +
+            "\" and \"" + right.to_string() + "\"."
+        );
+        node->set_resolve_type(type::bool_type());
+        return type::bool_type();
+    }
+    if (left.is_pointer() && left.pointer_level!=right.pointer_level) {
+        report(node,
+            "cannot compare \"" + left.to_string() +
+            "\" and \"" + right.to_string() + "\"."
+        );
+        node->set_resolve_type(type::bool_type());
+        return type::bool_type();
+    }
+    node->set_resolve_type(type::bool_type());
     return type::bool_type();
 }
 

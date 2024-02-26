@@ -69,6 +69,10 @@ struct type {
                t==type::i32_type() || t==type::u32_type() ||
                t==type::i64_type() || t==type::u64_type();
     }
+    bool is_float() const {
+        const auto& t = *this;
+        return t==type::f32_type() || t==type::f64_type();
+    }
     bool is_boolean() const {
         return *this==type::bool_type();
     }
