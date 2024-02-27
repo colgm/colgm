@@ -82,8 +82,11 @@ void semantic::analyse_method_parameter_list(param_list* node,
         func_self.parameters.front().name!="self") {
         return;
     }
+    // check self type is the pointer of implemented struct
     const auto& self_type = func_self.parameters.front().symbol_type;
-    if (self_type.name!=stct.name || self_type.pointer_level!=1) {
+    if (self_type.name!=stct.name ||
+        self_type.loc_file!=stct.location.file ||
+        self_type.pointer_level!=1) {
         report(node->get_params().front(),
             "\"self\" should be \"" + stct.name + "*\", but get \"" +
             self_type.to_string() + "\"."
@@ -162,10 +165,18 @@ void semantic::analyse_single_impl(impl_struct* node) {
             report(i, "method \"" + i->get_name() + "\" already exists.");
             continue;
         }
-        stct.method.insert({
-            i->get_name(),
-            analyse_single_method(i, stct)
-        });
+        auto func = analyse_single_method(i, stct);
+        if (func.parameters.size() && func.parameters[0].name=="self") {
+            stct.method.insert({
+                i->get_name(),
+                func
+            });
+        } else {
+            stct.static_method.insert({
+                i->get_name(),
+                func
+            });
+        }
     }
 }
 
@@ -186,6 +197,18 @@ type semantic::struct_static_method_infer(const std::string& st_name,
     infer.stm_info = {
         .flag_is_static = true,
         .flag_is_normal = false,
+        .method_name = fn_name
+    };
+    return infer;
+}
+
+type semantic::struct_method_infer(const std::string& st_name,
+                                   const std::string& loc_file,
+                                   const std::string& fn_name) {
+    auto infer = type({st_name, loc_file, 0, false});
+    infer.stm_info = {
+        .flag_is_static = false,
+        .flag_is_normal = true,
         .method_name = fn_name
     };
     return infer;
@@ -366,16 +389,8 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
             return field.symbol_type;
         }
     }
-    for (const auto& method : struct_self.method) {
-        if (node->get_name()==method.first) {
-            auto infer = type({prev.name, 0, false});
-            infer.stm_info = {
-                .flag_is_static = false,
-                .flag_is_normal = true,
-                .method_name = node->get_name()
-            };
-            return infer;
-        }
+    if (struct_self.method.count(node->get_name())) {
+        return struct_method_infer(prev.name, prev.loc_file, node->get_name());
     }
     report(node,
         "cannot find field \"" + node->get_name() +
@@ -384,24 +399,102 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
     return type::error_type();
 }
 
+void semantic::check_static_call_args(const colgm_func& func,
+                                      call_func_args* node) {
+    if (func.parameters.size()!=node->get_args().size()) {
+        report(node,
+            "expect " + std::to_string(func.parameters.size()) +
+            " argument(s) but get " + std::to_string(node->get_args().size()) +
+            "."
+        );
+        return;
+    }
+    size_t index = 0;
+    for(auto i : node->get_args()) {
+        const auto infer = resolve_expression(i);
+        const auto param = func.parameters[index].symbol_type;
+        if (infer.is_integer() && param.is_integer()) {
+            if (infer!=param && flag_enable_integer_type_warning) {
+                warning(i,
+                    "expect \"" + param.to_string() +
+                    "\" but get \"" + infer.to_string() + "\"."
+                );
+            }
+            continue;
+        }
+        if (infer!=param) {
+            report(i,
+                "expect \"" + param.to_string() +
+                "\" but get \"" + infer.to_string() + "\"."
+            );
+        }
+        ++index;
+    }
+}
+
+void semantic::check_method_call_args(const colgm_func& func,
+                                      const type& self,
+                                      call_func_args* node) {
+    if (func.parameters.size()!=node->get_args().size()+1) {
+        report(node,
+            "expect " + std::to_string(func.parameters.size()-1) +
+            " argument(s) but get " + std::to_string(node->get_args().size()) +
+            "."
+        );
+        return;
+    }
+    if (self!=func.parameters[0].symbol_type) {
+        report(node,
+            "self should be \"" + func.parameters[0].symbol_type.to_string() +
+            "\" but get \"" + self.to_string() + "\"."
+        );
+    }
+    size_t index = 1;
+    for(auto i : node->get_args()) {
+        const auto infer = resolve_expression(i);
+        const auto param = func.parameters[index].symbol_type;
+        if (infer.is_integer() && param.is_integer()) {
+            if (infer!=param && flag_enable_integer_type_warning) {
+                warning(i,
+                    "expect \"" + param.to_string() +
+                    "\" but get \"" + infer.to_string() + "\"."
+                );
+            }
+            continue;
+        }
+        if (infer!=param) {
+            report(i,
+                "expect \"" + param.to_string() +
+                "\" but get \"" + infer.to_string() + "\"."
+            );
+        }
+        ++index;
+    }
+}
+
 type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
-    // TODO
+    // global function call
     if (prev.is_global_func) {
-        // TODO
         const auto& domain = ctx.global.domain.at(prev.loc_file);
-        return domain.functions.at(prev.name).return_type;
+        const auto& func = domain.functions.at(prev.name);
+        check_static_call_args(func, node);
+        return func.return_type;
     }
+    // static method call of struct
     if (prev.stm_info.flag_is_static) {
-        // TODO
         const auto& domain = ctx.global.domain.at(prev.loc_file);
         const auto& st = domain.structs.at(prev.name);
-        return st.method.at(prev.stm_info.method_name).return_type;
+        const auto& method = st.static_method.at(prev.stm_info.method_name);
+        check_static_call_args(method, node);
+        return method.return_type;
     }
+    // method call of struct
     if (prev.stm_info.flag_is_normal) {
-        // TODO
         const auto& domain = ctx.global.domain.at(prev.loc_file);
         const auto& st = domain.structs.at(prev.name);
-        return st.method.at(prev.stm_info.method_name).return_type;
+        const auto& method = st.method.at(prev.stm_info.method_name);
+        check_method_call_args(method, prev, node);
+        return method.return_type;
     }
 
     unimplemented(node);
@@ -434,7 +527,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
     const auto& domain = ctx.global.domain.at(prev.loc_file);
     if (domain.structs.count(prev.name) && prev.is_global) {
         const auto& st = domain.structs.at(prev.name);
-        if (st.method.count(node->get_name())) {
+        if (st.static_method.count(node->get_name())) {
             return struct_static_method_infer(prev.name, prev.loc_file, node->get_name());
         } else {
             report(node,
@@ -474,16 +567,14 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
             return field.symbol_type;
         }
     }
-    for (const auto& method : struct_self.method) {
-        if (node->get_name()==method.first) {
-            auto infer = type({prev.name, prev.loc_file, 0, false});
-            infer.stm_info = {
-                .flag_is_static = false,
-                .flag_is_normal = true,
-                .method_name = node->get_name()
-            };
-            return infer;
-        }
+    if (struct_self.method.count(node->get_name())) {
+        auto infer = type({prev.name, prev.loc_file, prev.pointer_level, false});
+        infer.stm_info = {
+            .flag_is_static = false,
+            .flag_is_normal = true,
+            .method_name = node->get_name()
+        };
+        return infer;
     }
     report(node,
         "cannot find field \"" + node->get_name() +
@@ -773,7 +864,10 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
         return;
     }
     ctx.push_new_level();
-    const auto& method_self = struct_self.method.at(node->get_name());
+    const auto& method_self =
+        struct_self.method.count(node->get_name())?
+        struct_self.method.at(node->get_name()):
+        struct_self.static_method.at(node->get_name());
     for(const auto& p : method_self.parameters) {
         ctx.add_symbol(p.name, p.symbol_type);
     }

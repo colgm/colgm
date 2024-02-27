@@ -63,6 +63,9 @@ private:
     type struct_static_method_infer(const std::string&,
                                     const std::string&,
                                     const std::string&);
+    type struct_method_infer(const std::string&,
+                             const std::string&,
+                             const std::string&);
 
 private:
     type resolve_logical_operator(binary_operator*);
@@ -74,6 +77,8 @@ private:
     type resolve_bool_literal(bool_literal*);
     type resolve_identifier(identifier*);
     type resolve_call_field(const type&, call_field*);
+    void check_static_call_args(const colgm_func&, call_func_args*);
+    void check_method_call_args(const colgm_func&, const type&, call_func_args*);
     type resolve_call_func_args(const type&, call_func_args*);
     type resolve_call_index(const type&, call_index*);
     type resolve_call_path(const type&, call_path*);

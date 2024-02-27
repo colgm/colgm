@@ -99,6 +99,7 @@ struct colgm_struct {
     std::string name;
     span location;
     std::vector<symbol> field;
+    std::unordered_map<std::string, colgm_func> static_method;
     std::unordered_map<std::string, colgm_func> method;
 };
 
