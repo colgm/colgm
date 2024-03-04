@@ -32,7 +32,7 @@ bool ir_gen::visit_func_decl(func_decl* node) {
     if (impl_struct_name.length()) {
         name = impl_struct_name + "." + name;
     }
-    auto new_ir = new ir_func_decl("@" + name);
+    auto new_ir = new ir_func("@" + name);
     new_ir->set_return_type(generate_type_string(node->get_return_type()));
     for(auto i : node->get_params()->get_params()) {
         new_ir->add_param(
@@ -41,7 +41,7 @@ bool ir_gen::visit_func_decl(func_decl* node) {
         );
     }
     if (node->get_code_block()) {
-        emit(new_ir);
+        emit_func_impls(new_ir);
         new_ir->set_code_block(new ir_code_block);
     } else {
         emit_func_decl(new_ir);
@@ -230,7 +230,7 @@ void ir_context::dump_code(std::ostream& out) const {
     if (func_decls.size()) {
         out << "\n";
     }
-    for(auto i : generated_codes) {
+    for(auto i : func_impls) {
         i->dump(out);
         out << "\n";
     }

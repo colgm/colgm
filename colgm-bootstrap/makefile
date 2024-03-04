@@ -112,6 +112,9 @@ build/context.o: $(HEADER) src/sema/context.cpp | build
 build/symbol.o: $(HEADER) src/sema/symbol.cpp | build
 	$(CXX) $(CXXFLAGS) src/sema/symbol.cpp -o build/symbol.o -I src
 
+out.ll: colgm
+	./colgm ../src/main.colgm -L ../src
+
 .PHONY: clean
 clean:
 	@ echo "[clean] colgm" && if [ -e colgm ]; then rm colgm; fi
@@ -120,4 +123,4 @@ clean:
 
 .PHONY: test
 test: colgm
-	./colgm ../src/main.colgm -L ../src -Wi
+	./colgm ../src/main.colgm -L ../src -Wt

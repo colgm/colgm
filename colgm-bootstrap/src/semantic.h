@@ -37,11 +37,11 @@ private:
     }
 
 private:
-    bool flag_enable_integer_type_warning = false;
+    bool flag_enable_type_warning = false;
 
 public:
-    void enable_integer_type_warning() {
-        flag_enable_integer_type_warning = true;
+    void enable_type_warning() {
+        flag_enable_type_warning = true;
     }
 
 private:

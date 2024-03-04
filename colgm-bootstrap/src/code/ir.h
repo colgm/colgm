@@ -13,7 +13,7 @@ namespace colgm {
 
 enum class ir_kind {
     cir_struct,
-    cir_func_decl,
+    cir_func,
     cir_code_block,
     cir_ret,
     cir_def,
@@ -93,7 +93,7 @@ public:
     void dump(std::ostream&) override;
 };
 
-class ir_func_decl: public ir {
+class ir_func: public ir {
 private:
     std::string name;
     std::vector<std::pair<std::string, std::string>> params;
@@ -101,9 +101,9 @@ private:
     ir_code_block* cb;
 
 public:
-    ir_func_decl(const std::string& n):
-        ir(ir_kind::cir_func_decl), name(n), cb(nullptr) {}
-    ~ir_func_decl() override;
+    ir_func(const std::string& n):
+        ir(ir_kind::cir_func), name(n), cb(nullptr) {}
+    ~ir_func() override;
     void dump(std::ostream&) override;
 
     void add_param(const std::string& pname, const std::string& ptype) {

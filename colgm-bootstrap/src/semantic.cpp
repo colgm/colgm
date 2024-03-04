@@ -238,7 +238,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
     if (left.is_integer() && right.is_integer()) {
-        if (left!=right && flag_enable_integer_type_warning) {
+        if (left!=right && flag_enable_type_warning) {
             warning(node,
                 "get \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
@@ -279,7 +279,14 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
     if (left.is_integer() && right.is_integer()) {
-        if (left!=right && flag_enable_integer_type_warning) {
+        if (left!=right && flag_enable_type_warning) {
+            warning(node,
+                "get \"" + left.to_string() +
+                "\" and \"" + right.to_string() + "\"."
+            );
+        }
+    } else if (left.is_float() && right.is_float()) {
+        if (left!=right && flag_enable_type_warning) {
             warning(node,
                 "get \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
@@ -291,7 +298,6 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
             "\" and \"" + right.to_string() + "\"."
         );
     }
-    // TODO
     return left;
 }
 
@@ -414,7 +420,7 @@ void semantic::check_static_call_args(const colgm_func& func,
         const auto infer = resolve_expression(i);
         const auto param = func.parameters[index].symbol_type;
         if (infer.is_integer() && param.is_integer()) {
-            if (infer!=param && flag_enable_integer_type_warning) {
+            if (infer!=param && flag_enable_type_warning) {
                 warning(i,
                     "expect \"" + param.to_string() +
                     "\" but get \"" + infer.to_string() + "\"."
@@ -454,7 +460,7 @@ void semantic::check_method_call_args(const colgm_func& func,
         const auto infer = resolve_expression(i);
         const auto param = func.parameters[index].symbol_type;
         if (infer.is_integer() && param.is_integer()) {
-            if (infer!=param && flag_enable_integer_type_warning) {
+            if (infer!=param && flag_enable_type_warning) {
                 warning(i,
                     "expect \"" + param.to_string() +
                     "\" but get \"" + infer.to_string() + "\"."
@@ -646,13 +652,20 @@ type semantic::resolve_assignment(assignment* node) {
         }
         return type::bool_type();
     } else if (left.is_integer() && right.is_integer()) {
-        if (left!=right && flag_enable_integer_type_warning) {
+        if (left!=right && flag_enable_type_warning) {
             warning(node,
                 "get \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
             );
         }
         return type::bool_type();
+    } else if (left.is_float() && right.is_float()) {
+        if (left!=right && flag_enable_type_warning) {
+            warning(node,
+                "get \"" + left.to_string() +
+                "\" and \"" + right.to_string() + "\"."
+            );
+        }
     }
 
     if (left!=right) {
@@ -661,7 +674,6 @@ type semantic::resolve_assignment(assignment* node) {
             "\" and \"" + right.to_string() + "\"."
         );
     }
-    // TODO
     return type::bool_type();
 }
 
@@ -716,7 +728,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
             );
         }
     } else if (expected_type.is_integer() && real_type.is_integer()) {
-        if (expected_type!=real_type && flag_enable_integer_type_warning) {
+        if (expected_type!=real_type && flag_enable_type_warning) {
             warning(node,
                 "expected \"" + expected_type.to_string() +
                 "\", but get \"" + real_type.to_string() + "\"."
@@ -790,7 +802,7 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
         }
         return;
     } else if (infer.is_integer() && func_self.return_type.is_integer()) {
-        if (infer!=func_self.return_type && flag_enable_integer_type_warning) {
+        if (infer!=func_self.return_type && flag_enable_type_warning) {
             warning(node,
                 "expected return type \"" + func_self.return_type.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."

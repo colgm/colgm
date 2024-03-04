@@ -12,8 +12,8 @@ namespace colgm {
 
 struct ir_context {
     std::vector<ir_struct*> struct_decls;
-    std::vector<ir_func_decl*> func_decls;
-    std::vector<ir*> generated_codes;
+    std::vector<ir_func*> func_decls;
+    std::vector<ir_func*> func_impls;
 
     ~ir_context() {
         for(auto i : struct_decls) {
@@ -22,7 +22,7 @@ struct ir_context {
         for(auto i : func_decls) {
             delete i;
         }
-        for(auto i : generated_codes) {
+        for(auto i : func_impls) {
             delete i;
         }
     }
@@ -53,8 +53,8 @@ private:
     std::string impl_struct_name = "";
     ir_code_block* cb = nullptr;
 
-    void emit(ir* i) { irs.generated_codes.push_back(i); }
-    void emit_func_decl(ir_func_decl* f) { irs.func_decls.push_back(f); }
+    void emit_func_impls(ir_func* i) { irs.func_impls.push_back(i); }
+    void emit_func_decl(ir_func* f) { irs.func_decls.push_back(f); }
     void emit_struct_decl(ir_struct* s) { irs.struct_decls.push_back(s); }
     std::string generate_type_string(type_def*);
     bool visit_struct_decl(struct_decl*) override;

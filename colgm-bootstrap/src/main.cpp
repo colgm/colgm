@@ -16,7 +16,7 @@ const u32 COMPILE_VIEW_AST = 1<<1;
 const u32 COMPILE_VIEW_LIB = 1<<2;
 const u32 COMPILE_VIEW_SEMA = 1<<3;
 const u32 COMPILE_VIEW_IR = 1<<4;
-const u32 COMPILE_INT_WARN = 1<<5;
+const u32 COMPILE_TYPE_WARN = 1<<5;
 
 std::ostream& help(std::ostream& out) {
     out
@@ -32,7 +32,7 @@ std::ostream& help(std::ostream& out) {
     << "   -i,   --ir             | view semantic generated ir.\n"
     << "   -L,   --library <path> | add library path.\n"
     << "         --dump-lib       | view libraries.\n"
-    << "   -Wi                    | enable integer type check warnings.\n"
+    << "   -Wt                    | enable type check warnings.\n"
     << "file:\n"
     << "   <filename>             | input file.\n"
     << "\n";
@@ -110,8 +110,8 @@ void execute(
     }
 
     // simple semantic
-    if (cmd&COMPILE_INT_WARN) {
-        sema.enable_integer_type_warning();
+    if (cmd&COMPILE_TYPE_WARN) {
+        sema.enable_type_warning();
     }
     sema.analyse(parser.get_result()).chkerr();
     if (cmd&COMPILE_VIEW_SEMA) {
@@ -161,7 +161,7 @@ i32 main(i32 argc, const char* argv[]) {
         {"--ir", COMPILE_VIEW_IR},
         {"-i", COMPILE_VIEW_IR},
         {"--dump-lib", COMPILE_VIEW_LIB},
-        {"-Wi", COMPILE_INT_WARN}
+        {"-Wt", COMPILE_TYPE_WARN}
     };
     u32 cmd = 0;
     std::string filename = "";

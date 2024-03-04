@@ -39,16 +39,12 @@ void ir_def::dump(std::ostream& out) {
     out << "define_local " << name << " = alloca " << type << "\n";
 }
 
-ir_func_decl::~ir_func_decl() {
+ir_func::~ir_func() {
     delete cb;
 }
 
-void ir_func_decl::dump(std::ostream& out) {
-    if (cb) {
-        out << "define ";
-    } else {
-        out << "declare ";
-    }
+void ir_func::dump(std::ostream& out) {
+    out << (cb? "define ":"declare ");
     out << return_type << " " << name << "(";
     for(const auto& i : params) {
         out << i.second << " %" << i.first;
