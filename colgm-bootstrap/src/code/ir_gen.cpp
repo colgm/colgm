@@ -10,20 +10,21 @@ std::string ir_gen::generate_type_string(type_def* node) {
         node->get_location().file,
         node->get_pointer_level()
     });
-    // if (ctx.structs.count(ty.name)) {
+    // if (ctx.scope.count(ty.name)) {
     //     ty.name = "%struct." + ty.name;
-    // } else if (basic_type_convert_mapper.count(ty.name)) {
-    //     ty.name = basic_type_convert_mapper.at(ty.name);
-    // }
+    // } else
+    if (basic_type_convert_mapper.count(ty.name)) {
+        ty.name = basic_type_convert_mapper.at(ty.name);
+    }
     return ty.to_string();
 }
 
 bool ir_gen::visit_struct_decl(struct_decl* node) {
-    auto new_ir = new ir_struct(node->get_name());
+    auto new_struct = hir_struct(node->get_name());
     for(auto i : node->get_fields()) {
-        new_ir->add_field_type(generate_type_string(i->get_type()));
+        new_struct.add_field_type(generate_type_string(i->get_type()));
     }
-    emit_struct_decl(new_ir);
+    emit_struct_decl(new_struct);
     return true;
 }
 
@@ -32,7 +33,7 @@ bool ir_gen::visit_func_decl(func_decl* node) {
     if (impl_struct_name.length()) {
         name = impl_struct_name + "." + name;
     }
-    auto new_ir = new ir_func("@" + name);
+    auto new_ir = new hir_func("@" + name);
     new_ir->set_return_type(generate_type_string(node->get_return_type()));
     for(auto i : node->get_params()->get_params()) {
         new_ir->add_param(
@@ -218,8 +219,8 @@ bool ir_gen::visit_if_stmt(if_stmt* node) {
 }
 
 void ir_context::dump_code(std::ostream& out) const {
-    for(auto i : struct_decls) {
-        i->dump(out);
+    for(const auto& i : struct_decls) {
+        i.dump(out);
     }
     if (struct_decls.size()) {
         out << "\n";

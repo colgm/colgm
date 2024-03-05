@@ -12,8 +12,6 @@
 namespace colgm {
 
 enum class ir_kind {
-    cir_struct,
-    cir_func,
     cir_code_block,
     cir_ret,
     cir_def,
@@ -39,22 +37,8 @@ private:
 public:
     ir(ir_kind k): type(k) {}
     virtual ~ir() = default;
-    virtual void dump(std::ostream&) = 0;
+    virtual void dump(std::ostream&) const = 0;
     auto get_ir_type() const { return type; }
-};
-
-class ir_struct: public ir {
-private:
-    std::string name;
-    std::vector<std::string> field_type;
-
-public:
-    ir_struct(const std::string& n):
-        ir(ir_kind::cir_struct), name(n) {}
-    ~ir_struct() override = default;
-    void dump(std::ostream&) override;
-
-    void add_field_type(const std::string& type) { field_type.push_back(type); }
 };
 
 class ir_code_block: public ir {
@@ -64,7 +48,7 @@ private:
 public:
     ir_code_block(): ir(ir_kind::cir_code_block) {}
     ~ir_code_block() override;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 
     void add_stmt(ir* node) { stmts.push_back(node); }
     auto size() const { return stmts.size(); }
@@ -78,7 +62,7 @@ public:
     ir_ret(bool rv_flag):
         ir(ir_kind::cir_ret), has_return_value(rv_flag) {}
     ~ir_ret() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_def: public ir {
@@ -90,28 +74,7 @@ public:
     ir_def(const std::string& n, const std::string& t):
         ir(ir_kind::cir_def), name(n), type(t) {}
     ~ir_def() override = default;
-    void dump(std::ostream&) override;
-};
-
-class ir_func: public ir {
-private:
-    std::string name;
-    std::vector<std::pair<std::string, std::string>> params;
-    std::string return_type;
-    ir_code_block* cb;
-
-public:
-    ir_func(const std::string& n):
-        ir(ir_kind::cir_func), name(n), cb(nullptr) {}
-    ~ir_func() override;
-    void dump(std::ostream&) override;
-
-    void add_param(const std::string& pname, const std::string& ptype) {
-        params.push_back({pname, ptype});
-    }
-    void set_code_block(ir_code_block* node) { cb = node; }
-    auto get_code_block() { return cb; }
-    void set_return_type(const std::string& rtype) { return_type = rtype; }
+    void dump(std::ostream&) const override;
 };
 
 class ir_number: public ir {
@@ -122,7 +85,7 @@ public:
     ir_number(const std::string& n):
         ir(ir_kind::cir_num), literal(n) {}
     ~ir_number() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_string: public ir {
@@ -133,7 +96,7 @@ public:
     ir_string(const std::string& s):
         ir(ir_kind::cir_str), literal(s) {}
     ~ir_string() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_get_var: public ir {
@@ -144,14 +107,14 @@ public:
     ir_get_var(const std::string& n):
         ir(ir_kind::cir_get_var), name(n) {}
     ~ir_get_var() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_call_index: public ir {
 public:
     ir_call_index(): ir(ir_kind::cir_call_index) {}
     ~ir_call_index() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_call_field: public ir {
@@ -162,7 +125,7 @@ public:
     ir_call_field(const std::string& n):
         ir(ir_kind::cir_call_field), field_name(n) {}
     ~ir_call_field() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_ptr_call_field: public ir {
@@ -173,7 +136,7 @@ public:
     ir_ptr_call_field(const std::string& n):
         ir(ir_kind::cir_ptr_call_field), field_name(n) {}
     ~ir_ptr_call_field() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_call_path: public ir {
@@ -184,7 +147,7 @@ public:
     ir_call_path(const std::string& n):
         ir(ir_kind::cir_call_path), field_name(n) {}
     ~ir_call_path() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_call_func: public ir {
@@ -195,7 +158,7 @@ public:
     ir_call_func(usize ac):
         ir(ir_kind::cir_call_func), argc(ac) {}
     ~ir_call_func() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_binary: public ir {
@@ -206,7 +169,7 @@ public:
     ir_binary(const std::string& o):
         ir(ir_kind::cir_binary), opr(o) {}
     ~ir_binary() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_label: public ir {
@@ -217,7 +180,7 @@ public:
     ir_label(usize count):
         ir(ir_kind::cir_label), label_count(count) {}
     ~ir_label() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_assign: public ir {
@@ -228,7 +191,7 @@ public:
     ir_assign(const std::string& o):
         ir(ir_kind::cir_assign), opr(o) {}
     ~ir_assign() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_br_direct: public ir {
@@ -239,7 +202,7 @@ public:
     ir_br_direct(usize dst):
         ir(ir_kind::cir_br_direct), destination(dst) {}
     ~ir_br_direct() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 };
 
 class ir_br_cond: public ir {
@@ -253,7 +216,7 @@ public:
         destination_true(dst_true),
         destination_false(dst_false) {}
     ~ir_br_cond() override = default;
-    void dump(std::ostream&) override;
+    void dump(std::ostream&) const override;
 
     void set_true_label(u64 dst_true) {
         destination_true = dst_true;
@@ -261,6 +224,40 @@ public:
     void set_false_label(u64 dst_false) {
         destination_false = dst_false;
     }
+};
+
+// hir
+
+class hir_struct {
+private:
+    std::string name;
+    std::vector<std::string> field_type;
+
+public:
+    hir_struct(const std::string& n): name(n) {}
+    void dump(std::ostream&) const;
+
+    void add_field_type(const std::string& type) { field_type.push_back(type); }
+};
+
+class hir_func {
+private:
+    std::string name;
+    std::vector<std::pair<std::string, std::string>> params;
+    std::string return_type;
+    ir_code_block* cb;
+
+public:
+    hir_func(const std::string& n): name(n), cb(nullptr) {}
+    ~hir_func();
+    void dump(std::ostream&) const;
+
+    void add_param(const std::string& pname, const std::string& ptype) {
+        params.push_back({pname, ptype});
+    }
+    void set_code_block(ir_code_block* node) { cb = node; }
+    auto get_code_block() { return cb; }
+    void set_return_type(const std::string& rtype) { return_type = rtype; }
 };
 
 }
