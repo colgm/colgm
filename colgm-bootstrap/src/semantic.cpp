@@ -5,18 +5,26 @@
 
 namespace colgm {
 
+colgm_func semantic::builtin_struct_size(const span& loc) {
+    auto func = colgm_func();
+    func.name = "size";
+    func.location = loc;
+    func.return_type = type::u64_type();
+    return func;
+}
+
 void semantic::analyse_single_struct(struct_decl* node) {
     const auto& name = node->get_name();
-    if (ctx.global.domain.at(this_file).structs.count(name)) {
+    if (ctx.global.domain.at(ctx.this_file).structs.count(name)) {
         report(node, "struct \"" + node->get_name() +
             "\" conflicts with a exist symbol."
         );
         return;
     }
-    ctx.global.domain.at(this_file).structs.insert({name, {}});
-    ctx.global_symbol.insert({name, {symbol_kind::struct_kind, this_file}});
+    ctx.global.domain.at(ctx.this_file).structs.insert({name, {}});
+    ctx.global_symbol.insert({name, {symbol_kind::struct_kind, ctx.this_file}});
 
-    auto& struct_self = ctx.global.domain.at(this_file).structs.at(node->get_name());
+    auto& struct_self = ctx.global.domain.at(ctx.this_file).structs.at(node->get_name());
     struct_self.name = node->get_name();
     struct_self.location = node->get_location();
     // load fields
@@ -37,6 +45,11 @@ void semantic::analyse_single_struct(struct_decl* node) {
             }
         });
     }
+
+    // add built-in static method size, for malloc usage
+    struct_self.static_method.insert(
+        {"size", builtin_struct_size(node->get_location())}
+    );
 }
 
 void semantic::analyse_structs(root* ast_root) {
@@ -124,7 +137,7 @@ colgm_func semantic::analyse_single_func(func_decl* node) {
 }
 
 void semantic::analyse_functions(root* ast_root) {
-    auto& domain = ctx.global.domain.at(this_file);
+    auto& domain = ctx.global.domain.at(ctx.this_file);
     for(auto i : ast_root->get_decls()) {
         if (i->get_ast_type()!=ast_type::ast_func_decl) {
             continue;
@@ -155,11 +168,11 @@ void semantic::analyse_functions(root* ast_root) {
 }
 
 void semantic::analyse_single_impl(impl_struct* node) {
-    if (!ctx.global.domain.at(this_file).structs.count(node->get_struct_name())) {
+    if (!ctx.global.domain.at(ctx.this_file).structs.count(node->get_struct_name())) {
         report(node, "undefined struct \"" + node->get_struct_name() + "\".");
         return;
     }
-    auto& stct = ctx.global.domain.at(this_file).structs.at(node->get_struct_name());
+    auto& stct = ctx.global.domain.at(ctx.this_file).structs.at(node->get_struct_name());
     for(auto i : node->get_methods()) {
         if (stct.method.count(i->get_name())) {
             report(i, "method \"" + i->get_name() + "\" already exists.");
@@ -384,12 +397,13 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
         return type::error_type();
     }
 
-    if (!ctx.global.domain.at(this_file).structs.count(prev.name)) {
+    if (!ctx.global.domain.at(ctx.this_file).structs.count(prev.name)) {
         report(node, "cannot get field from \"" + prev.to_string() + "\".");
         return type::error_type();
     }
 
-    const auto& struct_self = ctx.global.domain.at(this_file).structs.at(prev.name);
+    const auto& domain = ctx.global.domain.at(ctx.this_file);
+    const auto& struct_self = domain.structs.at(prev.name);
     for (const auto& field : struct_self.field) {
         if (node->get_name()==field.name) {
             return field.symbol_type;
@@ -632,7 +646,7 @@ type semantic::resolve_call(call* node) {
             return infer;
         }
     }
-    if (ctx.global.domain.at(this_file).functions.count(infer.name)) {
+    if (ctx.global.domain.at(ctx.this_file).functions.count(infer.name)) {
         report(node, "function should be called here.");
         return type::error_type();
     }
@@ -854,7 +868,7 @@ void semantic::resolve_global_func(func_decl* node) {
     if (!node->get_code_block()) {
         return;
     }
-    const auto& domain = ctx.global.domain.at(this_file);
+    const auto& domain = ctx.global.domain.at(ctx.this_file);
     if (!domain.functions.count(node->get_name())) {
         report(node, "cannot find function \"" + node->get_name() + "\".");
         return;
@@ -890,7 +904,7 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
 }
 
 void semantic::resolve_impl(impl_struct* node) {
-    const auto& domain = ctx.global.domain.at(this_file);
+    const auto& domain = ctx.global.domain.at(ctx.this_file);
     if (!domain.structs.count(node->get_struct_name())) {
         report(node,
             "cannot implement \"" + node->get_struct_name() +
@@ -1005,9 +1019,9 @@ void semantic::resolve_use_stmt(root* node) {
 }
 
 const error& semantic::analyse(root* ast_root) {
-    this_file = ast_root->get_location().file;
-    if (!ctx.global.domain.count(this_file)) {
-        ctx.global.domain.insert({this_file, {}});
+    ctx.this_file = ast_root->get_location().file;
+    if (!ctx.global.domain.count(ctx.this_file)) {
+        ctx.global.domain.insert({ctx.this_file, {}});
     }
 
     ctx.global_symbol.clear();
@@ -1028,10 +1042,10 @@ const error& semantic::analyse(root* ast_root) {
         return err;
     }
 
-    ctx.global.domain.at(this_file).structs.clear();
+    ctx.global.domain.at(ctx.this_file).structs.clear();
     analyse_structs(ast_root);
 
-    ctx.global.domain.at(this_file).functions.clear();
+    ctx.global.domain.at(ctx.this_file).functions.clear();
     analyse_functions(ast_root);
 
     analyse_impls(ast_root);

@@ -20,7 +20,6 @@ class semantic {
 private:
     error err;
     semantic_context ctx;
-    std::string this_file;
 
 private:
     void report(node* n, const std::string& info) {
@@ -45,6 +44,7 @@ public:
     }
 
 private:
+    colgm_func builtin_struct_size(const span&);
     void analyse_single_struct(struct_decl*);
     void analyse_structs(root*);
     void analyse_parameter(param*, colgm_func&);

@@ -23,6 +23,9 @@ struct symbol_info {
 struct semantic_context {
     static inline global_symbol_table global;
 
+    // store the file name this context belongs to
+    std::string this_file;
+
     // store global symbol used in this file
     std::unordered_map<std::string, symbol_info> global_symbol;
 

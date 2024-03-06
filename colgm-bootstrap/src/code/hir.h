@@ -1,0 +1,40 @@
+#pragma once
+
+#include "colgm.h"
+#include "code/ir.h"
+
+namespace colgm {
+
+class hir_struct {
+private:
+    std::string name;
+    std::vector<std::string> field_type;
+
+public:
+    hir_struct(const std::string& n): name(n) {}
+    void dump(std::ostream&) const;
+
+    void add_field_type(const std::string& type) { field_type.push_back(type); }
+};
+
+class hir_func {
+private:
+    std::string name;
+    std::vector<std::pair<std::string, std::string>> params;
+    std::string return_type;
+    ir_code_block* cb;
+
+public:
+    hir_func(const std::string& n): name(n), cb(nullptr) {}
+    ~hir_func();
+    void dump(std::ostream&) const;
+
+    void add_param(const std::string& pname, const std::string& ptype) {
+        params.push_back({pname, ptype});
+    }
+    void set_code_block(ir_code_block* node) { cb = node; }
+    auto get_code_block() { return cb; }
+    void set_return_type(const std::string& rtype) { return_type = rtype; }
+};
+
+}

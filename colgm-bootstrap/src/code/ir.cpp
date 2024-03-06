@@ -3,38 +3,8 @@
 
 namespace colgm {
 
-void hir_struct::dump(std::ostream& out) const {
-    out << "%struct." << name << " = type {";
-    for(usize i = 0; i<field_type.size(); ++i) {
-        out << field_type[i];
-        if (i!=field_type.size()-1) {
-            out << ", ";
-        }
-    }
-    out << "}\n";
-}
-
-hir_func::~hir_func() {
-    delete cb;
-}
-
-void hir_func::dump(std::ostream& out) const {
-    out << (cb? "define ":"declare ");
-    out << return_type << " " << name << "(";
-    for(const auto& i : params) {
-        out << i.second << " %" << i.first;
-        if (i.first!=params.back().first) {
-            out << ", ";
-        }
-    }
-    out << ")";
-    if (!cb) {
-        out << "\n";
-        return;
-    }
-    out << " {\n";
-    cb->dump(out);
-    out << "}\n";
+void ir_alloca::dump(std::ostream& out) const {
+    out << variable_name << " = alloca " << type_name << "\n";
 }
 
 ir_code_block::~ir_code_block() {
@@ -45,7 +15,7 @@ ir_code_block::~ir_code_block() {
 
 void ir_code_block::dump(std::ostream& out) const {
     for(auto i : stmts) {
-        out << "  ; ";
+        out << "  ";
         i->dump(out);
     }
 }
@@ -58,16 +28,16 @@ void ir_ret::dump(std::ostream& out) const {
     out << "\n";
 }
 
-void ir_def::dump(std::ostream& out) const {
-    out << "define_local " << name << " = alloca " << type << "\n";
-}
-
 void ir_number::dump(std::ostream& out) const {
     out << "push_number  " << literal << "\n";
 }
 
 void ir_string::dump(std::ostream& out) const {
     out << "push_string  \"" << rawstr(literal) << "\"\n";
+}
+
+void ir_bool::dump(std::ostream& out) const {
+    out << "push_bool " << (flag? "true":"false") << "\n";
 }
 
 void ir_call_index::dump(std::ostream& out) const {

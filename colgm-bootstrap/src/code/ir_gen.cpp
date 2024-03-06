@@ -10,10 +10,10 @@ std::string ir_gen::generate_type_string(type_def* node) {
         node->get_location().file,
         node->get_pointer_level()
     });
-    // if (ctx.scope.count(ty.name)) {
-    //     ty.name = "%struct." + ty.name;
-    // } else
-    if (basic_type_convert_mapper.count(ty.name)) {
+    if (ctx.global_symbol.count(ty.name) &&
+        ctx.global_symbol.at(ty.name).kind==symbol_kind::struct_kind) {
+        ty.name = "%struct." + ty.name;
+    } else if (basic_type_convert_mapper.count(ty.name)) {
         ty.name = basic_type_convert_mapper.at(ty.name);
     }
     return ty.to_string();
@@ -73,6 +73,11 @@ bool ir_gen::visit_string_literal(string_literal* node) {
     return true;
 }
 
+bool ir_gen::visit_bool_literal(bool_literal* node) {
+    cb->add_stmt(new ir_bool(node->get_flag()));
+    return true;
+}
+
 bool ir_gen::visit_call(call* node) {
     cb->add_stmt(new ir_get_var(node->get_head()->get_name()));
     for(auto i : node->get_chain()) {
@@ -112,8 +117,8 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
 
 bool ir_gen::visit_definition(definition* node) {
     node->get_init_value()->accept(this);
-    cb->add_stmt(new ir_def(
-        node->get_name(),
+    cb->add_stmt(new ir_alloca(
+        "%" + node->get_name(),
         generate_type_string(node->get_type())
     ));
     return true;

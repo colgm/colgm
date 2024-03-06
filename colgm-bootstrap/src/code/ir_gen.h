@@ -2,6 +2,7 @@
 
 #include "ast/visitor.h"
 #include "code/ir.h"
+#include "code/hir.h"
 #include "semantic.h"
 
 #include <vector>
@@ -59,6 +60,7 @@ private:
     bool visit_impl_struct(impl_struct*) override;
     bool visit_number_literal(number_literal*) override;
     bool visit_string_literal(string_literal*) override;
+    bool visit_bool_literal(bool_literal*) override;
     bool visit_call(call*) override;
     bool visit_call_index(call_index*) override;
     bool visit_call_field(call_field*) override;

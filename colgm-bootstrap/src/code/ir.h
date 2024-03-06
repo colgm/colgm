@@ -13,10 +13,11 @@ namespace colgm {
 
 enum class ir_kind {
     cir_code_block,
+    cir_alloca,
     cir_ret,
-    cir_def,
     cir_num,
     cir_str,
+    cir_bool,
     cir_get_var,
     cir_call_index,
     cir_call_field,
@@ -39,6 +40,18 @@ public:
     virtual ~ir() = default;
     virtual void dump(std::ostream&) const = 0;
     auto get_ir_type() const { return type; }
+};
+
+class ir_alloca: public ir {
+private:
+    std::string variable_name;
+    std::string type_name;
+
+public:
+    ir_alloca(const std::string& v, const std::string& t):
+        ir(ir_kind::cir_alloca), variable_name(v), type_name(t) {}
+    ~ir_alloca() override = default;
+    void dump(std::ostream&) const override;
 };
 
 class ir_code_block: public ir {
@@ -65,18 +78,6 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class ir_def: public ir {
-private:
-    std::string name;
-    std::string type;
-
-public:
-    ir_def(const std::string& n, const std::string& t):
-        ir(ir_kind::cir_def), name(n), type(t) {}
-    ~ir_def() override = default;
-    void dump(std::ostream&) const override;
-};
-
 class ir_number: public ir {
 private:
     std::string literal;
@@ -96,6 +97,16 @@ public:
     ir_string(const std::string& s):
         ir(ir_kind::cir_str), literal(s) {}
     ~ir_string() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class ir_bool: public ir {
+private:
+    bool flag;
+
+public:
+    ir_bool(bool f): ir(ir_kind::cir_bool), flag(f) {}
+    ~ir_bool() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -224,40 +235,6 @@ public:
     void set_false_label(u64 dst_false) {
         destination_false = dst_false;
     }
-};
-
-// hir
-
-class hir_struct {
-private:
-    std::string name;
-    std::vector<std::string> field_type;
-
-public:
-    hir_struct(const std::string& n): name(n) {}
-    void dump(std::ostream&) const;
-
-    void add_field_type(const std::string& type) { field_type.push_back(type); }
-};
-
-class hir_func {
-private:
-    std::string name;
-    std::vector<std::pair<std::string, std::string>> params;
-    std::string return_type;
-    ir_code_block* cb;
-
-public:
-    hir_func(const std::string& n): name(n), cb(nullptr) {}
-    ~hir_func();
-    void dump(std::ostream&) const;
-
-    void add_param(const std::string& pname, const std::string& ptype) {
-        params.push_back({pname, ptype});
-    }
-    void set_code_block(ir_code_block* node) { cb = node; }
-    auto get_code_block() { return cb; }
-    void set_return_type(const std::string& rtype) { return_type = rtype; }
 };
 
 }
