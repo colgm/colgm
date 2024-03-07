@@ -1,3 +1,5 @@
-# colgm compiler project
+# Colgm Compiler Project
 
-experimental llvm project
+![logo](./doc/png/logo-color.png)
+
+This is the main repository for Colgm compiler.
