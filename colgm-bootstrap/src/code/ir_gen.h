@@ -3,6 +3,7 @@
 #include "ast/visitor.h"
 #include "code/ir.h"
 #include "code/hir.h"
+#include "code/context.h"
 #include "semantic.h"
 
 #include <vector>
@@ -11,20 +12,17 @@
 
 namespace colgm {
 
-struct ir_context {
-    std::vector<hir_struct> struct_decls;
-    std::vector<hir_func*> func_decls;
-    std::vector<hir_func*> func_impls;
+enum value_kind {
+    v_num,
+    v_str,
+    v_bool,
+    v_id
+};
 
-    ~ir_context() {
-        for(auto i : func_decls) {
-            delete i;
-        }
-        for(auto i : func_impls) {
-            delete i;
-        }
-    }
-    void dump_code(std::ostream&) const;
+struct value {
+    value_kind kind;
+    type resolve_type;
+    std::string content;
 };
 
 class ir_gen: public visitor {
@@ -58,6 +56,10 @@ private:
     bool visit_struct_decl(struct_decl*) override;
     bool visit_func_decl(func_decl*) override;
     bool visit_impl_struct(impl_struct*) override;
+
+private:
+    std::vector<value> value_stack;
+
     bool visit_number_literal(number_literal*) override;
     bool visit_string_literal(string_literal*) override;
     bool visit_bool_literal(bool_literal*) override;

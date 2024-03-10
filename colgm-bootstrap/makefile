@@ -21,6 +21,7 @@ HEADER = \
 	src/ast/stmt.h\
 	src/ast/visitor.h\
 	src/ast/dumper.h\
+	src/code/context.h\
 	src/code/hir.h\
 	src/code/ir.h\
 	src/code/ir_gen.h\
@@ -41,11 +42,12 @@ OBJECT = \
 	build/stmt.o\
 	build/visitor.o\
 	build/dumper.o\
+	build/code_context.o\
 	build/hir.o\
 	build/ir.o\
 	build/ir_gen.o\
 	build/package.o\
-	build/context.o\
+	build/sema_context.o\
 	build/symbol.o
 
 
@@ -99,6 +101,9 @@ build/visitor.o: $(HEADER) src/ast/visitor.cpp | build
 build/dumper.o: $(HEADER) src/ast/dumper.cpp | build
 	$(CXX) $(CXXFLAGS) src/ast/dumper.cpp -o build/dumper.o -I src
 
+build/code_context.o: $(HEADER) src/code/context.cpp | build
+	$(CXX) $(CXXFLAGS) src/code/context.cpp -o build/code_context.o -I src
+
 build/hir.o: $(HEADER) src/code/hir.cpp | build
 	$(CXX) $(CXXFLAGS) src/code/hir.cpp -o build/hir.o -I src
 
@@ -111,8 +116,8 @@ build/ir_gen.o: $(HEADER) src/code/ir_gen.cpp | build
 build/package.o: $(HEADER) src/package/package.cpp | build
 	$(CXX) $(CXXFLAGS) src/package/package.cpp -o build/package.o -I src
 
-build/context.o: $(HEADER) src/sema/context.cpp | build
-	$(CXX) $(CXXFLAGS) src/sema/context.cpp -o build/context.o -I src
+build/sema_context.o: $(HEADER) src/sema/context.cpp | build
+	$(CXX) $(CXXFLAGS) src/sema/context.cpp -o build/sema_context.o -I src
 
 build/symbol.o: $(HEADER) src/sema/symbol.cpp | build
 	$(CXX) $(CXXFLAGS) src/sema/symbol.cpp -o build/symbol.o -I src

@@ -65,21 +65,42 @@ bool ir_gen::visit_impl_struct(impl_struct* node) {
 
 bool ir_gen::visit_number_literal(number_literal* node) {
     cb->add_stmt(new ir_number(node->get_number()));
+    value_stack.push_back({
+        .kind = value_kind::v_num,
+        .resolve_type = node->get_resolve(),
+        .content = node->get_number()
+    });
     return true;
 }
 
 bool ir_gen::visit_string_literal(string_literal* node) {
     cb->add_stmt(new ir_string(node->get_string()));
+    irs.const_strings.insert({node->get_string(), irs.const_strings.size()});
+    value_stack.push_back({
+        .kind = value_kind::v_str,
+        .resolve_type = node->get_resolve(),
+        .content = node->get_string()
+    });
     return true;
 }
 
 bool ir_gen::visit_bool_literal(bool_literal* node) {
     cb->add_stmt(new ir_bool(node->get_flag()));
+    value_stack.push_back({
+        .kind = value_kind::v_bool,
+        .resolve_type = node->get_resolve(),
+        .content = node->get_flag()? "true":"false"
+    });
     return true;
 }
 
 bool ir_gen::visit_call(call* node) {
     cb->add_stmt(new ir_get_var(node->get_head()->get_name()));
+    value_stack.push_back({
+        .kind = value_kind::v_id,
+        .resolve_type = node->get_head()->get_resolve(),
+        .content = node->get_head()->get_name()
+    });
     for(auto i : node->get_chain()) {
         i->accept(this);
     }
@@ -221,25 +242,6 @@ bool ir_gen::visit_if_stmt(if_stmt* node) {
     }
     cb->add_stmt(new ir_label(cb->size()));
     return true;
-}
-
-void ir_context::dump_code(std::ostream& out) const {
-    for(const auto& i : struct_decls) {
-        i.dump(out);
-    }
-    if (struct_decls.size()) {
-        out << "\n";
-    }
-    for(auto i : func_decls) {
-        i->dump(out);
-    }
-    if (func_decls.size()) {
-        out << "\n";
-    }
-    for(auto i : func_impls) {
-        i->dump(out);
-        out << "\n";
-    }
 }
 
 }
