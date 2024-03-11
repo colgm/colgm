@@ -1,7 +1,7 @@
 #pragma once
 
 #include "colgm.h"
-#include "code/ir.h"
+#include "code/sir.h"
 
 namespace colgm {
 
@@ -22,7 +22,7 @@ private:
     std::string name;
     std::vector<std::pair<std::string, std::string>> params;
     std::string return_type;
-    ir_code_block* cb;
+    sir_code_block* cb;
 
 public:
     hir_func(const std::string& n): name(n), cb(nullptr) {}
@@ -32,7 +32,7 @@ public:
     void add_param(const std::string& pname, const std::string& ptype) {
         params.push_back({pname, ptype});
     }
-    void set_code_block(ir_code_block* node) { cb = node; }
+    void set_code_block(sir_code_block* node) { cb = node; }
     auto get_code_block() { return cb; }
     void set_return_type(const std::string& rtype) { return_type = rtype; }
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ast/visitor.h"
-#include "code/ir.h"
+#include "code/sir.h"
 #include "code/hir.h"
 #include "code/context.h"
 #include "semantic.h"
@@ -47,7 +47,7 @@ private:
     static inline ir_context irs;
 
     std::string impl_struct_name = "";
-    ir_code_block* cb = nullptr;
+    sir_code_block* cb = nullptr;
 
     void emit_func_impls(hir_func* i) { irs.func_impls.push_back(i); }
     void emit_func_decl(hir_func* f) { irs.func_decls.push_back(f); }

@@ -321,17 +321,26 @@ type semantic::resolve_binary_operator(binary_operator* node) {
         case binary_operator::kind::geq:
         case binary_operator::kind::grt:
         case binary_operator::kind::leq:
-        case binary_operator::kind::less:
-            return resolve_comparison_operator(node);
+        case binary_operator::kind::less: {
+            const auto res = resolve_comparison_operator(node);
+            node->set_resolve_type(res);
+            return res;
+        }
         case binary_operator::kind::cmpand:
-        case binary_operator::kind::cmpor:
-            return resolve_logical_operator(node);
+        case binary_operator::kind::cmpor: {
+            const auto res = resolve_logical_operator(node);
+            node->set_resolve_type(res);
+            return res;
+        }
         case binary_operator::kind::add:
         case binary_operator::kind::sub:
         case binary_operator::kind::div:
         case binary_operator::kind::mult:
-        case binary_operator::kind::mod:
-            return resolve_arithmetic_operator(node);
+        case binary_operator::kind::mod: {
+            const auto res = resolve_arithmetic_operator(node);
+            node->set_resolve_type(res);
+            return res;
+        }
         default: unimplemented(node); break;
     }
     return type::error_type();
@@ -406,11 +415,18 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
     const auto& struct_self = domain.structs.at(prev.name);
     for (const auto& field : struct_self.field) {
         if (node->get_name()==field.name) {
+            node->set_resolve_type(field.symbol_type);
             return field.symbol_type;
         }
     }
     if (struct_self.method.count(node->get_name())) {
-        return struct_method_infer(prev.name, prev.loc_file, node->get_name());
+        const auto res = struct_method_infer(
+            prev.name,
+            prev.loc_file,
+            node->get_name()
+        );
+        node->set_resolve_type(res);
+        return res;
     }
     report(node,
         "cannot find field \"" + node->get_name() +
@@ -498,6 +514,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         const auto& domain = ctx.global.domain.at(prev.loc_file);
         const auto& func = domain.functions.at(prev.name);
         check_static_call_args(func, node);
+        node->set_resolve_type(func.return_type);
         return func.return_type;
     }
     // static method call of struct
@@ -506,6 +523,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         const auto& st = domain.structs.at(prev.name);
         const auto& method = st.static_method.at(prev.stm_info.method_name);
         check_static_call_args(method, node);
+        node->set_resolve_type(method.return_type);
         return method.return_type;
     }
     // method call of struct
@@ -514,6 +532,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         const auto& st = domain.structs.at(prev.name);
         const auto& method = st.method.at(prev.stm_info.method_name);
         check_method_call_args(method, prev, node);
+        node->set_resolve_type(method.return_type);
         return method.return_type;
     }
 
@@ -536,6 +555,7 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
     }
     auto result = prev;
     result.pointer_level--;
+    node->set_resolve_type(result);
     return result;
 }
 
@@ -548,7 +568,13 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
     if (domain.structs.count(prev.name) && prev.is_global) {
         const auto& st = domain.structs.at(prev.name);
         if (st.static_method.count(node->get_name())) {
-            return struct_static_method_infer(prev.name, prev.loc_file, node->get_name());
+            const auto res = struct_static_method_infer(
+                prev.name,
+                prev.loc_file,
+                node->get_name()
+            );
+            node->set_resolve_type(res);
+            return res;
         } else {
             report(node,
                 "cannot find static method \"" + node->get_name() +
@@ -584,6 +610,7 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
     const auto& struct_self = domain.structs.at(prev.name);
     for (const auto& field : struct_self.field) {
         if (node->get_name()==field.name) {
+            node->set_resolve_type(field.symbol_type);
             return field.symbol_type;
         }
     }
@@ -594,6 +621,7 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
             .flag_is_normal = true,
             .method_name = node->get_name()
         };
+        node->set_resolve_type(infer);
         return infer;
     }
     report(node,
