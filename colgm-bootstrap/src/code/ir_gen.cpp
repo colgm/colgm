@@ -64,33 +64,36 @@ bool ir_gen::visit_impl_struct(impl_struct* node) {
 }
 
 bool ir_gen::visit_number_literal(number_literal* node) {
-    cb->add_stmt(new sir_number(node->get_number()));
-    value_stack.push_back({
-        .kind = value_kind::v_num,
+    const auto result = value {
+        .kind = value_kind::v_id,
         .resolve_type = node->get_resolve(),
-        .content = node->get_number()
-    });
+        .content = get_temp_variable()
+    };
+    cb->add_stmt(new sir_number(node->get_number(), result.content));
+    value_stack.push_back(result);
     return true;
 }
 
 bool ir_gen::visit_string_literal(string_literal* node) {
-    cb->add_stmt(new sir_string(node->get_string()));
-    irs.const_strings.insert({node->get_string(), irs.const_strings.size()});
-    value_stack.push_back({
-        .kind = value_kind::v_str,
+    const auto result = value {
+        .kind = value_kind::v_id,
         .resolve_type = node->get_resolve(),
-        .content = node->get_string()
-    });
+        .content = get_temp_variable()
+    };
+    cb->add_stmt(new sir_string(node->get_string(), result.content));
+    irs.const_strings.insert({node->get_string(), irs.const_strings.size()});
+    value_stack.push_back(result);
     return true;
 }
 
 bool ir_gen::visit_bool_literal(bool_literal* node) {
-    cb->add_stmt(new sir_bool(node->get_flag()));
-    value_stack.push_back({
-        .kind = value_kind::v_bool,
+    const auto result = value {
+        .kind = value_kind::v_id,
         .resolve_type = node->get_resolve(),
-        .content = node->get_flag()? "true":"false"
-    });
+        .content = get_temp_variable()
+    };
+    cb->add_stmt(new sir_bool(node->get_flag(), result.content));
+    value_stack.push_back(result);
     return true;
 }
 
@@ -109,7 +112,21 @@ bool ir_gen::visit_call(call* node) {
 
 bool ir_gen::visit_call_index(call_index* node) {
     node->get_index()->accept(this);
-    cb->add_stmt(new sir_call_index);
+    const auto index = value_stack.back();
+    value_stack.pop_back();
+    const auto source = value_stack.back();
+    value_stack.pop_back();
+    const auto result = value {
+        .kind = value_kind::v_id,
+        .resolve_type = node->get_resolve(),
+        .content = get_temp_variable()
+    };
+    value_stack.push_back(result);
+    cb->add_stmt(new sir_call_index(
+        source.content,
+        result.content,
+        index.content
+    ));
     return true;
 }
 
@@ -139,7 +156,7 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
 bool ir_gen::visit_definition(definition* node) {
     node->get_init_value()->accept(this);
     cb->add_stmt(new sir_alloca(
-        "%" + node->get_name(),
+        node->get_name(),
         generate_type_string(node->get_type())
     ));
     return true;

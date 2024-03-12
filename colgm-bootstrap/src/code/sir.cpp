@@ -4,7 +4,7 @@
 namespace colgm {
 
 void sir_alloca::dump(std::ostream& out) const {
-    out << variable_name << " = alloca " << type_name << "\n";
+    out << "%" << variable_name << " = alloca " << type_name << "\n";
 }
 
 sir_code_block::~sir_code_block() {
@@ -29,43 +29,44 @@ void sir_ret::dump(std::ostream& out) const {
 }
 
 void sir_number::dump(std::ostream& out) const {
-    out << "push_number  " << literal << "\n";
+    out << "%" << destination << " = " << literal << "\n";
 }
 
 void sir_string::dump(std::ostream& out) const {
-    out << "push_string  \"" << rawstr(literal) << "\"\n";
+    out << "%" << destination << " = \"" << rawstr(literal) << "\"\n";
 }
 
 void sir_bool::dump(std::ostream& out) const {
-    out << "push_bool " << (flag? "true":"false") << "\n";
+    out << "%" << destination << " = " << (flag? "true":"false") << "\n";
 }
 
 void sir_call_index::dump(std::ostream& out) const {
-    out << "call_index\n";
+    out << "%" << destination << " = %" << source;
+    out << "[%" << index << "]\n";
 }
 
 void sir_call_field::dump(std::ostream& out) const {
-    out << "call_field   " << field_name << "\n";
+    out << "; call_field " << field_name << "\n";
 }
 
 void sir_ptr_call_field::dump(std::ostream& out) const {
-    out << "ptr_callfld  " << field_name << "\n";
+    out << "; ptr_callfld " << field_name << "\n";
 }
 
 void sir_call_path::dump(std::ostream& out) const {
-    out << "call_path    " << field_name << "\n";
+    out << "; call_path " << field_name << "\n";
 }
 
 void sir_call_func::dump(std::ostream& out) const {
-    out << "call_funct   " << argc << "\n";
+    out << "; call_funct " << argc << "\n";
 }
 
 void sir_get_var::dump(std::ostream& out) const {
-    out << "get_variable " << name << "\n";
+    out << "; get_variable " << name << "\n";
 }
 
 void sir_binary::dump(std::ostream& out) const {
-    out << "calculation  " << opr << "\n";
+    out << "; calculation \"" << opr << "\"\n";
 }
 
 void sir_label::dump(std::ostream& out) const {
@@ -73,15 +74,15 @@ void sir_label::dump(std::ostream& out) const {
 }
 
 void sir_assign::dump(std::ostream& out) const {
-    out << "store_value  " << opr << "\n";
+    out << "; store_value " << opr << "\n";
 }
 
 void sir_br_direct::dump(std::ostream& out) const {
-    out << "br_direct    label " << destination << "\n";
+    out << "br_direct label " << destination << "\n";
 }
 
 void sir_br_cond::dump(std::ostream& out) const {
-    out << "br_cond      ";
+    out << "br_cond ";
     out << "label_true " << destination_true << ", ";
     out << "label_false " << destination_false << "\n";
 }

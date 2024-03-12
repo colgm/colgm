@@ -27,6 +27,12 @@ struct value {
 
 class ir_gen: public visitor {
 private:
+    u64 ssa_temp_counter = 0;
+    std::string get_temp_variable() {
+        return std::to_string(ssa_temp_counter++) + "_ssa";
+    }
+
+private:
     const semantic_context& ctx;
     const std::unordered_map<std::string, std::string> basic_type_convert_mapper = {
         {"i64", "i64"},

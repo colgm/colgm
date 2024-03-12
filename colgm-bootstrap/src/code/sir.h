@@ -81,10 +81,11 @@ public:
 class sir_number: public sir {
 private:
     std::string literal;
+    std::string destination;
 
 public:
-    sir_number(const std::string& n):
-        sir(sir_kind::sir_num), literal(n) {}
+    sir_number(const std::string& l, const std::string& dst):
+        sir(sir_kind::sir_num), literal(l), destination(dst) {}
     ~sir_number() override = default;
     void dump(std::ostream&) const override;
 };
@@ -92,10 +93,11 @@ public:
 class sir_string: public sir {
 private:
     std::string literal;
+    std::string destination;
 
 public:
-    sir_string(const std::string& s):
-        sir(sir_kind::sir_str), literal(s) {}
+    sir_string(const std::string& s, const std::string& dst):
+        sir(sir_kind::sir_str), literal(s), destination(dst) {}
     ~sir_string() override = default;
     void dump(std::ostream&) const override;
 };
@@ -103,9 +105,11 @@ public:
 class sir_bool: public sir {
 private:
     bool flag;
+    std::string destination;
 
 public:
-    sir_bool(bool f): sir(sir_kind::sir_bool), flag(f) {}
+    sir_bool(bool f, const std::string& dst):
+        sir(sir_kind::sir_bool), flag(f), destination(dst) {}
     ~sir_bool() override = default;
     void dump(std::ostream&) const override;
 };
@@ -122,8 +126,17 @@ public:
 };
 
 class sir_call_index: public sir {
+private:
+    std::string source;
+    std::string destination;
+    std::string index;
+
 public:
-    sir_call_index(): sir(sir_kind::sir_call_index) {}
+    sir_call_index(const std::string& src,
+                   const std::string& dst,
+                   const std::string& idx):
+        sir(sir_kind::sir_call_index), source(src),
+        destination(dst), index(idx) {}
     ~sir_call_index() override = default;
     void dump(std::ostream&) const override;
 };
