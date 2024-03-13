@@ -15,7 +15,9 @@ sir_code_block::~sir_code_block() {
 
 void sir_code_block::dump(std::ostream& out) const {
     for(auto i : stmts) {
-        out << "  ";
+        if (i->get_ir_type()!=sir_kind::sir_label) {
+            out << "  ";
+        }
         i->dump(out);
     }
 }
@@ -28,16 +30,11 @@ void sir_ret::dump(std::ostream& out) const {
     out << "\n";
 }
 
-void sir_number::dump(std::ostream& out) const {
-    out << "%" << destination << " = " << literal << "\n";
-}
-
 void sir_string::dump(std::ostream& out) const {
-    out << "%" << destination << " = \"" << rawstr(literal) << "\"\n";
-}
-
-void sir_bool::dump(std::ostream& out) const {
-    out << "%" << destination << " = " << (flag? "true":"false") << "\n";
+    out << "%" << destination << " = getelementptr ";
+    out << "[" << literal.size()+1 << " x i8], ";
+    out << "[" << literal.size()+1 << " x i8]* @.constant.str." << index;
+    out << ", i64 0, i64 0\n";
 }
 
 void sir_call_index::dump(std::ostream& out) const {
@@ -58,33 +55,38 @@ void sir_call_path::dump(std::ostream& out) const {
 }
 
 void sir_call_func::dump(std::ostream& out) const {
-    out << "; call_funct " << argc << "\n";
+    out << "; call_func " << argc << "\n";
 }
 
 void sir_get_var::dump(std::ostream& out) const {
-    out << "; get_variable " << name << "\n";
+    out << "; get_var " << name << "\n";
 }
 
 void sir_binary::dump(std::ostream& out) const {
-    out << "; calculation \"" << opr << "\"\n";
+    out << "; calc \"" << opr << "\"\n";
 }
 
 void sir_label::dump(std::ostream& out) const {
-    out << "label " << label_count << ":\n";
+    out << ".label_" << label_count << ":\n";
 }
 
 void sir_assign::dump(std::ostream& out) const {
-    out << "; store_value " << opr << "\n";
+    out << "; assign " << opr << "\n";
 }
 
-void sir_br_direct::dump(std::ostream& out) const {
-    out << "br_direct label " << destination << "\n";
+void sir_store::dump(std::ostream& out) const {
+    out << "store " << type << " %" << source;
+    out << ", " << type << "* %" << destination << "\n";
+}
+
+void sir_br::dump(std::ostream& out) const {
+    out << "br label %.label_" << destination << "\n";
 }
 
 void sir_br_cond::dump(std::ostream& out) const {
     out << "br_cond ";
-    out << "label_true " << destination_true << ", ";
-    out << "label_false " << destination_false << "\n";
+    out << "label %.label_" << destination_true << ", ";
+    out << "label %.label_" << destination_false << "\n";
 }
 
 }

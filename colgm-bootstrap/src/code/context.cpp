@@ -20,7 +20,7 @@ void ir_context::dump_raw_string(std::ostream& out,
 
 void ir_context::dump_const_string(std::ostream& out) const {
     for(const auto& i : const_strings) {
-        out << "@constant.str." << i.second;
+        out << "@.constant.str." << i.second;
         out << " = private unnamed_addr constant [";
         out << i.first.length() + 1 << " x i8] c\"";
         dump_raw_string(out, i.first);

@@ -22,17 +22,21 @@ private:
     std::string name;
     std::vector<std::pair<std::string, std::string>> params;
     std::string return_type;
+    sir_code_block* alloca_block;
     sir_code_block* cb;
 
 public:
-    hir_func(const std::string& n): name(n), cb(nullptr) {}
+    hir_func(const std::string& n):
+        name(n), alloca_block(nullptr), cb(nullptr) {}
     ~hir_func();
     void dump(std::ostream&) const;
 
     void add_param(const std::string& pname, const std::string& ptype) {
         params.push_back({pname, ptype});
     }
-    void set_code_block(sir_code_block* node) { cb = node; }
+    void set_alloca_block(sir_code_block* b) { alloca_block = b; }
+    auto get_alloca_block() { return alloca_block; }
+    void set_code_block(sir_code_block* b) { cb = b; }
     auto get_code_block() { return cb; }
     void set_return_type(const std::string& rtype) { return_type = rtype; }
 };

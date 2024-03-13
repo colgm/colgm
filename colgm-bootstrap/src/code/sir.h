@@ -15,9 +15,7 @@ enum class sir_kind {
     sir_code_block,
     sir_alloca,
     sir_ret,
-    sir_num,
     sir_str,
-    sir_bool,
     sir_get_var,
     sir_call_index,
     sir_call_field,
@@ -27,6 +25,7 @@ enum class sir_kind {
     sir_binary,
     sir_label,
     sir_assign,
+    sir_store,
     sir_br_direct,
     sir_br_cond
 };
@@ -78,39 +77,16 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_number: public sir {
-private:
-    std::string literal;
-    std::string destination;
-
-public:
-    sir_number(const std::string& l, const std::string& dst):
-        sir(sir_kind::sir_num), literal(l), destination(dst) {}
-    ~sir_number() override = default;
-    void dump(std::ostream&) const override;
-};
-
 class sir_string: public sir {
 private:
+    usize index;
     std::string literal;
     std::string destination;
 
 public:
-    sir_string(const std::string& s, const std::string& dst):
-        sir(sir_kind::sir_str), literal(s), destination(dst) {}
+    sir_string(const std::string& s, const usize i, const std::string& dst):
+        sir(sir_kind::sir_str), index(i), literal(s), destination(dst) {}
     ~sir_string() override = default;
-    void dump(std::ostream&) const override;
-};
-
-class sir_bool: public sir {
-private:
-    bool flag;
-    std::string destination;
-
-public:
-    sir_bool(bool f, const std::string& dst):
-        sir(sir_kind::sir_bool), flag(f), destination(dst) {}
-    ~sir_bool() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -218,14 +194,29 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_br_direct: public sir {
+class sir_store: public sir {
+private:
+    std::string type;
+    std::string source;
+    std::string destination;
+
+public:
+    sir_store(const std::string& t,
+              const std::string& src,
+              const std::string& dst):
+        sir(sir_kind::sir_store), type(t), source(src), destination(dst) {}
+    ~sir_store() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_br: public sir {
 private:
     usize destination;
 
 public:
-    sir_br_direct(usize dst):
+    sir_br(usize dst):
         sir(sir_kind::sir_br_direct), destination(dst) {}
-    ~sir_br_direct() override = default;
+    ~sir_br() override = default;
     void dump(std::ostream&) const override;
 };
 

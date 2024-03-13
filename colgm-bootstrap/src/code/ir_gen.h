@@ -27,9 +27,9 @@ struct value {
 
 class ir_gen: public visitor {
 private:
-    u64 ssa_temp_counter = 0;
+    u64 ssa_temp_counter = 1;
     std::string get_temp_variable() {
-        return std::to_string(ssa_temp_counter++) + "_ssa";
+        return std::to_string(ssa_temp_counter++) ;
     }
 
 private:
@@ -48,16 +48,18 @@ private:
         {"void", "void"},
         {"bool", "i1"}
     };
+    std::string type_convert(const type&);
 
 private:
-    static inline ir_context irs;
+    static inline ir_context irc;
 
     std::string impl_struct_name = "";
-    sir_code_block* cb = nullptr;
+    sir_code_block* alloca_block = nullptr;
+    sir_code_block* ircode_block = nullptr;
 
-    void emit_func_impls(hir_func* i) { irs.func_impls.push_back(i); }
-    void emit_func_decl(hir_func* f) { irs.func_decls.push_back(f); }
-    void emit_struct_decl(const hir_struct& s) { irs.struct_decls.push_back(s); }
+    void emit_func_impls(hir_func* i) { irc.func_impls.push_back(i); }
+    void emit_func_decl(hir_func* f) { irc.func_decls.push_back(f); }
+    void emit_struct_decl(const hir_struct& s) { irc.struct_decls.push_back(s); }
     std::string generate_type_string(type_def*);
     bool visit_struct_decl(struct_decl*) override;
     bool visit_func_decl(func_decl*) override;
@@ -85,7 +87,7 @@ private:
 public:
     ir_gen(const semantic_context& c): ctx(c) {}
     void generate(root* ast_root) { ast_root->accept(this); }
-    const auto& get_ir() const { return irs; }
+    const auto& get_ir() const { return irc; }
 };
 
 }

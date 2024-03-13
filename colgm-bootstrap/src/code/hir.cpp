@@ -27,11 +27,15 @@ void hir_func::dump(std::ostream& out) const {
         }
     }
     out << ")";
-    if (!cb) {
+    if (!alloca_block || !cb) {
         out << "\n";
         return;
     }
     out << " {\n";
+    alloca_block->dump(out);
+    if (alloca_block->size()) {
+        out << "\n";
+    }
     cb->dump(out);
     out << "}\n";
 }

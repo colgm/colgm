@@ -553,6 +553,7 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
         );
         return type::error_type();
     }
+    resolve_expression(node->get_index());
     auto result = prev;
     result.pointer_level--;
     node->set_resolve_type(result);
