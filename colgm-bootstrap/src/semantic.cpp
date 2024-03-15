@@ -37,13 +37,18 @@ void semantic::analyse_single_struct(struct_decl* node) {
             );
             continue;
         }
-        struct_self.field.push_back({
+        auto field_type = symbol {
             i->get_name()->get_name(), {
                 i->get_type()->get_name()->get_name(),
                 ctx.global_symbol.at(type_name_node->get_name()).loc_file,
                 i->get_type()->get_pointer_level()
             }
-        });
+        };
+        if (struct_self.field.count(i->get_name()->get_name())) {
+            report(i, "field name already exists");
+        }
+        struct_self.field.insert({i->get_name()->get_name(), field_type});
+        struct_self.ordered_field.push_back(field_type);
     }
 
     // add built-in static method size, for malloc usage
@@ -413,11 +418,9 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
 
     const auto& domain = ctx.global.domain.at(ctx.this_file);
     const auto& struct_self = domain.structs.at(prev.name);
-    for (const auto& field : struct_self.field) {
-        if (node->get_name()==field.name) {
-            node->set_resolve_type(field.symbol_type);
-            return field.symbol_type;
-        }
+    if (struct_self.field.count(node->get_name())) {
+        node->set_resolve_type(struct_self.field.at(node->get_name()).symbol_type);
+        return struct_self.field.at(node->get_name()).symbol_type;
     }
     if (struct_self.method.count(node->get_name())) {
         const auto res = struct_method_infer(
@@ -609,11 +612,9 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
     }
 
     const auto& struct_self = domain.structs.at(prev.name);
-    for (const auto& field : struct_self.field) {
-        if (node->get_name()==field.name) {
-            node->set_resolve_type(field.symbol_type);
-            return field.symbol_type;
-        }
+    if (struct_self.field.count(node->get_name())) {
+        node->set_resolve_type(struct_self.field.at(node->get_name()).symbol_type);
+        return struct_self.field.at(node->get_name()).symbol_type;
     }
     if (struct_self.method.count(node->get_name())) {
         auto infer = type({prev.name, prev.loc_file, prev.pointer_level, false});
@@ -1017,7 +1018,12 @@ void semantic::resolve_single_use(use_stmt* node) {
             return;
         }
         pkgman->set_analyse_status(file, package_manager::status::analysed);
-        gen.generate(par.get_result());
+        if (gen.generate(par.get_result()).geterr()) {
+            report(node,
+                "error ocurred when generating code for module \"" + mp + "\"."
+            );
+            return;
+        }
     }
 
     const auto& domain = ctx.global.domain.at(file);

@@ -29,9 +29,9 @@ void semantic_context::dump_structs() const {
         std::cout << "info of " << domain.first << ":\n";
         for(const auto& i : domain.second.structs) {
             std::cout << "  struct " << i.first << " {\n";
-            for(const auto& field : i.second.field) {
+            for(const auto& field : i.second.ordered_field) {
                 std::cout << "    " << field.name << ": " << field.symbol_type;
-                if (field.name!=i.second.field.back().name) {
+                if (field.name!=i.second.ordered_field.back().name) {
                     std::cout << ",";
                 }
                 std::cout << "\n";

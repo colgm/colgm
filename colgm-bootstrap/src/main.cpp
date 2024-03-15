@@ -119,7 +119,7 @@ void execute(
     }
 
     // generate code
-    gen.generate(parser.get_result());
+    gen.generate(parser.get_result()).chkerr();
     if (cmd&COMPILE_VIEW_IR) {
         gen.get_ir().dump_code(std::cout);
     }

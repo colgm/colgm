@@ -182,11 +182,81 @@ bool ir_gen::visit_call_index(call_index* node) {
 
 bool ir_gen::visit_call_field(call_field* node) {
     ircode_block->add_stmt(new sir_call_field(node->get_name()));
+    const auto source = value_stack.back();
+    value_stack.pop_back();
+    if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
+        err.err("code", node->get_location(),
+            "cannot find domain \"" + source.resolve_type.loc_file + "\"."
+        );
+        return true;
+    }
+    const auto& dom = ctx.global.domain.at(source.resolve_type.loc_file);
+    if (!dom.structs.count(source.resolve_type.name)) {
+        err.err("code", node->get_location(),
+            "cannot find struct \"" + source.resolve_type.name + "\"."
+        );
+        return true;
+    }
+    const auto& st = dom.structs.at(source.resolve_type.name);
+    if (st.field.count(node->get_name())) {
+        auto result = value {
+            .kind = value_kind::v_id,
+            .resolve_type = node->get_resolve(),
+            .content = get_temp_variable()
+        };
+        value_stack.push_back(result);
+        return true;
+    }
+    if (st.method.count(node->get_name())) {
+        auto result = value {
+            .kind = value_kind::v_fn,
+            .resolve_type = node->get_resolve(),
+            .content = get_temp_variable()
+        };
+        value_stack.push_back(result);
+        return true;
+    }
+    unreachable(node);
     return true;
 }
 
 bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
     ircode_block->add_stmt(new sir_ptr_call_field(node->get_name()));
+    const auto source = value_stack.back();
+    value_stack.pop_back();
+    if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
+        err.err("code", node->get_location(),
+            "cannot find domain \"" + source.resolve_type.loc_file + "\"."
+        );
+        return true;
+    }
+    const auto& dom = ctx.global.domain.at(source.resolve_type.loc_file);
+    if (!dom.structs.count(source.resolve_type.name)) {
+        err.err("code", node->get_location(),
+            "cannot find struct \"" + source.resolve_type.name + "\"."
+        );
+        return true;
+    }
+    const auto& st = dom.structs.at(source.resolve_type.name);
+    if (st.field.count(node->get_name())) {
+        auto result = value {
+            .kind = value_kind::v_id,
+            .resolve_type = node->get_resolve(),
+            .content = get_temp_variable()
+        };
+        value_stack.push_back(result);
+        return true;
+    }
+    if (st.method.count(node->get_name())) {
+        auto result = value {
+            .kind = value_kind::v_fn,
+            .resolve_type = node->get_resolve(),
+            .content = get_temp_variable()
+        };
+        value_stack.push_back(result);
+        return true;
+    }
+    unreachable(node);
     return true;
 }
 
@@ -199,6 +269,7 @@ bool ir_gen::visit_call_path(call_path* node) {
         .resolve_type = node->get_resolve(),
         .content = source.content + "." + node->get_name()
     };
+    value_stack.push_back(result);
     return true;
 }
 

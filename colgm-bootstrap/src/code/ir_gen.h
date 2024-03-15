@@ -5,6 +5,7 @@
 #include "code/hir.h"
 #include "code/context.h"
 #include "semantic.h"
+#include "err.h"
 
 #include <vector>
 #include <cstring>
@@ -13,10 +14,8 @@
 namespace colgm {
 
 enum value_kind {
-    v_num,
-    v_str,
-    v_bool,
-    v_id
+    v_id,
+    v_fn
 };
 
 struct value {
@@ -34,6 +33,12 @@ private:
 
 private:
     const semantic_context& ctx;
+    error err;
+    void unreachable(node* n) {
+        err.err("code", n->get_location(), "unreachable.");
+    }
+
+private:
     const std::unordered_map<std::string, std::string> basic_type_convert_mapper = {
         {"i64", "i64"},
         {"i32", "i32"},
@@ -86,7 +91,10 @@ private:
 
 public:
     ir_gen(const semantic_context& c): ctx(c) {}
-    void generate(root* ast_root) { ast_root->accept(this); }
+    auto& generate(root* ast_root) {
+        ast_root->accept(this);
+        return err;
+    }
     const auto& get_ir() const { return irc; }
 };
 
