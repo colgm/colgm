@@ -48,16 +48,13 @@ bool ir_gen::visit_func_decl(func_decl* node) {
     }
     if (node->get_code_block()) {
         emit_func_impls(new_ir);
-        new_ir->set_alloca_block(new sir_code_block);
-        new_ir->set_code_block(new sir_code_block);
+        new_ir->set_code_block(new sir_block);
     } else {
         emit_func_decl(new_ir);
         return true;
     }
-    alloca_block = new_ir->get_alloca_block();
     ircode_block = new_ir->get_code_block();
     node->get_code_block()->accept(this);
-    alloca_block = nullptr;
     ircode_block = nullptr;
     return true;
 }
@@ -73,11 +70,11 @@ bool ir_gen::visit_impl_struct(impl_struct* node) {
 
 bool ir_gen::visit_number_literal(number_literal* node) {
     const auto result = value {
-        .kind = value_kind::v_id,
+        .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
         .content = get_temp_variable()
     };
-    alloca_block->add_stmt(new sir_alloca(
+    ircode_block->add_allocs(new sir_alloca(
         result.content,
         type_convert(node->get_resolve())
     ));
@@ -92,7 +89,7 @@ bool ir_gen::visit_number_literal(number_literal* node) {
 
 bool ir_gen::visit_string_literal(string_literal* node) {
     const auto result = value {
-        .kind = value_kind::v_id,
+        .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
         .content = get_temp_variable()
     };
@@ -116,11 +113,11 @@ bool ir_gen::visit_string_literal(string_literal* node) {
 
 bool ir_gen::visit_bool_literal(bool_literal* node) {
     const auto result = value {
-        .kind = value_kind::v_id,
+        .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
         .content = get_temp_variable()
     };
-    alloca_block->add_stmt(new sir_alloca(
+    ircode_block->add_allocs(new sir_alloca(
         result.content,
         "i1"
     ));
@@ -134,19 +131,28 @@ bool ir_gen::visit_bool_literal(bool_literal* node) {
 }
 
 bool ir_gen::visit_call(call* node) {
-    ircode_block->add_stmt(new sir_get_var(node->get_head()->get_name()));
-    value_stack.push_back({
-        .kind = value_kind::v_id,
-        .resolve_type = node->get_head()->get_resolve(),
-        .content = node->get_head()->get_name()
-    });
+    // call head may be the global function
+    if (ctx.global_symbol.count(node->get_head()->get_name()) &&
+        ctx.global_symbol.at(node->get_head()->get_name()).kind==symbol_kind::func_kind) {
+        value_stack.push_back({
+            .kind = value_kind::v_sfn,
+            .resolve_type = node->get_head()->get_resolve(),
+            .content = node->get_head()->get_name()
+        });
+    } else {
+        value_stack.push_back({
+            .kind = value_kind::v_var,
+            .resolve_type = node->get_head()->get_resolve(),
+            .content = node->get_head()->get_name()
+        });
+    }
     for(auto i : node->get_chain()) {
         i->accept(this);
     }
     const auto source = value_stack.back();
     value_stack.pop_back();
     const auto result = value {
-        .kind = value_kind::v_id,
+        .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
         .content = get_temp_variable()
     };
@@ -166,7 +172,7 @@ bool ir_gen::visit_call_index(call_index* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
     auto result = value {
-        .kind = value_kind::v_id,
+        .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
         .content = get_temp_variable()
     };
@@ -200,7 +206,7 @@ bool ir_gen::visit_call_field(call_field* node) {
     const auto& st = dom.structs.at(source.resolve_type.name);
     if (st.field.count(node->get_name())) {
         auto result = value {
-            .kind = value_kind::v_id,
+            .kind = value_kind::v_var,
             .resolve_type = node->get_resolve(),
             .content = get_temp_variable()
         };
@@ -211,9 +217,10 @@ bool ir_gen::visit_call_field(call_field* node) {
         auto result = value {
             .kind = value_kind::v_fn,
             .resolve_type = node->get_resolve(),
-            .content = get_temp_variable()
+            .content = st.name + "." + node->get_name()
         };
         value_stack.push_back(result);
+        value_stack.push_back(source); // self pointer
         return true;
     }
     unreachable(node);
@@ -240,7 +247,7 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
     const auto& st = dom.structs.at(source.resolve_type.name);
     if (st.field.count(node->get_name())) {
         auto result = value {
-            .kind = value_kind::v_id,
+            .kind = value_kind::v_var,
             .resolve_type = node->get_resolve(),
             .content = get_temp_variable()
         };
@@ -251,7 +258,38 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
         auto result = value {
             .kind = value_kind::v_fn,
             .resolve_type = node->get_resolve(),
-            .content = get_temp_variable()
+            .content = st.name + "." + node->get_name()
+        };
+        value_stack.push_back(result);
+        value_stack.push_back(source); // self pointer
+        return true;
+    }
+    unreachable(node);
+    return true;
+}
+
+bool ir_gen::visit_call_path(call_path* node) {
+    const auto source = value_stack.back();
+    value_stack.pop_back();
+    if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
+        err.err("code", node->get_location(),
+            "cannot find domain \"" + source.resolve_type.loc_file + "\"."
+        );
+        return true;
+    }
+    const auto& dom = ctx.global.domain.at(source.resolve_type.loc_file);
+    if (!dom.structs.count(source.resolve_type.name)) {
+        err.err("code", node->get_location(),
+            "cannot find struct \"" + source.resolve_type.name + "\"."
+        );
+        return true;
+    }
+    const auto& st = dom.structs.at(source.resolve_type.name);
+    if (st.static_method.count(node->get_name())) {
+        auto result = value {
+            .kind = value_kind::v_sfn,
+            .resolve_type = node->get_resolve(),
+            .content = st.name + "." + node->get_name()
         };
         value_stack.push_back(result);
         return true;
@@ -260,24 +298,31 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
     return true;
 }
 
-bool ir_gen::visit_call_path(call_path* node) {
-    ircode_block->add_stmt(new sir_call_path(node->get_name()));
-    const auto source = value_stack.back();
-    value_stack.pop_back();
-    const auto result = value {
-        .kind = value_kind::v_id,
-        .resolve_type = node->get_resolve(),
-        .content = source.content + "." + node->get_name()
-    };
-    value_stack.push_back(result);
-    return true;
-}
-
 bool ir_gen::visit_call_func_args(call_func_args* node) {
+    std::vector<value> arguments;
     for(auto i : node->get_args()) {
         i->accept(this);
+        arguments.push_back(value_stack.back());
+        value_stack.pop_back();
     }
-    ircode_block->add_stmt(new sir_call_func(node->get_args().size()));
+    if (value_stack.empty()) {
+        report_stack_empty(node);
+        return true;
+    }
+
+    const auto func = value_stack.back();
+    value_stack.pop_back();
+    auto new_call = new sir_call_func(func.content);
+    for(const auto& arg : arguments) {
+        new_call->add_arg(arg.content);
+    }
+    ircode_block->add_stmt(new_call);
+    const auto result = value {
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = get_temp_variable()
+    };
+    value_stack.push_back(result);
     return true;
 }
 
@@ -286,6 +331,13 @@ bool ir_gen::visit_definition(definition* node) {
     ircode_block->add_stmt(new sir_alloca(
         node->get_name(),
         generate_type_string(node->get_type())
+    ));
+    const auto source = value_stack.back();
+    value_stack.pop_back();
+    ircode_block->add_stmt(new sir_store(
+        generate_type_string(node->get_type()),
+        source.content,
+        node->get_name()
     ));
     return true;
 }
@@ -307,22 +359,22 @@ bool ir_gen::visit_assignment(assignment* node) {
 bool ir_gen::visit_binary_operator(binary_operator* node) {
     if (node->get_opr()==binary_operator::kind::cmpand) {
         node->get_left()->accept(this);
-        auto br = new sir_br_cond(ircode_block->size()+1, 0);
+        auto br = new sir_br_cond(ircode_block->stmt_size()+1, 0);
         ircode_block->add_stmt(br);
-        ircode_block->add_stmt(new sir_label(ircode_block->size()));
+        ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
         node->get_right()->accept(this);
-        br->set_false_label(ircode_block->size());
-        ircode_block->add_stmt(new sir_label(ircode_block->size()));
+        br->set_false_label(ircode_block->stmt_size());
+        ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
         return true;
     }
     if (node->get_opr()==binary_operator::kind::cmpor) {
         node->get_left()->accept(this);
-        auto br = new sir_br_cond(0, ircode_block->size()+1);
+        auto br = new sir_br_cond(0, ircode_block->stmt_size()+1);
         ircode_block->add_stmt(br);
-        ircode_block->add_stmt(new sir_label(ircode_block->size()));
+        ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
         node->get_right()->accept(this);
-        br->set_true_label(ircode_block->size());
-        ircode_block->add_stmt(new sir_label(ircode_block->size()));
+        br->set_true_label(ircode_block->stmt_size());
+        ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
         return true;
     }
     node->get_left()->accept(this);
@@ -354,22 +406,22 @@ bool ir_gen::visit_ret_stmt(ret_stmt* node) {
 }
 
 bool ir_gen::visit_while_stmt(while_stmt* node) {
-    auto while_begin_label = ircode_block->size();
+    auto while_begin_label = ircode_block->stmt_size();
     // condition
-    ircode_block->add_stmt(new sir_label(ircode_block->size()));
+    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
 
     node->get_condition()->accept(this);
-    auto cond_branch_ir = new sir_br_cond(ircode_block->size()+1, 0);
+    auto cond_branch_ir = new sir_br_cond(ircode_block->stmt_size()+1, 0);
     ircode_block->add_stmt(cond_branch_ir);
 
     // loop begin
-    ircode_block->add_stmt(new sir_label(ircode_block->size()));
+    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     node->get_block()->accept(this);
     ircode_block->add_stmt(new sir_br(while_begin_label));
 
     // loop exit
-    cond_branch_ir->set_false_label(ircode_block->size());
-    ircode_block->add_stmt(new sir_label(ircode_block->size()));
+    cond_branch_ir->set_false_label(ircode_block->stmt_size());
+    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     return true;
 }
 
@@ -377,15 +429,15 @@ bool ir_gen::visit_if_stmt(if_stmt* node) {
     sir_br_cond* br_cond = nullptr;
     if (node->get_condition()) {
         node->get_condition()->accept(this);
-        br_cond = new sir_br_cond(ircode_block->size()+1, 0);
+        br_cond = new sir_br_cond(ircode_block->stmt_size()+1, 0);
         ircode_block->add_stmt(br_cond);
     }
-    ircode_block->add_stmt(new sir_label(ircode_block->size()));
+    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     node->get_block()->accept(this);
     if (br_cond) {
-        br_cond->set_false_label(ircode_block->size());
+        br_cond->set_false_label(ircode_block->stmt_size());
     }
-    ircode_block->add_stmt(new sir_label(ircode_block->size()));
+    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     return true;
 }
 

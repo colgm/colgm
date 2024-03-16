@@ -14,8 +14,10 @@
 namespace colgm {
 
 enum value_kind {
-    v_id,
-    v_fn
+    v_null,
+    v_var,
+    v_fn,
+    v_sfn
 };
 
 struct value {
@@ -36,6 +38,9 @@ private:
     error err;
     void unreachable(node* n) {
         err.err("code", n->get_location(), "unreachable.");
+    }
+    void report_stack_empty(node* n) {
+        err.err("code", n->get_location(), "internal error: stack is empty.");
     }
 
 private:
@@ -59,8 +64,7 @@ private:
     static inline ir_context irc;
 
     std::string impl_struct_name = "";
-    sir_code_block* alloca_block = nullptr;
-    sir_code_block* ircode_block = nullptr;
+    sir_block* ircode_block = nullptr;
 
     void emit_func_impls(hir_func* i) { irc.func_impls.push_back(i); }
     void emit_func_decl(hir_func* f) { irc.func_decls.push_back(f); }

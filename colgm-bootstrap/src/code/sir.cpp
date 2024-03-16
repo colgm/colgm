@@ -7,13 +7,23 @@ void sir_alloca::dump(std::ostream& out) const {
     out << "%" << variable_name << " = alloca " << type_name << "\n";
 }
 
-sir_code_block::~sir_code_block() {
+sir_block::~sir_block() {
+    for(auto i : allocs) {
+        delete i;
+    }
     for(auto i : stmts) {
         delete i;
     }
 }
 
-void sir_code_block::dump(std::ostream& out) const {
+void sir_block::dump(std::ostream& out) const {
+    for(auto i : allocs) {
+        out << "  ";
+        i->dump(out);
+    }
+    if (allocs.size() && stmts.size()) {
+        out << "\n";
+    }
     for(auto i : stmts) {
         if (i->get_ir_type()!=sir_kind::sir_label) {
             out << "  ";
@@ -50,16 +60,15 @@ void sir_ptr_call_field::dump(std::ostream& out) const {
     out << "; ptr_callfld " << field_name << "\n";
 }
 
-void sir_call_path::dump(std::ostream& out) const {
-    out << "; call_path " << field_name << "\n";
-}
-
 void sir_call_func::dump(std::ostream& out) const {
-    out << "; call_func " << argc << "\n";
-}
-
-void sir_get_var::dump(std::ostream& out) const {
-    out << "; get_var " << name << "\n";
+    out << "call @" << name << "(";
+    for(const auto& i : args) {
+        out << i;
+        if (i!=args.back()) {
+            out << ", ";
+        }
+    }
+    out << ")\n";
 }
 
 void sir_binary::dump(std::ostream& out) const {

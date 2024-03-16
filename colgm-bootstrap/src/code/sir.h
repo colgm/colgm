@@ -12,15 +12,13 @@
 namespace colgm {
 
 enum class sir_kind {
-    sir_code_block,
+    sir_block,
     sir_alloca,
     sir_ret,
     sir_str,
-    sir_get_var,
     sir_call_index,
     sir_call_field,
     sir_ptr_call_field,
-    sir_call_path,
     sir_call_func,
     sir_binary,
     sir_label,
@@ -53,17 +51,20 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_code_block: public sir {
+class sir_block: public sir {
 private:
+    std::vector<sir_alloca*> allocs;
     std::vector<sir*> stmts;
 
 public:
-    sir_code_block(): sir(sir_kind::sir_code_block) {}
-    ~sir_code_block() override;
+    sir_block(): sir(sir_kind::sir_block) {}
+    ~sir_block() override;
     void dump(std::ostream&) const override;
 
+    void add_allocs(sir_alloca* node) { allocs.push_back(node); }
+    auto alloca_size() const { return allocs.size(); }
     void add_stmt(sir* node) { stmts.push_back(node); }
-    auto size() const { return stmts.size(); }
+    auto stmt_size() const { return stmts.size(); }
 };
 
 class sir_ret: public sir {
@@ -87,17 +88,6 @@ public:
     sir_string(const std::string& s, const usize i, const std::string& dst):
         sir(sir_kind::sir_str), index(i), literal(s), destination(dst) {}
     ~sir_string() override = default;
-    void dump(std::ostream&) const override;
-};
-
-class sir_get_var: public sir {
-private:
-    std::string name;
-
-public:
-    sir_get_var(const std::string& n):
-        sir(sir_kind::sir_get_var), name(n) {}
-    ~sir_get_var() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -139,25 +129,16 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_call_path: public sir {
-private:
-    std::string field_name;
-
-public:
-    sir_call_path(const std::string& n):
-        sir(sir_kind::sir_call_path), field_name(n) {}
-    ~sir_call_path() override = default;
-    void dump(std::ostream&) const override;
-};
-
 class sir_call_func: public sir {
 private:
-    usize argc;
+    std::string name;
+    std::vector<std::string> args;
 
 public:
-    sir_call_func(usize ac):
-        sir(sir_kind::sir_call_func), argc(ac) {}
+    sir_call_func(const std::string& n):
+        sir(sir_kind::sir_call_func), name(n) {}
     ~sir_call_func() override = default;
+    void add_arg(const std::string& a) { args.push_back(a); }
     void dump(std::ostream&) const override;
 };
 
