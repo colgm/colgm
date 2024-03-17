@@ -3,6 +3,7 @@
 #include "ast/visitor.h"
 #include "code/sir.h"
 #include "code/hir.h"
+#include "code/value.h"
 #include "code/context.h"
 #include "semantic.h"
 #include "err.h"
@@ -13,24 +14,11 @@
 
 namespace colgm {
 
-enum value_kind {
-    v_null,
-    v_var,
-    v_fn,
-    v_sfn
-};
-
-struct value {
-    value_kind kind;
-    type resolve_type;
-    std::string content;
-};
-
 class ir_gen: public visitor {
 private:
     u64 ssa_temp_counter = 1;
     std::string get_temp_variable() {
-        return std::to_string(ssa_temp_counter++) ;
+        return "." + std::to_string(ssa_temp_counter++) ;
     }
 
 private:
@@ -80,12 +68,17 @@ private:
     bool visit_number_literal(number_literal*) override;
     bool visit_string_literal(string_literal*) override;
     bool visit_bool_literal(bool_literal*) override;
+    void call_function_symbol(identifier*);
+    void call_variable(identifier*);
+    void convert_call_result(call*);
     bool visit_call(call*) override;
     bool visit_call_index(call_index*) override;
     bool visit_call_field(call_field*) override;
     bool visit_ptr_call_field(ptr_call_field*) override;
     bool visit_call_path(call_path*) override;
     bool visit_call_func_args(call_func_args*) override;
+    void generate_and_operator(binary_operator*);
+    void generate_or_operator(binary_operator*);
     bool visit_binary_operator(binary_operator*) override;
     bool visit_ret_stmt(ret_stmt*) override;
     bool visit_definition(definition*) override;

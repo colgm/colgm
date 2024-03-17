@@ -24,8 +24,8 @@ HEADER = \
 	src/code/context.h\
 	src/code/hir.h\
 	src/code/sir.h\
+	src/code/value.h\
 	src/code/ir_gen.h\
-	src/code/lir.h\
 	src/package/package.h\
 	src/sema/context.h\
 	src/sema/symbol.h
@@ -46,8 +46,8 @@ OBJECT = \
 	build/code_context.o\
 	build/hir.o\
 	build/sir.o\
+	build/value.o\
 	build/ir_gen.o\
-	build/lir.o\
 	build/package.o\
 	build/sema_context.o\
 	build/symbol.o
@@ -112,11 +112,11 @@ build/hir.o: $(HEADER) src/code/hir.cpp | build
 build/sir.o: $(HEADER) src/code/sir.cpp | build
 	$(CXX) $(CXXFLAGS) src/code/sir.cpp -o build/sir.o -I src
 
+build/value.o: $(HEADER) src/code/value.cpp | build
+	$(CXX) $(CXXFLAGS) src/code/value.cpp -o build/value.o -I src
+
 build/ir_gen.o: $(HEADER) src/code/ir_gen.cpp | build
 	$(CXX) $(CXXFLAGS) src/code/ir_gen.cpp -o build/ir_gen.o -I src
-
-build/lir.o: $(HEADER) src/code/lir.cpp | build
-	$(CXX) $(CXXFLAGS) src/code/lir.cpp -o build/lir.o -I src
 
 build/package.o: $(HEADER) src/package/package.cpp | build
 	$(CXX) $(CXXFLAGS) src/package/package.cpp -o build/package.o -I src
@@ -137,5 +137,6 @@ clean:
 	@ rm $(OBJECT)
 
 .PHONY: test
-test: colgm
+test: colgm out.ll
 	./colgm ../src/main.colgm -L ../src -Wt
+	lli out.ll

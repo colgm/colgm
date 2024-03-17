@@ -78,7 +78,7 @@ bool ir_gen::visit_number_literal(number_literal* node) {
         result.content,
         type_convert(node->get_resolve())
     ));
-    ircode_block->add_stmt(new sir_store(
+    ircode_block->add_stmt(new sir_store_literal(
         type_convert(node->get_resolve()),
         node->get_number(),
         result.content
@@ -121,7 +121,7 @@ bool ir_gen::visit_bool_literal(bool_literal* node) {
         result.content,
         "i1"
     ));
-    ircode_block->add_stmt(new sir_store(
+    ircode_block->add_stmt(new sir_store_literal(
         "i1",
         node->get_flag()? "true":"false",
         result.content
@@ -130,38 +130,78 @@ bool ir_gen::visit_bool_literal(bool_literal* node) {
     return true;
 }
 
+void ir_gen::call_function_symbol(identifier* node) {
+    value_stack.push_back({
+        .kind = value_kind::v_sfn,
+        .resolve_type = node->get_resolve(),
+        .content = node->get_name()
+    });
+}
+
+void ir_gen::call_variable(identifier* node) {
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    ircode_block->add_allocs(new sir_alloca(
+        temp_0,
+        type_convert(node->get_resolve())
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(node->get_resolve()),
+        node->get_name(),
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_load(
+        type_convert(node->get_resolve()),
+        temp_0,
+        temp_1
+    ));
+    value_stack.push_back({
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = temp_1
+    });
+}
+
+void ir_gen::convert_call_result(call* node) {
+    const auto source = value_stack.back();
+    value_stack.pop_back();
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    const auto result = value {
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = temp_1
+    };
+    ircode_block->add_allocs(new sir_alloca(
+        temp_0,
+        type_convert(result.resolve_type)
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(result.resolve_type),
+        source.content,
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_load(
+        type_convert(result.resolve_type),
+        temp_0,
+        temp_1
+    ));
+    value_stack.push_back(result);
+}
+
 bool ir_gen::visit_call(call* node) {
     // call head may be the global function
-    if (ctx.global_symbol.count(node->get_head()->get_name()) &&
-        ctx.global_symbol.at(node->get_head()->get_name()).kind==symbol_kind::func_kind) {
-        value_stack.push_back({
-            .kind = value_kind::v_sfn,
-            .resolve_type = node->get_head()->get_resolve(),
-            .content = node->get_head()->get_name()
-        });
+    auto head = node->get_head();
+    if (ctx.global_symbol.count(head->get_name()) &&
+        ctx.global_symbol.at(head->get_name()).kind==symbol_kind::func_kind) {
+        call_function_symbol(head);
     } else {
-        value_stack.push_back({
-            .kind = value_kind::v_var,
-            .resolve_type = node->get_head()->get_resolve(),
-            .content = node->get_head()->get_name()
-        });
+        call_variable(head);
     }
     for(auto i : node->get_chain()) {
         i->accept(this);
     }
-    const auto source = value_stack.back();
-    value_stack.pop_back();
-    const auto result = value {
-        .kind = value_kind::v_var,
-        .resolve_type = node->get_resolve(),
-        .content = get_temp_variable()
-    };
-    ircode_block->add_stmt(new sir_store(
-        type_convert(result.resolve_type),
-        source.content,
-        result.content
-    ));
-    value_stack.push_back(result);
+    convert_call_result(node);
     return true;
 }
 
@@ -187,7 +227,6 @@ bool ir_gen::visit_call_index(call_index* node) {
 }
 
 bool ir_gen::visit_call_field(call_field* node) {
-    ircode_block->add_stmt(new sir_call_field(node->get_name()));
     const auto source = value_stack.back();
     value_stack.pop_back();
     if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
@@ -211,6 +250,18 @@ bool ir_gen::visit_call_field(call_field* node) {
             .content = get_temp_variable()
         };
         value_stack.push_back(result);
+        for(usize i = 0; i<st.ordered_field.size(); ++i) {
+            if (node->get_name()==st.ordered_field[i].name) {
+                ircode_block->add_stmt(new sir_call_field(
+                    result.content,
+                    type_convert(st.ordered_field[i].symbol_type),
+                    source.content,
+                    type_convert(source.resolve_type),
+                    i
+                ));
+                break;
+            }
+        }
         return true;
     }
     if (st.method.count(node->get_name())) {
@@ -228,7 +279,6 @@ bool ir_gen::visit_call_field(call_field* node) {
 }
 
 bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
-    ircode_block->add_stmt(new sir_ptr_call_field(node->get_name()));
     const auto source = value_stack.back();
     value_stack.pop_back();
     if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
@@ -252,6 +302,18 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
             .content = get_temp_variable()
         };
         value_stack.push_back(result);
+        for(usize i = 0; i<st.ordered_field.size(); ++i) {
+            if (node->get_name()==st.ordered_field[i].name) {
+                ircode_block->add_stmt(new sir_ptr_call_field(
+                    result.content,
+                    type_convert(st.ordered_field[i].symbol_type),
+                    source.content,
+                    type_convert(source.resolve_type),
+                    i
+                ));
+                break;
+            }
+        }
         return true;
     }
     if (st.method.count(node->get_name())) {
@@ -309,26 +371,33 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
         report_stack_empty(node);
         return true;
     }
-
-    const auto func = value_stack.back();
-    value_stack.pop_back();
-    auto new_call = new sir_call_func(func.content);
-    for(const auto& arg : arguments) {
-        new_call->add_arg(arg.content);
-    }
-    ircode_block->add_stmt(new_call);
+    // generate return value but do not push now
     const auto result = value {
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
         .content = get_temp_variable()
     };
+    // generate function call ir
+    const auto func = value_stack.back();
+    value_stack.pop_back();
+    auto new_call = new sir_call_func(
+        func.content,
+        type_convert(node->get_resolve()),
+        node->get_resolve()==type::void_type()? "":result.content
+    );
+    for(const auto& arg : arguments) {
+        new_call->add_arg_type(type_convert(arg.resolve_type));
+        new_call->add_arg(arg.content);
+    }
+    ircode_block->add_stmt(new_call);
+    // push return value on stack
     value_stack.push_back(result);
     return true;
 }
 
 bool ir_gen::visit_definition(definition* node) {
     node->get_init_value()->accept(this);
-    ircode_block->add_stmt(new sir_alloca(
+    ircode_block->add_allocs(new sir_alloca(
         node->get_name(),
         generate_type_string(node->get_type())
     ));
@@ -344,55 +413,143 @@ bool ir_gen::visit_definition(definition* node) {
 
 bool ir_gen::visit_assignment(assignment* node) {
     node->get_left()->accept(this);
+    const auto left = value_stack.back();
+    value_stack.pop_back();
+
     node->get_right()->accept(this);
+    const auto right = value_stack.back();
+    value_stack.pop_back();
+
     switch(node->get_type()) {
-        case assignment::kind::addeq: ircode_block->add_stmt(new sir_assign("+=")); break;
-        case assignment::kind::diveq: ircode_block->add_stmt(new sir_assign("/=")); break;
-        case assignment::kind::eq: ircode_block->add_stmt(new sir_assign("=")); break;
-        case assignment::kind::modeq: ircode_block->add_stmt(new sir_assign("%=")); break;
-        case assignment::kind::multeq: ircode_block->add_stmt(new sir_assign("*=")); break;
-        case assignment::kind::subeq: ircode_block->add_stmt(new sir_assign("-=")); break;
+        case assignment::kind::addeq:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, left.content, "add"
+            )); break;
+        case assignment::kind::diveq:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, left.content, "div"
+        )); break;
+        case assignment::kind::eq:
+            ircode_block->add_stmt(new sir_store(
+                type_convert(left.resolve_type),
+                right.content,
+                left.content
+            )); break;
+        case assignment::kind::modeq:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, left.content, "rem"
+            )); break;
+        case assignment::kind::multeq:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, left.content, "mul"
+            )); break;
+        case assignment::kind::subeq:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, left.content, "sub"
+            )); break;
     }
     return true;
 }
 
+void ir_gen::generate_and_operator(binary_operator* node) {
+    node->get_left()->accept(this);
+    const auto condition = value_stack.back();
+    value_stack.pop_back();
+    auto br = new sir_br_cond(
+        condition.content,
+        ircode_block->stmt_size()+1,
+        0
+    );
+    ircode_block->add_stmt(br);
+    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
+    node->get_right()->accept(this);
+    br->set_false_label(ircode_block->stmt_size());
+    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
+}
+
+void ir_gen::generate_or_operator(binary_operator* node) {
+    node->get_left()->accept(this);
+    const auto condition = value_stack.back();
+    value_stack.pop_back();
+    auto br = new sir_br_cond(
+        condition.content,
+        0,
+        ircode_block->stmt_size()+1
+    );
+    ircode_block->add_stmt(br);
+    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
+    node->get_right()->accept(this);
+    br->set_true_label(ircode_block->stmt_size());
+    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
+}
+
 bool ir_gen::visit_binary_operator(binary_operator* node) {
     if (node->get_opr()==binary_operator::kind::cmpand) {
-        node->get_left()->accept(this);
-        auto br = new sir_br_cond(ircode_block->stmt_size()+1, 0);
-        ircode_block->add_stmt(br);
-        ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
-        node->get_right()->accept(this);
-        br->set_false_label(ircode_block->stmt_size());
-        ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
+        generate_and_operator(node);
         return true;
     }
     if (node->get_opr()==binary_operator::kind::cmpor) {
-        node->get_left()->accept(this);
-        auto br = new sir_br_cond(0, ircode_block->stmt_size()+1);
-        ircode_block->add_stmt(br);
-        ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
-        node->get_right()->accept(this);
-        br->set_true_label(ircode_block->stmt_size());
-        ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
+        generate_or_operator(node);
         return true;
     }
     node->get_left()->accept(this);
+    const auto left = value_stack.back();
+    value_stack.pop_back();
     node->get_right()->accept(this);
+    const auto right = value_stack.back();
+    value_stack.pop_back();
+    const auto result = value {
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = get_temp_variable()
+    };
+    value_stack.push_back(result);
     switch(node->get_opr()) {
-        case binary_operator::kind::add: ircode_block->add_stmt(new sir_binary("+")); break;
-        case binary_operator::kind::cmpand: ircode_block->add_stmt(new sir_binary("&&")); break;
-        case binary_operator::kind::cmpeq: ircode_block->add_stmt(new sir_binary("==")); break;
-        case binary_operator::kind::cmpneq: ircode_block->add_stmt(new sir_binary("!=")); break;
-        case binary_operator::kind::cmpor: ircode_block->add_stmt(new sir_binary("||")); break;
-        case binary_operator::kind::div: ircode_block->add_stmt(new sir_binary("/")); break;
-        case binary_operator::kind::geq: ircode_block->add_stmt(new sir_binary(">=")); break;
-        case binary_operator::kind::grt: ircode_block->add_stmt(new sir_binary(">")); break;
-        case binary_operator::kind::leq: ircode_block->add_stmt(new sir_binary("<=")); break;
-        case binary_operator::kind::less: ircode_block->add_stmt(new sir_binary("<")); break;
-        case binary_operator::kind::mod: ircode_block->add_stmt(new sir_binary("%")); break;
-        case binary_operator::kind::mult: ircode_block->add_stmt(new sir_binary("*")); break;
-        case binary_operator::kind::sub: ircode_block->add_stmt(new sir_binary("-")); break;
+        case binary_operator::kind::add:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "add"
+            )); break;
+        case binary_operator::kind::cmpeq:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "eq"
+            )); break;
+        case binary_operator::kind::cmpneq:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "ne"
+            )); break;
+        case binary_operator::kind::div:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "div"
+            )); break;
+        case binary_operator::kind::geq:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "ge"
+            )); break;
+        case binary_operator::kind::grt:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "gt"
+            )); break;
+        case binary_operator::kind::leq:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "le"
+            )); break;
+        case binary_operator::kind::less:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "lt"
+            )); break;
+        case binary_operator::kind::mod:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "rem"
+            )); break;
+        case binary_operator::kind::mult:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "mul"
+            )); break;
+        case binary_operator::kind::sub:
+            ircode_block->add_stmt(new sir_binary(
+                left.content, right.content, result.content, "sub"
+            )); break;
+        default: unreachable(node);
     }
     return true;
 }
@@ -400,8 +557,15 @@ bool ir_gen::visit_binary_operator(binary_operator* node) {
 bool ir_gen::visit_ret_stmt(ret_stmt* node) {
     if (node->get_value()) {
         node->get_value()->accept(this);
+        const auto result = value_stack.back();
+        value_stack.pop_back();
+        ircode_block->add_stmt(new sir_ret(
+            type_convert(result.resolve_type),
+            result.content
+        ));
+    } else {
+        ircode_block->add_stmt(new sir_ret("void"));
     }
-    ircode_block->add_stmt(new sir_ret(node->get_value()));
     return true;
 }
 
@@ -411,7 +575,13 @@ bool ir_gen::visit_while_stmt(while_stmt* node) {
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
 
     node->get_condition()->accept(this);
-    auto cond_branch_ir = new sir_br_cond(ircode_block->stmt_size()+1, 0);
+    const auto condition = value_stack.back();
+    value_stack.pop_back();
+    auto cond_branch_ir = new sir_br_cond(
+        condition.content,
+        ircode_block->stmt_size()+1,
+        0
+    );
     ircode_block->add_stmt(cond_branch_ir);
 
     // loop begin
@@ -429,7 +599,13 @@ bool ir_gen::visit_if_stmt(if_stmt* node) {
     sir_br_cond* br_cond = nullptr;
     if (node->get_condition()) {
         node->get_condition()->accept(this);
-        br_cond = new sir_br_cond(ircode_block->stmt_size()+1, 0);
+        const auto condition = value_stack.back();
+        value_stack.pop_back();
+        br_cond = new sir_br_cond(
+            condition.content,
+            ircode_block->stmt_size()+1,
+            0
+        );
         ircode_block->add_stmt(br_cond);
     }
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));

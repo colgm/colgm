@@ -33,9 +33,9 @@ void sir_block::dump(std::ostream& out) const {
 }
 
 void sir_ret::dump(std::ostream& out) const {
-    out << "ret";
-    if (!has_return_value) {
-        out << " void";
+    out << "ret " << type;
+    if (value.size()) {
+        out << " %" << value;
     }
     out << "\n";
 }
@@ -53,18 +53,23 @@ void sir_call_index::dump(std::ostream& out) const {
 }
 
 void sir_call_field::dump(std::ostream& out) const {
-    out << "; call_field " << field_name << "\n";
+    out << "%" << destination << " = getelementptr " << field_type << ", ";
+    out << struct_name << " %" << source << ", i64 0, i64 " << index << "\n";
 }
 
 void sir_ptr_call_field::dump(std::ostream& out) const {
-    out << "; ptr_callfld " << field_name << "\n";
+    out << "%" << destination << " = getelementptr " << field_type << ", ";
+    out << struct_name << " %" << source << ", i64 0, i64 " << index << "\n";
 }
 
 void sir_call_func::dump(std::ostream& out) const {
-    out << "call @" << name << "(";
-    for(const auto& i : args) {
-        out << i;
-        if (i!=args.back()) {
+    if (destination.size()) {
+        out << "%" << destination << " = ";
+    }
+    out << "call " << return_type << " @" << name << "(";
+    for(usize i = 0; i<args.size(); ++i) {
+        out << args_type[i] << " %" << args[i];
+        if (i!=args.size()-1) {
             out << ", ";
         }
     }
@@ -72,15 +77,12 @@ void sir_call_func::dump(std::ostream& out) const {
 }
 
 void sir_binary::dump(std::ostream& out) const {
-    out << "; calc \"" << opr << "\"\n";
+    out << "%" << destination << " = " << opr << " ";
+    out << "%" << left << ", %" << right << "\n";
 }
 
 void sir_label::dump(std::ostream& out) const {
     out << ".label_" << label_count << ":\n";
-}
-
-void sir_assign::dump(std::ostream& out) const {
-    out << "; assign " << opr << "\n";
 }
 
 void sir_store::dump(std::ostream& out) const {
@@ -88,12 +90,22 @@ void sir_store::dump(std::ostream& out) const {
     out << ", " << type << "* %" << destination << "\n";
 }
 
+void sir_store_literal::dump(std::ostream& out) const {
+    out << "store " << type << " " << source;
+    out << ", " << type << "* %" << destination << "\n";
+}
+
+void sir_load::dump(std::ostream& out) const {
+    out << "%" << destination << " = load " << type;
+    out << ", " << type << "* %" << source << "\n";
+}
+
 void sir_br::dump(std::ostream& out) const {
     out << "br label %.label_" << destination << "\n";
 }
 
 void sir_br_cond::dump(std::ostream& out) const {
-    out << "br_cond ";
+    out << "br %" << condition << " ";
     out << "label %.label_" << destination_true << ", ";
     out << "label %.label_" << destination_false << "\n";
 }
