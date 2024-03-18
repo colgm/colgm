@@ -48,18 +48,15 @@ void sir_string::dump(std::ostream& out) const {
 }
 
 void sir_call_index::dump(std::ostream& out) const {
-    out << "%" << destination << " = %" << source;
-    out << "[%" << index << "]\n";
+    out << "%" << destination << " = getelementptr " << type << ", ";
+    out << type << "* %" << source << ", ";
+    out << index_type << " %" << index << "\n";
 }
 
 void sir_call_field::dump(std::ostream& out) const {
-    out << "%" << destination << " = getelementptr " << field_type << ", ";
-    out << struct_name << " %" << source << ", i64 0, i64 " << index << "\n";
-}
-
-void sir_ptr_call_field::dump(std::ostream& out) const {
-    out << "%" << destination << " = getelementptr " << field_type << ", ";
-    out << struct_name << " %" << source << ", i64 0, i64 " << index << "\n";
+    out << "%" << destination << " = getelementptr inbounds ";
+    out << struct_name << ", ";
+    out << struct_name << "* %" << source << ", i32 0, i32 " << index << "\n";
 }
 
 void sir_call_func::dump(std::ostream& out) const {
@@ -77,7 +74,7 @@ void sir_call_func::dump(std::ostream& out) const {
 }
 
 void sir_binary::dump(std::ostream& out) const {
-    out << "%" << destination << " = " << opr << " ";
+    out << "%" << destination << " = " << opr << " " << type << " ";
     out << "%" << left << ", %" << right << "\n";
 }
 

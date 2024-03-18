@@ -38,6 +38,7 @@ bool ir_gen::visit_func_decl(func_decl* node) {
     if (impl_struct_name.length()) {
         name = impl_struct_name + "." + name;
     }
+
     auto new_ir = new hir_func("@" + name);
     new_ir->set_return_type(generate_type_string(node->get_return_type()));
     for(auto i : node->get_params()->get_params()) {
@@ -69,19 +70,26 @@ bool ir_gen::visit_impl_struct(impl_struct* node) {
 }
 
 bool ir_gen::visit_number_literal(number_literal* node) {
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
     const auto result = value {
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
-        .content = get_temp_variable()
+        .content = temp_1
     };
     ircode_block->add_allocs(new sir_alloca(
-        result.content,
+        temp_0,
         type_convert(node->get_resolve())
     ));
     ircode_block->add_stmt(new sir_store_literal(
         type_convert(node->get_resolve()),
         node->get_number(),
-        result.content
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_load(
+        type_convert(node->get_resolve()),
+        temp_0,
+        temp_1
     ));
     value_stack.push_back(result);
     return true;
@@ -139,6 +147,8 @@ void ir_gen::call_function_symbol(identifier* node) {
 }
 
 void ir_gen::call_variable(identifier* node) {
+    // TODO: error occurred when calling defined variable
+    // but this error does not occur when calling parameter
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
     ircode_block->add_allocs(new sir_alloca(
@@ -162,33 +172,6 @@ void ir_gen::call_variable(identifier* node) {
     });
 }
 
-void ir_gen::convert_call_result(call* node) {
-    const auto source = value_stack.back();
-    value_stack.pop_back();
-    const auto temp_0 = get_temp_variable();
-    const auto temp_1 = get_temp_variable();
-    const auto result = value {
-        .kind = value_kind::v_var,
-        .resolve_type = node->get_resolve(),
-        .content = temp_1
-    };
-    ircode_block->add_allocs(new sir_alloca(
-        temp_0,
-        type_convert(result.resolve_type)
-    ));
-    ircode_block->add_stmt(new sir_store(
-        type_convert(result.resolve_type),
-        source.content,
-        temp_0
-    ));
-    ircode_block->add_stmt(new sir_load(
-        type_convert(result.resolve_type),
-        temp_0,
-        temp_1
-    ));
-    value_stack.push_back(result);
-}
-
 bool ir_gen::visit_call(call* node) {
     // call head may be the global function
     auto head = node->get_head();
@@ -201,7 +184,6 @@ bool ir_gen::visit_call(call* node) {
     for(auto i : node->get_chain()) {
         i->accept(this);
     }
-    convert_call_result(node);
     return true;
 }
 
@@ -211,17 +193,25 @@ bool ir_gen::visit_call_index(call_index* node) {
     value_stack.pop_back();
     const auto source = value_stack.back();
     value_stack.pop_back();
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
     auto result = value {
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
-        .content = get_temp_variable()
+        .content = temp_1
     };
-    result.resolve_type.pointer_level--;
     value_stack.push_back(result);
     ircode_block->add_stmt(new sir_call_index(
         source.content,
-        result.content,
-        index.content
+        temp_0,
+        index.content,
+        type_convert(node->get_resolve()),
+        type_convert(index.resolve_type)
+    ));
+    ircode_block->add_stmt(new sir_load(
+        type_convert(node->get_resolve()),
+        temp_0,
+        temp_1
     ));
     return true;
 }
@@ -244,20 +234,36 @@ bool ir_gen::visit_call_field(call_field* node) {
     }
     const auto& st = dom.structs.at(source.resolve_type.name);
     if (st.field.count(node->get_name())) {
+        const auto temp_0 = get_temp_variable();
+        const auto temp_1 = get_temp_variable();
+        const auto temp_2 = get_temp_variable();
+        ircode_block->add_allocs(new sir_alloca(
+            temp_0,
+            type_convert(source.resolve_type)
+        ));
+        ircode_block->add_stmt(new sir_store(
+            type_convert(source.resolve_type),
+            source.content,
+            temp_0
+        ));
         auto result = value {
             .kind = value_kind::v_var,
             .resolve_type = node->get_resolve(),
-            .content = get_temp_variable()
+            .content = temp_2
         };
         value_stack.push_back(result);
         for(usize i = 0; i<st.ordered_field.size(); ++i) {
             if (node->get_name()==st.ordered_field[i].name) {
                 ircode_block->add_stmt(new sir_call_field(
-                    result.content,
-                    type_convert(st.ordered_field[i].symbol_type),
-                    source.content,
+                    temp_1,
+                    temp_0,
                     type_convert(source.resolve_type),
                     i
+                ));
+                ircode_block->add_stmt(new sir_load(
+                    type_convert(st.ordered_field[i].symbol_type),
+                    temp_1,
+                    temp_2
                 ));
                 break;
             }
@@ -296,20 +302,29 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
     }
     const auto& st = dom.structs.at(source.resolve_type.name);
     if (st.field.count(node->get_name())) {
+        const auto temp_0 = get_temp_variable();
+        const auto temp_1 = get_temp_variable();
+        auto source_type_copy = source.resolve_type;
+        source_type_copy.pointer_level--;
+
         auto result = value {
             .kind = value_kind::v_var,
             .resolve_type = node->get_resolve(),
-            .content = get_temp_variable()
+            .content = temp_1
         };
         value_stack.push_back(result);
         for(usize i = 0; i<st.ordered_field.size(); ++i) {
             if (node->get_name()==st.ordered_field[i].name) {
-                ircode_block->add_stmt(new sir_ptr_call_field(
-                    result.content,
-                    type_convert(st.ordered_field[i].symbol_type),
+                ircode_block->add_stmt(new sir_call_field(
+                    temp_0,
                     source.content,
-                    type_convert(source.resolve_type),
+                    type_convert(source_type_copy),
                     i
+                ));
+                ircode_block->add_stmt(new sir_load(
+                    type_convert(st.ordered_field[i].symbol_type),
+                    temp_0,
+                    temp_1
                 ));
                 break;
             }
@@ -423,12 +438,14 @@ bool ir_gen::visit_assignment(assignment* node) {
     switch(node->get_type()) {
         case assignment::kind::addeq:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "add"
+                left.content, right.content, left.content, "add",
+                type_convert(left.resolve_type)
             )); break;
         case assignment::kind::diveq:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "div"
-        )); break;
+                left.content, right.content, left.content, "div",
+                type_convert(left.resolve_type)
+            )); break;
         case assignment::kind::eq:
             ircode_block->add_stmt(new sir_store(
                 type_convert(left.resolve_type),
@@ -437,15 +454,18 @@ bool ir_gen::visit_assignment(assignment* node) {
             )); break;
         case assignment::kind::modeq:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "rem"
+                left.content, right.content, left.content, "rem",
+                type_convert(left.resolve_type)
             )); break;
         case assignment::kind::multeq:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "mul"
+                left.content, right.content, left.content, "mul",
+                type_convert(left.resolve_type)
             )); break;
         case assignment::kind::subeq:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "sub"
+                left.content, right.content, left.content, "sub",
+                type_convert(left.resolve_type)
             )); break;
     }
     return true;
@@ -507,47 +527,58 @@ bool ir_gen::visit_binary_operator(binary_operator* node) {
     switch(node->get_opr()) {
         case binary_operator::kind::add:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "add"
+                left.content, right.content, result.content, "add",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::cmpeq:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "eq"
+                left.content, right.content, result.content, "eq",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::cmpneq:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "ne"
+                left.content, right.content, result.content, "ne",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::div:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "div"
+                left.content, right.content, result.content, "div",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::geq:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "ge"
+                left.content, right.content, result.content, "ge",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::grt:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "gt"
+                left.content, right.content, result.content, "gt",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::leq:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "le"
+                left.content, right.content, result.content, "le",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::less:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "lt"
+                left.content, right.content, result.content, "lt",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::mod:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "rem"
+                left.content, right.content, result.content, "rem",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::mult:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "mul"
+                left.content, right.content, result.content, "mul",
+                type_convert(node->get_resolve())
             )); break;
         case binary_operator::kind::sub:
             ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "sub"
+                left.content, right.content, result.content, "sub",
+                type_convert(node->get_resolve())
             )); break;
         default: unreachable(node);
     }

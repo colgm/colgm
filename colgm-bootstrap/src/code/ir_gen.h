@@ -70,7 +70,6 @@ private:
     bool visit_bool_literal(bool_literal*) override;
     void call_function_symbol(identifier*);
     void call_variable(identifier*);
-    void convert_call_result(call*);
     bool visit_call(call*) override;
     bool visit_call_index(call_index*) override;
     bool visit_call_field(call_field*) override;

@@ -30,7 +30,7 @@ struct struct_method {
 struct type {
     std::string name;
     std::string loc_file;
-    u64 pointer_level;
+    u64 pointer_level = 0;
     bool is_global = false;
     bool is_global_func = false;
 

@@ -19,7 +19,6 @@ enum class sir_kind {
     sir_str,
     sir_call_index,
     sir_call_field,
-    sir_ptr_call_field,
     sir_call_func,
     sir_binary,
     sir_label,
@@ -99,13 +98,17 @@ private:
     std::string source;
     std::string destination;
     std::string index;
+    std::string type;
+    std::string index_type;
 
 public:
     sir_call_index(const std::string& src,
                    const std::string& dst,
-                   const std::string& idx):
+                   const std::string& idx,
+                   const std::string& t,
+                   const std::string& it):
         sir(sir_kind::sir_call_index), source(src),
-        destination(dst), index(idx) {}
+        destination(dst), index(idx), type(t), index_type(it) {}
     ~sir_call_index() override = default;
     void dump(std::ostream&) const override;
 };
@@ -113,44 +116,19 @@ public:
 class sir_call_field: public sir {
 private:
     std::string destination;
-    std::string field_type;
     std::string source;
     std::string struct_name;
     usize index;
 
 public:
     sir_call_field(const std::string& dst,
-                   const std::string& ft,
                    const std::string& src,
                    const std::string& sn,
                    usize i):
         sir(sir_kind::sir_call_field),
-        destination(dst), field_type(ft),
-        source(src), struct_name(sn),
-        index(i) {}
+        destination(dst), source(src),
+        struct_name(sn), index(i) {}
     ~sir_call_field() override = default;
-    void dump(std::ostream&) const override;
-};
-
-class sir_ptr_call_field: public sir {
-private:
-    std::string destination;
-    std::string field_type;
-    std::string source;
-    std::string struct_name;
-    usize index;
-
-public:
-    sir_ptr_call_field(const std::string& dst,
-                       const std::string& ft,
-                       const std::string& src,
-                       const std::string& sn,
-                       usize i):
-        sir(sir_kind::sir_call_field),
-        destination(dst), field_type(ft),
-        source(src), struct_name(sn),
-        index(i) {}
-    ~sir_ptr_call_field() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -180,16 +158,18 @@ private:
     std::string right;
     std::string destination;
     std::string opr;
+    std::string type;
 
 public:
     sir_binary(const std::string& l,
                const std::string& r,
                const std::string& dst,
-               const std::string& o):
+               const std::string& o,
+               const std::string& t):
         sir(sir_kind::sir_binary),
         left(l), right(r),
         destination(dst),
-        opr(o) {}
+        opr(o), type(t) {}
     ~sir_binary() override = default;
     void dump(std::ostream&) const override;
 };
