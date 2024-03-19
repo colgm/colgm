@@ -59,6 +59,7 @@ private:
     void emit_struct_decl(const hir_struct& s) { irc.struct_decls.push_back(s); }
     std::string generate_type_string(type_def*);
     bool visit_struct_decl(struct_decl*) override;
+    void convert_parameter_to_pointer(func_decl*);
     bool visit_func_decl(func_decl*) override;
     bool visit_impl_struct(impl_struct*) override;
 

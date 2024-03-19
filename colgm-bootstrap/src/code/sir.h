@@ -13,6 +13,8 @@
 namespace colgm {
 
 enum class sir_kind {
+    sir_null = 0,
+    sir_nop,
     sir_block,
     sir_alloca,
     sir_ret,
@@ -40,6 +42,13 @@ public:
     auto get_ir_type() const { return type; }
 };
 
+class sir_nop: public sir {
+public:
+    sir_nop(): sir(sir_kind::sir_nop) {}
+    ~sir_nop() override = default;
+    void dump(std::ostream& os) const override { os << "\n"; }
+};
+
 class sir_alloca: public sir {
 private:
     std::string variable_name;
@@ -54,7 +63,6 @@ public:
 
 class sir_block: public sir {
 private:
-    std::vector<sir_alloca*> allocs;
     std::vector<sir*> stmts;
 
 public:
@@ -62,9 +70,8 @@ public:
     ~sir_block() override;
     void dump(std::ostream&) const override;
 
-    void add_allocs(sir_alloca* node) { allocs.push_back(node); }
-    auto alloca_size() const { return allocs.size(); }
     void add_stmt(sir* node) { stmts.push_back(node); }
+    void add_nop() { stmts.push_back(new sir_nop); }
     auto stmt_size() const { return stmts.size(); }
 };
 

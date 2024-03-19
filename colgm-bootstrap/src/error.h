@@ -47,7 +47,7 @@ public:
 
 class error: public flstream {
 private:
-    u32 cnt; // counter for errors
+    u64 cnt; // counter for errors
 
     std::string identation(usize len) {
         return std::string(len, ' ');
@@ -55,13 +55,13 @@ private:
     std::string leftpad(u32 num, usize len) {
         auto tmp = std::to_string(num);
         while(tmp.length()<len) {
-            tmp = " "+tmp;
+            tmp = " " + tmp;
         }
         return tmp;
     }
 
 public:
-    error():cnt(0) {}
+    error(): cnt(0) {}
     void err(const std::string&, const std::string&);
     void warn(const std::string&, const std::string&);
     void err(const std::string&, const span&, const std::string&);

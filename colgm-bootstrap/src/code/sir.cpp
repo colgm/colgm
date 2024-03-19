@@ -8,22 +8,12 @@ void sir_alloca::dump(std::ostream& out) const {
 }
 
 sir_block::~sir_block() {
-    for(auto i : allocs) {
-        delete i;
-    }
     for(auto i : stmts) {
         delete i;
     }
 }
 
 void sir_block::dump(std::ostream& out) const {
-    for(auto i : allocs) {
-        out << "  ";
-        i->dump(out);
-    }
-    if (allocs.size() && stmts.size()) {
-        out << "\n";
-    }
     for(auto i : stmts) {
         if (i->get_ir_type()!=sir_kind::sir_label) {
             out << "  ";
