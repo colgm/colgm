@@ -104,7 +104,7 @@ void semantic::analyse_method_parameter_list(param_list* node,
     const auto& self_type = func_self.parameters.front().symbol_type;
     if (self_type.name!=stct.name ||
         self_type.loc_file!=stct.location.file ||
-        self_type.pointer_level!=1) {
+        self_type.pointer_depth!=1) {
         report(node->get_params().front(),
             "\"self\" should be \"" + stct.name + "*\", but get \"" +
             self_type.to_string() + "\"."
@@ -281,7 +281,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
         node->set_resolve_type(type::bool_type());
         return type::bool_type();
     }
-    if (left.is_pointer() && left.pointer_level!=right.pointer_level) {
+    if (left.is_pointer() && left.pointer_depth!=right.pointer_depth) {
         report(node,
             "cannot compare \"" + left.to_string() +
             "\" and \"" + right.to_string() + "\"."
@@ -387,7 +387,7 @@ type semantic::resolve_identifier(identifier* node) {
         return {
             .name = name,
             .loc_file = ctx.global_symbol.at(name).loc_file,
-            .pointer_level = 0,
+            .pointer_depth = 0,
             .is_global = true,
             .is_global_func = ctx.global_symbol.at(name).kind==symbol_kind::func_kind
         };
@@ -558,7 +558,7 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
     }
     resolve_expression(node->get_index());
     auto result = prev;
-    result.pointer_level--;
+    result.pointer_depth--;
     node->set_resolve_type(result);
     return result;
 }
@@ -597,7 +597,7 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
         );
         return type::error_type();
     }
-    if (prev.pointer_level!=1) {
+    if (prev.pointer_depth!=1) {
         report(node,
             "cannot use \"->\" to get field from \"" +
             prev.to_string() + "\"."
@@ -617,7 +617,7 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
         return struct_self.field.at(node->get_name()).symbol_type;
     }
     if (struct_self.method.count(node->get_name())) {
-        auto infer = type({prev.name, prev.loc_file, prev.pointer_level, false});
+        auto infer = type({prev.name, prev.loc_file, prev.pointer_depth, false});
         infer.stm_info = {
             .flag_is_static = false,
             .flag_is_normal = true,

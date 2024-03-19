@@ -30,36 +30,40 @@ struct struct_method {
 struct type {
     std::string name;
     std::string loc_file;
-    u64 pointer_level = 0;
+    i64 pointer_depth = 0;
     bool is_global = false;
     bool is_global_func = false;
 
     struct_method stm_info;
 
+private:
+    void check_pointer_depth() const;
+
+public:
     std::string to_string() const;
     bool operator==(const type& another) const {
         return name==another.name &&
-               pointer_level==another.pointer_level;
+               pointer_depth==another.pointer_depth;
     }
     bool operator!=(const type& another) const {
         return name!=another.name ||
-               pointer_level!=another.pointer_level;
+               pointer_depth!=another.pointer_depth;
     }
     friend std::ostream& operator<<(std::ostream&, const type&);
     
     static const type error_type() { return {"<err>", "", 0}; }
-    static const type u64_type(u64 ptrlvl = 0) { return {"u64", "", ptrlvl}; }
-    static const type u32_type(u64 ptrlvl = 0) { return {"u32", "", ptrlvl}; }
-    static const type u16_type(u64 ptrlvl = 0) { return {"u16", "", ptrlvl}; }
-    static const type u8_type(u64 ptrlvl = 0) { return {"u8", "", ptrlvl}; }
-    static const type i64_type(u64 ptrlvl = 0) { return {"i64", "", ptrlvl}; }
-    static const type i32_type(u64 ptrlvl = 0) { return {"i32", "", ptrlvl}; }
-    static const type i16_type(u64 ptrlvl = 0) { return {"i16", "", ptrlvl}; }
-    static const type i8_type(u64 ptrlvl = 0) { return {"i8", "", ptrlvl}; }
-    static const type f64_type(u64 ptrlvl = 0) { return {"f64", "", ptrlvl}; }
-    static const type f32_type(u64 ptrlvl = 0) { return {"f32", "", ptrlvl}; }
-    static const type void_type(u64 ptrlvl = 0) { return {"void", "", ptrlvl}; }
-    static const type bool_type(u64 ptrlvl = 0) { return {"bool", "", ptrlvl}; }
+    static const type u64_type(i64 ptrlvl = 0) { return {"u64", "", ptrlvl}; }
+    static const type u32_type(i64 ptrlvl = 0) { return {"u32", "", ptrlvl}; }
+    static const type u16_type(i64 ptrlvl = 0) { return {"u16", "", ptrlvl}; }
+    static const type u8_type(i64 ptrlvl = 0) { return {"u8", "", ptrlvl}; }
+    static const type i64_type(i64 ptrlvl = 0) { return {"i64", "", ptrlvl}; }
+    static const type i32_type(i64 ptrlvl = 0) { return {"i32", "", ptrlvl}; }
+    static const type i16_type(i64 ptrlvl = 0) { return {"i16", "", ptrlvl}; }
+    static const type i8_type(i64 ptrlvl = 0) { return {"i8", "", ptrlvl}; }
+    static const type f64_type(i64 ptrlvl = 0) { return {"f64", "", ptrlvl}; }
+    static const type f32_type(i64 ptrlvl = 0) { return {"f32", "", ptrlvl}; }
+    static const type void_type(i64 ptrlvl = 0) { return {"void", "", ptrlvl}; }
+    static const type bool_type(i64 ptrlvl = 0) { return {"bool", "", ptrlvl}; }
 
     bool is_error() const { return name=="<err>"; }
     bool is_integer() const {
@@ -76,7 +80,7 @@ struct type {
     bool is_boolean() const {
         return *this==type::bool_type();
     }
-    bool is_pointer() const { return pointer_level; }
+    bool is_pointer() const { return pointer_depth>0; }
 };
 
 struct symbol {

@@ -305,7 +305,7 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
         const auto temp_0 = get_temp_variable();
         const auto temp_1 = get_temp_variable();
         auto source_type_copy = source.resolve_type;
-        source_type_copy.pointer_level--;
+        source_type_copy.pointer_depth--;
 
         auto result = value {
             .kind = value_kind::v_var,

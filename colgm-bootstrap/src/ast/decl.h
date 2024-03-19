@@ -17,19 +17,19 @@ public:
 class type_def: public decl {
 private:
     identifier* name;
-    u64 pointer_level;
+    i64 pointer_depth;
 
 public:
     type_def(const span& loc):
         decl(ast_type::ast_type_def, loc),
-        name(nullptr), pointer_level(0) {}
+        name(nullptr), pointer_depth(0) {}
     ~type_def() override;
     void accept(visitor*) override;
 
     void set_name(identifier* node) { name = node; }
     auto get_name() { return name; }
-    void add_pointer_level() { ++pointer_level; }
-    auto get_pointer_level() { return pointer_level; }
+    void add_pointer_level() { ++pointer_depth; }
+    auto get_pointer_level() { return pointer_depth; }
 };
 
 class struct_field: public decl {
