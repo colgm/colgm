@@ -1,7 +1,7 @@
 #pragma once
 
 #include "colgm.h"
-#include "err.h"
+#include "error.h"
 
 #include <ostream>
 #include <cstdint>

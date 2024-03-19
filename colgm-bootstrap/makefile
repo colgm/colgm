@@ -10,7 +10,7 @@ else
 endif
 
 HEADER = \
-	src/err.h\
+	src/error.h\
 	src/lexer.h\
 	src/colgm.h\
 	src/parse.h\
@@ -31,7 +31,7 @@ HEADER = \
 	src/sema/symbol.h
 
 OBJECT = \
-	build/err.o\
+	build/error.o\
 	build/lexer.o\
 	build/misc.o\
 	build/main.o\
@@ -73,10 +73,10 @@ build/main.o: $(HEADER) src/main.cpp | build
 build/misc.o: src/colgm.h src/misc.cpp | build
 	$(CXX) $(CXXFLAGS) src/misc.cpp -o build/misc.o -I src
 
-build/err.o: src/colgm.h src/err.h src/err.cpp | build
-	$(CXX) $(CXXFLAGS) src/err.cpp -o build/err.o -I src
+build/error.o: src/colgm.h src/error.h src/error.cpp | build
+	$(CXX) $(CXXFLAGS) src/error.cpp -o build/error.o -I src
 
-build/lexer.o: src/colgm.h src/err.h src/lexer.h src/lexer.cpp | build
+build/lexer.o: src/colgm.h src/error.h src/lexer.h src/lexer.cpp | build
 	$(CXX) $(CXXFLAGS) src/lexer.cpp -o build/lexer.o -I src
 
 build/parse.o: $(HEADER) src/parse.cpp | build

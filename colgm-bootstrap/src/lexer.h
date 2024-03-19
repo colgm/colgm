@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 #include "colgm.h"
-#include "err.h"
+#include "error.h"
 
 namespace colgm {
 

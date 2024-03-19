@@ -1,5 +1,5 @@
 #include "colgm.h"
-#include "err.h"
+#include "error.h"
 #include "sema/symbol.h"
 
 #include <cstring>

@@ -1,4 +1,4 @@
-#include "err.h"
+#include "error.h"
 
 namespace colgm {
 
