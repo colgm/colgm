@@ -18,7 +18,7 @@ class ir_gen: public visitor {
 private:
     u64 ssa_temp_counter = 1;
     std::string get_temp_variable() {
-        return "." + std::to_string(ssa_temp_counter++) ;
+        return std::to_string(ssa_temp_counter++) ;
     }
 
 private:
