@@ -137,7 +137,7 @@ clean:
 	@ rm $(OBJECT)
 
 .PHONY: test
-test: colgm out.ll
+test: colgm
 	@ ./colgm test/func.colgm
 	@ lli out.ll
 	@ ./colgm test/hello.colgm

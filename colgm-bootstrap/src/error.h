@@ -39,10 +39,10 @@ protected:
 public:
     flstream():file("") {}
     void load(const std::string&);
-    const std::string& operator[](usize n) const {return res[n];}
-    const auto& name() const {return file;}
-    const auto& file_content() const {return res;}
-    usize size() const {return res.size();}
+    const auto& operator[](usize n) const { return res[n]; }
+    const auto& name() const { return file; }
+    const auto& file_content() const { return res; }
+    auto size() const { return res.size(); }
 };
 
 class error: public flstream {
@@ -72,7 +72,7 @@ public:
             std::exit(1);
         }
     }
-    u32 geterr() const {return cnt;}
+    auto geterr() const { return cnt; }
 };
 
 }

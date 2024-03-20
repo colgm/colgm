@@ -431,7 +431,11 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
     ircode_block->add_stmt(new_call);
     ircode_block->add_nop();
     // push return value on stack
-    value_stack.push_back(result);
+    if (node->get_resolve()!=type::void_type()) {
+        value_stack.push_back(result);
+    } else {
+        ssa_temp_counter--;
+    }
     return true;
 }
 
