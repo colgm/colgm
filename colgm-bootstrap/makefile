@@ -128,7 +128,7 @@ build/symbol.o: $(HEADER) src/sema/symbol.cpp | build
 	$(CXX) $(CXXFLAGS) src/sema/symbol.cpp -o build/symbol.o -I src
 
 out.ll: colgm
-	./colgm ../src/main.colgm -L ../src
+	./colgm ../src/main.colgm -L ../src -Wt
 
 .PHONY: clean
 clean:
@@ -138,5 +138,7 @@ clean:
 
 .PHONY: test
 test: colgm out.ll
-	./colgm ../src/main.colgm -L ../src -Wt
-	lli out.ll
+	@ ./colgm test/func.colgm
+	@ lli out.ll
+	@ ./colgm test/hello.colgm
+	@ lli out.ll

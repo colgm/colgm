@@ -393,11 +393,19 @@ bool ir_gen::visit_call_path(call_path* node) {
 
 bool ir_gen::visit_call_func_args(call_func_args* node) {
     std::vector<value> arguments;
+    // load self if encountering value that is not a function
+    if (value_stack.back().kind!=value_kind::v_fn &&
+        value_stack.back().kind!=value_kind::v_sfn) {
+        arguments.push_back(value_stack.back());
+        value_stack.pop_back();
+    }
+    // load other arguments
     for(auto i : node->get_args()) {
         i->accept(this);
         arguments.push_back(value_stack.back());
         value_stack.pop_back();
     }
+
     if (value_stack.empty()) {
         report_stack_empty(node);
         return true;
