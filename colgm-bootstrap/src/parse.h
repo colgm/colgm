@@ -1,7 +1,7 @@
 #pragma once
 
 #include "colgm.h"
-#include "error.h"
+#include "report.h"
 #include "lexer.h"
 #include "ast/ast.h"
 #include "ast/decl.h"

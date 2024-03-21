@@ -6,7 +6,7 @@
 #include "code/value.h"
 #include "code/context.h"
 #include "semantic.h"
-#include "error.h"
+#include "report.h"
 
 #include <vector>
 #include <cstring>

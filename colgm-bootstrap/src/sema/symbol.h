@@ -1,7 +1,7 @@
 #pragma once
 
 #include "colgm.h"
-#include "error.h"
+#include "report.h"
 
 #include <ostream>
 #include <cstdint>
@@ -27,6 +27,12 @@ struct struct_method {
     std::string method_name;
 };
 
+struct basic_method {
+    bool flag_is_static = false; // mark static method
+    bool flag_is_normal = false; // mark normal method
+    std::string method_name;
+};
+
 struct type {
     std::string name;
     std::string loc_file;
@@ -35,6 +41,7 @@ struct type {
     bool is_global_func = false;
 
     struct_method stm_info;
+    basic_method bsc_info;
 
 private:
     void check_pointer_depth() const;
@@ -106,6 +113,16 @@ struct colgm_struct {
     std::vector<symbol> ordered_field;
     std::unordered_map<std::string, colgm_func> static_method;
     std::unordered_map<std::string, colgm_func> method;
+};
+
+struct colgm_basic {
+    std::string name;
+    std::unordered_map<std::string, colgm_func> static_method;
+
+    static std::unordered_map<std::string, colgm_basic*> mapper;
+
+    static colgm_basic* i32();
+    static colgm_basic* i64();
 };
 
 }

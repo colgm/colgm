@@ -364,6 +364,20 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
 bool ir_gen::visit_call_path(call_path* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
+    if (source.resolve_type.loc_file.empty()) {
+        const auto bsc = colgm_basic::mapper.at(source.resolve_type.name);
+        if (bsc->static_method.count(node->get_name())) {
+            auto result = value {
+                .kind = value_kind::v_sfn,
+                .resolve_type = node->get_resolve(),
+                .content = "." + source.resolve_type.name + "." + node->get_name()
+            };
+            value_stack.push_back(result);
+            return true;
+        }
+        unreachable(node);
+        return true;
+    }
     if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
         err.err("code", node->get_location(),
             "cannot find domain \"" + source.resolve_type.loc_file + "\"."

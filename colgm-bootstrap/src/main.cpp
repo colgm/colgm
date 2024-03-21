@@ -1,5 +1,5 @@
 #include "colgm.h"
-#include "error.h"
+#include "report.h"
 #include "lexer.h"
 #include "parse.h"
 #include "ast/dumper.h"

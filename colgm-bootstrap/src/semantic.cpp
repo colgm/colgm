@@ -7,14 +7,28 @@ namespace colgm {
 
 colgm_func semantic::builtin_struct_size(const span& loc) {
     auto func = colgm_func();
-    func.name = "size";
+    func.name = "__size__";
     func.location = loc;
     func.return_type = type::u64_type();
     return func;
 }
 
+colgm_func semantic::builtin_struct_alloc(const span& loc, const type& rtty) {
+    auto func = colgm_func();
+    func.name = "__alloc__";
+    func.location = loc;
+    func.return_type = rtty;
+    return func;
+}
+
 void semantic::analyse_single_struct(struct_decl* node) {
     const auto& name = node->get_name();
+    if (ctx.global_symbol.count(name)) {
+        report(node, "\"" + name +
+            "\" conflicts with a exist symbol."
+        );
+        return;
+    }
     if (ctx.global.domain.at(ctx.this_file).structs.count(name)) {
         report(node, "struct \"" + node->get_name() +
             "\" conflicts with a exist symbol."
@@ -24,9 +38,12 @@ void semantic::analyse_single_struct(struct_decl* node) {
     ctx.global.domain.at(ctx.this_file).structs.insert({name, {}});
     ctx.global_symbol.insert({name, {symbol_kind::struct_kind, ctx.this_file}});
 
-    auto& struct_self = ctx.global.domain.at(ctx.this_file).structs.at(node->get_name());
+    // initialize struct info
+    auto& this_domain = ctx.global.domain.at(ctx.this_file);
+    auto& struct_self = this_domain.structs.at(node->get_name());
     struct_self.name = node->get_name();
     struct_self.location = node->get_location();
+
     // load fields
     for(auto i : node->get_fields()) {
         auto type_node = i->get_type();
@@ -53,7 +70,14 @@ void semantic::analyse_single_struct(struct_decl* node) {
 
     // add built-in static method size, for malloc usage
     struct_self.static_method.insert(
-        {"size", builtin_struct_size(node->get_location())}
+        {"__size__", builtin_struct_size(node->get_location())}
+    );
+    struct_self.static_method.insert(
+        {"__alloc__", builtin_struct_alloc(node->get_location(), {
+            .name = name,
+            .loc_file = node->get_location().file,
+            .pointer_depth = 1
+        })}
     );
 }
 
@@ -63,16 +87,6 @@ void semantic::analyse_structs(root* ast_root) {
             continue;
         }
         auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
-        if (ctx.global_symbol.count(struct_decl_node->get_name())) {
-            report(i, "\"" + struct_decl_node->get_name() +
-                "\" conflicts with a exist symbol."
-            );
-            continue;
-        }
-        ctx.global_symbol.insert({
-            struct_decl_node->get_name(),
-            {symbol_kind::struct_kind, ast_root->get_location().file}
-        });
         analyse_single_struct(struct_decl_node);
     }
 }
@@ -80,7 +94,9 @@ void semantic::analyse_structs(root* ast_root) {
 void semantic::analyse_parameter(param* node, colgm_func& func_self) {
     const auto& name = node->get_name()->get_name();
     if (func_self.find_parameter(name)) {
-        report(node->get_name(), "redefinition of parameter \"" + name + "\".");
+        report(node->get_name(),
+            "redefinition of parameter \"" + name + "\"."
+        );
         return;
     }
     func_self.add_parameter(name, resolve_type_def(node->get_type()));
@@ -227,6 +243,17 @@ type semantic::struct_method_infer(const std::string& st_name,
     infer.stm_info = {
         .flag_is_static = false,
         .flag_is_normal = true,
+        .method_name = fn_name
+    };
+    return infer;
+}
+
+type semantic::basic_static_method_infer(const std::string& bsc_name,
+                                         const std::string& fn_name) {
+    auto infer = type({bsc_name, "", 0, true});
+    infer.bsc_info = {
+        .flag_is_static = true,
+        .flag_is_normal = false,
         .method_name = fn_name
     };
     return infer;
@@ -459,9 +486,7 @@ void semantic::check_static_call_args(const colgm_func& func,
                     "\" but get \"" + infer.to_string() + "\"."
                 );
             }
-            continue;
-        }
-        if (infer!=param) {
+        } else if (infer!=param) {
             report(i,
                 "expect \"" + param.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."
@@ -499,9 +524,7 @@ void semantic::check_method_call_args(const colgm_func& func,
                     "\" but get \"" + infer.to_string() + "\"."
                 );
             }
-            continue;
-        }
-        if (infer!=param) {
+        } else if (infer!=param) {
             report(i,
                 "expect \"" + param.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."
@@ -538,6 +561,14 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         node->set_resolve_type(method.return_type);
         return method.return_type;
     }
+    // static method call of basic
+    if (prev.bsc_info.flag_is_static) {
+        const auto bsc = colgm_basic::mapper.at(prev.name);
+        const auto& method = bsc->static_method.at(prev.bsc_info.method_name);
+        check_static_call_args(method, node);
+        node->set_resolve_type(method.return_type);
+        return method.return_type;
+    }
 
     unimplemented(node);
     return type::error_type();
@@ -566,6 +597,18 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
 type semantic::resolve_call_path(const type& prev, call_path* node) {
     if (!prev.is_global) {
         report(node, "cannot get path from a value.");
+        return type::error_type();
+    }
+    if (prev.loc_file.empty()) {
+        if (prev==type::i32_type() &&
+            colgm_basic::i32()->static_method.count(node->get_name())) {
+            return basic_static_method_infer("i32", node->get_name());
+        }
+        if (prev==type::i64_type() &&
+            colgm_basic::i64()->static_method.count(node->get_name())) {
+            return basic_static_method_infer("i64", node->get_name());
+        }
+        unimplemented(node);
         return type::error_type();
     }
     const auto& domain = ctx.global.domain.at(prev.loc_file);

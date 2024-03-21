@@ -1,6 +1,6 @@
 #pragma once
 
-#include "error.h"
+#include "report.h"
 #include "sema/symbol.h"
 
 #include <vector>

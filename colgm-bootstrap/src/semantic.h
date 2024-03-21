@@ -45,6 +45,9 @@ public:
 
 private:
     colgm_func builtin_struct_size(const span&);
+    colgm_func builtin_struct_alloc(const span&, const type&);
+
+private:
     void analyse_single_struct(struct_decl*);
     void analyse_structs(root*);
     void analyse_parameter(param*, colgm_func&);
@@ -66,6 +69,7 @@ private:
     type struct_method_infer(const std::string&,
                              const std::string&,
                              const std::string&);
+    type basic_static_method_infer(const std::string&, const std::string&);
 
 private:
     type resolve_logical_operator(binary_operator*);
