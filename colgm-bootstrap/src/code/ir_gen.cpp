@@ -167,16 +167,14 @@ void ir_gen::call_function_symbol(identifier* node) {
 }
 
 void ir_gen::call_variable(identifier* node) {
-    const auto temp_0 = get_temp_variable();
-    ircode_block->add_stmt(new sir_load(
-        type_convert(node->get_resolve()),
-        node->get_name(),
-        temp_0
-    ));
+    // in fact we need to get the pointer to this variable
+    auto resolve = node->get_resolve();
+    resolve.pointer_depth++;
+    // push pointer to the variable on top of the stack
     value_stack.push_back({
         .kind = value_kind::v_var,
-        .resolve_type = node->get_resolve(),
-        .content = temp_0
+        .resolve_type = resolve,
+        .content = node->get_name()
     });
 }
 
@@ -192,7 +190,32 @@ bool ir_gen::visit_call(call* node) {
     for(auto i : node->get_chain()) {
         i->accept(this);
     }
-    ircode_block->add_nop();
+    const auto source = value_stack.back();
+    if (source.resolve_type==type::void_type()) {
+        value_stack.pop_back();
+        return true;
+    }
+    // TODO: all of the source must be pointer
+    if (source.resolve_type.pointer_depth>0) {
+        value_stack.pop_back();
+        const auto temp = get_temp_variable();
+        auto result = value {
+            .kind = value_kind::v_var,
+            .resolve_type = source.resolve_type,
+            .content = temp
+        };
+        result.resolve_type.pointer_depth--;
+        value_stack.push_back(result);
+        ircode_block->add_stmt(new sir_load(
+            type_convert(result.resolve_type),
+            source.content,
+            temp
+        ));
+    } else {
+        err.err("code", node->get_location(),
+            "internal compiler bug: should be pointer."
+        );
+    }
     return true;
 }
 
@@ -209,16 +232,19 @@ bool ir_gen::visit_call_index(call_index* node) {
         .resolve_type = node->get_resolve(),
         .content = temp_1
     };
+    // in fact, must be pointer...
+    result.resolve_type.pointer_depth++;
+
     value_stack.push_back(result);
     ircode_block->add_stmt(new sir_call_index(
         source.content,
         temp_0,
         index.content,
-        type_convert(node->get_resolve()),
+        type_convert(result.resolve_type),
         type_convert(index.resolve_type)
     ));
     ircode_block->add_stmt(new sir_load(
-        type_convert(node->get_resolve()),
+        type_convert(result.resolve_type),
         temp_0,
         temp_1
     ));
@@ -243,37 +269,24 @@ bool ir_gen::visit_call_field(call_field* node) {
     }
     const auto& st = dom.structs.at(source.resolve_type.name);
     if (st.field.count(node->get_name())) {
-        const auto temp_0 = get_temp_variable();
-        const auto temp_1 = get_temp_variable();
-        const auto temp_2 = get_temp_variable();
-        ircode_block->add_stmt(new sir_alloca(
-            temp_0,
-            type_convert(source.resolve_type)
-        ));
-        ircode_block->add_stmt(new sir_store(
-            type_convert(source.resolve_type),
-            source.content,
-            temp_0
-        ));
-        auto result = value {
-            .kind = value_kind::v_var,
-            .resolve_type = node->get_resolve(),
-            .content = temp_2
-        };
-        value_stack.push_back(result);
         for(usize i = 0; i<st.ordered_field.size(); ++i) {
             if (node->get_name()==st.ordered_field[i].name) {
+                auto resolve = source.resolve_type;
+                resolve.pointer_depth--;
+                const auto temp = get_temp_variable();
                 ircode_block->add_stmt(new sir_call_field(
-                    temp_1,
-                    temp_0,
-                    type_convert(source.resolve_type),
+                    temp,
+                    source.content,
+                    type_convert(resolve),
                     i
                 ));
-                ircode_block->add_stmt(new sir_load(
-                    type_convert(st.ordered_field[i].symbol_type),
-                    temp_1,
-                    temp_2
-                ));
+                auto result = value {
+                    .kind = value_kind::v_var,
+                    .resolve_type = st.ordered_field[i].symbol_type,
+                    .content = temp
+                };
+                result.resolve_type.pointer_depth++;
+                value_stack.push_back(result);
                 break;
             }
         }
@@ -311,30 +324,31 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
     }
     const auto& st = dom.structs.at(source.resolve_type.name);
     if (st.field.count(node->get_name())) {
-        const auto temp_0 = get_temp_variable();
-        const auto temp_1 = get_temp_variable();
-        auto source_type_copy = source.resolve_type;
-        source_type_copy.pointer_depth--;
-
-        auto result = value {
-            .kind = value_kind::v_var,
-            .resolve_type = node->get_resolve(),
-            .content = temp_1
-        };
-        value_stack.push_back(result);
         for(usize i = 0; i<st.ordered_field.size(); ++i) {
             if (node->get_name()==st.ordered_field[i].name) {
-                ircode_block->add_stmt(new sir_call_field(
-                    temp_0,
+                const auto temp_0 = get_temp_variable();
+                const auto temp_1 = get_temp_variable();
+                auto source_type_copy = source.resolve_type;
+                source_type_copy.pointer_depth--;
+                ircode_block->add_stmt(new sir_load(
+                    type_convert(source_type_copy),
                     source.content,
+                    temp_0
+                ));
+                source_type_copy.pointer_depth--;
+                ircode_block->add_stmt(new sir_call_field(
+                    temp_1,
+                    temp_0,
                     type_convert(source_type_copy),
                     i
                 ));
-                ircode_block->add_stmt(new sir_load(
-                    type_convert(st.ordered_field[i].symbol_type),
-                    temp_0,
-                    temp_1
-                ));
+                auto result = value {
+                    .kind = value_kind::v_var,
+                    .resolve_type = node->get_resolve(),
+                    .content = temp_1
+                };
+                result.resolve_type.pointer_depth++;
+                value_stack.push_back(result);
                 break;
             }
         }
@@ -417,19 +431,14 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
         report_stack_empty(node);
         return true;
     }
-    // generate return value but do not push now
-    const auto result = value {
-        .kind = value_kind::v_var,
-        .resolve_type = node->get_resolve(),
-        .content = get_temp_variable()
-    };
+    const auto temp_0 = get_temp_variable();
     // generate function call ir
     const auto func = value_stack.back();
     value_stack.pop_back();
     auto new_call = new sir_call_func(
         func.content,
         type_convert(node->get_resolve()),
-        node->get_resolve()==type::void_type()? "":result.content
+        node->get_resolve()==type::void_type()? "":temp_0
     );
     for(const auto& arg : arguments) {
         new_call->add_arg_type(type_convert(arg.resolve_type));
@@ -438,8 +447,29 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
     ircode_block->add_stmt(new_call);
     // push return value on stack
     if (node->get_resolve()!=type::void_type()) {
+        const auto temp_1 = get_temp_variable();
+        ircode_block->add_stmt(new sir_alloca(
+            temp_1,
+            type_convert(node->get_resolve())
+        ));
+        ircode_block->add_stmt(new sir_store(
+            type_convert(node->get_resolve()),
+            temp_0,
+            temp_1
+        ));
+        auto result = value {
+            .kind = value_kind::v_var,
+            .resolve_type = node->get_resolve(),
+            .content = temp_1
+        };
+        result.resolve_type.pointer_depth++;
         value_stack.push_back(result);
     } else {
+        value_stack.push_back({
+            .kind = value_kind::v_var,
+            .resolve_type = type::void_type(),
+            .content = ""
+        });
         ssa_temp_counter--;
     }
     return true;
@@ -462,6 +492,7 @@ bool ir_gen::visit_definition(definition* node) {
     return true;
 }
 
+// TODO, left value should be pointer type
 bool ir_gen::visit_assignment(assignment* node) {
     node->get_left()->accept(this);
     const auto left = value_stack.back();
