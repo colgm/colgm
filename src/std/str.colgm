@@ -2,30 +2,30 @@ use std::libc::malloc;
 
 struct str {
     c_str: i8*,
-    size: u32
+    size: u64
 }
 
 impl str {
     func new() -> str* {
         var res: str* = str::__alloc__();
-        res->c_str = malloc(128);
-        res->size = 0;
-        res->c_str[0] = 0;
+        res->c_str = malloc(i64::to_u64(128));
+        res->size = i64::to_u64(0);
+        res->c_str[0] = i64::to_i8(0);
         return res;
     }
 
-    func empty(self: str*) -> u8 {
-        if (self->size == 0) {
-            return 1;
+    func empty(self: str*) -> bool {
+        if (self->size == i64::to_u64(0)) {
+            return true;
         }
-        return 0;
+        return false;
     }
 
     func copy(self: str*) -> str* {
         var new_str: str* = str::new();
         new_str->size = self->size;
         new_str->c_str = malloc(self->size);
-        var i: u32 = 0;
+        var i: u64 = i64::to_u64(0);
         while (i<self->size) {
             new_str->c_str[i] = self->c_str[i];
         }

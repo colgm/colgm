@@ -115,14 +115,4 @@ struct colgm_struct {
     std::unordered_map<std::string, colgm_func> method;
 };
 
-struct colgm_basic {
-    std::string name;
-    std::unordered_map<std::string, colgm_func> static_method;
-
-    static std::unordered_map<std::string, colgm_basic*> mapper;
-
-    static colgm_basic* i32();
-    static colgm_basic* i64();
-};
-
 }

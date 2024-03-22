@@ -1,5 +1,6 @@
 #include "code/ir_gen.h"
 #include "sema/symbol.h"
+#include "sema/basic.h"
 #include "semantic.h"
 
 namespace colgm {
@@ -45,7 +46,6 @@ void ir_gen::convert_parameter_to_pointer(func_decl* node) {
             i->get_name()->get_name()
         );
         ircode_block->add_stmt(store_param_to_addr);
-        ircode_block->add_nop();
     }
 }
 
@@ -111,7 +111,6 @@ bool ir_gen::visit_number_literal(number_literal* node) {
         temp_0,
         temp_1
     ));
-    ircode_block->add_nop();
     value_stack.push_back(result);
     return true;
 }
@@ -128,14 +127,12 @@ bool ir_gen::visit_string_literal(string_literal* node) {
             irc.const_strings.at(node->get_string()),
             result.content
         ));
-        ircode_block->add_nop();
     } else {
         ircode_block->add_stmt(new sir_string(
             node->get_string(),
             irc.const_strings.size(),
             result.content
         ));
-        ircode_block->add_nop();
         irc.const_strings.insert({node->get_string(), irc.const_strings.size()});
     }
     value_stack.push_back(result);
@@ -157,7 +154,6 @@ bool ir_gen::visit_bool_literal(bool_literal* node) {
         node->get_flag()? "true":"false",
         result.content
     ));
-    ircode_block->add_nop();
     value_stack.push_back(result);
     return true;
 }
@@ -177,7 +173,6 @@ void ir_gen::call_variable(identifier* node) {
         node->get_name(),
         temp_0
     ));
-    ircode_block->add_nop();
     value_stack.push_back({
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
@@ -197,6 +192,7 @@ bool ir_gen::visit_call(call* node) {
     for(auto i : node->get_chain()) {
         i->accept(this);
     }
+    ircode_block->add_nop();
     return true;
 }
 
@@ -226,7 +222,6 @@ bool ir_gen::visit_call_index(call_index* node) {
         temp_0,
         temp_1
     ));
-    ircode_block->add_nop();
     return true;
 }
 
@@ -279,7 +274,6 @@ bool ir_gen::visit_call_field(call_field* node) {
                     temp_1,
                     temp_2
                 ));
-                ircode_block->add_nop();
                 break;
             }
         }
@@ -341,7 +335,6 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
                     temp_0,
                     temp_1
                 ));
-                ircode_block->add_nop();
                 break;
             }
         }
@@ -443,7 +436,6 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
         new_call->add_arg(arg.content);
     }
     ircode_block->add_stmt(new_call);
-    ircode_block->add_nop();
     // push return value on stack
     if (node->get_resolve()!=type::void_type()) {
         value_stack.push_back(result);

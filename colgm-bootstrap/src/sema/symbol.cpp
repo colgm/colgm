@@ -45,47 +45,4 @@ void colgm_func::add_parameter(const std::string& name, const type& t) {
     unordered_params.insert({name, {name, t}});
 }
 
-std::unordered_map<std::string, colgm_basic*> colgm_basic::mapper = {
-    {"i32", colgm_basic::i32()},
-    {"i64", colgm_basic::i64()}
-};
-
-colgm_basic* colgm_basic::i32() {
-    static colgm_basic singleton = colgm_basic {"i32", {}};
-    if (!singleton.static_method.empty()) {
-        return &singleton;
-    }
-    const auto parameter = symbol {.name = "_num", type::i32_type()};
-    singleton.static_method.insert({
-        "to_i64",
-        colgm_func {
-            .name = "to_i64",
-            .location = span::null(),
-            .return_type = type::i64_type(),
-            .parameters = {parameter},
-            .unordered_params = {{"_num", parameter}}
-        }
-    });
-    return &singleton;
-}
-
-colgm_basic* colgm_basic::i64() {
-    static colgm_basic singleton = colgm_basic {"i64", {}};
-    if (!singleton.static_method.empty()) {
-        return &singleton;
-    }
-    const auto parameter = symbol {.name = "_num", type::i64_type()};
-    singleton.static_method.insert({
-        "to_i32",
-        colgm_func {
-            .name = "to_i32",
-            .location = span::null(),
-            .return_type = type::i32_type(),
-            .parameters = {parameter},
-            .unordered_params = {{"_num", parameter}}
-        }
-    });
-    return &singleton;
-}
-
 }
