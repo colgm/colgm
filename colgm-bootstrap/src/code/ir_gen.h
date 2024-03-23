@@ -66,6 +66,8 @@ private:
 private:
     std::vector<value> value_stack;
 
+    void call_expression_generation(call*, bool);
+
     bool visit_number_literal(number_literal*) override;
     bool visit_string_literal(string_literal*) override;
     bool visit_bool_literal(bool_literal*) override;

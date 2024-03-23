@@ -29,6 +29,7 @@ public:
         name(n), cb(nullptr) {}
     ~hir_func();
     void dump(std::ostream&) const;
+    const auto& get_name() const { return name; }
 
     void add_param(const std::string& pname, const std::string& ptype) {
         params.push_back({pname, ptype});

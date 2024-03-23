@@ -89,6 +89,54 @@ bool ir_gen::visit_impl_struct(impl_struct* node) {
     return true;
 }
 
+void ir_gen::call_expression_generation(call* node, bool need_address) {
+    // call head may be the global function
+    auto head = node->get_head();
+    if (ctx.global_symbol.count(head->get_name()) &&
+        ctx.global_symbol.at(head->get_name()).kind==symbol_kind::func_kind) {
+        call_function_symbol(head);
+    } else {
+        call_variable(head);
+    }
+    for(auto i : node->get_chain()) {
+        i->accept(this);
+    }
+    if (value_stack.empty()) {
+        report_stack_empty(node);
+        return;
+    }
+    const auto source = value_stack.back();
+    if (source.resolve_type==type::void_type()) {
+        value_stack.pop_back();
+        return;
+    }
+    // all of the source must be pointer
+    if (source.resolve_type.pointer_depth<=0) {
+        err.err("code", node->get_location(),
+            "internal compiler bug: should be pointer."
+        );
+        return;
+    }
+    // need address flag, for assignment
+    if (need_address) {
+        return;
+    }
+    value_stack.pop_back();
+    const auto temp = get_temp_variable();
+    auto result = value {
+        .kind = value_kind::v_var,
+        .resolve_type = source.resolve_type,
+        .content = temp
+    };
+    result.resolve_type.pointer_depth--;
+    value_stack.push_back(result);
+    ircode_block->add_stmt(new sir_load(
+        type_convert(result.resolve_type),
+        source.content,
+        temp
+    ));
+}
+
 bool ir_gen::visit_number_literal(number_literal* node) {
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
@@ -179,43 +227,7 @@ void ir_gen::call_variable(identifier* node) {
 }
 
 bool ir_gen::visit_call(call* node) {
-    // call head may be the global function
-    auto head = node->get_head();
-    if (ctx.global_symbol.count(head->get_name()) &&
-        ctx.global_symbol.at(head->get_name()).kind==symbol_kind::func_kind) {
-        call_function_symbol(head);
-    } else {
-        call_variable(head);
-    }
-    for(auto i : node->get_chain()) {
-        i->accept(this);
-    }
-    const auto source = value_stack.back();
-    if (source.resolve_type==type::void_type()) {
-        value_stack.pop_back();
-        return true;
-    }
-    // TODO: all of the source must be pointer
-    if (source.resolve_type.pointer_depth>0) {
-        value_stack.pop_back();
-        const auto temp = get_temp_variable();
-        auto result = value {
-            .kind = value_kind::v_var,
-            .resolve_type = source.resolve_type,
-            .content = temp
-        };
-        result.resolve_type.pointer_depth--;
-        value_stack.push_back(result);
-        ircode_block->add_stmt(new sir_load(
-            type_convert(result.resolve_type),
-            source.content,
-            temp
-        ));
-    } else {
-        err.err("code", node->get_location(),
-            "internal compiler bug: should be pointer."
-        );
-    }
+    call_expression_generation(node, false);
     return true;
 }
 
@@ -492,9 +504,8 @@ bool ir_gen::visit_definition(definition* node) {
     return true;
 }
 
-// TODO, left value should be pointer type
 bool ir_gen::visit_assignment(assignment* node) {
-    node->get_left()->accept(this);
+    call_expression_generation(node->get_left(), true);
     const auto left = value_stack.back();
     value_stack.pop_back();
 
@@ -502,6 +513,7 @@ bool ir_gen::visit_assignment(assignment* node) {
     const auto right = value_stack.back();
     value_stack.pop_back();
 
+    // TODO: adjust generation pass except kind::eq branch
     switch(node->get_type()) {
         case assignment::kind::addeq:
             ircode_block->add_stmt(new sir_binary(
@@ -515,7 +527,7 @@ bool ir_gen::visit_assignment(assignment* node) {
             )); break;
         case assignment::kind::eq:
             ircode_block->add_stmt(new sir_store(
-                type_convert(left.resolve_type),
+                type_convert(right.resolve_type),
                 right.content,
                 left.content
             )); break;

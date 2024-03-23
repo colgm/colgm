@@ -20,6 +20,7 @@ struct ir_context {
 private:
     void dump_raw_string(std::ostream&, const std::string&) const;
     void dump_const_string(std::ostream&) const;
+    void check_and_dump_default_main(std::ostream&) const;
 
 public:
     ~ir_context() {
