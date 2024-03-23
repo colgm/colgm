@@ -30,12 +30,12 @@ void ir_context::dump_const_string(std::ostream& out) const {
 
 void ir_context::check_and_dump_default_main(std::ostream& out) const {
     for(auto i : func_decls) {
-        if (i->get_name()=="main") {
+        if (i->get_name()=="@main") {
             return;
         }
     }
     for(auto i : func_impls) {
-        if (i->get_name()=="main") {
+        if (i->get_name()=="@main") {
             return;
         }
     }

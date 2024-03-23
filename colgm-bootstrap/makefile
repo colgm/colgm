@@ -5,7 +5,7 @@ out.ll:
 	$(COLGMCC) ../src/main.colgm -L ../src -Wt
 
 .PHONY: test
-test: colgm
+test: $(COLGMCC)
 	@ $(COLGMCC) test/func.colgm
 	@ lli out.ll
 	@ $(COLGMCC) test/hello.colgm
