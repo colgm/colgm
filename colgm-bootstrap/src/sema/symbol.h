@@ -75,17 +75,22 @@ public:
     bool is_error() const { return name=="<err>"; }
     bool is_integer() const {
         const auto& t = *this;
-        return t==type::i8_type() || t==type::u8_type() ||
-               t==type::i16_type() || t==type::u16_type() ||
-               t==type::i32_type() || t==type::u32_type() ||
-               t==type::i64_type() || t==type::u64_type();
+        return t==type::i8_type(t.pointer_depth) ||
+               t==type::u8_type(t.pointer_depth) ||
+               t==type::i16_type(t.pointer_depth) ||
+               t==type::u16_type(t.pointer_depth) ||
+               t==type::i32_type(t.pointer_depth) ||
+               t==type::u32_type(t.pointer_depth) ||
+               t==type::i64_type(t.pointer_depth) ||
+               t==type::u64_type(t.pointer_depth);
     }
     bool is_float() const {
         const auto& t = *this;
-        return t==type::f32_type() || t==type::f64_type();
+        return t==type::f32_type(t.pointer_depth) ||
+               t==type::f64_type(t.pointer_depth);
     }
     bool is_boolean() const {
-        return *this==type::bool_type();
+        return *this==type::bool_type(this->pointer_depth);
     }
     bool is_pointer() const { return pointer_depth>0; }
 };

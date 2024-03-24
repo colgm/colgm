@@ -6,6 +6,8 @@ out.ll:
 
 .PHONY: test
 test: $(COLGMCC)
+	@ $(COLGMCC) test/assign.colgm
+	@ lli out.ll
 	@ $(COLGMCC) test/func.colgm
 	@ lli out.ll
 	@ $(COLGMCC) test/hello.colgm

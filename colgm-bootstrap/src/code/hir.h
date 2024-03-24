@@ -13,6 +13,7 @@ private:
 public:
     hir_struct(const std::string& n): name(n) {}
     void dump(std::ostream&) const;
+    const auto& get_name() const { return name; }
 
     void add_field_type(const std::string& type) { field_type.push_back(type); }
 };

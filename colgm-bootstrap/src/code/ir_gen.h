@@ -84,6 +84,11 @@ private:
     bool visit_binary_operator(binary_operator*) override;
     bool visit_ret_stmt(ret_stmt*) override;
     bool visit_definition(definition*) override;
+    void generate_add_assignment(const value&, const value&);
+    void generate_sub_assignment(const value&, const value&);
+    void generate_mul_assignment(const value&, const value&);
+    void generate_div_assignment(const value&, const value&);
+    void generate_rem_assignment(const value&, const value&);
     bool visit_assignment(assignment*) override;
     bool visit_while_stmt(while_stmt*) override;
     bool visit_if_stmt(if_stmt*) override;

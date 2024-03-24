@@ -504,6 +504,116 @@ bool ir_gen::visit_definition(definition* node) {
     return true;
 }
 
+void ir_gen::generate_add_assignment(const value& left, const value& right) {
+    auto left_type_copy = left.resolve_type;
+    left_type_copy.pointer_depth--;
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    const auto opr = left.resolve_type.is_integer()? "add":"fadd";
+    ircode_block->add_stmt(new sir_load(
+        type_convert(left_type_copy),
+        left.content,
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_binary(
+        temp_0, right.content, temp_1, opr,
+        type_convert(left_type_copy)
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(left_type_copy),
+        temp_1,
+        left.content
+    ));
+}
+
+void ir_gen::generate_sub_assignment(const value& left, const value& right) {
+    auto left_type_copy = left.resolve_type;
+    left_type_copy.pointer_depth--;
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    const auto opr = left.resolve_type.is_integer()? "sub":"fsub";
+    ircode_block->add_stmt(new sir_load(
+        type_convert(left_type_copy),
+        left.content,
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_binary(
+        temp_0, right.content, temp_1, opr,
+        type_convert(left_type_copy)
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(left_type_copy),
+        temp_1,
+        left.content
+    ));
+}
+
+void ir_gen::generate_mul_assignment(const value& left, const value& right) {
+    auto left_type_copy = left.resolve_type;
+    left_type_copy.pointer_depth--;
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    const auto opr = left.resolve_type.is_integer()? "mul":"fmul";
+    ircode_block->add_stmt(new sir_load(
+        type_convert(left_type_copy),
+        left.content,
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_binary(
+        temp_0, right.content, temp_1, opr,
+        type_convert(left_type_copy)
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(left_type_copy),
+        temp_1,
+        left.content
+    ));
+}
+
+void ir_gen::generate_div_assignment(const value& left, const value& right) {
+    auto left_type_copy = left.resolve_type;
+    left_type_copy.pointer_depth--;
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    const auto opr = left.resolve_type.is_integer()? "sdiv":"fdiv";
+    ircode_block->add_stmt(new sir_load(
+        type_convert(left_type_copy),
+        left.content,
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_binary(
+        temp_0, right.content, temp_1, opr,
+        type_convert(left_type_copy)
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(left_type_copy),
+        temp_1,
+        left.content
+    ));
+}
+
+void ir_gen::generate_rem_assignment(const value& left, const value& right) {
+    auto left_type_copy = left.resolve_type;
+    left_type_copy.pointer_depth--;
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    const auto opr = "srem";
+    ircode_block->add_stmt(new sir_load(
+        type_convert(left_type_copy),
+        left.content,
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_binary(
+        temp_0, right.content, temp_1, opr,
+        type_convert(left_type_copy)
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(left_type_copy),
+        temp_1,
+        left.content
+    ));
+}
+
 bool ir_gen::visit_assignment(assignment* node) {
     call_expression_generation(node->get_left(), true);
     const auto left = value_stack.back();
@@ -515,37 +625,17 @@ bool ir_gen::visit_assignment(assignment* node) {
 
     // TODO: adjust generation pass except kind::eq branch
     switch(node->get_type()) {
-        case assignment::kind::addeq:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "add",
-                type_convert(left.resolve_type)
-            )); break;
-        case assignment::kind::diveq:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "div",
-                type_convert(left.resolve_type)
-            )); break;
+        case assignment::kind::addeq: generate_add_assignment(left, right); break;
+        case assignment::kind::diveq: generate_div_assignment(left, right); break;
         case assignment::kind::eq:
             ircode_block->add_stmt(new sir_store(
                 type_convert(right.resolve_type),
                 right.content,
                 left.content
             )); break;
-        case assignment::kind::modeq:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "rem",
-                type_convert(left.resolve_type)
-            )); break;
-        case assignment::kind::multeq:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "mul",
-                type_convert(left.resolve_type)
-            )); break;
-        case assignment::kind::subeq:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, left.content, "sub",
-                type_convert(left.resolve_type)
-            )); break;
+        case assignment::kind::modeq: generate_rem_assignment(left, right); break;
+        case assignment::kind::multeq: generate_mul_assignment(left, right); break;
+        case assignment::kind::subeq: generate_sub_assignment(left, right); break;
     }
     ircode_block->add_nop();
     return true;
