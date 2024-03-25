@@ -16,10 +16,12 @@ struct ir_context {
     std::vector<hir_func*> func_decls;
     std::vector<hir_func*> func_impls;
     std::unordered_map<std::string, u64> const_strings;
+    std::unordered_map<std::string, std::string> used_basic_convert_method;
 
 private:
     void dump_raw_string(std::ostream&, const std::string&) const;
     void dump_const_string(std::ostream&) const;
+    void dump_used_basic_convert_method(std::ostream&) const;
     void dump_struct_size_method(std::ostream&) const;
     void dump_struct_alloc_method(std::ostream&) const;
     void check_and_dump_default_main(std::ostream&) const;

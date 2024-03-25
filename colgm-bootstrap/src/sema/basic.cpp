@@ -19,9 +19,43 @@ colgm_func create_convert_method(const std::string& function_name,
 }
 
 std::unordered_map<std::string, colgm_basic*> colgm_basic::mapper = {
+    {"i8", colgm_basic::i8()},
+    {"i16", colgm_basic::i16()},
     {"i32", colgm_basic::i32()},
     {"i64", colgm_basic::i64()}
 };
+
+colgm_basic* colgm_basic::i8() {
+    static colgm_basic singleton = colgm_basic {"i8", {}};
+    if (!singleton.static_method.empty()) {
+        return &singleton;
+    }
+    const auto parameter = symbol {.name = "_num", type::i8_type()};
+    singleton.static_method.insert({"to_u8", basic::create_convert_method("to_u8", type::u8_type(), parameter)});
+    singleton.static_method.insert({"to_u16", basic::create_convert_method("to_u16", type::u16_type(), parameter)});
+    singleton.static_method.insert({"to_u32", basic::create_convert_method("to_u32", type::u32_type(), parameter)});
+    singleton.static_method.insert({"to_u64", basic::create_convert_method("to_u64", type::u64_type(), parameter)});
+    singleton.static_method.insert({"to_i16", basic::create_convert_method("to_i16", type::i16_type(), parameter)});
+    singleton.static_method.insert({"to_i32", basic::create_convert_method("to_i32", type::i32_type(), parameter)});
+    singleton.static_method.insert({"to_i64", basic::create_convert_method("to_i64", type::i64_type(), parameter)});
+    return &singleton;
+}
+
+colgm_basic* colgm_basic::i16() {
+    static colgm_basic singleton = colgm_basic {"i16", {}};
+    if (!singleton.static_method.empty()) {
+        return &singleton;
+    }
+    const auto parameter = symbol {.name = "_num", type::i16_type()};
+    singleton.static_method.insert({"to_u8", basic::create_convert_method("to_u8", type::u8_type(), parameter)});
+    singleton.static_method.insert({"to_u16", basic::create_convert_method("to_u16", type::u16_type(), parameter)});
+    singleton.static_method.insert({"to_u32", basic::create_convert_method("to_u32", type::u32_type(), parameter)});
+    singleton.static_method.insert({"to_u64", basic::create_convert_method("to_u64", type::u64_type(), parameter)});
+    singleton.static_method.insert({"to_i8", basic::create_convert_method("to_i8", type::i8_type(), parameter)});
+    singleton.static_method.insert({"to_i32", basic::create_convert_method("to_i32", type::i32_type(), parameter)});
+    singleton.static_method.insert({"to_i64", basic::create_convert_method("to_i64", type::i64_type(), parameter)});
+    return &singleton;
+}
 
 colgm_basic* colgm_basic::i32() {
     static colgm_basic singleton = colgm_basic {"i32", {}};
@@ -35,7 +69,7 @@ colgm_basic* colgm_basic::i32() {
     singleton.static_method.insert({"to_u64", basic::create_convert_method("to_u64", type::u64_type(), parameter)});
     singleton.static_method.insert({"to_i8", basic::create_convert_method("to_i8", type::i8_type(), parameter)});
     singleton.static_method.insert({"to_i16", basic::create_convert_method("to_i16", type::i16_type(), parameter)});
-    singleton.static_method.insert({"to_i64",basic::create_convert_method("to_i64", type::i64_type(), parameter)});
+    singleton.static_method.insert({"to_i64", basic::create_convert_method("to_i64", type::i64_type(), parameter)});
     return &singleton;
 }
 

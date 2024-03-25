@@ -20,6 +20,8 @@ struct colgm_basic {
 
     static std::unordered_map<std::string, colgm_basic*> mapper;
 
+    static colgm_basic* i8();
+    static colgm_basic* i16();
     static colgm_basic* i32();
     static colgm_basic* i64();
 };

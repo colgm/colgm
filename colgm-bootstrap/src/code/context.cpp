@@ -28,6 +28,18 @@ void ir_context::dump_const_string(std::ostream& out) const {
     }
 }
 
+void ir_context::dump_used_basic_convert_method(std::ostream& out) const {
+    // TODO: this is a demo, fix it later
+    for(const auto& i : used_basic_convert_method) {
+        out << "define " << i.second << " ";
+        out << "@native." << i.first << ".to_" << i.second;
+        out << "(" << i.first << " %num) {\n";
+        out << "  %1 = trunc " << i.first << " %num to " << i.second << "\n";
+        out << "  ret " << i.second << " %1\n";
+        out << "}\n";
+    }
+}
+
 void ir_context::dump_struct_size_method(std::ostream& out) const {
     for(const auto& st : struct_decls) {
         out << "define i64 @" << st.get_name() << ".__size__() {\n";
@@ -72,6 +84,7 @@ void ir_context::dump_code(std::ostream& out) const {
         i.dump(out);
     }
     dump_const_string(out);
+    dump_used_basic_convert_method(out);
     dump_struct_size_method(out);
     dump_struct_alloc_method(out);
     if (struct_decls.size()) {

@@ -237,8 +237,22 @@ bool ir_gen::visit_call_index(call_index* node) {
     value_stack.pop_back();
     const auto source = value_stack.back();
     value_stack.pop_back();
+
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
+
+    auto source_type_copy = source.resolve_type;
+    if (source_type_copy.pointer_depth<2) {
+        err.err("code", node->get_location(),
+            "source pointer depth is less than 2."
+        );
+    }
+    source_type_copy.pointer_depth--;
+    ircode_block->add_stmt(new sir_load(
+        type_convert(source_type_copy),
+        source.content,
+        temp_0
+    ));
     auto result = value {
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
@@ -248,17 +262,13 @@ bool ir_gen::visit_call_index(call_index* node) {
     result.resolve_type.pointer_depth++;
 
     value_stack.push_back(result);
+    source_type_copy.pointer_depth--;
     ircode_block->add_stmt(new sir_call_index(
-        source.content,
         temp_0,
+        temp_1,
         index.content,
-        type_convert(result.resolve_type),
+        type_convert(source_type_copy),
         type_convert(index.resolve_type)
-    ));
-    ircode_block->add_stmt(new sir_load(
-        type_convert(result.resolve_type),
-        temp_0,
-        temp_1
     ));
     return true;
 }
@@ -383,13 +393,20 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
 bool ir_gen::visit_call_path(call_path* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
+    // basic symbol, for example i8, i16, i32, i64
     if (source.resolve_type.loc_file.empty()) {
         const auto bsc = colgm_basic::mapper.at(source.resolve_type.name);
         if (bsc->static_method.count(node->get_name())) {
+            const auto name = "native." + source.resolve_type.name +
+                              "." + node->get_name();
+            irc.used_basic_convert_method.insert({
+                source.resolve_type.name,
+                bsc->static_method.at(node->get_name()).return_type.name
+            });
             auto result = value {
                 .kind = value_kind::v_sfn,
                 .resolve_type = node->get_resolve(),
-                .content = "." + source.resolve_type.name + "." + node->get_name()
+                .content = name
             };
             value_stack.push_back(result);
             return true;
