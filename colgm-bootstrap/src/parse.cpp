@@ -147,7 +147,7 @@ expr* parse::scalar_gen() {
 expr* parse::multive_gen() {
     const auto begin_location = toks[ptr].loc;
     auto result = scalar_gen();
-    while(look_ahead(tok::mult) || look_ahead(tok::div) || look_ahead(tok::mult)) {
+    while(look_ahead(tok::mult) || look_ahead(tok::div) || look_ahead(tok::rem)) {
         auto binary = new binary_operator(begin_location);
         binary->set_left(result);
         switch(toks[ptr].type) {

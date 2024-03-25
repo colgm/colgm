@@ -89,6 +89,7 @@ private:
     void generate_mul_assignment(const value&, const value&);
     void generate_div_assignment(const value&, const value&);
     void generate_rem_assignment(const value&, const value&);
+    void generate_eq_assignment(const value&, const value&);
     bool visit_assignment(assignment*) override;
     bool visit_while_stmt(while_stmt*) override;
     bool visit_if_stmt(if_stmt*) override;

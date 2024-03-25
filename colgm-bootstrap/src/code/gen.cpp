@@ -618,6 +618,14 @@ void ir_gen::generate_rem_assignment(const value& left, const value& right) {
     ));
 }
 
+void ir_gen::generate_eq_assignment(const value& left, const value& right) {
+    ircode_block->add_stmt(new sir_store(
+        type_convert(right.resolve_type),
+        right.content,
+        left.content
+    ));
+}
+
 bool ir_gen::visit_assignment(assignment* node) {
     call_expression_generation(node->get_left(), true);
     const auto left = value_stack.back();
@@ -627,19 +635,13 @@ bool ir_gen::visit_assignment(assignment* node) {
     const auto right = value_stack.back();
     value_stack.pop_back();
 
-    // TODO: adjust generation pass except kind::eq branch
     switch(node->get_type()) {
         case assignment::kind::addeq: generate_add_assignment(left, right); break;
         case assignment::kind::diveq: generate_div_assignment(left, right); break;
-        case assignment::kind::eq:
-            ircode_block->add_stmt(new sir_store(
-                type_convert(right.resolve_type),
-                right.content,
-                left.content
-            )); break;
         case assignment::kind::remeq: generate_rem_assignment(left, right); break;
         case assignment::kind::multeq: generate_mul_assignment(left, right); break;
         case assignment::kind::subeq: generate_sub_assignment(left, right); break;
+        case assignment::kind::eq: generate_eq_assignment(left, right); break;
     }
     ircode_block->add_nop();
     return true;
