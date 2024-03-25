@@ -889,8 +889,9 @@ bool ir_gen::visit_ret_stmt(ret_stmt* node) {
 }
 
 bool ir_gen::visit_while_stmt(while_stmt* node) {
-    auto while_begin_label = ircode_block->stmt_size();
+    auto while_begin_label = ircode_block->stmt_size()+1;
     // condition
+    ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
 
     node->get_condition()->accept(this);
@@ -931,8 +932,9 @@ bool ir_gen::visit_if_stmt(if_stmt* node) {
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     node->get_block()->accept(this);
     if (br_cond) {
-        br_cond->set_false_label(ircode_block->stmt_size());
+        br_cond->set_false_label(ircode_block->stmt_size()+1);
     }
+    ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     ircode_block->add_nop();
     return true;
