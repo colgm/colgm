@@ -681,6 +681,159 @@ void ir_gen::generate_or_operator(binary_operator* node) {
     ircode_block->add_nop();
 }
 
+void ir_gen::generate_add_operator(const value& left,
+                                   const value& right,
+                                   const value& result) {
+    const auto opr = left.resolve_type.is_integer()? "add":"fadd";
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_sub_operator(const value& left,
+                                   const value& right,
+                                   const value& result) {
+    const auto opr = left.resolve_type.is_integer()? "sub":"fsub";
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_mul_operator(const value& left,
+                                   const value& right,
+                                   const value& result) {
+    const auto opr = left.resolve_type.is_integer()? "mul":"fmul";
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_div_operator(const value& left,
+                                   const value& right,
+                                   const value& result) {
+    const auto opr = left.resolve_type.is_integer()?
+        (left.resolve_type.is_unsigned()? "udiv":"sdiv"):
+        "fdiv";
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_rem_operator(const value& left,
+                                   const value& right,
+                                   const value& result) {
+    const auto opr = left.resolve_type.is_integer()?
+        (left.resolve_type.is_unsigned()? "urem":"srem"):
+        "frem";
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_eq_operator(const value& left,
+                                  const value& right,
+                                  const value& result) {
+    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
+    opr += (left.resolve_type.is_float()? "ueq":"eq");
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_neq_operator(const value& left,
+                                   const value& right,
+                                   const value& result) {
+    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
+    opr += (left.resolve_type.is_float()? "une":"ne");
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_ge_operator(const value& left,
+                                  const value& right,
+                                  const value& result) {
+    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
+    opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "uge":"sge"):"uge";
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_gt_operator(const value& left,
+                                  const value& right,
+                                  const value& result) {
+    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
+    opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "ugt":"sgt"):"ugt";
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_le_operator(const value& left,
+                                  const value& right,
+                                  const value& result) {
+    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
+    opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "ule":"sle"):"ule";
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
+void ir_gen::generate_lt_operator(const value& left,
+                                  const value& right,
+                                  const value& result) {
+    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
+    opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "ult":"slt"):"ult";
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        opr,
+        type_convert(left.resolve_type)
+    ));
+}
+
 bool ir_gen::visit_binary_operator(binary_operator* node) {
     if (node->get_opr()==binary_operator::kind::cmpand) {
         generate_and_operator(node);
@@ -703,61 +856,17 @@ bool ir_gen::visit_binary_operator(binary_operator* node) {
     };
     value_stack.push_back(result);
     switch(node->get_opr()) {
-        case binary_operator::kind::add:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "add",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::cmpeq:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "eq",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::cmpneq:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "ne",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::div:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "div",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::geq:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "ge",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::grt:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "gt",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::leq:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "le",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::less:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "lt",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::rem:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "rem",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::mult:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "mul",
-                type_convert(node->get_resolve())
-            )); break;
-        case binary_operator::kind::sub:
-            ircode_block->add_stmt(new sir_binary(
-                left.content, right.content, result.content, "sub",
-                type_convert(node->get_resolve())
-            )); break;
+        case binary_operator::kind::add: generate_add_operator(left, right, result); break;
+        case binary_operator::kind::sub: generate_sub_operator(left, right, result); break;
+        case binary_operator::kind::mult: generate_mul_operator(left, right, result); break;
+        case binary_operator::kind::div: generate_div_operator(left, right, result); break;
+        case binary_operator::kind::rem: generate_rem_operator(left, right, result); break;
+        case binary_operator::kind::cmpeq: generate_eq_operator(left, right, result); break;
+        case binary_operator::kind::cmpneq: generate_neq_operator(left, right, result); break;
+        case binary_operator::kind::geq: generate_ge_operator(left, right, result); break;
+        case binary_operator::kind::grt: generate_gt_operator(left, right, result); break;
+        case binary_operator::kind::leq: generate_le_operator(left, right, result); break;
+        case binary_operator::kind::less: generate_lt_operator(left, right, result); break;
         default: unreachable(node);
     }
     ircode_block->add_nop();

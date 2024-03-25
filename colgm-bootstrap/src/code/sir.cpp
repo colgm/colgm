@@ -92,7 +92,7 @@ void sir_br::dump(std::ostream& out) const {
 }
 
 void sir_br_cond::dump(std::ostream& out) const {
-    out << "br %" << condition << " ";
+    out << "br i1 %" << condition << ", ";
     out << "label %.label_" << destination_true << ", ";
     out << "label %.label_" << destination_false << "\n";
 }

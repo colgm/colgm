@@ -81,6 +81,17 @@ private:
     bool visit_call_func_args(call_func_args*) override;
     void generate_and_operator(binary_operator*);
     void generate_or_operator(binary_operator*);
+    void generate_add_operator(const value&, const value&, const value&);
+    void generate_sub_operator(const value&, const value&, const value&);
+    void generate_mul_operator(const value&, const value&, const value&);
+    void generate_div_operator(const value&, const value&, const value&);
+    void generate_rem_operator(const value&, const value&, const value&);
+    void generate_eq_operator(const value&, const value&, const value&);
+    void generate_neq_operator(const value&, const value&, const value&);
+    void generate_ge_operator(const value&, const value&, const value&);
+    void generate_gt_operator(const value&, const value&, const value&);
+    void generate_le_operator(const value&, const value&, const value&);
+    void generate_lt_operator(const value&, const value&, const value&);
     bool visit_binary_operator(binary_operator*) override;
     bool visit_ret_stmt(ret_stmt*) override;
     bool visit_definition(definition*) override;
