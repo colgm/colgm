@@ -648,37 +648,65 @@ bool ir_gen::visit_assignment(assignment* node) {
 }
 
 void ir_gen::generate_and_operator(binary_operator* node) {
+    const auto temp_0 = get_temp_variable();
+    ircode_block->add_stmt(new sir_alloca(temp_0, "i1"));
     node->get_left()->accept(this);
-    const auto condition = value_stack.back();
+    const auto left = value_stack.back();
     value_stack.pop_back();
+    ircode_block->add_stmt(new sir_store("i1", left.content, temp_0));
     auto br = new sir_br_cond(
-        condition.content,
+        left.content,
         ircode_block->stmt_size()+1,
         0
     );
     ircode_block->add_stmt(br);
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     node->get_right()->accept(this);
+    const auto right = value_stack.back();
+    value_stack.pop_back();
+    ircode_block->add_stmt(new sir_store("i1", right.content, temp_0));
+    ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
     br->set_false_label(ircode_block->stmt_size());
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
+    const auto temp_1 = get_temp_variable();
+    ircode_block->add_stmt(new sir_load("i1", temp_0, temp_1));
     ircode_block->add_nop();
+    value_stack.push_back(value {
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = temp_1
+    });
 }
 
 void ir_gen::generate_or_operator(binary_operator* node) {
+    const auto temp_0 = get_temp_variable();
+    ircode_block->add_stmt(new sir_alloca(temp_0, "i1"));
     node->get_left()->accept(this);
-    const auto condition = value_stack.back();
+    const auto left = value_stack.back();
     value_stack.pop_back();
+    ircode_block->add_stmt(new sir_store("i1", left.content, temp_0));
     auto br = new sir_br_cond(
-        condition.content,
+        left.content,
         0,
         ircode_block->stmt_size()+1
     );
     ircode_block->add_stmt(br);
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     node->get_right()->accept(this);
+    const auto right = value_stack.back();
+    value_stack.pop_back();
+    ircode_block->add_stmt(new sir_store("i1", right.content, temp_0));
+    ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
     br->set_true_label(ircode_block->stmt_size());
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
+    const auto temp_1 = get_temp_variable();
+    ircode_block->add_stmt(new sir_load("i1", temp_0, temp_1));
     ircode_block->add_nop();
+    value_stack.push_back(value {
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = temp_1
+    });
 }
 
 void ir_gen::generate_add_operator(const value& left,
