@@ -1,7 +1,7 @@
 #include "lexer.h"
 #include "parse.h"
 #include "semantic.h"
-#include "code/ir_gen.h"
+#include "code/gen.h"
 #include "sema/basic.h"
 
 namespace colgm {
@@ -345,7 +345,7 @@ type semantic::resolve_binary_operator(binary_operator* node) {
         case binary_operator::kind::sub:
         case binary_operator::kind::div:
         case binary_operator::kind::mult:
-        case binary_operator::kind::mod: {
+        case binary_operator::kind::rem: {
             const auto res = resolve_arithmetic_operator(node);
             node->set_resolve_type(res);
             return res;

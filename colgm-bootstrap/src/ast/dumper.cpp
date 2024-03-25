@@ -143,7 +143,7 @@ bool dumper::visit_binary_operator(binary_operator* node) {
     switch(node->get_opr()) {
         case binary_operator::kind::add: std::cout << "+"; break;
         case binary_operator::kind::sub: std::cout << "-"; break;
-        case binary_operator::kind::mod: std::cout << "%"; break;
+        case binary_operator::kind::rem: std::cout << "%"; break;
         case binary_operator::kind::mult: std::cout << "*"; break;
         case binary_operator::kind::div: std::cout << "/"; break;
         case binary_operator::kind::cmpeq: std::cout << "=="; break;
@@ -231,7 +231,7 @@ bool dumper::visit_assignment(assignment* node) {
         case assignment::kind::eq: std::cout << "="; break;
         case assignment::kind::addeq: std::cout << "+= "; break;
         case assignment::kind::diveq: std::cout << "/= "; break;
-        case assignment::kind::modeq: std::cout << "%= "; break;
+        case assignment::kind::remeq: std::cout << "%= "; break;
         case assignment::kind::multeq: std::cout << "*= "; break;
         case assignment::kind::subeq: std::cout << "-= "; break;
     }

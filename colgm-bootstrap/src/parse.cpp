@@ -153,7 +153,7 @@ expr* parse::multive_gen() {
         switch(toks[ptr].type) {
             case tok::mult: binary->set_opr(binary_operator::kind::mult); break;
             case tok::div: binary->set_opr(binary_operator::kind::div); break;
-            case tok::mod: binary->set_opr(binary_operator::kind::mod); break;
+            case tok::rem: binary->set_opr(binary_operator::kind::rem); break;
             default: break;
         }
         match(toks[ptr].type);
@@ -253,7 +253,7 @@ expr* parse::calculation_gen() {
     }
     // if is call node, check assignment syntax
     if (look_ahead(tok::addeq) || look_ahead(tok::subeq) || look_ahead(tok::multeq) ||
-        look_ahead(tok::diveq) || look_ahead(tok::modeq) || look_ahead(tok::eq)) {
+        look_ahead(tok::diveq) || look_ahead(tok::remeq) || look_ahead(tok::eq)) {
         auto new_assignment = new assignment(begin_location);
         new_assignment->set_left(reinterpret_cast<call*>(result));
         switch(toks[ptr].type) {
@@ -262,7 +262,7 @@ expr* parse::calculation_gen() {
             case tok::subeq: new_assignment->set_type(assignment::kind::subeq); break;
             case tok::multeq: new_assignment->set_type(assignment::kind::multeq); break;
             case tok::diveq: new_assignment->set_type(assignment::kind::diveq); break;
-            case tok::modeq: new_assignment->set_type(assignment::kind::modeq); break;
+            case tok::remeq: new_assignment->set_type(assignment::kind::remeq); break;
             default: break;
         }
         match(toks[ptr].type);

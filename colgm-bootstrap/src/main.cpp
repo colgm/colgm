@@ -4,7 +4,7 @@
 #include "parse.h"
 #include "ast/dumper.h"
 #include "semantic.h"
-#include "code/ir_gen.h"
+#include "code/gen.h"
 #include "package/package.h"
 
 #include <unordered_map>

@@ -1,4 +1,4 @@
-#include "code/ir_gen.h"
+#include "code/gen.h"
 #include "sema/symbol.h"
 #include "sema/basic.h"
 #include "semantic.h"
@@ -575,7 +575,9 @@ void ir_gen::generate_div_assignment(const value& left, const value& right) {
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
-    const auto opr = left.resolve_type.is_integer()? "sdiv":"fdiv";
+    const auto opr = left.resolve_type.is_integer()?
+        (left.resolve_type.is_unsigned()? "udiv":"sdiv"):
+        "fdiv";
     ircode_block->add_stmt(new sir_load(
         type_convert(left_type_copy),
         left.content,
@@ -597,7 +599,9 @@ void ir_gen::generate_rem_assignment(const value& left, const value& right) {
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
-    const auto opr = "srem";
+    const auto opr = left.resolve_type.is_integer()?
+        (left.resolve_type.is_unsigned()? "urem":"srem"):
+        "frem";
     ircode_block->add_stmt(new sir_load(
         type_convert(left_type_copy),
         left.content,
@@ -633,7 +637,7 @@ bool ir_gen::visit_assignment(assignment* node) {
                 right.content,
                 left.content
             )); break;
-        case assignment::kind::modeq: generate_rem_assignment(left, right); break;
+        case assignment::kind::remeq: generate_rem_assignment(left, right); break;
         case assignment::kind::multeq: generate_mul_assignment(left, right); break;
         case assignment::kind::subeq: generate_sub_assignment(left, right); break;
     }
@@ -737,7 +741,7 @@ bool ir_gen::visit_binary_operator(binary_operator* node) {
                 left.content, right.content, result.content, "lt",
                 type_convert(node->get_resolve())
             )); break;
-        case binary_operator::kind::mod:
+        case binary_operator::kind::rem:
             ircode_block->add_stmt(new sir_binary(
                 left.content, right.content, result.content, "rem",
                 type_convert(node->get_resolve())

@@ -73,6 +73,13 @@ public:
     static const type bool_type(i64 ptrlvl = 0) { return {"bool", "", ptrlvl}; }
 
     bool is_error() const { return name=="<err>"; }
+    bool is_unsigned() const {
+        const auto& t = *this;
+        return t==type::u8_type(t.pointer_depth) ||
+               t==type::u16_type(t.pointer_depth) ||
+               t==type::u32_type(t.pointer_depth) ||
+               t==type::u64_type(t.pointer_depth);
+    }
     bool is_integer() const {
         const auto& t = *this;
         return t==type::i8_type(t.pointer_depth) ||

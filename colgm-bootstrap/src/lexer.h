@@ -53,7 +53,7 @@ enum class tok:u32 {
     sub,      // operator -
     mult,     // operator *
     div,      // operator /
-    mod,      // operator %
+    rem,      // operator %
     floater,  // operator ~ and binary operator ~
     btand,    // bitwise operator &
     btor,     // bitwise operator |
@@ -64,7 +64,7 @@ enum class tok:u32 {
     subeq,    // operator -=
     multeq,   // operator *=
     diveq,    // operator /=
-    modeq,    // operator %=
+    remeq,    // operator %=
     lnkeq,    // operator ~=
     btandeq,  // operator &=
     btoreq,   // operator |=
@@ -138,7 +138,7 @@ private:
         {"-"       ,tok::sub     },
         {"*"       ,tok::mult    },
         {"/"       ,tok::div     },
-        {"%"       ,tok::mod     },
+        {"%"       ,tok::rem     },
         {"~"       ,tok::floater },
         {"&"       ,tok::btand   },
         {"|"       ,tok::btor    },
@@ -149,7 +149,7 @@ private:
         {"-="      ,tok::subeq   },
         {"*="      ,tok::multeq  },
         {"/="      ,tok::diveq   },
-        {"%="      ,tok::modeq   },
+        {"%="      ,tok::remeq   },
         {"~="      ,tok::lnkeq   },
         {"&="      ,tok::btandeq },
         {"|="      ,tok::btoreq  },

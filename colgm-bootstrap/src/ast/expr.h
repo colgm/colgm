@@ -28,7 +28,7 @@ public:
         sub,
         mult,
         div,
-        mod,
+        rem,
         cmpeq,
         cmpneq,
         less,
@@ -203,7 +203,7 @@ public:
         subeq,
         multeq,
         diveq,
-        modeq
+        remeq
     };
 
 private:
