@@ -12,13 +12,7 @@ jobs:
     runs-on: macos-latest
     steps:
     - name: checkout
-      uses: actions/checkout@v4
-    - name: fetch llvm
-      run: |
-          brew update
-          brew install llvm@17
-          echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> /Users/runner/.bash_profile
-          /usr/local/opt/llvm/bin/lli --version
+      uses: actions/checkout@v4   
     - name: build
       run: |
           mkdir build
@@ -29,7 +23,10 @@ jobs:
           tar -czf colgm-mac-nightly.tgz .
     - name: verify
       run: |
-          alias lli="/usr/local/opt/llvm/bin/lli"
+          brew update
+          brew install llvm@17
+          echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> /Users/runner/.bash_profile
+          /usr/local/opt/llvm/bin/lli --version
           cd ./bootstrap
           make out.ll
           make test
@@ -39,10 +36,6 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v4
-    - name: fetch llvm
-      run: |
-          sudo apt-get update
-          sudo apt-get install llvm-14-runtime
     - name: build
       run: |
           mkdir build
@@ -54,6 +47,8 @@ jobs:
           tar -czf colgm-linux-x86_64-nightly.tgz --exclude=colgm-linux-x86_64-nightly.tgz .
     - name: verify
       run: |
+          sudo apt-get update
+          sudo apt-get install llvm-14-runtime
           cd ./bootstrap
           make out.ll
           make test
