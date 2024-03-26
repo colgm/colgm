@@ -975,7 +975,7 @@ void semantic::resolve_single_use(use_stmt* node) {
         lexer lex;
         parse par;
         semantic sema;
-        ir_gen gen(sema.get_context());
+        generator gen(sema.get_context());
         if (lex.scan(file).geterr()) {
             report(node, "error ocurred when analysing module \"" + mp + "\".");
             return;

@@ -92,7 +92,7 @@ void execute(
     colgm::lexer lexer;
     colgm::parse parser;
     colgm::semantic sema;
-    colgm::ir_gen gen(sema.get_context());
+    colgm::generator gen(sema.get_context());
 
     // lexer scans file to get tokens
     lexer.scan(file).chkerr();

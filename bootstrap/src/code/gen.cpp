@@ -5,7 +5,7 @@
 
 namespace colgm {
 
-std::string ir_gen::type_convert(const type& t) {
+std::string generator::type_convert(const type& t) {
     auto copy = t;
     if (basic_type_convert_mapper.count(copy.name)) {
         copy.name = basic_type_convert_mapper.at(copy.name);
@@ -16,7 +16,7 @@ std::string ir_gen::type_convert(const type& t) {
     return copy.to_string();
 }
 
-std::string ir_gen::generate_type_string(type_def* node) {
+std::string generator::generate_type_string(type_def* node) {
     return type_convert({
         node->get_name()->get_name(),
         node->get_location().file,
@@ -24,7 +24,7 @@ std::string ir_gen::generate_type_string(type_def* node) {
     });
 }
 
-bool ir_gen::visit_struct_decl(struct_decl* node) {
+bool generator::visit_struct_decl(struct_decl* node) {
     auto new_struct = hir_struct(node->get_name());
     for(auto i : node->get_fields()) {
         new_struct.add_field_type(generate_type_string(i->get_type()));
@@ -33,7 +33,7 @@ bool ir_gen::visit_struct_decl(struct_decl* node) {
     return true;
 }
 
-void ir_gen::convert_parameter_to_pointer(func_decl* node) {
+void generator::convert_parameter_to_pointer(func_decl* node) {
     for(auto i : node->get_params()->get_params()) {
         auto param_addr = new sir_alloca(
             i->get_name()->get_name(),
@@ -49,7 +49,7 @@ void ir_gen::convert_parameter_to_pointer(func_decl* node) {
     }
 }
 
-bool ir_gen::visit_func_decl(func_decl* node) {
+bool generator::visit_func_decl(func_decl* node) {
     ssa_temp_counter = 1;
     auto name = node->get_name();
     if (impl_struct_name.length()) {
@@ -80,7 +80,7 @@ bool ir_gen::visit_func_decl(func_decl* node) {
     return true;
 }
 
-bool ir_gen::visit_impl_struct(impl_struct* node) {
+bool generator::visit_impl_struct(impl_struct* node) {
     impl_struct_name = node->get_struct_name();
     for(auto i : node->get_methods()) {
         i->accept(this);
@@ -89,7 +89,7 @@ bool ir_gen::visit_impl_struct(impl_struct* node) {
     return true;
 }
 
-void ir_gen::call_expression_generation(call* node, bool need_address) {
+void generator::call_expression_generation(call* node, bool need_address) {
     // call head may be the global function
     auto head = node->get_head();
     if (ctx.global_symbol.count(head->get_name()) &&
@@ -137,7 +137,7 @@ void ir_gen::call_expression_generation(call* node, bool need_address) {
     ));
 }
 
-bool ir_gen::visit_number_literal(number_literal* node) {
+bool generator::visit_number_literal(number_literal* node) {
     const auto temp = get_temp_variable();
     ircode_block->add_stmt(new sir_number(
         node->get_number(),
@@ -155,7 +155,7 @@ bool ir_gen::visit_number_literal(number_literal* node) {
     return true;
 }
 
-bool ir_gen::visit_string_literal(string_literal* node) {
+bool generator::visit_string_literal(string_literal* node) {
     const auto result = value {
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
@@ -179,7 +179,7 @@ bool ir_gen::visit_string_literal(string_literal* node) {
     return true;
 }
 
-bool ir_gen::visit_bool_literal(bool_literal* node) {
+bool generator::visit_bool_literal(bool_literal* node) {
     const auto temp = get_temp_variable();
     ircode_block->add_stmt(new sir_number(
         node->get_flag()? "true":"false",
@@ -197,7 +197,7 @@ bool ir_gen::visit_bool_literal(bool_literal* node) {
     return true;
 }
 
-void ir_gen::call_function_symbol(identifier* node) {
+void generator::call_function_symbol(identifier* node) {
     value_stack.push_back({
         .kind = value_kind::v_sfn,
         .resolve_type = node->get_resolve(),
@@ -205,7 +205,7 @@ void ir_gen::call_function_symbol(identifier* node) {
     });
 }
 
-void ir_gen::call_variable(identifier* node) {
+void generator::call_variable(identifier* node) {
     // in fact we need to get the pointer to this variable
     auto resolve = node->get_resolve();
     resolve.pointer_depth++;
@@ -217,12 +217,12 @@ void ir_gen::call_variable(identifier* node) {
     });
 }
 
-bool ir_gen::visit_call(call* node) {
+bool generator::visit_call(call* node) {
     call_expression_generation(node, false);
     return true;
 }
 
-bool ir_gen::visit_call_index(call_index* node) {
+bool generator::visit_call_index(call_index* node) {
     node->get_index()->accept(this);
     const auto index = value_stack.back();
     value_stack.pop_back();
@@ -264,7 +264,7 @@ bool ir_gen::visit_call_index(call_index* node) {
     return true;
 }
 
-bool ir_gen::visit_call_field(call_field* node) {
+bool generator::visit_call_field(call_field* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
     if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
@@ -319,7 +319,7 @@ bool ir_gen::visit_call_field(call_field* node) {
     return true;
 }
 
-bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
+bool generator::visit_ptr_call_field(ptr_call_field* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
     if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
@@ -381,7 +381,7 @@ bool ir_gen::visit_ptr_call_field(ptr_call_field* node) {
     return true;
 }
 
-bool ir_gen::visit_call_path(call_path* node) {
+bool generator::visit_call_path(call_path* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
     // basic symbol, for example i8, i16, i32, i64
@@ -432,7 +432,7 @@ bool ir_gen::visit_call_path(call_path* node) {
     return true;
 }
 
-bool ir_gen::visit_call_func_args(call_func_args* node) {
+bool generator::visit_call_func_args(call_func_args* node) {
     std::vector<value> arguments;
     // load self if encountering value that is not a function
     if (value_stack.back().kind!=value_kind::v_fn &&
@@ -499,7 +499,7 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
     return true;
 }
 
-bool ir_gen::visit_definition(definition* node) {
+bool generator::visit_definition(definition* node) {
     node->get_init_value()->accept(this);
     ircode_block->add_alloca(new sir_alloca(
         node->get_name(),
@@ -516,7 +516,7 @@ bool ir_gen::visit_definition(definition* node) {
     return true;
 }
 
-void ir_gen::generate_add_assignment(const value& left, const value& right) {
+void generator::generate_add_assignment(const value& left, const value& right) {
     auto left_type_copy = left.resolve_type;
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
@@ -538,7 +538,7 @@ void ir_gen::generate_add_assignment(const value& left, const value& right) {
     ));
 }
 
-void ir_gen::generate_sub_assignment(const value& left, const value& right) {
+void generator::generate_sub_assignment(const value& left, const value& right) {
     auto left_type_copy = left.resolve_type;
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
@@ -560,7 +560,7 @@ void ir_gen::generate_sub_assignment(const value& left, const value& right) {
     ));
 }
 
-void ir_gen::generate_mul_assignment(const value& left, const value& right) {
+void generator::generate_mul_assignment(const value& left, const value& right) {
     auto left_type_copy = left.resolve_type;
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
@@ -582,7 +582,7 @@ void ir_gen::generate_mul_assignment(const value& left, const value& right) {
     ));
 }
 
-void ir_gen::generate_div_assignment(const value& left, const value& right) {
+void generator::generate_div_assignment(const value& left, const value& right) {
     auto left_type_copy = left.resolve_type;
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
@@ -606,7 +606,7 @@ void ir_gen::generate_div_assignment(const value& left, const value& right) {
     ));
 }
 
-void ir_gen::generate_rem_assignment(const value& left, const value& right) {
+void generator::generate_rem_assignment(const value& left, const value& right) {
     auto left_type_copy = left.resolve_type;
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
@@ -630,7 +630,7 @@ void ir_gen::generate_rem_assignment(const value& left, const value& right) {
     ));
 }
 
-void ir_gen::generate_eq_assignment(const value& left, const value& right) {
+void generator::generate_eq_assignment(const value& left, const value& right) {
     ircode_block->add_stmt(new sir_store(
         type_convert(right.resolve_type),
         right.content,
@@ -638,7 +638,7 @@ void ir_gen::generate_eq_assignment(const value& left, const value& right) {
     ));
 }
 
-bool ir_gen::visit_assignment(assignment* node) {
+bool generator::visit_assignment(assignment* node) {
     call_expression_generation(node->get_left(), true);
     const auto left = value_stack.back();
     value_stack.pop_back();
@@ -659,7 +659,7 @@ bool ir_gen::visit_assignment(assignment* node) {
     return true;
 }
 
-void ir_gen::generate_and_operator(binary_operator* node) {
+void generator::generate_and_operator(binary_operator* node) {
     const auto temp_0 = get_temp_variable();
     ircode_block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
     ircode_block->add_stmt(new sir_tempptr(temp_0, "i1"));
@@ -691,7 +691,7 @@ void ir_gen::generate_and_operator(binary_operator* node) {
     });
 }
 
-void ir_gen::generate_or_operator(binary_operator* node) {
+void generator::generate_or_operator(binary_operator* node) {
     const auto temp_0 = get_temp_variable();
     ircode_block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
     ircode_block->add_stmt(new sir_tempptr(temp_0, "i1"));
@@ -723,9 +723,9 @@ void ir_gen::generate_or_operator(binary_operator* node) {
     });
 }
 
-void ir_gen::generate_add_operator(const value& left,
-                                   const value& right,
-                                   const value& result) {
+void generator::generate_add_operator(const value& left,
+                                      const value& right,
+                                      const value& result) {
     const auto opr = left.resolve_type.is_integer()? "add":"fadd";
     ircode_block->add_stmt(new sir_binary(
         left.content,
@@ -736,9 +736,9 @@ void ir_gen::generate_add_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_sub_operator(const value& left,
-                                   const value& right,
-                                   const value& result) {
+void generator::generate_sub_operator(const value& left,
+                                      const value& right,
+                                      const value& result) {
     const auto opr = left.resolve_type.is_integer()? "sub":"fsub";
     ircode_block->add_stmt(new sir_binary(
         left.content,
@@ -749,9 +749,9 @@ void ir_gen::generate_sub_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_mul_operator(const value& left,
-                                   const value& right,
-                                   const value& result) {
+void generator::generate_mul_operator(const value& left,
+                                      const value& right,
+                                      const value& result) {
     const auto opr = left.resolve_type.is_integer()? "mul":"fmul";
     ircode_block->add_stmt(new sir_binary(
         left.content,
@@ -762,9 +762,9 @@ void ir_gen::generate_mul_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_div_operator(const value& left,
-                                   const value& right,
-                                   const value& result) {
+void generator::generate_div_operator(const value& left,
+                                      const value& right,
+                                      const value& result) {
     const auto opr = left.resolve_type.is_integer()?
         (left.resolve_type.is_unsigned()? "udiv":"sdiv"):
         "fdiv";
@@ -777,9 +777,9 @@ void ir_gen::generate_div_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_rem_operator(const value& left,
-                                   const value& right,
-                                   const value& result) {
+void generator::generate_rem_operator(const value& left,
+                                      const value& right,
+                                      const value& result) {
     const auto opr = left.resolve_type.is_integer()?
         (left.resolve_type.is_unsigned()? "urem":"srem"):
         "frem";
@@ -792,9 +792,9 @@ void ir_gen::generate_rem_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_eq_operator(const value& left,
-                                  const value& right,
-                                  const value& result) {
+void generator::generate_eq_operator(const value& left,
+                                     const value& right,
+                                     const value& result) {
     auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
     opr += (left.resolve_type.is_float()? "ueq":"eq");
     ircode_block->add_stmt(new sir_binary(
@@ -806,9 +806,9 @@ void ir_gen::generate_eq_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_neq_operator(const value& left,
-                                   const value& right,
-                                   const value& result) {
+void generator::generate_neq_operator(const value& left,
+                                      const value& right,
+                                      const value& result) {
     auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
     opr += (left.resolve_type.is_float()? "une":"ne");
     ircode_block->add_stmt(new sir_binary(
@@ -820,9 +820,9 @@ void ir_gen::generate_neq_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_ge_operator(const value& left,
-                                  const value& right,
-                                  const value& result) {
+void generator::generate_ge_operator(const value& left,
+                                     const value& right,
+                                     const value& result) {
     auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
     opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "uge":"sge"):"uge";
     ircode_block->add_stmt(new sir_binary(
@@ -834,9 +834,9 @@ void ir_gen::generate_ge_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_gt_operator(const value& left,
-                                  const value& right,
-                                  const value& result) {
+void generator::generate_gt_operator(const value& left,
+                                     const value& right,
+                                     const value& result) {
     auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
     opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "ugt":"sgt"):"ugt";
     ircode_block->add_stmt(new sir_binary(
@@ -848,9 +848,9 @@ void ir_gen::generate_gt_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_le_operator(const value& left,
-                                  const value& right,
-                                  const value& result) {
+void generator::generate_le_operator(const value& left,
+                                     const value& right,
+                                     const value& result) {
     auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
     opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "ule":"sle"):"ule";
     ircode_block->add_stmt(new sir_binary(
@@ -862,9 +862,9 @@ void ir_gen::generate_le_operator(const value& left,
     ));
 }
 
-void ir_gen::generate_lt_operator(const value& left,
-                                  const value& right,
-                                  const value& result) {
+void generator::generate_lt_operator(const value& left,
+                                     const value& right,
+                                     const value& result) {
     auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
     opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "ult":"slt"):"ult";
     ircode_block->add_stmt(new sir_binary(
@@ -876,7 +876,7 @@ void ir_gen::generate_lt_operator(const value& left,
     ));
 }
 
-bool ir_gen::visit_binary_operator(binary_operator* node) {
+bool generator::visit_binary_operator(binary_operator* node) {
     if (node->get_opr()==binary_operator::kind::cmpand) {
         generate_and_operator(node);
         return true;
@@ -915,7 +915,7 @@ bool ir_gen::visit_binary_operator(binary_operator* node) {
     return true;
 }
 
-bool ir_gen::visit_ret_stmt(ret_stmt* node) {
+bool generator::visit_ret_stmt(ret_stmt* node) {
     if (node->get_value()) {
         node->get_value()->accept(this);
         const auto result = value_stack.back();
@@ -930,7 +930,7 @@ bool ir_gen::visit_ret_stmt(ret_stmt* node) {
     return true;
 }
 
-bool ir_gen::visit_while_stmt(while_stmt* node) {
+bool generator::visit_while_stmt(while_stmt* node) {
     auto while_begin_label = ircode_block->stmt_size()+1;
     // condition
     ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
@@ -958,7 +958,7 @@ bool ir_gen::visit_while_stmt(while_stmt* node) {
     return true;
 }
 
-bool ir_gen::visit_if_stmt(if_stmt* node) {
+bool generator::visit_if_stmt(if_stmt* node) {
     sir_br_cond* br_cond = nullptr;
     if (node->get_condition()) {
         node->get_condition()->accept(this);
@@ -973,10 +973,31 @@ bool ir_gen::visit_if_stmt(if_stmt* node) {
     }
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     node->get_block()->accept(this);
+    auto jump_out = new sir_br(0);
+    jump_outs.push_back(jump_out);
+    ircode_block->add_stmt(jump_out);
     if (br_cond) {
-        br_cond->set_false_label(ircode_block->stmt_size()+1);
+        br_cond->set_false_label(ircode_block->stmt_size());
+        ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     }
-    ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
+    return true;
+}
+
+bool generator::visit_cond_stmt(cond_stmt* node) {
+    jump_outs.clear();
+    for(auto i : node->get_stmts()) {
+        if (!i->get_condition()) {
+            // last branch
+            ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
+        }
+        i->accept(this);
+        if (i->get_condition() && i==node->get_stmts().back()) {
+            ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
+        }
+    }
+    for(auto i : jump_outs) {
+        i->set_label(ircode_block->stmt_size());
+    }
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     ircode_block->add_nop();
     return true;

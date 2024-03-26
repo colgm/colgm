@@ -14,7 +14,7 @@
 
 namespace colgm {
 
-class ir_gen: public visitor {
+class generator: public visitor {
 private:
     i64 ssa_temp_counter = 1;
     std::string get_temp_variable() {
@@ -103,10 +103,15 @@ private:
     void generate_eq_assignment(const value&, const value&);
     bool visit_assignment(assignment*) override;
     bool visit_while_stmt(while_stmt*) override;
+
+private:
+    std::vector<sir_br*> jump_outs;
+
     bool visit_if_stmt(if_stmt*) override;
+    bool visit_cond_stmt(cond_stmt*) override;
 
 public:
-    ir_gen(const semantic_context& c): ctx(c) {}
+    generator(const semantic_context& c): ctx(c) {}
     auto& generate(root* ast_root) {
         ast_root->accept(this);
         return err;

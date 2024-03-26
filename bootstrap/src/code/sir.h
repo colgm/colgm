@@ -281,6 +281,8 @@ public:
         sir(sir_kind::sir_br_direct), destination(dst) {}
     ~sir_br() override = default;
     void dump(std::ostream&) const override;
+
+    void set_label(usize dst) { destination = dst; }
 };
 
 class sir_br_cond: public sir {
