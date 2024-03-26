@@ -34,6 +34,9 @@ void parse::match(tok type) {
             );
             break;
     }
+    // should be panic mode here, but this is a bootstrap
+    // so do not do too many things
+    next();
     return;
 }
 
