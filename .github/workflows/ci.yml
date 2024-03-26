@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  mac-build-bootstrap-compiler:
+  mac-build-bootstrap:
     runs-on: macos-latest
     steps:
     - name: check out codes
@@ -21,14 +21,18 @@ jobs:
       run: |
           mkdir build
           cd build
-          cmake ../colgm-bootstrap
+          cmake ../bootstrap
           make -j4
-          cd ../colgm-bootstrap
+          cd ../bootstrap
           make out.ll
           cd ..
           tar -czf colgm-mac-nightly.tgz .
+    - name: verify
+      run: |
+          cd ./bootstrap
+          make test
     
-  linux-x86_64-build-bootstrap-compiler:
+  linux-x86_64-build-bootstrap:
     runs-on: ubuntu-latest
     steps:
     - name: check out codes
@@ -41,10 +45,14 @@ jobs:
       run: |
           mkdir build
           cd build
-          cmake ../colgm-bootstrap
+          cmake ../bootstrap
           make -j4
-          cd ../colgm-bootstrap
+          cd ../bootstrap
           make out.ll
           cd ..
           touch colgm-linux-x86_64-nightly.tgz
           tar -czf colgm-linux-x86_64-nightly.tgz --exclude=colgm-linux-x86_64-nightly.tgz .
+    - name: verify
+      run: |
+          cd ./bootstrap
+          make test

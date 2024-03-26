@@ -1,3 +1,3 @@
-# Colgm Compiler Project: Self-hosted Colgm Compiler Source Code
+# Colgm Compiler Project: Source Code
 
 Still working in progress...

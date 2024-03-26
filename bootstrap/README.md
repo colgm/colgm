@@ -9,7 +9,7 @@ In the top level directory, use these commands:
 ```sh
 mkdir build
 cd build
-cmake ../colgm-bootstrap
+cmake ../bootstrap
 make -j
 ```
 

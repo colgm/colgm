@@ -4,7 +4,7 @@ This is the main repository for Colgm compiler.
 
 ## Content
 
-- [colgm bootstrap](./colgm-bootstrap/README.md) -> colgm-bootstrap
+- [colgm bootstrap](./bootstrap/README.md) -> bootstrap
 
 - [colgm self-hosted](./src/README.md) -> src
 
@@ -15,13 +15,13 @@ Use these commands to build the bootstrap compiler:
 ```sh
 mkdir build
 cd build
-cmake ../colgm-bootstrap
+cmake ../bootstrap
 make -j
 ```
 
 The executable is located as `build/colgm`.
 
-In directory `colgm-bootstrap`, use this command:
+In directory `bootstrap`, use this command:
 
 ```sh
 make out.ll
@@ -31,7 +31,7 @@ The generated llvm ir will be generated with filename `out.ll`.
 
 ## Hello World
 
-Hello world example is available in `colgm-bootstrap`:
+Hello world example is available in `bootstrap`:
 
 ```rust
 func puts(v: i8*) -> i32;
