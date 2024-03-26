@@ -4,24 +4,42 @@ func puts(s: i8*) -> i32;
 
 
 func to_str(num: i64) -> i8* {
-    var a: i8* = malloc(128);
-    var index: i64 = 0;
-    var str: i8* = "0";
-    var zero: i8 = str[0];
+    var zero: i8 = i64::to_i8(48);
+
+    var result: i8* = malloc(128);
     var i: i64 = 0;
-    while(i<10) {
-        a[i] = zero + i64::to_i8(i);
+    while(num > 0) {
+        result[i] = zero + i64::to_i8(num % 10);
+        num /= 10;
         i += 1;
     }
-    var end: i8 = i64::to_i8(0);
-    a[i] = end;
-    return a;
+    result[i] = i64::to_i8(0);
+
+    var s_begin: i64 = 0;
+    var s_end: i64 = i;
+    var s_mid: i64 = (s_begin + s_end) / 2;
+    i = 0;
+    var tmp: i8 = zero;
+    while(i<s_mid) {
+        tmp = result[i];
+        result[i] = result[s_end - i - 1];
+        result[s_end - i - 1] = tmp;
+        i += 1;
+    }
+    return result;
 }
 
 func main() -> i64 {
     var result: i8* = to_str(114514);
     puts(result);
     free(result);
+    var index: i64 = 0;
+    while(index < 2147483647) {
+        result = to_str(index);
+        puts(result);
+        free(result);
+        index += 1;
+    }
     puts("  -> from to_str.colgm");
     return 0;
 }
