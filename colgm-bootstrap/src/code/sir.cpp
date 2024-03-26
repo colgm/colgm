@@ -22,6 +22,14 @@ void sir_block::dump(std::ostream& out) const {
     }
 }
 
+void sir_number::dump(std::ostream& out) const {
+    out << "%" << destination << " = ";
+    out << (is_integer? "add":"fadd") << " " << type_name << " ";
+    out << literal << ", ";
+    out << (is_integer? "0":"0.0");
+    out << "\n";
+}
+
 void sir_ret::dump(std::ostream& out) const {
     out << "ret " << type;
     if (value.size()) {

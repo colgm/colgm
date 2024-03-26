@@ -138,27 +138,19 @@ void ir_gen::call_expression_generation(call* node, bool need_address) {
 }
 
 bool ir_gen::visit_number_literal(number_literal* node) {
-    const auto temp_0 = get_temp_variable();
-    const auto temp_1 = get_temp_variable();
+    const auto temp = get_temp_variable();
+    ircode_block->add_stmt(new sir_number(
+        node->get_number(),
+        temp,
+        type_convert(node->get_resolve()),
+        node->get_resolve().is_integer()
+    ));
+    // push value on stack
     const auto result = value {
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
-        .content = temp_1
+        .content = temp
     };
-    ircode_block->add_stmt(new sir_alloca(
-        temp_0,
-        type_convert(node->get_resolve())
-    ));
-    ircode_block->add_stmt(new sir_store_literal(
-        type_convert(node->get_resolve()),
-        node->get_number(),
-        temp_0
-    ));
-    ircode_block->add_stmt(new sir_load(
-        type_convert(node->get_resolve()),
-        temp_0,
-        temp_1
-    ));
     value_stack.push_back(result);
     return true;
 }
@@ -188,20 +180,19 @@ bool ir_gen::visit_string_literal(string_literal* node) {
 }
 
 bool ir_gen::visit_bool_literal(bool_literal* node) {
+    const auto temp = get_temp_variable();
+    ircode_block->add_stmt(new sir_number(
+        node->get_flag()? "true":"false",
+        temp,
+        "i1",
+        true
+    ));
+    // push value on stack
     const auto result = value {
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
-        .content = get_temp_variable()
+        .content = temp
     };
-    ircode_block->add_stmt(new sir_alloca(
-        result.content,
-        "i1"
-    ));
-    ircode_block->add_stmt(new sir_store_literal(
-        "i1",
-        node->get_flag()? "true":"false",
-        result.content
-    ));
     value_stack.push_back(result);
     return true;
 }
