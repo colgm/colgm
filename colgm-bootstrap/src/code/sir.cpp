@@ -8,12 +8,19 @@ void sir_alloca::dump(std::ostream& out) const {
 }
 
 sir_block::~sir_block() {
+    for(auto i : allocas) {
+        delete i;
+    }
     for(auto i : stmts) {
         delete i;
     }
 }
 
 void sir_block::dump(std::ostream& out) const {
+    for(auto i : allocas) {
+        out << "  ";
+        i->dump(out);
+    }
     for(auto i : stmts) {
         if (i->get_ir_type()!=sir_kind::sir_label) {
             out << "  ";
@@ -28,6 +35,11 @@ void sir_number::dump(std::ostream& out) const {
     out << literal << ", ";
     out << (is_integer? "0":"0.0");
     out << "\n";
+}
+
+void sir_tempptr::dump(std::ostream& out) const {
+    out << "%" << temp_name << " = getelementptr " << type_name << ", ";
+    out << type_name << "* %real." << temp_name << ", i32 0\n"; 
 }
 
 void sir_ret::dump(std::ostream& out) const {

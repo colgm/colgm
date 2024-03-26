@@ -18,6 +18,7 @@ enum class sir_kind {
     sir_block,
     sir_alloca,
     sir_number,
+    sir_tempptr,
     sir_ret,
     sir_str,
     sir_call_index,
@@ -81,8 +82,21 @@ public:
     void dump(std::ostream&) const override;
 };
 
+class sir_tempptr: public sir {
+private:
+    std::string temp_name;
+    std::string type_name;
+
+public:
+    sir_tempptr(const std::string& tmp, const std::string type):
+        sir(sir_kind::sir_tempptr), temp_name(tmp), type_name(type) {}
+    ~sir_tempptr() override = default;
+    void dump(std::ostream&) const override;
+};
+
 class sir_block: public sir {
 private:
+    std::vector<sir_alloca*> allocas;
     std::vector<sir*> stmts;
 
 public:
@@ -90,6 +104,7 @@ public:
     ~sir_block() override;
     void dump(std::ostream&) const override;
 
+    void add_alloca(sir_alloca* node) { allocas.push_back(node); }
     void add_stmt(sir* node) { stmts.push_back(node); }
     void add_nop() { stmts.push_back(new sir_nop); }
     auto stmt_size() const { return stmts.size(); }

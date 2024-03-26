@@ -39,7 +39,7 @@ void ir_gen::convert_parameter_to_pointer(func_decl* node) {
             i->get_name()->get_name(),
             generate_type_string(i->get_type())
         );
-        ircode_block->add_stmt(param_addr);
+        ircode_block->add_alloca(param_addr);
         auto store_param_to_addr = new sir_store(
             generate_type_string(i->get_type()),
             i->get_name()->get_name() + ".param",
@@ -468,7 +468,11 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
     // push return value on stack
     if (node->get_resolve()!=type::void_type()) {
         const auto temp_1 = get_temp_variable();
-        ircode_block->add_stmt(new sir_alloca(
+        ircode_block->add_alloca(new sir_alloca(
+            "real." + temp_1,
+            type_convert(node->get_resolve())
+        ));
+        ircode_block->add_stmt(new sir_tempptr(
             temp_1,
             type_convert(node->get_resolve())
         ));
@@ -497,7 +501,7 @@ bool ir_gen::visit_call_func_args(call_func_args* node) {
 
 bool ir_gen::visit_definition(definition* node) {
     node->get_init_value()->accept(this);
-    ircode_block->add_stmt(new sir_alloca(
+    ircode_block->add_alloca(new sir_alloca(
         node->get_name(),
         generate_type_string(node->get_type())
     ));
@@ -657,7 +661,8 @@ bool ir_gen::visit_assignment(assignment* node) {
 
 void ir_gen::generate_and_operator(binary_operator* node) {
     const auto temp_0 = get_temp_variable();
-    ircode_block->add_stmt(new sir_alloca(temp_0, "i1"));
+    ircode_block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
+    ircode_block->add_stmt(new sir_tempptr(temp_0, "i1"));
     node->get_left()->accept(this);
     const auto left = value_stack.back();
     value_stack.pop_back();
@@ -688,7 +693,8 @@ void ir_gen::generate_and_operator(binary_operator* node) {
 
 void ir_gen::generate_or_operator(binary_operator* node) {
     const auto temp_0 = get_temp_variable();
-    ircode_block->add_stmt(new sir_alloca(temp_0, "i1"));
+    ircode_block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
+    ircode_block->add_stmt(new sir_tempptr(temp_0, "i1"));
     node->get_left()->accept(this);
     const auto left = value_stack.back();
     value_stack.pop_back();
