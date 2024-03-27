@@ -31,12 +31,14 @@ void ir_context::dump_const_string(std::ostream& out) const {
 void ir_context::dump_used_basic_convert_method(std::ostream& out) const {
     // TODO: this is a demo, fix it later
     for(const auto& i : used_basic_convert_method) {
-        out << "define " << i.second << " ";
-        out << "@native." << i.first << ".to_" << i.second;
-        out << "(" << i.first << " %num) {\n";
-        out << "  %1 = trunc " << i.first << " %num to " << i.second << "\n";
-        out << "  ret " << i.second << " %1\n";
-        out << "}\n";
+        for(const auto& convert_type : i.second) {
+            out << "define " << convert_type << " ";
+            out << "@native." << i.first << ".to_" << convert_type;
+            out << "(" << i.first << " %num) {\n";
+            out << "  %1 = trunc " << i.first << " %num to " << convert_type << "\n";
+            out << "  ret " << convert_type << " %1\n";
+            out << "}\n";
+        }
     }
 }
 

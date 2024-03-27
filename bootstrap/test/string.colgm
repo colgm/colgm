@@ -1,0 +1,44 @@
+func puts(s: i8*) -> i32;
+func malloc(s: i64) -> i8*;
+func free(s: i8*);
+
+struct str {
+    c_str: i8*,
+    size: i64
+}
+
+impl str {
+    func new(src: i8*) -> str* {
+        var result: str* = str::__alloc__();
+        var index: i64 = 0;
+        while(src[index]!=i64::to_i8(0)) {
+            index += 1;
+        }
+        result->c_str = malloc(index);
+        result->size = index;
+        var i: i64 = 0;
+        while(i<=index) {
+            result->c_str[i] = src[i];
+            i += 1;
+        }
+        return result;
+    }
+    func print(self: str*) {
+        puts(self->c_str);
+        return;
+    }
+    func free(self: str*) {
+        free(self->c_str);
+        return;
+    }
+}
+
+func main() -> i32 {
+    var string: str* = str::new("Hello World");
+    string->print();
+    string->free();
+    var another: str* = str::new("  -> from string.colgm");
+    another->print();
+    another->free();
+    return i64::to_i32(0);
+}

@@ -368,13 +368,26 @@ bool generator::visit_ptr_call_field(ptr_call_field* node) {
         return true;
     }
     if (st.method.count(node->get_name())) {
+        const auto temp_0 = get_temp_variable();
+        auto source_type_copy = source.resolve_type;
+        source_type_copy.pointer_depth--;
+        ircode_block->add_stmt(new sir_load(
+            type_convert(source_type_copy),
+            source.content,
+            temp_0
+        ));
         auto result = value {
             .kind = value_kind::v_fn,
             .resolve_type = node->get_resolve(),
             .content = st.name + "." + node->get_name()
         };
+        auto self = value {
+            .kind = value_kind::v_var,
+            .resolve_type = source_type_copy,
+            temp_0
+        };
         value_stack.push_back(result);
-        value_stack.push_back(source); // self pointer
+        value_stack.push_back(self); // self pointer
         return true;
     }
     unreachable(node);
@@ -390,10 +403,15 @@ bool generator::visit_call_path(call_path* node) {
         if (bsc->static_method.count(node->get_name())) {
             const auto name = "native." + source.resolve_type.name +
                               "." + node->get_name();
-            irc.used_basic_convert_method.insert({
-                source.resolve_type.name,
+            if (!irc.used_basic_convert_method.count(source.resolve_type.name)) {
+                irc.used_basic_convert_method.insert({
+                    source.resolve_type.name,
+                    {}
+                });
+            }
+            irc.used_basic_convert_method.at(source.resolve_type.name).insert(
                 bsc->static_method.at(node->get_name()).return_type.name
-            });
+            );
             auto result = value {
                 .kind = value_kind::v_sfn,
                 .resolve_type = node->get_resolve(),
