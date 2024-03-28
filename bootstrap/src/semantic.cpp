@@ -563,6 +563,30 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         return type::error_type();
     }
     if (prev.loc_file.empty()) {
+        if (prev==type::u8_type() &&
+            colgm_basic::u8()->static_method.count(node->get_name())) {
+            return basic_static_method_infer("u8", node->get_name());
+        }
+        if (prev==type::u16_type() &&
+            colgm_basic::u16()->static_method.count(node->get_name())) {
+            return basic_static_method_infer("u16", node->get_name());
+        }
+        if (prev==type::u32_type() &&
+            colgm_basic::u32()->static_method.count(node->get_name())) {
+            return basic_static_method_infer("u32", node->get_name());
+        }
+        if (prev==type::u64_type() &&
+            colgm_basic::u64()->static_method.count(node->get_name())) {
+            return basic_static_method_infer("u64", node->get_name());
+        }
+        if (prev==type::i8_type() &&
+            colgm_basic::i8()->static_method.count(node->get_name())) {
+            return basic_static_method_infer("i8", node->get_name());
+        }
+        if (prev==type::i16_type() &&
+            colgm_basic::i16()->static_method.count(node->get_name())) {
+            return basic_static_method_infer("i16", node->get_name());
+        }
         if (prev==type::i32_type() &&
             colgm_basic::i32()->static_method.count(node->get_name())) {
             return basic_static_method_infer("i32", node->get_name());
