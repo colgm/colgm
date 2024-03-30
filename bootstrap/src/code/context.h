@@ -21,9 +21,16 @@ struct ir_context {
 private:
     void dump_raw_string(std::ostream&, const std::string&) const;
     void dump_const_string(std::ostream&) const;
+
+private:
+    std::string convert_instruction(char, int, char, int) const;
     void dump_used_basic_convert_method(std::ostream&) const;
+
+private:
     void dump_struct_size_method(std::ostream&) const;
     void dump_struct_alloc_method(std::ostream&) const;
+
+private:
     void check_and_dump_default_main(std::ostream&) const;
 
 public:

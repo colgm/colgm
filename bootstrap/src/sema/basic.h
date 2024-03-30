@@ -31,6 +31,8 @@ struct colgm_basic {
     static colgm_basic* i16();
     static colgm_basic* i32();
     static colgm_basic* i64();
+    static colgm_basic* f32();
+    static colgm_basic* f64();
 };
 
 }
