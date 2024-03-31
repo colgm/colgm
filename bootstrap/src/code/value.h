@@ -18,6 +18,8 @@ struct value {
     value_kind kind;
     type resolve_type;
     std::string content;
+
+    void dump(std::ostream&) const;
 };
 
 }

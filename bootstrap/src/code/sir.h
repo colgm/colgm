@@ -45,10 +45,19 @@ public:
 };
 
 class sir_nop: public sir {
+private:
+    std::string info;
+
 public:
-    sir_nop(): sir(sir_kind::sir_nop) {}
+    sir_nop(const std::string& i): sir(sir_kind::sir_nop), info(i) {}
     ~sir_nop() override = default;
-    void dump(std::ostream& os) const override { os << "\n"; }
+    void dump(std::ostream& os) const override {
+        if (info.empty()) {
+            os << "\n";
+            return;
+        }
+        os << "; " << info << "\n";
+    }
 };
 
 class sir_alloca: public sir {
@@ -106,8 +115,13 @@ public:
 
     void add_alloca(sir_alloca* node) { allocas.push_back(node); }
     void add_stmt(sir* node) { stmts.push_back(node); }
-    void add_nop() { stmts.push_back(new sir_nop); }
+    void add_nop(const std::string& info = "") {
+        stmts.push_back(new sir_nop(info));
+    }
     auto stmt_size() const { return stmts.size(); }
+    bool back_is_ret_stmt() const {
+        return stmts.size() && stmts.back()->get_ir_type()==sir_kind::sir_ret;
+    }
 };
 
 class sir_ret: public sir {

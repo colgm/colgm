@@ -16,7 +16,7 @@ namespace colgm {
 
 class generator: public visitor {
 private:
-    i64 ssa_temp_counter = 1;
+    i64 ssa_temp_counter = 0;
     std::string get_temp_variable() {
         return std::to_string(ssa_temp_counter++) ;
     }
@@ -62,6 +62,7 @@ private:
     void convert_parameter_to_pointer(func_decl*);
     bool visit_func_decl(func_decl*) override;
     bool visit_impl_struct(impl_struct*) override;
+    bool visit_code_block(code_block*) override;
 
 private:
     std::vector<value> value_stack;

@@ -6,6 +6,43 @@
 
 namespace colgm {
 
+void semantic::report_unreachable_statements(code_block* node) {
+    bool flag_returned = false;
+    std::vector<stmt*> unreachable_statements = {};
+    for(auto i : node->get_stmts()) {
+        if (flag_returned) {
+            unreachable_statements.push_back(i);
+        }
+        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+            flag_returned = true;
+        }
+    }
+    if (unreachable_statements.empty()) {
+        return;
+    }
+    auto unreachable_location = unreachable_statements.front()->get_location();
+    for(auto i : unreachable_statements) {
+        const auto& location = i->get_location();
+        unreachable_location.end_column = location.end_column;
+        unreachable_location.end_line = location.end_line;
+    }
+    err.warn("sema", unreachable_location, "unreachable statement(s).");
+}
+
+void semantic::report_top_level_block_has_no_return(code_block* node) {
+    bool flag_has_return = false;
+    for(auto i : node->get_stmts()) {
+        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+            flag_has_return = true;
+            break;
+        }
+    }
+    if (flag_has_return) {
+        return;
+    }
+    report(node, "expect at least one return statement.");
+}
+
 colgm_func semantic::builtin_struct_size(const span& loc) {
     auto func = colgm_func();
     func.name = "__size__";
@@ -857,6 +894,10 @@ void semantic::resolve_code_block(code_block* node, const colgm_func& func_self)
     ctx.push_new_level();
     for(auto i : node->get_stmts()) {
         resolve_statement(i, func_self);
+        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+            report_unreachable_statements(node);
+            break;
+        }
     }
     ctx.pop_new_level();
 }
@@ -877,7 +918,12 @@ void semantic::resolve_global_func(func_decl* node) {
     }
     for(auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, func_self);
+        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+            report_unreachable_statements(node->get_code_block());
+            break;
+        }
     }
+    report_top_level_block_has_no_return(node->get_code_block());
     ctx.pop_new_level();
 }
 
@@ -896,7 +942,12 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
     }
     for(auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, method_self);
+        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+            report_unreachable_statements(node->get_code_block());
+            break;
+        }
     }
+    report_top_level_block_has_no_return(node->get_code_block());
     ctx.pop_new_level();
 }
 

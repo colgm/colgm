@@ -7,7 +7,9 @@ namespace colgm {
 void ir_context::dump_raw_string(std::ostream& out,
                                  const std::string& src) const {
     for(const auto c : src) {
-        if (32 <= c && c <= 126) {
+        if (c == '\\') {
+            out << "\\\\";
+        } else if (32 <= c && c <= 126) {
             out << c;
         } else {
             out << "\\";

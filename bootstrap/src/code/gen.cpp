@@ -50,7 +50,7 @@ void generator::convert_parameter_to_pointer(func_decl* node) {
 }
 
 bool generator::visit_func_decl(func_decl* node) {
-    ssa_temp_counter = 1;
+    ssa_temp_counter = 0;
     auto name = node->get_name();
     if (impl_struct_name.length()) {
         name = impl_struct_name + "." + name;
@@ -86,6 +86,17 @@ bool generator::visit_impl_struct(impl_struct* node) {
         i->accept(this);
     }
     impl_struct_name = "";
+    return true;
+}
+
+bool generator::visit_code_block(code_block* node) {
+    for(auto i : node->get_stmts()) {
+        i->accept(this);
+        // we do not generate unreachable statements
+        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+            break;
+        }
+    }
     return true;
 }
 
@@ -518,6 +529,7 @@ bool generator::visit_call_func_args(call_func_args* node) {
 }
 
 bool generator::visit_definition(definition* node) {
+    ircode_block->add_nop("begin def");
     node->get_init_value()->accept(this);
     ircode_block->add_alloca(new sir_alloca(
         node->get_name(),
@@ -530,7 +542,7 @@ bool generator::visit_definition(definition* node) {
         source.content,
         node->get_name()
     ));
-    ircode_block->add_nop();
+    ircode_block->add_nop("end def");
     return true;
 }
 
@@ -657,6 +669,7 @@ void generator::generate_eq_assignment(const value& left, const value& right) {
 }
 
 bool generator::visit_assignment(assignment* node) {
+    ircode_block->add_nop("begin assign");
     call_expression_generation(node->get_left(), true);
     const auto left = value_stack.back();
     value_stack.pop_back();
@@ -673,11 +686,12 @@ bool generator::visit_assignment(assignment* node) {
         case assignment::kind::subeq: generate_sub_assignment(left, right); break;
         case assignment::kind::eq: generate_eq_assignment(left, right); break;
     }
-    ircode_block->add_nop();
+    ircode_block->add_nop("end assign");
     return true;
 }
 
 void generator::generate_and_operator(binary_operator* node) {
+    ircode_block->add_nop("begin and opr");
     const auto temp_0 = get_temp_variable();
     ircode_block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
     ircode_block->add_stmt(new sir_tempptr(temp_0, "i1"));
@@ -701,7 +715,7 @@ void generator::generate_and_operator(binary_operator* node) {
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load("i1", temp_0, temp_1));
-    ircode_block->add_nop();
+    ircode_block->add_nop("end and opr");
     value_stack.push_back(value {
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
@@ -710,6 +724,7 @@ void generator::generate_and_operator(binary_operator* node) {
 }
 
 void generator::generate_or_operator(binary_operator* node) {
+    ircode_block->add_nop("begin or opr");
     const auto temp_0 = get_temp_variable();
     ircode_block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
     ircode_block->add_stmt(new sir_tempptr(temp_0, "i1"));
@@ -733,7 +748,7 @@ void generator::generate_or_operator(binary_operator* node) {
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load("i1", temp_0, temp_1));
-    ircode_block->add_nop();
+    ircode_block->add_nop("end or opr");
     value_stack.push_back(value {
         .kind = value_kind::v_var,
         .resolve_type = node->get_resolve(),
@@ -903,6 +918,7 @@ bool generator::visit_binary_operator(binary_operator* node) {
         generate_or_operator(node);
         return true;
     }
+    ircode_block->add_nop("begin binary opr");
     node->get_left()->accept(this);
     const auto left = value_stack.back();
     value_stack.pop_back();
@@ -929,7 +945,7 @@ bool generator::visit_binary_operator(binary_operator* node) {
         case binary_operator::kind::less: generate_lt_operator(left, right, result); break;
         default: unreachable(node);
     }
-    ircode_block->add_nop();
+    ircode_block->add_nop("end binary opr");
     return true;
 }
 
@@ -949,6 +965,7 @@ bool generator::visit_ret_stmt(ret_stmt* node) {
 }
 
 bool generator::visit_while_stmt(while_stmt* node) {
+    ircode_block->add_nop("begin loop");
     auto while_begin_label = ircode_block->stmt_size()+1;
     // condition
     ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
@@ -972,7 +989,7 @@ bool generator::visit_while_stmt(while_stmt* node) {
     // loop exit
     cond_branch_ir->set_false_label(ircode_block->stmt_size());
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
-    ircode_block->add_nop();
+    ircode_block->add_nop("end loop");
     return true;
 }
 
@@ -991,6 +1008,15 @@ bool generator::visit_if_stmt(if_stmt* node) {
     }
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     node->get_block()->accept(this);
+    if (ircode_block->back_is_ret_stmt()) {
+        // generate a new label here, but we do not declare it
+        // so just add the numbering counter
+        ircode_block->add_nop(
+            "auto declared label " +
+            std::to_string(ssa_temp_counter)
+        );
+        ++ssa_temp_counter;
+    }
     auto jump_out = new sir_br(0);
     jump_outs.push_back(jump_out);
     ircode_block->add_stmt(jump_out);
@@ -1002,14 +1028,16 @@ bool generator::visit_if_stmt(if_stmt* node) {
 }
 
 bool generator::visit_cond_stmt(cond_stmt* node) {
+    ircode_block->add_nop("begin cond");
     jump_outs.clear();
     for(auto i : node->get_stmts()) {
         if (!i->get_condition()) {
-            // last branch
+            // last branch: must be else branch
             ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
         }
         i->accept(this);
         if (i->get_condition() && i==node->get_stmts().back()) {
+            // elsif branch
             ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
         }
     }
@@ -1017,7 +1045,7 @@ bool generator::visit_cond_stmt(cond_stmt* node) {
         i->set_label(ircode_block->stmt_size());
     }
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
-    ircode_block->add_nop();
+    ircode_block->add_nop("end cond");
     return true;
 }
 

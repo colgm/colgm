@@ -32,6 +32,7 @@ void hir_func::dump(std::ostream& out) const {
         return;
     }
     out << " {\n";
+    out << "entry:\n";
     cb->dump(out);
     out << "}\n";
 }

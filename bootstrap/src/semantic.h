@@ -34,6 +34,8 @@ private:
     void unreachable(node* n) {
         err.err("sema", n->get_location(), "unreachable, please report a bug.");
     }
+    void report_unreachable_statements(code_block*);
+    void report_top_level_block_has_no_return(code_block*);
 
 private:
     bool flag_enable_type_warning = false;
