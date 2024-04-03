@@ -193,7 +193,7 @@ bool generator::visit_string_literal(string_literal* node) {
 bool generator::visit_bool_literal(bool_literal* node) {
     const auto temp = get_temp_variable();
     ircode_block->add_stmt(new sir_number(
-        node->get_flag()? "true":"false",
+        node->get_flag()? "1":"0",
         temp,
         "i1",
         true

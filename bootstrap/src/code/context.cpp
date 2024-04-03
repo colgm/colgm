@@ -123,6 +123,18 @@ void ir_context::dump_struct_alloc_method(std::ostream& out) const {
     }
 }
 
+void ir_context::dump_struct_delete_method(std::ostream& out) const {
+    for(const auto& st: struct_decls) {
+        out << "define void @" << st.get_name();
+        out << ".__delete__(%struct." << st.get_name();
+        out << "* %self) alwaysinline {\n";
+        out << "  %1 = bitcast %struct." << st.get_name() << "* %self to i8*\n";
+        out << "  call void @free(i8* %1)\n";
+        out << "  ret void\n";
+        out << "}\n";
+    }
+}
+
 void ir_context::check_and_dump_default_main(std::ostream& out) const {
     for(auto i : func_decls) {
         if (i->get_name()=="@main") {
@@ -147,6 +159,7 @@ void ir_context::dump_code(std::ostream& out) const {
     dump_used_basic_convert_method(out);
     dump_struct_size_method(out);
     dump_struct_alloc_method(out);
+    dump_struct_delete_method(out);
     if (struct_decls.size()) {
         out << "\n";
     }

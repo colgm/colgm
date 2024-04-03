@@ -1,11 +1,44 @@
 use std::str::str;
-use std::libc::{malloc, print, println};
+use std::libc::{malloc, streq, print, println};
 use err::span::span;
 use ast::ast::*;
 use cli::*;
 
 func main(argc: i32, argv: i8**) -> i32 {
-    help();
-    logo();
+    if (argc==i64::i32(1)) {
+        logo();
+        return i64::i32(0);
+    }
+    if (argc==i64::i32(2) and (streq(argv[1], "-h") or streq(argv[1], "--help"))) {
+        help();
+        return i64::i32(0);
+    }
+    if (argc==i64::i32(2) and (streq(argv[1], "-v") or streq(argv[1], "--version"))) {
+        print(version());
+        return i64::i32(0);
+    }
+    var i: i32 = i64::i32(1);
+    while(i < argc) {
+        if (streq(argv[i], "-l") or streq(argv[i], "--lex")) {
+            print("unimplemented");
+        } elsif (streq(argv[i], "-a") or streq(argv[i], "--ast")) {
+            print("unimplemented");
+        } elsif (streq(argv[i], "-s") or streq(argv[i], "--sema")) {
+            print("unimplemented");
+        } elsif (streq(argv[i], "-i") or streq(argv[i], "--ir")) {
+            print("unimplemented");
+        } elsif (streq(argv[i], "-L") or streq(argv[i], "--library")) {
+            print("unimplemented");
+        } elsif (streq(argv[i], "--dump-lib")) {
+            print("unimplemented");
+        } elsif (streq(argv[i], "-Wt")) {
+            print("unimplemented");
+        } else {
+            print("invalid argument:");
+            print(argv[i]);
+            return i64::i32(0-1);
+        }
+        i += i64::i32(1);
+    }
     return i64::i32(0);
 }

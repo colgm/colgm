@@ -20,3 +20,5 @@ test: $(COLGMCC)
 	@ lli out.ll
 	@ $(COLGMCC) test/type_convert.colgm
 	@ lli out.ll
+	@ $(COLGMCC) ../src/main.colgm -L ../src
+	@ lli out.ll -h

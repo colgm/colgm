@@ -59,6 +59,15 @@ colgm_func semantic::builtin_struct_alloc(const span& loc, const type& rtty) {
     return func;
 }
 
+colgm_func semantic::builtin_struct_delete(const span& loc, const type& self) {
+    auto func = colgm_func();
+    func.name = "__delete__";
+    func.location = loc;
+    func.add_parameter("self", self);
+    func.return_type = type::void_type();
+    return func;
+}
+
 void semantic::analyse_single_struct(struct_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol.count(name)) {
@@ -112,6 +121,14 @@ void semantic::analyse_single_struct(struct_decl* node) {
     );
     struct_self.static_method.insert(
         {"__alloc__", builtin_struct_alloc(node->get_location(), {
+            .name = name,
+            .loc_file = node->get_location().file,
+            .pointer_depth = 1
+        })}
+    );
+    // add built-in method delete
+    struct_self.method.insert(
+        {"__delete__", builtin_struct_delete(node->get_location(), {
             .name = name,
             .loc_file = node->get_location().file,
             .pointer_depth = 1

@@ -29,6 +29,7 @@ private:
 private:
     void dump_struct_size_method(std::ostream&) const;
     void dump_struct_alloc_method(std::ostream&) const;
+    void dump_struct_delete_method(std::ostream&) const;
 
 private:
     void check_and_dump_default_main(std::ostream&) const;

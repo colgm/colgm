@@ -48,6 +48,7 @@ public:
 private:
     colgm_func builtin_struct_size(const span&);
     colgm_func builtin_struct_alloc(const span&, const type&);
+    colgm_func builtin_struct_delete(const span&, const type&);
 
 private:
     void analyse_single_struct(struct_decl*);
