@@ -75,7 +75,7 @@ void lexer::err_char() {
 void lexer::open(const std::string& file) {
     // check file exsits and it is a regular file
     if (!std::filesystem::is_regular_file(file)) {
-        err.err("lexer", "<"+file+"> is not a regular file");
+        err.err("lexer", "<" + file + "> is not a regular file");
         err.chkerr();
     }
 
@@ -349,8 +349,10 @@ token lexer::calc_opr() {
     u32 begin_column = column;
     // get calculation operator
     std::string str(1, res[ptr++]);
-    if (ptr<res.size() && res[ptr]=='=') {
-        str += res[ptr++];
+    if (ptr<res.size() && str[0]==res[ptr] && (str[0]=='&' || str[0]=='|')) {
+        str += res[ptr++]; // generate && ||
+    } else if (ptr<res.size() && res[ptr]=='=') {
+        str += res[ptr++]; // generate _=
     }
     column += str.length();
     return {{begin_line, begin_column, line, column, filename}, get_type(str), str};

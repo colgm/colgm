@@ -20,7 +20,7 @@ private:
     root* result;
     const token* toks;
 
-    const std::unordered_map<tok, std::string> tokname {
+    const std::unordered_map<tok, std::string> tokname = {
         {tok::use     ,"use"     },
         {tok::impl    ,"impl"    },
         {tok::tktrue  ,"true"    },

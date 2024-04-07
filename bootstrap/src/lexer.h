@@ -99,7 +99,7 @@ private:
     u64 invalid_char;
     std::vector<token> toks;
 
-    const std::unordered_map<std::string, tok> typetbl {
+    const std::unordered_map<std::string, tok> typetbl = {
         {"use"     ,tok::use     },
         {"impl"    ,tok::impl    },
         {"true"    ,tok::tktrue  },
@@ -127,7 +127,9 @@ private:
         {"}"       ,tok::rbrace  },
         {";"       ,tok::semi    },
         {"and"     ,tok::opand   },
+        {"&&"      ,tok::opand   },
         {"or"      ,tok::opor    },
+        {"||"      ,tok::opor    },
         {","       ,tok::comma   },
         {"."       ,tok::dot     },
         {"..."     ,tok::ellipsis},
