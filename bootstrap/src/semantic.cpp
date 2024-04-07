@@ -800,6 +800,13 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         report(node, "variable \"" + name + "\" conflicts with global symbol.");
         return;
     }
+    // no type declaration
+    if (!node->get_type()) {
+        const auto real_type = resolve_expression(node->get_init_value());
+        node->set_resolve_type(real_type);
+        ctx.add_symbol(name, real_type);
+        return;
+    }
     const auto expected_type = resolve_type_def(node->get_type());
     const auto real_type = resolve_expression(node->get_init_value());
     if (expected_type.is_pointer() && real_type.is_pointer()) {
@@ -815,6 +822,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
             "\", but get \"" + real_type.to_string() + "\"."
         );
     }
+    node->set_resolve_type(expected_type);
     ctx.add_symbol(name, expected_type);
 }
 

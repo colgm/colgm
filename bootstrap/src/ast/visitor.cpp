@@ -150,7 +150,9 @@ bool visitor::visit_use_stmt(use_stmt* node) {
 }
 
 bool visitor::visit_definition(definition* node) {
-    node->get_type()->accept(this);
+    if (node->get_type()) {
+        node->get_type()->accept(this);
+    }
     node->get_init_value()->accept(this);
     return true;
 }

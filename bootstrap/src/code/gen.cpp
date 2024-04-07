@@ -531,17 +531,32 @@ bool generator::visit_call_func_args(call_func_args* node) {
 bool generator::visit_definition(definition* node) {
     ircode_block->add_nop("begin def");
     node->get_init_value()->accept(this);
-    ircode_block->add_alloca(new sir_alloca(
-        node->get_name(),
-        generate_type_string(node->get_type())
-    ));
+    if (node->get_type()) {
+        ircode_block->add_alloca(new sir_alloca(
+            node->get_name(),
+            generate_type_string(node->get_type())
+        ));
+    } else {
+        ircode_block->add_alloca(new sir_alloca(
+            node->get_name(),
+            type_convert(node->get_resolve())
+        ));
+    }
     const auto source = value_stack.back();
     value_stack.pop_back();
-    ircode_block->add_stmt(new sir_store(
-        generate_type_string(node->get_type()),
-        source.content,
-        node->get_name()
-    ));
+    if (node->get_type()) {
+        ircode_block->add_stmt(new sir_store(
+            generate_type_string(node->get_type()),
+            source.content,
+            node->get_name()
+        ));
+    } else {
+        ircode_block->add_stmt(new sir_store(
+            type_convert(node->get_resolve()),
+            source.content,
+            node->get_name()
+        ));
+    }
     ircode_block->add_nop("end def");
     return true;
 }

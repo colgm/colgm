@@ -417,8 +417,10 @@ definition* parse::definition_gen() {
     match(tok::var);
     auto result = new definition(toks[ptr].loc, toks[ptr].str);
     match(tok::id);
-    match(tok::colon);
-    result->set_type(type_gen());
+    if (look_ahead(tok::colon)) {
+        match(tok::colon);
+        result->set_type(type_gen());
+    }
     match(tok::eq);
     result->set_init_value(calculation_gen());
     match(tok::semi);

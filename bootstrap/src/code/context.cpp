@@ -135,16 +135,37 @@ void ir_context::dump_struct_delete_method(std::ostream& out) const {
     }
 }
 
-void ir_context::check_and_dump_default_main(std::ostream& out) const {
+bool ir_context::check_used(const std::string& name) const {
     for(auto i : func_decls) {
-        if (i->get_name()=="@main") {
-            return;
+        if (i->get_name()==name) {
+            return true;
         }
     }
     for(auto i : func_impls) {
-        if (i->get_name()=="@main") {
-            return;
+        if (i->get_name()==name) {
+            return true;
         }
+    }
+    return false;
+}
+
+void ir_context::check_and_dump_malloc(std::ostream& out) const {
+    if (check_used("@malloc")) {
+        return;
+    }
+    out << "declare i8* @malloc(i64 %size)\n";
+}
+
+void ir_context::check_and_dump_free(std::ostream& out) const {
+    if (check_used("@free")) {
+        return;
+    }
+    out << "declare void @free(i8* %address)\n";
+}
+
+void ir_context::check_and_dump_default_main(std::ostream& out) const {
+    if (check_used("@main")) {
+        return;
     }
     out << "define i32 @main(i32 %argc, i8** %argv) {\n";
     out << "  ret i32 0;\n";
@@ -157,6 +178,8 @@ void ir_context::dump_code(std::ostream& out) const {
     }
     dump_const_string(out);
     dump_used_basic_convert_method(out);
+    check_and_dump_malloc(out);
+    check_and_dump_free(out);
     dump_struct_size_method(out);
     dump_struct_alloc_method(out);
     dump_struct_delete_method(out);

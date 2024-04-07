@@ -32,6 +32,9 @@ private:
     void dump_struct_delete_method(std::ostream&) const;
 
 private:
+    bool check_used(const std::string&) const;
+    void check_and_dump_malloc(std::ostream&) const;
+    void check_and_dump_free(std::ostream&) const;
     void check_and_dump_default_main(std::ostream&) const;
 
 public:
