@@ -81,6 +81,7 @@ private:
     type resolve_binary_operator(binary_operator*);
     type resolve_number_literal(number_literal*);
     type resolve_string_literal(string_literal*);
+    type resolve_char_literal(char_literal*);
     type resolve_bool_literal(bool_literal*);
     type resolve_identifier(identifier*);
     type resolve_call_field(const type&, call_field*);

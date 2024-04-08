@@ -71,6 +71,7 @@ private:
 
     bool visit_number_literal(number_literal*) override;
     bool visit_string_literal(string_literal*) override;
+    bool visit_char_literal(char_literal*) override;
     bool visit_bool_literal(bool_literal*) override;
     void call_function_symbol(identifier*);
     void call_variable(identifier*);

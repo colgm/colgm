@@ -117,6 +117,12 @@ string_literal* parse::string_gen() {
     return result;
 }
 
+char_literal* parse::char_gen() {
+    auto result = new char_literal(toks[ptr].loc, toks[ptr].str[0]);
+    match(tok::ch);
+    return result;
+}
+
 bool_literal* parse::bool_gen() {
     auto result = new bool_literal(toks[ptr].loc, toks[ptr].type==tok::tktrue);
     match(toks[ptr].type);
@@ -135,6 +141,9 @@ expr* parse::scalar_gen() {
     }
     if (look_ahead(tok::str)) {
         return string_gen();
+    }
+    if (look_ahead(tok::ch)) {
+        return char_gen();
     }
     if (look_ahead(tok::tktrue) || look_ahead(tok::tkfalse)) {
         return bool_gen();

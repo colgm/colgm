@@ -14,6 +14,7 @@ enum class tok:u32 {
     null = 0, // null token (default token type)
     num,      // number literal
     str,      // string literal
+    ch,       // char literal
     id,       // identifier
     tktrue,   // keyword true
     tkfalse,  // keyword false

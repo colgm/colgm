@@ -14,6 +14,7 @@ enum class ast_type {
     ast_identifier,
     ast_number_literal,
     ast_string_literal,
+    ast_char_literal,
     ast_bool_literal,
     ast_call_index,
     ast_call_func_args,

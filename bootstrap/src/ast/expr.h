@@ -98,6 +98,19 @@ public:
     const auto& get_string() const { return literal; }
 };
 
+class char_literal: public expr {
+private:
+    char literal;
+
+public:
+    char_literal(const span& loc, const char c):
+        expr(ast_type::ast_char_literal, loc), literal(c) {}
+    ~char_literal() override = default;
+    void accept(visitor*) override;
+
+    auto get_char() const { return literal; }
+};
+
 class bool_literal: public expr {
 private:
     bool flag;

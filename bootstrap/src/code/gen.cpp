@@ -190,6 +190,24 @@ bool generator::visit_string_literal(string_literal* node) {
     return true;
 }
 
+bool generator::visit_char_literal(char_literal* node) {
+    const auto temp = get_temp_variable();
+    ircode_block->add_stmt(new sir_number(
+        std::to_string(int64_t(node->get_char())),
+        temp,
+        type_convert(node->get_resolve()),
+        node->get_resolve().is_integer()
+    ));
+    // push value on stack
+    const auto result = value {
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = temp
+    };
+    value_stack.push_back(result);
+    return true;
+}
+
 bool generator::visit_bool_literal(bool_literal* node) {
     const auto temp = get_temp_variable();
     ircode_block->add_stmt(new sir_number(

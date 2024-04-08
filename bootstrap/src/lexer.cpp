@@ -292,6 +292,10 @@ token lexer::str_gen() {
             "\"\'\" is used for single character"
         );
     }
+    // ascii character
+    if (begin=='\'' && str.length()==1) {
+        return {{begin_line, begin_column, line, column, filename}, tok::ch, str};
+    }
     return {{begin_line, begin_column, line, column, filename}, tok::str, str};
 }
 

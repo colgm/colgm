@@ -99,6 +99,7 @@ private:
     call* call_gen();
     number_literal* number_gen();
     string_literal* string_gen();
+    char_literal* char_gen();
     bool_literal* bool_gen();
     expr* scalar_gen();
     expr* multive_gen();

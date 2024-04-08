@@ -92,6 +92,10 @@ bool visitor::visit_string_literal(string_literal* node) {
     return true;
 }
 
+bool visitor::visit_char_literal(char_literal* node) {
+    return true;
+}
+
 bool visitor::visit_bool_literal(bool_literal* node) {
     return true;
 }

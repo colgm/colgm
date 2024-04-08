@@ -40,6 +40,13 @@ bool dumper::visit_string_literal(string_literal* node) {
     return true;
 }
 
+bool dumper::visit_char_literal(char_literal* node) {
+    dump_indent();
+    std::string literal = std::string(1, node->get_char());
+    std::cout << "char " << rawstr(literal) << format_location(node->get_location());
+    return true;
+}
+
 bool dumper::visit_bool_literal(bool_literal* node) {
     dump_indent();
     std::cout << "bool " << (node->get_flag()? "true":"false") << format_location(node->get_location());

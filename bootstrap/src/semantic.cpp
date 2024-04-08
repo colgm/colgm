@@ -431,6 +431,11 @@ type semantic::resolve_string_literal(string_literal* node) {
     return {"i8", "", 1};
 }
 
+type semantic::resolve_char_literal(char_literal* node) {
+    node->set_resolve_type({"i8", "", 0});
+    return {"i8", "", 0};
+}
+
 type semantic::resolve_bool_literal(bool_literal* node) {
     node->set_resolve_type({"bool", "", 0});
     return {"bool", "", 0};
@@ -767,6 +772,8 @@ type semantic::resolve_expression(expr* node) {
         return resolve_number_literal(reinterpret_cast<number_literal*>(node));
     case ast_type::ast_string_literal:
         return resolve_string_literal(reinterpret_cast<string_literal*>(node));
+    case ast_type::ast_char_literal:
+        return resolve_char_literal(reinterpret_cast<char_literal*>(node));
     case ast_type::ast_bool_literal:
         return resolve_bool_literal(reinterpret_cast<bool_literal*>(node));
     case ast_type::ast_call:
