@@ -2,15 +2,23 @@ func malloc(s: i64) -> i8*;
 func free(s: i8*) -> void;
 func puts(s: i8*) -> i32;
 
-func itoa(num: i64, buf: i8*, base: i64) {
-    var zero = '0';#i64::i8(48);
+func itoa(num: i64, buf: i8*, base: i64) -> i8* {
+    if (base < 2 or base > 16) {
+        buf[0] = '\0';
+        return buf;
+    }
     var i = 0;
     while(num > 0) {
-        buf[i] = zero + i64::i8(num % base);
+        var tmp_bit = i64::i8(num % base);
+        if (tmp_bit < i64::i8(10)) {
+            buf[i] = '0' + tmp_bit;
+        } else {
+            buf[i] = 'a' + tmp_bit - i64::i8(10);
+        }
         num /= base;
         i += 1;
     }
-    buf[i] = i64::i8(0);
+    buf[i] = '\0';
 
     var s_begin = 0;
     var s_end = i;
@@ -22,22 +30,28 @@ func itoa(num: i64, buf: i8*, base: i64) {
         buf[s_end - i - 1] = tmp;
         i += 1;
     }
-    return;
+    return buf;
 }
 
 func main() -> i64 {
-    var result: i8* = malloc(128);
-    itoa(114514, result, 10);
-    puts(result);
+    var result = malloc(128);
+    puts(itoa(114514, result, 2));
+    puts(itoa(114514, result, 8));
+    puts(itoa(114514, result, 10));
+    puts(itoa(114514, result, 16));
 
-    var index: i64 = 0;
+    var index = 0;
     while(index <= 2147483647) {
         if (index % 50000000 == 0 and index > 0) {
-            itoa(index, result, 10);
-            puts(result);
+            puts(itoa(index, result, 2));
+            puts(itoa(index, result, 8));
+            puts(itoa(index, result, 10));
+            puts(itoa(index, result, 16));
         } elsif (index == 2147483647 and index > 0) {
-            itoa(index, result, 10);
-            puts(result);
+            puts(itoa(index, result, 2));
+            puts(itoa(index, result, 8));
+            puts(itoa(index, result, 10));
+            puts(itoa(index, result, 16));
         }
         index += 1;
     }
