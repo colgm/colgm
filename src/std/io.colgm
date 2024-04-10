@@ -1,17 +1,21 @@
 use std::libc::{open, read, write, close, malloc, free};
 
-func readfile(filename: i8*) {
-    var buff = malloc(i64::u64(1024));
-    var O_RDONLY = i64::i32(0);
-    var O_WRONLY = i64::i32(1);
-    var O_RDWR = i64::i32(2);
-    var O_APPEND = i64::i32(8);
-    # var O_CREAT = i64::i32(0x0100);
-    # var O_TRUNC = i64::i32(0x0200);
-    # var O_EXCL = i64::i32(0x0400);
-    # var O_TEXT = i64::i32(0x4000);
-    # var O_BINARY = i64::i32(0x8000);
+func readfile(filename: i8*) -> i64 {
+    var O_RDONLY = u64::i32(0x0000);
+    var O_WRONLY = u64::i32(0x0001);
+    var O_RDWR = u64::i32(0x0002);
+    var O_APPEND = u64::i32(0x0008);
+    var O_CREAT = u64::i32(0x0100);
+    var O_TRUNC = u64::i32(0x0200);
+    var O_EXCL = u64::i32(0x0400);
+    var O_TEXT = u64::i32(0x4000);
+    var O_BINARY = u64::i32(0x8000);
+
     var fd = open(filename, O_RDONLY);
+    if (fd < i64::i32(0)) {
+        return i32::i64(fd);
+    }
+    var buff = malloc(i64::u64(1024));
     var readcount = read(fd, buff, 1023);
     write(i64::i32(1), buff, readcount);
     while(readcount!=0) {
@@ -20,5 +24,5 @@ func readfile(filename: i8*) {
     }
     close(fd);
     free(buff);
-    return;
+    return 0;
 }

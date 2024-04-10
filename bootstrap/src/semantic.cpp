@@ -1,3 +1,4 @@
+#include "colgm.h"
 #include "lexer.h"
 #include "parse.h"
 #include "semantic.h"
@@ -416,10 +417,20 @@ type semantic::resolve_number_literal(number_literal* node) {
         node->set_resolve_type({"f64", "", 0});
         return {"f64", "", 0};
     }
-    f64 result = atof(literal_string.c_str());
+    f64 result = str_to_num(literal_string.c_str());
     if (std::isinf(result) || std::isnan(result)) {
         report(node, "invalid number \"" + literal_string + "\".");
         return type::error_type();
+    }
+    if (literal_string.length()>2 && literal_string[1]=='o') {
+        node->set_resolve_type({"u64", "", 0});
+        node->reset_number(std::to_string(oct_to_u64(literal_string.c_str())));
+        return {"u64", "", 0};
+    }
+    if (literal_string.length()>2 && literal_string[1]=='x') {
+        node->set_resolve_type({"u64", "", 0});
+        node->reset_number(std::to_string(hex_to_u64(literal_string.c_str())));
+        return {"u64", "", 0};
     }
     node->set_resolve_type({"i64", "", 0});
     return {"i64", "", 0};

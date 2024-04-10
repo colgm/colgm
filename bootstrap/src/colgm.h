@@ -38,7 +38,9 @@ const char* get_platform();
 const char* get_arch();
 
 f64 hex_to_f64(const char*);
+u64 hex_to_u64(const char*);
 f64 oct_to_f64(const char*);
+u64 oct_to_u64(const char*);
 // we have the same reason not using atof here
 // just as andy's interpreter does.
 // it is not platform independent, and may have strange output.

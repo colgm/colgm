@@ -141,6 +141,22 @@ f64 hex_to_f64(const char* str) {
     return ret;
 }
 
+u64 hex_to_u64(const char* str) {
+    u64 ret = 0;
+    for(; *str; ++str) {
+        if ('0'<=*str && *str<='9') {
+            ret = ret*16+(*str-'0');
+        } else if ('a'<=*str && *str<='f') {
+            ret = ret*16+(*str-'a'+10);
+        } else if ('A'<=*str && *str<='F') {
+            ret = ret*16+(*str-'A'+10);
+        } else {
+            return 0;
+        }
+    }
+    return ret;
+}
+
 f64 oct_to_f64(const char* str) {
     f64 ret = 0;
     while('0'<=*str && *str<'8') {
@@ -148,6 +164,17 @@ f64 oct_to_f64(const char* str) {
     }
     if (*str) {
         return nan("");
+    }
+    return ret;
+}
+
+u64 oct_to_u64(const char* str) {
+    u64 ret = 0;
+    while('0'<=*str && *str<'8') {
+        ret = ret*8+(*str++-'0');
+    }
+    if (*str) {
+        return 0;
     }
     return ret;
 }

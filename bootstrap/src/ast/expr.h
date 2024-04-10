@@ -83,6 +83,8 @@ public:
     void accept(visitor*) override;
 
     const auto& get_number() const { return literal; }
+    // used to set 0o____ & 0x____ number to literal that llvm could recognize
+    void reset_number(const std::string& number) { literal = number; }
 };
 
 class string_literal: public expr {
