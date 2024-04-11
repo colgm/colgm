@@ -1,6 +1,8 @@
 # Colgm Compiler Project: Source Code
 
-Still working in progress...
+<img src="../doc/png/logo-color.png" style="width:200px"></img>
+
+Still working in progress.
 
 ## Build
 

@@ -1,5 +1,7 @@
 # Colgm Compiler Project
 
+<img src="./doc/png/logo-color.png" style="width:200px"></img>
+
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 
 This is the main repository for Colgm compiler.
