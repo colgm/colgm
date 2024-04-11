@@ -718,6 +718,7 @@ bool generator::visit_assignment(assignment* node) {
         case assignment::kind::multeq: generate_mul_assignment(left, right); break;
         case assignment::kind::subeq: generate_sub_assignment(left, right); break;
         case assignment::kind::eq: generate_eq_assignment(left, right); break;
+        default: unreachable(node);
     }
     ircode_block->add_nop("end assign");
     return true;

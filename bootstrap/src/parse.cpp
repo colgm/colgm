@@ -195,9 +195,54 @@ expr* parse::additive_gen() {
     return result;
 }
 
-expr* parse::compare_gen() {
+expr* parse::bitwise_and_gen() {
     const auto begin_location = toks[ptr].loc;
     auto result = additive_gen();
+    while(look_ahead(tok::btand)) {
+        auto binary = new binary_operator(begin_location);
+        binary->set_left(result);
+        binary->set_opr(binary_operator::kind::band);
+        match(toks[ptr].type);
+        binary->set_right(additive_gen());
+        result = binary;
+    }
+    update_location(result);
+    return result;
+}
+
+expr* parse::bitwise_xor_gen() {
+    const auto begin_location = toks[ptr].loc;
+    auto result = bitwise_and_gen();
+    while(look_ahead(tok::btxor)) {
+        auto binary = new binary_operator(begin_location);
+        binary->set_left(result);
+        binary->set_opr(binary_operator::kind::bxor);
+        match(toks[ptr].type);
+        binary->set_right(bitwise_and_gen());
+        result = binary;
+    }
+    update_location(result);
+    return result;
+}
+
+expr* parse::bitwise_or_gen() {
+    const auto begin_location = toks[ptr].loc;
+    auto result = bitwise_xor_gen();
+    while(look_ahead(tok::btor)) {
+        auto binary = new binary_operator(begin_location);
+        binary->set_left(result);
+        binary->set_opr(binary_operator::kind::bor);
+        match(toks[ptr].type);
+        binary->set_right(bitwise_xor_gen());
+        result = binary;
+    }
+    update_location(result);
+    return result;
+}
+
+expr* parse::compare_gen() {
+    const auto begin_location = toks[ptr].loc;
+    auto result = bitwise_or_gen();
     while(look_ahead(tok::cmpeq) || look_ahead(tok::neq) ||
         look_ahead(tok::less) || look_ahead(tok::leq) ||
         look_ahead(tok::grt) || look_ahead(tok::geq)) {
@@ -213,7 +258,7 @@ expr* parse::compare_gen() {
             default: break;
         }
         match(toks[ptr].type);
-        binary->set_right(additive_gen());
+        binary->set_right(bitwise_or_gen());
         result = binary;
     }
     update_location(result);
@@ -265,7 +310,8 @@ expr* parse::calculation_gen() {
     }
     // if is call node, check assignment syntax
     if (look_ahead(tok::addeq) || look_ahead(tok::subeq) || look_ahead(tok::multeq) ||
-        look_ahead(tok::diveq) || look_ahead(tok::remeq) || look_ahead(tok::eq)) {
+        look_ahead(tok::diveq) || look_ahead(tok::remeq) || look_ahead(tok::eq) ||
+        look_ahead(tok::btandeq) || look_ahead(tok::btxoreq) || look_ahead(tok::btoreq)) {
         auto new_assignment = new assignment(begin_location);
         new_assignment->set_left(reinterpret_cast<call*>(result));
         switch(toks[ptr].type) {
@@ -275,6 +321,9 @@ expr* parse::calculation_gen() {
             case tok::multeq: new_assignment->set_type(assignment::kind::multeq); break;
             case tok::diveq: new_assignment->set_type(assignment::kind::diveq); break;
             case tok::remeq: new_assignment->set_type(assignment::kind::remeq); break;
+            case tok::btandeq: new_assignment->set_type(assignment::kind::andeq); break;
+            case tok::btxoreq: new_assignment->set_type(assignment::kind::xoreq); break;
+            case tok::btoreq: new_assignment->set_type(assignment::kind::oreq); break;
             default: break;
         }
         match(toks[ptr].type);

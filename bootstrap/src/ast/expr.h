@@ -36,7 +36,10 @@ public:
         grt,
         geq,
         cmpand,
-        cmpor
+        cmpor,
+        band,
+        bor,
+        bxor,
     };
 
 private:
@@ -218,7 +221,10 @@ public:
         subeq,
         multeq,
         diveq,
-        remeq
+        remeq,
+        andeq,
+        xoreq,
+        oreq
     };
 
 private:

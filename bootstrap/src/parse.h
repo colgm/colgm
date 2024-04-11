@@ -104,6 +104,9 @@ private:
     expr* scalar_gen();
     expr* multive_gen();
     expr* additive_gen();
+    expr* bitwise_and_gen();
+    expr* bitwise_xor_gen();
+    expr* bitwise_or_gen();
     expr* compare_gen();
     expr* and_expression_gen();
     expr* or_expression_gen();
