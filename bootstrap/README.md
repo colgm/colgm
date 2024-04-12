@@ -1,6 +1,6 @@
 # Colgm Compiler Project: Bootstrap
 
-<img src="../doc/png/logo-color.png" style="width:200px"></img>
+<img src="../doc/png/logo-small.png" style="width:200px"></img>
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 
