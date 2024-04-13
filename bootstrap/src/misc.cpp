@@ -143,6 +143,7 @@ f64 hex_to_f64(const char* str) {
 
 u64 hex_to_u64(const char* str) {
     u64 ret = 0;
+    str += 2;
     for(; *str; ++str) {
         if ('0'<=*str && *str<='9') {
             ret = ret*16+(*str-'0');
@@ -170,6 +171,7 @@ f64 oct_to_f64(const char* str) {
 
 u64 oct_to_u64(const char* str) {
     u64 ret = 0;
+    str += 2;
     while('0'<=*str && *str<'8') {
         ret = ret*8+(*str++-'0');
     }

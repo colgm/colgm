@@ -8,6 +8,8 @@ out.ll:
 test: $(COLGMCC)
 	@ $(COLGMCC) test/assign.colgm
 	@ lli out.ll
+	@ $(COLGMCC) test/bitwise.colgm
+	@ lli out.ll
 	@ $(COLGMCC) test/branch.colgm
 	@ lli out.ll
 	@ $(COLGMCC) test/func.colgm

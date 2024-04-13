@@ -1,32 +1,7 @@
-
-func malloc(s: u64) -> i8*;
-func free(s: i8*);
-
-func open(file: i8*, flags: i32) -> i32;
-func read(fd: i32, buf: i8*, nbytes: i64) -> i64;
 func write(fd: i32, buf: i8*, count: i64) -> i64;
-func close(fd: i32) -> i32;
-
-func puts(s: i8*) -> i32;
-
-func strlen(src: i8*) -> i64;
-func strcmp(left: i8*, right: i8*) -> i32;
-
-func streq(left: i8*, right: i8*) -> bool {
-    return strcmp(left, right)==i64::i32(0);
-}
-
-func print(s: i8*) -> i64 {
-    var stdout = i64::i32(1);
-    return write(stdout, s, strlen(s));
-}
-
-func println(s: i8*) -> i64 {
-    var stdout = i64::i32(1);
-    var len = write(stdout, s, strlen(s));
-    write(stdout, "\n", 1);
-    return len + 1;
-}
+func strlen(s: i8*) -> i64;
+func malloc(s: i64) -> i8*;
+func free(s: i8*);
 
 func itoa(num: i64, buf: i8*, base: i64) -> i8* {
     if (base < 2 or base > 16) {
@@ -62,4 +37,35 @@ func itoa(num: i64, buf: i8*, base: i64) -> i8* {
         i += 1;
     }
     return buf;
+}
+
+func hexdump(buf: i8*) {
+    var stdout = i64::i32(1);
+    write(stdout, "0x", 2);
+    write(stdout, buf, strlen(buf));
+    write(stdout, "\n", 1);
+    return;
+}
+
+func main() -> i64 {
+    var i = 0x1;
+    var total = 0x0;
+    var buf = malloc(128);
+    while(i < 0x80000000) {
+        total = total | i;
+        itoa(u64::i64(total), buf, 16);
+        hexdump(buf);
+        i *= 0x2;
+    }
+    i = 0x1;
+    total = 0x0;
+    while(i < 0x80000000) {
+        total |= i;
+        itoa(u64::i64(total), buf, 16);
+        hexdump(buf);
+        i *= 0x2;
+    }
+    free(buf);
+    write(i64::i32(1), "  -> from bitwise.colgm\n", 24);
+    return 0;
 }

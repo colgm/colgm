@@ -78,6 +78,7 @@ private:
     type resolve_logical_operator(binary_operator*);
     type resolve_comparison_operator(binary_operator*);
     type resolve_arithmetic_operator(binary_operator*);
+    type resolve_bitwise_operator(binary_operator*);
     type resolve_binary_operator(binary_operator*);
     type resolve_number_literal(number_literal*);
     type resolve_string_literal(string_literal*);

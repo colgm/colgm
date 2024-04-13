@@ -701,6 +701,69 @@ void generator::generate_eq_assignment(const value& left, const value& right) {
     ));
 }
 
+void generator::generate_and_assignment(const value& left, const value& right) {
+    auto left_type_copy = left.resolve_type;
+    left_type_copy.pointer_depth--;
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    ircode_block->add_stmt(new sir_load(
+        type_convert(left_type_copy),
+        left.content,
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_binary(
+        temp_0, right.content, temp_1, "and",
+        type_convert(left_type_copy)
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(left_type_copy),
+        temp_1,
+        left.content
+    ));
+}
+
+void generator::generate_xor_assignment(const value& left, const value& right) {
+    auto left_type_copy = left.resolve_type;
+    left_type_copy.pointer_depth--;
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    ircode_block->add_stmt(new sir_load(
+        type_convert(left_type_copy),
+        left.content,
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_binary(
+        temp_0, right.content, temp_1, "xor",
+        type_convert(left_type_copy)
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(left_type_copy),
+        temp_1,
+        left.content
+    ));
+}
+
+void generator::generate_or_assignment(const value& left, const value& right) {
+    auto left_type_copy = left.resolve_type;
+    left_type_copy.pointer_depth--;
+    const auto temp_0 = get_temp_variable();
+    const auto temp_1 = get_temp_variable();
+    ircode_block->add_stmt(new sir_load(
+        type_convert(left_type_copy),
+        left.content,
+        temp_0
+    ));
+    ircode_block->add_stmt(new sir_binary(
+        temp_0, right.content, temp_1, "or",
+        type_convert(left_type_copy)
+    ));
+    ircode_block->add_stmt(new sir_store(
+        type_convert(left_type_copy),
+        temp_1,
+        left.content
+    ));
+}
+
 bool generator::visit_assignment(assignment* node) {
     ircode_block->add_nop("begin assign");
     call_expression_generation(node->get_left(), true);
@@ -718,6 +781,9 @@ bool generator::visit_assignment(assignment* node) {
         case assignment::kind::multeq: generate_mul_assignment(left, right); break;
         case assignment::kind::subeq: generate_sub_assignment(left, right); break;
         case assignment::kind::eq: generate_eq_assignment(left, right); break;
+        case assignment::kind::andeq: generate_and_assignment(left, right); break;
+        case assignment::kind::xoreq: generate_xor_assignment(left, right); break;
+        case assignment::kind::oreq: generate_or_assignment(left, right); break;
         default: unreachable(node);
     }
     ircode_block->add_nop("end assign");
@@ -859,6 +925,42 @@ void generator::generate_rem_operator(const value& left,
     ));
 }
 
+void generator::generate_band_operator(const value& left,
+                                       const value& right,
+                                       const value& result) {
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        "and",
+        type_convert(left.resolve_type)
+    ));
+}
+
+void generator::generate_bxor_operator(const value& left,
+                                       const value& right,
+                                       const value& result) {
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        "xor",
+        type_convert(left.resolve_type)
+    ));
+}
+
+void generator::generate_bor_operator(const value& left,
+                                      const value& right,
+                                      const value& result) {
+    ircode_block->add_stmt(new sir_binary(
+        left.content,
+        right.content,
+        result.content,
+        "or",
+        type_convert(left.resolve_type)
+    ));
+}
+
 void generator::generate_eq_operator(const value& left,
                                      const value& right,
                                      const value& result) {
@@ -971,6 +1073,9 @@ bool generator::visit_binary_operator(binary_operator* node) {
         case binary_operator::kind::mult: generate_mul_operator(left, right, result); break;
         case binary_operator::kind::div: generate_div_operator(left, right, result); break;
         case binary_operator::kind::rem: generate_rem_operator(left, right, result); break;
+        case binary_operator::kind::band: generate_band_operator(left, right, result); break;
+        case binary_operator::kind::bxor: generate_bxor_operator(left, right, result); break;
+        case binary_operator::kind::bor: generate_bor_operator(left, right, result); break;
         case binary_operator::kind::cmpeq: generate_eq_operator(left, right, result); break;
         case binary_operator::kind::cmpneq: generate_neq_operator(left, right, result); break;
         case binary_operator::kind::geq: generate_ge_operator(left, right, result); break;

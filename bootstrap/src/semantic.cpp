@@ -378,6 +378,30 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
     return left;
 }
 
+type semantic::resolve_bitwise_operator(binary_operator* node) {
+    const auto left = resolve_expression(node->get_left());
+    const auto right = resolve_expression(node->get_right());
+    if (!left.is_integer()) {
+        report(node->get_left(),
+            "bitwise operator cannot be used on \"" + left.to_string() + "\"."
+        );
+        return left;
+    }
+    if (!right.is_integer()) {
+        report(node->get_right(),
+            "bitwise operator cannot be used on \"" + right.to_string() + "\"."
+        );
+        return right;
+    }
+    if (left!=right) {
+        report(node,
+            "get \"" + left.to_string() +
+            "\" and \"" + right.to_string() + "\"."
+        );
+    }
+    return left;
+}
+
 type semantic::resolve_binary_operator(binary_operator* node) {
     switch(node->get_opr()) {
         case binary_operator::kind::cmpeq:
@@ -402,6 +426,13 @@ type semantic::resolve_binary_operator(binary_operator* node) {
         case binary_operator::kind::mult:
         case binary_operator::kind::rem: {
             const auto res = resolve_arithmetic_operator(node);
+            node->set_resolve_type(res);
+            return res;
+        }
+        case binary_operator::kind::band:
+        case binary_operator::kind::bxor:
+        case binary_operator::kind::bor: {
+            const auto res = resolve_bitwise_operator(node);
             node->set_resolve_type(res);
             return res;
         }
@@ -759,6 +790,26 @@ type semantic::resolve_call(call* node) {
 type semantic::resolve_assignment(assignment* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
+    switch(node->get_type()) {
+        case assignment::kind::andeq:
+        case assignment::kind::xoreq:
+        case assignment::kind::oreq:
+            if (!left.is_integer()) {
+                report(node->get_left(),
+                    "bitwise operator cannot be used on \"" +
+                    left.to_string() + "\"."
+                );
+                return type::bool_type();
+            }
+            if (!right.is_integer()) {
+                report(node->get_right(),
+                    "bitwise operator cannot be used on \"" +
+                    right.to_string() + "\"."
+                );
+                return type::bool_type();
+            }
+        default: break;
+    }
     if (left.is_pointer() && right.is_pointer()) {
         if (left!=right) {
             warning(node,

@@ -88,6 +88,9 @@ private:
     void generate_mul_operator(const value&, const value&, const value&);
     void generate_div_operator(const value&, const value&, const value&);
     void generate_rem_operator(const value&, const value&, const value&);
+    void generate_band_operator(const value&, const value&, const value&);
+    void generate_bxor_operator(const value&, const value&, const value&);
+    void generate_bor_operator(const value&, const value&, const value&);
     void generate_eq_operator(const value&, const value&, const value&);
     void generate_neq_operator(const value&, const value&, const value&);
     void generate_ge_operator(const value&, const value&, const value&);
@@ -103,6 +106,9 @@ private:
     void generate_div_assignment(const value&, const value&);
     void generate_rem_assignment(const value&, const value&);
     void generate_eq_assignment(const value&, const value&);
+    void generate_and_assignment(const value&, const value&);
+    void generate_xor_assignment(const value&, const value&);
+    void generate_or_assignment(const value&, const value&);
     bool visit_assignment(assignment*) override;
     bool visit_while_stmt(while_stmt*) override;
 

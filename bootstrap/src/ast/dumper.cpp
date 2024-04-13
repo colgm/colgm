@@ -161,6 +161,9 @@ bool dumper::visit_binary_operator(binary_operator* node) {
         case binary_operator::kind::geq: std::cout << ">="; break;
         case binary_operator::kind::cmpand: std::cout << "and"; break;
         case binary_operator::kind::cmpor: std::cout << "or"; break;
+        case binary_operator::kind::band: std::cout << "&"; break;
+        case binary_operator::kind::bxor: std::cout << "^"; break;
+        case binary_operator::kind::bor: std::cout << "|"; break;
     }
     std::cout << format_location(node->get_location());
     push_indent();
@@ -241,6 +244,9 @@ bool dumper::visit_assignment(assignment* node) {
         case assignment::kind::remeq: std::cout << "%= "; break;
         case assignment::kind::multeq: std::cout << "*= "; break;
         case assignment::kind::subeq: std::cout << "-= "; break;
+        case assignment::kind::andeq: std::cout << "&= "; break;
+        case assignment::kind::xoreq: std::cout << "^= "; break;
+        case assignment::kind::oreq: std::cout << "|= "; break;
     }
     std::cout << format_location(node->get_location());
     push_indent();
