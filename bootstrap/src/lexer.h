@@ -19,6 +19,7 @@ enum class tok:u32 {
     tktrue,   // keyword true
     tkfalse,  // keyword false
     use,      // keyword use
+    tkenum,   // keyword enum
     rfor,     // loop keyword for
     forindex, // loop keyword forindex
     foreach,  // loop keyword foreach
@@ -102,6 +103,7 @@ private:
 
     const std::unordered_map<std::string, tok> typetbl = {
         {"use"     ,tok::use     },
+        {"enum"    ,tok::tkenum  },
         {"impl"    ,tok::impl    },
         {"true"    ,tok::tktrue  },
         {"false"   ,tok::tkfalse },

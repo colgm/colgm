@@ -22,6 +22,7 @@ private:
 
     const std::unordered_map<tok, std::string> tokname = {
         {tok::use     ,"use"     },
+        {tok::tkenum  ,"enum"    },
         {tok::impl    ,"impl"    },
         {tok::tktrue  ,"true"    },
         {tok::tkfalse ,"false"   },

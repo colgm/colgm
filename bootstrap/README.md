@@ -27,6 +27,19 @@ Use this command to get usage:
 
 ## Syntax
 
+### Bitwise Operator
+
+Colgm now supports these bitwise operators:
+
+```typescript
+a | b;
+a ^ b;
+a & b;
+a |= b;
+a ^= b;
+a &= b;
+```
+
 ### Logical Operator
 
 Support basic logical operators: `==` `!=` `<` `<=` `>` `>=`.
