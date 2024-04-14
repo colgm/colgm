@@ -48,6 +48,7 @@ private:
 
 public:
     std::string to_string() const;
+    std::string full_path_name() const;
     bool operator==(const type& another) const {
         return name==another.name &&
                pointer_depth==another.pointer_depth;

@@ -1,3 +1,4 @@
+#include "colgm.h"
 #include "code/gen.h"
 #include "sema/symbol.h"
 #include "sema/basic.h"
@@ -11,21 +12,25 @@ std::string generator::type_convert(const type& t) {
         copy.name = basic_type_convert_mapper.at(copy.name);
     } else if (ctx.global_symbol.count(copy.name) &&
         ctx.global_symbol.at(copy.name).kind==symbol_kind::struct_kind) {
-        copy.name = "%struct." + copy.name;
+        copy.name = "%struct." + mangle_in_module_symbol(t.full_path_name());
     }
     return copy.to_string();
 }
 
 std::string generator::generate_type_string(type_def* node) {
+    auto loc_file = node->get_location().file;
+    if (ctx.global_symbol.count(node->get_name()->get_name())) {
+        loc_file = ctx.global_symbol.at(node->get_name()->get_name()).loc_file;
+    }
     return type_convert({
         node->get_name()->get_name(),
-        node->get_location().file,
+        loc_file,
         node->get_pointer_level()
     });
 }
 
 bool generator::visit_struct_decl(struct_decl* node) {
-    auto new_struct = hir_struct(node->get_name());
+    auto new_struct = hir_struct(node->get_name(), node->get_location());
     for(auto i : node->get_fields()) {
         new_struct.add_field_type(generate_type_string(i->get_type()));
     }

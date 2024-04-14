@@ -54,4 +54,6 @@ usize utf8_hdchk(const char);
 std::string char_to_hex(const char);
 std::string rawstr(const std::string&, const usize maxlen = 0);
 
+std::string mangle_in_module_symbol(const std::string&);
+
 }

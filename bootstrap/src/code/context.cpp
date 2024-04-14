@@ -1,3 +1,4 @@
+#include "colgm.h"
 #include "code/context.h"
 
 #include <iomanip>
@@ -102,10 +103,17 @@ void ir_context::dump_used_basic_convert_method(std::ostream& out) const {
 
 void ir_context::dump_struct_size_method(std::ostream& out) const {
     for(const auto& st : struct_decls) {
-        out << "define i64 @" << st.get_name() << ".__size__() alwaysinline {\n";
-        out << "  %1 = getelementptr %struct." << st.get_name();
-        out << ", %struct." << st.get_name() << "* null, i64 1\n";
-        out << "  %2 = ptrtoint %struct." << st.get_name() << "* %1 to i64\n";
+        const auto st_type = type {
+            .name = st.get_name(),
+            .loc_file = st.get_location().file
+        };
+        const auto st_name = mangle_in_module_symbol(st_type.full_path_name());
+        const auto st_real_name = "%struct." + st_name;
+        out << "define i64 @" << st_name;
+        out << ".__size__() alwaysinline {\n";
+        out << "  %1 = getelementptr " << st_real_name;
+        out << ", " << st_real_name << "* null, i64 1\n";
+        out << "  %2 = ptrtoint " << st_real_name << "* %1 to i64\n";
         out << "  ret i64 %2\n";
         out << "}\n";
     }
@@ -113,22 +121,34 @@ void ir_context::dump_struct_size_method(std::ostream& out) const {
 
 void ir_context::dump_struct_alloc_method(std::ostream& out) const {
     for(const auto& st: struct_decls) {
-        out << "define %struct." << st.get_name() << "* @" << st.get_name();
+        const auto st_type = type {
+            .name = st.get_name(),
+            .loc_file = st.get_location().file
+        };
+        const auto st_name = mangle_in_module_symbol(st_type.full_path_name());
+        const auto st_real_name = "%struct." + st_name;
+        out << "define " << st_real_name << "* @" << st.get_name();
         out << ".__alloc__() alwaysinline {\n";
-        out << "  %1 = call i64 @" << st.get_name() << ".__size__()\n";
+        out << "  %1 = call i64 @" << st_name << ".__size__()\n";
         out << "  %2 = call i8* @malloc(i64 %1)\n";
-        out << "  %3 = bitcast i8* %2 to %struct." << st.get_name() << "*\n";
-        out << "  ret %struct." << st.get_name() << "* %3\n";
+        out << "  %3 = bitcast i8* %2 to " << st_real_name << "*\n";
+        out << "  ret " << st_real_name << "* %3\n";
         out << "}\n";
     }
 }
 
 void ir_context::dump_struct_delete_method(std::ostream& out) const {
     for(const auto& st: struct_decls) {
-        out << "define void @" << st.get_name();
-        out << ".__delete__(%struct." << st.get_name();
+        const auto st_type = type {
+            .name = st.get_name(),
+            .loc_file = st.get_location().file
+        };
+        const auto st_name = mangle_in_module_symbol(st_type.full_path_name());
+        const auto st_real_name = "%struct." + st_name;
+        out << "define void @" << st_name;
+        out << ".__delete__(" << st_real_name;
         out << "* %self) alwaysinline {\n";
-        out << "  %1 = bitcast %struct." << st.get_name() << "* %self to i8*\n";
+        out << "  %1 = bitcast " << st_real_name << "* %self to i8*\n";
         out << "  call void @free(i8* %1)\n";
         out << "  ret void\n";
         out << "}\n";

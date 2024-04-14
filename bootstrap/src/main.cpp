@@ -167,7 +167,10 @@ i32 main(i32 argc, const char* argv[]) {
     std::string filename = "";
     std::string library_path = "";
     for(i32 i = 1; i<argc; ++i) {
-        if (cmdlst.count(argv[i])) {
+        if (argv[i]==std::string("-h") || argv[i]==std::string("--help")) {
+            std::clog << help;
+            break;
+        } else if (cmdlst.count(argv[i])) {
             cmd |= cmdlst.at(argv[i]);
         } else if (argv[i]==std::string("-L") || argv[i]==std::string("--library")) {
             if (i+1<argc) {

@@ -302,4 +302,14 @@ std::string rawstr(const std::string& str, const usize maxlen) {
     return ret;
 }
 
+std::string mangle_in_module_symbol(const std::string& name) {
+    auto copy = name;
+    for(auto& c : copy) {
+        if (c==':') {
+            c = '_';
+        }
+    }
+    return copy;
+}
+
 }

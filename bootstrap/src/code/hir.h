@@ -8,12 +8,14 @@ namespace colgm {
 class hir_struct {
 private:
     std::string name;
+    span location;
     std::vector<std::string> field_type;
 
 public:
-    hir_struct(const std::string& n): name(n) {}
+    hir_struct(const std::string& n, const span& loc): name(n), location(loc) {}
     void dump(std::ostream&) const;
     const auto& get_name() const { return name; }
+    const auto& get_location() const { return location; }
 
     void add_field_type(const std::string& type) { field_type.push_back(type); }
 };

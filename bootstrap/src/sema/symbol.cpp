@@ -1,6 +1,7 @@
 #include "colgm.h"
 #include "report.h"
 #include "sema/symbol.h"
+#include "package/package.h"
 
 #include <cstring>
 #include <sstream>
@@ -25,6 +26,11 @@ std::string type::to_string() const {
         result += "*";
     }
     return result;
+}
+
+std::string type::full_path_name() const {
+    auto pkg = package_manager::singleton();
+    return pkg->get_module_name(loc_file) + "::" + name;
 }
 
 std::ostream& operator<<(std::ostream& out, const type& t) {
