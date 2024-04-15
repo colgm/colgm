@@ -41,6 +41,8 @@ public:
     virtual bool visit_while_stmt(while_stmt*);
     virtual bool visit_in_stmt_expr(in_stmt_expr*);
     virtual bool visit_ret_stmt(ret_stmt*);
+    virtual bool visit_continue_stmt(continue_stmt*);
+    virtual bool visit_break_stmt(break_stmt*);
     virtual bool visit_code_block(code_block*);
 };
 

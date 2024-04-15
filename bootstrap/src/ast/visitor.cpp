@@ -194,6 +194,14 @@ bool visitor::visit_ret_stmt(ret_stmt* node) {
     return true;
 }
 
+bool visitor::visit_continue_stmt(continue_stmt* node) {
+    return true;
+}
+
+bool visitor::visit_break_stmt(break_stmt* node) {
+    return true;
+}
+
 bool visitor::visit_code_block(code_block* node) {
     for(auto i : node->get_stmts()) {
         i->accept(this);

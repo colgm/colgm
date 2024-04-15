@@ -27,6 +27,11 @@ private:
     void unreachable(node* n) {
         err.err("code", n->get_location(), "unreachable.");
     }
+    void unimplemented(node* n) {
+        err.err("code", n->get_location(),
+            "unimplemented. please report an issue."
+        );
+    }
     void report_stack_empty(node* n) {
         err.err("code", n->get_location(), "internal error: stack is empty.");
     }
@@ -111,6 +116,8 @@ private:
     void generate_or_assignment(const value&, const value&);
     bool visit_assignment(assignment*) override;
     bool visit_while_stmt(while_stmt*) override;
+    bool visit_continue_stmt(continue_stmt*) override;
+    bool visit_break_stmt(break_stmt*) override;
 
 private:
     std::vector<sir_br*> jump_outs;

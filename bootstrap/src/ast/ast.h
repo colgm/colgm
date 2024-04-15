@@ -37,6 +37,8 @@ enum class ast_type {
     ast_while_stmt,
     ast_in_stmt_expr,
     ast_ret_stmt,
+    ast_continue_stmt,
+    ast_break_stmt,
     ast_code_block
 };
 
@@ -71,6 +73,8 @@ class if_stmt;
 class while_stmt;
 class in_stmt_expr;
 class ret_stmt;
+class continue_stmt;
+class break_stmt;
 class code_block;
 
 class node {

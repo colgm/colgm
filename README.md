@@ -6,13 +6,12 @@
 
 This is the main repository for Colgm compiler.
 
-## Content
+## Repo Content
 
-- [colgm bootstrap](./bootstrap/README.md) -> bootstrap
+- [Bootstrap [WIP]](./bootstrap/README.md) -> bootstrap
+- [Self-Hosted [WIP & unavailable now]](./src/README.md) -> src
 
-- [colgm self-hosted](./src/README.md) -> src
-
-## Bootstrap
+## Bootstrap Compiler
 
 Use these commands to build the bootstrap compiler:
 
@@ -32,6 +31,8 @@ make out.ll
 ```
 
 The generated llvm ir will be generated with filename `out.ll`.
+
+Learn more about bootstrap compiler: [Colgm Bootstrap](./bootstrap/README.md).
 
 ## Hello World
 

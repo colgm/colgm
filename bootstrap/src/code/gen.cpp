@@ -789,7 +789,7 @@ bool generator::visit_assignment(assignment* node) {
         case assignment::kind::andeq: generate_and_assignment(left, right); break;
         case assignment::kind::xoreq: generate_xor_assignment(left, right); break;
         case assignment::kind::oreq: generate_or_assignment(left, right); break;
-        default: unreachable(node);
+        default: unimplemented(node);
     }
     ircode_block->add_nop("end assign");
     return true;
@@ -1087,7 +1087,7 @@ bool generator::visit_binary_operator(binary_operator* node) {
         case binary_operator::kind::grt: generate_gt_operator(left, right, result); break;
         case binary_operator::kind::leq: generate_le_operator(left, right, result); break;
         case binary_operator::kind::less: generate_lt_operator(left, right, result); break;
-        default: unreachable(node);
+        default: unimplemented(node);
     }
     ircode_block->add_nop("end binary opr");
     return true;
@@ -1134,6 +1134,16 @@ bool generator::visit_while_stmt(while_stmt* node) {
     cond_branch_ir->set_false_label(ircode_block->stmt_size());
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     ircode_block->add_nop("end loop");
+    return true;
+}
+
+bool generator::visit_continue_stmt(continue_stmt* node) {
+    unimplemented(node);
+    return true;
+}
+
+bool generator::visit_break_stmt(break_stmt* node) {
+    unimplemented(node);
     return true;
 }
 

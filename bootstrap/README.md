@@ -27,6 +27,18 @@ Use this command to get usage:
 
 ## Syntax
 
+### Arithmetic Operator
+
+Colgm allows these arithmetic operators:
+
+```typescript
+a + b;
+a - b;
+a * b;
+a / b;
+a % b;
+```
+
 ### Bitwise Operator
 
 Colgm now supports these bitwise operators:
@@ -35,9 +47,6 @@ Colgm now supports these bitwise operators:
 a | b;
 a ^ b;
 a & b;
-a |= b;
-a ^= b;
-a &= b;
 ```
 
 ### Logical Operator
@@ -58,4 +67,39 @@ Colgm allows two kinds of definition.
 ```typescript
 var variable_name: type = expression; # with type
 var variable_name = expression; # without type
+```
+
+### Assignment
+
+Colgm allows these assignment operators:
+
+```typescript
+a += b;
+a -= b;
+a *= b;
+a /= b;
+a %= b;
+a |= b;
+a ^= b;
+a &= b;
+```
+
+### Control Flow
+
+```typescript
+# loop
+while (1 == 1) {
+    ...
+    continue;
+    break;
+}
+
+# condition
+if (1 == 1) {
+    ...
+} elsif (1 == 1) {
+    ...
+} else {
+    ...
+}
 ```

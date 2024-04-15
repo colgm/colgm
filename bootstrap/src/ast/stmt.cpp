@@ -73,6 +73,14 @@ void ret_stmt::accept(visitor* v) {
     v->visit_ret_stmt(this);
 }
 
+void continue_stmt::accept(visitor* v) {
+    v->visit_continue_stmt(this);
+}
+
+void break_stmt::accept(visitor* v) {
+    v->visit_break_stmt(this);
+}
+
 code_block::~code_block() {
     for(auto i : statements) {
         delete i;

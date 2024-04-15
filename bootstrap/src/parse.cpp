@@ -541,6 +541,8 @@ code_block* parse::block_gen() {
             case tok::rif: result->add_stmt(cond_stmt_gen()); break;
             case tok::rwhile: result->add_stmt(while_stmt_gen()); break;
             case tok::ret: result->add_stmt(return_gen()); break;
+            case tok::cont: result->add_stmt(continue_gen()); break;
+            case tok::brk: result->add_stmt(break_gen()); break;
             default: match(toks[ptr].type); break;
         }
     }
@@ -565,6 +567,18 @@ ret_stmt* parse::return_gen() {
     }
     match(tok::semi);
     update_location(result);
+    return result;
+}
+
+continue_stmt* parse::continue_gen() {
+    auto result = new continue_stmt(toks[ptr].loc);
+    match(tok::cont);
+    return result;
+}
+
+break_stmt* parse::break_gen() {
+    auto result = new break_stmt(toks[ptr].loc);
+    match(tok::brk);
     return result;
 }
 

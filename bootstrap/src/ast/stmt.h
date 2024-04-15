@@ -131,6 +131,22 @@ public:
     auto get_value() const { return value; }
 };
 
+class continue_stmt: public stmt {
+public:
+    continue_stmt(const span& loc):
+        stmt(ast_type::ast_continue_stmt, loc) {}
+    ~continue_stmt() override = default;
+    void accept(visitor*) override;
+};
+
+class break_stmt: public stmt {
+public:
+    break_stmt(const span& loc):
+        stmt(ast_type::ast_break_stmt, loc) {}
+    ~break_stmt() override = default;
+    void accept(visitor*) override;
+};
+
 class code_block: public stmt {
 private:
     std::vector<stmt*> statements;

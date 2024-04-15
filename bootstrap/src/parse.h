@@ -126,6 +126,8 @@ private:
     code_block* block_gen();
     in_stmt_expr* in_stmt_expr_gen();
     ret_stmt* return_gen();
+    continue_stmt* continue_gen();
+    break_stmt* break_gen();
 
 public:
     const error& analyse(const std::vector<token>&);

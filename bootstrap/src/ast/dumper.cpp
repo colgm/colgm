@@ -362,6 +362,18 @@ bool dumper::visit_ret_stmt(ret_stmt* node) {
     return true;
 }
 
+bool dumper::visit_continue_stmt(continue_stmt* node) {
+    dump_indent();
+    std::cout << "continue" << format_location(node->get_location());
+    return true;
+}
+
+bool dumper::visit_break_stmt(break_stmt* node) {
+    dump_indent();
+    std::cout << "break" << format_location(node->get_location());
+    return true;
+}
+
 bool dumper::visit_code_block(code_block* node) {
     dump_indent();
     std::cout << "code block" << format_location(node->get_location());

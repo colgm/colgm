@@ -925,7 +925,9 @@ void semantic::resolve_while_stmt(while_stmt* node, const colgm_func& func_self)
         );
     }
     if (node->get_block()) {
+        ++in_loop_level;
         resolve_code_block(node->get_block(), func_self);
+        --in_loop_level;
     }
 }
 
@@ -977,6 +979,11 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
     case ast_type::ast_ret_stmt:
         resolve_ret_stmt(reinterpret_cast<ret_stmt*>(node), func_self);
         break;
+    case ast_type::ast_continue_stmt:
+    case ast_type::ast_break_stmt:
+        if (!in_loop_level) {
+            report(node, "this statement should be used inside a loop.");
+        }
     default:
         unreachable(node);
         break;

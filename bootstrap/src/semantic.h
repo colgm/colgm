@@ -20,6 +20,7 @@ class semantic {
 private:
     error err;
     semantic_context ctx;
+    i64 in_loop_level = 0;
 
 private:
     void report(node* n, const std::string& info) {
