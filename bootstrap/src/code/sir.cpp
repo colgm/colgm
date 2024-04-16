@@ -22,7 +22,8 @@ void sir_block::dump(std::ostream& out) const {
         i->dump(out);
     }
     for(auto i : stmts) {
-        if (i->get_ir_type()!=sir_kind::sir_label) {
+        if (i->get_ir_type()!=sir_kind::sir_label &&
+            i->get_ir_type()!=sir_kind::sir_name_label) {
             out << "  ";
         }
         i->dump(out);
@@ -90,6 +91,10 @@ void sir_binary::dump(std::ostream& out) const {
 
 void sir_label::dump(std::ostream& out) const {
     out << ".label_" << label_count << ":\n";
+}
+
+void sir_name_label::dump(std::ostream& out) const {
+    out << "." << name << ":\n";
 }
 
 void sir_store::dump(std::ostream& out) const {

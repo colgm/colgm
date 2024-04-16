@@ -18,7 +18,11 @@ class generator: public visitor {
 private:
     i64 ssa_temp_counter = 0;
     std::string get_temp_variable() {
-        return std::to_string(ssa_temp_counter++) ;
+        return std::to_string(ssa_temp_counter++);
+    }
+    i64 auto_declared_label = 0;
+    std::string get_auto_label() {
+        return "auto_label_" + std::to_string(auto_declared_label++);
     }
 
 private:

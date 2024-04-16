@@ -56,6 +56,7 @@ void generator::convert_parameter_to_pointer(func_decl* node) {
 
 bool generator::visit_func_decl(func_decl* node) {
     ssa_temp_counter = 0;
+    auto_declared_label = 0;
     auto name = node->get_name();
     if (impl_struct_name.length()) {
         name = impl_struct_name + "." + name;
@@ -1163,13 +1164,8 @@ bool generator::visit_if_stmt(if_stmt* node) {
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
     node->get_block()->accept(this);
     if (ircode_block->back_is_ret_stmt()) {
-        // generate a new label here, but we do not declare it
-        // so just add the numbering counter
-        ircode_block->add_nop(
-            "auto declared label " +
-            std::to_string(ssa_temp_counter)
-        );
-        ++ssa_temp_counter;
+        // generate a new label here
+        ircode_block->add_stmt(new sir_name_label(get_auto_label()));
     }
     auto jump_out = new sir_br(0);
     jump_outs.push_back(jump_out);
