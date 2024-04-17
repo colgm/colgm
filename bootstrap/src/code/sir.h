@@ -26,7 +26,7 @@ enum class sir_kind {
     sir_call_func,
     sir_binary,
     sir_label,
-    sir_name_label,
+    sir_place_holder_label,
     sir_store,
     sir_store_literal,
     sir_load,
@@ -242,14 +242,14 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_name_label: public sir {
+class sir_place_holder_label: public sir {
 private:
-    std::string name;
+    i64 label_count;
 
 public:
-    sir_name_label(const std::string& n):
-        sir(sir_kind::sir_name_label), name(n) {}
-    ~sir_name_label() override = default;
+    sir_place_holder_label(i64 count):
+        sir(sir_kind::sir_place_holder_label), label_count(count) {}
+    ~sir_place_holder_label() override = default;
     void dump(std::ostream&) const override;
 };
 

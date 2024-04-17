@@ -23,7 +23,7 @@ void sir_block::dump(std::ostream& out) const {
     }
     for(auto i : stmts) {
         if (i->get_ir_type()!=sir_kind::sir_label &&
-            i->get_ir_type()!=sir_kind::sir_name_label) {
+            i->get_ir_type()!=sir_kind::sir_place_holder_label) {
             out << "  ";
         }
         i->dump(out);
@@ -54,7 +54,7 @@ void sir_ret::dump(std::ostream& out) const {
 void sir_string::dump(std::ostream& out) const {
     out << "%" << destination << " = getelementptr ";
     out << "[" << literal.size()+1 << " x i8], ";
-    out << "[" << literal.size()+1 << " x i8]* @.constant.str." << index;
+    out << "[" << literal.size()+1 << " x i8]* @.const.str." << index;
     out << ", i64 0, i64 0\n";
 }
 
@@ -90,11 +90,11 @@ void sir_binary::dump(std::ostream& out) const {
 }
 
 void sir_label::dump(std::ostream& out) const {
-    out << ".label_" << label_count << ":\n";
+    out << "label." << label_count << ":\n";
 }
 
-void sir_name_label::dump(std::ostream& out) const {
-    out << "." << name << ":\n";
+void sir_place_holder_label::dump(std::ostream& out) const {
+    out << "label.place_holder." << label_count << ":\n";
 }
 
 void sir_store::dump(std::ostream& out) const {
@@ -113,13 +113,13 @@ void sir_load::dump(std::ostream& out) const {
 }
 
 void sir_br::dump(std::ostream& out) const {
-    out << "br label %.label_" << destination << "\n";
+    out << "br label %label." << destination << "\n";
 }
 
 void sir_br_cond::dump(std::ostream& out) const {
     out << "br i1 %" << condition << ", ";
-    out << "label %.label_" << destination_true << ", ";
-    out << "label %.label_" << destination_false << "\n";
+    out << "label %label." << destination_true << ", ";
+    out << "label %label." << destination_false << "\n";
 }
 
 }

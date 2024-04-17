@@ -21,8 +21,8 @@ private:
         return std::to_string(ssa_temp_counter++);
     }
     i64 auto_declared_label = 0;
-    std::string get_auto_label() {
-        return "auto_label_" + std::to_string(auto_declared_label++);
+    auto get_auto_label() {
+        return auto_declared_label++;
     }
 
 private:
@@ -119,6 +119,11 @@ private:
     void generate_xor_assignment(const value&, const value&);
     void generate_or_assignment(const value&, const value&);
     bool visit_assignment(assignment*) override;
+
+private:
+    std::vector<usize> loop_begin;
+    std::vector<sir_br*> break_inst;
+
     bool visit_while_stmt(while_stmt*) override;
     bool visit_continue_stmt(continue_stmt*) override;
     bool visit_break_stmt(break_stmt*) override;

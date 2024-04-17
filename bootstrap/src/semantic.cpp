@@ -8,14 +8,16 @@
 namespace colgm {
 
 void semantic::report_unreachable_statements(code_block* node) {
-    bool flag_returned = false;
+    bool flag_block_ended = false;
     std::vector<stmt*> unreachable_statements = {};
     for(auto i : node->get_stmts()) {
-        if (flag_returned) {
+        if (flag_block_ended) {
             unreachable_statements.push_back(i);
         }
-        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
-            flag_returned = true;
+        if (i->get_ast_type()==ast_type::ast_ret_stmt ||
+            i->get_ast_type()==ast_type::ast_continue_stmt ||
+            i->get_ast_type()==ast_type::ast_break_stmt) {
+            flag_block_ended = true;
         }
     }
     if (unreachable_statements.empty()) {
@@ -984,6 +986,7 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
         if (!in_loop_level) {
             report(node, "this statement should be used inside a loop.");
         }
+        break;
     default:
         unreachable(node);
         break;
@@ -1043,7 +1046,9 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
     }
     for(auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, method_self);
-        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+        if (i->get_ast_type()==ast_type::ast_ret_stmt ||
+            i->get_ast_type()==ast_type::ast_continue_stmt ||
+            i->get_ast_type()==ast_type::ast_break_stmt) {
             report_unreachable_statements(node->get_code_block());
             break;
         }

@@ -99,7 +99,9 @@ bool generator::visit_code_block(code_block* node) {
     for(auto i : node->get_stmts()) {
         i->accept(this);
         // we do not generate unreachable statements
-        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+        if (i->get_ast_type()==ast_type::ast_ret_stmt ||
+            i->get_ast_type()==ast_type::ast_continue_stmt ||
+            i->get_ast_type()==ast_type::ast_break_stmt) {
             break;
         }
     }
@@ -1112,6 +1114,8 @@ bool generator::visit_ret_stmt(ret_stmt* node) {
 bool generator::visit_while_stmt(while_stmt* node) {
     ircode_block->add_nop("begin loop");
     auto while_begin_label = ircode_block->stmt_size()+1;
+    loop_begin.push_back(while_begin_label);
+    break_inst.clear();
     // condition
     ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
@@ -1132,19 +1136,28 @@ bool generator::visit_while_stmt(while_stmt* node) {
     ircode_block->add_stmt(new sir_br(while_begin_label));
 
     // loop exit
-    cond_branch_ir->set_false_label(ircode_block->stmt_size());
-    ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
+    auto while_exit_label = ircode_block->stmt_size();
+    cond_branch_ir->set_false_label(while_exit_label);
+    ircode_block->add_stmt(new sir_label(while_exit_label));
+    for(auto i : break_inst) {
+        i->set_label(while_exit_label);
+    }
     ircode_block->add_nop("end loop");
+    loop_begin.pop_back();
     return true;
 }
 
 bool generator::visit_continue_stmt(continue_stmt* node) {
-    unimplemented(node);
+    ircode_block->add_stmt(new sir_br(loop_begin.back()));
+    ircode_block->add_stmt(new sir_place_holder_label(get_auto_label()));
     return true;
 }
 
 bool generator::visit_break_stmt(break_stmt* node) {
-    unimplemented(node);
+    auto break_br = new sir_br(0);
+    break_inst.push_back(break_br);
+    ircode_block->add_stmt(break_br);
+    ircode_block->add_stmt(new sir_place_holder_label(get_auto_label()));
     return true;
 }
 
@@ -1165,7 +1178,7 @@ bool generator::visit_if_stmt(if_stmt* node) {
     node->get_block()->accept(this);
     if (ircode_block->back_is_ret_stmt()) {
         // generate a new label here
-        ircode_block->add_stmt(new sir_name_label(get_auto_label()));
+        ircode_block->add_stmt(new sir_place_holder_label(get_auto_label()));
     }
     auto jump_out = new sir_br(0);
     jump_outs.push_back(jump_out);

@@ -12,6 +12,8 @@ test: $(COLGMCC)
 	@ lli out.ll
 	@ $(COLGMCC) test/branch.colgm
 	@ lli out.ll
+	@ $(COLGMCC) test/continue_break.colgm
+	@ lli out.ll
 	@ $(COLGMCC) test/func.colgm
 	@ lli out.ll
 	@ $(COLGMCC) test/hello.colgm
