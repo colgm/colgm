@@ -54,7 +54,7 @@ void sir_ret::dump(std::ostream& out) const {
 void sir_string::dump(std::ostream& out) const {
     out << "%" << destination << " = getelementptr ";
     out << "[" << literal.size()+1 << " x i8], ";
-    out << "[" << literal.size()+1 << " x i8]* @.const.str." << index;
+    out << "[" << literal.size()+1 << " x i8]* @const.str." << index;
     out << ", i64 0, i64 0\n";
 }
 

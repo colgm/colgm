@@ -20,9 +20,9 @@ private:
     std::string get_temp_variable() {
         return std::to_string(ssa_temp_counter++);
     }
-    i64 auto_declared_label = 0;
-    auto get_auto_label() {
-        return auto_declared_label++;
+    usize place_holder_label = 0;
+    auto get_place_holder_label() {
+        return place_holder_label++;
     }
 
 private:

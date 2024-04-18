@@ -244,10 +244,10 @@ public:
 
 class sir_place_holder_label: public sir {
 private:
-    i64 label_count;
+    usize label_count;
 
 public:
-    sir_place_holder_label(i64 count):
+    sir_place_holder_label(usize count):
         sir(sir_kind::sir_place_holder_label), label_count(count) {}
     ~sir_place_holder_label() override = default;
     void dump(std::ostream&) const override;

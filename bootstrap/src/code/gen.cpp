@@ -56,7 +56,8 @@ void generator::convert_parameter_to_pointer(func_decl* node) {
 
 bool generator::visit_func_decl(func_decl* node) {
     ssa_temp_counter = 0;
-    auto_declared_label = 0;
+    place_holder_label = 0;
+
     auto name = node->get_name();
     if (impl_struct_name.length()) {
         name = impl_struct_name + "." + name;
@@ -1149,7 +1150,7 @@ bool generator::visit_while_stmt(while_stmt* node) {
 
 bool generator::visit_continue_stmt(continue_stmt* node) {
     ircode_block->add_stmt(new sir_br(loop_begin.back()));
-    ircode_block->add_stmt(new sir_place_holder_label(get_auto_label()));
+    ircode_block->add_stmt(new sir_place_holder_label(get_place_holder_label()));
     return true;
 }
 
@@ -1157,7 +1158,7 @@ bool generator::visit_break_stmt(break_stmt* node) {
     auto break_br = new sir_br(0);
     break_inst.push_back(break_br);
     ircode_block->add_stmt(break_br);
-    ircode_block->add_stmt(new sir_place_holder_label(get_auto_label()));
+    ircode_block->add_stmt(new sir_place_holder_label(get_place_holder_label()));
     return true;
 }
 
@@ -1178,7 +1179,7 @@ bool generator::visit_if_stmt(if_stmt* node) {
     node->get_block()->accept(this);
     if (ircode_block->back_is_ret_stmt()) {
         // generate a new label here
-        ircode_block->add_stmt(new sir_place_holder_label(get_auto_label()));
+        ircode_block->add_stmt(new sir_place_holder_label(get_place_holder_label()));
     }
     auto jump_out = new sir_br(0);
     jump_outs.push_back(jump_out);
