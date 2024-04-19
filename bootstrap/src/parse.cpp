@@ -136,24 +136,42 @@ expr* parse::scalar_gen() {
         match(tok::rcurve);
         return result;
     }
-    if (look_ahead(tok::num)) {
+    if (look_ahead(tok::sub)) {
+        return unary_neg_gen();
+    } else if (look_ahead(tok::floater)) {
+        return unary_bnot_gen();
+    } else if (look_ahead(tok::num)) {
         return number_gen();
-    }
-    if (look_ahead(tok::str)) {
+    } else if (look_ahead(tok::str)) {
         return string_gen();
-    }
-    if (look_ahead(tok::ch)) {
+    } else if (look_ahead(tok::ch)) {
         return char_gen();
-    }
-    if (look_ahead(tok::tktrue) || look_ahead(tok::tkfalse)) {
+    } else if (look_ahead(tok::tktrue) || look_ahead(tok::tkfalse)) {
         return bool_gen();
-    }
-    if (look_ahead(tok::id)) {
+    } else if (look_ahead(tok::id)) {
         return call_gen();
     }
     err.err("parse", toks[ptr].loc, "expected scalar here.");
     next();
     return new null();
+}
+
+unary_operator* parse::unary_neg_gen() {
+    auto result = new unary_operator(toks[ptr].loc);
+    match(tok::sub);
+    result->set_value(scalar_gen());
+    result->set_opr(unary_operator::kind::neg);
+    update_location(result);
+    return result;
+}
+
+unary_operator* parse::unary_bnot_gen() {
+    auto result = new unary_operator(toks[ptr].loc);
+    match(tok::floater);
+    result->set_value(scalar_gen());
+    result->set_opr(unary_operator::kind::bnot);
+    update_location(result);
+    return result;
 }
 
 expr* parse::multive_gen() {

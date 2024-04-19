@@ -144,6 +144,21 @@ bool dumper::visit_impl_struct(impl_struct* node) {
     return true;
 }
 
+bool dumper::visit_unary_operator(unary_operator* node) {
+    dump_indent();
+    std::cout << "unary ";
+    switch(node->get_opr()) {
+        case unary_operator::kind::neg: std::cout << "-"; break;
+        case unary_operator::kind::bnot: std::cout << "~"; break;
+    }
+    std::cout << format_location(node->get_location());
+    push_indent();
+    set_last();
+    node->get_value()->accept(this);
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_binary_operator(binary_operator* node) {
     dump_indent();
     std::cout << "binary ";

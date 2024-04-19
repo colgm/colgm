@@ -81,6 +81,9 @@ private:
     type resolve_arithmetic_operator(binary_operator*);
     type resolve_bitwise_operator(binary_operator*);
     type resolve_binary_operator(binary_operator*);
+    type resolve_unary_neg(unary_operator*);
+    type resolve_unary_bnot(unary_operator*);
+    type resolve_unary_operator(unary_operator*);
     type resolve_number_literal(number_literal*);
     type resolve_string_literal(string_literal*);
     type resolve_char_literal(char_literal*);

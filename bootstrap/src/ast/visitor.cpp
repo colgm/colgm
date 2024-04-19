@@ -74,6 +74,11 @@ bool visitor::visit_expr(expr* node) {
     return true;
 }
 
+bool visitor::visit_unary_operator(unary_operator* node) {
+    node->get_value()->accept(this);
+    return true;
+}
+
 bool visitor::visit_binary_operator(binary_operator* node) {
     node->get_left()->accept(this);
     node->get_right()->accept(this);

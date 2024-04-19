@@ -20,6 +20,7 @@ public:
     virtual bool visit_func_decl(func_decl*);
     virtual bool visit_impl_struct(impl_struct*);
     virtual bool visit_expr(expr*);
+    virtual bool visit_unary_operator(unary_operator*);
     virtual bool visit_binary_operator(binary_operator*);
     virtual bool visit_identifier(identifier*);
     virtual bool visit_number_literal(number_literal*);

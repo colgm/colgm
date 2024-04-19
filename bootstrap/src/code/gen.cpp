@@ -1097,6 +1097,12 @@ bool generator::visit_binary_operator(binary_operator* node) {
     return true;
 }
 
+bool generator::visit_unary_operator(unary_operator* node) {
+    node->get_value()->accept(this);
+    unimplemented(node);
+    return true;
+}
+
 bool generator::visit_ret_stmt(ret_stmt* node) {
     if (node->get_value()) {
         node->get_value()->accept(this);

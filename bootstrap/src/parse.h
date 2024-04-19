@@ -103,6 +103,8 @@ private:
     char_literal* char_gen();
     bool_literal* bool_gen();
     expr* scalar_gen();
+    unary_operator* unary_neg_gen();
+    unary_operator* unary_bnot_gen();
     expr* multive_gen();
     expr* additive_gen();
     expr* bitwise_and_gen();

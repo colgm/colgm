@@ -7,6 +7,14 @@ void expr::accept(visitor* v) {
     v->visit_expr(this);
 }
 
+unary_operator::~unary_operator() {
+    delete value;
+}
+
+void unary_operator::accept(visitor* v) {
+    v->visit_unary_operator(this);
+}
+
 binary_operator::~binary_operator() {
     delete left;
     delete right;

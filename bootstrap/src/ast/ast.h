@@ -10,6 +10,7 @@ namespace colgm {
 enum class ast_type {
     ast_null = 0,
     ast_root,
+    ast_unary_operator,
     ast_binary_operator,
     ast_identifier,
     ast_number_literal,
@@ -54,6 +55,8 @@ class func_decl;
 class impl_struct;
 class expr;
 class null;
+class unary_operator;
+class binary_operator;
 class identifier;
 class number_literal;
 class string_literal;

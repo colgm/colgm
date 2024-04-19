@@ -21,6 +21,29 @@ public:
     void accept(visitor*) override { return; }
 };
 
+class unary_operator: public expr {
+public:
+    enum class kind {
+        neg,
+        bnot
+    };
+
+private:
+    kind opr;
+    expr* value;
+
+public:
+    unary_operator(const span& loc):
+        expr(ast_type::ast_unary_operator, loc), value(nullptr) {}
+    ~unary_operator() override;
+    void accept(visitor*) override;
+
+    void set_opr(kind t) { opr = t; }
+    auto get_opr() const { return opr; }
+    void set_value(expr* node) { value = node; }
+    auto get_value() const { return value; }
+};
+
 class binary_operator: public expr {
 public:
     enum class kind {

@@ -443,6 +443,43 @@ type semantic::resolve_binary_operator(binary_operator* node) {
     return type::error_type();
 }
 
+type semantic::resolve_unary_neg(unary_operator* node) {
+    const auto value = resolve_expression(node->get_value());
+    if (!value.is_integer() && !value.is_float()) {
+        report(node,
+            "expect integer or float but get \"" + value.to_string() + "\"."
+        );
+    }
+    return value;
+}
+
+type semantic::resolve_unary_bnot(unary_operator* node) {
+    const auto value = resolve_expression(node->get_value());
+    if (!value.is_integer()) {
+        report(node->get_value(),
+            "bitwise operator cannot be used on \"" + value.to_string() + "\"."
+        );
+    }
+    return value;
+}
+
+type semantic::resolve_unary_operator(unary_operator* node) {
+    switch(node->get_opr()) {
+        case unary_operator::kind::neg: {
+            const auto res = resolve_unary_neg(node);
+            node->set_resolve_type(res);
+            return res;
+        }
+        case unary_operator::kind::bnot: {
+            const auto res = resolve_unary_bnot(node);
+            node->set_resolve_type(res);
+            return res;
+        }
+        default: unimplemented(node); break;
+    }
+    return type::error_type();
+}
+
 type semantic::resolve_number_literal(number_literal* node) {
     const auto& literal_string = node->get_number();
     if (literal_string.find(".")!=std::string::npos ||
@@ -830,6 +867,8 @@ type semantic::resolve_assignment(assignment* node) {
 
 type semantic::resolve_expression(expr* node) {
     switch(node->get_ast_type()) {
+    case ast_type::ast_unary_operator:
+        return resolve_unary_operator(reinterpret_cast<unary_operator*>(node));
     case ast_type::ast_binary_operator:
         return resolve_binary_operator(reinterpret_cast<binary_operator*>(node));
     case ast_type::ast_number_literal:
