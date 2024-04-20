@@ -18,12 +18,14 @@ enum class sir_kind {
     sir_block,
     sir_alloca,
     sir_number,
-    sir_tempptr,
+    sir_temp_ptr,
     sir_ret,
     sir_str,
     sir_call_index,
     sir_call_field,
     sir_call_func,
+    sir_neg,
+    sir_bnot,
     sir_binary,
     sir_label,
     sir_place_holder_label,
@@ -92,15 +94,22 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_tempptr: public sir {
+class sir_temp_ptr: public sir {
+/*
+used to get temporary pointer of numbering variable
+    %real.1 = alloca i32
+this operand will do this:
+    %1 = getelementptr i32, i32* %real.1, i32 0
+and %1 is i32*
+*/
 private:
     std::string temp_name;
     std::string type_name;
 
 public:
-    sir_tempptr(const std::string& tmp, const std::string type):
-        sir(sir_kind::sir_tempptr), temp_name(tmp), type_name(type) {}
-    ~sir_tempptr() override = default;
+    sir_temp_ptr(const std::string& tmp, const std::string type):
+        sir(sir_kind::sir_temp_ptr), temp_name(tmp), type_name(type) {}
+    ~sir_temp_ptr() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -206,6 +215,42 @@ public:
     ~sir_call_func() override = default;
     void add_arg_type(const std::string& t) { args_type.push_back(t); }
     void add_arg(const std::string& a) { args.push_back(a); }
+    void dump(std::ostream&) const override;
+};
+
+class sir_neg: public sir {
+private:
+    std::string source;
+    std::string destination;
+    std::string opr;
+    std::string type;
+
+public:
+    sir_neg(const std::string& src,
+            const std::string& dst,
+            const std::string& o,
+            const std::string& t):
+        sir(sir_kind::sir_neg),
+        source(src), destination(dst),
+        opr(o), type(t) {}
+    ~sir_neg() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_bnot: public sir {
+private:
+    std::string source;
+    std::string destination;
+    std::string type;
+
+public:
+    sir_bnot(const std::string& src,
+             const std::string& dst,
+             const std::string& t):
+        sir(sir_kind::sir_bnot),
+        source(src), destination(dst),
+        type(t) {}
+    ~sir_bnot() override = default;
     void dump(std::ostream&) const override;
 };
 

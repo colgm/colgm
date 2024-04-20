@@ -2,6 +2,7 @@ func write(fd: i32, buf: i8*, count: i64) -> i64;
 func strlen(s: i8*) -> i64;
 func malloc(s: i64) -> i8*;
 func free(s: i8*);
+func puts(s: i8*) -> i32;
 
 func itoa(num: i64, buf: i8*, base: i64) -> i8* {
     if (base < 2 or base > 16) {
@@ -14,6 +15,10 @@ func itoa(num: i64, buf: i8*, base: i64) -> i8* {
         return buf;
     }
     var i = 0;
+    var neg_flag = num < 0;
+    if (neg_flag) {
+        num = -num;
+    }
     while(num > 0) {
         var tmp_bit = i64::i8(num % base);
         if (tmp_bit < i64::i8(10)) {
@@ -36,11 +41,20 @@ func itoa(num: i64, buf: i8*, base: i64) -> i8* {
         buf[s_end - i - 1] = tmp;
         i += 1;
     }
+    if (neg_flag and base==10) {
+        var j = i;
+        while (j>=0) {
+            buf[j+1] = buf[j];
+            j -= 1;
+        }
+        buf[0] = '-';
+    }
     return buf;
 }
 
 func hexdump(buf: i8*) {
     var stdout = i64::i32(1);
+    write(stdout, "[bitwise.colgm] ", 16);
     write(stdout, "0x", 2);
     write(stdout, buf, strlen(buf));
     write(stdout, "\n", 1);
@@ -65,7 +79,18 @@ func main() -> i64 {
         hexdump(buf);
         i *= 0x2;
     }
+
+    i = 0x1;
+    puts("[bitwise.colgm] bnot test begin...");
+    while (i < 0x80000000) {
+        var res = i ^ i64::u64(-1);
+        if (res!=~i) {
+            puts("[bitwise.colgm] bnot test failed!");
+        }
+        i += i64::u64(1);
+    }
+    puts("[bitwise.colgm] bnot test passed!");
+
     free(buf);
-    write(i64::i32(1), "  -> from bitwise.colgm\n", 24);
     return 0;
 }

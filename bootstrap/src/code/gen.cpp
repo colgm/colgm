@@ -528,7 +528,7 @@ bool generator::visit_call_func_args(call_func_args* node) {
             "real." + temp_1,
             type_convert(node->get_resolve())
         ));
-        ircode_block->add_stmt(new sir_tempptr(
+        ircode_block->add_stmt(new sir_temp_ptr(
             temp_1,
             type_convert(node->get_resolve())
         ));
@@ -803,7 +803,7 @@ void generator::generate_and_operator(binary_operator* node) {
     ircode_block->add_nop("begin and opr");
     const auto temp_0 = get_temp_variable();
     ircode_block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
-    ircode_block->add_stmt(new sir_tempptr(temp_0, "i1"));
+    ircode_block->add_stmt(new sir_temp_ptr(temp_0, "i1"));
     node->get_left()->accept(this);
     const auto left = value_stack.back();
     value_stack.pop_back();
@@ -836,7 +836,7 @@ void generator::generate_or_operator(binary_operator* node) {
     ircode_block->add_nop("begin or opr");
     const auto temp_0 = get_temp_variable();
     ircode_block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
-    ircode_block->add_stmt(new sir_tempptr(temp_0, "i1"));
+    ircode_block->add_stmt(new sir_temp_ptr(temp_0, "i1"));
     node->get_left()->accept(this);
     const auto left = value_stack.back();
     value_stack.pop_back();
@@ -1097,9 +1097,41 @@ bool generator::visit_binary_operator(binary_operator* node) {
     return true;
 }
 
+void generator::generate_neg_operator(const value& src, const value& result) {
+    const auto opr = src.resolve_type.is_integer()? "sub":"fsub";
+    ircode_block->add_stmt(new sir_neg(
+        src.content,
+        result.content,
+        opr,
+        type_convert(src.resolve_type)
+    ));
+}
+
+void generator::generate_bnot_operator(const value& src, const value& result) {
+    ircode_block->add_stmt(new sir_bnot(
+        src.content,
+        result.content,
+        type_convert(src.resolve_type)
+    ));
+}
+
 bool generator::visit_unary_operator(unary_operator* node) {
+    ircode_block->add_nop("begin unary opr");
     node->get_value()->accept(this);
-    unimplemented(node);
+    const auto src = value_stack.back();
+    value_stack.pop_back();
+    const auto result = value {
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = get_temp_variable()
+    };
+    value_stack.push_back(result);
+    switch(node->get_opr()) {
+        case unary_operator::kind::neg: generate_neg_operator(src,result); break;
+        case unary_operator::kind::bnot: generate_bnot_operator(src, result); break;
+        default: unimplemented(node);
+    }
+    ircode_block->add_nop("end binary opr");
     return true;
 }
 

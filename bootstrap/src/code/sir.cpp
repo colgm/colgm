@@ -38,7 +38,7 @@ void sir_number::dump(std::ostream& out) const {
     out << "\n";
 }
 
-void sir_tempptr::dump(std::ostream& out) const {
+void sir_temp_ptr::dump(std::ostream& out) const {
     out << "%" << temp_name << " = getelementptr " << type_name << ", ";
     out << type_name << "* %real." << temp_name << ", i32 0\n"; 
 }
@@ -82,6 +82,17 @@ void sir_call_func::dump(std::ostream& out) const {
         }
     }
     out << ")\n";
+}
+
+void sir_neg::dump(std::ostream& out) const {
+    out << "%" << destination << " = " << opr << " " << type << " ";
+    out << (opr=="sub"? "0":"0,0");
+    out << ", %" << source << "\n";
+}
+
+void sir_bnot::dump(std::ostream& out) const {
+    out << "%" << destination << " = xor " << type << " ";
+    out << "%" << source << ", -1\n";
 }
 
 void sir_binary::dump(std::ostream& out) const {
