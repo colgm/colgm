@@ -9,7 +9,7 @@ namespace colgm {
 void package_manager::dump_package_core(colgm_package* p,
                                         const std::string& indent) {
     for(const auto& i : p->sub_pack) {
-        std::clog << indent << "package: " << i.second->package_name << ":\n";
+        std::clog << indent << "package: " << i.second->package_name << "\n";
         dump_package_core(i.second, indent + "  ");
     }
     for(const auto& i : p->sub_mod) {

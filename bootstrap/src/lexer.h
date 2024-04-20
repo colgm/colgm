@@ -101,7 +101,7 @@ private:
     u64 invalid_char;
     std::vector<token> toks;
 
-    const std::unordered_map<std::string, tok> typetbl = {
+    const std::unordered_map<std::string, tok> type_table = {
         {"use"     ,tok::use     },
         {"enum"    ,tok::tkenum  },
         {"impl"    ,tok::impl    },

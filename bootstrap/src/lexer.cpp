@@ -94,7 +94,7 @@ void lexer::open(const std::string& file) {
 }
 
 tok lexer::get_type(const std::string& str) {
-    return typetbl.count(str)? typetbl.at(str):tok::null;
+    return type_table.count(str)? type_table.at(str):tok::null;
 }
 
 std::string lexer::utf8_gen() {
