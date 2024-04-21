@@ -16,10 +16,10 @@ enum class tok:u32 {
     str,      // string literal
     ch,       // char literal
     id,       // identifier
-    tktrue,   // keyword true
-    tkfalse,  // keyword false
+    tk_true,  // keyword true
+    tk_false, // keyword false
     use,      // keyword use
-    tkenum,   // keyword enum
+    tk_enum,  // keyword enum
     rfor,     // loop keyword for
     forindex, // loop keyword forindex
     foreach,  // loop keyword foreach
@@ -35,7 +35,7 @@ enum class tok:u32 {
     rif,      // condition expression keyword if
     elsif,    // condition expression keyword elsif
     relse,    // condition expression keyword else
-    tknil,    // nil literal
+    nil,      // nil literal
     lcurve,   // (
     rcurve,   // )
     lbracket, // [
@@ -103,10 +103,10 @@ private:
 
     const std::unordered_map<std::string, tok> type_table = {
         {"use"     ,tok::use     },
-        {"enum"    ,tok::tkenum  },
+        {"enum"    ,tok::tk_enum },
         {"impl"    ,tok::impl    },
-        {"true"    ,tok::tktrue  },
-        {"false"   ,tok::tkfalse },
+        {"true"    ,tok::tk_true },
+        {"false"   ,tok::tk_false},
         {"for"     ,tok::rfor    },
         {"forindex",tok::forindex},
         {"foreach" ,tok::foreach },
@@ -121,7 +121,7 @@ private:
         {"if"      ,tok::rif     },
         {"elsif"   ,tok::elsif   },
         {"else"    ,tok::relse   },
-        {"nil"     ,tok::tknil   },
+        {"nil"     ,tok::nil     },
         {"("       ,tok::lcurve  },
         {")"       ,tok::rcurve  },
         {"["       ,tok::lbracket},

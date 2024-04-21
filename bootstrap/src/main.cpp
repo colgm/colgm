@@ -82,13 +82,8 @@ void scan_package(const std::string& library_path, const u32 cmd) {
     }
 }
 
-void execute(
-    const std::string& file,
-    const u32 cmd = 0) {
-
-    // using clk = std::chrono::high_resolution_clock;
-    // const auto den = clk::duration::period::den;
-
+void execute(const std::string& file,
+             const u32 cmd = 0) {
     colgm::lexer lexer;
     colgm::parse parser;
     colgm::semantic sema;

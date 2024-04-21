@@ -107,7 +107,7 @@ call* parse::call_gen() {
 
 nil_literal* parse::nil_gen() {
     auto result = new nil_literal(toks[ptr].loc);
-    match(tok::tknil);
+    match(tok::nil);
     return result;
 }
 
@@ -130,7 +130,7 @@ char_literal* parse::char_gen() {
 }
 
 bool_literal* parse::bool_gen() {
-    auto result = new bool_literal(toks[ptr].loc, toks[ptr].type==tok::tktrue);
+    auto result = new bool_literal(toks[ptr].loc, toks[ptr].type==tok::tk_true);
     match(toks[ptr].type);
     return result;
 }
@@ -146,7 +146,7 @@ expr* parse::scalar_gen() {
         return unary_neg_gen();
     } else if (look_ahead(tok::floater)) {
         return unary_bnot_gen();
-    } else if (look_ahead(tok::tknil)) {
+    } else if (look_ahead(tok::nil)) {
         return nil_gen();
     } else if (look_ahead(tok::num)) {
         return number_gen();
@@ -154,7 +154,7 @@ expr* parse::scalar_gen() {
         return string_gen();
     } else if (look_ahead(tok::ch)) {
         return char_gen();
-    } else if (look_ahead(tok::tktrue) || look_ahead(tok::tkfalse)) {
+    } else if (look_ahead(tok::tk_true) || look_ahead(tok::tk_false)) {
         return bool_gen();
     } else if (look_ahead(tok::id)) {
         return call_gen();
@@ -564,7 +564,7 @@ code_block* parse::block_gen() {
         switch(toks[ptr].type) {
             case tok::var: result->add_stmt(definition_gen()); break;
             case tok::lcurve:
-            case tok::tknil:
+            case tok::nil:
             case tok::num:
             case tok::str:
             case tok::id: result->add_stmt(in_stmt_expr_gen()); break;
