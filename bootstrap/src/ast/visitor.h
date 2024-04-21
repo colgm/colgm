@@ -23,6 +23,7 @@ public:
     virtual bool visit_unary_operator(unary_operator*);
     virtual bool visit_binary_operator(binary_operator*);
     virtual bool visit_identifier(identifier*);
+    virtual bool visit_nil_literal(nil_literal*);
     virtual bool visit_number_literal(number_literal*);
     virtual bool visit_string_literal(string_literal*);
     virtual bool visit_char_literal(char_literal*);

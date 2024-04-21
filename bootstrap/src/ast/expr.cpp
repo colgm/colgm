@@ -28,6 +28,10 @@ void identifier::accept(visitor* v) {
     v->visit_identifier(this);
 }
 
+void nil_literal::accept(visitor* v) {
+    v->visit_nil_literal(this);
+}
+
 void number_literal::accept(visitor* v) {
     v->visit_number_literal(this);
 }

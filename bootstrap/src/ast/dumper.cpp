@@ -28,6 +28,12 @@ bool dumper::visit_identifier(identifier* node) {
     return true;
 }
 
+bool dumper::visit_nil_literal(nil_literal* node) {
+    dump_indent();
+    std::cout << "nil" << format_location(node->get_location());
+    return true;
+}
+
 bool dumper::visit_number_literal(number_literal* node) {
     dump_indent();
     std::cout << "number " << node->get_number() << format_location(node->get_location());

@@ -13,6 +13,7 @@ enum class ast_type {
     ast_unary_operator,
     ast_binary_operator,
     ast_identifier,
+    ast_nil_literal,
     ast_number_literal,
     ast_string_literal,
     ast_char_literal,

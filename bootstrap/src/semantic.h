@@ -84,6 +84,7 @@ private:
     type resolve_unary_neg(unary_operator*);
     type resolve_unary_bnot(unary_operator*);
     type resolve_unary_operator(unary_operator*);
+    type resolve_nil_literal(nil_literal*);
     type resolve_number_literal(number_literal*);
     type resolve_string_literal(string_literal*);
     type resolve_char_literal(char_literal*);

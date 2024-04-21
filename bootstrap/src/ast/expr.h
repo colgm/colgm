@@ -98,6 +98,14 @@ public:
     const auto& get_name() const { return name; }
 };
 
+class nil_literal: public expr {
+public:
+    nil_literal(const span& loc):
+        expr(ast_type::ast_nil_literal, loc) {}
+    ~nil_literal() override = default;
+    void accept(visitor*) override;
+};
+
 class number_literal: public expr {
 private:
     std::string literal;

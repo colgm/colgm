@@ -78,6 +78,7 @@ private:
 
     void call_expression_generation(call*, bool);
 
+    bool visit_nil_literal(nil_literal*) override;
     bool visit_number_literal(number_literal*) override;
     bool visit_string_literal(string_literal*) override;
     bool visit_char_literal(char_literal*) override;

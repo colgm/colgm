@@ -30,6 +30,11 @@ void sir_block::dump(std::ostream& out) const {
     }
 }
 
+void sir_nil::dump(std::ostream& out) const {
+    out << "%" << destination << " = ";
+    out << "getelementptr i8, i8* null, i32 0\n";
+}
+
 void sir_number::dump(std::ostream& out) const {
     out << "%" << destination << " = ";
     out << (is_integer? "add":"fadd") << " " << type_name << " ";

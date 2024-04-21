@@ -89,6 +89,10 @@ bool visitor::visit_identifier(identifier* node) {
     return true;
 }
 
+bool visitor::visit_nil_literal(nil_literal* node) {
+    return true;
+}
+
 bool visitor::visit_number_literal(number_literal* node) {
     return true;
 }

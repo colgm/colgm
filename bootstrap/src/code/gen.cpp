@@ -157,6 +157,19 @@ void generator::call_expression_generation(call* node, bool need_address) {
     ));
 }
 
+bool generator::visit_nil_literal(nil_literal* node) {
+    const auto temp = get_temp_variable();
+    ircode_block->add_stmt(new sir_nil(temp));
+    // push value on stack
+    const auto result = value {
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = temp
+    };
+    value_stack.push_back(result);
+    return true;
+}
+
 bool generator::visit_number_literal(number_literal* node) {
     const auto temp = get_temp_variable();
     ircode_block->add_stmt(new sir_number(

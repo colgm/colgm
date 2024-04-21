@@ -17,6 +17,7 @@ enum class sir_kind {
     sir_nop,
     sir_block,
     sir_alloca,
+    sir_nil,
     sir_number,
     sir_temp_ptr,
     sir_ret,
@@ -72,6 +73,17 @@ public:
     sir_alloca(const std::string& v, const std::string& t):
         sir(sir_kind::sir_alloca), variable_name(v), type_name(t) {}
     ~sir_alloca() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_nil: public sir {
+private:
+    std::string destination;
+
+public:
+    sir_nil(const std::string& dst):
+        sir(sir_kind::sir_nil), destination(dst) {}
+    ~sir_nil() override = default;
     void dump(std::ostream&) const override;
 };
 

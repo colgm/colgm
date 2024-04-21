@@ -105,6 +105,12 @@ call* parse::call_gen() {
     return result;
 }
 
+nil_literal* parse::nil_gen() {
+    auto result = new nil_literal(toks[ptr].loc);
+    match(tok::tknil);
+    return result;
+}
+
 number_literal* parse::number_gen() {
     auto result = new number_literal(toks[ptr].loc, toks[ptr].str);
     match(tok::num);
@@ -140,6 +146,8 @@ expr* parse::scalar_gen() {
         return unary_neg_gen();
     } else if (look_ahead(tok::floater)) {
         return unary_bnot_gen();
+    } else if (look_ahead(tok::tknil)) {
+        return nil_gen();
     } else if (look_ahead(tok::num)) {
         return number_gen();
     } else if (look_ahead(tok::str)) {
@@ -556,6 +564,7 @@ code_block* parse::block_gen() {
         switch(toks[ptr].type) {
             case tok::var: result->add_stmt(definition_gen()); break;
             case tok::lcurve:
+            case tok::tknil:
             case tok::num:
             case tok::str:
             case tok::id: result->add_stmt(in_stmt_expr_gen()); break;

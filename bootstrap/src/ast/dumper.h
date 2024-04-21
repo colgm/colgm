@@ -42,6 +42,7 @@ public:
     dumper(): indent({}) {}
     bool visit_root(root*) override;
     bool visit_identifier(identifier*) override;
+    bool visit_nil_literal(nil_literal*) override;
     bool visit_number_literal(number_literal*) override;
     bool visit_string_literal(string_literal*) override;
     bool visit_char_literal(char_literal*) override;

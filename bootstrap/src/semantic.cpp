@@ -480,12 +480,17 @@ type semantic::resolve_unary_operator(unary_operator* node) {
     return type::error_type();
 }
 
+type semantic::resolve_nil_literal(nil_literal* node) {
+    node->set_resolve_type(type::i8_type(1));
+    return type::i8_type(1);
+}
+
 type semantic::resolve_number_literal(number_literal* node) {
     const auto& literal_string = node->get_number();
     if (literal_string.find(".")!=std::string::npos ||
         literal_string.find("e")!=std::string::npos) {
-        node->set_resolve_type({"f64", "", 0});
-        return {"f64", "", 0};
+        node->set_resolve_type(type::f64_type());
+        return type::f64_type();
     }
     f64 result = str_to_num(literal_string.c_str());
     if (std::isinf(result) || std::isnan(result)) {
@@ -493,33 +498,33 @@ type semantic::resolve_number_literal(number_literal* node) {
         return type::error_type();
     }
     if (literal_string.length()>2 && literal_string[1]=='o') {
-        node->set_resolve_type({"u64", "", 0});
+        node->set_resolve_type(type::u64_type());
         node->reset_number(std::to_string(oct_to_u64(literal_string.c_str())));
-        return {"u64", "", 0};
+        return type::u64_type();
     }
     if (literal_string.length()>2 && literal_string[1]=='x') {
-        node->set_resolve_type({"u64", "", 0});
+        node->set_resolve_type(type::u64_type());
         node->reset_number(std::to_string(hex_to_u64(literal_string.c_str())));
-        return {"u64", "", 0};
+        return type::u64_type();
     }
-    node->set_resolve_type({"i64", "", 0});
-    return {"i64", "", 0};
+    node->set_resolve_type(type::i64_type());
+    return type::i64_type();
 }
 
 type semantic::resolve_string_literal(string_literal* node) {
     ctx.global.constant_string.insert(node->get_string());
-    node->set_resolve_type({"i8", "", 1});
-    return {"i8", "", 1};
+    node->set_resolve_type(type::i8_type(1));
+    return type::i8_type(1);
 }
 
 type semantic::resolve_char_literal(char_literal* node) {
-    node->set_resolve_type({"i8", "", 0});
-    return {"i8", "", 0};
+    node->set_resolve_type(type::i8_type());
+    return type::i8_type();
 }
 
 type semantic::resolve_bool_literal(bool_literal* node) {
-    node->set_resolve_type({"bool", "", 0});
-    return {"bool", "", 0};
+    node->set_resolve_type(type::bool_type());
+    return type::bool_type();
 }
 
 type semantic::resolve_identifier(identifier* node) {
@@ -871,6 +876,8 @@ type semantic::resolve_expression(expr* node) {
         return resolve_unary_operator(reinterpret_cast<unary_operator*>(node));
     case ast_type::ast_binary_operator:
         return resolve_binary_operator(reinterpret_cast<binary_operator*>(node));
+    case ast_type::ast_nil_literal:
+        return resolve_nil_literal(reinterpret_cast<nil_literal*>(node));
     case ast_type::ast_number_literal:
         return resolve_number_literal(reinterpret_cast<number_literal*>(node));
     case ast_type::ast_string_literal:

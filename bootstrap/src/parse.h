@@ -98,6 +98,7 @@ private:
 private:
     identifier* identifier_gen();
     call* call_gen();
+    nil_literal* nil_gen();
     number_literal* number_gen();
     string_literal* string_gen();
     char_literal* char_gen();
