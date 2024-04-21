@@ -910,6 +910,11 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         report(node, "variable \"" + name + "\" conflicts with global symbol.");
         return;
     }
+    // must have init value!
+    if (!node->get_init_value()) {
+        report(node, "expect initial value.");
+        return;
+    }
     // no type declaration
     if (!node->get_type()) {
         const auto real_type = resolve_expression(node->get_init_value());

@@ -162,7 +162,9 @@ bool visitor::visit_definition(definition* node) {
     if (node->get_type()) {
         node->get_type()->accept(this);
     }
-    node->get_init_value()->accept(this);
+    if (node->get_init_value()) {
+        node->get_init_value()->accept(this);
+    }
     return true;
 }
 

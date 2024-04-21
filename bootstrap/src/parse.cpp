@@ -490,15 +490,18 @@ use_stmt* parse::use_stmt_gen() {
 }
 
 definition* parse::definition_gen() {
+    const auto& begin_location = toks[ptr].loc;
     match(tok::var);
-    auto result = new definition(toks[ptr].loc, toks[ptr].str);
+    auto result = new definition(begin_location, toks[ptr].str);
     match(tok::id);
     if (look_ahead(tok::colon)) {
         match(tok::colon);
         result->set_type(type_gen());
     }
-    match(tok::eq);
-    result->set_init_value(calculation_gen());
+    if (look_ahead(tok::eq)) {
+        match(tok::eq);
+        result->set_init_value(calculation_gen());
+    }
     match(tok::semi);
     update_location(result);
     return result;

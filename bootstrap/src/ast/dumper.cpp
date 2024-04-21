@@ -303,11 +303,16 @@ bool dumper::visit_definition(definition* node) {
     std::cout << "define @" << node->get_name() << " ";
     std::cout << format_location(node->get_location());
     push_indent();
+    if (node->get_type() && !node->get_init_value()) {
+        set_last();
+    }
     if (node->get_type()) {
         node->get_type()->accept(this);
     }
     set_last();
-    node->get_init_value()->accept(this);
+    if (node->get_init_value()) {
+        node->get_init_value()->accept(this);
+    }
     pop_indent();
     return true;
 }
