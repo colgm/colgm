@@ -74,6 +74,7 @@ private:
                              const std::string&,
                              const std::string&);
     type basic_static_method_infer(const std::string&, const std::string&);
+    type basic_method_infer(const std::string&, const std::string&);
 
 private:
     type resolve_logical_operator(binary_operator*);

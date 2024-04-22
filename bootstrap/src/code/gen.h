@@ -87,8 +87,10 @@ private:
     void call_variable(identifier*);
     bool visit_call(call*) override;
     bool visit_call_index(call_index*) override;
+    void generate_basic_method_call(call_field*, const value&);
     bool visit_call_field(call_field*) override;
     bool visit_ptr_call_field(ptr_call_field*) override;
+    void generate_basic_static_method(call_path*, const value&);
     bool visit_call_path(call_path*) override;
     bool visit_call_func_args(call_func_args*) override;
     void generate_and_operator(binary_operator*);

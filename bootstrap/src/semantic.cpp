@@ -317,6 +317,17 @@ type semantic::basic_static_method_infer(const std::string& bsc_name,
     return infer;
 }
 
+type semantic::basic_method_infer(const std::string& bsc_name,
+                                  const std::string& fn_name) {
+    auto infer = type({bsc_name, "", 0, true});
+    infer.bsc_info = {
+        .flag_is_static = false,
+        .flag_is_normal = true,
+        .method_name = fn_name
+    };
+    return infer;
+}
+
 type semantic::resolve_logical_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
@@ -559,6 +570,14 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
         );
         return type::error_type();
     }
+    if (prev.loc_file.empty()) {
+        if (colgm_basic::mapper.count(prev.name) &&
+            colgm_basic::mapper.at(prev.name)->method.count(node->get_name())) {
+            return basic_method_infer(prev.name, node->get_name());
+        }
+        unimplemented(node);
+        return type::error_type();
+    }
 
     if (!ctx.global.domain.at(ctx.this_file).structs.count(prev.name)) {
         report(node, "cannot get field from \"" + prev.to_string() + "\".");
@@ -677,6 +696,14 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         node->set_resolve_type(method.return_type);
         return method.return_type;
     }
+    // method call of basic
+    if (prev.bsc_info.flag_is_normal) {
+        const auto bsc = colgm_basic::mapper.at(prev.name);
+        const auto& method = bsc->method.at(prev.bsc_info.method_name);
+        check_method_call_args(method, prev, node);
+        node->set_resolve_type(method.return_type);
+        return method.return_type;
+    }
 
     unimplemented(node);
     return type::error_type();
@@ -712,7 +739,10 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
             colgm_basic::mapper.at(prev.name)->static_method.count(node->get_name())) {
             return basic_static_method_infer(prev.name, node->get_name());
         }
-        unimplemented(node);
+        report(node,
+            "cannot get static method \"" + node->get_name() +
+            "\" from \"" + prev.to_string() + "\"."
+        );
         return type::error_type();
     }
     const auto& domain = ctx.global.domain.at(prev.loc_file);

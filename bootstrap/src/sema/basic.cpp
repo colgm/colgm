@@ -49,100 +49,110 @@ std::unordered_map<std::string, colgm_basic*> colgm_basic::mapper = {
 
 colgm_basic* colgm_basic::u8() {
     static colgm_basic singleton = colgm_basic {"u8", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::u8_type()};
+    const auto parameter = symbol {.name = "self", type::u8_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "u8");
     basic::init_convert_method_map(singleton.static_method, parameter, "u8");
     return &singleton;
 }
 
 colgm_basic* colgm_basic::u16() {
     static colgm_basic singleton = colgm_basic {"u16", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::u16_type()};
+    const auto parameter = symbol {.name = "self", type::u16_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "u16");
     basic::init_convert_method_map(singleton.static_method, parameter, "u16");
     return &singleton;
 }
 
 colgm_basic* colgm_basic::u32() {
     static colgm_basic singleton = colgm_basic {"u32", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::u32_type()};
+    const auto parameter = symbol {.name = "self", type::u32_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "u32");
     basic::init_convert_method_map(singleton.static_method, parameter, "u32");
     return &singleton;
 }
 
 colgm_basic* colgm_basic::u64() {
     static colgm_basic singleton = colgm_basic {"u64", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::u64_type()};
+    const auto parameter = symbol {.name = "self", type::u64_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "u64");
     basic::init_convert_method_map(singleton.static_method, parameter, "u64");
     return &singleton;
 }
 
 colgm_basic* colgm_basic::i8() {
     static colgm_basic singleton = colgm_basic {"i8", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::i8_type()};
+    const auto parameter = symbol {.name = "self", type::i8_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "i8");
     basic::init_convert_method_map(singleton.static_method, parameter, "i8");
     return &singleton;
 }
 
 colgm_basic* colgm_basic::i16() {
     static colgm_basic singleton = colgm_basic {"i16", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::i16_type()};
+    const auto parameter = symbol {.name = "self", type::i16_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "i16");
     basic::init_convert_method_map(singleton.static_method, parameter, "i16");
     return &singleton;
 }
 
 colgm_basic* colgm_basic::i32() {
     static colgm_basic singleton = colgm_basic {"i32", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::i32_type()};
+    const auto parameter = symbol {.name = "self", type::i32_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "i32");
     basic::init_convert_method_map(singleton.static_method, parameter, "i32");
     return &singleton;
 }
 
 colgm_basic* colgm_basic::i64() {
     static colgm_basic singleton = colgm_basic {"i64", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::i64_type()};
+    const auto parameter = symbol {.name = "self", type::i64_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "i64");
     basic::init_convert_method_map(singleton.static_method, parameter, "i64");
     return &singleton;
 }
 
 colgm_basic* colgm_basic::f32() {
     static colgm_basic singleton = colgm_basic {"f32", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::f32_type()};
+    const auto parameter = symbol {.name = "self", type::f32_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "f32");
     basic::init_convert_method_map(singleton.static_method, parameter, "f32");
     return &singleton;
 }
 
 colgm_basic* colgm_basic::f64() {
     static colgm_basic singleton = colgm_basic {"f64", {}};
-    if (!singleton.static_method.empty()) {
+    if (!singleton.method.empty()) {
         return &singleton;
     }
-    const auto parameter = symbol {.name = "_num", type::f64_type()};
+    const auto parameter = symbol {.name = "self", type::f64_type()};
+    basic::init_convert_method_map(singleton.method, parameter, "f64");
     basic::init_convert_method_map(singleton.static_method, parameter, "f64");
     return &singleton;
 }

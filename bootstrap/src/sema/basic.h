@@ -19,6 +19,7 @@ void init_convert_method_map(std::unordered_map<std::string, colgm_func>&,
 
 struct colgm_basic {
     std::string name;
+    std::unordered_map<std::string, colgm_func> method;
     std::unordered_map<std::string, colgm_func> static_method;
 
     static std::unordered_map<std::string, colgm_basic*> mapper;

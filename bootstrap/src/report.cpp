@@ -122,6 +122,8 @@ void error::err(const std::string& stage,
     const usize maxlen = std::to_string(loc.end_line).length();
     const std::string iden = identation(maxlen);
 
+    std::cerr << cyan << iden << " | " << reset << "\n";
+
     for(u32 line = loc.begin_line; line<=loc.end_line; ++line) {
         // skip line 0
         if (!line) {

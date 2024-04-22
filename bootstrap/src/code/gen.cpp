@@ -315,9 +315,53 @@ bool generator::visit_call_index(call_index* node) {
     return true;
 }
 
+void generator::generate_basic_method_call(call_field* node,
+                                           const value& source) {
+    const auto bsc = colgm_basic::mapper.at(source.resolve_type.name);
+    if (!bsc->method.count(node->get_name())) {
+        unreachable(node);
+        return;
+    }
+    const auto name = "native." + source.resolve_type.name +
+                        "." + node->get_name();
+    if (!irc.used_basic_convert_method.count(source.resolve_type.name)) {
+        irc.used_basic_convert_method.insert({
+            source.resolve_type.name,
+            {}
+        });
+    }
+    irc.used_basic_convert_method.at(source.resolve_type.name).insert(
+        bsc->method.at(node->get_name()).return_type.name
+    );
+    auto result = value {
+        .kind = value_kind::v_sfn,
+        .resolve_type = node->get_resolve(),
+        .content = name
+    };
+    value_stack.push_back(result);
+    // load pointer's content to a temporary variable
+    auto self = value {
+        .kind = value_kind::v_var,
+        .resolve_type = source.resolve_type,
+        .content = get_temp_variable()
+    };
+    self.resolve_type.pointer_depth--;
+    ircode_block->add_stmt(new sir_load(
+        type_convert(self.resolve_type),
+        source.content,
+        self.content
+    ));
+    value_stack.push_back(self); // self number
+}
+
 bool generator::visit_call_field(call_field* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
+    // basic symbol, for example i8, i16, i32, i64
+    if (source.resolve_type.loc_file.empty()) {
+        generate_basic_method_call(node, source);
+        return true;
+    }
     if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
         err.err("code", node->get_location(),
             "cannot find domain \"" + source.resolve_type.loc_file + "\"."
@@ -445,33 +489,38 @@ bool generator::visit_ptr_call_field(ptr_call_field* node) {
     return true;
 }
 
+void generator::generate_basic_static_method(call_path* node,
+                                             const value& source) {
+    const auto bsc = colgm_basic::mapper.at(source.resolve_type.name);
+    if (!bsc->static_method.count(node->get_name())) {
+        unreachable(node);
+        return;
+    }
+    const auto name = "native." + source.resolve_type.name +
+                        "." + node->get_name();
+    if (!irc.used_basic_convert_method.count(source.resolve_type.name)) {
+        irc.used_basic_convert_method.insert({
+            source.resolve_type.name,
+            {}
+        });
+    }
+    irc.used_basic_convert_method.at(source.resolve_type.name).insert(
+        bsc->static_method.at(node->get_name()).return_type.name
+    );
+    auto result = value {
+        .kind = value_kind::v_sfn,
+        .resolve_type = node->get_resolve(),
+        .content = name
+    };
+    value_stack.push_back(result);
+}
+
 bool generator::visit_call_path(call_path* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
     // basic symbol, for example i8, i16, i32, i64
     if (source.resolve_type.loc_file.empty()) {
-        const auto bsc = colgm_basic::mapper.at(source.resolve_type.name);
-        if (bsc->static_method.count(node->get_name())) {
-            const auto name = "native." + source.resolve_type.name +
-                              "." + node->get_name();
-            if (!irc.used_basic_convert_method.count(source.resolve_type.name)) {
-                irc.used_basic_convert_method.insert({
-                    source.resolve_type.name,
-                    {}
-                });
-            }
-            irc.used_basic_convert_method.at(source.resolve_type.name).insert(
-                bsc->static_method.at(node->get_name()).return_type.name
-            );
-            auto result = value {
-                .kind = value_kind::v_sfn,
-                .resolve_type = node->get_resolve(),
-                .content = name
-            };
-            value_stack.push_back(result);
-            return true;
-        }
-        unreachable(node);
+        generate_basic_static_method(node, source);
         return true;
     }
     if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
