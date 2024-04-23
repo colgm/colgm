@@ -27,6 +27,11 @@ enum class sir_kind {
     sir_call_func,
     sir_neg,
     sir_bnot,
+    sir_add,
+    sir_sub,
+    sir_mul,
+    sir_div,
+    sir_rem,
     sir_binary,
     sir_label,
     sir_place_holder_label,
@@ -234,17 +239,17 @@ class sir_neg: public sir {
 private:
     std::string source;
     std::string destination;
-    std::string opr;
+    bool is_integer;
     std::string type;
 
 public:
     sir_neg(const std::string& src,
             const std::string& dst,
-            const std::string& o,
+            bool is_int,
             const std::string& t):
         sir(sir_kind::sir_neg),
         source(src), destination(dst),
-        opr(o), type(t) {}
+        is_integer(is_int), type(t) {}
     ~sir_neg() override = default;
     void dump(std::ostream&) const override;
 };
@@ -266,6 +271,112 @@ public:
     void dump(std::ostream&) const override;
 };
 
+class sir_add: public sir {
+private:
+    std::string left;
+    std::string right;
+    std::string destination;
+    bool is_integer;
+    std::string type;
+
+public:
+    sir_add(const std::string& l,
+            const std::string& r,
+            const std::string& dst,
+            bool is_int,
+            const std::string& t):
+        sir(sir_kind::sir_add),
+        left(l), right(r), destination(dst), is_integer(is_int), type(t) {}
+    ~sir_add() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_sub: public sir {
+private:
+    std::string left;
+    std::string right;
+    std::string destination;
+    bool is_integer;
+    std::string type;
+
+public:
+    sir_sub(const std::string& l,
+            const std::string& r,
+            const std::string& dst,
+            bool is_int,
+            const std::string& t):
+        sir(sir_kind::sir_sub),
+        left(l), right(r), destination(dst), is_integer(is_int), type(t) {}
+    ~sir_sub() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_mul: public sir {
+private:
+    std::string left;
+    std::string right;
+    std::string destination;
+    bool is_integer;
+    std::string type;
+
+public:
+    sir_mul(const std::string& l,
+            const std::string& r,
+            const std::string& dst,
+            bool is_int,
+            const std::string& t):
+        sir(sir_kind::sir_mul),
+        left(l), right(r), destination(dst), is_integer(is_int), type(t) {}
+    ~sir_mul() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_div: public sir {
+private:
+    std::string left;
+    std::string right;
+    std::string destination;
+    bool is_integer;
+    bool is_signed;
+    std::string type;
+
+public:
+    sir_div(const std::string& l,
+            const std::string& r,
+            const std::string& dst,
+            bool is_int,
+            bool is_sign,
+            const std::string& t):
+        sir(sir_kind::sir_mul),
+        left(l), right(r), destination(dst), is_integer(is_int),
+        is_signed(is_sign), type(t) {}
+    ~sir_div() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_rem: public sir {
+private:
+    std::string left;
+    std::string right;
+    std::string destination;
+    bool is_integer;
+    bool is_signed;
+    std::string type;
+
+public:
+    sir_rem(const std::string& l,
+            const std::string& r,
+            const std::string& dst,
+            bool is_int,
+            bool is_sign,
+            const std::string& t):
+        sir(sir_kind::sir_rem),
+        left(l), right(r), destination(dst), is_integer(is_int),
+        is_signed(is_sign), type(t) {}
+    ~sir_rem() override = default;
+    void dump(std::ostream&) const override;
+};
+
 class sir_binary: public sir {
 private:
     std::string left;
@@ -281,9 +392,7 @@ public:
                const std::string& o,
                const std::string& t):
         sir(sir_kind::sir_binary),
-        left(l), right(r),
-        destination(dst),
-        opr(o), type(t) {}
+        left(l), right(r), destination(dst), opr(o), type(t) {}
     ~sir_binary() override = default;
     void dump(std::ostream&) const override;
 };

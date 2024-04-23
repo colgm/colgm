@@ -90,14 +90,59 @@ void sir_call_func::dump(std::ostream& out) const {
 }
 
 void sir_neg::dump(std::ostream& out) const {
-    out << "%" << destination << " = " << opr << " " << type << " ";
-    out << (opr=="sub"? "0":"0,0");
+    out << "%" << destination << " = ";
+    out << (is_integer? "sub":"fsub");
+    out << " " << type << " ";
+    out << (is_integer? "0":"0.0");
     out << ", %" << source << "\n";
 }
 
 void sir_bnot::dump(std::ostream& out) const {
     out << "%" << destination << " = xor " << type << " ";
     out << "%" << source << ", -1\n";
+}
+
+void sir_add::dump(std::ostream& out) const {
+    out << "%" << destination << " = ";
+    out << (is_integer? "add":"fadd") << " ";
+    out << type << " ";
+    out << "%" << left << ", %" << right << "\n";
+}
+
+void sir_sub::dump(std::ostream& out) const {
+    out << "%" << destination << " = ";
+    out << (is_integer? "sub":"fsub") << " ";
+    out << type << " ";
+    out << "%" << left << ", %" << right << "\n";
+}
+
+void sir_mul::dump(std::ostream& out) const {
+    out << "%" << destination << " = ";
+    out << (is_integer? "mul":"fmul") << " ";
+    out << type << " ";
+    out << "%" << left << ", %" << right << "\n";
+}
+
+void sir_div::dump(std::ostream& out) const {
+    out << "%" << destination << " = ";
+    if (is_integer) {
+        out << (is_signed? "sdiv":"udiv") << " ";
+    } else {
+        out << "fdiv ";
+    }
+    out << type << " ";
+    out << "%" << left << ", %" << right << "\n";
+}
+
+void sir_rem::dump(std::ostream& out) const {
+    out << "%" << destination << " = ";
+    if (is_integer) {
+        out << (is_signed? "srem":"urem") << " ";
+    } else {
+        out << "frem ";
+    }
+    out << type << " ";
+    out << "%" << left << ", %" << right << "\n";
 }
 
 void sir_binary::dump(std::ostream& out) const {

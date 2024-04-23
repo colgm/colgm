@@ -930,12 +930,11 @@ void generator::generate_or_operator(binary_operator* node) {
 void generator::generate_add_operator(const value& left,
                                       const value& right,
                                       const value& result) {
-    const auto opr = left.resolve_type.is_integer()? "add":"fadd";
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_add(
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
         type_convert(left.resolve_type)
     ));
 }
@@ -943,12 +942,11 @@ void generator::generate_add_operator(const value& left,
 void generator::generate_sub_operator(const value& left,
                                       const value& right,
                                       const value& result) {
-    const auto opr = left.resolve_type.is_integer()? "sub":"fsub";
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_sub(
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
         type_convert(left.resolve_type)
     ));
 }
@@ -956,12 +954,11 @@ void generator::generate_sub_operator(const value& left,
 void generator::generate_mul_operator(const value& left,
                                       const value& right,
                                       const value& result) {
-    const auto opr = left.resolve_type.is_integer()? "mul":"fmul";
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_mul(
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
         type_convert(left.resolve_type)
     ));
 }
@@ -969,14 +966,12 @@ void generator::generate_mul_operator(const value& left,
 void generator::generate_div_operator(const value& left,
                                       const value& right,
                                       const value& result) {
-    const auto opr = left.resolve_type.is_integer()?
-        (left.resolve_type.is_unsigned()? "udiv":"sdiv"):
-        "fdiv";
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_div(
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left.resolve_type)
     ));
 }
@@ -984,14 +979,12 @@ void generator::generate_div_operator(const value& left,
 void generator::generate_rem_operator(const value& left,
                                       const value& right,
                                       const value& result) {
-    const auto opr = left.resolve_type.is_integer()?
-        (left.resolve_type.is_unsigned()? "urem":"srem"):
-        "frem";
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_rem(
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left.resolve_type)
     ));
 }
@@ -1160,11 +1153,10 @@ bool generator::visit_binary_operator(binary_operator* node) {
 }
 
 void generator::generate_neg_operator(const value& src, const value& result) {
-    const auto opr = src.resolve_type.is_integer()? "sub":"fsub";
     ircode_block->add_stmt(new sir_neg(
         src.content,
         result.content,
-        opr,
+        src.resolve_type.is_integer(),
         type_convert(src.resolve_type)
     ));
 }
