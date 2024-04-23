@@ -82,10 +82,11 @@ void ir_context::dump_used_basic_convert_method(std::ostream& out) const {
             out << "define " << type_mapper.at(convert_type) << " ";
             out << "@native." << i.first << "." << convert_type;
             out << "(" << type_mapper.at(i.first) << " %num) alwaysinline {\n";
+            out << "entry:\n";
             if (type_mapper.at(i.first)==type_mapper.at(convert_type)) {
                 out << "  ret " << type_mapper.at(convert_type) << " %num\n";
             } else {
-                out << "  %1 = ";
+                out << "  %0 = ";
                 out << convert_instruction(
                     before_type_mark,
                     before_bit_size,
@@ -94,7 +95,7 @@ void ir_context::dump_used_basic_convert_method(std::ostream& out) const {
                 );
                 out << " " << type_mapper.at(i.first);
                 out << " %num to " << type_mapper.at(convert_type) << "\n";
-                out << "  ret " << type_mapper.at(convert_type) << " %1\n";
+                out << "  ret " << type_mapper.at(convert_type) << " %0\n";
             }
             out << "}\n";
         }
@@ -111,10 +112,11 @@ void ir_context::dump_struct_size_method(std::ostream& out) const {
         const auto st_real_name = "%struct." + st_name;
         out << "define i64 @" << st_name;
         out << ".__size__() alwaysinline {\n";
-        out << "  %1 = getelementptr " << st_real_name;
+        out << "entry:\n";
+        out << "  %0 = getelementptr " << st_real_name;
         out << ", " << st_real_name << "* null, i64 1\n";
-        out << "  %2 = ptrtoint " << st_real_name << "* %1 to i64\n";
-        out << "  ret i64 %2\n";
+        out << "  %1 = ptrtoint " << st_real_name << "* %0 to i64\n";
+        out << "  ret i64 %1\n";
         out << "}\n";
     }
 }
@@ -129,10 +131,11 @@ void ir_context::dump_struct_alloc_method(std::ostream& out) const {
         const auto st_real_name = "%struct." + st_name;
         out << "define " << st_real_name << "* @" << st.get_name();
         out << ".__alloc__() alwaysinline {\n";
-        out << "  %1 = call i64 @" << st_name << ".__size__()\n";
-        out << "  %2 = call i8* @malloc(i64 %1)\n";
-        out << "  %3 = bitcast i8* %2 to " << st_real_name << "*\n";
-        out << "  ret " << st_real_name << "* %3\n";
+        out << "entry:\n";
+        out << "  %0 = call i64 @" << st_name << ".__size__()\n";
+        out << "  %1 = call i8* @malloc(i64 %0)\n";
+        out << "  %2 = bitcast i8* %1 to " << st_real_name << "*\n";
+        out << "  ret " << st_real_name << "* %2\n";
         out << "}\n";
     }
 }
@@ -148,8 +151,9 @@ void ir_context::dump_struct_delete_method(std::ostream& out) const {
         out << "define void @" << st_name;
         out << ".__delete__(" << st_real_name;
         out << "* %self) alwaysinline {\n";
-        out << "  %1 = bitcast " << st_real_name << "* %self to i8*\n";
-        out << "  call void @free(i8* %1)\n";
+        out << "entry:\n";
+        out << "  %0 = bitcast " << st_real_name << "* %self to i8*\n";
+        out << "  call void @free(i8* %0)\n";
         out << "  ret void\n";
         out << "}\n";
     }
@@ -188,7 +192,8 @@ void ir_context::check_and_dump_default_main(std::ostream& out) const {
         return;
     }
     out << "define i32 @main(i32 %argc, i8** %argv) {\n";
-    out << "  ret i32 0;\n";
+    out << "entry:\n";
+    out << "  ret i32 0\n";
     out << "}\n";
 }
 

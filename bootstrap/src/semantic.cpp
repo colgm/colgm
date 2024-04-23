@@ -575,7 +575,10 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
             colgm_basic::mapper.at(prev.name)->method.count(node->get_name())) {
             return basic_method_infer(prev.name, node->get_name());
         }
-        unimplemented(node);
+        report(node,
+            "cannot get method \"" + node->get_name() +
+            "\" from \"" + prev.to_string() + "\"."
+        );
         return type::error_type();
     }
 
