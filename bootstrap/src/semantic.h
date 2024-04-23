@@ -99,6 +99,7 @@ private:
     type resolve_call_path(const type&, call_path*);
     type resolve_ptr_call_field(const type&, ptr_call_field*);
     type resolve_call(call*);
+    bool check_valid_left_value(expr*);
     type resolve_assignment(assignment*);
     type resolve_expression(expr*);
     type resolve_type_def(type_def*);

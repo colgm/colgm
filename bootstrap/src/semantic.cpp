@@ -864,7 +864,25 @@ type semantic::resolve_call(call* node) {
     return infer;
 }
 
+bool semantic::check_valid_left_value(expr* node) {
+    if (node->get_ast_type()!=ast_type::ast_call) {
+        return false;
+    }
+    const auto mem_get_node = reinterpret_cast<call*>(node);
+    for(auto i : mem_get_node->get_chain()) {
+        if (i->get_ast_type()==ast_type::ast_call_path ||
+            i->get_ast_type()==ast_type::ast_call_func_args) {
+            return false;
+        }
+    }
+    return true;
+}
+
 type semantic::resolve_assignment(assignment* node) {
+    if (!check_valid_left_value(node->get_left())) {
+        report(node->get_left(), "bad left value.");
+        return type::error_type();
+    }
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
     switch(node->get_type()) {
