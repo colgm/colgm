@@ -145,8 +145,36 @@ void sir_rem::dump(std::ostream& out) const {
     out << "%" << left << ", %" << right << "\n";
 }
 
-void sir_binary::dump(std::ostream& out) const {
-    out << "%" << destination << " = " << opr << " " << type << " ";
+void sir_band::dump(std::ostream& out) const {
+    out << "%" << destination << " = and ";
+    out << type << " ";
+    out << "%" << left << ", %" << right << "\n";
+}
+
+void sir_bxor::dump(std::ostream& out) const {
+    out << "%" << destination << " = xor ";
+    out << type << " ";
+    out << "%" << left << ", %" << right << "\n";
+}
+
+void sir_bor::dump(std::ostream& out) const {
+    out << "%" << destination << " = or ";
+    out << type << " ";
+    out << "%" << left << ", %" << right << "\n";
+}
+
+void sir_cmp::dump(std::ostream& out) const {
+    out << "%" << destination << " = " << (is_integer? "icmp":"fcmp") << " ";
+    auto head = (is_integer? (is_signed? 's':'u'):'u');
+    switch(cmp_type) {
+        case kind::cmp_eq: out << (is_integer? "eq":"ueq"); break;
+        case kind::cmp_neq: out << (is_integer? "ne":"une"); break;
+        case kind::cmp_ge: out << head << "ge"; break;
+        case kind::cmp_gt: out << head << "gt"; break;
+        case kind::cmp_le: out << head << "le"; break;
+        case kind::cmp_lt: out << head << "lt"; break;
+    }
+    out << " " << type << " ";
     out << "%" << left << ", %" << right << "\n";
 }
 

@@ -32,7 +32,10 @@ enum class sir_kind {
     sir_mul,
     sir_div,
     sir_rem,
-    sir_binary,
+    sir_band,
+    sir_bxor,
+    sir_bor,
+    sir_cmp,
     sir_label,
     sir_place_holder_label,
     sir_store,
@@ -377,23 +380,92 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_binary: public sir {
+class sir_band: public sir {
 private:
     std::string left;
     std::string right;
     std::string destination;
-    std::string opr;
     std::string type;
 
 public:
-    sir_binary(const std::string& l,
-               const std::string& r,
-               const std::string& dst,
-               const std::string& o,
-               const std::string& t):
-        sir(sir_kind::sir_binary),
-        left(l), right(r), destination(dst), opr(o), type(t) {}
-    ~sir_binary() override = default;
+    sir_band(const std::string& l,
+             const std::string& r,
+             const std::string& dst,
+             const std::string& t):
+        sir(sir_kind::sir_band),
+        left(l), right(r), destination(dst), type(t) {}
+    ~sir_band() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_bxor: public sir {
+private:
+    std::string left;
+    std::string right;
+    std::string destination;
+    std::string type;
+
+public:
+    sir_bxor(const std::string& l,
+             const std::string& r,
+             const std::string& dst,
+             const std::string& t):
+        sir(sir_kind::sir_bxor),
+        left(l), right(r), destination(dst), type(t) {}
+    ~sir_bxor() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_bor: public sir {
+private:
+    std::string left;
+    std::string right;
+    std::string destination;
+    std::string type;
+
+public:
+    sir_bor(const std::string& l,
+            const std::string& r,
+            const std::string& dst,
+            const std::string& t):
+        sir(sir_kind::sir_bor),
+        left(l), right(r), destination(dst), type(t) {}
+    ~sir_bor() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_cmp: public sir {
+public:
+    enum class kind {
+        cmp_eq,
+        cmp_neq,
+        cmp_ge,
+        cmp_gt,
+        cmp_le,
+        cmp_lt
+    };
+
+private:
+    kind cmp_type;
+    std::string left;
+    std::string right;
+    std::string destination;
+    bool is_integer;
+    bool is_signed;
+    std::string type;
+
+public:
+    sir_cmp(kind ct,
+            const std::string& l,
+            const std::string& r,
+            const std::string& dst,
+            bool is_int,
+            bool is_sign,
+            const std::string& t):
+        sir(sir_kind::sir_cmp), cmp_type(ct),
+        left(l), right(r), destination(dst),
+        is_integer(is_int), is_signed(is_sign), type(t) {}
+    ~sir_cmp() override = default;
     void dump(std::ostream&) const override;
 };
 

@@ -655,14 +655,14 @@ void generator::generate_add_assignment(const value& left, const value& right) {
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
-    const auto opr = left.resolve_type.is_integer()? "add":"fadd";
     ircode_block->add_stmt(new sir_load(
         type_convert(left_type_copy),
         left.content,
         temp_0
     ));
-    ircode_block->add_stmt(new sir_binary(
-        temp_0, right.content, temp_1, opr,
+    ircode_block->add_stmt(new sir_add(
+        temp_0, right.content, temp_1,
+        left.resolve_type.is_integer(),
         type_convert(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -677,14 +677,14 @@ void generator::generate_sub_assignment(const value& left, const value& right) {
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
-    const auto opr = left.resolve_type.is_integer()? "sub":"fsub";
     ircode_block->add_stmt(new sir_load(
         type_convert(left_type_copy),
         left.content,
         temp_0
     ));
-    ircode_block->add_stmt(new sir_binary(
-        temp_0, right.content, temp_1, opr,
+    ircode_block->add_stmt(new sir_sub(
+        temp_0, right.content, temp_1,
+        left.resolve_type.is_integer(),
         type_convert(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -699,14 +699,14 @@ void generator::generate_mul_assignment(const value& left, const value& right) {
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
-    const auto opr = left.resolve_type.is_integer()? "mul":"fmul";
     ircode_block->add_stmt(new sir_load(
         type_convert(left_type_copy),
         left.content,
         temp_0
     ));
-    ircode_block->add_stmt(new sir_binary(
-        temp_0, right.content, temp_1, opr,
+    ircode_block->add_stmt(new sir_mul(
+        temp_0, right.content, temp_1,
+        left.resolve_type.is_integer(),
         type_convert(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -721,16 +721,15 @@ void generator::generate_div_assignment(const value& left, const value& right) {
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
-    const auto opr = left.resolve_type.is_integer()?
-        (left.resolve_type.is_unsigned()? "udiv":"sdiv"):
-        "fdiv";
     ircode_block->add_stmt(new sir_load(
         type_convert(left_type_copy),
         left.content,
         temp_0
     ));
-    ircode_block->add_stmt(new sir_binary(
-        temp_0, right.content, temp_1, opr,
+    ircode_block->add_stmt(new sir_div(
+        temp_0, right.content, temp_1,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -745,16 +744,15 @@ void generator::generate_rem_assignment(const value& left, const value& right) {
     left_type_copy.pointer_depth--;
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
-    const auto opr = left.resolve_type.is_integer()?
-        (left.resolve_type.is_unsigned()? "urem":"srem"):
-        "frem";
     ircode_block->add_stmt(new sir_load(
         type_convert(left_type_copy),
         left.content,
         temp_0
     ));
-    ircode_block->add_stmt(new sir_binary(
-        temp_0, right.content, temp_1, opr,
+    ircode_block->add_stmt(new sir_rem(
+        temp_0, right.content, temp_1,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -782,8 +780,8 @@ void generator::generate_and_assignment(const value& left, const value& right) {
         left.content,
         temp_0
     ));
-    ircode_block->add_stmt(new sir_binary(
-        temp_0, right.content, temp_1, "and",
+    ircode_block->add_stmt(new sir_band(
+        temp_0, right.content, temp_1,
         type_convert(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -803,8 +801,8 @@ void generator::generate_xor_assignment(const value& left, const value& right) {
         left.content,
         temp_0
     ));
-    ircode_block->add_stmt(new sir_binary(
-        temp_0, right.content, temp_1, "xor",
+    ircode_block->add_stmt(new sir_bxor(
+        temp_0, right.content, temp_1,
         type_convert(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -824,8 +822,8 @@ void generator::generate_or_assignment(const value& left, const value& right) {
         left.content,
         temp_0
     ));
-    ircode_block->add_stmt(new sir_binary(
-        temp_0, right.content, temp_1, "or",
+    ircode_block->add_stmt(new sir_bor(
+        temp_0, right.content, temp_1,
         type_convert(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -992,11 +990,10 @@ void generator::generate_rem_operator(const value& left,
 void generator::generate_band_operator(const value& left,
                                        const value& right,
                                        const value& result) {
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_band(
         left.content,
         right.content,
         result.content,
-        "and",
         type_convert(left.resolve_type)
     ));
 }
@@ -1004,11 +1001,10 @@ void generator::generate_band_operator(const value& left,
 void generator::generate_bxor_operator(const value& left,
                                        const value& right,
                                        const value& result) {
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_bxor(
         left.content,
         right.content,
         result.content,
-        "xor",
         type_convert(left.resolve_type)
     ));
 }
@@ -1016,11 +1012,10 @@ void generator::generate_bxor_operator(const value& left,
 void generator::generate_bor_operator(const value& left,
                                       const value& right,
                                       const value& result) {
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_bor(
         left.content,
         right.content,
         result.content,
-        "or",
         type_convert(left.resolve_type)
     ));
 }
@@ -1028,13 +1023,13 @@ void generator::generate_bor_operator(const value& left,
 void generator::generate_eq_operator(const value& left,
                                      const value& right,
                                      const value& result) {
-    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
-    opr += (left.resolve_type.is_float()? "ueq":"eq");
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_cmp(
+        sir_cmp::kind::cmp_eq,
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left.resolve_type)
     ));
 }
@@ -1042,13 +1037,13 @@ void generator::generate_eq_operator(const value& left,
 void generator::generate_neq_operator(const value& left,
                                       const value& right,
                                       const value& result) {
-    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
-    opr += (left.resolve_type.is_float()? "une":"ne");
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_cmp(
+        sir_cmp::kind::cmp_neq,
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left.resolve_type)
     ));
 }
@@ -1056,13 +1051,13 @@ void generator::generate_neq_operator(const value& left,
 void generator::generate_ge_operator(const value& left,
                                      const value& right,
                                      const value& result) {
-    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
-    opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "uge":"sge"):"uge";
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_cmp(
+        sir_cmp::kind::cmp_ge,
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left.resolve_type)
     ));
 }
@@ -1070,13 +1065,13 @@ void generator::generate_ge_operator(const value& left,
 void generator::generate_gt_operator(const value& left,
                                      const value& right,
                                      const value& result) {
-    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
-    opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "ugt":"sgt"):"ugt";
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_cmp(
+        sir_cmp::kind::cmp_gt,
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left.resolve_type)
     ));
 }
@@ -1084,13 +1079,13 @@ void generator::generate_gt_operator(const value& left,
 void generator::generate_le_operator(const value& left,
                                      const value& right,
                                      const value& result) {
-    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
-    opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "ule":"sle"):"ule";
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_cmp(
+        sir_cmp::kind::cmp_le,
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left.resolve_type)
     ));
 }
@@ -1098,13 +1093,13 @@ void generator::generate_le_operator(const value& left,
 void generator::generate_lt_operator(const value& left,
                                      const value& right,
                                      const value& result) {
-    auto opr = std::string(left.resolve_type.is_integer()? "icmp ":"fcmp ");
-    opr += left.resolve_type.is_integer()? (left.resolve_type.is_unsigned()? "ult":"slt"):"ult";
-    ircode_block->add_stmt(new sir_binary(
+    ircode_block->add_stmt(new sir_cmp(
+        sir_cmp::kind::cmp_lt,
         left.content,
         right.content,
         result.content,
-        opr,
+        left.resolve_type.is_integer(),
+        !left.resolve_type.is_unsigned(),
         type_convert(left.resolve_type)
     ));
 }
