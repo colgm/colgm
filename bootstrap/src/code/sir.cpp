@@ -215,4 +215,15 @@ void sir_br_cond::dump(std::ostream& out) const {
     out << "label %label." << destination_false << "\n";
 }
 
+void sir_type_convert::dump(std::ostream& out) const {
+    if (is_pointer_convert) {
+        out << "%" << destination << " = bitcast ";
+        out << src_type << " %" << source << " to ";
+        out << dst_type << "\n";
+        return;
+    }
+    // TODO
+    out << "\n";
+}
+
 }

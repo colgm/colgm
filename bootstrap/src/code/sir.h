@@ -43,7 +43,8 @@ enum class sir_kind {
     sir_store_literal,
     sir_load,
     sir_br_direct,
-    sir_br_cond
+    sir_br_cond,
+    sir_type_convert
 };
 
 class sir {
@@ -582,6 +583,28 @@ public:
     void set_false_label(u64 dst_false) {
         destination_false = dst_false;
     }
+};
+
+class sir_type_convert: public sir {
+private:
+    std::string source;
+    std::string destination;
+    std::string src_type;
+    std::string dst_type;
+    bool is_pointer_convert;
+
+public:
+    sir_type_convert(const std::string& src,
+                     const std::string& dst,
+                     const std::string& st,
+                     const std::string& dt,
+                     bool ptr_cvrt):
+        sir(sir_kind::sir_type_convert),
+        source(src), destination(dst),
+        src_type(st), dst_type(dt),
+        is_pointer_convert(ptr_cvrt) {}
+    ~sir_type_convert() override = default;
+    void dump(std::ostream&) const override;
 };
 
 }

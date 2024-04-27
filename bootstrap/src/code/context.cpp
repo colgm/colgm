@@ -68,7 +68,6 @@ std::string ir_context::convert_instruction(char before_type_mark,
 }
 
 void ir_context::dump_used_basic_convert_method(std::ostream& out) const {
-    // TODO: this is a demo, fix it later
     const std::unordered_map<std::string, std::string> type_mapper = {
         {"u8", "i8"}, {"u16", "i16"}, {"u32", "i32"}, {"u64", "i64"},
         {"i8", "i8"}, {"i16", "i16"}, {"i32", "i32"}, {"i64", "i64"},
