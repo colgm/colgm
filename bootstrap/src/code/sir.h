@@ -21,6 +21,7 @@ enum class sir_kind {
     sir_number,
     sir_temp_ptr,
     sir_ret,
+    sir_ret_literal,
     sir_str,
     sir_call_index,
     sir_call_field,
@@ -64,11 +65,10 @@ public:
     sir_nop(const std::string& i): sir(sir_kind::sir_nop), info(i) {}
     ~sir_nop() override = default;
     void dump(std::ostream& os) const override {
-        if (info.empty()) {
-            os << "\n";
-            return;
+        if (info.size()) {
+            os << "; " << info;
         }
-        os << "; " << info << "\n";
+        os << "\n";
     }
 };
 
@@ -163,6 +163,18 @@ public:
     sir_ret(const std::string& t, const std::string& v = ""):
         sir(sir_kind::sir_ret), type(t), value(v) {}
     ~sir_ret() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_ret_literal: public sir {
+private:
+    std::string type;
+    std::string literal;
+
+public:
+    sir_ret_literal(const std::string& t, const std::string& l):
+        sir(sir_kind::sir_ret_literal), type(t), literal(l) {}
+    ~sir_ret_literal() override = default;
     void dump(std::ostream&) const override;
 };
 

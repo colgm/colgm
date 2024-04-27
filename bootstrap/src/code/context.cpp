@@ -1,5 +1,6 @@
 #include "colgm.h"
 #include "code/context.h"
+#include "pass/pass_manager.h"
 
 #include <iomanip>
 
@@ -187,17 +188,12 @@ void ir_context::check_and_dump_free(std::ostream& out) const {
     out << "declare void @free(i8* %address)\n";
 }
 
-void ir_context::check_and_dump_default_main(std::ostream& out) const {
-    if (check_used("@main")) {
-        return;
+void ir_context::dump_code(std::ostream& out) {
+    if (!passes_already_executed) {
+        pass_manager().run(*this);
+        passes_already_executed = true;
     }
-    out << "define i32 @main(i32 %argc, i8** %argv) {\n";
-    out << "entry:\n";
-    out << "  ret i32 0\n";
-    out << "}\n";
-}
 
-void ir_context::dump_code(std::ostream& out) const {
     for(const auto& i : struct_decls) {
         i.dump(out);
     }
@@ -221,7 +217,6 @@ void ir_context::dump_code(std::ostream& out) const {
         i->dump(out);
         out << "\n";
     }
-    check_and_dump_default_main(out);
 }
 
 }

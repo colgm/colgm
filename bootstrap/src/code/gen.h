@@ -146,7 +146,7 @@ public:
         ast_root->accept(this);
         return err;
     }
-    const auto& get_ir() const { return irc; }
+    auto& get_mutable_ir() const { return irc; }
 };
 
 }

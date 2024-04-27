@@ -19,6 +19,9 @@ struct ir_context {
     std::unordered_map<std::string, std::unordered_set<std::string>> used_basic_convert_method;
 
 private:
+    bool passes_already_executed = false;
+
+private:
     void dump_raw_string(std::ostream&, const std::string&) const;
     void dump_const_string(std::ostream&) const;
 
@@ -35,7 +38,6 @@ private:
     bool check_used(const std::string&) const;
     void check_and_dump_malloc(std::ostream&) const;
     void check_and_dump_free(std::ostream&) const;
-    void check_and_dump_default_main(std::ostream&) const;
 
 public:
     ~ir_context() {
@@ -46,7 +48,7 @@ public:
             delete i;
         }
     }
-    void dump_code(std::ostream&) const;
+    void dump_code(std::ostream&);
 };
 
 }

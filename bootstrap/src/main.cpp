@@ -1,5 +1,4 @@
 #include "colgm.h"
-#include "report.h"
 #include "lexer.h"
 #include "parse.h"
 #include "ast/dumper.h"
@@ -116,11 +115,11 @@ void execute(const std::string& file,
     // generate code
     gen.generate(parser.get_result()).chkerr();
     if (cmd&COMPILE_VIEW_IR) {
-        gen.get_ir().dump_code(std::cout);
+        gen.get_mutable_ir().dump_code(std::cout);
     }
 
     std::ofstream out("out.ll");
-    gen.get_ir().dump_code(out);
+    gen.get_mutable_ir().dump_code(out);
 }
 
 i32 main(i32 argc, const char* argv[]) {
