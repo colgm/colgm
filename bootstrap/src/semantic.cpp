@@ -814,7 +814,13 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
 }
 
 type semantic::resolve_call(call* node) {
-    auto infer = resolve_identifier(node->get_head());
+    auto infer = type::error_type();
+    if (node->get_head()->get_ast_type()!=ast_type::ast_identifier) {
+        infer = resolve_expression(node->get_head());
+    } else {
+        auto head = reinterpret_cast<identifier*>(node->get_head());
+        infer = resolve_identifier(head);
+    }
     node->get_head()->set_resolve_type(infer);
     if (infer.is_error()) {
         return infer;
@@ -869,6 +875,9 @@ bool semantic::check_valid_left_value(expr* node) {
         return false;
     }
     const auto mem_get_node = reinterpret_cast<call*>(node);
+    if (mem_get_node->get_head()->get_ast_type()!=ast_type::ast_identifier) {
+        return false;
+    }
     for(auto i : mem_get_node->get_chain()) {
         if (i->get_ast_type()==ast_type::ast_call_path ||
             i->get_ast_type()==ast_type::ast_call_func_args) {

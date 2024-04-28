@@ -110,8 +110,12 @@ bool generator::visit_code_block(code_block* node) {
 }
 
 void generator::call_expression_generation(call* node, bool need_address) {
+    if (node->get_head()->get_ast_type()!=ast_type::ast_identifier) {
+        unimplemented(node->get_head());
+        return;
+    }
     // call head may be the global function
-    auto head = node->get_head();
+    auto head = reinterpret_cast<identifier*>(node->get_head());
     if (ctx.global_symbol.count(head->get_name()) &&
         ctx.global_symbol.at(head->get_name()).kind==symbol_kind::func_kind) {
         call_function_symbol(head);
