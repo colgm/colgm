@@ -1,6 +1,10 @@
 #include "code/sir.h"
 #include "colgm.h"
 
+#include <sstream>
+#include <cstring>
+#include <unordered_map>
+
 namespace colgm {
 
 void sir_alloca::dump(std::ostream& out) const {
@@ -215,6 +219,41 @@ void sir_br_cond::dump(std::ostream& out) const {
     out << "label %label." << destination_false << "\n";
 }
 
+std::string sir_type_convert::convert_instruction(char source_type_mark,
+                                                  int source_bit_size,
+                                                  char dest_type_mark,
+                                                  int dest_bit_size) const {
+    if (source_type_mark=='u' && dest_type_mark=='u') {
+        return source_bit_size<dest_bit_size? "zext":"trunc";
+    }
+    if (source_type_mark=='u' && dest_type_mark=='i') {
+        return source_bit_size<dest_bit_size? "zext":"trunc";
+    }
+    if (source_type_mark=='u' && dest_type_mark=='f') {
+        return "uitofp";
+    }
+    if (source_type_mark=='i' && dest_type_mark=='u') {
+        return source_bit_size<dest_bit_size? "sext":"trunc";
+    }
+    if (source_type_mark=='i' && dest_type_mark=='i') {
+        return source_bit_size<dest_bit_size? "sext":"trunc";
+    }
+    if (source_type_mark=='i' && dest_type_mark=='f') {
+        return "sitofp";
+    }
+    if (source_type_mark=='f' && dest_type_mark=='u') {
+        return "fptoui";
+    }
+    if (source_type_mark=='f' && dest_type_mark=='i') {
+        return "fptosi";
+    }
+    if (source_type_mark=='f' && dest_type_mark=='f') {
+        return source_bit_size<dest_bit_size? "fpext":"fptrunc";
+    }
+    // unreachable
+    return "";
+}
+
 void sir_type_convert::dump(std::ostream& out) const {
     if (is_pointer_convert) {
         out << "%" << destination << " = bitcast ";
@@ -222,8 +261,28 @@ void sir_type_convert::dump(std::ostream& out) const {
         out << dst_type << "\n";
         return;
     }
-    // TODO
-    out << "\n";
+
+    const std::unordered_map<std::string, std::string> ft = {
+        {"float", "f32"}, {"double", "f64"}
+    };
+
+    const auto real_src_type = ft.count(src_type)? ft.at(src_type):src_type;
+    const auto real_dst_type = ft.count(dst_type)? ft.at(dst_type):dst_type;
+
+    const auto source_type_mark = real_src_type[0];
+    const auto source_bit_size = std::stoi(real_src_type.substr(1));
+    const auto dest_type_mark = real_dst_type[0];
+    const auto dest_bit_size = std::stoi(real_dst_type.substr(1));
+    const auto convert_inst = convert_instruction(
+        source_type_mark,
+        source_bit_size,
+        dest_type_mark,
+        dest_bit_size
+    );
+
+    out << "%" << destination << " = " << convert_inst << " ";
+    out << src_type << " %" << source << " to ";
+    out << dst_type << "\n";
 }
 
 }

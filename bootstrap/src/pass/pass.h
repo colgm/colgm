@@ -7,7 +7,8 @@
 namespace colgm {
 
 enum class pass_kind {
-    ps_default_main
+    ps_default_main,
+    ps_native_type_conv
 };
 
 class pass {

@@ -593,6 +593,9 @@ private:
     std::string dst_type;
     bool is_pointer_convert;
 
+private:
+    std::string convert_instruction(char, int, char, int) const;
+
 public:
     sir_type_convert(const std::string& src,
                      const std::string& dst,
