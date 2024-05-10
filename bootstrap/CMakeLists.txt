@@ -33,7 +33,7 @@ set(COLGM_OBJECT_SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/code/sir.cpp
     ${CMAKE_SOURCE_DIR}/src/code/value.cpp
     ${CMAKE_SOURCE_DIR}/src/package/package.cpp
-    ${CMAKE_SOURCE_DIR}/src/pass/add_default_main.cpp
+    ${CMAKE_SOURCE_DIR}/src/pass/add_default_func.cpp
     ${CMAKE_SOURCE_DIR}/src/pass/native_type_convert.cpp
     ${CMAKE_SOURCE_DIR}/src/pass/pass.cpp
     ${CMAKE_SOURCE_DIR}/src/pass/pass_manager.cpp

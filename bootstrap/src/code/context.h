@@ -30,11 +30,6 @@ private:
     void dump_struct_alloc_method(std::ostream&) const;
     void dump_struct_delete_method(std::ostream&) const;
 
-private:
-    bool check_used(const std::string&) const;
-    void check_and_dump_malloc(std::ostream&) const;
-    void check_and_dump_free(std::ostream&) const;
-
 public:
     ~ir_context() {
         for(auto i : func_decls) {
