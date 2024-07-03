@@ -16,9 +16,10 @@ This is the main repository for Colgm compiler.
 Use these commands to build the bootstrap compiler:
 
 ```sh
+cd bootstrap
 mkdir build
 cd build
-cmake ../bootstrap
+cmake ..
 make -j
 ```
 

@@ -1,4 +1,4 @@
-COLGMCC = ../build/colgm
+COLGMCC = ./build/colgm
 
 .PHONY: out.ll
 out.ll:
