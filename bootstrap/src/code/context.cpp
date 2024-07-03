@@ -23,11 +23,18 @@ void ir_context::dump_raw_string(std::ostream& out,
 }
 
 void ir_context::dump_const_string(std::ostream& out) const {
+    // make sure constant strings are in order
+    std::vector<std::string> ordered_const_string;
+    ordered_const_string.resize(const_strings.size());
     for(const auto& i : const_strings) {
-        out << "@const.str." << i.second;
+        ordered_const_string[i.second] = i.first;
+    }
+
+    for(usize i = 0; i<ordered_const_string.size(); ++i) {
+        out << "@const.str." << i;
         out << " = private unnamed_addr constant [";
-        out << i.first.length() + 1 << " x i8] c\"";
-        dump_raw_string(out, i.first);
+        out << ordered_const_string[i].length() + 1 << " x i8] c\"";
+        dump_raw_string(out, ordered_const_string[i]);
         out << "\"\n";
     }
 }
