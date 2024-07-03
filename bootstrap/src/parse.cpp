@@ -579,6 +579,9 @@ code_block* parse::block_gen() {
             case tok::tk_brk: result->add_stmt(break_gen()); break;
             default: match(toks[ptr].type); break;
         }
+        if (look_ahead(tok::tk_eof)) {
+            break;
+        }
     }
     match(tok::tk_rbrace);
     update_location(result);
