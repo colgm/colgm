@@ -53,15 +53,7 @@ void sir_temp_ptr::dump(std::ostream& out) const {
 }
 
 void sir_ret::dump(std::ostream& out) const {
-    out << "ret " << type;
-    if (value.size()) {
-        out << " %" << value;
-    }
-    out << "\n";
-}
-
-void sir_ret_literal::dump(std::ostream& out) const {
-    out << "ret " << type << " " << literal << "\n";
+    out << "ret " << type << " " << value << "\n";
 }
 
 void sir_string::dump(std::ostream& out) const {
@@ -195,13 +187,8 @@ void sir_place_holder_label::dump(std::ostream& out) const {
 }
 
 void sir_store::dump(std::ostream& out) const {
-    out << "store " << type << " %" << source;
-    out << ", " << type << "* %" << destination << "\n";
-}
-
-void sir_store_literal::dump(std::ostream& out) const {
     out << "store " << type << " " << source;
-    out << ", " << type << "* %" << destination << "\n";
+    out << ", " << type << "* " << destination << "\n";
 }
 
 void sir_load::dump(std::ostream& out) const {

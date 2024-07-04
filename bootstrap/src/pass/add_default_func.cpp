@@ -46,7 +46,9 @@ void add_default_func::add_main_func_impl() {
     auto default_main = new hir_func("@main");
     default_main->set_return_type("i32");
     default_main->set_code_block(new sir_block);
-    default_main->get_code_block()->add_stmt(new sir_ret_literal("i32", "0"));
+    default_main->get_code_block()->add_stmt(
+        new sir_ret("i32", value_t::literal("0"))
+    );
     ctx->func_impls.push_back(default_main);
 }
 

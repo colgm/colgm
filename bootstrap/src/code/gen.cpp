@@ -47,8 +47,8 @@ void generator::convert_parameter_to_pointer(func_decl* node) {
         ircode_block->add_alloca(param_addr);
         auto store_param_to_addr = new sir_store(
             generate_type_string(i->get_type()),
-            i->get_name()->get_name() + ".param",
-            i->get_name()->get_name()
+            value_t::variable(i->get_name()->get_name() + ".param"),
+            value_t::variable(i->get_name()->get_name())
         );
         ircode_block->add_stmt(store_param_to_addr);
     }
@@ -600,8 +600,8 @@ bool generator::visit_call_func_args(call_func_args* node) {
         ));
         ircode_block->add_stmt(new sir_store(
             type_convert(node->get_resolve()),
-            temp_0,
-            temp_1
+            value_t::variable(temp_0),
+            value_t::variable(temp_1)
         ));
         auto result = value {
             .kind = value_kind::v_var,
@@ -640,14 +640,14 @@ bool generator::visit_definition(definition* node) {
     if (node->get_type()) {
         ircode_block->add_stmt(new sir_store(
             generate_type_string(node->get_type()),
-            source.content,
-            node->get_name()
+            value_t::variable(source.content),
+            value_t::variable(node->get_name())
         ));
     } else {
         ircode_block->add_stmt(new sir_store(
             type_convert(node->get_resolve()),
-            source.content,
-            node->get_name()
+            value_t::variable(source.content),
+            value_t::variable(node->get_name())
         ));
     }
     ircode_block->add_nop("end def");
@@ -671,8 +671,8 @@ void generator::generate_add_assignment(const value& left, const value& right) {
     ));
     ircode_block->add_stmt(new sir_store(
         type_convert(left_type_copy),
-        temp_1,
-        left.content
+        value_t::variable(temp_1),
+        value_t::variable(left.content)
     ));
 }
 
@@ -693,8 +693,8 @@ void generator::generate_sub_assignment(const value& left, const value& right) {
     ));
     ircode_block->add_stmt(new sir_store(
         type_convert(left_type_copy),
-        temp_1,
-        left.content
+        value_t::variable(temp_1),
+        value_t::variable(left.content)
     ));
 }
 
@@ -715,8 +715,8 @@ void generator::generate_mul_assignment(const value& left, const value& right) {
     ));
     ircode_block->add_stmt(new sir_store(
         type_convert(left_type_copy),
-        temp_1,
-        left.content
+        value_t::variable(temp_1),
+        value_t::variable(left.content)
     ));
 }
 
@@ -738,8 +738,8 @@ void generator::generate_div_assignment(const value& left, const value& right) {
     ));
     ircode_block->add_stmt(new sir_store(
         type_convert(left_type_copy),
-        temp_1,
-        left.content
+        value_t::variable(temp_1),
+        value_t::variable(left.content)
     ));
 }
 
@@ -761,16 +761,16 @@ void generator::generate_rem_assignment(const value& left, const value& right) {
     ));
     ircode_block->add_stmt(new sir_store(
         type_convert(left_type_copy),
-        temp_1,
-        left.content
+        value_t::variable(temp_1),
+        value_t::variable(left.content)
     ));
 }
 
 void generator::generate_eq_assignment(const value& left, const value& right) {
     ircode_block->add_stmt(new sir_store(
         type_convert(right.resolve_type),
-        right.content,
-        left.content
+        value_t::variable(right.content),
+        value_t::variable(left.content)
     ));
 }
 
@@ -790,8 +790,8 @@ void generator::generate_and_assignment(const value& left, const value& right) {
     ));
     ircode_block->add_stmt(new sir_store(
         type_convert(left_type_copy),
-        temp_1,
-        left.content
+        value_t::variable(temp_1),
+        value_t::variable(left.content)
     ));
 }
 
@@ -811,8 +811,8 @@ void generator::generate_xor_assignment(const value& left, const value& right) {
     ));
     ircode_block->add_stmt(new sir_store(
         type_convert(left_type_copy),
-        temp_1,
-        left.content
+        value_t::variable(temp_1),
+        value_t::variable(left.content)
     ));
 }
 
@@ -832,8 +832,8 @@ void generator::generate_or_assignment(const value& left, const value& right) {
     ));
     ircode_block->add_stmt(new sir_store(
         type_convert(left_type_copy),
-        temp_1,
-        left.content
+        value_t::variable(temp_1),
+        value_t::variable(left.content)
     ));
 }
 
@@ -871,7 +871,11 @@ void generator::generate_and_operator(binary_operator* node) {
     node->get_left()->accept(this);
     const auto left = value_stack.back();
     value_stack.pop_back();
-    ircode_block->add_stmt(new sir_store("i1", left.content, temp_0));
+    ircode_block->add_stmt(new sir_store(
+        "i1",
+        value_t::variable(left.content),
+        value_t::variable(temp_0)
+    ));
     auto br = new sir_br_cond(
         left.content,
         ircode_block->stmt_size()+1,
@@ -882,7 +886,11 @@ void generator::generate_and_operator(binary_operator* node) {
     node->get_right()->accept(this);
     const auto right = value_stack.back();
     value_stack.pop_back();
-    ircode_block->add_stmt(new sir_store("i1", right.content, temp_0));
+    ircode_block->add_stmt(new sir_store(
+        "i1",
+        value_t::variable(right.content),
+        value_t::variable(temp_0)
+    ));
     ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
     br->set_false_label(ircode_block->stmt_size());
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
@@ -904,7 +912,11 @@ void generator::generate_or_operator(binary_operator* node) {
     node->get_left()->accept(this);
     const auto left = value_stack.back();
     value_stack.pop_back();
-    ircode_block->add_stmt(new sir_store("i1", left.content, temp_0));
+    ircode_block->add_stmt(new sir_store(
+        "i1",
+        value_t::variable(left.content),
+        value_t::variable(temp_0)
+    ));
     auto br = new sir_br_cond(
         left.content,
         0,
@@ -915,7 +927,11 @@ void generator::generate_or_operator(binary_operator* node) {
     node->get_right()->accept(this);
     const auto right = value_stack.back();
     value_stack.pop_back();
-    ircode_block->add_stmt(new sir_store("i1", right.content, temp_0));
+    ircode_block->add_stmt(new sir_store(
+        "i1",
+        value_t::variable(right.content),
+        value_t::variable(temp_0)
+    ));
     ircode_block->add_stmt(new sir_br(ircode_block->stmt_size()+1));
     br->set_true_label(ircode_block->stmt_size());
     ircode_block->add_stmt(new sir_label(ircode_block->stmt_size()));
@@ -1195,10 +1211,10 @@ bool generator::visit_ret_stmt(ret_stmt* node) {
         value_stack.pop_back();
         ircode_block->add_stmt(new sir_ret(
             type_convert(result.resolve_type),
-            result.content
+            value_t::variable(result.content)
         ));
     } else {
-        ircode_block->add_stmt(new sir_ret("void"));
+        ircode_block->add_stmt(new sir_ret("void", value_t::null()));
     }
     return true;
 }

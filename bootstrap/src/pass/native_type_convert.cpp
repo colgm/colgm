@@ -14,7 +14,7 @@ void native_type_convert::gen(const std::string& source,
         if (type_mapper.at(source)==type_mapper.at(target)) {
             convert_function->get_code_block()->add_stmt(new sir_ret(
                 type_mapper.at(target),
-                "num"
+                value_t::variable("num")
             ));
         } else {
             convert_function->get_code_block()->add_stmt(new sir_type_convert(
@@ -26,7 +26,7 @@ void native_type_convert::gen(const std::string& source,
             ));
             convert_function->get_code_block()->add_stmt(new sir_ret(
                 type_mapper.at(target),
-                "0"
+                value_t::variable("0")
             ));
         }
         ctx->func_impls.push_back(convert_function);

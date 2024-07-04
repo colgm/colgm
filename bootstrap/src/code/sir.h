@@ -21,7 +21,6 @@ enum class sir_kind {
     sir_number,
     sir_temp_ptr,
     sir_ret,
-    sir_ret_literal,
     sir_str,
     sir_call_index,
     sir_call_field,
@@ -40,11 +39,53 @@ enum class sir_kind {
     sir_label,
     sir_place_holder_label,
     sir_store,
-    sir_store_literal,
     sir_load,
     sir_br_direct,
     sir_br_cond,
     sir_type_convert
+};
+
+struct value_t {
+public:
+    enum class kind {
+        null,
+        variable,
+        literal
+    };
+
+public:
+    kind value_kind;
+    std::string content;
+
+public:
+    static auto null() {
+        return value_t {
+            .value_kind = value_t::kind::null,
+            .content = ""
+        };
+    }
+    static auto variable(const std::string& name) {
+        return value_t {
+            .value_kind = value_t::kind::variable,
+            .content = name
+        };
+    }
+    static auto literal(const std::string& value) {
+        return value_t {
+            .value_kind = value_t::kind::literal,
+            .content = value
+        };
+    }
+
+public:
+    friend std::ostream& operator<<(std::ostream& out, const value_t& value) {
+        switch(value.value_kind) {
+            case value_t::kind::variable: out << "%" << value.content; break;
+            case value_t::kind::literal: out << value.content; break;
+            default: break;
+        }
+        return out;
+    }
 };
 
 class sir {
@@ -158,24 +199,12 @@ public:
 class sir_ret: public sir {
 private:
     std::string type;
-    std::string value;
+    value_t value;
 
 public:
-    sir_ret(const std::string& t, const std::string& v = ""):
+    sir_ret(const std::string& t, const value_t& v):
         sir(sir_kind::sir_ret), type(t), value(v) {}
     ~sir_ret() override = default;
-    void dump(std::ostream&) const override;
-};
-
-class sir_ret_literal: public sir {
-private:
-    std::string type;
-    std::string literal;
-
-public:
-    sir_ret_literal(const std::string& t, const std::string& l):
-        sir(sir_kind::sir_ret_literal), type(t), literal(l) {}
-    ~sir_ret_literal() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -507,30 +536,15 @@ public:
 class sir_store: public sir {
 private:
     std::string type;
-    std::string source;
-    std::string destination;
+    value_t source;
+    value_t destination;
 
 public:
     sir_store(const std::string& t,
-              const std::string& src,
-              const std::string& dst):
+              const value_t& src,
+              const value_t& dst):
         sir(sir_kind::sir_store), type(t), source(src), destination(dst) {}
     ~sir_store() override = default;
-    void dump(std::ostream&) const override;
-};
-
-class sir_store_literal: public sir {
-private:
-    std::string type;
-    std::string source;
-    std::string destination;
-
-public:
-    sir_store_literal(const std::string& t,
-                      const std::string& src,
-                      const std::string& dst):
-        sir(sir_kind::sir_store_literal), type(t), source(src), destination(dst) {}
-    ~sir_store_literal() override = default;
     void dump(std::ostream&) const override;
 };
 
