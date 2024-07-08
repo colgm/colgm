@@ -1,4 +1,4 @@
-use std::libc::malloc;
+use std::libc::{ malloc, free, memcpy, strlen };
 
 struct str {
     c_str: i8*,
@@ -14,13 +14,6 @@ impl str {
         return res;
     }
 
-    func empty(self: str*) -> bool {
-        if (self->size == i64::u64(0)) {
-            return true;
-        }
-        return false;
-    }
-
     func copy(self: str*) -> str* {
         var new_str = str::new();
         new_str->size = self->size;
@@ -30,5 +23,29 @@ impl str {
             new_str->c_str[i] = self->c_str[i];
         }
         return new_str;
+    }
+
+    func delete(self: str*) {
+        free(self->c_str);
+        # free(self); # does not support pointer conversion
+        return;
+    }
+
+    func empty(self: str*) -> bool {
+        if (self->size == i64::u64(0)) {
+            return true;
+        }
+        return false;
+    }
+
+    func copy_const(self: str*, src: i8*) {
+        var len = i64::u64(strlen(src));
+        if (len >= self->size) {
+            free(self->c_str);
+            self->c_str = malloc(len + i64::u64(1));
+            self->size = len + i64::u64(1);
+        }
+        memcpy(self->c_str, src, len);
+        return;
     }
 }
