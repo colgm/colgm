@@ -229,7 +229,7 @@ public:
 
 class call: public expr {
 private:
-    expr* head;
+    identifier* head;
     std::vector<expr*> chain;
 
 public:
@@ -238,7 +238,7 @@ public:
     ~call() override;
     void accept(visitor*) override;
 
-    void set_head(expr* node) { head = node; }
+    void set_head(identifier* node) { head = node; }
     auto get_head() const { return head; }
     void add_chain(expr* node) { chain.push_back(node); }
     const auto& get_chain() const { return chain; }
