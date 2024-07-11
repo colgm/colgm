@@ -29,8 +29,12 @@ std::string type::to_string() const {
 }
 
 std::string type::full_path_name() const {
-    auto pkg = package_manager::singleton();
-    return pkg->get_module_name(loc_file) + "::" + name;
+    const auto pkg = package_manager::singleton();
+    const auto module_name = pkg->get_module_name(loc_file);
+    if (module_name.empty()) {
+        return name;
+    }
+    return module_name + "::" + name;
 }
 
 std::ostream& operator<<(std::ostream& out, const type& t) {
