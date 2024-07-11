@@ -184,8 +184,9 @@ void error::err(const std::string& stage,
     std::cerr << "\n\n";
 }
 
-void error::warn(
-    const std::string& stage, const span& loc, const std::string& info) {
+void error::warn(const std::string& stage,
+                 const span& loc,
+                 const std::string& info) {
     // load error occurred file into string lines
     load(loc.file);
 

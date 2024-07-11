@@ -16,7 +16,6 @@ struct ir_context {
     std::vector<hir_func*> func_decls;
     std::vector<hir_func*> func_impls;
     std::unordered_map<std::string, u64> const_strings;
-    std::unordered_map<std::string, std::unordered_set<std::string>> used_basic_convert_method;
 
 private:
     bool passes_already_executed = false;

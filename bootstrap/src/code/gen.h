@@ -55,7 +55,7 @@ private:
         {"void", "void"},
         {"bool", "i1"}
     };
-    std::string type_convert(const type&);
+    std::string type_mapping(const type&);
 
 private:
     static inline ir_context irc;
@@ -87,7 +87,7 @@ private:
     void call_variable(identifier*);
     bool visit_call(call*) override;
     bool visit_call_index(call_index*) override;
-    void generate_basic_method_call(call_field*, const value&);
+    void generate_basic_method(call_field*, const value&);
     bool visit_call_field(call_field*) override;
     bool visit_ptr_call_field(ptr_call_field*) override;
     void generate_basic_static_method(call_path*, const value&);

@@ -10,8 +10,9 @@ namespace colgm {
 enum value_kind {
     v_null,
     v_var,
-    v_fn,
-    v_sfn
+    v_fn, // normal function
+    v_static_fn, // static function
+    v_type_convert
 };
 
 struct value {

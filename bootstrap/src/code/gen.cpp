@@ -6,7 +6,7 @@
 
 namespace colgm {
 
-std::string generator::type_convert(const type& t) {
+std::string generator::type_mapping(const type& t) {
     auto copy = t;
     if (basic_type_convert_mapper.count(copy.name)) {
         copy.name = basic_type_convert_mapper.at(copy.name);
@@ -22,7 +22,7 @@ std::string generator::generate_type_string(type_def* node) {
     if (ctx.global_symbol.count(node->get_name()->get_name())) {
         loc_file = ctx.global_symbol.at(node->get_name()->get_name()).loc_file;
     }
-    return type_convert({
+    return type_mapping({
         node->get_name()->get_name(),
         loc_file,
         node->get_pointer_level()
@@ -151,7 +151,7 @@ void generator::call_expression_generation(call* node, bool need_address) {
     result.resolve_type.pointer_depth--;
     value_stack.push_back(result);
     ircode_block->add_stmt(new sir_load(
-        type_convert(result.resolve_type),
+        type_mapping(result.resolve_type),
         source.content,
         temp
     ));
@@ -175,7 +175,7 @@ bool generator::visit_number_literal(number_literal* node) {
     ircode_block->add_stmt(new sir_number(
         node->get_number(),
         temp,
-        type_convert(node->get_resolve()),
+        type_mapping(node->get_resolve()),
         node->get_resolve().is_integer()
     ));
     // push value on stack
@@ -217,7 +217,7 @@ bool generator::visit_char_literal(char_literal* node) {
     ircode_block->add_stmt(new sir_number(
         std::to_string(int64_t(node->get_char())),
         temp,
-        type_convert(node->get_resolve()),
+        type_mapping(node->get_resolve()),
         node->get_resolve().is_integer()
     ));
     // push value on stack
@@ -250,7 +250,7 @@ bool generator::visit_bool_literal(bool_literal* node) {
 
 void generator::call_function_symbol(identifier* node) {
     value_stack.push_back({
-        .kind = value_kind::v_sfn,
+        .kind = value_kind::v_static_fn,
         .resolve_type = node->get_resolve(),
         .content = node->get_name()
     });
@@ -291,7 +291,7 @@ bool generator::visit_call_index(call_index* node) {
     }
     source_type_copy.pointer_depth--;
     ircode_block->add_stmt(new sir_load(
-        type_convert(source_type_copy),
+        type_mapping(source_type_copy),
         source.content,
         temp_0
     ));
@@ -309,32 +309,23 @@ bool generator::visit_call_index(call_index* node) {
         temp_0,
         temp_1,
         index.content,
-        type_convert(source_type_copy),
-        type_convert(index.resolve_type)
+        type_mapping(source_type_copy),
+        type_mapping(index.resolve_type)
     ));
     return true;
 }
 
-void generator::generate_basic_method_call(call_field* node,
-                                           const value& source) {
+void generator::generate_basic_method(call_field* node,
+                                      const value& source) {
     const auto bsc = colgm_basic::mapper.at(source.resolve_type.name);
     if (!bsc->method.count(node->get_name())) {
         unreachable(node);
         return;
     }
     const auto name = "native." + source.resolve_type.name +
-                        "." + node->get_name();
-    if (!irc.used_basic_convert_method.count(source.resolve_type.name)) {
-        irc.used_basic_convert_method.insert({
-            source.resolve_type.name,
-            {}
-        });
-    }
-    irc.used_basic_convert_method.at(source.resolve_type.name).insert(
-        bsc->method.at(node->get_name()).return_type.name
-    );
+                      "." + node->get_name();
     auto result = value {
-        .kind = value_kind::v_sfn,
+        .kind = value_kind::v_type_convert,
         .resolve_type = node->get_resolve(),
         .content = name
     };
@@ -347,7 +338,7 @@ void generator::generate_basic_method_call(call_field* node,
     };
     self.resolve_type.pointer_depth--;
     ircode_block->add_stmt(new sir_load(
-        type_convert(self.resolve_type),
+        type_mapping(self.resolve_type),
         source.content,
         self.content
     ));
@@ -357,11 +348,13 @@ void generator::generate_basic_method_call(call_field* node,
 bool generator::visit_call_field(call_field* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
+
     // basic symbol, for example i8, i16, i32, i64
     if (source.resolve_type.loc_file.empty()) {
-        generate_basic_method_call(node, source);
+        generate_basic_method(node, source);
         return true;
     }
+
     if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
         err.err("code", node->get_location(),
             "cannot find domain \"" + source.resolve_type.loc_file + "\"."
@@ -385,7 +378,7 @@ bool generator::visit_call_field(call_field* node) {
                 ircode_block->add_stmt(new sir_call_field(
                     temp,
                     source.content,
-                    type_convert(resolve),
+                    type_mapping(resolve),
                     i
                 ));
                 auto result = value {
@@ -439,7 +432,7 @@ bool generator::visit_ptr_call_field(ptr_call_field* node) {
                 auto source_type_copy = source.resolve_type;
                 source_type_copy.pointer_depth--;
                 ircode_block->add_stmt(new sir_load(
-                    type_convert(source_type_copy),
+                    type_mapping(source_type_copy),
                     source.content,
                     temp_0
                 ));
@@ -447,7 +440,7 @@ bool generator::visit_ptr_call_field(ptr_call_field* node) {
                 ircode_block->add_stmt(new sir_call_field(
                     temp_1,
                     temp_0,
-                    type_convert(source_type_copy),
+                    type_mapping(source_type_copy),
                     i
                 ));
                 auto result = value {
@@ -467,7 +460,7 @@ bool generator::visit_ptr_call_field(ptr_call_field* node) {
         auto source_type_copy = source.resolve_type;
         source_type_copy.pointer_depth--;
         ircode_block->add_stmt(new sir_load(
-            type_convert(source_type_copy),
+            type_mapping(source_type_copy),
             source.content,
             temp_0
         ));
@@ -497,18 +490,9 @@ void generator::generate_basic_static_method(call_path* node,
         return;
     }
     const auto name = "native." + source.resolve_type.name +
-                        "." + node->get_name();
-    if (!irc.used_basic_convert_method.count(source.resolve_type.name)) {
-        irc.used_basic_convert_method.insert({
-            source.resolve_type.name,
-            {}
-        });
-    }
-    irc.used_basic_convert_method.at(source.resolve_type.name).insert(
-        bsc->static_method.at(node->get_name()).return_type.name
-    );
+                      "." + node->get_name();
     auto result = value {
-        .kind = value_kind::v_sfn,
+        .kind = value_kind::v_type_convert,
         .resolve_type = node->get_resolve(),
         .content = name
     };
@@ -518,11 +502,13 @@ void generator::generate_basic_static_method(call_path* node,
 bool generator::visit_call_path(call_path* node) {
     const auto source = value_stack.back();
     value_stack.pop_back();
+
     // basic symbol, for example i8, i16, i32, i64
     if (source.resolve_type.loc_file.empty()) {
         generate_basic_static_method(node, source);
         return true;
     }
+
     if (!ctx.global.domain.count(source.resolve_type.loc_file)) {
         err.err("code", node->get_location(),
             "cannot find domain \"" + source.resolve_type.loc_file + "\"."
@@ -539,7 +525,7 @@ bool generator::visit_call_path(call_path* node) {
     const auto& st = dom.structs.at(source.resolve_type.name);
     if (st.static_method.count(node->get_name())) {
         auto result = value {
-            .kind = value_kind::v_sfn,
+            .kind = value_kind::v_static_fn,
             .resolve_type = node->get_resolve(),
             .content = st.name + "." + node->get_name()
         };
@@ -552,12 +538,21 @@ bool generator::visit_call_path(call_path* node) {
 
 bool generator::visit_call_func_args(call_func_args* node) {
     std::vector<value> arguments;
+
     // load self if encountering value that is not a function
+    // the stack should be like this:
+    // +------+
+    // | var  | <- variable 'self'
+    // +------+
+    // | func | <- normal function that needs 'self' argument
+    // +------+
     if (value_stack.back().kind!=value_kind::v_fn &&
-        value_stack.back().kind!=value_kind::v_sfn) {
+        value_stack.back().kind!=value_kind::v_static_fn &&
+        value_stack.back().kind!=value_kind::v_type_convert) {
         arguments.push_back(value_stack.back());
         value_stack.pop_back();
     }
+
     // load other arguments
     for(auto i : node->get_args()) {
         i->accept(this);
@@ -570,32 +565,46 @@ bool generator::visit_call_func_args(call_func_args* node) {
         return true;
     }
     const auto temp_0 = get_temp_variable();
+
     // generate function call ir
     const auto func = value_stack.back();
     value_stack.pop_back();
-    auto new_call = new sir_call_func(
-        func.content,
-        type_convert(node->get_resolve()),
-        node->get_resolve()==type::void_type()? "":temp_0
-    );
-    for(const auto& arg : arguments) {
-        new_call->add_arg_type(type_convert(arg.resolve_type));
-        new_call->add_arg(arg.content);
+
+    // generate type convert ir directly if func is v_type_convert
+    if (func.kind==value_kind::v_type_convert) {
+        auto new_convert = new sir_type_convert(
+            arguments[0].content,
+            temp_0,
+            type_mapping(arguments[0].resolve_type),
+            type_mapping(node->get_resolve()),
+            false
+        );
+        ircode_block->add_stmt(new_convert);
+    } else {
+        auto new_call = new sir_call_func(
+            func.content,
+            type_mapping(node->get_resolve()),
+            node->get_resolve()==type::void_type()? "":temp_0
+        );
+        for(const auto& arg : arguments) {
+            new_call->add_arg_type(type_mapping(arg.resolve_type));
+            new_call->add_arg(arg.content);
+        }
+        ircode_block->add_stmt(new_call);
     }
-    ircode_block->add_stmt(new_call);
     // push return value on stack
     if (node->get_resolve()!=type::void_type()) {
         const auto temp_1 = get_temp_variable();
         ircode_block->add_alloca(new sir_alloca(
             "real." + temp_1,
-            type_convert(node->get_resolve())
+            type_mapping(node->get_resolve())
         ));
         ircode_block->add_stmt(new sir_temp_ptr(
             temp_1,
-            type_convert(node->get_resolve())
+            type_mapping(node->get_resolve())
         ));
         ircode_block->add_stmt(new sir_store(
-            type_convert(node->get_resolve()),
+            type_mapping(node->get_resolve()),
             value_t::variable(temp_0),
             value_t::variable(temp_1)
         ));
@@ -628,7 +637,7 @@ bool generator::visit_definition(definition* node) {
     } else {
         ircode_block->add_alloca(new sir_alloca(
             node->get_name(),
-            type_convert(node->get_resolve())
+            type_mapping(node->get_resolve())
         ));
     }
     const auto source = value_stack.back();
@@ -641,7 +650,7 @@ bool generator::visit_definition(definition* node) {
         ));
     } else {
         ircode_block->add_stmt(new sir_store(
-            type_convert(node->get_resolve()),
+            type_mapping(node->get_resolve()),
             value_t::variable(source.content),
             value_t::variable(node->get_name())
         ));
@@ -656,17 +665,17 @@ void generator::generate_add_assignment(const value& left, const value& right) {
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         left.content,
         temp_0
     ));
     ircode_block->add_stmt(new sir_add(
         temp_0, right.content, temp_1,
         left.resolve_type.is_integer(),
-        type_convert(left_type_copy)
+        type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         value_t::variable(temp_1),
         value_t::variable(left.content)
     ));
@@ -678,17 +687,17 @@ void generator::generate_sub_assignment(const value& left, const value& right) {
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         left.content,
         temp_0
     ));
     ircode_block->add_stmt(new sir_sub(
         temp_0, right.content, temp_1,
         left.resolve_type.is_integer(),
-        type_convert(left_type_copy)
+        type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         value_t::variable(temp_1),
         value_t::variable(left.content)
     ));
@@ -700,17 +709,17 @@ void generator::generate_mul_assignment(const value& left, const value& right) {
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         left.content,
         temp_0
     ));
     ircode_block->add_stmt(new sir_mul(
         temp_0, right.content, temp_1,
         left.resolve_type.is_integer(),
-        type_convert(left_type_copy)
+        type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         value_t::variable(temp_1),
         value_t::variable(left.content)
     ));
@@ -722,7 +731,7 @@ void generator::generate_div_assignment(const value& left, const value& right) {
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         left.content,
         temp_0
     ));
@@ -730,10 +739,10 @@ void generator::generate_div_assignment(const value& left, const value& right) {
         temp_0, right.content, temp_1,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left_type_copy)
+        type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         value_t::variable(temp_1),
         value_t::variable(left.content)
     ));
@@ -745,7 +754,7 @@ void generator::generate_rem_assignment(const value& left, const value& right) {
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         left.content,
         temp_0
     ));
@@ -753,10 +762,10 @@ void generator::generate_rem_assignment(const value& left, const value& right) {
         temp_0, right.content, temp_1,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left_type_copy)
+        type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         value_t::variable(temp_1),
         value_t::variable(left.content)
     ));
@@ -764,7 +773,7 @@ void generator::generate_rem_assignment(const value& left, const value& right) {
 
 void generator::generate_eq_assignment(const value& left, const value& right) {
     ircode_block->add_stmt(new sir_store(
-        type_convert(right.resolve_type),
+        type_mapping(right.resolve_type),
         value_t::variable(right.content),
         value_t::variable(left.content)
     ));
@@ -776,16 +785,16 @@ void generator::generate_and_assignment(const value& left, const value& right) {
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         left.content,
         temp_0
     ));
     ircode_block->add_stmt(new sir_band(
         temp_0, right.content, temp_1,
-        type_convert(left_type_copy)
+        type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         value_t::variable(temp_1),
         value_t::variable(left.content)
     ));
@@ -797,16 +806,16 @@ void generator::generate_xor_assignment(const value& left, const value& right) {
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         left.content,
         temp_0
     ));
     ircode_block->add_stmt(new sir_bxor(
         temp_0, right.content, temp_1,
-        type_convert(left_type_copy)
+        type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         value_t::variable(temp_1),
         value_t::variable(left.content)
     ));
@@ -818,16 +827,16 @@ void generator::generate_or_assignment(const value& left, const value& right) {
     const auto temp_0 = get_temp_variable();
     const auto temp_1 = get_temp_variable();
     ircode_block->add_stmt(new sir_load(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         left.content,
         temp_0
     ));
     ircode_block->add_stmt(new sir_bor(
         temp_0, right.content, temp_1,
-        type_convert(left_type_copy)
+        type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
-        type_convert(left_type_copy),
+        type_mapping(left_type_copy),
         value_t::variable(temp_1),
         value_t::variable(left.content)
     ));
@@ -949,7 +958,7 @@ void generator::generate_add_operator(const value& left,
         right.content,
         result.content,
         left.resolve_type.is_integer(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -961,7 +970,7 @@ void generator::generate_sub_operator(const value& left,
         right.content,
         result.content,
         left.resolve_type.is_integer(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -973,7 +982,7 @@ void generator::generate_mul_operator(const value& left,
         right.content,
         result.content,
         left.resolve_type.is_integer(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -986,7 +995,7 @@ void generator::generate_div_operator(const value& left,
         result.content,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -999,7 +1008,7 @@ void generator::generate_rem_operator(const value& left,
         result.content,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1010,7 +1019,7 @@ void generator::generate_band_operator(const value& left,
         left.content,
         right.content,
         result.content,
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1021,7 +1030,7 @@ void generator::generate_bxor_operator(const value& left,
         left.content,
         right.content,
         result.content,
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1032,7 +1041,7 @@ void generator::generate_bor_operator(const value& left,
         left.content,
         right.content,
         result.content,
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1046,7 +1055,7 @@ void generator::generate_eq_operator(const value& left,
         result.content,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1060,7 +1069,7 @@ void generator::generate_neq_operator(const value& left,
         result.content,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1074,7 +1083,7 @@ void generator::generate_ge_operator(const value& left,
         result.content,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1088,7 +1097,7 @@ void generator::generate_gt_operator(const value& left,
         result.content,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1102,7 +1111,7 @@ void generator::generate_le_operator(const value& left,
         result.content,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1116,7 +1125,7 @@ void generator::generate_lt_operator(const value& left,
         result.content,
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
-        type_convert(left.resolve_type)
+        type_mapping(left.resolve_type)
     ));
 }
 
@@ -1168,7 +1177,7 @@ void generator::generate_neg_operator(const value& src, const value& result) {
         src.content,
         result.content,
         src.resolve_type.is_integer(),
-        type_convert(src.resolve_type)
+        type_mapping(src.resolve_type)
     ));
 }
 
@@ -1176,7 +1185,7 @@ void generator::generate_bnot_operator(const value& src, const value& result) {
     ircode_block->add_stmt(new sir_bnot(
         src.content,
         result.content,
-        type_convert(src.resolve_type)
+        type_mapping(src.resolve_type)
     ));
 }
 
@@ -1206,7 +1215,7 @@ bool generator::visit_ret_stmt(ret_stmt* node) {
         const auto result = value_stack.back();
         value_stack.pop_back();
         ircode_block->add_stmt(new sir_ret(
-            type_convert(result.resolve_type),
+            type_mapping(result.resolve_type),
             value_t::variable(result.content)
         ));
     } else {

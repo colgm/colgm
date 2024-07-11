@@ -260,6 +260,18 @@ void sir_type_convert::dump(std::ostream& out) const {
     const auto source_bit_size = std::stoi(real_src_type.substr(1));
     const auto dest_type_mark = real_dst_type[0];
     const auto dest_bit_size = std::stoi(real_dst_type.substr(1));
+
+    // source type maybe the same as target type
+    // because like i64 & u64 share the same llvm type `i64`
+    if (real_src_type==real_dst_type &&
+        (real_src_type[0]=='i' || real_src_type[0]=='u')) {
+        out << "%" << destination << " = add " << real_src_type << " ";
+        out << "%" << source << ", 0";
+        out << " ; " << src_type << " -> " << dst_type << "\n";
+        return;
+    }
+
+    // get convert instruction
     const auto convert_inst = convert_instruction(
         source_type_mark,
         source_bit_size,
@@ -268,8 +280,8 @@ void sir_type_convert::dump(std::ostream& out) const {
     );
 
     out << "%" << destination << " = " << convert_inst << " ";
-    out << src_type << " %" << source << " to ";
-    out << dst_type << "\n";
+    out << src_type << " %" << source << " to " << dst_type;
+    out << " ; " << src_type << " -> " << dst_type << "\n";
 }
 
 }
