@@ -1,6 +1,4 @@
-# Colgm Compiler Project: Bootstrap
-
-<img src="../doc/png/logo-small.png" style="width:200px"></img>
+# Colgm Compiler: Bootstrap
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 
@@ -11,9 +9,8 @@ This directory stores the source file of colgm compiler which is used to bootstr
 In the top level directory, use these commands:
 
 ```sh
-mkdir build
-cd build
-cmake ../bootstrap
+cd bootstrap
+mkdir build && cd build && cmake ..
 make -j
 ```
 
@@ -22,7 +19,7 @@ make -j
 Use this command to get usage:
 
 ```sh
-./colgm -h
+./build/colgm -h
 ```
 
 ## Syntax
@@ -101,5 +98,15 @@ if (1 == 1) {
     ...
 } else {
     ...
+}
+```
+
+## Type Conversion
+
+A bit like rust, using `=>` instead of `as`:
+
+```rust
+func main() -> i32 {
+    return 0 => i32;
 }
 ```

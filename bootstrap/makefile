@@ -1,9 +1,5 @@
 COLGMCC = ./build/colgm
 
-.PHONY: out.ll
-out.ll:
-	$(COLGMCC) ../src/main.colgm -L ../src
-
 .PHONY: test
 test: $(COLGMCC)
 	@ $(COLGMCC) test/assign.colgm

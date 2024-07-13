@@ -8,15 +8,6 @@
 
 namespace colgm {
 
-namespace basic {
-
-colgm_func create_convert_method(const std::string&, const type&, const symbol&);
-void init_convert_method_map(std::unordered_map<std::string, colgm_func>&,
-                             const symbol&,
-                             const std::string&);
-
-}
-
 struct colgm_basic {
     std::string name;
     std::unordered_map<std::string, colgm_func> method;

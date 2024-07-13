@@ -576,8 +576,7 @@ bool generator::visit_call_func_args(call_func_args* node) {
             arguments[0].content,
             temp_0,
             type_mapping(arguments[0].resolve_type),
-            type_mapping(node->get_resolve()),
-            false
+            type_mapping(node->get_resolve())
         );
         ircode_block->add_stmt(new_convert);
     } else {
@@ -1219,8 +1218,7 @@ bool generator::visit_type_convert(type_convert* node) {
         src.content,
         temp,
         type_mapping(src.resolve_type),
-        type_mapping(node->get_resolve()),
-        node->get_resolve().pointer_depth
+        type_mapping(node->get_resolve())
     ));
     const auto result = value {
         .kind = value_kind::v_var,

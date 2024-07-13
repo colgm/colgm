@@ -8,9 +8,9 @@ struct str {
 impl str {
     func new() -> str* {
         var res = str::__alloc__();
-        res->c_str = malloc(i64::u64(128));
-        res->size = i64::u64(0);
-        res->c_str[0] = i64::i8(0);
+        res->c_str = malloc(128 => u64);
+        res->size = 0 => u64;
+        res->c_str[0] = '\0';
         return res;
     }
 
@@ -18,8 +18,8 @@ impl str {
         var new_str = str::new();
         new_str->size = self->size;
         new_str->c_str = malloc(self->size);
-        var i = i64::u64(0);
-        while (i<self->size) {
+        var i = 0 => u64;
+        while (i < self->size) {
             new_str->c_str[i] = self->c_str[i];
         }
         return new_str;
@@ -32,18 +32,18 @@ impl str {
     }
 
     func empty(self: str*) -> bool {
-        if (self->size == i64::u64(0)) {
+        if (self->size == (0 => u64)) {
             return true;
         }
         return false;
     }
 
     func copy_const(self: str*, src: i8*) {
-        var len = i64::u64(strlen(src));
+        var len = strlen(src) => u64;
         if (len >= self->size) {
             free(self->c_str);
-            self->c_str = malloc(len + i64::u64(1));
-            self->size = len + i64::u64(1);
+            self->c_str = malloc(len + (1 => u64));
+            self->size = len + 1 => u64;
         }
         memcpy(self->c_str, src, len);
         self->c_str[len] = '\0';

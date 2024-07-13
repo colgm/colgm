@@ -605,7 +605,6 @@ private:
     std::string destination;
     std::string src_type;
     std::string dst_type;
-    bool is_pointer_convert;
 
 private:
     std::string convert_instruction(char, int, char, int) const;
@@ -614,12 +613,10 @@ public:
     sir_type_convert(const std::string& src,
                      const std::string& dst,
                      const std::string& st,
-                     const std::string& dt,
-                     bool ptr_cvrt):
+                     const std::string& dt):
         sir(sir_kind::sir_type_convert),
         source(src), destination(dst),
-        src_type(st), dst_type(dt),
-        is_pointer_convert(ptr_cvrt) {}
+        src_type(st), dst_type(dt) {}
     ~sir_type_convert() override = default;
     void dump(std::ostream&) const override;
 };

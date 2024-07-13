@@ -306,28 +306,6 @@ type semantic::struct_method_infer(const std::string& st_name,
     return infer;
 }
 
-type semantic::basic_static_method_infer(const std::string& bsc_name,
-                                         const std::string& fn_name) {
-    auto infer = type({bsc_name, "", 0, true});
-    infer.bsc_info = {
-        .flag_is_static = true,
-        .flag_is_normal = false,
-        .method_name = fn_name
-    };
-    return infer;
-}
-
-type semantic::basic_method_infer(const std::string& bsc_name,
-                                  const std::string& fn_name) {
-    auto infer = type({bsc_name, "", 0, true});
-    infer.bsc_info = {
-        .flag_is_static = false,
-        .flag_is_normal = true,
-        .method_name = fn_name
-    };
-    return infer;
-}
-
 type semantic::resolve_logical_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
@@ -503,6 +481,16 @@ type semantic::resolve_type_convert(type_convert* node) {
             res.to_string() + "\" and \"" + type_res.to_string() + "\"."
         );
     }
+
+    // convert floating point number to pointer is unsafe at all
+    if ((res.is_float() && type_res.is_pointer()) ||
+        (res.is_pointer() && type_res.is_float())) {
+        report(node->get_target(),
+            "cannot cast floating point number to pointer: \"" +
+            res.to_string() + "\" => \"" + type_res.to_string() + "\"."
+        );
+    }
+
     node->set_resolve_type(type_res);
     return type_res;
 }
@@ -586,11 +574,9 @@ type semantic::resolve_call_field(const type& prev, call_field* node) {
         );
         return type::error_type();
     }
+
+    // prev resolved type is natvie type
     if (prev.loc_file.empty()) {
-        if (colgm_basic::mapper.count(prev.name) &&
-            colgm_basic::mapper.at(prev.name)->method.count(node->get_name())) {
-            return basic_method_infer(prev.name, node->get_name());
-        }
         report(node,
             "cannot get method \"" + node->get_name() +
             "\" from \"" + prev.to_string() + "\"."
@@ -753,17 +739,16 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         report(node, "cannot get path from a value.");
         return type::error_type();
     }
+
+    // prev resolved type is a native type
     if (prev.loc_file.empty()) {
-        if (colgm_basic::mapper.count(prev.name) &&
-            colgm_basic::mapper.at(prev.name)->static_method.count(node->get_name())) {
-            return basic_static_method_infer(prev.name, node->get_name());
-        }
         report(node,
             "cannot get static method \"" + node->get_name() +
             "\" from \"" + prev.to_string() + "\"."
         );
         return type::error_type();
     }
+
     const auto& domain = ctx.global.domain.at(prev.loc_file);
     if (domain.structs.count(prev.name) && prev.is_global) {
         const auto& st = domain.structs.at(prev.name);

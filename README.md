@@ -1,6 +1,4 @@
-# Colgm Compiler Project
-
-<img src="./doc/png/logo-small.png" style="width:200px"></img>
+# <img src="./doc/png/logo-small.png" style="width:40px"></img> Colgm Compiler Project
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 
@@ -8,30 +6,38 @@ This is the main repository for Colgm compiler.
 
 ## Repo Content
 
-- [Bootstrap [WIP]](./bootstrap/README.md) -> bootstrap
-- [Self-Hosted [WIP & unavailable now]](./src/README.md) -> src
+- [Bootstrap](./bootstrap/README.md) -> bootstrap
+- [Bootstrapped [WIP]](./src/README.md) -> src
 
-## Bootstrap Compiler
+## Bootstrapping Compiler
+
+Bootstrap compiler locates at `{repo_path}/bootstrap`,
+written by C++(`-std=c++17`):
 
 Use these commands to build the bootstrap compiler:
 
 ```sh
 cd bootstrap
-mkdir build
-cd build
-cmake ..
+mkdir build && cd build && cmake ..
 make -j
 ```
 
 The executable is located as `build/colgm`.
 
-In directory `bootstrap`, use this command:
+Then move to the `{repo_path}/src`:
 
 ```sh
-make out.ll
+cd src
+make
 ```
 
-The generated llvm ir will be generated with filename `out.ll`.
+The bootstrapped compiler should be `{repo_path}/src/out.ll`.
+If having `lli`(llvm jit interpreter), you could try this to
+execute bootstrapped new compiler:
+
+```sh
+lli out.ll
+```
 
 Learn more about bootstrap compiler: [Colgm Bootstrap](./bootstrap/README.md).
 

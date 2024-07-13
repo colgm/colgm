@@ -242,8 +242,20 @@ std::string sir_type_convert::convert_instruction(char source_type_mark,
 }
 
 void sir_type_convert::dump(std::ostream& out) const {
-    if (is_pointer_convert) {
+    if (src_type.back()=='*' && dst_type.back()=='*') {
         out << "%" << destination << " = bitcast ";
+        out << src_type << " %" << source << " to ";
+        out << dst_type << "\n";
+        return;
+    }
+    if (src_type.back()!='*' && dst_type.back()=='*') {
+        out << "%" << destination << " = inttoptr ";
+        out << src_type << " %" << source << " to ";
+        out << dst_type << "\n";
+        return;
+    }
+    if (src_type.back()=='*' && dst_type.back()!='*') {
+        out << "%" << destination << " = ptrtoint ";
         out << src_type << " %" << source << " to ";
         out << dst_type << "\n";
         return;
