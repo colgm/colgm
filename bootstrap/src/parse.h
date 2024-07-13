@@ -82,7 +82,8 @@ private:
         {tok::tk_leq         , "<="      },
         {tok::tk_grt         , ">"       },
         {tok::tk_geq         , ">="      },
-        {tok::tk_arrow       , "->"      }
+        {tok::tk_arrow       , "->"      },
+        {tok::tk_wide_arrow  , "=>"      }
     };
 
 private:

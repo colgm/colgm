@@ -32,9 +32,9 @@ private:
             std::cout << i;
         }
     }
-    std::string format_location(const span& location) {
+    std::string format_location(node* n) {
         std::stringstream ss;
-        ss << " -> " << location << "\n";
+        ss << " -> " << n->get_location() << "\n";
         return ss.str();
     }
 
@@ -56,6 +56,7 @@ public:
     bool visit_impl_struct(impl_struct*) override;
     bool visit_unary_operator(unary_operator*) override;
     bool visit_binary_operator(binary_operator*) override;
+    bool visit_type_convert(type_convert*) override;
     bool visit_call_index(call_index*) override;
     bool visit_call_func_args(call_func_args*) override;
     bool visit_call_field(call_field*) override;

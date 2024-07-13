@@ -12,6 +12,7 @@ enum class ast_type {
     ast_root,
     ast_unary_operator,
     ast_binary_operator,
+    ast_type_convert,
     ast_identifier,
     ast_nil_literal,
     ast_number_literal,
@@ -58,6 +59,7 @@ class expr;
 class null;
 class unary_operator;
 class binary_operator;
+class type_convert;
 class identifier;
 class number_literal;
 class string_literal;

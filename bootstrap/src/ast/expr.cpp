@@ -24,6 +24,15 @@ void binary_operator::accept(visitor* v) {
     v->visit_binary_operator(this);
 }
 
+type_convert::~type_convert() {
+    delete source;
+    delete target;
+}
+
+void type_convert::accept(visitor* v) {
+    v->visit_type_convert(this);
+}
+
 void identifier::accept(visitor* v) {
     v->visit_identifier(this);
 }

@@ -56,6 +56,16 @@ bool lexer::is_arrow(char c) {
     return false;
 }
 
+bool lexer::is_wide_arrow(char c) {
+    if (c!='=') {
+        return false;
+    }
+    if (ptr+1<res.size() && res[ptr+1]=='>') {
+        return true;
+    }
+    return false;
+}
+
 void lexer::skip_note() {
     // avoid note, after this process ptr will point to '\n'
     // so next loop line counter+1
@@ -334,10 +344,14 @@ token lexer::str_gen() {
 token lexer::arrow_gen() {
     u32 begin_line = line;
     u32 begin_column = column;
-    std::string str = "->";
+    std::string str = (res[ptr]=='-'? "->":"=>");
     ptr += str.length();
     column += str.length();
-    return {{begin_line, begin_column, line, column, filename}, get_type(str), str};
+    return {
+        {begin_line, begin_column, line, column, filename},
+        get_type(str),
+        str
+    };
 }
 
 token lexer::single_opr() {
@@ -419,7 +433,7 @@ const error& lexer::scan(const std::string& file) {
             toks.push_back(num_gen());
         } else if (is_str(res[ptr])) {
             toks.push_back(str_gen());
-        } else if (is_arrow(res[ptr])) {
+        } else if (is_arrow(res[ptr]) || is_wide_arrow(res[ptr])) {
             toks.push_back(arrow_gen());
         } else if (is_single_opr(res[ptr])) {
             toks.push_back(single_opr());

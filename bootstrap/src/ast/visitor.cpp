@@ -85,6 +85,12 @@ bool visitor::visit_binary_operator(binary_operator* node) {
     return true;
 }
 
+bool visitor::visit_type_convert(type_convert* node) {
+    node->get_source()->accept(this);
+    node->get_target()->accept(this);
+    return true;
+}
+
 bool visitor::visit_identifier(identifier* node) {
     return true;
 }

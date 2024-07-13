@@ -85,6 +85,25 @@ public:
     auto get_right() const { return right; }
 };
 
+class type_convert: public expr {
+private:
+    expr* source;
+    type_def* target;
+
+public:
+    type_convert(const span& loc):
+        expr(ast_type::ast_type_convert, loc),
+        source(nullptr), target(nullptr) {}
+    ~type_convert() override;
+    void accept(visitor*) override;
+
+public:
+    void set_source(expr* s) { source = s; }
+    void set_target(type_def* t) { target = t; }
+    auto get_source() const { return source; }
+    auto get_target() const { return target; }
+};
+
 class identifier: public expr {
 private:
     std::string name;
