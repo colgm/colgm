@@ -1201,11 +1201,34 @@ bool generator::visit_unary_operator(unary_operator* node) {
     };
     value_stack.push_back(result);
     switch(node->get_opr()) {
-        case unary_operator::kind::neg: generate_neg_operator(src,result); break;
+        case unary_operator::kind::neg: generate_neg_operator(src, result); break;
         case unary_operator::kind::bnot: generate_bnot_operator(src, result); break;
         default: unimplemented(node);
     }
     ircode_block->add_nop("end binary opr");
+    return true;
+}
+
+bool generator::visit_type_convert(type_convert* node) {
+    ircode_block->add_nop("begin type convert");
+    node->get_source()->accept(this);
+    const auto src = value_stack.back();
+    value_stack.pop_back();
+    const auto temp = get_temp_variable();
+    ircode_block->add_stmt(new sir_type_convert(
+        src.content,
+        temp,
+        type_mapping(src.resolve_type),
+        type_mapping(node->get_resolve()),
+        node->get_resolve().pointer_depth
+    ));
+    const auto result = value {
+        .kind = value_kind::v_var,
+        .resolve_type = node->get_resolve(),
+        .content = temp
+    };
+    value_stack.push_back(result);
+    ircode_block->add_nop("end type convert");
     return true;
 }
 

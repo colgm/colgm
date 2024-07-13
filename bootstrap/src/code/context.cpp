@@ -37,6 +37,10 @@ void ir_context::dump_const_string(std::ostream& out) const {
         dump_raw_string(out, ordered_const_string[i]);
         out << "\"\n";
     }
+
+    if (ordered_const_string.size()) {
+        out << "\n";
+    }
 }
 
 void ir_context::dump_struct_size_method(std::ostream& out) const {
@@ -105,19 +109,26 @@ void ir_context::dump_code(std::ostream& out) {
     for(const auto& i : struct_decls) {
         i.dump(out);
     }
+    if (struct_decls.size()) {
+        out << "\n";
+    }
+
     dump_const_string(out);
+
     dump_struct_size_method(out);
     dump_struct_alloc_method(out);
     dump_struct_delete_method(out);
     if (struct_decls.size()) {
         out << "\n";
     }
+
     for(auto i : func_decls) {
         i->dump(out);
     }
     if (func_decls.size()) {
         out << "\n";
     }
+
     for(auto i : func_impls) {
         i->dump(out);
         out << "\n";

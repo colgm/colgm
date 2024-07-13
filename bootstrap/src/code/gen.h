@@ -113,6 +113,7 @@ private:
     void generate_neg_operator(const value&, const value&);
     void generate_bnot_operator(const value&, const value&);
     bool visit_unary_operator(unary_operator*) override;
+    bool visit_type_convert(type_convert*) override;
     bool visit_ret_stmt(ret_stmt*) override;
     bool visit_definition(definition*) override;
     void generate_add_assignment(const value&, const value&);

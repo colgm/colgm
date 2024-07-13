@@ -107,6 +107,7 @@ private:
     expr* scalar_gen();
     unary_operator* unary_neg_gen();
     unary_operator* unary_bnot_gen();
+    expr* type_convert_gen();
     expr* multive_gen();
     expr* additive_gen();
     expr* bitwise_and_gen();

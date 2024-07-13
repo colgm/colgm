@@ -491,6 +491,22 @@ type semantic::resolve_unary_operator(unary_operator* node) {
     return type::error_type();
 }
 
+type semantic::resolve_type_convert(type_convert* node) {
+    const auto res = resolve_expression(node->get_source());
+    const auto type_res = resolve_type_def(node->get_target());
+    if (res.is_error() || type_res.is_error()) {
+        return type::error_type();
+    }
+    if (res == type_res) {
+        report(node->get_target(),
+            "unnecessary type cast between \"" +
+            res.to_string() + "\" and \"" + type_res.to_string() + "\"."
+        );
+    }
+    node->set_resolve_type(type_res);
+    return type_res;
+}
+
 type semantic::resolve_nil_literal(nil_literal* node) {
     node->set_resolve_type(type::i8_type(1));
     return type::i8_type(1);
@@ -930,6 +946,8 @@ type semantic::resolve_expression(expr* node) {
         return resolve_unary_operator(reinterpret_cast<unary_operator*>(node));
     case ast_type::ast_binary_operator:
         return resolve_binary_operator(reinterpret_cast<binary_operator*>(node));
+    case ast_type::ast_type_convert:
+        return resolve_type_convert(reinterpret_cast<type_convert*>(node));
     case ast_type::ast_nil_literal:
         return resolve_nil_literal(reinterpret_cast<nil_literal*>(node));
     case ast_type::ast_number_literal:

@@ -24,27 +24,25 @@ private:
 
 private:
     void report(node* n, const std::string& info) {
-        err.err("sema", n->get_location(), info);
+        err.err("semantic", n->get_location(), info);
     }
     void warning(node* n, const std::string& info) {
-        err.warn("sema", n->get_location(), info);
+        err.warn("semantic", n->get_location(), info);
     }
     void unimplemented(node* n) {
-        err.err("sema", n->get_location(), "unimplemented, please report a bug.");
+        err.err("semantic",
+            n->get_location(),
+            "unimplemented, please report a bug."
+        );
     }
     void unreachable(node* n) {
-        err.err("sema", n->get_location(), "unreachable, please report a bug.");
+        err.err("semantic",
+            n->get_location(),
+            "unreachable, please report a bug."
+        );
     }
     void report_unreachable_statements(code_block*);
     void report_top_level_block_has_no_return(code_block*);
-
-private:
-    bool flag_enable_type_warning = false;
-
-public:
-    void enable_type_warning() {
-        flag_enable_type_warning = true;
-    }
 
 private:
     colgm_func builtin_struct_size(const span&);
@@ -85,6 +83,7 @@ private:
     type resolve_unary_neg(unary_operator*);
     type resolve_unary_bnot(unary_operator*);
     type resolve_unary_operator(unary_operator*);
+    type resolve_type_convert(type_convert*);
     type resolve_nil_literal(nil_literal*);
     type resolve_number_literal(number_literal*);
     type resolve_string_literal(string_literal*);

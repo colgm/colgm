@@ -182,9 +182,24 @@ unary_operator* parse::unary_bnot_gen() {
     return result;
 }
 
-expr* parse::multive_gen() {
+expr* parse::type_convert_gen() {
     const auto begin_location = toks[ptr].loc;
     auto result = scalar_gen();
+    if (look_ahead(tok::tk_wide_arrow)) {
+        match(tok::tk_wide_arrow);
+        auto type_cast_node = new type_convert(begin_location);
+        type_cast_node->set_source(result);
+        type_cast_node->set_target(type_gen());
+        result = type_cast_node;
+    }
+
+    update_location(result);
+    return result;
+}
+
+expr* parse::multive_gen() {
+    const auto begin_location = toks[ptr].loc;
+    auto result = type_convert_gen();
     while(look_ahead(tok::tk_mult) ||
         look_ahead(tok::tk_div) ||
         look_ahead(tok::tk_rem)) {
@@ -197,7 +212,7 @@ expr* parse::multive_gen() {
             default: break;
         }
         match(toks[ptr].type);
-        binary->set_right(scalar_gen());
+        binary->set_right(type_convert_gen());
         result = binary;
     }
     update_location(result);
