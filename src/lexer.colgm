@@ -1,11 +1,53 @@
 use std::str::str;
+use std::libc::{ malloc, free };
 
 struct token {
     kind: i64,
     content: str*
 }
 
+impl token {
+    func new(kind: i64, content: str*) -> token* {
+        var res = token::__alloc__();
+        res->kind = kind;
+        res->content = content;
+        return res;
+    }
+
+    func delete(self: token*) {
+        self->content->delete();
+        free(self->content => i8*);
+        return;
+    }
+}
+
+struct token_vector {
+    data: token*,
+    size: u64,
+    alloc_size: u64
+}
+
+impl token_vector {
+    func new() -> token_vector* {
+        var res = token_vector::__alloc__();
+        res->data = malloc((1024 => u64) * token::__size__()) => token*;
+        res->size = 0 => u64;
+        res->alloc_size = 1024 => u64;
+        return res;
+    }
+
+    func delete(self: token_vector*) {
+        var index = 0 => u64;
+        while(index < self->size) {
+            var offset = (self->data => u64 + index) => token*;
+            offset->delete();
+        }
+        free(self->data => i8*);
+        return;
+    }
+}
+
 struct lexer {
-    toks: token*
+    toks: token_vector*
 }
 

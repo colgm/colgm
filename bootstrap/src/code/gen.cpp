@@ -60,7 +60,11 @@ bool generator::visit_func_decl(func_decl* node) {
 
     auto name = node->get_name();
     if (impl_struct_name.length()) {
-        name = impl_struct_name + "." + name;
+        const auto stt = type {
+            .name = impl_struct_name,
+            .loc_file = node->get_location().file
+        };
+        name = mangle_in_module_symbol(stt.full_path_name()) + "." + name;
     }
 
     auto new_ir = new hir_func("@" + name);
@@ -394,10 +398,13 @@ bool generator::visit_call_field(call_field* node) {
         return true;
     }
     if (st.method.count(node->get_name())) {
+        const auto st_name = mangle_in_module_symbol(
+            source.resolve_type.full_path_name()
+        );
         auto result = value {
             .kind = value_kind::v_fn,
             .resolve_type = node->get_resolve(),
-            .content = st.name + "." + node->get_name()
+            .content = st_name + "." + node->get_name()
         };
         value_stack.push_back(result);
         value_stack.push_back(source); // self pointer
@@ -464,10 +471,13 @@ bool generator::visit_ptr_call_field(ptr_call_field* node) {
             source.content,
             temp_0
         ));
+        const auto st_name = mangle_in_module_symbol(
+            source.resolve_type.full_path_name()
+        );
         auto result = value {
             .kind = value_kind::v_fn,
             .resolve_type = node->get_resolve(),
-            .content = st.name + "." + node->get_name()
+            .content = st_name + "." + node->get_name()
         };
         auto self = value {
             .kind = value_kind::v_var,
@@ -524,10 +534,13 @@ bool generator::visit_call_path(call_path* node) {
     }
     const auto& st = dom.structs.at(source.resolve_type.name);
     if (st.static_method.count(node->get_name())) {
+        const auto st_name = mangle_in_module_symbol(
+            source.resolve_type.full_path_name()
+        );
         auto result = value {
             .kind = value_kind::v_static_fn,
             .resolve_type = node->get_resolve(),
-            .content = st.name + "." + node->get_name()
+            .content = st_name + "." + node->get_name()
         };
         value_stack.push_back(result);
         return true;
@@ -1137,7 +1150,7 @@ bool generator::visit_binary_operator(binary_operator* node) {
         generate_or_operator(node);
         return true;
     }
-    ircode_block->add_nop("begin binary opr");
+
     node->get_left()->accept(this);
     const auto left = value_stack.back();
     value_stack.pop_back();
@@ -1167,7 +1180,7 @@ bool generator::visit_binary_operator(binary_operator* node) {
         case binary_operator::kind::less: generate_lt_operator(left, right, result); break;
         default: unimplemented(node);
     }
-    ircode_block->add_nop("end binary opr");
+
     return true;
 }
 
@@ -1189,7 +1202,6 @@ void generator::generate_bnot_operator(const value& src, const value& result) {
 }
 
 bool generator::visit_unary_operator(unary_operator* node) {
-    ircode_block->add_nop("begin unary opr");
     node->get_value()->accept(this);
     const auto src = value_stack.back();
     value_stack.pop_back();
@@ -1204,12 +1216,11 @@ bool generator::visit_unary_operator(unary_operator* node) {
         case unary_operator::kind::bnot: generate_bnot_operator(src, result); break;
         default: unimplemented(node);
     }
-    ircode_block->add_nop("end binary opr");
+
     return true;
 }
 
 bool generator::visit_type_convert(type_convert* node) {
-    ircode_block->add_nop("begin type convert");
     node->get_source()->accept(this);
     const auto src = value_stack.back();
     value_stack.pop_back();
@@ -1226,7 +1237,6 @@ bool generator::visit_type_convert(type_convert* node) {
         .content = temp
     };
     value_stack.push_back(result);
-    ircode_block->add_nop("end type convert");
     return true;
 }
 

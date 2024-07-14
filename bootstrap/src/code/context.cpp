@@ -70,7 +70,7 @@ void ir_context::dump_struct_alloc_method(std::ostream& out) const {
         };
         const auto st_name = mangle_in_module_symbol(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
-        out << "define " << st_real_name << "* @" << st.get_name();
+        out << "define " << st_real_name << "* @" << st_name;
         out << ".__alloc__() alwaysinline {\n";
         out << "entry:\n";
         out << "  %0 = call i64 @" << st_name << ".__size__()\n";

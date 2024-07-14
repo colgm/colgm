@@ -1,4 +1,4 @@
-out.ll: ast/*.colgm err/*.colgm std/*.colgm cli.colgm main.colgm
+out.ll: ../bootstrap/build/colgm ast/*.colgm err/*.colgm std/*.colgm ./*.colgm
 	../bootstrap/build/colgm -L . main.colgm
 
 .PHONY=clean
