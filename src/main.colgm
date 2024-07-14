@@ -3,18 +3,31 @@ use std::libc::{ malloc, streq, print, println };
 use err::span::span;
 use ast::ast::*;
 use cli::*;
-use std::io::readfile;
+use std::io::readfile_into_string;
 
-func test_string() {
+use lexer::lexer;
+
+func test_string_module() {
     var s = str::new();
     s->copy_const("for test, first self-host compiler");
+    s->append_char('!');
     println(s->c_str);
     s->delete();
     return;
 }
 
+func compile(filename: i8*) {
+    var lex = lexer::__alloc__();
+
+    var source = str::new();
+    readfile_into_string(filename, source);
+    print(source->c_str);
+
+    return;
+}
+
 func main(argc: i32, argv: i8**) -> i32 {
-    test_string();
+    test_string_module();
 
     if (argc==(1 => i32)) {
         logo();
@@ -29,6 +42,7 @@ func main(argc: i32, argv: i8**) -> i32 {
         return 0 => i32;
     }
     var i = 1 => i32;
+    var filename = nil;
     while(i < argc) {
         if (streq(argv[i], "-l") || streq(argv[i], "--lex")) {
             println("unimplemented");
@@ -49,10 +63,12 @@ func main(argc: i32, argv: i8**) -> i32 {
             println(argv[i]);
             return (0-1) => i32;
         } else {
-            readfile(argv[i]);
+            filename = argv[i];
         }
         i += 1 => i32;
     }
+
+    compile(filename);
 
     return 0 => i32;
 }

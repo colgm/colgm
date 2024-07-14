@@ -106,6 +106,7 @@ void ir_context::dump_code(std::ostream& out) {
         passes_already_executed = true;
     }
 
+    // generate declarations of structs
     for(const auto& i : struct_decls) {
         i.dump(out);
     }
@@ -113,8 +114,10 @@ void ir_context::dump_code(std::ostream& out) {
         out << "\n";
     }
 
+    // generate constant strings
     dump_const_string(out);
 
+    // generate builtin methods for structs
     dump_struct_size_method(out);
     dump_struct_alloc_method(out);
     dump_struct_delete_method(out);
@@ -122,6 +125,7 @@ void ir_context::dump_code(std::ostream& out) {
         out << "\n";
     }
 
+    // generate function declarations for normal functions or libc functions
     for(auto i : func_decls) {
         i->dump(out);
     }
@@ -129,6 +133,7 @@ void ir_context::dump_code(std::ostream& out) {
         out << "\n";
     }
 
+    // generate implementations of functions
     for(auto i : func_impls) {
         i->dump(out);
         out << "\n";

@@ -1,4 +1,5 @@
 use std::libc::{open, read, write, close, malloc, free};
+use std::str::str;
 
 func O_RDONLY() -> i32 {
     return 0x0000 => i32;
@@ -36,19 +37,30 @@ func O_BINARY() -> i32 {
     return 0x8000 => i32;
 }
 
-func readfile(filename: i8*) -> i64 {
+func readfile_into_string(filename: i8*, dst: str*) -> i64 {
     var fd = open(filename, O_RDONLY() | O_BINARY());
     if (fd < (0 => i32)) {
         return fd => i64;
     }
+
     var buff = malloc(1024 => u64);
     var readcount = read(fd, buff, 1023);
-    var stdout = 1 => i32;
-    write(stdout, buff, readcount);
+
+    var index = 0;
+    while(index < readcount) {
+        dst->append_char(buff[index]);
+        index += 1;
+    }
+
     while(readcount!=0) {
         readcount = read(fd, buff, 1023);
-        write(stdout, buff, readcount);
+        index = 0;
+        while(index < readcount) {
+            dst->append_char(buff[index]);
+            index += 1;
+        }
     }
+
     close(fd);
     free(buff);
     return 0;

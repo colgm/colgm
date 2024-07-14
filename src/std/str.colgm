@@ -1,52 +1,96 @@
-use std::libc::{ malloc, free, memcpy, strlen };
+use std::libc::{ malloc, free, memcpy, strlen, exit, write };
 
 struct str {
     c_str: i8*,
-    size: u64
+    size: u64,
+    alloc_size: u64
 }
 
 impl str {
     func new() -> str* {
         var res = str::__alloc__();
+
+        # init
         res->c_str = malloc(128 => u64);
         res->size = 0 => u64;
+        res->alloc_size = 128 => u64;
+
+        # tail 0
         res->c_str[0] = '\0';
+
+        # return
         return res;
     }
 
     func copy(self: str*) -> str* {
         var new_str = str::new();
+        new_str->c_str = malloc(self->alloc_size);
         new_str->size = self->size;
-        new_str->c_str = malloc(self->size);
-        var i = 0 => u64;
-        while (i < self->size) {
-            new_str->c_str[i] = self->c_str[i];
-        }
+        new_str->alloc_size = self->alloc_size;
+
+        memcpy(new_str->c_str, self->c_str, self->size);
+        new_str->c_str[self->size] = '\0';
+
         return new_str;
     }
 
     func delete(self: str*) {
         free(self->c_str);
-        # free(self); # does not support pointer conversion
+        
+        self->c_str = 0 => i8*;
+        self->size = 0 => u64;
+        self->alloc_size = 0 => u64;
+
         return;
     }
 
     func empty(self: str*) -> bool {
-        if (self->size == (0 => u64)) {
-            return true;
-        }
-        return false;
+        return self->size == (0 => u64);
     }
 
     func copy_const(self: str*, src: i8*) {
         var len = strlen(src) => u64;
+
+        # re-allocate memory
         if (len >= self->size) {
             free(self->c_str);
             self->c_str = malloc(len + (1 => u64));
             self->size = len + 1 => u64;
+            self->alloc_size = len + 1 => u64;
         }
+
         memcpy(self->c_str, src, len);
         self->c_str[len] = '\0';
+        self->size = len;
+
         return;
+    }
+
+    func append_char(self: str*, ch: i8) -> str* {
+        if (self->size + (1 => u64) < self->alloc_size) {
+            self->c_str[self->size] = ch;
+            self->c_str[self->size + (1 => u64)] = '\0';
+            self->size += 1 => u64;
+            return self;
+        }
+
+        var new_buffer = malloc(self->alloc_size*(2 => u64));
+        memcpy(new_buffer, self->c_str, self->size);
+        new_buffer[self->size] = ch;
+        new_buffer[self->size + (1 => u64)] = '\0';
+        free(self->c_str);
+        self->c_str = new_buffer;
+        self->size += 1 => u64;
+        self->alloc_size *= 2 => u64;
+        return self;
+    }
+
+    func get(self: str*, index: u64) -> i8 {
+        if (index >= self->size) {
+            var report_info = "std::str::get: index out of range\n\n";
+            write(2 => i32, report_info, strlen(report_info));
+            exit(-1 => i32);
+        }
+        return self->c_str[index];
     }
 }
