@@ -7,6 +7,17 @@ void decl::accept(visitor* v) {
     v->visit_decl(this);
 }
 
+enum_decl::~enum_decl() {
+    delete name;
+    for(auto i : member) {
+        delete i;
+    }
+}
+
+void enum_decl::accept(visitor* v) {
+    v->visit_enum_decl(this);
+}
+
 type_def::~type_def() {
     delete name;
 }

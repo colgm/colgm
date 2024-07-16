@@ -32,6 +32,25 @@ public:
     auto get_pointer_level() { return pointer_depth; }
 };
 
+class enum_decl: public decl {
+private:
+    identifier* name;
+    std::vector<identifier*> member;
+
+public:
+    enum_decl(const span& loc):
+        decl(ast_type::ast_enum_decl, loc),
+        name(nullptr) {}
+    ~enum_decl() override;
+    void accept(visitor*) override;
+
+public:
+    void set_name(identifier* node) { name = node; }
+    void add_member(identifier* node) { member.push_back(node); }
+    auto get_name() { return name; }
+    const auto& get_member() const { return member; }
+};
+
 class struct_field: public decl {
 private:
     identifier* name;

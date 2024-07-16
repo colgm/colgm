@@ -27,6 +27,7 @@ enum class ast_type {
     ast_call,
     ast_assignment,
     ast_type_def,
+    ast_enum_decl,
     ast_struct_field,
     ast_struct_decl,
     ast_param,
@@ -49,6 +50,7 @@ class visitor;
 
 class decl;
 class type_def;
+class enum_decl;
 class struct_field;
 class struct_decl;
 class param;

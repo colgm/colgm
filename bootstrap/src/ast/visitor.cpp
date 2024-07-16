@@ -27,6 +27,14 @@ bool visitor::visit_type_def(type_def* node) {
     return true;
 }
 
+bool visitor::visit_enum_decl(enum_decl* node) {
+    node->get_name()->accept(this);
+    for(auto i : node->get_member()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_struct_field(struct_field* node) {
     node->get_name()->accept(this);
     node->get_type()->accept(this);

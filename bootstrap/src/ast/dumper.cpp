@@ -69,6 +69,24 @@ bool dumper::visit_type_def(type_def* node) {
     return true;
 }
 
+bool dumper::visit_enum_decl(enum_decl* node) {
+    dump_indent();
+    std::cout << "enum" << format_location(node);
+    push_indent();
+    node->get_name()->accept(this);
+    if (node->get_member().empty()) {
+        set_last();
+    }
+    for(auto i : node->get_member()) {
+        if (i==node->get_member().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_struct_field(struct_field* node) {
     dump_indent();
     std::cout << "field" << format_location(node);

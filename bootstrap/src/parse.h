@@ -118,6 +118,7 @@ private:
     expr* or_expression_gen();
     expr* calculation_gen();
     type_def* type_gen();
+    enum_decl* enum_gen();
     struct_field* struct_field_gen();
     struct_decl* struct_gen();
     param* param_gen();

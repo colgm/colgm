@@ -391,6 +391,23 @@ type_def* parse::type_gen() {
     return result;
 }
 
+enum_decl* parse::enum_gen() {
+    auto result = new enum_decl(toks[ptr].loc);
+    result->set_name(identifier_gen());
+    match(tok::tk_lbrace);
+    while(look_ahead(tok::tk_id)) {
+        result->add_member(identifier_gen());
+        if (look_ahead(tok::tk_comma)) {
+            match(tok::tk_comma);
+        } else if (look_ahead(tok::tk_id)) {
+            err.err("parse", toks[ptr-1].loc, "expected ',' here.");
+        }
+    }
+    match(tok::tk_rbrace);
+    update_location(result);
+    return result;
+}
+
 struct_field* parse::struct_field_gen() {
     auto result = new struct_field(toks[ptr].loc);
     result->set_name(identifier_gen());
@@ -649,6 +666,7 @@ const error& parse::analyse(const std::vector<token>& token_list) {
             case tok::tk_func: result->add_decl(function_gen()); break;
             case tok::tk_stct: result->add_decl(struct_gen()); break;
             case tok::tk_impl: result->add_decl(impl_gen()); break;
+            case tok::tk_enum: result->add_decl(enum_gen()); break;
             default:
                 err.err("parse", toks[ptr].loc,
                     "unexpected token \"" + toks[ptr].str + "\"."
