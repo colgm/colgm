@@ -129,4 +129,11 @@ struct colgm_struct {
     std::unordered_map<std::string, colgm_func> method;
 };
 
+struct colgm_enum {
+    std::string name;
+    span location;
+    std::vector<std::string> ordered_member;
+    std::unordered_map<std::string, size_t> members;
+};
+
 }

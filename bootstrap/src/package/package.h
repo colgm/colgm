@@ -13,6 +13,7 @@ namespace colgm {
 
 struct colgm_module {
     std::string file_name;
+    std::unordered_map<std::string, colgm_enum> enums;
     std::unordered_map<std::string, colgm_struct> structs;
     std::unordered_map<std::string, colgm_func> functions;
 };

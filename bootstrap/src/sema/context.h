@@ -39,6 +39,7 @@ struct semantic_context {
     void pop_new_level() { scope.pop_back(); }
 
     void dump_structs() const;
+    void dump_enums() const;
     void dump_functions() const;
     void dump_single_function(const colgm_func&,
                               const std::string& indent = "") const;

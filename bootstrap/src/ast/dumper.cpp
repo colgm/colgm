@@ -71,9 +71,8 @@ bool dumper::visit_type_def(type_def* node) {
 
 bool dumper::visit_enum_decl(enum_decl* node) {
     dump_indent();
-    std::cout << "enum" << format_location(node);
+    std::cout << "enum " << node->get_name()->get_name() << format_location(node);
     push_indent();
-    node->get_name()->accept(this);
     if (node->get_member().empty()) {
         set_last();
     }

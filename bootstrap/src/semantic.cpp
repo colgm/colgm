@@ -74,15 +74,11 @@ colgm_func semantic::builtin_struct_delete(const span& loc, const type& self) {
 void semantic::analyse_single_struct(struct_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol.count(name)) {
-        report(node, "\"" + name +
-            "\" conflicts with a exist symbol."
-        );
+        report(node, "\"" + name + "\" conflicts with a exist symbol.");
         return;
     }
     if (ctx.global.domain.at(ctx.this_file).structs.count(name)) {
-        report(node, "struct \"" + node->get_name() +
-            "\" conflicts with a exist symbol."
-        );
+        report(node, "struct \"" + name + "\" conflicts with a exist symbol.");
         return;
     }
     ctx.global.domain.at(ctx.this_file).structs.insert({name, {}});
@@ -90,8 +86,8 @@ void semantic::analyse_single_struct(struct_decl* node) {
 
     // initialize struct info
     auto& this_domain = ctx.global.domain.at(ctx.this_file);
-    auto& struct_self = this_domain.structs.at(node->get_name());
-    struct_self.name = node->get_name();
+    auto& struct_self = this_domain.structs.at(name);
+    struct_self.name = name;
     struct_self.location = node->get_location();
 
     // load fields
@@ -146,6 +142,45 @@ void semantic::analyse_structs(root* ast_root) {
         }
         auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
         analyse_single_struct(struct_decl_node);
+    }
+}
+
+void semantic::analyse_single_enum(enum_decl* node) {
+    const auto& name = node->get_name()->get_name();
+    if (ctx.global_symbol.count(name)) {
+        report(node, "\"" + name + "\" conflicts with a exist symbol.");
+        return;
+    }
+    if (ctx.global.domain.at(ctx.this_file).structs.count(name)) {
+        report(node, "enum \"" + name + "\" conflicts with a exist symbol.");
+        return;
+    }
+    ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
+    ctx.global_symbol.insert({name, {symbol_kind::enum_kind, ctx.this_file}});
+
+    // initialize enum info
+    auto& this_domain = ctx.global.domain.at(ctx.this_file);
+    auto& enum_self = this_domain.enums.at(name);
+    enum_self.name = name;
+    enum_self.location = node->get_location();
+
+    for(auto i : node->get_member()) {
+        if (enum_self.members.count(i->get_name())) {
+            report(i, "enum member already exists");
+            continue;
+        }
+        enum_self.members[i->get_name()] = enum_self.ordered_member.size();
+        enum_self.ordered_member.push_back(i->get_name());
+    }
+}
+
+void semantic::analyse_enums(root* ast_root) {
+    for(auto i : ast_root->get_decls()) {
+        if (i->get_ast_type()!=ast_type::ast_enum_decl) {
+            continue;
+        }
+        auto enum_decl_node = reinterpret_cast<enum_decl*>(i);
+        analyse_single_enum(enum_decl_node);
     }
 }
 
@@ -1312,6 +1347,9 @@ const error& semantic::analyse(root* ast_root) {
     ctx.global.domain.at(ctx.this_file).structs.clear();
     analyse_structs(ast_root);
 
+    ctx.global.domain.at(ctx.this_file).enums.clear();
+    analyse_enums(ast_root);
+
     ctx.global.domain.at(ctx.this_file).functions.clear();
     analyse_functions(ast_root);
 
@@ -1323,6 +1361,7 @@ const error& semantic::analyse(root* ast_root) {
 }
 
 void semantic::dump() {
+    ctx.dump_enums();
     ctx.dump_structs();
     ctx.dump_functions();
 }

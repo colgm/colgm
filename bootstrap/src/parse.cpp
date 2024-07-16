@@ -393,6 +393,7 @@ type_def* parse::type_gen() {
 
 enum_decl* parse::enum_gen() {
     auto result = new enum_decl(toks[ptr].loc);
+    match(tok::tk_enum);
     result->set_name(identifier_gen());
     match(tok::tk_lbrace);
     while(look_ahead(tok::tk_id)) {

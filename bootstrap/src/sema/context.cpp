@@ -25,7 +25,10 @@ void semantic_context::add_symbol(const std::string& name, const type& t) {
 }
 
 void semantic_context::dump_structs() const {
-    for(const auto& domain: global.domain) {
+    for(const auto& domain : global.domain) {
+        if (domain.second.structs.empty()) {
+            continue;
+        }
         std::cout << "info of " << domain.first << ":\n";
         for(const auto& i : domain.second.structs) {
             std::cout << "  struct " << i.first << " {\n";
@@ -49,8 +52,28 @@ void semantic_context::dump_structs() const {
     }
 }
 
+void semantic_context::dump_enums() const {
+    for(const auto& domain : global.domain) {
+        if (domain.second.enums.empty()) {
+            continue;
+        }
+        std::cout << "info of " << domain.first << ":\n";
+        for(const auto& en : domain.second.enums) {
+            std::cout << "  enum " << en.second.name << " {\n";
+            for(const auto& i : en.second.ordered_member) {
+                std::cout << "    " << i << ": ";
+                std::cout << en.second.members.at(i) << "\n";
+            }
+            std::cout << "  }\n";
+        }
+    }
+}
+
 void semantic_context::dump_functions() const {
-    for(const auto& domain: global.domain) {
+    for(const auto& domain : global.domain) {
+        if (domain.second.functions.empty()) {
+            continue;
+        }
         std::cout << "info of " << domain.first << ":\n";
         for(const auto& func : domain.second.functions) {
             dump_single_function(func.second, "");
