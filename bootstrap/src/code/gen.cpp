@@ -13,6 +13,9 @@ std::string generator::type_mapping(const type& t) {
     } else if (ctx.global_symbol.count(copy.name) &&
         ctx.global_symbol.at(copy.name).kind==symbol_kind::struct_kind) {
         copy.name = "%struct." + mangle_in_module_symbol(t.full_path_name());
+    } else if (ctx.global_symbol.count(copy.name) &&
+        ctx.global_symbol.at(copy.name).kind==symbol_kind::enum_kind) {
+        copy = type::i64_type();
     }
     return copy.to_string();
 }
@@ -127,6 +130,11 @@ void generator::call_expression_generation(call* node, bool need_address) {
     }
     if (value_stack.empty()) {
         report_stack_empty(node);
+        return;
+    }
+    // only for enum
+    if (ctx.global_symbol.count(head->get_name()) &&
+        ctx.global_symbol.at(head->get_name()).kind==symbol_kind::enum_kind) {
         return;
     }
     const auto source = value_stack.back();
@@ -263,6 +271,13 @@ void generator::call_function_symbol(identifier* node) {
 void generator::call_variable(identifier* node) {
     // in fact we need to get the pointer to this variable
     auto resolve = node->get_resolve();
+    if (resolve.is_global) {
+        value_stack.push_back({
+            .kind = value_kind::v_var,
+            .resolve_type = resolve,
+            .content = node->get_name()
+        });
+    }
     resolve.pointer_depth++;
     // push pointer to the variable on top of the stack
     value_stack.push_back({
@@ -526,25 +541,45 @@ bool generator::visit_call_path(call_path* node) {
         return true;
     }
     const auto& dom = ctx.global.domain.at(source.resolve_type.loc_file);
-    if (!dom.structs.count(source.resolve_type.name)) {
-        err.err("code", node->get_location(),
-            "cannot find struct \"" + source.resolve_type.name + "\"."
-        );
-        return true;
-    }
-    const auto& st = dom.structs.at(source.resolve_type.name);
-    if (st.static_method.count(node->get_name())) {
-        const auto st_name = mangle_in_module_symbol(
-            source.resolve_type.full_path_name()
-        );
-        auto result = value {
-            .kind = value_kind::v_static_fn,
+    if (dom.structs.count(source.resolve_type.name)) {
+        const auto& st = dom.structs.at(source.resolve_type.name);
+        if (st.static_method.count(node->get_name())) {
+            const auto st_name = mangle_in_module_symbol(
+                source.resolve_type.full_path_name()
+            );
+            auto result = value {
+                .kind = value_kind::v_static_fn,
+                .resolve_type = node->get_resolve(),
+                .content = st_name + "." + node->get_name()
+            };
+            value_stack.push_back(result);
+            return true;
+        }
+    } else if (dom.enums.count(source.resolve_type.name)) {
+        const auto& en = dom.enums.at(source.resolve_type.name);
+        const auto literal = en.members.at(node->get_name());
+        const auto temp = get_temp_variable();
+        ircode_block->add_stmt(new sir_number(
+            std::to_string(literal),
+            temp,
+            type_mapping(node->get_resolve()),
+            true
+        ));
+        // push value on stack
+        const auto result = value {
+            .kind = value_kind::v_var,
             .resolve_type = node->get_resolve(),
-            .content = st_name + "." + node->get_name()
+            .content = temp
         };
         value_stack.push_back(result);
         return true;
+    } else {
+        err.err("code", node->get_location(),
+            "undefined symbol \"" + source.resolve_type.name + "\"."
+        );
+        return true;
     }
+    
     unreachable(node);
     return true;
 }

@@ -372,6 +372,10 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
         node->set_resolve_type(type::bool_type());
         return type::bool_type();
     }
+    if (ctx.global_symbol.count(left.name) &&
+        ctx.global_symbol.at(left.name).kind==symbol_kind::enum_kind) {
+        return type::bool_type();
+    }
     if (!left.is_integer() && !left.is_float() && !left.is_pointer()) {
         report(node,
             "cannot compare \"" + left.to_string() +
@@ -399,6 +403,12 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
         report(node,
             "get \"" + left.to_string() +
             "\" and \"" + right.to_string() + "\"."
+        );
+    }
+    if (ctx.global_symbol.count(left.name) &&
+        ctx.global_symbol.at(left.name).kind==symbol_kind::enum_kind) {
+        report(node,
+            "cannot calculate enum type\"" + left.to_string() + "\"."
         );
     }
     return left;
@@ -801,6 +811,15 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
                 "\" in \"" + prev.name + "\"."
             );
             return type::error_type();
+        }
+    }
+    if (domain.enums.count(prev.name) && prev.is_global) {
+        const auto& en = domain.enums.at(prev.name);
+        if (en.members.count(node->get_name())) {
+            auto res = prev;
+            res.is_global = false;
+            node->set_resolve_type(res);
+            return res;
         }
     }
     return type::error_type();

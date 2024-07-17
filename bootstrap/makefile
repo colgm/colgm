@@ -10,6 +10,8 @@ test: $(COLGMCC)
 	@ lli out.ll
 	@ $(COLGMCC) test/continue_break.colgm
 	@ lli out.ll
+	@ $(COLGMCC) test/enum_test.colgm
+	@ lli out.ll
 	@ $(COLGMCC) test/func.colgm
 	@ lli out.ll
 	@ $(COLGMCC) test/hello.colgm
