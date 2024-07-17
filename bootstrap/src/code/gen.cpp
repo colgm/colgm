@@ -271,13 +271,19 @@ void generator::call_function_symbol(identifier* node) {
 void generator::call_variable(identifier* node) {
     // in fact we need to get the pointer to this variable
     auto resolve = node->get_resolve();
-    if (resolve.is_global) {
+
+    // only for enum
+    if (ctx.global_symbol.count(node->get_name()) &&
+        ctx.global_symbol.at(node->get_name()).kind==symbol_kind::enum_kind) {
         value_stack.push_back({
             .kind = value_kind::v_var,
-            .resolve_type = resolve,
+            .resolve_type = node->get_resolve(),
             .content = node->get_name()
         });
+        return;
     }
+
+    // for others
     resolve.pointer_depth++;
     // push pointer to the variable on top of the stack
     value_stack.push_back({
