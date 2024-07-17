@@ -1,8 +1,10 @@
-# <img src="./doc/png/logo-small.png" style="width:40px"></img> Colgm Compiler Project
+# Colgm Compiler Project
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 
 This is the main repository for Colgm compiler.
+
+![llvm?](./doc/jpg/llvm-maybe.jpg)
 
 ## Repo Content
 
