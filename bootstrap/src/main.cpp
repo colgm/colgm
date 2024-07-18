@@ -3,6 +3,7 @@
 #include "parse.h"
 #include "ast/dumper.h"
 #include "semantic.h"
+#include "mir/ast2mir.h"
 #include "code/gen.h"
 #include "package/package.h"
 
@@ -84,6 +85,7 @@ void execute(const std::string& file,
     colgm::lexer lexer;
     colgm::parse parser;
     colgm::semantic sema;
+    colgm::mir::ast2mir translator;
     colgm::generator gen(sema.get_context());
 
     // lexer scans file to get tokens
@@ -108,6 +110,7 @@ void execute(const std::string& file,
     }
 
     // generate code
+    translator.generate(parser.get_result()).chkerr();
     gen.generate(parser.get_result()).chkerr();
     if (cmd&COMPILE_VIEW_IR) {
         gen.get_mutable_ir().dump_code(std::cout);
