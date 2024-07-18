@@ -43,6 +43,30 @@ struct semantic_context {
     void dump_functions() const;
     void dump_single_function(const colgm_func&,
                               const std::string& indent = "") const;
+
+public:
+    symbol_kind search_symbol_kind(const std::string& name) const {
+        if (!global_symbol.count(name)) {
+            return symbol_kind::error_kind;
+        }
+        return global_symbol.at(name).kind;
+    }
+    symbol_kind search_symbol_kind(const type& t) const {
+        if (!global.domain.count(t.loc_file)) {
+            return symbol_kind::error_kind;
+        }
+        const auto& domain = global.domain.at(t.loc_file);
+        if (domain.enums.count(t.name)) {
+            return symbol_kind::enum_kind;
+        }
+        if (domain.structs.count(t.name)) {
+            return symbol_kind::struct_kind;
+        }
+        if (domain.structs.count(t.name)) {
+            return symbol_kind::func_kind;
+        }
+        return symbol_kind::error_kind;
+    }
 };
 
 }

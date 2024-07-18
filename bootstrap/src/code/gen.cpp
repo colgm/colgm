@@ -10,12 +10,16 @@ std::string generator::type_mapping(const type& t) {
     auto copy = t;
     if (basic_type_convert_mapper.count(copy.name)) {
         copy.name = basic_type_convert_mapper.at(copy.name);
-    } else if (ctx.global_symbol.count(copy.name) &&
-        ctx.global_symbol.at(copy.name).kind==symbol_kind::struct_kind) {
-        copy.name = "%struct." + mangle_in_module_symbol(t.full_path_name());
-    } else if (ctx.global_symbol.count(copy.name) &&
-        ctx.global_symbol.at(copy.name).kind==symbol_kind::enum_kind) {
-        copy = type::i64_type();
+        return copy.to_string();
+    }
+    switch(ctx.search_symbol_kind(copy.name)) {
+        case symbol_kind::struct_kind:
+            copy.name = "%struct." + mangle_in_module_symbol(t.full_path_name());
+            break;
+        case symbol_kind::enum_kind:
+            copy = type::i64_type();
+            break;
+        default: break;
     }
     return copy.to_string();
 }
@@ -119,12 +123,18 @@ bool generator::visit_code_block(code_block* node) {
 void generator::call_expression_generation(call* node, bool need_address) {
     // call head may be the global function
     auto head = node->get_head();
-    if (ctx.global_symbol.count(head->get_name()) &&
-        ctx.global_symbol.at(head->get_name()).kind==symbol_kind::func_kind) {
-        call_function_symbol(head);
-    } else {
-        call_variable(head);
+    switch(ctx.search_symbol_kind(head->get_name())) {
+        case symbol_kind::func_kind: call_function_symbol(head); break;
+        case symbol_kind::enum_kind:
+            value_stack.push_back({
+                .kind = value_kind::v_var,
+                .resolve_type = head->get_resolve(),
+                .content = head->get_name()
+            });
+            break;;
+        default: call_variable(head); break;
     }
+
     for(auto i : node->get_chain()) {
         i->accept(this);
     }
@@ -132,11 +142,12 @@ void generator::call_expression_generation(call* node, bool need_address) {
         report_stack_empty(node);
         return;
     }
+
     // only for enum
-    if (ctx.global_symbol.count(head->get_name()) &&
-        ctx.global_symbol.at(head->get_name()).kind==symbol_kind::enum_kind) {
+    if (ctx.search_symbol_kind(head->get_name())==symbol_kind::enum_kind) {
         return;
     }
+
     const auto source = value_stack.back();
     if (source.resolve_type==type::void_type()) {
         value_stack.pop_back();
@@ -271,18 +282,6 @@ void generator::call_function_symbol(identifier* node) {
 void generator::call_variable(identifier* node) {
     // in fact we need to get the pointer to this variable
     auto resolve = node->get_resolve();
-
-    // only for enum
-    if (ctx.global_symbol.count(node->get_name()) &&
-        ctx.global_symbol.at(node->get_name()).kind==symbol_kind::enum_kind) {
-        value_stack.push_back({
-            .kind = value_kind::v_var,
-            .resolve_type = node->get_resolve(),
-            .content = node->get_name()
-        });
-        return;
-    }
-
     // for others
     resolve.pointer_depth++;
     // push pointer to the variable on top of the stack
@@ -1101,12 +1100,14 @@ void generator::generate_bor_operator(const value& left,
 void generator::generate_eq_operator(const value& left,
                                      const value& right,
                                      const value& result) {
+    auto flag_is_integer = left.resolve_type.is_integer() ||
+        ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
     ircode_block->add_stmt(new sir_cmp(
         sir_cmp::kind::cmp_eq,
         left.content,
         right.content,
         result.content,
-        left.resolve_type.is_integer(),
+        flag_is_integer,
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)
     ));
@@ -1115,12 +1116,14 @@ void generator::generate_eq_operator(const value& left,
 void generator::generate_neq_operator(const value& left,
                                       const value& right,
                                       const value& result) {
+    auto flag_is_integer = left.resolve_type.is_integer() ||
+        ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
     ircode_block->add_stmt(new sir_cmp(
         sir_cmp::kind::cmp_neq,
         left.content,
         right.content,
         result.content,
-        left.resolve_type.is_integer(),
+        flag_is_integer,
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)
     ));

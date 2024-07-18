@@ -372,10 +372,16 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
         node->set_resolve_type(type::bool_type());
         return type::bool_type();
     }
-    if (ctx.global_symbol.count(left.name) &&
-        ctx.global_symbol.at(left.name).kind==symbol_kind::enum_kind) {
+
+    // check enum comparison
+    if (ctx.search_symbol_kind(left.name)==symbol_kind::enum_kind) {
+        if (node->get_opr()!=binary_operator::kind::cmpeq &&
+            node->get_opr()!=binary_operator::kind::cmpneq) {
+            report(node, "only \"==\" and \"!=\" is allowed.");
+        }
         return type::bool_type();
     }
+
     if (!left.is_integer() && !left.is_float() && !left.is_pointer()) {
         report(node,
             "cannot compare \"" + left.to_string() +
@@ -399,18 +405,21 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
 type semantic::resolve_arithmetic_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
+
+    // left hand side value should be the same as right hand side value
     if (left!=right) {
         report(node,
             "get \"" + left.to_string() +
             "\" and \"" + right.to_string() + "\"."
         );
     }
-    if (ctx.global_symbol.count(left.name) &&
-        ctx.global_symbol.at(left.name).kind==symbol_kind::enum_kind) {
-        report(node,
-            "cannot calculate enum type\"" + left.to_string() + "\"."
-        );
+
+    // cannot calculate enum
+    if (ctx.search_symbol_kind(left.name)==symbol_kind::enum_kind) {
+        report(node, "cannot calculate enum \"" + left.to_string() + "\".");
+        return type::error_type();
     }
+
     return left;
 }
 
@@ -965,8 +974,8 @@ type semantic::resolve_assignment(assignment* node) {
     }
     if (left.is_pointer() && right.is_pointer()) {
         if (left!=right) {
-            warning(node,
-                "get \"" + left.to_string() +
+            report(node,
+                "cannot calculate \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
             );
         }
@@ -975,6 +984,13 @@ type semantic::resolve_assignment(assignment* node) {
             "get \"" + left.to_string() +
             "\" and \"" + right.to_string() + "\"."
         );
+    }
+
+    // only = is allowed to be applied on enums
+    if (ctx.search_symbol_kind(left.name)==symbol_kind::enum_kind &&
+        node->get_type()!=assignment::kind::eq) {
+        report(node, "cannot calculate enum \"" + left.to_string() + "\".");
+        return type::bool_type();
     }
     return type::bool_type();
 }

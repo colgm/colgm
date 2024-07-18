@@ -14,6 +14,7 @@
 namespace colgm {
 
 enum class symbol_kind {
+    error_kind,
     basic_kind,
     enum_kind,
     struct_kind,
