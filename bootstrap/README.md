@@ -2,7 +2,7 @@
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 
-This directory stores the source file of colgm compiler which is used to bootstrap.
+This directory stores the source file of colgm bootstrap compiler.
 
 ![llvm?](../doc/jpg/llvm-bootstrap.jpg)
 

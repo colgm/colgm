@@ -85,7 +85,7 @@ void execute(const std::string& file,
     colgm::lexer lexer;
     colgm::parse parser;
     colgm::semantic sema;
-    colgm::mir::ast2mir translator;
+    colgm::mir::ast2mir ast2mir(sema.get_context());
     colgm::generator gen(sema.get_context());
 
     // lexer scans file to get tokens
@@ -110,7 +110,7 @@ void execute(const std::string& file,
     }
 
     // generate code
-    translator.generate(parser.get_result()).chkerr();
+    ast2mir.generate(parser.get_result()).chkerr();
     gen.generate(parser.get_result()).chkerr();
     if (cmd&COMPILE_VIEW_IR) {
         gen.get_mutable_ir().dump_code(std::cout);

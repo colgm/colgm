@@ -2,6 +2,7 @@
 #include "lexer.h"
 #include "parse.h"
 #include "semantic.h"
+#include "mir/ast2mir.h"
 #include "code/gen.h"
 #include "sema/basic.h"
 
@@ -1306,6 +1307,7 @@ void semantic::resolve_single_use(use_stmt* node) {
         lexer lex;
         parse par;
         semantic sema;
+        mir::ast2mir ast2mir(sema.get_context());
         generator gen(sema.get_context());
         if (lex.scan(file).geterr()) {
             report(node, "error ocurred when analysing module \"" + mp + "\".");
@@ -1320,9 +1322,17 @@ void semantic::resolve_single_use(use_stmt* node) {
             return;
         }
         pkgman->set_analyse_status(file, package_manager::status::analysed);
+        // generate mir
+        if (ast2mir.generate(par.get_result()).geterr()) {
+            report(node,
+                "error ocurred when generating mir for module \"" + mp + "\"."
+            );
+            return;
+        }
+        // generate sir
         if (gen.generate(par.get_result()).geterr()) {
             report(node,
-                "error ocurred when generating code for module \"" + mp + "\"."
+                "error ocurred when generating sir for module \"" + mp + "\"."
             );
             return;
         }
