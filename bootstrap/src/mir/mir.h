@@ -21,6 +21,7 @@ enum class kind {
     mir_string,
     mir_char,
     mir_bool,
+    mir_call,
     mir_call_id,
     mir_call_index,
     mir_call_func,
@@ -64,6 +65,70 @@ public:
 
 public:
     void add_content(mir* n) { content.push_back(n); }
+    const auto& get_content() const { return content; }
+};
+
+class mir_unary: public mir {
+public:
+    enum class opr_kind {
+        neg,
+        bnot
+    };
+
+private:
+    opr_kind opr;
+    type resolve_type;
+    mir_block* value;
+
+public:
+    mir_unary(const span& loc, opr_kind o, const type& t, mir_block* v):
+        mir(kind::mir_unary, loc), opr(o), resolve_type(t), value(v) {}
+    ~mir_unary() override {
+        delete value;
+    }
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_binary: public mir {
+public:
+    enum class opr_kind {
+        add,
+        sub,
+        mult,
+        div,
+        rem,
+        cmpeq,
+        cmpneq,
+        less,
+        leq,
+        grt,
+        geq,
+        cmpand,
+        cmpor,
+        band,
+        bor,
+        bxor,
+    };
+
+private:
+    opr_kind opr;
+    type resolve_type;
+    mir_block* left;
+    mir_block* right;
+
+public:
+    mir_binary(const span& loc,
+               opr_kind o,
+               const type& t,
+               mir_block* l,
+               mir_block* r):
+        mir(kind::mir_binary, loc), opr(o), resolve_type(t),
+        left(l), right(r) {}
+    ~mir_binary() override {
+        delete left;
+        delete right;
+    }
+    void dump(const std::string&, std::ostream&) override;
 };
 
 class mir_nil: public mir {
@@ -122,6 +187,115 @@ public:
     mir_bool(const span& loc, const bool l, const type& t):
         mir(kind::mir_bool, loc), literal(l), resolve_type(t) {}
     ~mir_bool() override = default;
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_call: public mir {
+private:
+    mir_block* content;
+    type resolve_type;
+
+public:
+    mir_call(const span& loc, const type& t, mir_block* c):
+        mir(kind::mir_call, loc), resolve_type(t), content(c) {}
+    ~mir_call() override {
+        delete content;
+    }
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_call_id: public mir {
+private:
+    std::string name;
+    type resolve_type;
+
+public:
+    mir_call_id(const span& loc, const std::string& n, const type& t):
+        mir(kind::mir_call_id, loc), name(n), resolve_type(t) {}
+    ~mir_call_id() override = default;
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_call_index: public mir {
+private:
+    type resolve_type;
+    mir_block* index;
+
+public:
+    mir_call_index(const span& loc, const type& t, mir_block* i):
+        mir(kind::mir_call_index, loc), resolve_type(t), index(i) {}
+    ~mir_call_index() override {
+        delete index;
+    }
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_call_func: public mir {
+private:
+    size_t arg_size;
+    type resolve_type;
+
+public:
+    mir_call_func(const span& loc, const size_t argc, const type& t):
+        mir(kind::mir_call_func, loc), arg_size(argc), resolve_type(t) {}
+    ~mir_call_func() override = default;
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_call_field: public mir {
+private:
+    std::string name;
+    type resolve_type;
+
+public:
+    mir_call_field(const span& loc, const std::string& n, const type& t):
+        mir(kind::mir_call_field, loc), name(n), resolve_type(t) {}
+    ~mir_call_field() override = default;
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_ptr_call_field: public mir {
+private:
+    std::string name;
+    type resolve_type;
+
+public:
+    mir_ptr_call_field(const span& loc, const std::string& n, const type& t):
+        mir(kind::mir_ptr_call_field, loc), name(n), resolve_type(t) {}
+    ~mir_ptr_call_field() override = default;
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_call_path: public mir {
+private:
+    std::string name;
+    type resolve_type;
+
+public:
+    mir_call_path(const span& loc, const std::string& n, const type& t):
+        mir(kind::mir_call_path, loc), name(n), resolve_type(t) {}
+    ~mir_call_path() override = default;
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_define: public mir {
+private:
+    std::string name;
+    mir_block* init_value;
+    type expect_type;
+    type resolve_type;
+
+public:
+    mir_define(const span& loc,
+               const std::string& n,
+               mir_block* iv,
+               const type& et,
+               const type& rt):
+        mir(kind::mir_define, loc), name(n),
+        init_value(iv), expect_type(et), resolve_type(rt) {}
+    ~mir_define() override {
+        delete init_value;
+    }
     void dump(const std::string&, std::ostream&) override;
 };
 

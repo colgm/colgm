@@ -2,6 +2,68 @@
 
 namespace colgm::mir {
 
+bool ast2mir::visit_unary_operator(unary_operator* node) {
+    auto new_block = new mir_block(node->get_value()->get_location());
+    auto temp = block;
+    block = new_block;
+    node->get_value()->accept(this);
+    block = temp;
+
+    mir_unary::opr_kind type;
+    switch(node->get_opr()) {
+        case unary_operator::kind::bnot: type = mir_unary::opr_kind::bnot; break;
+        case unary_operator::kind::neg: type = mir_unary::opr_kind::neg; break;
+    }
+
+    block->add_content(new mir_unary(
+        node->get_location(),
+        type,
+        node->get_resolve(),
+        new_block
+    ));
+    return true;
+}
+
+bool ast2mir::visit_binary_operator(binary_operator* node) {
+    auto left = new mir_block(node->get_left()->get_location());
+    auto temp = block;
+    block = left;
+    node->get_left()->accept(this);
+
+    auto right = new mir_block(node->get_right()->get_location());
+    block = right;
+    node->get_right()->accept(this);
+    block = temp;
+
+    mir_binary::opr_kind type;
+    switch(node->get_opr()) {
+        case binary_operator::kind::add: type = mir_binary::opr_kind::add; break;
+        case binary_operator::kind::sub: type = mir_binary::opr_kind::sub; break;
+        case binary_operator::kind::mult: type = mir_binary::opr_kind::mult; break;
+        case binary_operator::kind::div: type = mir_binary::opr_kind::div; break;
+        case binary_operator::kind::rem: type = mir_binary::opr_kind::rem; break;
+        case binary_operator::kind::cmpeq: type = mir_binary::opr_kind::cmpeq; break;
+        case binary_operator::kind::cmpneq: type = mir_binary::opr_kind::cmpneq; break;
+        case binary_operator::kind::less: type = mir_binary::opr_kind::less; break;
+        case binary_operator::kind::leq: type = mir_binary::opr_kind::leq; break;
+        case binary_operator::kind::grt: type = mir_binary::opr_kind::grt; break;
+        case binary_operator::kind::geq: type = mir_binary::opr_kind::geq; break;
+        case binary_operator::kind::cmpand: type = mir_binary::opr_kind::cmpand; break;
+        case binary_operator::kind::cmpor: type = mir_binary::opr_kind::cmpor; break;
+        case binary_operator::kind::band: type = mir_binary::opr_kind::band; break;
+        case binary_operator::kind::bor: type = mir_binary::opr_kind::bor; break;
+        case binary_operator::kind::bxor: type = mir_binary::opr_kind::bxor; break;
+    }
+    block->add_content(new mir_binary(
+        node->get_location(),
+        type,
+        node->get_resolve(),
+        left,
+        right
+    ));
+    return true;
+}
+
 bool ast2mir::visit_nil_literal(nil_literal* node) {
     block->add_content(new mir_nil(
         node->get_location(),
@@ -75,7 +137,9 @@ bool ast2mir::visit_func_decl(func_decl* node) {
     }
 
     block = func->block = new mir_block(node->get_code_block()->get_location());
-    node->get_code_block()->accept(this);
+    for(auto i : node->get_code_block()->get_stmts()) {
+        i->accept(this);
+    }
     block = nullptr;
     emit_function(func);
     return true;
@@ -87,6 +151,99 @@ bool ast2mir::visit_impl_struct(impl_struct* node) {
         i->accept(this);
     }
     impl_struct_name = "";
+    return true;
+}
+
+bool ast2mir::visit_call_index(call_index* node) {
+    auto new_block = new mir_block(node->get_index()->get_location());
+    auto temp = block;
+    block = new_block;
+    node->get_index()->accept(this);
+    block = temp;
+
+    block->add_content(new mir_call_index(
+        node->get_location(),
+        node->get_resolve(),
+        new_block
+    ));
+    return true;
+}
+
+bool ast2mir::visit_call_func_args(call_func_args* node) {
+    for(auto i : node->get_args()) {
+        i->accept(this);
+    }
+    block->add_content(new mir_call_func(
+        node->get_location(),
+        node->get_args().size(),
+        node->get_resolve()
+    ));
+    return true;
+}
+
+bool ast2mir::visit_call_field(call_field* node) {
+    block->add_content(new mir_call_field(
+        node->get_location(),
+        node->get_name(),
+        node->get_resolve()
+    ));
+    return true;
+}
+
+bool ast2mir::visit_ptr_call_field(ptr_call_field* node) {
+    block->add_content(new mir_ptr_call_field(
+        node->get_location(),
+        node->get_name(),
+        node->get_resolve()
+    ));
+    return true;
+}
+
+bool ast2mir::visit_call_path(call_path* node) {
+    block->add_content(new mir_call_path(
+        node->get_location(),
+        node->get_name(),
+        node->get_resolve()
+    ));
+    return true;
+}
+
+bool ast2mir::visit_call(call* node) {
+    auto new_block = new mir_block(node->get_location());
+    auto temp = block;
+    block = new_block;
+    block->add_content(new mir_call_id(
+        node->get_head()->get_location(),
+        node->get_head()->get_name(),
+        node->get_head()->get_resolve()
+    ));
+    for(auto i : node->get_chain()) {
+        i->accept(this);
+    }
+    block = temp;
+
+    block->add_content(new mir_call(
+        node->get_location(),
+        node->get_resolve(),
+        new_block
+    ));
+    return true;
+}
+
+bool ast2mir::visit_definition(definition* node) {
+    auto new_block = new mir_block(node->get_init_value()->get_location());
+    auto temp = block;
+    block = new_block;
+    node->get_init_value()->accept(this);
+    block = temp;
+
+    block->add_content(new mir_define(
+        node->get_location(),
+        node->get_name(),
+        new_block,
+        node->get_type()? generate_type(node->get_type()):type::error_type(),
+        node->get_resolve()
+    ));
     return true;
 }
 
@@ -126,22 +283,24 @@ void ast2mir::emit_function(mir_func* f) {
     impls.insert({f->name, f});
 }
 
-void ast2mir::dump() const {
+void ast2mir::dump(std::ostream& os) const {
     for(const auto& i : impls) {
-        std::cout << i.first << "(";
+        os << i.first << "(";
         for(const auto& p : i.second->params) {
-            std::cout << p.first << ": " << p.second;
+            os << p.first << ": " << p.second;
             if (p.first!=i.second->params.back().first) {
-                std::cout << ", ";
+                os << ", ";
             }
         }
-        std::cout << ") -> " << i.second->return_type;
+        os << ") -> " << i.second->return_type;
         if (i.second->block) {
-            std::cout << " {\n";
-            i.second->block->dump("  ", std::cout);
-            std::cout << "}";
+            os << " {\n";
+            for(auto ir : i.second->block->get_content()) {
+                ir->dump("  ", os);
+            }
+            os << "}";
         }
-        std::cout << "\n";
+        os << "\n";
     }
 }
 

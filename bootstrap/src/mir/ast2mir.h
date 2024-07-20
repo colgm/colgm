@@ -5,6 +5,7 @@
 #include "mir/mir.h"
 #include "report.h"
 
+#include <iostream>
 #include <cstring>
 #include <sstream>
 #include <unordered_map>
@@ -33,6 +34,8 @@ private:
     mir_block* block = nullptr;
 
 private:
+    bool visit_unary_operator(unary_operator*) override;
+    bool visit_binary_operator(binary_operator*) override;
     bool visit_nil_literal(nil_literal*) override;
     bool visit_number_literal(number_literal*) override;
     bool visit_string_literal(string_literal*) override;
@@ -40,6 +43,13 @@ private:
     bool visit_bool_literal(bool_literal*) override;
     bool visit_func_decl(func_decl*) override;
     bool visit_impl_struct(impl_struct*) override;
+    bool visit_call_index(call_index*) override;
+    bool visit_call_func_args(call_func_args*) override;
+    bool visit_call_field(call_field*) override;
+    bool visit_ptr_call_field(ptr_call_field*) override;
+    bool visit_call_path(call_path*) override;
+    bool visit_call(call*) override;
+    bool visit_definition(definition*) override;
     bool visit_code_block(code_block*) override;
 
 private:
@@ -55,10 +65,10 @@ public:
     }
 
 public:
-    void dump() const;
+    void dump(std::ostream&) const;
     auto& generate(root* ast_root) {
         ast_root->accept(this);
-        dump();
+        dump(std::cout);
         return err;
     }
     auto& get_mutable_ir() const { return impls; }
