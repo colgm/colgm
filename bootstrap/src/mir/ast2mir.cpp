@@ -64,6 +64,21 @@ bool ast2mir::visit_binary_operator(binary_operator* node) {
     return true;
 }
 
+bool ast2mir::visit_type_convert(type_convert* node) {
+    auto new_block = new mir_block(node->get_source()->get_location());
+    auto temp = block;
+    block = new_block;
+    node->get_source()->accept(this);
+    block = temp;
+
+    block->add_content(new mir_type_convert(
+        node->get_location(),
+        new_block,
+        generate_type(node->get_target())
+    ));
+    return true;
+}
+
 bool ast2mir::visit_nil_literal(nil_literal* node) {
     block->add_content(new mir_nil(
         node->get_location(),
@@ -244,6 +259,106 @@ bool ast2mir::visit_definition(definition* node) {
         node->get_type()? generate_type(node->get_type()):type::error_type(),
         node->get_resolve()
     ));
+    return true;
+}
+
+bool ast2mir::visit_assignment(assignment* node) {
+    auto left = new mir_block(node->get_left()->get_location());
+    auto temp = block;
+    block = left;
+    node->get_left()->accept(this);
+
+    auto right = new mir_block(node->get_right()->get_location());
+    block = right;
+    node->get_right()->accept(this);
+    block = temp;
+
+    mir_assign::opr_kind type;
+    switch(node->get_type()) {
+        case assignment::kind::eq: type = mir_assign::opr_kind::eq; break;
+        case assignment::kind::addeq: type = mir_assign::opr_kind::addeq; break;
+        case assignment::kind::subeq: type = mir_assign::opr_kind::subeq; break;
+        case assignment::kind::multeq: type = mir_assign::opr_kind::multeq; break;
+        case assignment::kind::diveq: type = mir_assign::opr_kind::diveq; break;
+        case assignment::kind::remeq: type = mir_assign::opr_kind::remeq; break;
+        case assignment::kind::andeq: type = mir_assign::opr_kind::andeq; break;
+        case assignment::kind::xoreq: type = mir_assign::opr_kind::xoreq; break;
+        case assignment::kind::oreq: type = mir_assign::opr_kind::oreq; break;
+    }
+    block->add_content(new mir_assign(
+        node->get_location(),
+        mir_assign::opr_kind::addeq,
+        left,
+        right
+    ));
+    return true;
+}
+
+bool ast2mir::visit_cond_stmt(cond_stmt* node) {
+    auto cond = new mir_branch(node->get_location());
+    for(auto i : node->get_stmts()) {
+        cond->add(generate_if_stmt(i));
+    }
+    block->add_content(cond);
+    return true;
+}
+
+mir_if* ast2mir::generate_if_stmt(if_stmt* node) {
+    if (!node->get_condition()) {
+        auto body_block = new mir_block(node->get_block()->get_location());
+        auto temp = block;
+        block = body_block;
+        node->get_block()->accept(this);
+        block = temp;
+
+        return new mir_if(
+            node->get_location(),
+            nullptr,
+            body_block
+        );
+    }
+    auto cond_block = new mir_block(node->get_condition()->get_location());
+    auto temp = block;
+    block = cond_block;
+    node->get_condition()->accept(this);
+
+    auto body_block = new mir_block(node->get_block()->get_location());
+    block = body_block;
+    node->get_block()->accept(this);
+    block = temp;
+
+    return new mir_if(
+        node->get_location(),
+        cond_block,
+        body_block
+    );
+}
+
+bool ast2mir::visit_while_stmt(while_stmt* node) {
+    auto cond_block = new mir_block(node->get_condition()->get_location());
+    auto temp = block;
+    block = cond_block;
+    node->get_condition()->accept(this);
+    auto body_block = new mir_block(node->get_block()->get_location());
+    block = body_block;
+    node->get_block()->accept(this);
+    block = temp;
+
+    block->add_content(new mir_while(
+        node->get_location(),
+        cond_block,
+        body_block
+    ));
+    return true;
+}
+
+bool ast2mir::visit_continue_stmt(continue_stmt* node) {
+    block->add_content(new mir_continue(node->get_location()));
+    return true;
+}
+
+bool ast2mir::visit_break_stmt(break_stmt* node) {
+    block->add_content(new mir_break(node->get_location()));
     return true;
 }
 

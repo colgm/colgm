@@ -61,8 +61,18 @@ void mir_binary::dump(const std::string& indent, std::ostream& os) {
     for(auto i : left->get_content()) {
         i->dump(indent + "  ", os);
     }
-    os << indent << "} {\n";
+    os << indent << "}.{\n";
     for(auto i : right->get_content()) {
+        i->dump(indent + "  ", os);
+    }
+    os << indent << "}\n";
+}
+
+void mir_type_convert::dump(const std::string& indent, std::ostream& os) {
+    os << indent << "[" << location << "]";
+    os << "[target:" << target_type << "]";
+    os << " type convert {\n";
+    for(auto i : source->get_content()) {
         i->dump(indent + "  ", os);
     }
     os << indent << "}\n";
@@ -164,6 +174,59 @@ void mir_define::dump(const std::string& indent, std::ostream& os) {
     for(auto i : init_value->get_content()) {
         i->dump(indent + "  ", os);
     }
+    os << indent << "}\n";
+}
+
+void mir_assign::dump(const std::string& indent, std::ostream& os) {
+    os << indent << "[" << location << "] assign ";
+    switch(opr) {
+       case opr_kind::eq: os << "="; break;
+       case opr_kind::addeq: os << "+="; break;
+       case opr_kind::subeq: os << "-="; break;
+       case opr_kind::multeq: os << "*="; break;
+       case opr_kind::diveq: os << "/="; break;
+       case opr_kind::remeq: os << "%="; break;
+       case opr_kind::andeq: os << "&="; break;
+       case opr_kind::xoreq: os << "^="; break;
+       case opr_kind::oreq: os << "|="; break;
+    }
+    os << " {\n";
+    left->dump(indent + "  ", os);
+    right->dump(indent + "  ", os);
+    os << indent << "}\n";
+}
+
+void mir_if::dump(const std::string& indent, std::ostream& os) {
+    os << indent << "[" << location << "] ";
+    os << (condition? "if":"else");
+    os << " {\n";
+    if (condition) {
+        condition->dump(indent + "  ", os);
+    }
+    content->dump(indent + "  ", os);
+    os << indent << "}\n";
+}
+
+void mir_branch::dump(const std::string& indent, std::ostream& os) {
+    os << indent << "[" << location << "] branch {\n";
+    for(auto i : branch) {
+        i->dump(indent + "  ", os);
+    }
+    os << indent << "}\n";
+}
+
+void mir_break::dump(const std::string& indent, std::ostream& os) {
+    os << indent << "[" << location << "] break\n";
+}
+
+void mir_continue::dump(const std::string& indent, std::ostream& os) {
+    os << indent << "[" << location << "] continue\n";
+}
+
+void mir_while::dump(const std::string& indent, std::ostream& os) {
+    os << indent << "[" << location << "] while {\n";
+    condition->dump(indent + "  ", os);
+    content->dump(indent + "  ", os);
     os << indent << "}\n";
 }
 

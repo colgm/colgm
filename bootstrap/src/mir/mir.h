@@ -30,6 +30,11 @@ enum class kind {
     mir_ptr_call_field,
     mir_define,
     mir_assign,
+    mir_if,
+    mir_branch,
+    mir_break,
+    mir_continue,
+    mir_while,
 };
 
 class mir {
@@ -127,6 +132,20 @@ public:
     ~mir_binary() override {
         delete left;
         delete right;
+    }
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_type_convert: public mir {
+private:
+    mir_block* source;
+    type target_type;
+
+public:
+    mir_type_convert(const span& loc, mir_block* src, const type& tt):
+        mir(kind::mir_type_convert, loc), source(src), target_type(tt) {}
+    ~mir_type_convert() override {
+        delete source;
     }
     void dump(const std::string&, std::ostream&) override;
 };
@@ -295,6 +314,95 @@ public:
         init_value(iv), expect_type(et), resolve_type(rt) {}
     ~mir_define() override {
         delete init_value;
+    }
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_assign: public mir {
+public:
+    enum class opr_kind {
+        eq,
+        addeq,
+        subeq,
+        multeq,
+        diveq,
+        remeq,
+        andeq,
+        xoreq,
+        oreq
+    };
+
+private:
+    opr_kind opr;
+    mir_block* left;
+    mir_block* right;
+
+public:
+    mir_assign(const span& loc, const opr_kind o, mir_block* l, mir_block* r):
+        mir(kind::mir_assign, loc), opr(o), left(l), right(r) {}
+    ~mir_assign() override {
+        delete left;
+        delete right;
+    }
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_if: public mir {
+private:
+    mir_block* condition;
+    mir_block* content;
+
+public:
+    mir_if(const span& loc, mir_block* cond, mir_block* ct):
+        mir(kind::mir_if, loc), condition(cond), content(ct) {}
+    ~mir_if() override {
+        delete condition;
+        delete content;
+    }
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_branch: public mir {
+private:
+    std::vector<mir_if*> branch;
+
+public:
+    mir_branch(const span& loc):
+        mir(kind::mir_branch, loc) {}
+    ~mir_branch() override {
+        for(auto i : branch) {
+            delete i;
+        }
+    }
+    void dump(const std::string&, std::ostream&) override;
+    void add(mir_if* b) { branch.push_back(b); }
+};
+
+class mir_break: public mir {
+public:
+    mir_break(const span& loc): mir(kind::mir_break, loc) {}
+    ~mir_break() override = default;
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_continue: public mir {
+public:
+    mir_continue(const span& loc): mir(kind::mir_continue, loc) {}
+    ~mir_continue() override = default;
+    void dump(const std::string&, std::ostream&) override;
+};
+
+class mir_while: public mir {
+private:
+    mir_block* condition;
+    mir_block* content;
+
+public:
+    mir_while(const span& loc, mir_block* cond, mir_block* ct):
+        mir(kind::mir_while, loc), condition(cond), content(ct) {}
+    ~mir_while() override {
+        delete condition;
+        delete content;
     }
     void dump(const std::string&, std::ostream&) override;
 };
