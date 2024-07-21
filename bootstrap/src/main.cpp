@@ -16,6 +16,7 @@ const u32 COMPILE_VIEW_AST = 1<<1;
 const u32 COMPILE_VIEW_LIB = 1<<2;
 const u32 COMPILE_VIEW_SEMA = 1<<3;
 const u32 COMPILE_VIEW_IR = 1<<4;
+const u32 COMPILE_VIEW_MIR = 1<<5;
 
 std::ostream& help(std::ostream& out) {
     out
@@ -28,6 +29,7 @@ std::ostream& help(std::ostream& out) {
     << "   -l,   --lex            | view analysed tokens.\n"
     << "   -a,   --ast            | view ast.\n"
     << "   -s,   --sema           | view semantic result.\n"
+    << "         --mir            | view mir.\n"
     << "   -i,   --ir             | view semantic generated ir.\n"
     << "   -L,   --library <path> | add library path.\n"
     << "         --dump-lib       | view libraries.\n"
@@ -111,6 +113,9 @@ void execute(const std::string& file,
 
     // generate code
     ast2mir.generate(parser.get_result()).chkerr();
+    if (cmd&COMPILE_VIEW_MIR) {
+        colgm::mir::ast2mir::dump(std::cout);
+    }
     gen.generate(parser.get_result()).chkerr();
     if (cmd&COMPILE_VIEW_IR) {
         gen.get_mutable_ir().dump_code(std::cout);
@@ -150,6 +155,7 @@ i32 main(i32 argc, const char* argv[]) {
         {"-a", COMPILE_VIEW_AST},
         {"--sema", COMPILE_VIEW_SEMA},
         {"-s", COMPILE_VIEW_SEMA},
+        {"--mir", COMPILE_VIEW_MIR},
         {"--ir", COMPILE_VIEW_IR},
         {"-i", COMPILE_VIEW_IR},
         {"--dump-lib", COMPILE_VIEW_LIB}

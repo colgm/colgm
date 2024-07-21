@@ -185,12 +185,17 @@ bool ast2mir::visit_call_index(call_index* node) {
 }
 
 bool ast2mir::visit_call_func_args(call_func_args* node) {
+    auto args_block = new mir_block(node->get_location());
+    auto temp = block;
+    block = args_block;
     for(auto i : node->get_args()) {
         i->accept(this);
     }
+    block = temp;
+
     block->add_content(new mir_call_func(
         node->get_location(),
-        node->get_args().size(),
+        args_block,
         node->get_resolve()
     ));
     return true;
@@ -256,7 +261,7 @@ bool ast2mir::visit_definition(definition* node) {
         node->get_location(),
         node->get_name(),
         new_block,
-        node->get_type()? generate_type(node->get_type()):type::error_type(),
+        node->get_type()? generate_type(node->get_type()):node->get_resolve(),
         node->get_resolve()
     ));
     return true;
@@ -304,11 +309,14 @@ bool ast2mir::visit_cond_stmt(cond_stmt* node) {
 }
 
 mir_if* ast2mir::generate_if_stmt(if_stmt* node) {
+    // else branch
     if (!node->get_condition()) {
         auto body_block = new mir_block(node->get_block()->get_location());
         auto temp = block;
         block = body_block;
-        node->get_block()->accept(this);
+        for(auto i : node->get_block()->get_stmts()) {
+            i->accept(this);
+        }
         block = temp;
 
         return new mir_if(
@@ -324,7 +332,9 @@ mir_if* ast2mir::generate_if_stmt(if_stmt* node) {
 
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
-    node->get_block()->accept(this);
+    for(auto i : node->get_block()->get_stmts()) {
+        i->accept(this);
+    }
     block = temp;
 
     return new mir_if(
@@ -341,7 +351,9 @@ bool ast2mir::visit_while_stmt(while_stmt* node) {
     node->get_condition()->accept(this);
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
-    node->get_block()->accept(this);
+    for(auto i : node->get_block()->get_stmts()) {
+        i->accept(this);
+    }
     block = temp;
 
     block->add_content(new mir_while(
@@ -389,17 +401,17 @@ type ast2mir::generate_type(type_def* node) {
 }
 
 void ast2mir::emit_function(mir_func* f) {
-    if (impls.count(f->name)) {
+    if (mctx.impls.count(f->name)) {
         err.err("ast2mir",
             f->location,
             "redefinition of function \"" + f->name + "\"."
         );
     }
-    impls.insert({f->name, f});
+    mctx.impls.insert({f->name, f});
 }
 
-void ast2mir::dump(std::ostream& os) const {
-    for(const auto& i : impls) {
+void ast2mir::dump(std::ostream& os) {
+    for(const auto& i : mctx.impls) {
         os << i.first << "(";
         for(const auto& p : i.second->params) {
             os << p.first << ": " << p.second;
@@ -415,7 +427,7 @@ void ast2mir::dump(std::ostream& os) const {
             }
             os << "}";
         }
-        os << "\n";
+        os << "\n\n";
     }
 }
 

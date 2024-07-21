@@ -23,13 +23,22 @@ struct mir_func {
     ~mir_func() { delete block; }
 };
 
+struct mir_context {
+    std::unordered_map<std::string, mir_func*> impls;
+    ~mir_context() {
+        for(auto i : impls) {
+            delete i.second;
+        }
+    }
+};
+
 class ast2mir: public visitor {
 private:
     error err;
     const semantic_context& ctx;
 
 private:
-    std::unordered_map<std::string, mir_func*> impls;
+    static inline mir_context mctx;
     std::string impl_struct_name = "";
     mir_block* block = nullptr;
 
@@ -65,20 +74,13 @@ private:
 
 public:
     ast2mir(const semantic_context& c): ctx(c) {}
-    ~ast2mir() {
-        for(const auto& i : impls) {
-            delete i.second;
-        }
-    }
 
 public:
-    void dump(std::ostream&) const;
+    static void dump(std::ostream&);
     auto& generate(root* ast_root) {
         ast_root->accept(this);
-        dump(std::cout);
         return err;
     }
-    auto& get_mutable_ir() const { return impls; }
 };
 
 }

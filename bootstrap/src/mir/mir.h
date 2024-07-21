@@ -251,13 +251,13 @@ public:
 
 class mir_call_func: public mir {
 private:
-    size_t arg_size;
+    mir_block* args;
     type resolve_type;
 
 public:
-    mir_call_func(const span& loc, const size_t argc, const type& t):
-        mir(kind::mir_call_func, loc), arg_size(argc), resolve_type(t) {}
-    ~mir_call_func() override = default;
+    mir_call_func(const span& loc, mir_block* a, const type& t):
+        mir(kind::mir_call_func, loc), args(a), resolve_type(t) {}
+    ~mir_call_func() override { delete args; }
     void dump(const std::string&, std::ostream&) override;
 };
 
