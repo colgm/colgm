@@ -13,6 +13,7 @@ void pass_manager::execute(mir_context* mctx) {
         if (!i->run(mctx)) {
             break;
         }
+        std::clog << "[mir] running " << i->name() << " finished.\n";
     }
 }
 
