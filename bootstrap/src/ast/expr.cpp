@@ -1,7 +1,7 @@
 #include "ast/expr.h"
 #include "ast/visitor.h"
 
-namespace colgm {
+namespace colgm::ast {
 
 void expr::accept(visitor* v) {
     v->visit_expr(this);

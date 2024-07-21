@@ -1,6 +1,6 @@
 #include "ast/dumper.h"
 
-namespace colgm {
+namespace colgm::ast {
 
 bool dumper::visit_root(root* node) {
     dump_indent();

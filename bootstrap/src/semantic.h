@@ -16,6 +16,8 @@
 
 namespace colgm {
 
+using namespace ast;
+
 class semantic {
 private:
     error err;

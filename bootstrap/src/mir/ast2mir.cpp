@@ -2,7 +2,7 @@
 
 namespace colgm::mir {
 
-bool ast2mir::visit_unary_operator(unary_operator* node) {
+bool ast2mir::visit_unary_operator(ast::unary_operator* node) {
     auto new_block = new mir_block(node->get_value()->get_location());
     auto temp = block;
     block = new_block;
@@ -11,8 +11,8 @@ bool ast2mir::visit_unary_operator(unary_operator* node) {
 
     mir_unary::opr_kind type;
     switch(node->get_opr()) {
-        case unary_operator::kind::bnot: type = mir_unary::opr_kind::bnot; break;
-        case unary_operator::kind::neg: type = mir_unary::opr_kind::neg; break;
+        case ast::unary_operator::kind::bnot: type = mir_unary::opr_kind::bnot; break;
+        case ast::unary_operator::kind::neg: type = mir_unary::opr_kind::neg; break;
     }
 
     block->add_content(new mir_unary(
@@ -24,7 +24,7 @@ bool ast2mir::visit_unary_operator(unary_operator* node) {
     return true;
 }
 
-bool ast2mir::visit_binary_operator(binary_operator* node) {
+bool ast2mir::visit_binary_operator(ast::binary_operator* node) {
     auto left = new mir_block(node->get_left()->get_location());
     auto temp = block;
     block = left;
@@ -37,22 +37,22 @@ bool ast2mir::visit_binary_operator(binary_operator* node) {
 
     mir_binary::opr_kind type;
     switch(node->get_opr()) {
-        case binary_operator::kind::add: type = mir_binary::opr_kind::add; break;
-        case binary_operator::kind::sub: type = mir_binary::opr_kind::sub; break;
-        case binary_operator::kind::mult: type = mir_binary::opr_kind::mult; break;
-        case binary_operator::kind::div: type = mir_binary::opr_kind::div; break;
-        case binary_operator::kind::rem: type = mir_binary::opr_kind::rem; break;
-        case binary_operator::kind::cmpeq: type = mir_binary::opr_kind::cmpeq; break;
-        case binary_operator::kind::cmpneq: type = mir_binary::opr_kind::cmpneq; break;
-        case binary_operator::kind::less: type = mir_binary::opr_kind::less; break;
-        case binary_operator::kind::leq: type = mir_binary::opr_kind::leq; break;
-        case binary_operator::kind::grt: type = mir_binary::opr_kind::grt; break;
-        case binary_operator::kind::geq: type = mir_binary::opr_kind::geq; break;
-        case binary_operator::kind::cmpand: type = mir_binary::opr_kind::cmpand; break;
-        case binary_operator::kind::cmpor: type = mir_binary::opr_kind::cmpor; break;
-        case binary_operator::kind::band: type = mir_binary::opr_kind::band; break;
-        case binary_operator::kind::bor: type = mir_binary::opr_kind::bor; break;
-        case binary_operator::kind::bxor: type = mir_binary::opr_kind::bxor; break;
+        case ast::binary_operator::kind::add: type = mir_binary::opr_kind::add; break;
+        case ast::binary_operator::kind::sub: type = mir_binary::opr_kind::sub; break;
+        case ast::binary_operator::kind::mult: type = mir_binary::opr_kind::mult; break;
+        case ast::binary_operator::kind::div: type = mir_binary::opr_kind::div; break;
+        case ast::binary_operator::kind::rem: type = mir_binary::opr_kind::rem; break;
+        case ast::binary_operator::kind::cmpeq: type = mir_binary::opr_kind::cmpeq; break;
+        case ast::binary_operator::kind::cmpneq: type = mir_binary::opr_kind::cmpneq; break;
+        case ast::binary_operator::kind::less: type = mir_binary::opr_kind::less; break;
+        case ast::binary_operator::kind::leq: type = mir_binary::opr_kind::leq; break;
+        case ast::binary_operator::kind::grt: type = mir_binary::opr_kind::grt; break;
+        case ast::binary_operator::kind::geq: type = mir_binary::opr_kind::geq; break;
+        case ast::binary_operator::kind::cmpand: type = mir_binary::opr_kind::cmpand; break;
+        case ast::binary_operator::kind::cmpor: type = mir_binary::opr_kind::cmpor; break;
+        case ast::binary_operator::kind::band: type = mir_binary::opr_kind::band; break;
+        case ast::binary_operator::kind::bor: type = mir_binary::opr_kind::bor; break;
+        case ast::binary_operator::kind::bxor: type = mir_binary::opr_kind::bxor; break;
     }
     block->add_content(new mir_binary(
         node->get_location(),
@@ -64,7 +64,7 @@ bool ast2mir::visit_binary_operator(binary_operator* node) {
     return true;
 }
 
-bool ast2mir::visit_type_convert(type_convert* node) {
+bool ast2mir::visit_type_convert(ast::type_convert* node) {
     auto new_block = new mir_block(node->get_source()->get_location());
     auto temp = block;
     block = new_block;
@@ -79,7 +79,7 @@ bool ast2mir::visit_type_convert(type_convert* node) {
     return true;
 }
 
-bool ast2mir::visit_nil_literal(nil_literal* node) {
+bool ast2mir::visit_nil_literal(ast::nil_literal* node) {
     block->add_content(new mir_nil(
         node->get_location(),
         node->get_resolve()
@@ -87,7 +87,7 @@ bool ast2mir::visit_nil_literal(nil_literal* node) {
     return true;
 }
 
-bool ast2mir::visit_number_literal(number_literal* node) {
+bool ast2mir::visit_number_literal(ast::number_literal* node) {
     block->add_content(new mir_number(
         node->get_location(),
         node->get_number(),
@@ -96,16 +96,17 @@ bool ast2mir::visit_number_literal(number_literal* node) {
     return true;
 }
 
-bool ast2mir::visit_string_literal(string_literal* node) {
+bool ast2mir::visit_string_literal(ast::string_literal* node) {
     block->add_content(new mir_string(
         node->get_location(),
         node->get_string(),
         node->get_resolve()
     ));
+    mctx.const_strings.insert({node->get_string(), mctx.const_strings.size()});
     return true;
 }
 
-bool ast2mir::visit_char_literal(char_literal* node) {
+bool ast2mir::visit_char_literal(ast::char_literal* node) {
     block->add_content(new mir_char(
         node->get_location(),
         node->get_char(),
@@ -114,7 +115,7 @@ bool ast2mir::visit_char_literal(char_literal* node) {
     return true;
 }
 
-bool ast2mir::visit_bool_literal(bool_literal* node) {
+bool ast2mir::visit_bool_literal(ast::bool_literal* node) {
     block->add_content(new mir_bool(
         node->get_location(),
         node->get_flag(),
@@ -123,7 +124,22 @@ bool ast2mir::visit_bool_literal(bool_literal* node) {
     return true;
 }
 
-bool ast2mir::visit_func_decl(func_decl* node) {
+bool ast2mir::visit_struct_decl(ast::struct_decl* node) {
+    auto new_struct = new mir_struct;
+    new_struct->name = mangle_in_module_symbol(type {
+        .name = node->get_name(),
+        .loc_file = node->get_location().file
+    }.full_path_name());
+    new_struct->location = node->get_location();
+
+    for(auto i : node->get_fields()) {
+        new_struct->field_type.push_back(generate_type(i->get_type()));
+    }
+    mctx.structs.push_back(new_struct);
+    return true;
+}
+
+bool ast2mir::visit_func_decl(ast::func_decl* node) {
     auto name = node->get_name();
     if (impl_struct_name.length()) {
         const auto tmp = type {
@@ -147,7 +163,7 @@ bool ast2mir::visit_func_decl(func_decl* node) {
 
     // insert if is declaration
     if (!node->get_code_block()) {
-        emit_function(func);
+        mctx.decls.push_back(func);
         return true;
     }
 
@@ -156,11 +172,11 @@ bool ast2mir::visit_func_decl(func_decl* node) {
         i->accept(this);
     }
     block = nullptr;
-    emit_function(func);
+    mctx.impls.push_back(func);
     return true;
 }
 
-bool ast2mir::visit_impl_struct(impl_struct* node) {
+bool ast2mir::visit_impl_struct(ast::impl_struct* node) {
     impl_struct_name = node->get_struct_name();
     for(auto i : node->get_methods()) {
         i->accept(this);
@@ -169,7 +185,7 @@ bool ast2mir::visit_impl_struct(impl_struct* node) {
     return true;
 }
 
-bool ast2mir::visit_call_index(call_index* node) {
+bool ast2mir::visit_call_index(ast::call_index* node) {
     auto new_block = new mir_block(node->get_index()->get_location());
     auto temp = block;
     block = new_block;
@@ -184,7 +200,7 @@ bool ast2mir::visit_call_index(call_index* node) {
     return true;
 }
 
-bool ast2mir::visit_call_func_args(call_func_args* node) {
+bool ast2mir::visit_call_func_args(ast::call_func_args* node) {
     auto args_block = new mir_block(node->get_location());
     auto temp = block;
     block = args_block;
@@ -201,7 +217,7 @@ bool ast2mir::visit_call_func_args(call_func_args* node) {
     return true;
 }
 
-bool ast2mir::visit_call_field(call_field* node) {
+bool ast2mir::visit_call_field(ast::call_field* node) {
     block->add_content(new mir_call_field(
         node->get_location(),
         node->get_name(),
@@ -210,7 +226,7 @@ bool ast2mir::visit_call_field(call_field* node) {
     return true;
 }
 
-bool ast2mir::visit_ptr_call_field(ptr_call_field* node) {
+bool ast2mir::visit_ptr_call_field(ast::ptr_call_field* node) {
     block->add_content(new mir_ptr_call_field(
         node->get_location(),
         node->get_name(),
@@ -219,7 +235,7 @@ bool ast2mir::visit_ptr_call_field(ptr_call_field* node) {
     return true;
 }
 
-bool ast2mir::visit_call_path(call_path* node) {
+bool ast2mir::visit_call_path(ast::call_path* node) {
     block->add_content(new mir_call_path(
         node->get_location(),
         node->get_name(),
@@ -228,7 +244,7 @@ bool ast2mir::visit_call_path(call_path* node) {
     return true;
 }
 
-bool ast2mir::visit_call(call* node) {
+bool ast2mir::visit_call(ast::call* node) {
     auto new_block = new mir_block(node->get_location());
     auto temp = block;
     block = new_block;
@@ -250,7 +266,7 @@ bool ast2mir::visit_call(call* node) {
     return true;
 }
 
-bool ast2mir::visit_definition(definition* node) {
+bool ast2mir::visit_definition(ast::definition* node) {
     auto new_block = new mir_block(node->get_init_value()->get_location());
     auto temp = block;
     block = new_block;
@@ -267,7 +283,7 @@ bool ast2mir::visit_definition(definition* node) {
     return true;
 }
 
-bool ast2mir::visit_assignment(assignment* node) {
+bool ast2mir::visit_assignment(ast::assignment* node) {
     auto left = new mir_block(node->get_left()->get_location());
     auto temp = block;
     block = left;
@@ -280,15 +296,15 @@ bool ast2mir::visit_assignment(assignment* node) {
 
     mir_assign::opr_kind type;
     switch(node->get_type()) {
-        case assignment::kind::eq: type = mir_assign::opr_kind::eq; break;
-        case assignment::kind::addeq: type = mir_assign::opr_kind::addeq; break;
-        case assignment::kind::subeq: type = mir_assign::opr_kind::subeq; break;
-        case assignment::kind::multeq: type = mir_assign::opr_kind::multeq; break;
-        case assignment::kind::diveq: type = mir_assign::opr_kind::diveq; break;
-        case assignment::kind::remeq: type = mir_assign::opr_kind::remeq; break;
-        case assignment::kind::andeq: type = mir_assign::opr_kind::andeq; break;
-        case assignment::kind::xoreq: type = mir_assign::opr_kind::xoreq; break;
-        case assignment::kind::oreq: type = mir_assign::opr_kind::oreq; break;
+        case ast::assignment::kind::eq: type = mir_assign::opr_kind::eq; break;
+        case ast::assignment::kind::addeq: type = mir_assign::opr_kind::addeq; break;
+        case ast::assignment::kind::subeq: type = mir_assign::opr_kind::subeq; break;
+        case ast::assignment::kind::multeq: type = mir_assign::opr_kind::multeq; break;
+        case ast::assignment::kind::diveq: type = mir_assign::opr_kind::diveq; break;
+        case ast::assignment::kind::remeq: type = mir_assign::opr_kind::remeq; break;
+        case ast::assignment::kind::andeq: type = mir_assign::opr_kind::andeq; break;
+        case ast::assignment::kind::xoreq: type = mir_assign::opr_kind::xoreq; break;
+        case ast::assignment::kind::oreq: type = mir_assign::opr_kind::oreq; break;
     }
     block->add_content(new mir_assign(
         node->get_location(),
@@ -299,7 +315,7 @@ bool ast2mir::visit_assignment(assignment* node) {
     return true;
 }
 
-bool ast2mir::visit_cond_stmt(cond_stmt* node) {
+bool ast2mir::visit_cond_stmt(ast::cond_stmt* node) {
     auto cond = new mir_branch(node->get_location());
     for(auto i : node->get_stmts()) {
         cond->add(generate_if_stmt(i));
@@ -308,7 +324,7 @@ bool ast2mir::visit_cond_stmt(cond_stmt* node) {
     return true;
 }
 
-mir_if* ast2mir::generate_if_stmt(if_stmt* node) {
+mir_if* ast2mir::generate_if_stmt(ast::if_stmt* node) {
     // else branch
     if (!node->get_condition()) {
         auto body_block = new mir_block(node->get_block()->get_location());
@@ -344,7 +360,7 @@ mir_if* ast2mir::generate_if_stmt(if_stmt* node) {
     );
 }
 
-bool ast2mir::visit_while_stmt(while_stmt* node) {
+bool ast2mir::visit_while_stmt(ast::while_stmt* node) {
     auto cond_block = new mir_block(node->get_condition()->get_location());
     auto temp = block;
     block = cond_block;
@@ -364,17 +380,17 @@ bool ast2mir::visit_while_stmt(while_stmt* node) {
     return true;
 }
 
-bool ast2mir::visit_continue_stmt(continue_stmt* node) {
+bool ast2mir::visit_continue_stmt(ast::continue_stmt* node) {
     block->add_content(new mir_continue(node->get_location()));
     return true;
 }
 
-bool ast2mir::visit_break_stmt(break_stmt* node) {
+bool ast2mir::visit_break_stmt(ast::break_stmt* node) {
     block->add_content(new mir_break(node->get_location()));
     return true;
 }
 
-bool ast2mir::visit_code_block(code_block* node) {
+bool ast2mir::visit_code_block(ast::code_block* node) {
     auto new_block = new mir_block(node->get_location());
     block->add_content(new_block);
 
@@ -387,7 +403,7 @@ bool ast2mir::visit_code_block(code_block* node) {
     return true;
 }
 
-type ast2mir::generate_type(type_def* node) {
+type ast2mir::generate_type(ast::type_def* node) {
     const auto& name = node->get_name()->get_name();
     auto loc_file = node->get_location().file;
     if (ctx.global_symbol.count(name)) {
@@ -400,34 +416,66 @@ type ast2mir::generate_type(type_def* node) {
     };
 }
 
-void ast2mir::emit_function(mir_func* f) {
-    if (mctx.impls.count(f->name)) {
-        err.err("ast2mir",
-            f->location,
-            "redefinition of function \"" + f->name + "\"."
-        );
-    }
-    mctx.impls.insert({f->name, f});
-}
-
 void ast2mir::dump(std::ostream& os) {
-    for(const auto& i : mctx.impls) {
-        os << i.first << "(";
-        for(const auto& p : i.second->params) {
-            os << p.first << ": " << p.second;
-            if (p.first!=i.second->params.back().first) {
+    std::vector<std::string> const_strings;
+    const_strings.resize(mctx.const_strings.size());
+    for(const auto& i : mctx.const_strings) {
+        const_strings[i.second] = i.first;
+    }
+    for(usize i = 0; i<mctx.const_strings.size(); ++i) {
+        os << i << " \"" << rawstr(const_strings[i]) << "\"\n";
+    }
+    if (const_strings.size()) {
+        os << "\n";
+    }
+
+    for(const auto i : mctx.structs) {
+        os << i->name << " {";
+        size_t count = 0;
+        for(const auto& f : i->field_type) {
+            os << f;
+            ++count;
+            if (count!=i->field_type.size()) {
                 os << ", ";
             }
         }
-        os << ") -> " << i.second->return_type;
-        if (i.second->block) {
+        os << "} [" << i->location << "]\n";
+    }
+    if (mctx.structs.size()) {
+        os << "\n";
+    }
+
+    for(const auto i : mctx.decls) {
+        os << i->name << "(";
+        for(const auto& p : i->params) {
+            os << p.first << ": " << p.second;
+            if (p.first!=i->params.back().first) {
+                os << ", ";
+            }
+        }
+        os << ") -> " << i->return_type << "\n";
+    }
+    if (mctx.decls.size()) {
+        os << "\n";
+    }
+
+    for(const auto i : mctx.impls) {
+        os << i->name << "(";
+        for(const auto& p : i->params) {
+            os << p.first << ": " << p.second;
+            if (p.first!=i->params.back().first) {
+                os << ", ";
+            }
+        }
+        os << ") -> " << i->return_type;
+        if (i->block) {
             os << " {\n";
-            for(auto ir : i.second->block->get_content()) {
+            for(auto ir : i->block->get_content()) {
                 ir->dump("  ", os);
             }
-            os << "}";
+            os << "}\n";
         }
-        os << "\n\n";
+        os << "\n";
     }
 }
 

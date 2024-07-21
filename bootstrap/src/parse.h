@@ -13,6 +13,8 @@
 
 namespace colgm {
 
+using namespace ast;
+
 class parse {
 private:
     usize ptr;

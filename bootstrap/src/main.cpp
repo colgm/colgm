@@ -4,6 +4,7 @@
 #include "ast/dumper.h"
 #include "semantic.h"
 #include "mir/ast2mir.h"
+#include "mir/pass_manager.h"
 #include "code/gen.h"
 #include "package/package.h"
 
@@ -88,6 +89,7 @@ void execute(const std::string& file,
     colgm::parse parser;
     colgm::semantic sema;
     colgm::mir::ast2mir ast2mir(sema.get_context());
+    colgm::mir::pass_manager pm;
     colgm::generator gen(sema.get_context());
 
     // lexer scans file to get tokens
@@ -113,6 +115,7 @@ void execute(const std::string& file,
 
     // generate code
     ast2mir.generate(parser.get_result()).chkerr();
+    pm.execute(colgm::mir::ast2mir::get_context());
     if (cmd&COMPILE_VIEW_MIR) {
         colgm::mir::ast2mir::dump(std::cout);
     }

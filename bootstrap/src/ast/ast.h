@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace colgm {
+namespace colgm::ast {
 
 enum class ast_type {
     ast_null = 0,

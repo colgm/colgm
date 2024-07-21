@@ -5,7 +5,8 @@
 
 #include <cstring>
 #include <sstream>
-namespace colgm {
+
+namespace colgm::ast {
 
 class decl: public node {
 public:

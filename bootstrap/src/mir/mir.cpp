@@ -1,11 +1,18 @@
 #include "mir/mir.h"
+#include "mir/visitor.h"
 
 #include <iomanip>
 
 namespace colgm::mir {
 
+void mir::accept(visitor*) {}
+
 void mir_nop::dump(const std::string& indent, std::ostream& os) {
     os << indent << "nop\n";
+}
+
+void mir_nop::accept(visitor* v) {
+    v->visit_mir_nop(this);
 }
 
 void mir_block::dump(const std::string& indent, std::ostream& os) {
@@ -22,6 +29,10 @@ void mir_block::dump(const std::string& indent, std::ostream& os) {
     os << indent << "}\n";
 }
 
+void mir_block::accept(visitor* v) {
+    v->visit_mir_block(this);
+}
+
 void mir_unary::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "] unary [";
     switch(opr) {
@@ -31,6 +42,10 @@ void mir_unary::dump(const std::string& indent, std::ostream& os) {
     os << "] {\n";
     value->dump(indent + "  ", os);
     os << indent << "}\n";
+}
+
+void mir_unary::accept(visitor* v) {
+    v->visit_mir_unary(this);
 }
 
 void mir_binary::dump(const std::string& indent, std::ostream& os) {
@@ -59,18 +74,34 @@ void mir_binary::dump(const std::string& indent, std::ostream& os) {
     os << indent << "}\n";
 }
 
+void mir_binary::accept(visitor* v) {
+    v->visit_mir_binary(this);
+}
+
 void mir_type_convert::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[target:" << target_type << "] type convert {\n";
     source->dump(indent + "  ", os);
     os << indent << "}\n";
 }
 
+void mir_type_convert::accept(visitor* v) {
+    v->visit_mir_type_convert(this);
+}
+
 void mir_nil::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "] nil\n";
 }
 
+void mir_nil::accept(visitor* v) {
+    v->visit_mir_nil(this);
+}
+
 void mir_number::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "] number:" << literal << "\n";
+}
+
+void mir_number::accept(visitor* v) {
+    v->visit_mir_number(this);
 }
 
 void mir_string::dump(const std::string& indent, std::ostream& os) {
@@ -84,6 +115,10 @@ void mir_string::dump(const std::string& indent, std::ostream& os) {
     os << "\\00\"\n";
 }
 
+void mir_string::accept(visitor* v) {
+    v->visit_mir_string(this);
+}
+
 void mir_char::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "]";
     os << "[ascii(dec):" << int(literal) << "]";
@@ -92,9 +127,17 @@ void mir_char::dump(const std::string& indent, std::ostream& os) {
     os << std::dec << "\'\n";
 }
 
+void mir_char::accept(visitor* v) {
+    v->visit_mir_char(this);
+}
+
 void mir_bool::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "]";
     os << " bool:" << (literal? "true":"false") << "\n";
+}
+
+void mir_bool::accept(visitor* v) {
+    v->visit_mir_bool(this);
 }
 
 void mir_call::dump(const std::string& indent, std::ostream& os) {
@@ -105,10 +148,18 @@ void mir_call::dump(const std::string& indent, std::ostream& os) {
     os << indent << "}\n";
 }
 
+void mir_call::accept(visitor* v) {
+    v->visit_mir_call(this);
+}
+
 void mir_call_id::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "]";
     os << (resolve_type.is_global? "[global]":"[instance]");
     os << " identifier:" << name << "\n";
+}
+
+void mir_call_id::accept(visitor* v) {
+    v->visit_mir_call_id(this);
 }
 
 void mir_call_index::dump(const std::string& indent, std::ostream& os) {
@@ -119,6 +170,10 @@ void mir_call_index::dump(const std::string& indent, std::ostream& os) {
     os << indent << "}\n";
 }
 
+void mir_call_index::accept(visitor* v) {
+    v->visit_mir_call_index(this);
+}
+
 void mir_call_func::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "]";
     os << " call func {\n";
@@ -126,9 +181,17 @@ void mir_call_func::dump(const std::string& indent, std::ostream& os) {
     os << indent << "}\n";
 }
 
+void mir_call_func::accept(visitor* v) {
+    v->visit_mir_call_func(this);
+}
+
 void mir_call_field::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "]";
     os << " call field:" << name << "\n";
+}
+
+void mir_call_field::accept(visitor* v) {
+    v->visit_mir_call_field(this);
 }
 
 void mir_ptr_call_field::dump(const std::string& indent, std::ostream& os) {
@@ -136,10 +199,18 @@ void mir_ptr_call_field::dump(const std::string& indent, std::ostream& os) {
     os << " pointer call field:" << name << "\n";
 }
 
+void mir_ptr_call_field::accept(visitor* v) {
+    v->visit_mir_ptr_call_field(this);
+}
+
 void mir_call_path::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "]";
     os << (resolve_type.is_global? "[global]":"[instance]");
     os << " call path:" << name << "\n";
+}
+
+void mir_call_path::accept(visitor* v) {
+    v->visit_mir_call_path(this);
 }
 
 void mir_define::dump(const std::string& indent, std::ostream& os) {
@@ -150,6 +221,10 @@ void mir_define::dump(const std::string& indent, std::ostream& os) {
         i->dump(indent + "  ", os);
     }
     os << indent << "}\n";
+}
+
+void mir_define::accept(visitor* v) {
+    v->visit_mir_define(this);
 }
 
 void mir_assign::dump(const std::string& indent, std::ostream& os) {
@@ -171,6 +246,10 @@ void mir_assign::dump(const std::string& indent, std::ostream& os) {
     os << indent << "}\n";
 }
 
+void mir_assign::accept(visitor* v) {
+    v->visit_mir_assign(this);
+}
+
 void mir_if::dump(const std::string& indent, std::ostream& os) {
     os << indent << (condition? "if":"else") << " {\n";
     if (condition) {
@@ -178,6 +257,10 @@ void mir_if::dump(const std::string& indent, std::ostream& os) {
     }
     content->dump(indent + "  ", os);
     os << indent << "}\n";
+}
+
+void mir_if::accept(visitor* v) {
+    v->visit_mir_if(this);
 }
 
 void mir_branch::dump(const std::string& indent, std::ostream& os) {
@@ -188,12 +271,24 @@ void mir_branch::dump(const std::string& indent, std::ostream& os) {
     os << indent << "}\n";
 }
 
+void mir_branch::accept(visitor* v) {
+    v->visit_mir_branch(this);
+}
+
 void mir_break::dump(const std::string& indent, std::ostream& os) {
     os << indent << "break\n";
 }
 
+void mir_break::accept(visitor* v) {
+    v->visit_mir_break(this);
+}
+
 void mir_continue::dump(const std::string& indent, std::ostream& os) {
     os << indent << "continue\n";
+}
+
+void mir_continue::accept(visitor* v) {
+    v->visit_mir_continue(this);
 }
 
 void mir_while::dump(const std::string& indent, std::ostream& os) {
@@ -201,6 +296,10 @@ void mir_while::dump(const std::string& indent, std::ostream& os) {
     condition->dump(indent + "  ", os);
     content->dump(indent + "  ", os);
     os << indent << "}\n";
+}
+
+void mir_while::accept(visitor* v) {
+    v->visit_mir_while(this);
 }
 
 }

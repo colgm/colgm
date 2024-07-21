@@ -5,7 +5,7 @@
 
 #include <vector>
 
-namespace colgm {
+namespace colgm::ast {
 
 class stmt: public node {
 public:

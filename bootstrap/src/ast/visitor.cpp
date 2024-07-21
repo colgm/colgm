@@ -1,6 +1,6 @@
 #include "ast/visitor.h"
 
-namespace colgm {
+namespace colgm::ast {
 
 bool visitor::visit_node(node* node) {
     node->accept(this);

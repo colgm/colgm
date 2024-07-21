@@ -5,7 +5,7 @@
 #include "ast/expr.h"
 #include "ast/stmt.h"
 
-namespace colgm {
+namespace colgm::ast {
 
 class visitor {
 public:

@@ -37,6 +37,8 @@ enum class kind {
     mir_while,
 };
 
+class visitor;
+
 class mir {
 protected:
     kind mir_kind;
@@ -46,6 +48,11 @@ public:
     mir(kind k, const span& loc): mir_kind(k), location(loc) {}
     virtual ~mir() = default;
     virtual void dump(const std::string&, std::ostream&) {}
+    virtual void accept(visitor*);
+
+public:
+    auto get_kind() const { return mir_kind; }
+    const auto& get_location() const { return location; }
 };
 
 class mir_nop: public mir {
@@ -53,6 +60,7 @@ public:
     mir_nop(const span& loc): mir(kind::mir_nop, loc) {}
     ~mir_nop() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_block: public mir {
@@ -67,10 +75,12 @@ public:
         }
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 
 public:
     void add_content(mir* n) { content.push_back(n); }
     const auto& get_content() const { return content; }
+    auto& get_mutable_content() { return content; }
 };
 
 class mir_unary: public mir {
@@ -92,6 +102,10 @@ public:
         delete value;
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_value() const { return value; }
 };
 
 class mir_binary: public mir {
@@ -134,6 +148,11 @@ public:
         delete right;
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_left() const { return left; }
+    auto get_right() const { return right; }
 };
 
 class mir_type_convert: public mir {
@@ -148,6 +167,11 @@ public:
         delete source;
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    const auto& get_target_type() const { return target_type; }
+    auto get_source() const { return source; }
 };
 
 class mir_nil: public mir {
@@ -159,6 +183,7 @@ public:
         mir(kind::mir_nil, loc), resolve_type(t) {}
     ~mir_nil() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_number: public mir {
@@ -171,6 +196,10 @@ public:
         mir(kind::mir_number, loc), literal(l), resolve_type(t) {}
     ~mir_number() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    const auto& get_literal() const { return literal; }
 };
 
 class mir_string: public mir {
@@ -183,6 +212,7 @@ public:
         mir(kind::mir_string, loc), literal(l), resolve_type(t) {}
     ~mir_string() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_char: public mir {
@@ -195,6 +225,7 @@ public:
         mir(kind::mir_char, loc), literal(l), resolve_type(t) {}
     ~mir_char() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_bool: public mir {
@@ -207,6 +238,7 @@ public:
         mir(kind::mir_bool, loc), literal(l), resolve_type(t) {}
     ~mir_bool() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_call: public mir {
@@ -221,6 +253,10 @@ public:
         delete content;
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_content() const { return content; }
 };
 
 class mir_call_id: public mir {
@@ -233,6 +269,7 @@ public:
         mir(kind::mir_call_id, loc), name(n), resolve_type(t) {}
     ~mir_call_id() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_call_index: public mir {
@@ -247,6 +284,10 @@ public:
         delete index;
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_index() const { return index; }
 };
 
 class mir_call_func: public mir {
@@ -259,6 +300,10 @@ public:
         mir(kind::mir_call_func, loc), args(a), resolve_type(t) {}
     ~mir_call_func() override { delete args; }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_args() const { return args; }
 };
 
 class mir_call_field: public mir {
@@ -271,6 +316,7 @@ public:
         mir(kind::mir_call_field, loc), name(n), resolve_type(t) {}
     ~mir_call_field() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_ptr_call_field: public mir {
@@ -283,6 +329,7 @@ public:
         mir(kind::mir_ptr_call_field, loc), name(n), resolve_type(t) {}
     ~mir_ptr_call_field() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_call_path: public mir {
@@ -295,6 +342,7 @@ public:
         mir(kind::mir_call_path, loc), name(n), resolve_type(t) {}
     ~mir_call_path() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_define: public mir {
@@ -316,6 +364,10 @@ public:
         delete init_value;
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_init_value() const { return init_value; }
 };
 
 class mir_assign: public mir {
@@ -345,6 +397,11 @@ public:
         delete right;
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_left() const { return left; }
+    auto get_right() const { return right; }
 };
 
 class mir_if: public mir {
@@ -360,6 +417,11 @@ public:
         delete content;
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_condition() const { return condition; }
+    auto get_content() const { return content; }
 };
 
 class mir_branch: public mir {
@@ -375,7 +437,11 @@ public:
         }
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
     void add(mir_if* b) { branch.push_back(b); }
+    const auto& get_branch() const { return branch; }
 };
 
 class mir_break: public mir {
@@ -383,6 +449,7 @@ public:
     mir_break(const span& loc): mir(kind::mir_break, loc) {}
     ~mir_break() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_continue: public mir {
@@ -390,6 +457,7 @@ public:
     mir_continue(const span& loc): mir(kind::mir_continue, loc) {}
     ~mir_continue() override = default;
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
 };
 
 class mir_while: public mir {
@@ -405,6 +473,11 @@ public:
         delete content;
     }
     void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_condition() const { return condition; }
+    auto get_content() const { return content; }
 };
 
 }

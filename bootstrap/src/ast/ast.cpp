@@ -1,7 +1,7 @@
 #include "ast/ast.h"
 #include "ast/visitor.h"
 
-namespace colgm {
+namespace colgm::ast {
 
 root::~root() {
     for(auto i : imports) {

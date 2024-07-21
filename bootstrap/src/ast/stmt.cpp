@@ -1,7 +1,7 @@
 #include "ast/stmt.h"
 #include "ast/visitor.h"
 
-namespace colgm {
+namespace colgm::ast {
 
 void stmt::accept(visitor* v) {
     v->visit_stmt(this);
