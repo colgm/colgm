@@ -82,8 +82,9 @@ private:
     bool visit_cond_stmt(ast::cond_stmt*) override;
     mir_if* generate_if_stmt(ast::if_stmt*);
     bool visit_while_stmt(ast::while_stmt*) override;
-    bool visit_continue_stmt(ast::continue_stmt*);
-    bool visit_break_stmt(ast::break_stmt*);
+    bool visit_ret_stmt(ast::ret_stmt*) override;
+    bool visit_continue_stmt(ast::continue_stmt*) override;
+    bool visit_break_stmt(ast::break_stmt*) override;
     bool visit_code_block(ast::code_block*) override;
 
 private:

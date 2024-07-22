@@ -302,4 +302,14 @@ void mir_while::accept(visitor* v) {
     v->visit_mir_while(this);
 }
 
+void mir_return::dump(const std::string& indent, std::ostream& os) {
+    os << indent << "return {\n";
+    value->dump(indent + "  ", os);
+    os << indent << "}\n";
+}
+
+void mir_return::accept(visitor* v) {
+    v->visit_mir_return(this);
+}
+
 }

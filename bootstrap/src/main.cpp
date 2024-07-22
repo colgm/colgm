@@ -5,6 +5,7 @@
 #include "semantic.h"
 #include "mir/ast2mir.h"
 #include "mir/pass_manager.h"
+#include "mir/mir2sir.h"
 #include "code/gen.h"
 #include "package/package.h"
 
@@ -90,6 +91,7 @@ void execute(const std::string& file,
     colgm::semantic sema;
     colgm::mir::ast2mir ast2mir(sema.get_context());
     colgm::mir::pass_manager pm;
+    colgm::mir::mir2sir mir2sir;
     colgm::generator gen(sema.get_context());
 
     // lexer scans file to get tokens
@@ -119,6 +121,7 @@ void execute(const std::string& file,
     if (cmd&COMPILE_VIEW_MIR) {
         colgm::mir::ast2mir::dump(std::cout);
     }
+    mir2sir.generate(*ast2mir.get_context());
     gen.generate(parser.get_result()).chkerr();
     if (cmd&COMPILE_VIEW_IR) {
         gen.get_mutable_ir().dump_code(std::cout);

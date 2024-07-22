@@ -35,6 +35,7 @@ enum class kind {
     mir_break,
     mir_continue,
     mir_while,
+    mir_return
 };
 
 class visitor;
@@ -478,6 +479,21 @@ public:
 public:
     auto get_condition() const { return condition; }
     auto get_content() const { return content; }
+};
+
+class mir_return: public mir {
+private:
+    mir_block* value;
+
+public:
+    mir_return(const span& loc, mir_block* v):
+        mir(kind::mir_return, loc), value(v) {}
+    ~mir_return() override { delete value; }
+    void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_value() const { return value; }
 };
 
 }

@@ -60,4 +60,8 @@ void visitor::visit_mir_while(mir_while* node) {
     node->get_content()->accept(this);
 }
 
+void visitor::visit_mir_return(mir_return* node) {
+    node->get_value()->accept(this);
+}
+
 }

@@ -380,6 +380,23 @@ bool ast2mir::visit_while_stmt(ast::while_stmt* node) {
     return true;
 }
 
+bool ast2mir::visit_ret_stmt(ast::ret_stmt* node) {
+    auto value_block = new mir_block(node->get_value()?
+        node->get_value()->get_location():node->get_location());
+    auto temp = block;
+    block = value_block;
+    if (node->get_value()) {
+        node->get_value()->accept(this);
+    }
+    block = temp;
+
+    block->add_content(new mir_return(
+        node->get_location(),
+        value_block
+    ));
+    return true;
+}
+
 bool ast2mir::visit_continue_stmt(ast::continue_stmt* node) {
     block->add_content(new mir_continue(node->get_location()));
     return true;
