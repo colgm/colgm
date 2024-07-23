@@ -126,10 +126,7 @@ bool ast2mir::visit_bool_literal(ast::bool_literal* node) {
 
 bool ast2mir::visit_struct_decl(ast::struct_decl* node) {
     auto new_struct = new mir_struct;
-    new_struct->name = mangle_in_module_symbol(type {
-        .name = node->get_name(),
-        .loc_file = node->get_location().file
-    }.full_path_name());
+    new_struct->name = node->get_name();
     new_struct->location = node->get_location();
 
     for(auto i : node->get_fields()) {

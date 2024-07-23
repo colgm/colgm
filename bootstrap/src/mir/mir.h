@@ -368,6 +368,8 @@ public:
     void accept(visitor*) override;
 
 public:
+    const auto& get_name() const { return name; }
+    const auto& get_resolve_type() const { return resolve_type; }
     auto get_init_value() const { return init_value; }
 };
 

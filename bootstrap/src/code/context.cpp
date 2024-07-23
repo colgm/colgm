@@ -9,15 +9,9 @@ namespace colgm {
 void ir_context::dump_raw_string(std::ostream& out,
                                  const std::string& src) const {
     for(const auto c : src) {
-        if (c == '\\') {
-            out << "\\\\";
-        } else if (32 <= c && c <= 126) {
-            out << c;
-        } else {
-            out << "\\";
-            out << std::hex << std::setw(2) << std::setfill('0') << u32(c);
-            out << std::dec;
-        }
+        out << "\\";
+        out << std::hex << std::setw(2) << std::setfill('0') << u32(c);
+        out << std::dec;
     }
     out << "\\00";
 }
