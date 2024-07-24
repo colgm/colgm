@@ -57,3 +57,8 @@ func main() -> i64 {
     return 0;
 }
 ```
+
+## TODO
+
+1. finish mir2sir
+2. develop bootstrapped compiler

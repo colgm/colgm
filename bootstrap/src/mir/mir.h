@@ -201,6 +201,7 @@ public:
 
 public:
     const auto& get_literal() const { return literal; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_string: public mir {
@@ -214,6 +215,9 @@ public:
     ~mir_string() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
+
+public:
+    const auto& get_literal() const { return literal; }
 };
 
 class mir_char: public mir {
@@ -227,6 +231,10 @@ public:
     ~mir_char() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
+
+public:
+    auto get_literal() const { return literal; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_bool: public mir {
@@ -240,6 +248,10 @@ public:
     ~mir_bool() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
+
+public:
+    auto get_literal() const { return literal; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_call: public mir {

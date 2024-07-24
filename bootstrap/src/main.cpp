@@ -91,7 +91,7 @@ void execute(const std::string& file,
     colgm::semantic sema;
     colgm::mir::ast2mir ast2mir(sema.get_context());
     colgm::mir::pass_manager pm;
-    colgm::mir::mir2sir mir2sir;
+    colgm::mir::mir2sir mir2sir(sema.get_context());
     colgm::generator gen(sema.get_context());
 
     // lexer scans file to get tokens
