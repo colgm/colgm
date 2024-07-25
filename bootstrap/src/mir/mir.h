@@ -218,6 +218,7 @@ public:
 
 public:
     const auto& get_literal() const { return literal; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_char: public mir {

@@ -77,12 +77,18 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         }
         // generate code block
         func->set_code_block(new sir_block);
+        // init ssa generator
         ssa_gen.clear();
+        // clear value stack
+        value_stack.clear();
         block = func->get_code_block();
         for(const auto& j : i->params) {
             block->add_alloca(new sir_alloca(j.first, type_mapping(j.second)));
         }
+        // visit mir and generate sir
         i->block->accept(this);
+
+        // clear block pointer
         block = nullptr;
 
         ictx.func_impls.push_back(func);
@@ -100,37 +106,33 @@ void mir2sir::visit_mir_block(mir_block* node) {
 }
 
 void mir2sir::visit_mir_number(mir_number* node) {
-    block->add_stmt(new sir_number(
-        node->get_literal(),
-        ssa_gen.create(),
-        type_mapping(node->get_type()),
-        node->get_type().is_integer()
-    ));
+    auto literal = node->get_literal();
+    if (!node->get_type().is_integer() &&
+        literal.find('.')==std::string::npos) {
+        literal += ".0";
+    }
+    value_stack.push_back(mir_value_t::literal(literal, node->get_type()));
 }
 
 void mir2sir::visit_mir_string(mir_string* node) {
+    auto temp_var = ssa_gen.create();
     block->add_stmt(new sir_string(
         node->get_literal(),
         ictx.const_strings.at(node->get_literal()),
-        ssa_gen.create()
+        temp_var
     ));
+    value_stack.push_back(mir_value_t::variable(temp_var, node->get_type()));
 }
 
 void mir2sir::visit_mir_char(mir_char* node) {
-    block->add_stmt(new sir_number(
-        std::to_string(node->get_literal()),
-        ssa_gen.create(),
-        type_mapping(node->get_type()),
-        node->get_type().is_integer()
-    ));
+    const auto literal = std::to_string(u32(node->get_literal()));
+    value_stack.push_back(mir_value_t::literal(literal, node->get_type()));
 }
 
 void mir2sir::visit_mir_bool(mir_bool* node) {
-    block->add_stmt(new sir_number(
+    value_stack.push_back(mir_value_t::literal(
         node->get_literal()? "1":"0",
-        ssa_gen.create(),
-        "i1",
-        true
+        node->get_type()
     ));
 }
 
@@ -140,10 +142,13 @@ void mir2sir::visit_mir_define(mir_define* node) {
         type_mapping(node->get_resolve_type())
     ));
     node->get_init_value()->accept(this);
+    // if (!value_stack_check(node->get_init_value()->get_location())) {
+    //     return;
+    // }
     // TODO
 }
 
-void mir2sir::generate(const mir_context& mctx) {
+const error& mir2sir::generate(const mir_context& mctx) {
     generate_type_mapper();
     for(const auto& i : mctx.const_strings) {
         ictx.const_strings.insert(i);
@@ -154,6 +159,7 @@ void mir2sir::generate(const mir_context& mctx) {
 
     std::ofstream out("test_mir2sir.dump.ll");
     ictx.dump_code(out);
+    return err;
 }
 
 }

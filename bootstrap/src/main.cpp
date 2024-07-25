@@ -121,7 +121,7 @@ void execute(const std::string& file,
     if (cmd&COMPILE_VIEW_MIR) {
         colgm::mir::ast2mir::dump(std::cout);
     }
-    mir2sir.generate(*ast2mir.get_context());
+    mir2sir.generate(*ast2mir.get_context()).chkerr();
     gen.generate(parser.get_result()).chkerr();
     if (cmd&COMPILE_VIEW_IR) {
         gen.get_mutable_ir().dump_code(std::cout);

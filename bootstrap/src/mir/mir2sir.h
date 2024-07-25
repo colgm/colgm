@@ -1,5 +1,6 @@
 #pragma once
 
+#include "report.h"
 #include "sema/symbol.h"
 #include "sema/context.h"
 #include "mir/visitor.h"
@@ -10,6 +11,7 @@
 #include <unordered_map>
 #include <cstring>
 #include <sstream>
+#include <vector>
 
 namespace colgm::mir {
 
@@ -21,6 +23,43 @@ public:
     ssa_generator(): counter(0) {}
     void clear() { counter = 0; }
     auto create() { return std::to_string(counter++); }
+};
+
+struct mir_value_t {
+public:
+    enum class kind {
+        null,
+        variable,
+        literal
+    };
+
+public:
+    kind value_kind;
+    std::string content;
+    type resolve_type;
+
+public:
+    static auto null(const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::null,
+            .content = "",
+            .resolve_type = ty
+        };
+    }
+    static auto variable(const std::string& name, const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::variable,
+            .content = name,
+            .resolve_type = ty
+        };
+    }
+    static auto literal(const std::string& value, const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::literal,
+            .content = value,
+            .resolve_type = ty
+        };
+    }
 };
 
 class mir2sir: public visitor {
@@ -50,6 +89,20 @@ private:
     ir_context ictx;
     ssa_generator ssa_gen;
     sir_block* block;
+    std::vector<mir_value_t> value_stack;
+    error err;
+
+private:
+    bool value_stack_check(const span& loc) {
+        if (value_stack.size()) {
+            return true;
+        }
+        err.err("mir2sir",
+            loc,
+            "internal compiler error: value stack is empty."
+        );
+        return false;
+    }
 
 private:
     void generate_type_mapper();
@@ -86,7 +139,7 @@ private:
 
 public:
     mir2sir(const semantic_context& c): ctx(c), block(nullptr) {}
-    void generate(const mir_context&);
+    const error& generate(const mir_context&);
 };
 
 }
