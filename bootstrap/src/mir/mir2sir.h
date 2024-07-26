@@ -28,7 +28,8 @@ public:
 struct mir_value_t {
 public:
     enum class kind {
-        null,
+        null, // reserved
+        nil,
         variable,
         literal
     };
@@ -43,6 +44,13 @@ public:
         return mir_value_t {
             .value_kind = mir_value_t::kind::null,
             .content = "",
+            .resolve_type = ty
+        };
+    }
+    static auto nil(const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::nil,
+            .content = "null",
             .resolve_type = ty
         };
     }
@@ -91,6 +99,7 @@ private:
     sir_block* block;
     std::vector<mir_value_t> value_stack;
     error err;
+    bool in_assign_lvalue_process;
 
 private:
     bool value_stack_check(const span& loc) {
@@ -116,20 +125,19 @@ private:
     // void visit_mir_unary(mir_unary*) override;
     // void visit_mir_binary(mir_binary*) override;
     // void visit_mir_type_convert(mir_type_convert*) override;
-    // void visit_mir_nil(mir_nil*) override;
+    void visit_mir_nil(mir_nil*) override;
     void visit_mir_number(mir_number*) override;
     void visit_mir_string(mir_string*) override;
     void visit_mir_char(mir_char*) override;
     void visit_mir_bool(mir_bool*) override;
-    // void visit_mir_call(mir_call*) override;
-    // void visit_mir_call_id(mir_call_id*) override;
-    // void visit_mir_call_index(mir_call_index*) override;
-    // void visit_mir_call_func(mir_call_func*) override;
-    // void visit_mir_call_field(mir_call_field*) override;
-    // void visit_mir_call_path(mir_call_path*) override;
-    // void visit_mir_ptr_call_field(mir_ptr_call_field*) override;
+    void visit_mir_call_id(mir_call_id*) override;
+    void visit_mir_call_index(mir_call_index*) override;
+    void visit_mir_call_func(mir_call_func*) override;
+    void visit_mir_call_field(mir_call_field*) override;
+    void visit_mir_call_path(mir_call_path*) override;
+    void visit_mir_ptr_call_field(mir_ptr_call_field*) override;
     void visit_mir_define(mir_define*) override;
-    // void visit_mir_assign(mir_assign*) override;
+    void visit_mir_assign(mir_assign*) override;
     // void visit_mir_if(mir_if*) override;
     // void visit_mir_branch(mir_branch*) override;
     // void visit_mir_break(mir_break*) override;
@@ -138,7 +146,8 @@ private:
     // void visit_mir_return(mir_return*) override;
 
 public:
-    mir2sir(const semantic_context& c): ctx(c), block(nullptr) {}
+    mir2sir(const semantic_context& c):
+        ctx(c), block(nullptr), in_assign_lvalue_process(false) {}
     const error& generate(const mir_context&);
 };
 

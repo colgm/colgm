@@ -185,6 +185,9 @@ public:
     ~mir_nil() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
+
+public:
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_number: public mir {
@@ -271,6 +274,7 @@ public:
 
 public:
     auto get_content() const { return content; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_call_id: public mir {
@@ -284,6 +288,10 @@ public:
     ~mir_call_id() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
+
+public:
+    const auto& get_name() const { return name; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_call_index: public mir {
@@ -302,6 +310,7 @@ public:
 
 public:
     auto get_index() const { return index; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_call_func: public mir {
@@ -318,6 +327,7 @@ public:
 
 public:
     auto get_args() const { return args; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_call_field: public mir {
@@ -331,6 +341,10 @@ public:
     ~mir_call_field() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
+
+public:
+    const auto& get_name() const { return name; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_ptr_call_field: public mir {
@@ -344,6 +358,10 @@ public:
     ~mir_ptr_call_field() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
+
+public:
+    const auto& get_name() const { return name; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_call_path: public mir {

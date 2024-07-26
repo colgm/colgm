@@ -105,6 +105,10 @@ void mir2sir::visit_mir_block(mir_block* node) {
     }
 }
 
+void mir2sir::visit_mir_nil(mir_nil* node) {
+    value_stack.push_back(mir_value_t::nil(node->get_type()));
+}
+
 void mir2sir::visit_mir_number(mir_number* node) {
     auto literal = node->get_literal();
     if (!node->get_type().is_integer() &&
@@ -136,6 +140,30 @@ void mir2sir::visit_mir_bool(mir_bool* node) {
     ));
 }
 
+void mir2sir::visit_mir_call_id(mir_call_id* node) {
+    if (node->get_type().is_global) {
+        std::cout << node->get_name() << " is global\n";
+    }
+    // TODO
+}
+
+void mir2sir::visit_mir_call_index(mir_call_index* node) {
+    node->get_index()->accept(this);
+    // TODO
+}
+
+void mir2sir::visit_mir_call_func(mir_call_func* node) {
+    node->get_args()->accept(this);
+    // TODO
+}
+
+void mir2sir::visit_mir_call_field(mir_call_field* node) {}
+
+void mir2sir::visit_mir_call_path(mir_call_path* node) {}
+
+void mir2sir::visit_mir_ptr_call_field(mir_ptr_call_field* node) {}
+
+
 void mir2sir::visit_mir_define(mir_define* node) {
     block->add_alloca(new sir_alloca(
         node->get_name(),
@@ -143,6 +171,18 @@ void mir2sir::visit_mir_define(mir_define* node) {
     ));
     node->get_init_value()->accept(this);
     // if (!value_stack_check(node->get_init_value()->get_location())) {
+    //     return;
+    // }
+    // TODO
+}
+
+void mir2sir::visit_mir_assign(mir_assign* node) {
+    in_assign_lvalue_process = true;
+    node->get_left()->accept(this);
+    in_assign_lvalue_process = false;
+
+    node->get_right()->accept(this);
+    // if (!value_stack_check(node->get_value()->get_location())) {
     //     return;
     // }
     // TODO
