@@ -1,7 +1,7 @@
 #include "colgm.h"
 #include "lexer.h"
 #include "parse.h"
-#include "semantic.h"
+#include "sema/semantic.h"
 #include "mir/ast2mir.h"
 #include "code/gen.h"
 #include "sema/basic.h"

@@ -5,7 +5,7 @@
 #include "code/hir.h"
 #include "code/value.h"
 #include "code/context.h"
-#include "semantic.h"
+#include "sema/semantic.h"
 #include "report.h"
 
 #include <vector>

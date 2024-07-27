@@ -60,7 +60,8 @@ public:
                pointer_depth!=another.pointer_depth;
     }
     friend std::ostream& operator<<(std::ostream&, const type&);
-    
+
+public:
     static const type error_type() { return {"<err>", "", 0}; }
     static const type u64_type(i64 ptrlvl = 0) { return {"u64", "", ptrlvl}; }
     static const type u32_type(i64 ptrlvl = 0) { return {"u32", "", ptrlvl}; }
@@ -75,6 +76,7 @@ public:
     static const type void_type(i64 ptrlvl = 0) { return {"void", "", ptrlvl}; }
     static const type bool_type(i64 ptrlvl = 0) { return {"bool", "", ptrlvl}; }
 
+public:
     bool is_error() const { return name=="<err>"; }
     bool is_unsigned() const {
         const auto& t = *this;
@@ -103,6 +105,13 @@ public:
         return *this==type::bool_type(this->pointer_depth);
     }
     bool is_pointer() const { return pointer_depth>0; }
+
+public:
+    auto get_pointer_copy() const {
+        auto copy = *this;
+        ++copy.pointer_depth;
+        return copy;
+    }
 };
 
 struct symbol {

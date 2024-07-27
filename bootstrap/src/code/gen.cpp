@@ -2,7 +2,7 @@
 #include "code/gen.h"
 #include "sema/symbol.h"
 #include "sema/basic.h"
-#include "semantic.h"
+#include "sema/semantic.h"
 
 namespace colgm {
 

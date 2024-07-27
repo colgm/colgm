@@ -75,12 +75,14 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         for(const auto& j : i->params) {
             func->add_param(j.first + ".param", type_mapping(j.second));
         }
+
         // generate code block
         func->set_code_block(new sir_block);
         // init ssa generator
         ssa_gen.clear();
         // clear value stack
         value_stack.clear();
+
         block = func->get_code_block();
         for(const auto& j : i->params) {
             block->add_alloca(new sir_alloca(j.first, type_mapping(j.second)));
@@ -140,11 +142,41 @@ void mir2sir::visit_mir_bool(mir_bool* node) {
     ));
 }
 
+void mir2sir::visit_mir_call(mir_call* node) {
+    node->get_content()->accept(this);
+}
+
 void mir2sir::visit_mir_call_id(mir_call_id* node) {
-    if (node->get_type().is_global) {
-        std::cout << node->get_name() << " is global\n";
+    if (!node->get_type().is_global) {
+        value_stack.push_back(mir_value_t::variable(
+            node->get_name(),
+            node->get_type().get_pointer_copy()
+        ));
+        return;
     }
-    // TODO
+
+    // get full path
+    switch(ctx.search_symbol_kind(node->get_type())) {
+        case symbol_kind::func_kind:
+            value_stack.push_back(mir_value_t::func_kind(
+                node->get_type().full_path_name(),
+                node->get_type()
+            ));
+            break;
+        case symbol_kind::struct_kind:
+            value_stack.push_back(mir_value_t::struct_kind(
+                node->get_type().full_path_name(),
+                node->get_type()
+            ));
+            break;
+        case symbol_kind::enum_kind:
+            value_stack.push_back(mir_value_t::enum_kind(
+                node->get_type().full_path_name(),
+                node->get_type()
+            ));
+            break;
+        default: unimplemented(node); break;
+    }
 }
 
 void mir2sir::visit_mir_call_index(mir_call_index* node) {
@@ -157,11 +189,17 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
     // TODO
 }
 
-void mir2sir::visit_mir_call_field(mir_call_field* node) {}
+void mir2sir::visit_mir_call_field(mir_call_field* node) {
+    ;
+}
 
-void mir2sir::visit_mir_call_path(mir_call_path* node) {}
+void mir2sir::visit_mir_call_path(mir_call_path* node) {
+    ;
+}
 
-void mir2sir::visit_mir_ptr_call_field(mir_ptr_call_field* node) {}
+void mir2sir::visit_mir_ptr_call_field(mir_ptr_call_field* node) {
+    ;
+}
 
 
 void mir2sir::visit_mir_define(mir_define* node) {

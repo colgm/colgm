@@ -2,7 +2,7 @@
 #include "lexer.h"
 #include "parse.h"
 #include "ast/dumper.h"
-#include "semantic.h"
+#include "sema/semantic.h"
 #include "mir/ast2mir.h"
 #include "mir/pass_manager.h"
 #include "mir/mir2sir.h"

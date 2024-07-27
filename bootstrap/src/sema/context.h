@@ -62,7 +62,7 @@ public:
         if (domain.structs.count(t.name)) {
             return symbol_kind::struct_kind;
         }
-        if (domain.structs.count(t.name)) {
+        if (domain.functions.count(t.name)) {
             return symbol_kind::func_kind;
         }
         return symbol_kind::error_kind;

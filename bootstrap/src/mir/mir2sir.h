@@ -31,7 +31,10 @@ public:
         null, // reserved
         nil,
         variable,
-        literal
+        literal,
+        func_symbol,
+        struct_symbol,
+        enum_symbol
     };
 
 public:
@@ -40,13 +43,6 @@ public:
     type resolve_type;
 
 public:
-    static auto null(const type& ty) {
-        return mir_value_t {
-            .value_kind = mir_value_t::kind::null,
-            .content = "",
-            .resolve_type = ty
-        };
-    }
     static auto nil(const type& ty) {
         return mir_value_t {
             .value_kind = mir_value_t::kind::nil,
@@ -65,6 +61,27 @@ public:
         return mir_value_t {
             .value_kind = mir_value_t::kind::literal,
             .content = value,
+            .resolve_type = ty
+        };
+    }
+    static auto func_kind(const std::string& full_name, const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::func_symbol,
+            .content = full_name,
+            .resolve_type = ty
+        };
+    }
+    static auto struct_kind(const std::string& full_name, const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::struct_symbol,
+            .content = full_name,
+            .resolve_type = ty
+        };
+    }
+    static auto enum_kind(const std::string& full_name, const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::enum_symbol,
+            .content = full_name,
             .resolve_type = ty
         };
     }
@@ -102,15 +119,11 @@ private:
     bool in_assign_lvalue_process;
 
 private:
-    bool value_stack_check(const span& loc) {
-        if (value_stack.size()) {
-            return true;
-        }
+    void unimplemented(mir* node) {
         err.err("mir2sir",
-            loc,
-            "internal compiler error: value stack is empty."
+            node->get_location(),
+            "internal compiler error: unimplemented mir node."
         );
-        return false;
     }
 
 private:
@@ -130,6 +143,7 @@ private:
     void visit_mir_string(mir_string*) override;
     void visit_mir_char(mir_char*) override;
     void visit_mir_bool(mir_bool*) override;
+    void visit_mir_call(mir_call*) override;
     void visit_mir_call_id(mir_call_id*) override;
     void visit_mir_call_index(mir_call_index*) override;
     void visit_mir_call_func(mir_call_func*) override;

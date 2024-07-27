@@ -45,12 +45,12 @@ set(COLGM_OBJECT_SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/pass/pass.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/basic.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/context.cpp
+    ${CMAKE_SOURCE_DIR}/src/sema/semantic.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/symbol.cpp
     ${CMAKE_SOURCE_DIR}/src/lexer.cpp
     ${CMAKE_SOURCE_DIR}/src/misc.cpp
     ${CMAKE_SOURCE_DIR}/src/parse.cpp
-    ${CMAKE_SOURCE_DIR}/src/report.cpp
-    ${CMAKE_SOURCE_DIR}/src/semantic.cpp)
+    ${CMAKE_SOURCE_DIR}/src/report.cpp)
 add_library(colgm-object STATIC ${COLGM_OBJECT_SOURCE_FILE})
 target_include_directories(colgm-object PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
