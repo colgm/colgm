@@ -156,6 +156,8 @@ public:
 public:
     auto get_left() const { return left; }
     auto get_right() const { return right; }
+    auto get_opr() const { return opr; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_type_convert: public mir {
@@ -442,6 +444,7 @@ public:
 public:
     auto get_left() const { return left; }
     auto get_right() const { return right; }
+    auto get_opr() const { return opr; }
 };
 
 class mir_if: public mir {
