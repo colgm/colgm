@@ -33,6 +33,7 @@ public:
         variable,
         literal,
         func_symbol,
+        method,
         struct_symbol,
         enum_symbol
     };
@@ -67,6 +68,13 @@ public:
     static auto func_kind(const std::string& full_name, const type& ty) {
         return mir_value_t {
             .value_kind = mir_value_t::kind::func_symbol,
+            .content = full_name,
+            .resolve_type = ty
+        };
+    }
+    static auto method(const std::string& full_name, const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::method,
             .content = full_name,
             .resolve_type = ty
         };
@@ -147,9 +155,9 @@ private:
     void visit_mir_call_id(mir_call_id*) override;
     void visit_mir_call_index(mir_call_index*) override;
     void visit_mir_call_func(mir_call_func*) override;
-    void visit_mir_call_field(mir_call_field*) override;
-    void visit_mir_call_path(mir_call_path*) override;
-    void visit_mir_ptr_call_field(mir_ptr_call_field*) override;
+    void visit_mir_get_field(mir_get_field*) override;
+    void visit_mir_get_path(mir_get_path*) override;
+    void visit_mir_ptr_get_field(mir_ptr_get_field*) override;
     void visit_mir_define(mir_define*) override;
     void visit_mir_assign(mir_assign*) override;
     // void visit_mir_if(mir_if*) override;

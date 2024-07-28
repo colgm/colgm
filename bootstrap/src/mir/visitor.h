@@ -20,9 +20,9 @@ public:
     virtual void visit_mir_call_id(mir_call_id*) {}
     virtual void visit_mir_call_index(mir_call_index*);
     virtual void visit_mir_call_func(mir_call_func*);
-    virtual void visit_mir_call_field(mir_call_field*) {}
-    virtual void visit_mir_call_path(mir_call_path*) {}
-    virtual void visit_mir_ptr_call_field(mir_ptr_call_field*) {}
+    virtual void visit_mir_get_field(mir_get_field*) {}
+    virtual void visit_mir_get_path(mir_get_path*) {}
+    virtual void visit_mir_ptr_get_field(mir_ptr_get_field*) {}
     virtual void visit_mir_define(mir_define*);
     virtual void visit_mir_assign(mir_assign*);
     virtual void visit_mir_if(mir_if*);

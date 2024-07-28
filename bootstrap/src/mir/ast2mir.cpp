@@ -215,7 +215,7 @@ bool ast2mir::visit_call_func_args(ast::call_func_args* node) {
 }
 
 bool ast2mir::visit_call_field(ast::call_field* node) {
-    block->add_content(new mir_call_field(
+    block->add_content(new mir_get_field(
         node->get_location(),
         node->get_name(),
         node->get_resolve()
@@ -224,7 +224,7 @@ bool ast2mir::visit_call_field(ast::call_field* node) {
 }
 
 bool ast2mir::visit_ptr_call_field(ast::ptr_call_field* node) {
-    block->add_content(new mir_ptr_call_field(
+    block->add_content(new mir_ptr_get_field(
         node->get_location(),
         node->get_name(),
         node->get_resolve()
@@ -233,7 +233,7 @@ bool ast2mir::visit_ptr_call_field(ast::ptr_call_field* node) {
 }
 
 bool ast2mir::visit_call_path(ast::call_path* node) {
-    block->add_content(new mir_call_path(
+    block->add_content(new mir_get_path(
         node->get_location(),
         node->get_name(),
         node->get_resolve()

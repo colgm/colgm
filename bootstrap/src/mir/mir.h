@@ -25,9 +25,9 @@ enum class kind {
     mir_call_id,
     mir_call_index,
     mir_call_func,
-    mir_call_field,
-    mir_call_path,
-    mir_ptr_call_field,
+    mir_get_field,
+    mir_get_path,
+    mir_ptr_get_field,
     mir_define,
     mir_assign,
     mir_if,
@@ -330,15 +330,15 @@ public:
     const auto& get_type() const { return resolve_type; }
 };
 
-class mir_call_field: public mir {
+class mir_get_field: public mir {
 private:
     std::string name;
     type resolve_type;
 
 public:
-    mir_call_field(const span& loc, const std::string& n, const type& t):
-        mir(kind::mir_call_field, loc), name(n), resolve_type(t) {}
-    ~mir_call_field() override = default;
+    mir_get_field(const span& loc, const std::string& n, const type& t):
+        mir(kind::mir_get_field, loc), name(n), resolve_type(t) {}
+    ~mir_get_field() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
 
@@ -347,15 +347,15 @@ public:
     const auto& get_type() const { return resolve_type; }
 };
 
-class mir_ptr_call_field: public mir {
+class mir_ptr_get_field: public mir {
 private:
     std::string name;
     type resolve_type;
 
 public:
-    mir_ptr_call_field(const span& loc, const std::string& n, const type& t):
-        mir(kind::mir_ptr_call_field, loc), name(n), resolve_type(t) {}
-    ~mir_ptr_call_field() override = default;
+    mir_ptr_get_field(const span& loc, const std::string& n, const type& t):
+        mir(kind::mir_ptr_get_field, loc), name(n), resolve_type(t) {}
+    ~mir_ptr_get_field() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
 
@@ -364,17 +364,21 @@ public:
     const auto& get_type() const { return resolve_type; }
 };
 
-class mir_call_path: public mir {
+class mir_get_path: public mir {
 private:
     std::string name;
     type resolve_type;
 
 public:
-    mir_call_path(const span& loc, const std::string& n, const type& t):
-        mir(kind::mir_call_path, loc), name(n), resolve_type(t) {}
-    ~mir_call_path() override = default;
+    mir_get_path(const span& loc, const std::string& n, const type& t):
+        mir(kind::mir_get_path, loc), name(n), resolve_type(t) {}
+    ~mir_get_path() override = default;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
+
+public:
+    const auto& get_name() const { return name; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_define: public mir {

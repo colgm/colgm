@@ -180,25 +180,144 @@ void mir2sir::visit_mir_call_id(mir_call_id* node) {
 }
 
 void mir2sir::visit_mir_call_index(mir_call_index* node) {
+    auto prev = value_stack.back();
+    value_stack.pop_back();
+
     node->get_index()->accept(this);
-    // TODO
+    auto index = value_stack.back();
+    value_stack.pop_back();
+
+    auto target = ssa_gen.create();
+    block->add_stmt(new sir_call_index(
+        prev.content,
+        target,
+        index.content,
+        type_mapping(prev.resolve_type),
+        type_mapping(index.resolve_type)
+    ));
+    
+    value_stack.push_back(mir_value_t::variable(target, node->get_type()));
 }
 
 void mir2sir::visit_mir_call_func(mir_call_func* node) {
-    node->get_args()->accept(this);
-    // TODO
+    auto prev = value_stack.back();
+    value_stack.pop_back();
+
+    std::vector<mir_value_t> args;
+    if (prev.value_kind==mir_value_t::kind::method) {
+        args.push_back(value_stack.back());
+        value_stack.pop_back();
+    }
+
+    for(auto i : node->get_args()->get_content()) {
+        i->accept(this);
+        args.push_back(value_stack.back());
+        value_stack.pop_back();        
+    }
+
+    auto target = ssa_gen.create();
+    auto sir_function_call = new sir_call_func(
+        prev.content,
+        type_mapping(node->get_type()),
+        target
+    );
+    for(const auto& i : args) {
+        sir_function_call->add_arg(i.content);
+        sir_function_call->add_arg_type(type_mapping(i.resolve_type));
+    }
+    block->add_stmt(sir_function_call);
+    value_stack.push_back(mir_value_t::variable(target, node->get_type()));
 }
 
-void mir2sir::visit_mir_call_field(mir_call_field* node) {
-    ;
+void mir2sir::visit_mir_get_field(mir_get_field* node) {
+    auto prev = value_stack.back();
+    value_stack.pop_back();
+
+    const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
+    const auto& st = dm.structs.at(prev.resolve_type.name);
+
+    if (st.method.count(node->get_name())) {
+        value_stack.push_back(prev);
+        value_stack.push_back(mir_value_t::method(
+            prev.resolve_type.full_path_name() + "::" + node->get_name(),
+            node->get_type()
+        ));
+        return;
+    }
+
+    const auto target = ssa_gen.create();
+    usize index = 0;
+    for(; index < st.ordered_field.size(); ++index) {
+        if (st.ordered_field[index].name==node->get_name()) {
+            break;
+        }
+    }
+
+    block->add_stmt(new sir_call_field(
+        target,
+        prev.content,
+        type_mapping(prev.resolve_type),
+        index
+    ));
+
+    value_stack.push_back(mir_value_t::variable(target, node->get_type()));
 }
 
-void mir2sir::visit_mir_call_path(mir_call_path* node) {
-    ;
+void mir2sir::visit_mir_get_path(mir_get_path* node) {
+    auto prev = value_stack.back();
+    value_stack.pop_back();
+
+    switch(prev.value_kind) {
+        case mir_value_t::kind::struct_symbol:
+            value_stack.push_back(mir_value_t::func_kind(
+                prev.resolve_type.full_path_name() + "::" + node->get_name(),
+                node->get_type()
+            ));
+            break;
+        case mir_value_t::kind::enum_symbol: {
+            const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
+            const auto& em = dm.enums.at(prev.resolve_type.name);
+            value_stack.push_back(mir_value_t::literal(
+                std::to_string(em.members.at(node->get_name())),
+                node->get_type()
+            ));
+        } break;
+        default: unimplemented(node); break;
+    }
 }
 
-void mir2sir::visit_mir_ptr_call_field(mir_ptr_call_field* node) {
-    ;
+void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
+    auto prev = value_stack.back();
+    value_stack.pop_back();
+
+    const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
+    const auto& st = dm.structs.at(prev.resolve_type.name);
+
+    if (st.method.count(node->get_name())) {
+        value_stack.push_back(prev);
+        value_stack.push_back(mir_value_t::method(
+            prev.resolve_type.full_path_name() + "::" + node->get_name(),
+            node->get_type()
+        ));
+        return;
+    }
+
+    const auto target = ssa_gen.create();
+    usize index = 0;
+    for(; index < st.ordered_field.size(); ++index) {
+        if (st.ordered_field[index].name==node->get_name()) {
+            break;
+        }
+    }
+
+    block->add_stmt(new sir_call_field(
+        target,
+        prev.content,
+        type_mapping(prev.resolve_type),
+        index
+    ));
+
+    value_stack.push_back(mir_value_t::variable(target, node->get_type()));
 }
 
 
@@ -207,11 +326,19 @@ void mir2sir::visit_mir_define(mir_define* node) {
         node->get_name(),
         type_mapping(node->get_resolve_type())
     ));
+
     node->get_init_value()->accept(this);
-    // if (!value_stack_check(node->get_init_value()->get_location())) {
-    //     return;
-    // }
-    // TODO
+    auto source = value_stack.back();
+    value_stack.pop_back();
+
+    auto target = ssa_gen.create();
+    block->add_stmt(new sir_store(
+        type_mapping(node->get_resolve_type()),
+        value_t::variable(source.content),
+        value_t::variable(target)
+    ));
+
+    value_stack.push_back(mir_value_t::variable(target, node->get_resolve_type()));
 }
 
 void mir2sir::visit_mir_assign(mir_assign* node) {
@@ -220,9 +347,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
     in_assign_lvalue_process = false;
 
     node->get_right()->accept(this);
-    // if (!value_stack_check(node->get_value()->get_location())) {
-    //     return;
-    // }
+
     // TODO
 }
 

@@ -185,32 +185,32 @@ void mir_call_func::accept(visitor* v) {
     v->visit_mir_call_func(this);
 }
 
-void mir_call_field::dump(const std::string& indent, std::ostream& os) {
+void mir_get_field::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "]";
-    os << " call field:" << name << "\n";
+    os << " get field:" << name << "\n";
 }
 
-void mir_call_field::accept(visitor* v) {
-    v->visit_mir_call_field(this);
+void mir_get_field::accept(visitor* v) {
+    v->visit_mir_get_field(this);
 }
 
-void mir_ptr_call_field::dump(const std::string& indent, std::ostream& os) {
+void mir_ptr_get_field::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "]";
     os << " pointer call field:" << name << "\n";
 }
 
-void mir_ptr_call_field::accept(visitor* v) {
-    v->visit_mir_ptr_call_field(this);
+void mir_ptr_get_field::accept(visitor* v) {
+    v->visit_mir_ptr_get_field(this);
 }
 
-void mir_call_path::dump(const std::string& indent, std::ostream& os) {
+void mir_get_path::dump(const std::string& indent, std::ostream& os) {
     os << indent << "[" << resolve_type << "]";
     os << (resolve_type.is_global? "[global]":"[instance]");
     os << " call path:" << name << "\n";
 }
 
-void mir_call_path::accept(visitor* v) {
-    v->visit_mir_call_path(this);
+void mir_get_path::accept(visitor* v) {
+    v->visit_mir_get_path(this);
 }
 
 void mir_define::dump(const std::string& indent, std::ostream& os) {
