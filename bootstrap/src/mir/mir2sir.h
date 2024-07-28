@@ -137,6 +137,10 @@ private:
     error err;
     bool in_assign_lvalue_process;
 
+    std::vector<usize> loop_entry;
+    std::vector<std::vector<sir_br*>> break_inst;
+    std::vector<std::vector<sir_br*>> branch_jump_out;
+
 private:
     void unimplemented(mir* node) {
         err.err("mir2sir",
@@ -152,7 +156,10 @@ private:
     void emit_func_impl(const mir_context&);
 
 private:
-    void visit_mir_nop(mir_nop*) override;
+    void generate_and(mir_binary*);
+    void generate_or(mir_binary*);
+
+private:
     void visit_mir_block(mir_block*) override;
     void visit_mir_unary(mir_unary*) override;
     void visit_mir_binary(mir_binary*) override;
@@ -171,11 +178,11 @@ private:
     void visit_mir_ptr_get_field(mir_ptr_get_field*) override;
     void visit_mir_define(mir_define*) override;
     void visit_mir_assign(mir_assign*) override;
-    // void visit_mir_if(mir_if*) override;
-    // void visit_mir_branch(mir_branch*) override;
-    // void visit_mir_break(mir_break*) override;
-    // void visit_mir_continue(mir_continue*) override;
-    // void visit_mir_while(mir_while*) override;
+    void visit_mir_if(mir_if*) override;
+    void visit_mir_branch(mir_branch*) override;
+    void visit_mir_break(mir_break*) override;
+    void visit_mir_continue(mir_continue*) override;
+    void visit_mir_while(mir_while*) override;
     void visit_mir_return(mir_return*) override;
 
 public:

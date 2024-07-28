@@ -7,14 +7,6 @@ namespace colgm::mir {
 
 void mir::accept(visitor*) {}
 
-void mir_nop::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "nop\n";
-}
-
-void mir_nop::accept(visitor* v) {
-    v->visit_mir_nop(this);
-}
-
 void mir_block::dump(const std::string& indent, std::ostream& os) {
     os << indent << "block {";
     if (content.empty()) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sema/symbol.h"
+#include "code/sir.h"
 
 #include <cstring>
 #include <sstream>
@@ -15,12 +16,16 @@ enum value_kind {
     v_type_convert
 };
 
+struct value_t;
+
 struct value {
     value_kind kind;
     type resolve_type;
     std::string content;
 
     void dump(std::ostream&) const;
+
+    value_t to_value_t() const;
 };
 
 }

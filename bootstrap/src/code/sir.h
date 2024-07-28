@@ -489,18 +489,18 @@ public:
 
 private:
     kind cmp_type;
-    std::string left;
-    std::string right;
-    std::string destination;
+    value_t left;
+    value_t right;
+    value_t destination;
     bool is_integer;
     bool is_signed;
     std::string type;
 
 public:
     sir_cmp(kind ct,
-            const std::string& l,
-            const std::string& r,
-            const std::string& dst,
+            const value_t& l,
+            const value_t& r,
+            const value_t& dst,
             bool is_int,
             bool is_sign,
             const std::string& t):

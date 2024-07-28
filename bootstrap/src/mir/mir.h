@@ -11,8 +11,7 @@
 namespace colgm::mir {
 
 enum class kind {
-    mir_nop,
-    mir_block,
+    mir_block = 1,
     mir_unary,
     mir_binary,
     mir_type_convert,
@@ -54,14 +53,6 @@ public:
 public:
     auto get_kind() const { return mir_kind; }
     const auto& get_location() const { return location; }
-};
-
-class mir_nop: public mir {
-public:
-    mir_nop(const span& loc): mir(kind::mir_nop, loc) {}
-    ~mir_nop() override = default;
-    void dump(const std::string&, std::ostream&) override;
-    void accept(visitor*) override;
 };
 
 class mir_block: public mir {

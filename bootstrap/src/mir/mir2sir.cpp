@@ -100,8 +100,102 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
     }
 }
 
-void mir2sir::visit_mir_nop(mir_nop* node) {
-    block->add_nop();
+void mir2sir::generate_and(mir_binary* node) {
+    auto temp_0 = ssa_gen.create();
+    block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
+    block->add_stmt(new sir_temp_ptr(temp_0, "i1"));
+
+    node->get_left()->accept(this);
+    auto left = value_stack.back();
+    value_stack.pop_back();
+    block->add_stmt(new sir_store(
+        "i1",
+        left.to_value_t(),
+        value_t::variable(temp_0)
+    ));
+
+    auto true_label = block->stmt_size() + 1;
+    auto br = new sir_br_cond(
+        left.content,
+        true_label,
+        0
+    );
+    block->add_stmt(br);
+    block->add_stmt(new sir_label(true_label));
+
+    node->get_right()->accept(this);
+    auto right = value_stack.back();
+    value_stack.pop_back();
+    block->add_stmt(new sir_store(
+        "i1",
+        right.to_value_t(),
+        value_t::variable(temp_0)
+    ));
+
+    auto next_label = block->stmt_size() + 1;
+    block->add_stmt(new sir_br(next_label));
+
+    auto false_label = block->stmt_size();
+    br->set_false_label(false_label);
+
+    block->add_stmt(new sir_label(next_label));
+    auto temp_1 = ssa_gen.create();
+    block->add_stmt(new sir_load(
+        "i1",
+        temp_0,
+        temp_1
+    ));
+
+    value_stack.push_back(mir_value_t::variable(temp_1, node->get_type()));
+}
+
+void mir2sir::generate_or(mir_binary* node) {
+    auto temp_0 = ssa_gen.create();
+    block->add_alloca(new sir_alloca("real." + temp_0, "i1"));
+    block->add_stmt(new sir_temp_ptr(temp_0, "i1"));
+
+    node->get_left()->accept(this);
+    auto left = value_stack.back();
+    value_stack.pop_back();
+    block->add_stmt(new sir_store(
+        "i1",
+        left.to_value_t(),
+        value_t::variable(temp_0)
+    ));
+
+    auto false_label = block->stmt_size() + 1;
+    auto br = new sir_br_cond(
+        left.content,
+        0,
+        false_label
+    );
+    block->add_stmt(br);
+    block->add_stmt(new sir_label(false_label));
+
+    node->get_right()->accept(this);
+    auto right = value_stack.back();
+    value_stack.pop_back();
+    block->add_stmt(new sir_store(
+        "i1",
+        right.to_value_t(),
+        value_t::variable(temp_0)
+    ));
+
+    auto next_label = block->stmt_size() + 1;
+    block->add_stmt(new sir_br(next_label));
+
+    auto true_label = block->stmt_size();
+    br->set_true_label(true_label);
+
+    block->add_stmt(new sir_label(next_label));
+    auto temp_1 = ssa_gen.create();
+    block->add_stmt(new sir_load(
+        "i1",
+        temp_0,
+        temp_1
+    ));
+
+    value_stack.push_back(mir_value_t::variable(temp_1, node->get_type()));
 }
 
 void mir2sir::visit_mir_block(mir_block* node) {
@@ -135,10 +229,10 @@ void mir2sir::visit_mir_unary(mir_unary* node) {
 
 void mir2sir::visit_mir_binary(mir_binary* node) {
     if (node->get_opr()==mir_binary::opr_kind::cmpand) {
-        // TODO
+        generate_and(node);
         return;
     } else if (node->get_opr()==mir_binary::opr_kind::cmpor) {
-        // TODO
+        generate_or(node);
         return;
     }
 
@@ -228,9 +322,9 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
             ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_eq,
-                left.content,
-                right.content,
-                temp_var,
+                left.to_value_t(),
+                right.to_value_t(),
+                value_t::variable(temp_var),
                 flag_is_integer,
                 !left.resolve_type.is_unsigned(),
                 type_mapping(left.resolve_type)
@@ -241,9 +335,9 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
             ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_neq,
-                left.content,
-                right.content,
-                temp_var,
+                left.to_value_t(),
+                right.to_value_t(),
+                value_t::variable(temp_var),
                 flag_is_integer,
                 !left.resolve_type.is_unsigned(),
                 type_mapping(left.resolve_type)
@@ -252,9 +346,9 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
         case mir_binary::opr_kind::grt:
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_gt,
-                left.content,
-                right.content,
-                temp_var,
+                left.to_value_t(),
+                right.to_value_t(),
+                value_t::variable(temp_var),
                 left.resolve_type.is_integer(),
                 !left.resolve_type.is_unsigned(),
                 type_mapping(left.resolve_type)
@@ -263,9 +357,9 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
         case mir_binary::opr_kind::geq:
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_ge,
-                left.content,
-                right.content,
-                temp_var,
+                left.to_value_t(),
+                right.to_value_t(),
+                value_t::variable(temp_var),
                 left.resolve_type.is_integer(),
                 !left.resolve_type.is_unsigned(),
                 type_mapping(left.resolve_type)
@@ -274,9 +368,9 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
         case mir_binary::opr_kind::less:
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_lt,
-                left.content,
-                right.content,
-                temp_var,
+                left.to_value_t(),
+                right.to_value_t(),
+                value_t::variable(temp_var),
                 left.resolve_type.is_integer(),
                 !left.resolve_type.is_unsigned(),
                 type_mapping(left.resolve_type)
@@ -285,9 +379,9 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
         case mir_binary::opr_kind::leq:
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_le,
-                left.content,
-                right.content,
-                temp_var,
+                left.to_value_t(),
+                right.to_value_t(),
+                value_t::variable(temp_var),
                 left.resolve_type.is_integer(),
                 !left.resolve_type.is_unsigned(),
                 type_mapping(left.resolve_type)
@@ -735,6 +829,104 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             ));
         } break;
     }
+}
+
+void mir2sir::visit_mir_if(mir_if* node) {
+    sir_br_cond* br_cond = nullptr;
+    if (node->get_condition()) {
+        node->get_condition()->accept(this);
+        auto cond = value_stack.back();
+        value_stack.pop_back();
+        br_cond = new sir_br_cond(
+            cond.content,
+            block->stmt_size() + 1,
+            0
+        );
+        block->add_stmt(br_cond);
+        block->add_stmt(new sir_label(block->stmt_size()));
+    }
+    node->get_content()->accept(this);
+
+    if (block->back_is_ret_stmt()) {
+        block->add_stmt(new sir_place_holder_label(block->stmt_size()));
+    }
+
+    auto jump_out = new sir_br(0);
+    branch_jump_out.back().push_back(jump_out);
+    block->add_stmt(jump_out);
+
+    if (br_cond) {
+        br_cond->set_false_label(block->stmt_size());
+        block->add_stmt(new sir_label(block->stmt_size()));
+    }
+}
+
+void mir2sir::visit_mir_branch(mir_branch* node) {
+    block->add_nop("branch");
+    branch_jump_out.push_back({});
+
+    for(auto i : node->get_branch()) {
+        i->accept(this);
+        if (i->get_condition() && i==node->get_branch().back()) {
+            block->add_stmt(new sir_br(block->stmt_size()+1));
+        }
+    }
+
+    for(auto i : branch_jump_out.back()) {
+        i->set_label(block->stmt_size());
+    }
+    branch_jump_out.pop_back();
+
+    block->add_stmt(new sir_label(block->stmt_size()));
+}
+
+void mir2sir::visit_mir_break(mir_break* node) {
+    block->add_nop("break");
+    auto break_br = new sir_br(0);
+    break_inst.back().push_back(break_br);
+    block->add_stmt(break_br);
+    block->add_stmt(new sir_place_holder_label(block->stmt_size()));
+}
+
+void mir2sir::visit_mir_continue(mir_continue* node) {
+    block->add_nop("continue");
+    block->add_stmt(new sir_br(loop_entry.back()));
+    block->add_stmt(new sir_place_holder_label(block->stmt_size()));
+}
+
+void mir2sir::visit_mir_while(mir_while* node) {
+    block->add_nop("while loop");
+
+    auto entry_label = block->stmt_size() + 1;
+    loop_entry.push_back(entry_label);
+    break_inst.push_back({});
+
+    block->add_stmt(new sir_label(entry_label));
+
+    node->get_condition()->accept(this);
+    auto cond = value_stack.back();
+    value_stack.pop_back();
+
+    auto cond_ir = new sir_br_cond(
+        cond.content,
+        block->stmt_size() + 1,
+        0
+    );
+    block->add_stmt(cond_ir);
+    block->add_stmt(new sir_label(block->stmt_size()));
+
+    node->get_content()->accept(this);
+    block->add_stmt(new sir_br(entry_label));
+
+    auto exit_label = block->stmt_size();
+    cond_ir->set_false_label(exit_label);
+    block->add_stmt(new sir_label(exit_label));
+    for(auto i : break_inst.back()) {
+        i->set_label(exit_label);
+    }
+
+    loop_entry.pop_back();
+    break_inst.pop_back();
 }
 
 void mir2sir::visit_mir_return(mir_return* node) {

@@ -6,7 +6,6 @@ namespace colgm::mir {
 
 class visitor {
 public:
-    virtual void visit_mir_nop(mir_nop*) {}
     virtual void visit_mir_block(mir_block*);
     virtual void visit_mir_unary(mir_unary*);
     virtual void visit_mir_binary(mir_binary*);

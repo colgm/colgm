@@ -1104,9 +1104,9 @@ void generator::generate_eq_operator(const value& left,
         ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
     ircode_block->add_stmt(new sir_cmp(
         sir_cmp::kind::cmp_eq,
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         flag_is_integer,
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)
@@ -1120,9 +1120,9 @@ void generator::generate_neq_operator(const value& left,
         ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
     ircode_block->add_stmt(new sir_cmp(
         sir_cmp::kind::cmp_neq,
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         flag_is_integer,
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)
@@ -1134,9 +1134,9 @@ void generator::generate_ge_operator(const value& left,
                                      const value& result) {
     ircode_block->add_stmt(new sir_cmp(
         sir_cmp::kind::cmp_ge,
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)
@@ -1148,9 +1148,9 @@ void generator::generate_gt_operator(const value& left,
                                      const value& result) {
     ircode_block->add_stmt(new sir_cmp(
         sir_cmp::kind::cmp_gt,
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)
@@ -1162,9 +1162,9 @@ void generator::generate_le_operator(const value& left,
                                      const value& result) {
     ircode_block->add_stmt(new sir_cmp(
         sir_cmp::kind::cmp_le,
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)
@@ -1176,9 +1176,9 @@ void generator::generate_lt_operator(const value& left,
                                      const value& result) {
     ircode_block->add_stmt(new sir_cmp(
         sir_cmp::kind::cmp_lt,
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)

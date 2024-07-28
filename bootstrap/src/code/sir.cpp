@@ -164,7 +164,7 @@ void sir_bor::dump(std::ostream& out) const {
 }
 
 void sir_cmp::dump(std::ostream& out) const {
-    out << "%" << destination << " = " << (is_integer? "icmp":"fcmp") << " ";
+    out << destination << " = " << (is_integer? "icmp":"fcmp") << " ";
     auto head = (is_integer? (is_signed? 's':'u'):'u');
     switch(cmp_type) {
         case kind::cmp_eq: out << (is_integer? "eq":"ueq"); break;
@@ -175,7 +175,7 @@ void sir_cmp::dump(std::ostream& out) const {
         case kind::cmp_lt: out << head << "lt"; break;
     }
     out << " " << type << " ";
-    out << "%" << left << ", %" << right << "\n";
+    out << left << ", " << right << "\n";
 }
 
 void sir_label::dump(std::ostream& out) const {
