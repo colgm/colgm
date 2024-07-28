@@ -143,7 +143,7 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
             .name = impl_struct_name,
             .loc_file = node->get_location().file
         };
-        name = mangle_in_module_symbol(tmp.full_path_name()) + "." + name;
+        name = mangle(tmp.full_path_name()) + "." + name;
     }
     name = "@" + name;
 

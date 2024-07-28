@@ -8,7 +8,7 @@ void hir_struct::dump(std::ostream& out) const {
         .name = name,
         .loc_file = location.file
     };
-    out << "%struct." << mangle_in_module_symbol(ty.full_path_name());
+    out << "%struct." << mangle(ty.full_path_name());
     out << " = type {";
     for(usize i = 0; i<field_type.size(); ++i) {
         out << field_type[i];

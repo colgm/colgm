@@ -44,6 +44,18 @@ public:
     type resolve_type;
 
 public:
+    auto to_value_t() const {
+        if (value_kind==mir_value_t::kind::literal ||
+            value_kind==mir_value_t::kind::nil) {
+            return value_t::literal(content);
+        }
+        if (value_kind==mir_value_t::kind::variable) {
+            return value_t::variable(content);
+        }
+        return value_t::null();
+    }
+
+public:
     static auto nil(const type& ty) {
         return mir_value_t {
             .value_kind = mir_value_t::kind::nil,
@@ -115,7 +127,6 @@ private:
         {"void", "void"},
         {"bool", "i1"}
     };
-    std::string mangle_struct(const std::string&);
     std::string type_mapping(const type&);
 
 private:
@@ -143,9 +154,9 @@ private:
 private:
     void visit_mir_nop(mir_nop*) override;
     void visit_mir_block(mir_block*) override;
-    // void visit_mir_unary(mir_unary*) override;
-    // void visit_mir_binary(mir_binary*) override;
-    // void visit_mir_type_convert(mir_type_convert*) override;
+    void visit_mir_unary(mir_unary*) override;
+    void visit_mir_binary(mir_binary*) override;
+    void visit_mir_type_convert(mir_type_convert*) override;
     void visit_mir_nil(mir_nil*) override;
     void visit_mir_number(mir_number*) override;
     void visit_mir_string(mir_string*) override;
@@ -165,7 +176,7 @@ private:
     // void visit_mir_break(mir_break*) override;
     // void visit_mir_continue(mir_continue*) override;
     // void visit_mir_while(mir_while*) override;
-    // void visit_mir_return(mir_return*) override;
+    void visit_mir_return(mir_return*) override;
 
 public:
     mir2sir(const semantic_context& c):

@@ -107,6 +107,8 @@ public:
 
 public:
     auto get_value() const { return value; }
+    auto get_opr() const { return opr; }
+    const auto& get_type() const { return resolve_type; }
 };
 
 class mir_binary: public mir {

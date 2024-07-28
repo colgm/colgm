@@ -14,7 +14,7 @@ std::string generator::type_mapping(const type& t) {
     }
     switch(ctx.search_symbol_kind(copy.name)) {
         case symbol_kind::struct_kind:
-            copy.name = "%struct." + mangle_in_module_symbol(t.full_path_name());
+            copy.name = "%struct." + mangle(t.full_path_name());
             break;
         case symbol_kind::enum_kind:
             copy = type::i64_type();
@@ -71,7 +71,7 @@ bool generator::visit_func_decl(func_decl* node) {
             .name = impl_struct_name,
             .loc_file = node->get_location().file
         };
-        name = mangle_in_module_symbol(stt.full_path_name()) + "." + name;
+        name = mangle(stt.full_path_name()) + "." + name;
     }
 
     auto new_ir = new hir_func("@" + name);
@@ -418,7 +418,7 @@ bool generator::visit_call_field(call_field* node) {
         return true;
     }
     if (st.method.count(node->get_name())) {
-        const auto st_name = mangle_in_module_symbol(
+        const auto st_name = mangle(
             source.resolve_type.full_path_name()
         );
         auto result = value {
@@ -491,7 +491,7 @@ bool generator::visit_ptr_call_field(ptr_call_field* node) {
             source.content,
             temp_0
         ));
-        const auto st_name = mangle_in_module_symbol(
+        const auto st_name = mangle(
             source.resolve_type.full_path_name()
         );
         auto result = value {
@@ -549,7 +549,7 @@ bool generator::visit_call_path(call_path* node) {
     if (dom.structs.count(source.resolve_type.name)) {
         const auto& st = dom.structs.at(source.resolve_type.name);
         if (st.static_method.count(node->get_name())) {
-            const auto st_name = mangle_in_module_symbol(
+            const auto st_name = mangle(
                 source.resolve_type.full_path_name()
             );
             auto result = value {

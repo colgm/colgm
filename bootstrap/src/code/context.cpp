@@ -43,7 +43,7 @@ void ir_context::dump_struct_size_method(std::ostream& out) const {
             .name = st.get_name(),
             .loc_file = st.get_location().file
         };
-        const auto st_name = mangle_in_module_symbol(st_type.full_path_name());
+        const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
         out << "define i64 @" << st_name;
         out << ".__size__() alwaysinline {\n";
@@ -62,7 +62,7 @@ void ir_context::dump_struct_alloc_method(std::ostream& out) const {
             .name = st.get_name(),
             .loc_file = st.get_location().file
         };
-        const auto st_name = mangle_in_module_symbol(st_type.full_path_name());
+        const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
         out << "define " << st_real_name << "* @" << st_name;
         out << ".__alloc__() alwaysinline {\n";
@@ -81,7 +81,7 @@ void ir_context::dump_struct_delete_method(std::ostream& out) const {
             .name = st.get_name(),
             .loc_file = st.get_location().file
         };
-        const auto st_name = mangle_in_module_symbol(st_type.full_path_name());
+        const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
         out << "define void @" << st_name;
         out << ".__delete__(" << st_real_name;
