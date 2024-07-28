@@ -722,7 +722,9 @@ void generator::generate_add_assignment(const value& left, const value& right) {
         temp_0
     ));
     ircode_block->add_stmt(new sir_add(
-        temp_0, right.content, temp_1,
+        value_t::variable(temp_0),
+        right.to_value_t(),
+        value_t::variable(temp_1),
         left.resolve_type.is_integer(),
         type_mapping(left_type_copy)
     ));
@@ -744,7 +746,9 @@ void generator::generate_sub_assignment(const value& left, const value& right) {
         temp_0
     ));
     ircode_block->add_stmt(new sir_sub(
-        temp_0, right.content, temp_1,
+        value_t::variable(temp_0),
+        right.to_value_t(),
+        value_t::variable(temp_1),
         left.resolve_type.is_integer(),
         type_mapping(left_type_copy)
     ));
@@ -766,7 +770,9 @@ void generator::generate_mul_assignment(const value& left, const value& right) {
         temp_0
     ));
     ircode_block->add_stmt(new sir_mul(
-        temp_0, right.content, temp_1,
+        value_t::variable(temp_0),
+        right.to_value_t(),
+        value_t::variable(temp_1),
         left.resolve_type.is_integer(),
         type_mapping(left_type_copy)
     ));
@@ -788,7 +794,9 @@ void generator::generate_div_assignment(const value& left, const value& right) {
         temp_0
     ));
     ircode_block->add_stmt(new sir_div(
-        temp_0, right.content, temp_1,
+        value_t::variable(temp_0),
+        right.to_value_t(),
+        value_t::variable(temp_1),
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
         type_mapping(left_type_copy)
@@ -811,7 +819,9 @@ void generator::generate_rem_assignment(const value& left, const value& right) {
         temp_0
     ));
     ircode_block->add_stmt(new sir_rem(
-        temp_0, right.content, temp_1,
+        value_t::variable(temp_0),
+        right.to_value_t(),
+        value_t::variable(temp_1),
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
         type_mapping(left_type_copy)
@@ -842,7 +852,9 @@ void generator::generate_and_assignment(const value& left, const value& right) {
         temp_0
     ));
     ircode_block->add_stmt(new sir_band(
-        temp_0, right.content, temp_1,
+        value_t::variable(temp_0),
+        right.to_value_t(),
+        value_t::variable(temp_1),
         type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -863,7 +875,9 @@ void generator::generate_xor_assignment(const value& left, const value& right) {
         temp_0
     ));
     ircode_block->add_stmt(new sir_bxor(
-        temp_0, right.content, temp_1,
+        value_t::variable(temp_0),
+        right.to_value_t(),
+        value_t::variable(temp_1),
         type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -884,7 +898,9 @@ void generator::generate_or_assignment(const value& left, const value& right) {
         temp_0
     ));
     ircode_block->add_stmt(new sir_bor(
-        temp_0, right.content, temp_1,
+        value_t::variable(temp_0),
+        right.to_value_t(),
+        value_t::variable(temp_1),
         type_mapping(left_type_copy)
     ));
     ircode_block->add_stmt(new sir_store(
@@ -1006,9 +1022,9 @@ void generator::generate_add_operator(const value& left,
                                       const value& right,
                                       const value& result) {
     ircode_block->add_stmt(new sir_add(
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         left.resolve_type.is_integer(),
         type_mapping(left.resolve_type)
     ));
@@ -1018,9 +1034,9 @@ void generator::generate_sub_operator(const value& left,
                                       const value& right,
                                       const value& result) {
     ircode_block->add_stmt(new sir_sub(
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         left.resolve_type.is_integer(),
         type_mapping(left.resolve_type)
     ));
@@ -1030,9 +1046,9 @@ void generator::generate_mul_operator(const value& left,
                                       const value& right,
                                       const value& result) {
     ircode_block->add_stmt(new sir_mul(
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         left.resolve_type.is_integer(),
         type_mapping(left.resolve_type)
     ));
@@ -1042,9 +1058,9 @@ void generator::generate_div_operator(const value& left,
                                       const value& right,
                                       const value& result) {
     ircode_block->add_stmt(new sir_div(
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)
@@ -1055,9 +1071,9 @@ void generator::generate_rem_operator(const value& left,
                                       const value& right,
                                       const value& result) {
     ircode_block->add_stmt(new sir_rem(
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         left.resolve_type.is_integer(),
         !left.resolve_type.is_unsigned(),
         type_mapping(left.resolve_type)
@@ -1068,9 +1084,9 @@ void generator::generate_band_operator(const value& left,
                                        const value& right,
                                        const value& result) {
     ircode_block->add_stmt(new sir_band(
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         type_mapping(left.resolve_type)
     ));
 }
@@ -1079,9 +1095,9 @@ void generator::generate_bxor_operator(const value& left,
                                        const value& right,
                                        const value& result) {
     ircode_block->add_stmt(new sir_bxor(
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         type_mapping(left.resolve_type)
     ));
 }
@@ -1090,9 +1106,9 @@ void generator::generate_bor_operator(const value& left,
                                       const value& right,
                                       const value& result) {
     ircode_block->add_stmt(new sir_bor(
-        left.content,
-        right.content,
-        result.content,
+        left.to_value_t(),
+        right.to_value_t(),
+        result.to_value_t(),
         type_mapping(left.resolve_type)
     ));
 }
@@ -1230,8 +1246,8 @@ bool generator::visit_binary_operator(binary_operator* node) {
 
 void generator::generate_neg_operator(const value& src, const value& result) {
     ircode_block->add_stmt(new sir_neg(
-        src.content,
-        result.content,
+        src.to_value_t(),
+        result.to_value_t(),
         src.resolve_type.is_integer(),
         type_mapping(src.resolve_type)
     ));
@@ -1239,8 +1255,8 @@ void generator::generate_neg_operator(const value& src, const value& result) {
 
 void generator::generate_bnot_operator(const value& src, const value& result) {
     ircode_block->add_stmt(new sir_bnot(
-        src.content,
-        result.content,
+        src.to_value_t(),
+        result.to_value_t(),
         type_mapping(src.resolve_type)
     ));
 }

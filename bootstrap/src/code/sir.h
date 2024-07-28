@@ -282,14 +282,14 @@ public:
 
 class sir_neg: public sir {
 private:
-    std::string source;
-    std::string destination;
+    value_t source;
+    value_t destination;
     bool is_integer;
     std::string type;
 
 public:
-    sir_neg(const std::string& src,
-            const std::string& dst,
+    sir_neg(const value_t& src,
+            const value_t& dst,
             bool is_int,
             const std::string& t):
         sir(sir_kind::sir_neg),
@@ -301,13 +301,13 @@ public:
 
 class sir_bnot: public sir {
 private:
-    std::string source;
-    std::string destination;
+    value_t source;
+    value_t destination;
     std::string type;
 
 public:
-    sir_bnot(const std::string& src,
-             const std::string& dst,
+    sir_bnot(const value_t& src,
+             const value_t& dst,
              const std::string& t):
         sir(sir_kind::sir_bnot),
         source(src), destination(dst),
@@ -318,16 +318,16 @@ public:
 
 class sir_add: public sir {
 private:
-    std::string left;
-    std::string right;
-    std::string destination;
+    value_t left;
+    value_t right;
+    value_t destination;
     bool is_integer;
     std::string type;
 
 public:
-    sir_add(const std::string& l,
-            const std::string& r,
-            const std::string& dst,
+    sir_add(const value_t& l,
+            const value_t& r,
+            const value_t& dst,
             bool is_int,
             const std::string& t):
         sir(sir_kind::sir_add),
@@ -338,16 +338,16 @@ public:
 
 class sir_sub: public sir {
 private:
-    std::string left;
-    std::string right;
-    std::string destination;
+    value_t left;
+    value_t right;
+    value_t destination;
     bool is_integer;
     std::string type;
 
 public:
-    sir_sub(const std::string& l,
-            const std::string& r,
-            const std::string& dst,
+    sir_sub(const value_t& l,
+            const value_t& r,
+            const value_t& dst,
             bool is_int,
             const std::string& t):
         sir(sir_kind::sir_sub),
@@ -358,16 +358,16 @@ public:
 
 class sir_mul: public sir {
 private:
-    std::string left;
-    std::string right;
-    std::string destination;
+    value_t left;
+    value_t right;
+    value_t destination;
     bool is_integer;
     std::string type;
 
 public:
-    sir_mul(const std::string& l,
-            const std::string& r,
-            const std::string& dst,
+    sir_mul(const value_t& l,
+            const value_t& r,
+            const value_t& dst,
             bool is_int,
             const std::string& t):
         sir(sir_kind::sir_mul),
@@ -378,17 +378,17 @@ public:
 
 class sir_div: public sir {
 private:
-    std::string left;
-    std::string right;
-    std::string destination;
+    value_t left;
+    value_t right;
+    value_t destination;
     bool is_integer;
     bool is_signed;
     std::string type;
 
 public:
-    sir_div(const std::string& l,
-            const std::string& r,
-            const std::string& dst,
+    sir_div(const value_t& l,
+            const value_t& r,
+            const value_t& dst,
             bool is_int,
             bool is_sign,
             const std::string& t):
@@ -401,17 +401,17 @@ public:
 
 class sir_rem: public sir {
 private:
-    std::string left;
-    std::string right;
-    std::string destination;
+    value_t left;
+    value_t right;
+    value_t destination;
     bool is_integer;
     bool is_signed;
     std::string type;
 
 public:
-    sir_rem(const std::string& l,
-            const std::string& r,
-            const std::string& dst,
+    sir_rem(const value_t& l,
+            const value_t& r,
+            const value_t& dst,
             bool is_int,
             bool is_sign,
             const std::string& t):
@@ -424,15 +424,15 @@ public:
 
 class sir_band: public sir {
 private:
-    std::string left;
-    std::string right;
-    std::string destination;
+    value_t left;
+    value_t right;
+    value_t destination;
     std::string type;
 
 public:
-    sir_band(const std::string& l,
-             const std::string& r,
-             const std::string& dst,
+    sir_band(const value_t& l,
+             const value_t& r,
+             const value_t& dst,
              const std::string& t):
         sir(sir_kind::sir_band),
         left(l), right(r), destination(dst), type(t) {}
@@ -442,15 +442,15 @@ public:
 
 class sir_bxor: public sir {
 private:
-    std::string left;
-    std::string right;
-    std::string destination;
+    value_t left;
+    value_t right;
+    value_t destination;
     std::string type;
 
 public:
-    sir_bxor(const std::string& l,
-             const std::string& r,
-             const std::string& dst,
+    sir_bxor(const value_t& l,
+             const value_t& r,
+             const value_t& dst,
              const std::string& t):
         sir(sir_kind::sir_bxor),
         left(l), right(r), destination(dst), type(t) {}
@@ -460,15 +460,15 @@ public:
 
 class sir_bor: public sir {
 private:
-    std::string left;
-    std::string right;
-    std::string destination;
+    value_t left;
+    value_t right;
+    value_t destination;
     std::string type;
 
 public:
-    sir_bor(const std::string& l,
-            const std::string& r,
-            const std::string& dst,
+    sir_bor(const value_t& l,
+            const value_t& r,
+            const value_t& dst,
             const std::string& t):
         sir(sir_kind::sir_bor),
         left(l), right(r), destination(dst), type(t) {}
