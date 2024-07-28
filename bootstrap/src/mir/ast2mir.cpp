@@ -485,7 +485,7 @@ void ast2mir::dump(std::ostream& os) {
         if (i->block) {
             os << " {\n";
             for(auto ir : i->block->get_content()) {
-                ir->dump("  ", os);
+                ir->dump(" ", os);
             }
             os << "}\n";
         }

@@ -2,23 +2,31 @@
 #include "mir/visitor.h"
 
 #include <iomanip>
+#include <sstream>
+#include <cstring>
 
 namespace colgm::mir {
+
+std::string to_hex(mir* num) {
+    std::stringstream ss;
+    ss << "0x" << std::hex << u64(num) << std::dec << "";
+    return ss.str();
+}
 
 void mir::accept(visitor*) {}
 
 void mir_block::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "block {";
+    os << indent << to_hex(this) << " block (";
     if (content.empty()) {
-        os << "}\n";
+        os << ")\n";
         return;
     }
 
     os << "\n";
     for(auto i : content) {
-        i->dump(indent + "  ", os);
+        i->dump(indent + " ", os);
     }
-    os << indent << "}\n";
+    os << indent << ")\n";
 }
 
 void mir_block::accept(visitor* v) {
@@ -26,14 +34,14 @@ void mir_block::accept(visitor* v) {
 }
 
 void mir_unary::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "] unary [";
+    os << indent << to_hex(this) << " [" << resolve_type << "] unary [";
     switch(opr) {
         case opr_kind::neg: os << "-"; break;
         case opr_kind::bnot: os << "~"; break;
     }
-    os << "] {\n";
-    value->dump(indent + "  ", os);
-    os << indent << "}\n";
+    os << "] (\n";
+    value->dump(indent + " ", os);
+    os << indent << ")\n";
 }
 
 void mir_unary::accept(visitor* v) {
@@ -41,7 +49,7 @@ void mir_unary::accept(visitor* v) {
 }
 
 void mir_binary::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "] binary [";
+    os << indent << to_hex(this) << " [" << resolve_type << "] binary [";
     switch(opr) {
         case opr_kind::add: os << "+"; break;
         case opr_kind::sub: os << "-"; break;
@@ -60,10 +68,10 @@ void mir_binary::dump(const std::string& indent, std::ostream& os) {
         case opr_kind::bor: os << "|"; break;
         case opr_kind::bxor: os << "^"; break;
     }
-    os << "] {\n";
-    left->dump(indent + "  ", os);
-    right->dump(indent + "  ", os);
-    os << indent << "}\n";
+    os << "] (\n";
+    left->dump(indent + " ", os);
+    right->dump(indent + " ", os);
+    os << indent << ")\n";
 }
 
 void mir_binary::accept(visitor* v) {
@@ -71,9 +79,9 @@ void mir_binary::accept(visitor* v) {
 }
 
 void mir_type_convert::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[target:" << target_type << "] type convert {\n";
-    source->dump(indent + "  ", os);
-    os << indent << "}\n";
+    os << indent << to_hex(this) << " [target:" << target_type << "] convert (\n";
+    source->dump(indent + " ", os);
+    os << indent << ")\n";
 }
 
 void mir_type_convert::accept(visitor* v) {
@@ -81,7 +89,7 @@ void mir_type_convert::accept(visitor* v) {
 }
 
 void mir_nil::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "] nil\n";
+    os << indent << to_hex(this) << " " << "[" << resolve_type << "] nil\n";
 }
 
 void mir_nil::accept(visitor* v) {
@@ -89,7 +97,8 @@ void mir_nil::accept(visitor* v) {
 }
 
 void mir_number::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "] number:" << literal << "\n";
+    os << indent << to_hex(this);
+    os << " [" << resolve_type << "] number: " << literal << "\n";
 }
 
 void mir_number::accept(visitor* v) {
@@ -97,9 +106,9 @@ void mir_number::accept(visitor* v) {
 }
 
 void mir_string::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "]";
+    os << indent << to_hex(this) << " [" << resolve_type << "]";
     os << "[size:" << literal.length()+1 << "]";
-    os << " string:\"";
+    os << " string: \"";
     for(const auto i : literal) {
         os << "\\";
         os << std::hex << std::setw(2) << std::setfill('0') << int(i) << std::dec;
@@ -112,9 +121,9 @@ void mir_string::accept(visitor* v) {
 }
 
 void mir_char::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "]";
+    os << indent << to_hex(this) << " [" << resolve_type << "]";
     os << "[ascii(dec):" << int(literal) << "]";
-    os << " char:\'\\";
+    os << " char: \'\\";
     os << std::hex << std::setw(2) << std::setfill('0') << int(literal);
     os << std::dec << "\'\n";
 }
@@ -124,8 +133,8 @@ void mir_char::accept(visitor* v) {
 }
 
 void mir_bool::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "]";
-    os << " bool:" << (literal? "true":"false") << "\n";
+    os << indent << to_hex(this) << " [" << resolve_type << "]";
+    os << " bool: " << (literal? "true":"false") << "\n";
 }
 
 void mir_bool::accept(visitor* v) {
@@ -133,11 +142,11 @@ void mir_bool::accept(visitor* v) {
 }
 
 void mir_call::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "] call {\n";
+    os << indent << to_hex(this) << " [" << resolve_type << "] call (\n";
     for(auto i : content->get_content()) {
-        i->dump(indent + "  ", os);
+        i->dump(indent + " ", os);
     }
-    os << indent << "}\n";
+    os << indent << ")\n";
 }
 
 void mir_call::accept(visitor* v) {
@@ -145,9 +154,9 @@ void mir_call::accept(visitor* v) {
 }
 
 void mir_call_id::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "]";
+    os << indent << to_hex(this) << " [" << resolve_type << "]";
     os << (resolve_type.is_global? "[global]":"[instance]");
-    os << " identifier:" << name << "\n";
+    os << " identifier: " << name << "\n";
 }
 
 void mir_call_id::accept(visitor* v) {
@@ -155,11 +164,9 @@ void mir_call_id::accept(visitor* v) {
 }
 
 void mir_call_index::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "] call index {\n";
-    for(auto i : index->get_content()) {
-        i->dump(indent + "  ", os);
-    }
-    os << indent << "}\n";
+    os << indent << to_hex(this) << " [" << resolve_type << "] call index (\n";
+    index->dump(indent + " ", os);
+    os << indent << ")\n";
 }
 
 void mir_call_index::accept(visitor* v) {
@@ -167,10 +174,10 @@ void mir_call_index::accept(visitor* v) {
 }
 
 void mir_call_func::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "]";
-    os << " call func {\n";
-    args->dump(indent + "  ", os);
-    os << indent << "}\n";
+    os << indent << to_hex(this) << " [" << resolve_type << "]";
+    os << " call func (\n";
+    args->dump(indent + " ", os);
+    os << indent << ")\n";
 }
 
 void mir_call_func::accept(visitor* v) {
@@ -178,8 +185,8 @@ void mir_call_func::accept(visitor* v) {
 }
 
 void mir_get_field::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "]";
-    os << " get field:" << name << "\n";
+    os << indent << to_hex(this) << " [" << resolve_type << "]";
+    os << " get field: " << name << "\n";
 }
 
 void mir_get_field::accept(visitor* v) {
@@ -187,8 +194,8 @@ void mir_get_field::accept(visitor* v) {
 }
 
 void mir_ptr_get_field::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "]";
-    os << " pointer call field:" << name << "\n";
+    os << indent << to_hex(this) << " [" << resolve_type << "]";
+    os << " pointer get field: " << name << "\n";
 }
 
 void mir_ptr_get_field::accept(visitor* v) {
@@ -196,9 +203,9 @@ void mir_ptr_get_field::accept(visitor* v) {
 }
 
 void mir_get_path::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "]";
+    os << indent << to_hex(this) << " [" << resolve_type << "]";
     os << (resolve_type.is_global? "[global]":"[instance]");
-    os << " call path:" << name << "\n";
+    os << " call path: " << name << "\n";
 }
 
 void mir_get_path::accept(visitor* v) {
@@ -206,13 +213,13 @@ void mir_get_path::accept(visitor* v) {
 }
 
 void mir_define::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "[" << resolve_type << "]";
-    os << "[expect:" << expect_type << "]";
-    os << " define:" << name << " {\n";
+    os << indent << to_hex(this) << " [" << resolve_type;
+    os << ":" << expect_type << "]";
+    os << " definition: " << name << " (\n";
     for(auto i : init_value->get_content()) {
-        i->dump(indent + "  ", os);
+        i->dump(indent + " ", os);
     }
-    os << indent << "}\n";
+    os << indent << ")\n";
 }
 
 void mir_define::accept(visitor* v) {
@@ -220,7 +227,7 @@ void mir_define::accept(visitor* v) {
 }
 
 void mir_assign::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "assign [";
+    os << indent << to_hex(this) << " assignment [";
     switch(opr) {
        case opr_kind::eq: os << "="; break;
        case opr_kind::addeq: os << "+="; break;
@@ -232,10 +239,10 @@ void mir_assign::dump(const std::string& indent, std::ostream& os) {
        case opr_kind::xoreq: os << "^="; break;
        case opr_kind::oreq: os << "|="; break;
     }
-    os << "] {\n";
-    left->dump(indent + "  ", os);
-    right->dump(indent + "  ", os);
-    os << indent << "}\n";
+    os << "] (\n";
+    left->dump(indent + " ", os);
+    right->dump(indent + " ", os);
+    os << indent << ")\n";
 }
 
 void mir_assign::accept(visitor* v) {
@@ -243,12 +250,12 @@ void mir_assign::accept(visitor* v) {
 }
 
 void mir_if::dump(const std::string& indent, std::ostream& os) {
-    os << indent << (condition? "if":"else") << " {\n";
+    os << indent << to_hex(this) << " " << (condition? "if":"else") << " (\n";
     if (condition) {
-        condition->dump(indent + "  ", os);
+        condition->dump(indent + " ", os);
     }
-    content->dump(indent + "  ", os);
-    os << indent << "}\n";
+    content->dump(indent + " ", os);
+    os << indent << ")\n";
 }
 
 void mir_if::accept(visitor* v) {
@@ -256,11 +263,11 @@ void mir_if::accept(visitor* v) {
 }
 
 void mir_branch::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "branch {\n";
+    os << indent << to_hex(this) << " branch (\n";
     for(auto i : branch) {
-        i->dump(indent + "  ", os);
+        i->dump(indent + " ", os);
     }
-    os << indent << "}\n";
+    os << indent << ")\n";
 }
 
 void mir_branch::accept(visitor* v) {
@@ -268,7 +275,7 @@ void mir_branch::accept(visitor* v) {
 }
 
 void mir_break::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "break\n";
+    os << indent << to_hex(this) << " break\n";
 }
 
 void mir_break::accept(visitor* v) {
@@ -276,7 +283,7 @@ void mir_break::accept(visitor* v) {
 }
 
 void mir_continue::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "continue\n";
+    os << indent << to_hex(this) << " continue\n";
 }
 
 void mir_continue::accept(visitor* v) {
@@ -284,10 +291,10 @@ void mir_continue::accept(visitor* v) {
 }
 
 void mir_while::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "while {\n";
-    condition->dump(indent + "  ", os);
-    content->dump(indent + "  ", os);
-    os << indent << "}\n";
+    os << indent << to_hex(this) << " while (\n";
+    condition->dump(indent + " ", os);
+    content->dump(indent + " ", os);
+    os << indent << ")\n";
 }
 
 void mir_while::accept(visitor* v) {
@@ -295,9 +302,9 @@ void mir_while::accept(visitor* v) {
 }
 
 void mir_return::dump(const std::string& indent, std::ostream& os) {
-    os << indent << "return {\n";
-    value->dump(indent + "  ", os);
-    os << indent << "}\n";
+    os << indent << to_hex(this) << " return (\n";
+    value->dump(indent + " ", os);
+    os << indent << ")\n";
 }
 
 void mir_return::accept(visitor* v) {
