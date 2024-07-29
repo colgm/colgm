@@ -112,6 +112,11 @@ public:
         ++copy.pointer_depth;
         return copy;
     }
+    auto get_ref_copy() const {
+        auto copy = *this;
+        --copy.pointer_depth;
+        return copy;
+    }
 };
 
 struct symbol {

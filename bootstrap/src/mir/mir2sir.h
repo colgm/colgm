@@ -135,7 +135,6 @@ private:
     sir_block* block;
     std::vector<mir_value_t> value_stack;
     error err;
-    bool in_assign_lvalue_process;
 
     std::vector<usize> loop_entry;
     std::vector<std::vector<sir_br*>> break_inst;
@@ -169,6 +168,7 @@ private:
     void visit_mir_string(mir_string*) override;
     void visit_mir_char(mir_char*) override;
     void visit_mir_bool(mir_bool*) override;
+    void call_expression_generation(mir_call*, bool);
     void visit_mir_call(mir_call*) override;
     void visit_mir_call_id(mir_call_id*) override;
     void visit_mir_call_index(mir_call_index*) override;
@@ -187,7 +187,7 @@ private:
 
 public:
     mir2sir(const semantic_context& c):
-        ctx(c), block(nullptr), in_assign_lvalue_process(false) {}
+        ctx(c), block(nullptr) {}
     const error& generate(const mir_context&);
 };
 

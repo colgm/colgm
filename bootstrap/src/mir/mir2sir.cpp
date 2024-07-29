@@ -400,8 +400,8 @@ void mir2sir::visit_mir_type_convert(mir_type_convert* node) {
 
     auto temp_var = ssa_gen.create();
     block->add_stmt(new sir_type_convert(
-        source.content,
-        temp_var,
+        source.to_value_t(),
+        value_t::variable(temp_var),
         type_mapping(source.resolve_type),
         type_mapping(node->get_target_type())
     ));
@@ -446,33 +446,46 @@ void mir2sir::visit_mir_bool(mir_bool* node) {
     ));
 }
 
-void mir2sir::visit_mir_call(mir_call* node) {
+void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
     node->get_content()->accept(this);
-    if (in_assign_lvalue_process) {
+
+    auto source = value_stack.back();
+    if (!source.resolve_type.is_pointer()) {
         return;
     }
-    auto source = value_stack.back();
-    if (source.resolve_type.is_pointer()) {
-        // value_stack.pop_back();
-
-        source.resolve_type.pointer_depth--;
-
-        auto temp_var = ssa_gen.create();
-        block->add_stmt(new sir_load(
-            type_mapping(source.resolve_type),
-            source.content,
-            temp_var
-        ));
-
-        value_stack.push_back(mir_value_t::variable(temp_var, source.resolve_type));
+    if (source.resolve_type==type::void_type()) {
+        value_stack.pop_back();
+        return;
     }
+
+    if (need_address) {
+        return;
+    }
+
+    value_stack.pop_back();
+
+    auto temp_var = ssa_gen.create();
+    block->add_stmt(new sir_load(
+        type_mapping(source.resolve_type.get_ref_copy()),
+        source.content,
+        temp_var
+    ));
+
+    value_stack.push_back(mir_value_t::variable(
+        temp_var,
+        source.resolve_type.get_ref_copy()
+    ));
+}
+
+void mir2sir::visit_mir_call(mir_call* node) {
+    call_expression_generation(node, false);
 }
 
 void mir2sir::visit_mir_call_id(mir_call_id* node) {
     if (!node->get_type().is_global) {
         value_stack.push_back(mir_value_t::variable(
             node->get_name(),
-            node->get_type().get_pointer_copy()
+            node->get_type()
         ));
         return;
     }
@@ -548,7 +561,32 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
         sir_function_call->add_arg_type(type_mapping(i.resolve_type));
     }
     block->add_stmt(sir_function_call);
-    value_stack.push_back(mir_value_t::variable(target, node->get_type()));
+
+    if (node->get_type()!=type::void_type()) {
+        auto temp_var = ssa_gen.create();
+        block->add_alloca(new sir_alloca(
+            "real." + temp_var,
+            type_mapping(node->get_type())
+        ));
+        block->add_stmt(new sir_temp_ptr(
+            temp_var,
+            type_mapping(node->get_type())
+        ));
+        block->add_stmt(new sir_store(
+            type_mapping(node->get_type()),
+            value_t::variable(target),
+            value_t::variable(temp_var)
+        ));
+        value_stack.push_back(mir_value_t::variable(
+            temp_var,
+            node->get_type().get_pointer_copy()
+        ));
+    } else {
+        value_stack.push_back(mir_value_t::variable(
+            target,
+            node->get_type()
+        ));
+    }
 }
 
 void mir2sir::visit_mir_get_field(mir_get_field* node) {
@@ -622,36 +660,36 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
         return;
     }
 
-    const auto target = ssa_gen.create();
     for(usize index = 0; index < st.ordered_field.size(); ++index) {
         if (st.ordered_field[index].name==node->get_name()) {
             auto temp_0 = ssa_gen.create();
+            auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
                 type_mapping(prev.resolve_type),
                 prev.content,
                 temp_0
             ));
             block->add_stmt(new sir_call_field(
-                target,
+                temp_1,
                 temp_0,
-                type_mapping(prev.resolve_type.get_pointer_copy()),
+                type_mapping(prev.resolve_type.get_ref_copy()),
                 index
+            ));
+            value_stack.push_back(mir_value_t::variable(
+                temp_1,
+                node->get_type().get_pointer_copy()
             ));
             break;
         }
     }
-
-    value_stack.push_back(mir_value_t::variable(
-        target,
-        node->get_type().get_pointer_copy()
-    ));
 }
 
-
 void mir2sir::visit_mir_define(mir_define* node) {
+    block->add_nop("[begin] definition");
+
     block->add_alloca(new sir_alloca(
         node->get_name(),
-        type_mapping(node->get_resolve_type())
+        type_mapping(node->get_type())
     ));
 
     node->get_init_value()->accept(this);
@@ -659,16 +697,22 @@ void mir2sir::visit_mir_define(mir_define* node) {
     value_stack.pop_back();
 
     block->add_stmt(new sir_store(
-        type_mapping(node->get_resolve_type()),
+        type_mapping(node->get_type()),
         source.to_value_t(),
         value_t::variable(node->get_name())
     ));
+
+    block->add_nop("[end] definition");
 }
 
 void mir2sir::visit_mir_assign(mir_assign* node) {
-    in_assign_lvalue_process = true;
+    block->add_nop("[begin] assignment");
+
+    call_expression_generation(
+        reinterpret_cast<mir_call*>(node->get_left()->get_content().front()),
+        true
+    );
     node->get_left()->accept(this);
-    in_assign_lvalue_process = false;
     auto left = value_stack.back();
     value_stack.pop_back();
 
@@ -852,6 +896,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             ));
         } break;
     }
+    block->add_nop("[end] assignment");
 }
 
 void mir2sir::visit_mir_if(mir_if* node) {

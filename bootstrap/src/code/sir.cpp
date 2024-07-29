@@ -49,7 +49,8 @@ void sir_number::dump(std::ostream& out) const {
 
 void sir_temp_ptr::dump(std::ostream& out) const {
     out << "%" << temp_name << " = getelementptr " << type_name << ", ";
-    out << type_name << "* %real." << temp_name << ", i32 0\n"; 
+    out << type_name << "* %real." << temp_name << ", i32 0";
+    out << " ; get temporary address\n"; 
 }
 
 void sir_ret::dump(std::ostream& out) const {
@@ -234,20 +235,29 @@ std::string sir_type_convert::convert_instruction(char source_type_mark,
 
 void sir_type_convert::dump(std::ostream& out) const {
     if (src_type.back()=='*' && dst_type.back()=='*') {
-        out << "%" << destination << " = bitcast ";
-        out << src_type << " %" << source << " to ";
+        out << destination << " = bitcast ";
+        out << src_type << " " << source << " to ";
         out << dst_type << "\n";
         return;
     }
     if (src_type.back()!='*' && dst_type.back()=='*') {
-        out << "%" << destination << " = inttoptr ";
-        out << src_type << " %" << source << " to ";
+        out << destination << " = inttoptr ";
+        out << src_type << " " << source << " to ";
         out << dst_type << "\n";
         return;
     }
     if (src_type.back()=='*' && dst_type.back()!='*') {
-        out << "%" << destination << " = ptrtoint ";
-        out << src_type << " %" << source << " to ";
+        out << destination << " = ptrtoint ";
+        out << src_type << " " << source << " to ";
+        out << dst_type << "\n";
+        return;
+    }
+
+    // error, should be unreachable
+    if ((src_type.front()=='%' && src_type.back()!='*') ||
+        (dst_type.front()=='%' && dst_type.back()!='*')) {
+        out << destination << " = unknown ";
+        out << src_type << " " << source << " to ";
         out << dst_type << "\n";
         return;
     }
@@ -268,8 +278,8 @@ void sir_type_convert::dump(std::ostream& out) const {
     // because like i64 & u64 share the same llvm type `i64`
     if (real_src_type==real_dst_type &&
         (real_src_type[0]=='i' || real_src_type[0]=='u')) {
-        out << "%" << destination << " = add " << real_src_type << " ";
-        out << "%" << source << ", 0";
+        out << destination << " = add " << real_src_type << " ";
+        out << source << ", 0";
         out << " ; " << src_type << " -> " << dst_type << "\n";
         return;
     }
@@ -282,8 +292,8 @@ void sir_type_convert::dump(std::ostream& out) const {
         dest_bit_size
     );
 
-    out << "%" << destination << " = " << convert_inst << " ";
-    out << src_type << " %" << source << " to " << dst_type;
+    out << destination << " = " << convert_inst << " ";
+    out << src_type << " " << source << " to " << dst_type;
     out << " ; " << src_type << " -> " << dst_type << "\n";
 }
 

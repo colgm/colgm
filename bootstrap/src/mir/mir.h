@@ -380,17 +380,15 @@ class mir_define: public mir {
 private:
     std::string name;
     mir_block* init_value;
-    type expect_type;
     type resolve_type;
 
 public:
     mir_define(const span& loc,
                const std::string& n,
                mir_block* iv,
-               const type& et,
                const type& rt):
         mir(kind::mir_define, loc), name(n),
-        init_value(iv), expect_type(et), resolve_type(rt) {}
+        init_value(iv), resolve_type(rt) {}
     ~mir_define() override {
         delete init_value;
     }
@@ -399,7 +397,7 @@ public:
 
 public:
     const auto& get_name() const { return name; }
-    const auto& get_resolve_type() const { return resolve_type; }
+    const auto& get_type() const { return resolve_type; }
     auto get_init_value() const { return init_value; }
 };
 

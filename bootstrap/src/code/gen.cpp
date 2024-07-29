@@ -131,7 +131,7 @@ void generator::call_expression_generation(call* node, bool need_address) {
                 .resolve_type = head->get_resolve(),
                 .content = head->get_name()
             });
-            break;;
+            break;
         default: call_variable(head); break;
     }
 
@@ -626,8 +626,8 @@ bool generator::visit_call_func_args(call_func_args* node) {
     // generate type convert ir directly if func is v_type_convert
     if (func.kind==value_kind::v_type_convert) {
         auto new_convert = new sir_type_convert(
-            arguments[0].content,
-            temp_0,
+            arguments[0].to_value_t(),
+            value_t::variable(temp_0),
             type_mapping(arguments[0].resolve_type),
             type_mapping(node->get_resolve())
         );
@@ -1286,8 +1286,8 @@ bool generator::visit_type_convert(type_convert* node) {
     value_stack.pop_back();
     const auto temp = get_temp_variable();
     ircode_block->add_stmt(new sir_type_convert(
-        src.content,
-        temp,
+        src.to_value_t(),
+        value_t::variable(temp),
         type_mapping(src.resolve_type),
         type_mapping(node->get_resolve())
     ));

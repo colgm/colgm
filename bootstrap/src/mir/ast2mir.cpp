@@ -274,7 +274,6 @@ bool ast2mir::visit_definition(ast::definition* node) {
         node->get_location(),
         node->get_name(),
         new_block,
-        node->get_type()? generate_type(node->get_type()):node->get_resolve(),
         node->get_resolve()
     ));
     return true;
@@ -303,12 +302,7 @@ bool ast2mir::visit_assignment(ast::assignment* node) {
         case ast::assignment::kind::xoreq: type = mir_assign::opr_kind::xoreq; break;
         case ast::assignment::kind::oreq: type = mir_assign::opr_kind::oreq; break;
     }
-    block->add_content(new mir_assign(
-        node->get_location(),
-        mir_assign::opr_kind::addeq,
-        left,
-        right
-    ));
+    block->add_content(new mir_assign(node->get_location(), type, left, right));
     return true;
 }
 

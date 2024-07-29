@@ -106,9 +106,7 @@ void mir_number::accept(visitor* v) {
 }
 
 void mir_string::dump(const std::string& indent, std::ostream& os) {
-    os << indent << to_hex(this) << " [" << resolve_type << "]";
-    os << "[size:" << literal.length()+1 << "]";
-    os << " string: \"";
+    os << indent << to_hex(this) << " [" << resolve_type << "] string: \"";
     for(const auto i : literal) {
         os << "\\";
         os << std::hex << std::setw(2) << std::setfill('0') << int(i) << std::dec;
@@ -154,8 +152,12 @@ void mir_call::accept(visitor* v) {
 }
 
 void mir_call_id::dump(const std::string& indent, std::ostream& os) {
-    os << indent << to_hex(this) << " [" << resolve_type << "]";
-    os << (resolve_type.is_global? "[global]":"[instance]");
+    os << indent << to_hex(this) << " ";
+    if (resolve_type.is_global) {
+        os << "[global]";
+    } else {
+        os << "[real:" << resolve_type.get_pointer_copy() << "]";
+    }
     os << " identifier: " << name << "\n";
 }
 
@@ -185,7 +187,8 @@ void mir_call_func::accept(visitor* v) {
 }
 
 void mir_get_field::dump(const std::string& indent, std::ostream& os) {
-    os << indent << to_hex(this) << " [" << resolve_type << "]";
+    os << indent << to_hex(this);
+    os << " [real:" << resolve_type.get_pointer_copy() << "]";
     os << " get field: " << name << "\n";
 }
 
@@ -194,7 +197,8 @@ void mir_get_field::accept(visitor* v) {
 }
 
 void mir_ptr_get_field::dump(const std::string& indent, std::ostream& os) {
-    os << indent << to_hex(this) << " [" << resolve_type << "]";
+    os << indent << to_hex(this);
+    os << " [real:" << resolve_type.get_pointer_copy() << "]";
     os << " pointer get field: " << name << "\n";
 }
 
@@ -213,8 +217,7 @@ void mir_get_path::accept(visitor* v) {
 }
 
 void mir_define::dump(const std::string& indent, std::ostream& os) {
-    os << indent << to_hex(this) << " [" << resolve_type;
-    os << ":" << expect_type << "]";
+    os << indent << to_hex(this) << " [" << resolve_type << "]";
     os << " definition: " << name << " (\n";
     for(auto i : init_value->get_content()) {
         i->dump(indent + " ", os);

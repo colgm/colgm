@@ -601,8 +601,8 @@ public:
 
 class sir_type_convert: public sir {
 private:
-    std::string source;
-    std::string destination;
+    value_t source;
+    value_t destination;
     std::string src_type;
     std::string dst_type;
 
@@ -610,8 +610,8 @@ private:
     std::string convert_instruction(char, int, char, int) const;
 
 public:
-    sir_type_convert(const std::string& src,
-                     const std::string& dst,
+    sir_type_convert(const value_t& src,
+                     const value_t& dst,
                      const std::string& st,
                      const std::string& dt):
         sir(sir_kind::sir_type_convert),
