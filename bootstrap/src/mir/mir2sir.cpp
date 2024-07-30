@@ -452,6 +452,7 @@ void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
     node->get_content()->accept(this);
 
     auto source = value_stack.back();
+    // for enum member
     if (!source.resolve_type.is_pointer()) {
         return;
     }
@@ -489,7 +490,7 @@ void mir2sir::visit_mir_call_id(mir_call_id* node) {
     if (!node->get_type().is_global) {
         value_stack.push_back(mir_value_t::variable(
             node->get_name(),
-            node->get_type()
+            node->get_type().get_pointer_copy()
         ));
         return;
     }
@@ -526,16 +527,26 @@ void mir2sir::visit_mir_call_index(mir_call_index* node) {
     auto index = value_stack.back();
     value_stack.pop_back();
 
+    auto temp_var = ssa_gen.create();
+    block->add_stmt(new sir_load(
+        type_mapping(prev.resolve_type.get_ref_copy()),
+        prev.content,
+        temp_var
+    ));
+
     auto target = ssa_gen.create();
     block->add_stmt(new sir_call_index(
-        prev.content,
-        target,
-        index.content,
-        type_mapping(prev.resolve_type),
+        value_t::variable(temp_var),
+        value_t::variable(target),
+        index.to_value_t(),
+        type_mapping(prev.resolve_type.get_ref_copy().get_ref_copy()),
         type_mapping(index.resolve_type)
     ));
     
-    value_stack.push_back(mir_value_t::variable(target, node->get_type()));
+    value_stack.push_back(mir_value_t::variable(
+        target,
+        node->get_type().get_pointer_copy()
+    ));
 }
 
 void mir2sir::visit_mir_call_func(mir_call_func* node) {
@@ -558,10 +569,10 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
     auto sir_function_call = new sir_call_func(
         mangle(prev.content),
         type_mapping(node->get_type()),
-        target
+        value_t::variable(target)
     );
     for(const auto& i : args) {
-        sir_function_call->add_arg(i.content);
+        sir_function_call->add_arg(i.to_value_t());
         sir_function_call->add_arg_type(type_mapping(i.resolve_type));
     }
     block->add_stmt(sir_function_call);
@@ -669,14 +680,14 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
             auto temp_0 = ssa_gen.create();
             auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
-                type_mapping(prev.resolve_type),
+                type_mapping(prev.resolve_type.get_ref_copy()),
                 prev.content,
                 temp_0
             ));
             block->add_stmt(new sir_call_field(
                 temp_1,
                 temp_0,
-                type_mapping(prev.resolve_type.get_ref_copy()),
+                type_mapping(prev.resolve_type.get_ref_copy().get_ref_copy()),
                 index
             ));
             value_stack.push_back(mir_value_t::variable(

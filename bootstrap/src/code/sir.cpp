@@ -65,9 +65,9 @@ void sir_string::dump(std::ostream& out) const {
 }
 
 void sir_call_index::dump(std::ostream& out) const {
-    out << "%" << destination << " = getelementptr " << type << ", ";
-    out << type << "* %" << source << ", ";
-    out << index_type << " %" << index << "\n";
+    out << destination << " = getelementptr " << type << ", ";
+    out << type << "* " << source << ", ";
+    out << index_type << " " << index << "\n";
 }
 
 void sir_call_field::dump(std::ostream& out) const {
@@ -77,12 +77,12 @@ void sir_call_field::dump(std::ostream& out) const {
 }
 
 void sir_call_func::dump(std::ostream& out) const {
-    if (destination.size()) {
-        out << "%" << destination << " = ";
+    if (destination.value_kind==value_t::kind::variable) {
+        out << destination << " = ";
     }
     out << "call " << return_type << " @" << name << "(";
     for(usize i = 0; i<args.size(); ++i) {
-        out << args_type[i] << " %" << args[i];
+        out << args_type[i] << " " << args[i];
         if (i!=args.size()-1) {
             out << ", ";
         }

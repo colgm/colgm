@@ -223,16 +223,16 @@ public:
 
 class sir_call_index: public sir {
 private:
-    std::string source;
-    std::string destination;
-    std::string index;
+    value_t source;
+    value_t destination;
+    value_t index;
     std::string type;
     std::string index_type;
 
 public:
-    sir_call_index(const std::string& src,
-                   const std::string& dst,
-                   const std::string& idx,
+    sir_call_index(const value_t& src,
+                   const value_t& dst,
+                   const value_t& idx,
                    const std::string& t,
                    const std::string& it):
         sir(sir_kind::sir_call_index), source(src),
@@ -264,19 +264,19 @@ class sir_call_func: public sir {
 private:
     std::string name;
     std::string return_type;
-    std::string destination;
+    value_t destination;
     std::vector<std::string> args_type;
-    std::vector<std::string> args;
+    std::vector<value_t> args;
 
 public:
     sir_call_func(const std::string& n,
                   const std::string& rt,
-                  const std::string& dst):
+                  const value_t& dst):
         sir(sir_kind::sir_call_func), name(n),
         return_type(rt), destination(dst) {}
     ~sir_call_func() override = default;
     void add_arg_type(const std::string& t) { args_type.push_back(t); }
-    void add_arg(const std::string& a) { args.push_back(a); }
+    void add_arg(const value_t& a) { args.push_back(a); }
     void dump(std::ostream&) const override;
 };
 

@@ -330,9 +330,9 @@ bool generator::visit_call_index(call_index* node) {
     value_stack.push_back(result);
     source_type_copy.pointer_depth--;
     ircode_block->add_stmt(new sir_call_index(
-        temp_0,
-        temp_1,
-        index.content,
+        value_t::variable(temp_0),
+        value_t::variable(temp_1),
+        index.to_value_t(),
         type_mapping(source_type_copy),
         type_mapping(index.resolve_type)
     ));
@@ -636,11 +636,13 @@ bool generator::visit_call_func_args(call_func_args* node) {
         auto new_call = new sir_call_func(
             func.content,
             type_mapping(node->get_resolve()),
-            node->get_resolve()==type::void_type()? "":temp_0
+            node->get_resolve()==type::void_type()
+                ? value_t::null()
+                : value_t::variable(temp_0)
         );
         for(const auto& arg : arguments) {
             new_call->add_arg_type(type_mapping(arg.resolve_type));
-            new_call->add_arg(arg.content);
+            new_call->add_arg(arg.to_value_t());
         }
         ircode_block->add_stmt(new_call);
     }
