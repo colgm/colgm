@@ -447,6 +447,8 @@ void mir2sir::visit_mir_bool(mir_bool* node) {
 }
 
 void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
+    block->add_nop("[call begin]");
+
     node->get_content()->accept(this);
 
     auto source = value_stack.back();
@@ -459,6 +461,7 @@ void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
     }
 
     if (need_address) {
+        block->add_nop("[call end] need address");
         return;
     }
 
@@ -470,6 +473,7 @@ void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
         source.content,
         temp_var
     ));
+    block->add_nop("[call end] need value");
 
     value_stack.push_back(mir_value_t::variable(
         temp_var,
@@ -712,7 +716,6 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
         reinterpret_cast<mir_call*>(node->get_left()->get_content().front()),
         true
     );
-    node->get_left()->accept(this);
     auto left = value_stack.back();
     value_stack.pop_back();
 
@@ -725,7 +728,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             auto temp_0 = ssa_gen.create();
             auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 left.content,
                 temp_0
             ));
@@ -734,10 +737,10 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
                 right.to_value_t(),
                 value_t::variable(temp_1),
                 left.resolve_type.is_integer(),
-                type_mapping(left.resolve_type)
+                type_mapping(right.resolve_type)
             ));
             block->add_stmt(new sir_store(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
                 left.to_value_t()
             ));
@@ -746,7 +749,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             auto temp_0 = ssa_gen.create();
             auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 left.content,
                 temp_0
             ));
@@ -755,10 +758,10 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
                 right.to_value_t(),
                 value_t::variable(temp_1),
                 left.resolve_type.is_integer(),
-                type_mapping(left.resolve_type)
+                type_mapping(right.resolve_type)
             ));
             block->add_stmt(new sir_store(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
                 left.to_value_t()
             ));
@@ -767,7 +770,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             auto temp_0 = ssa_gen.create();
             auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 left.content,
                 temp_0
             ));
@@ -776,10 +779,10 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
                 right.to_value_t(),
                 value_t::variable(temp_1),
                 left.resolve_type.is_integer(),
-                type_mapping(left.resolve_type)
+                type_mapping(right.resolve_type)
             ));
             block->add_stmt(new sir_store(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
                 left.to_value_t()
             ));
@@ -788,7 +791,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             auto temp_0 = ssa_gen.create();
             auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 left.content,
                 temp_0
             ));
@@ -798,10 +801,10 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
                 value_t::variable(temp_1),
                 left.resolve_type.is_integer(),
                 !left.resolve_type.is_unsigned(),
-                type_mapping(left.resolve_type)
+                type_mapping(right.resolve_type)
             ));
             block->add_stmt(new sir_store(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
                 left.to_value_t()
             ));
@@ -810,7 +813,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             auto temp_0 = ssa_gen.create();
             auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 left.content,
                 temp_0
             ));
@@ -820,17 +823,17 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
                 value_t::variable(temp_1),
                 left.resolve_type.is_integer(),
                 !left.resolve_type.is_unsigned(),
-                type_mapping(left.resolve_type)
+                type_mapping(right.resolve_type)
             ));
             block->add_stmt(new sir_store(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
                 left.to_value_t()
             ));
         } break;
         case mir_assign::opr_kind::eq:
             block->add_stmt(new sir_store(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 right.to_value_t(),
                 left.to_value_t()
             ));
@@ -839,7 +842,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             auto temp_0 = ssa_gen.create();
             auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 left.content,
                 temp_0
             ));
@@ -847,10 +850,10 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
                 value_t::variable(temp_0),
                 right.to_value_t(),
                 value_t::variable(temp_1),
-                type_mapping(left.resolve_type)
+                type_mapping(right.resolve_type)
             ));
             block->add_stmt(new sir_store(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
                 left.to_value_t()
             ));
@@ -859,7 +862,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             auto temp_0 = ssa_gen.create();
             auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 left.content,
                 temp_0
             ));
@@ -867,10 +870,10 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
                 value_t::variable(temp_0),
                 right.to_value_t(),
                 value_t::variable(temp_1),
-                type_mapping(left.resolve_type)
+                type_mapping(right.resolve_type)
             ));
             block->add_stmt(new sir_store(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
                 left.to_value_t()
             ));
@@ -879,7 +882,7 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             auto temp_0 = ssa_gen.create();
             auto temp_1 = ssa_gen.create();
             block->add_stmt(new sir_load(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 left.content,
                 temp_0
             ));
@@ -887,10 +890,10 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
                 value_t::variable(temp_0),
                 right.to_value_t(),
                 value_t::variable(temp_1),
-                type_mapping(left.resolve_type)
+                type_mapping(right.resolve_type)
             ));
             block->add_stmt(new sir_store(
-                type_mapping(left.resolve_type),
+                type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
                 left.to_value_t()
             ));
