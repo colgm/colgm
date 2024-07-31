@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sir/context.h"
-#include "pass/pass.h"
+#include "sir/pass.h"
 
 #include <vector>
 

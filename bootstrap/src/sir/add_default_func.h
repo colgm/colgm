@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pass/pass.h"
+#include "sir/pass.h"
 
 namespace colgm {
 

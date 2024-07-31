@@ -50,7 +50,7 @@ public:
 };
 
 struct sir_context {
-    std::vector<sir_struct> struct_decls;
+    std::vector<sir_struct*> struct_decls;
     std::vector<sir_func*> func_decls;
     std::vector<sir_func*> func_impls;
     std::unordered_map<std::string, u64> const_strings;
@@ -69,6 +69,9 @@ private:
 
 public:
     ~sir_context() {
+        for(auto i : struct_decls) {
+            delete i;
+        }
         for(auto i : func_decls) {
             delete i;
         }

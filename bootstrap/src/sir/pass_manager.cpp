@@ -1,7 +1,6 @@
-#include "pass/pass.h"
-#include "pass/pass_manager.h"
-
-#include "pass/add_default_func.h"
+#include "sir/pass.h"
+#include "sir/pass_manager.h"
+#include "sir/add_default_func.h"
 
 namespace colgm {
 

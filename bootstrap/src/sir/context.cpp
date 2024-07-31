@@ -1,7 +1,7 @@
 #include "colgm.h"
 #include "sema/symbol.h"
 #include "sir/context.h"
-#include "pass/pass_manager.h"
+#include "sir/pass_manager.h"
 
 #include <iomanip>
 
@@ -77,8 +77,8 @@ void sir_context::dump_const_string(std::ostream& out) const {
 void sir_context::dump_struct_size_method(std::ostream& out) const {
     for(const auto& st : struct_decls) {
         const auto st_type = type {
-            .name = st.get_name(),
-            .loc_file = st.get_location().file
+            .name = st->get_name(),
+            .loc_file = st->get_location().file
         };
         const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
@@ -96,8 +96,8 @@ void sir_context::dump_struct_size_method(std::ostream& out) const {
 void sir_context::dump_struct_alloc_method(std::ostream& out) const {
     for(const auto& st: struct_decls) {
         const auto st_type = type {
-            .name = st.get_name(),
-            .loc_file = st.get_location().file
+            .name = st->get_name(),
+            .loc_file = st->get_location().file
         };
         const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
@@ -113,10 +113,10 @@ void sir_context::dump_struct_alloc_method(std::ostream& out) const {
 }
 
 void sir_context::dump_struct_delete_method(std::ostream& out) const {
-    for(const auto& st: struct_decls) {
+    for(const auto& st : struct_decls) {
         const auto st_type = type {
-            .name = st.get_name(),
-            .loc_file = st.get_location().file
+            .name = st->get_name(),
+            .loc_file = st->get_location().file
         };
         const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
@@ -138,8 +138,8 @@ void sir_context::dump_code(std::ostream& out) {
     }
 
     // generate declarations of structs
-    for(const auto& i : struct_decls) {
-        i.dump(out);
+    for(auto i : struct_decls) {
+        i->dump(out);
     }
     if (struct_decls.size()) {
         out << "\n";

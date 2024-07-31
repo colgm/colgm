@@ -47,9 +47,9 @@ std::string mir2sir::type_mapping(const type& t) {
 
 void mir2sir::emit_struct(const mir_context& mctx) {
     for(auto i : mctx.structs) {
-        auto stct = sir_struct(i->name, i->location);
+        auto stct = new sir_struct(i->name, i->location);
         for(const auto& f : i->field_type) {
-            stct.add_field_type(type_mapping(f));
+            stct->add_field_type(type_mapping(f));
         }
         ictx.struct_decls.push_back(stct);
     }

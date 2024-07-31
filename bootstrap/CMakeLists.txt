@@ -29,6 +29,9 @@ set(COLGM_OBJECT_SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/ast/visitor.cpp
     ${CMAKE_SOURCE_DIR}/src/sir/context.cpp
     ${CMAKE_SOURCE_DIR}/src/sir/sir.cpp
+    ${CMAKE_SOURCE_DIR}/src/sir/add_default_func.cpp
+    ${CMAKE_SOURCE_DIR}/src/sir/pass_manager.cpp
+    ${CMAKE_SOURCE_DIR}/src/sir/pass.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/ast2mir.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/mir.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/mir2sir.cpp
@@ -37,9 +40,6 @@ set(COLGM_OBJECT_SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/mir/type_cast_number_pass.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/visitor.cpp
     ${CMAKE_SOURCE_DIR}/src/package/package.cpp
-    ${CMAKE_SOURCE_DIR}/src/pass/add_default_func.cpp
-    ${CMAKE_SOURCE_DIR}/src/pass/pass_manager.cpp
-    ${CMAKE_SOURCE_DIR}/src/pass/pass.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/basic.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/context.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/semantic.cpp

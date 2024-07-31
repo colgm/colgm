@@ -1,4 +1,4 @@
-#include "pass/add_default_func.h"
+#include "sir/add_default_func.h"
 
 namespace colgm {
 
