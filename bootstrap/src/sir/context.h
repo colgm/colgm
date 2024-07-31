@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "colgm.h"
+#include "sema/symbol.h"
 #include "sir/sir.h"
 
 #include <iostream>

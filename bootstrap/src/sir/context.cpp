@@ -1,4 +1,5 @@
 #include "colgm.h"
+#include "sema/symbol.h"
 #include "sir/context.h"
 #include "pass/pass_manager.h"
 
