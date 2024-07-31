@@ -11,7 +11,7 @@
 
 namespace colgm {
 
-struct ir_context {
+struct sir_context {
     std::vector<hir_struct> struct_decls;
     std::vector<hir_func*> func_decls;
     std::vector<hir_func*> func_impls;
@@ -30,7 +30,7 @@ private:
     void dump_struct_delete_method(std::ostream&) const;
 
 public:
-    ~ir_context() {
+    ~sir_context() {
         for(auto i : func_decls) {
             delete i;
         }

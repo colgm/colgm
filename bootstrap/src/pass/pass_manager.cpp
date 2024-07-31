@@ -5,7 +5,7 @@
 
 namespace colgm {
 
-void pass_manager::run(ir_context& c) {
+void pass_manager::run(sir_context& c) {
     ordered_passes.clear();
     ordered_passes.push_back(new add_default_func(c));
     for(auto i : ordered_passes) {

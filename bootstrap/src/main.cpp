@@ -6,7 +6,6 @@
 #include "mir/ast2mir.h"
 #include "mir/pass_manager.h"
 #include "mir/mir2sir.h"
-#include "code/gen.h"
 #include "package/package.h"
 
 #include <unordered_map>
@@ -32,7 +31,7 @@ std::ostream& help(std::ostream& out) {
     << "   -a,   --ast            | view ast.\n"
     << "   -s,   --sema           | view semantic result.\n"
     << "         --mir            | view mir.\n"
-    << "   -i,   --ir             | view semantic generated ir.\n"
+    << "         --sir            | view semantic generated ir.\n"
     << "   -L,   --library <path> | add library path.\n"
     << "         --dump-lib       | view libraries.\n"
     << "file:\n"
@@ -92,7 +91,6 @@ void execute(const std::string& file,
     colgm::mir::ast2mir ast2mir(sema.get_context());
     colgm::mir::pass_manager pm;
     colgm::mir::mir2sir mir2sir(sema.get_context());
-    colgm::generator gen(sema.get_context());
 
     // lexer scans file to get tokens
     lexer.scan(file).chkerr();
@@ -115,20 +113,21 @@ void execute(const std::string& file,
         sema.dump();
     }
 
-    // generate code
+    // generate mir code
     ast2mir.generate(parser.get_result()).chkerr();
     pm.execute(colgm::mir::ast2mir::get_context());
     if (cmd&COMPILE_VIEW_MIR) {
         colgm::mir::ast2mir::dump(std::cout);
     }
+
+    // generate sir code
     mir2sir.generate(*ast2mir.get_context()).chkerr();
-    gen.generate(parser.get_result()).chkerr();
     if (cmd&COMPILE_VIEW_IR) {
-        gen.get_mutable_ir().dump_code(std::cout);
+        mir2sir.get_mutable_sir_context().dump_code(std::cout);
     }
 
     std::ofstream out("out.ll");
-    gen.get_mutable_ir().dump_code(out);
+    mir2sir.get_mutable_sir_context().dump_code(out);
 }
 
 i32 main(i32 argc, const char* argv[]) {
@@ -162,8 +161,7 @@ i32 main(i32 argc, const char* argv[]) {
         {"--sema", COMPILE_VIEW_SEMA},
         {"-s", COMPILE_VIEW_SEMA},
         {"--mir", COMPILE_VIEW_MIR},
-        {"--ir", COMPILE_VIEW_IR},
-        {"-i", COMPILE_VIEW_IR},
+        {"--sir", COMPILE_VIEW_IR},
         {"--dump-lib", COMPILE_VIEW_LIB}
     };
     u32 cmd = 0;

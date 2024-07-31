@@ -565,12 +565,24 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
         value_stack.pop_back();        
     }
 
-    auto target = ssa_gen.create();
-    auto sir_function_call = new sir_call_func(
-        mangle(prev.content),
-        type_mapping(node->get_type()),
-        value_t::variable(target)
-    );
+    std::string target = "";
+    sir_call_func* sir_function_call = nullptr;
+    if (node->get_type()!=type::void_type()) {
+        target = ssa_gen.create();
+        sir_function_call = new sir_call_func(
+            mangle(prev.content),
+            type_mapping(node->get_type()),
+            value_t::variable(target)
+        );
+    } else {
+        sir_function_call = new sir_call_func(
+            mangle(prev.content),
+            type_mapping(node->get_type()),
+            value_t::null()
+        );
+    }
+
+    // load args
     for(const auto& i : args) {
         sir_function_call->add_arg(i.to_value_t());
         sir_function_call->add_arg_type(type_mapping(i.resolve_type));
@@ -605,13 +617,17 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
 }
 
 void mir2sir::visit_mir_get_field(mir_get_field* node) {
+    // FIXME: maybe not available to use
+
     auto prev = value_stack.back();
     value_stack.pop_back();
 
     const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
     const auto& st = dm.structs.at(prev.resolve_type.name);
 
+    // get method
     if (st.method.count(node->get_name())) {
+        // push self into the stack
         value_stack.push_back(prev);
         value_stack.push_back(mir_value_t::method(
             prev.resolve_type.full_path_name() + "::" + node->get_name(),
@@ -626,7 +642,7 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
             block->add_stmt(new sir_call_field(
                 target,
                 prev.content,
-                type_mapping(prev.resolve_type),
+                type_mapping(prev.resolve_type.get_ref_copy()),
                 index
             ));
             break;
@@ -666,8 +682,19 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
     const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
     const auto& st = dm.structs.at(prev.resolve_type.name);
 
+    // get method
     if (st.method.count(node->get_name())) {
-        value_stack.push_back(prev);
+        // push self into the stack
+        auto temp_var = ssa_gen.create();
+        block->add_stmt(new sir_load(
+            type_mapping(prev.resolve_type.get_ref_copy()),
+            prev.content,
+            temp_var
+        ));
+        value_stack.push_back(mir_value_t::variable(
+            temp_var,
+            prev.resolve_type.get_ref_copy()
+        ));
         value_stack.push_back(mir_value_t::method(
             prev.resolve_type.full_path_name() + "::" + node->get_name(),
             node->get_type()
@@ -983,6 +1010,7 @@ void mir2sir::visit_mir_while(mir_while* node) {
     loop_entry.push_back(entry_label);
     break_inst.push_back({});
 
+    block->add_stmt(new sir_br(entry_label));
     block->add_stmt(new sir_label(entry_label));
 
     node->get_condition()->accept(this);
@@ -1039,8 +1067,6 @@ const error& mir2sir::generate(const mir_context& mctx) {
     emit_func_decl(mctx);
     emit_func_impl(mctx);
 
-    std::ofstream out("test_mir2sir.dump.ll");
-    ictx.dump_code(out);
     return err;
 }
 

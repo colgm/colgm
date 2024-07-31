@@ -17,7 +17,7 @@ public:
             delete i;
         }
     }
-    void run(ir_context&);
+    void run(sir_context&);
 };
 
 }

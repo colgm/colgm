@@ -3,7 +3,6 @@
 #include "parse.h"
 #include "sema/semantic.h"
 #include "mir/ast2mir.h"
-#include "code/gen.h"
 #include "sema/basic.h"
 
 namespace colgm {
@@ -1308,7 +1307,6 @@ void semantic::resolve_single_use(use_stmt* node) {
         parse par;
         semantic sema;
         mir::ast2mir ast2mir(sema.get_context());
-        generator gen(sema.get_context());
         if (lex.scan(file).geterr()) {
             report(node, "error ocurred when analysing module \"" + mp + "\".");
             return;
@@ -1326,13 +1324,6 @@ void semantic::resolve_single_use(use_stmt* node) {
         if (ast2mir.generate(par.get_result()).geterr()) {
             report(node,
                 "error ocurred when generating mir for module \"" + mp + "\"."
-            );
-            return;
-        }
-        // generate sir
-        if (gen.generate(par.get_result()).geterr()) {
-            report(node,
-                "error ocurred when generating sir for module \"" + mp + "\"."
             );
             return;
         }

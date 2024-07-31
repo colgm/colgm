@@ -12,7 +12,7 @@ private:
     void add_main_func_impl();
 
 public:
-    add_default_func(ir_context& c):
+    add_default_func(sir_context& c):
         pass(pass_kind::ps_add_default_func, c) {}
     ~add_default_func() override = default;
     const std::string& get_name() override {

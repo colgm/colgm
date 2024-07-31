@@ -18,10 +18,10 @@ class pass {
 protected:
     pass_kind kind;
     error err;
-    ir_context* ctx;
+    sir_context* ctx;
 
 public:
-    pass(pass_kind k, ir_context& c): kind(k), ctx(&c) {}
+    pass(pass_kind k, sir_context& c): kind(k), ctx(&c) {}
     virtual ~pass() = default;
     virtual const std::string& get_name() = 0;
     virtual bool run() = 0;    

@@ -5,6 +5,7 @@ namespace colgm::mir {
 mir_number* type_cast_number::do_optimize(mir_type_convert* node) {
     auto ir_node = node->get_source()->get_content().front();
     auto num_node = reinterpret_cast<mir_number*>(ir_node);
+
     return new mir_number(
         num_node->get_location(),
         num_node->get_literal(),
@@ -17,6 +18,13 @@ bool type_cast_number::cast_const_number(mir_type_convert* node) {
         node->get_source()->get_content().size()>1) {
         return false;
     }
+
+    // convert constant pointer is now unsupported
+    // maybe it will be supported in the future
+    if (node->get_target_type().is_pointer()) {
+        return false;
+    }
+
     auto ir_node = node->get_source()->get_content().front();
     return ir_node->get_kind()==kind::mir_number;
 }

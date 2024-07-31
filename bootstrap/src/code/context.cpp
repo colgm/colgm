@@ -6,8 +6,8 @@
 
 namespace colgm {
 
-void ir_context::dump_raw_string(std::ostream& out,
-                                 const std::string& src) const {
+void sir_context::dump_raw_string(std::ostream& out,
+                                  const std::string& src) const {
     for(const auto c : src) {
         out << "\\";
         out << std::hex << std::setw(2) << std::setfill('0') << u32(c);
@@ -16,7 +16,7 @@ void ir_context::dump_raw_string(std::ostream& out,
     out << "\\00";
 }
 
-void ir_context::dump_const_string(std::ostream& out) const {
+void sir_context::dump_const_string(std::ostream& out) const {
     // make sure constant strings are in order
     std::vector<std::string> ordered_const_string;
     ordered_const_string.resize(const_strings.size());
@@ -37,7 +37,7 @@ void ir_context::dump_const_string(std::ostream& out) const {
     }
 }
 
-void ir_context::dump_struct_size_method(std::ostream& out) const {
+void sir_context::dump_struct_size_method(std::ostream& out) const {
     for(const auto& st : struct_decls) {
         const auto st_type = type {
             .name = st.get_name(),
@@ -56,7 +56,7 @@ void ir_context::dump_struct_size_method(std::ostream& out) const {
     }
 }
 
-void ir_context::dump_struct_alloc_method(std::ostream& out) const {
+void sir_context::dump_struct_alloc_method(std::ostream& out) const {
     for(const auto& st: struct_decls) {
         const auto st_type = type {
             .name = st.get_name(),
@@ -75,7 +75,7 @@ void ir_context::dump_struct_alloc_method(std::ostream& out) const {
     }
 }
 
-void ir_context::dump_struct_delete_method(std::ostream& out) const {
+void sir_context::dump_struct_delete_method(std::ostream& out) const {
     for(const auto& st: struct_decls) {
         const auto st_type = type {
             .name = st.get_name(),
@@ -94,7 +94,7 @@ void ir_context::dump_struct_delete_method(std::ostream& out) const {
     }
 }
 
-void ir_context::dump_code(std::ostream& out) {
+void sir_context::dump_code(std::ostream& out) {
     if (!passes_already_executed) {
         pass_manager().run(*this);
         passes_already_executed = true;

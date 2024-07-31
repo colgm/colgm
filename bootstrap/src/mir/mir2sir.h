@@ -130,7 +130,7 @@ private:
     std::string type_mapping(const type&);
 
 private:
-    ir_context ictx;
+    sir_context ictx;
     ssa_generator ssa_gen;
     sir_block* block;
     std::vector<mir_value_t> value_stack;
@@ -189,6 +189,7 @@ public:
     mir2sir(const semantic_context& c):
         ctx(c), block(nullptr) {}
     const error& generate(const mir_context&);
+    auto& get_mutable_sir_context() { return ictx; }
 };
 
 }
