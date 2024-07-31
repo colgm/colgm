@@ -1,4 +1,4 @@
-#include "code/sir.h"
+#include "sir/sir.h"
 #include "colgm.h"
 
 #include <sstream>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "code/context.h"
+#include "sir/context.h"
 #include "pass/pass.h"
 
 #include <vector>

@@ -27,10 +27,9 @@ set(COLGM_OBJECT_SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/ast/expr.cpp
     ${CMAKE_SOURCE_DIR}/src/ast/stmt.cpp
     ${CMAKE_SOURCE_DIR}/src/ast/visitor.cpp
-    ${CMAKE_SOURCE_DIR}/src/code/context.cpp
-    ${CMAKE_SOURCE_DIR}/src/code/hir.cpp
-    ${CMAKE_SOURCE_DIR}/src/code/sir.cpp
-    ${CMAKE_SOURCE_DIR}/src/code/value.cpp
+    ${CMAKE_SOURCE_DIR}/src/sir/context.cpp
+    ${CMAKE_SOURCE_DIR}/src/sir/sir.cpp
+    ${CMAKE_SOURCE_DIR}/src/sir/value.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/ast2mir.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/mir.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/mir2sir.cpp

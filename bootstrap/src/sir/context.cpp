@@ -1,10 +1,46 @@
 #include "colgm.h"
-#include "code/context.h"
+#include "sir/context.h"
 #include "pass/pass_manager.h"
 
 #include <iomanip>
 
 namespace colgm {
+
+void sir_struct::dump(std::ostream& out) const {
+    const auto ty = type {
+        .name = name,
+        .loc_file = location.file
+    };
+    out << "%struct." << mangle(ty.full_path_name());
+    out << " = type {";
+    for(usize i = 0; i<field_type.size(); ++i) {
+        out << field_type[i];
+        if (i!=field_type.size()-1) {
+            out << ", ";
+        }
+    }
+    out << "}\n";
+}
+
+void sir_func::dump(std::ostream& out) const {
+    out << (block? "define ":"declare ");
+    out << return_type << " " << name << "(";
+    for(const auto& i : params) {
+        out << i.second << " %" << i.first;
+        if (i.first!=params.back().first) {
+            out << ", ";
+        }
+    }
+    out << ")";
+    if (!block) {
+        out << "\n";
+        return;
+    }
+    out << " {\n";
+    out << "entry:\n";
+    block->dump(out);
+    out << "}\n";
+}
 
 void sir_context::dump_raw_string(std::ostream& out,
                                   const std::string& src) const {

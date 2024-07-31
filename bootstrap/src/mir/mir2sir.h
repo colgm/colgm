@@ -5,8 +5,8 @@
 #include "sema/context.h"
 #include "mir/visitor.h"
 #include "mir/ast2mir.h"
-#include "code/sir.h"
-#include "code/context.h"
+#include "sir/sir.h"
+#include "sir/context.h"
 
 #include <unordered_map>
 #include <cstring>

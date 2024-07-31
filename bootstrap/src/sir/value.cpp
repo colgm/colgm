@@ -1,5 +1,5 @@
-#include "code/value.h"
-#include "code/sir.h"
+#include "sir/value.h"
+#include "sir/sir.h"
 
 namespace colgm {
 

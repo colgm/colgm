@@ -1,7 +1,7 @@
 #pragma once
 
-#include "code/sir.h"
-#include "code/context.h"
+#include "sir/sir.h"
+#include "sir/context.h"
 #include "report.h"
 
 #include <sstream>

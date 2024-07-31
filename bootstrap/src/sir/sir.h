@@ -1,7 +1,7 @@
 #pragma once
 
 #include "colgm.h"
-#include "code/value.h"
+#include "sir/value.h"
 
 #include <cstdint>
 #include <cstring>

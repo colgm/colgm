@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sema/symbol.h"
-#include "code/sir.h"
+#include "sir/sir.h"
 
 #include <cstring>
 #include <sstream>

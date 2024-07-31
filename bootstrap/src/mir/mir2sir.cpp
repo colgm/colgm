@@ -47,7 +47,7 @@ std::string mir2sir::type_mapping(const type& t) {
 
 void mir2sir::emit_struct(const mir_context& mctx) {
     for(auto i : mctx.structs) {
-        auto stct = hir_struct(i->name, i->location);
+        auto stct = sir_struct(i->name, i->location);
         for(const auto& f : i->field_type) {
             stct.add_field_type(type_mapping(f));
         }
@@ -57,7 +57,7 @@ void mir2sir::emit_struct(const mir_context& mctx) {
 
 void mir2sir::emit_func_decl(const mir_context& mctx) {
     for(auto i : mctx.decls) {
-        auto func = new hir_func(i->name);
+        auto func = new sir_func(i->name);
         func->set_return_type(type_mapping(i->return_type));
         for(const auto& j : i->params) {
             func->add_param(j.first + ".param", type_mapping(j.second));
@@ -68,7 +68,7 @@ void mir2sir::emit_func_decl(const mir_context& mctx) {
 
 void mir2sir::emit_func_impl(const mir_context& mctx) {
     for(auto i : mctx.impls) {
-        auto func = new hir_func(i->name);
+        auto func = new sir_func(i->name);
         func->set_return_type(type_mapping(i->return_type));
         for(const auto& j : i->params) {
             func->add_param(j.first + ".param", type_mapping(j.second));

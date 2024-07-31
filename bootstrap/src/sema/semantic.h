@@ -3,7 +3,7 @@
 #include "ast/decl.h"
 #include "ast/expr.h"
 #include "ast/stmt.h"
-#include "code/sir.h"
+#include "sir/sir.h"
 #include "ast/visitor.h"
 #include "sema/symbol.h"
 #include "package/package.h"
