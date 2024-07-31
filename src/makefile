@@ -1,5 +1,5 @@
 out.ll: ../bootstrap/build/colgm ast/*.colgm err/*.colgm std/*.colgm ./*.colgm
-	../bootstrap/build/colgm -L . main.colgm --mir
+	../bootstrap/build/colgm -L . main.colgm --mir --sir
 
 .PHONY=clean
 clean: out.ll
