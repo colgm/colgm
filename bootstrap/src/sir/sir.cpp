@@ -34,19 +34,6 @@ void sir_block::dump(std::ostream& out) const {
     }
 }
 
-void sir_nil::dump(std::ostream& out) const {
-    out << "%" << destination << " = ";
-    out << "getelementptr i8, i8* null, i32 0\n";
-}
-
-void sir_number::dump(std::ostream& out) const {
-    out << "%" << destination << " = ";
-    out << (is_integer? "add":"fadd") << " " << type_name << " ";
-    out << literal << ", ";
-    out << (is_integer? "0":"0.0");
-    out << "\n";
-}
-
 void sir_temp_ptr::dump(std::ostream& out) const {
     out << "%" << temp_name << " = getelementptr " << type_name << ", ";
     out << type_name << "* %real." << temp_name << ", i32 0";
@@ -58,9 +45,9 @@ void sir_ret::dump(std::ostream& out) const {
 }
 
 void sir_string::dump(std::ostream& out) const {
-    out << "%" << destination << " = getelementptr ";
-    out << "[" << literal.size()+1 << " x i8], ";
-    out << "[" << literal.size()+1 << " x i8]* @const.str." << index;
+    out << target << " = getelementptr ";
+    out << "[" << length << " x i8], ";
+    out << "[" << length << " x i8]* @const.str." << index;
     out << ", i64 0, i64 0\n";
 }
 
@@ -184,18 +171,18 @@ void sir_store::dump(std::ostream& out) const {
 }
 
 void sir_load::dump(std::ostream& out) const {
-    out << "%" << destination << " = load " << type;
-    out << ", " << type << "* %" << source << "\n";
+    out << destination << " = load " << type;
+    out << ", " << type << "* " << source << "\n";
 }
 
 void sir_br::dump(std::ostream& out) const {
-    out << "br label %label." << destination << "\n";
+    out << "br label %label." << label << "\n";
 }
 
 void sir_br_cond::dump(std::ostream& out) const {
     out << "br i1 %" << condition << ", ";
-    out << "label %label." << destination_true << ", ";
-    out << "label %label." << destination_false << "\n";
+    out << "label %label." << label_true << ", ";
+    out << "label %label." << label_false << "\n";
 }
 
 std::string sir_type_convert::convert_instruction(char source_type_mark,

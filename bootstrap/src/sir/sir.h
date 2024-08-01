@@ -16,8 +16,6 @@ enum class sir_kind {
     sir_nop,
     sir_block,
     sir_alloca,
-    sir_nil,
-    sir_number,
     sir_temp_ptr,
     sir_ret,
     sir_str,
@@ -125,36 +123,6 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_nil: public sir {
-private:
-    std::string destination;
-
-public:
-    sir_nil(const std::string& dst):
-        sir(sir_kind::sir_nil), destination(dst) {}
-    ~sir_nil() override = default;
-    void dump(std::ostream&) const override;
-};
-
-class sir_number: public sir {
-private:
-    std::string literal;
-    std::string destination;
-    std::string type_name;
-    bool is_integer;
-
-public:
-    sir_number(const std::string& lt,
-               const std::string& dst,
-               const std::string& type,
-               bool ii):
-        sir(sir_kind::sir_number), literal(lt),
-        destination(dst), type_name(type),
-        is_integer(ii) {}
-    ~sir_number() override = default;
-    void dump(std::ostream&) const override;
-};
-
 class sir_temp_ptr: public sir {
 /*
 used to get temporary pointer of numbering variable
@@ -210,12 +178,12 @@ public:
 class sir_string: public sir {
 private:
     usize index;
-    std::string literal;
-    std::string destination;
+    usize length;
+    value_t target;
 
 public:
-    sir_string(const std::string& s, const usize i, const std::string& dst):
-        sir(sir_kind::sir_str), index(i), literal(s), destination(dst) {}
+    sir_string(const usize sl, const usize i, const value_t& tgt):
+        sir(sir_kind::sir_str), index(i), length(sl), target(tgt) {}
     ~sir_string() override = default;
     void dump(std::ostream&) const override;
 };
@@ -550,13 +518,13 @@ public:
 class sir_load: public sir {
 private:
     std::string type;
-    std::string source;
-    std::string destination;
+    value_t source;
+    value_t destination;
 
 public:
     sir_load(const std::string& t,
-             const std::string& src,
-             const std::string& dst):
+             const value_t& src,
+             const value_t& dst):
         sir(sir_kind::sir_load), type(t), source(src), destination(dst) {}
     ~sir_load() override = default;
     void dump(std::ostream&) const override;
@@ -564,37 +532,36 @@ public:
 
 class sir_br: public sir {
 private:
-    usize destination;
+    usize label;
 
 public:
     sir_br(usize dst):
-        sir(sir_kind::sir_br_direct), destination(dst) {}
+        sir(sir_kind::sir_br_direct), label(dst) {}
     ~sir_br() override = default;
     void dump(std::ostream&) const override;
 
-    void set_label(usize dst) { destination = dst; }
+    void set_label(usize dst) { label = dst; }
 };
 
 class sir_br_cond: public sir {
 private:
     std::string condition;
-    usize destination_true;
-    usize destination_false;
+    usize label_true;
+    usize label_false;
 
 public:
     sir_br_cond(const std::string& cd, u64 dst_true, u64 dst_false):
-        sir(sir_kind::sir_br_cond),
-        condition(cd),
-        destination_true(dst_true),
-        destination_false(dst_false) {}
+        sir(sir_kind::sir_br_cond), condition(cd),
+        label_true(dst_true), label_false(dst_false) {}
     ~sir_br_cond() override = default;
     void dump(std::ostream&) const override;
 
+public:
     void set_true_label(u64 dst_true) {
-        destination_true = dst_true;
+        label_true = dst_true;
     }
     void set_false_label(u64 dst_false) {
-        destination_false = dst_false;
+        label_false = dst_false;
     }
 };
 
