@@ -73,8 +73,8 @@ private:
     bool visit_impl_struct(ast::impl_struct*) override;
     bool visit_call_index(ast::call_index*) override;
     bool visit_call_func_args(ast::call_func_args*) override;
-    bool visit_call_field(ast::call_field*) override;
-    bool visit_ptr_call_field(ast::ptr_call_field*) override;
+    bool visit_get_field(ast::get_field*) override;
+    bool visit_ptr_get_field(ast::ptr_get_field*) override;
     bool visit_call_path(ast::call_path*) override;
     bool visit_call(ast::call*) override;
     bool visit_definition(ast::definition*) override;

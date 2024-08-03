@@ -60,8 +60,8 @@ public:
     bool visit_type_convert(type_convert*) override;
     bool visit_call_index(call_index*) override;
     bool visit_call_func_args(call_func_args*) override;
-    bool visit_call_field(call_field*) override;
-    bool visit_ptr_call_field(ptr_call_field*) override;
+    bool visit_get_field(get_field*) override;
+    bool visit_ptr_get_field(ptr_get_field*) override;
     bool visit_call_path(call_path*) override;
     bool visit_call(call*) override;
     bool visit_assignment(assignment*) override;

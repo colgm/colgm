@@ -29,12 +29,6 @@ struct struct_method {
     std::string method_name;
 };
 
-struct basic_method {
-    bool flag_is_static = false; // mark static method
-    bool flag_is_normal = false; // mark normal method
-    std::string method_name;
-};
-
 struct type {
     std::string name;
     std::string loc_file;
@@ -43,7 +37,6 @@ struct type {
     bool is_global_func = false;
 
     struct_method stm_info;
-    basic_method bsc_info;
 
 private:
     void check_pointer_depth() const;

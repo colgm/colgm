@@ -75,12 +75,12 @@ void call_func_args::accept(visitor* v) {
     v->visit_call_func_args(this);
 }
 
-void call_field::accept(visitor* v) {
-    v->visit_call_field(this);
+void get_field::accept(visitor* v) {
+    v->visit_get_field(this);
 }
 
-void ptr_call_field::accept(visitor* v) {
-    v->visit_ptr_call_field(this);
+void ptr_get_field::accept(visitor* v) {
+    v->visit_ptr_get_field(this);
 }
 
 void call_path::accept(visitor* v) {

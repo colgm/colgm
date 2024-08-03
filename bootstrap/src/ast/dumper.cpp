@@ -247,13 +247,13 @@ bool dumper::visit_call_func_args(call_func_args* node) {
     return true;
 }
 
-bool dumper::visit_call_field(call_field* node) {
+bool dumper::visit_get_field(get_field* node) {
     dump_indent();
     std::cout << "call field @" << node->get_name() << format_location(node);
     return true;
 }
 
-bool dumper::visit_ptr_call_field(ptr_call_field* node) {
+bool dumper::visit_ptr_get_field(ptr_get_field* node) {
     dump_indent();
     std::cout << "ptr call field @" << node->get_name() << format_location(node);
     return true;

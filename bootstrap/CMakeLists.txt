@@ -40,7 +40,6 @@ set(COLGM_OBJECT_SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/mir/type_cast_number_pass.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/visitor.cpp
     ${CMAKE_SOURCE_DIR}/src/package/package.cpp
-    ${CMAKE_SOURCE_DIR}/src/sema/basic.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/context.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/semantic.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/symbol.cpp

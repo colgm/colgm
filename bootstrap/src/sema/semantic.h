@@ -92,13 +92,13 @@ private:
     type resolve_char_literal(char_literal*);
     type resolve_bool_literal(bool_literal*);
     type resolve_identifier(identifier*);
-    type resolve_call_field(const type&, call_field*);
+    type resolve_get_field(const type&, get_field*);
     void check_static_call_args(const colgm_func&, call_func_args*);
     void check_method_call_args(const colgm_func&, const type&, call_func_args*);
     type resolve_call_func_args(const type&, call_func_args*);
     type resolve_call_index(const type&, call_index*);
     type resolve_call_path(const type&, call_path*);
-    type resolve_ptr_call_field(const type&, ptr_call_field*);
+    type resolve_ptr_get_field(const type&, ptr_get_field*);
     type resolve_call(call*);
     bool check_valid_left_value(expr*);
     type resolve_assignment(assignment*);

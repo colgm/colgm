@@ -207,27 +207,27 @@ public:
     const auto& get_args() const { return args; }
 };
 
-class call_field: public expr {
+class get_field: public expr {
 private:
     std::string name;
 
 public:
-    call_field(const span& loc, const std::string& f):
-        expr(ast_type::ast_call_field, loc), name(f) {}
-    ~call_field() override = default;
+    get_field(const span& loc, const std::string& f):
+        expr(ast_type::ast_get_field, loc), name(f) {}
+    ~get_field() override = default;
     void accept(visitor*) override;
 
     const auto& get_name() const { return name; }
 };
 
-class ptr_call_field: public expr {
+class ptr_get_field: public expr {
 private:
     std::string name;
 
 public:
-    ptr_call_field(const span& loc, const std::string& f):
-        expr(ast_type::ast_ptr_call_field, loc), name(f) {}
-    ~ptr_call_field() override = default;
+    ptr_get_field(const span& loc, const std::string& f):
+        expr(ast_type::ast_ptr_get_field, loc), name(f) {}
+    ~ptr_get_field() override = default;
     void accept(visitor*) override;
 
     const auto& get_name() const { return name; }

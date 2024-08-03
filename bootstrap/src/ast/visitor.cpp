@@ -135,11 +135,11 @@ bool visitor::visit_call_func_args(call_func_args* node) {
     return true;
 }
 
-bool visitor::visit_call_field(call_field* node) {
+bool visitor::visit_get_field(get_field* node) {
     return true;
 }
 
-bool visitor::visit_ptr_call_field(ptr_call_field* node) {
+bool visitor::visit_ptr_get_field(ptr_get_field* node) {
     return true;
 }
 

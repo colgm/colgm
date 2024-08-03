@@ -3,7 +3,6 @@
 #include "parse.h"
 #include "sema/semantic.h"
 #include "mir/ast2mir.h"
-#include "sema/basic.h"
 
 namespace colgm {
 
@@ -614,7 +613,7 @@ type semantic::resolve_identifier(identifier* node) {
     return type::error_type();
 }
 
-type semantic::resolve_call_field(const type& prev, call_field* node) {
+type semantic::resolve_get_field(const type& prev, get_field* node) {
     if (prev.is_global) {
         report(node,
             "cannot get field from global symbol \"" + prev.to_string() + "\"."
@@ -747,22 +746,6 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         node->set_resolve_type(method.return_type);
         return method.return_type;
     }
-    // static method call of basic
-    if (prev.bsc_info.flag_is_static) {
-        const auto bsc = colgm_basic::mapper.at(prev.name);
-        const auto& method = bsc->static_method.at(prev.bsc_info.method_name);
-        check_static_call_args(method, node);
-        node->set_resolve_type(method.return_type);
-        return method.return_type;
-    }
-    // method call of basic
-    if (prev.bsc_info.flag_is_normal) {
-        const auto bsc = colgm_basic::mapper.at(prev.name);
-        const auto& method = bsc->method.at(prev.bsc_info.method_name);
-        check_method_call_args(method, prev, node);
-        node->set_resolve_type(method.return_type);
-        return method.return_type;
-    }
 
     unimplemented(node);
     return type::error_type();
@@ -834,7 +817,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
     return type::error_type();
 }
 
-type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
+type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
     if (prev.is_global) {
         report(node,
             "cannot get field from global symbol \"" + prev.to_string() + "\"."
@@ -845,6 +828,15 @@ type semantic::resolve_ptr_call_field(const type& prev, ptr_call_field* node) {
         report(node,
             "cannot use \"->\" to get field from \"" +
             prev.to_string() + "\"."
+        );
+        return type::error_type();
+    }
+
+    // prev resolved type is natvie type
+    if (prev.loc_file.empty()) {
+        report(node,
+            "cannot get method \"" + node->get_name() +
+            "\" from \"" + prev.to_string() + "\"."
         );
         return type::error_type();
     }
@@ -887,9 +879,9 @@ type semantic::resolve_call(call* node) {
     // resolve call chain
     for(auto i : node->get_chain()) {
         switch(i->get_ast_type()) {
-        case ast_type::ast_call_field:
-            infer = resolve_call_field(
-                infer, reinterpret_cast<call_field*>(i)
+        case ast_type::ast_get_field:
+            infer = resolve_get_field(
+                infer, reinterpret_cast<get_field*>(i)
             );
             break;
         case ast_type::ast_call_func_args:
@@ -907,9 +899,9 @@ type semantic::resolve_call(call* node) {
                 infer, reinterpret_cast<call_path*>(i)
             );
             break;
-        case ast_type::ast_ptr_call_field:
-            infer = resolve_ptr_call_field(
-                infer, reinterpret_cast<ptr_call_field*>(i)
+        case ast_type::ast_ptr_get_field:
+            infer = resolve_ptr_get_field(
+                infer, reinterpret_cast<ptr_get_field*>(i)
             );
             break;
         default:

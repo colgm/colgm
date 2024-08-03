@@ -21,8 +21,8 @@ enum class ast_type {
     ast_bool_literal,
     ast_call_index,
     ast_call_func_args,
-    ast_call_field,
-    ast_ptr_call_field,
+    ast_get_field,
+    ast_ptr_get_field,
     ast_call_path,
     ast_call,
     ast_assignment,
@@ -68,8 +68,8 @@ class string_literal;
 class bool_literal;
 class call_index;
 class call_func_args;
-class call_field;
-class ptr_call_field;
+class get_field;
+class ptr_get_field;
 class call_path;
 class call;
 class assignment;

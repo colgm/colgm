@@ -32,8 +32,8 @@ public:
     virtual bool visit_bool_literal(bool_literal*);
     virtual bool visit_call_index(call_index*);
     virtual bool visit_call_func_args(call_func_args*);
-    virtual bool visit_call_field(call_field*);
-    virtual bool visit_ptr_call_field(ptr_call_field*);
+    virtual bool visit_get_field(get_field*);
+    virtual bool visit_ptr_get_field(ptr_get_field*);
     virtual bool visit_call_path(call_path*);
     virtual bool visit_call(call*);
     virtual bool visit_assignment(assignment*);

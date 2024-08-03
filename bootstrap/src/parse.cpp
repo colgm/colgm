@@ -83,13 +83,13 @@ call* parse::call_gen() {
             result->add_chain(new_call_index);
         } else if (look_ahead(tok::tk_dot)) {
             match(tok::tk_dot);
-            auto new_call_field = new call_field(toks[ptr].loc, toks[ptr].str);
+            auto new_call_field = new get_field(toks[ptr].loc, toks[ptr].str);
             match(tok::tk_id);
             update_location(new_call_field);
             result->add_chain(new_call_field);
         } else if (look_ahead(tok::tk_arrow)) {
             match(tok::tk_arrow);
-            auto new_call_field = new ptr_call_field(toks[ptr].loc, toks[ptr].str);
+            auto new_call_field = new ptr_get_field(toks[ptr].loc, toks[ptr].str);
             match(tok::tk_id);
             update_location(new_call_field);
             result->add_chain(new_call_field);
