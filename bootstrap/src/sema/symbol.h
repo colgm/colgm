@@ -142,6 +142,8 @@ struct colgm_struct {
     std::vector<symbol> ordered_field;
     std::unordered_map<std::string, colgm_func> static_method;
     std::unordered_map<std::string, colgm_func> method;
+
+    usize field_index(const std::string&) const;
 };
 
 struct colgm_enum {

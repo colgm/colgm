@@ -3,6 +3,7 @@
 #include "sema/symbol.h"
 #include "package/package.h"
 
+#include <cstdint>
 #include <cstring>
 #include <sstream>
 
@@ -53,6 +54,15 @@ bool colgm_func::find_parameter(const std::string& name) {
 void colgm_func::add_parameter(const std::string& name, const type& t) {
     parameters.push_back({name, t});
     unordered_params.insert({name, {name, t}});
+}
+
+usize colgm_struct::field_index(const std::string& name) const {
+    for(usize i = 0; i<ordered_field.size(); ++i) {
+        if (ordered_field[i].name == name) {
+            return i;
+        }
+    }
+    return SIZE_MAX;
 }
 
 }
