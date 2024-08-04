@@ -2,17 +2,21 @@
 
 #include "mir/pass.h"
 
+#include <sstream>
+#include <cstring>
+#include <unordered_set>
+
 namespace colgm::mir {
 
 class add_default_func: public pass {
 private:
     mir_context* ctx = nullptr;
+    std::unordered_set<std::string> used_funcs;
 
 private:
-    bool check_used(const std::string&);
     void add_malloc_decl();
     void add_free_decl();
-    void add_main_func_impl();
+    void add_main_impl();
 
 public:
     std::string name() override {

@@ -2,22 +2,8 @@
 
 namespace colgm::mir {
 
-bool add_default_func::check_used(const std::string& name) {
-    for(auto i : ctx->decls) {
-        if (i->name==name) {
-            return true;
-        }
-    }
-    for(auto i : ctx->impls) {
-        if (i->name==name) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void add_default_func::add_malloc_decl() {
-    if (check_used("@malloc")) {
+    if (used_funcs.count("@malloc")) {
         return;
     }
 
@@ -29,7 +15,7 @@ void add_default_func::add_malloc_decl() {
 }
 
 void add_default_func::add_free_decl() {
-    if (check_used("@free")) {
+    if (used_funcs.count("@free")) {
         return;
     }
 
@@ -40,8 +26,8 @@ void add_default_func::add_free_decl() {
     ctx->decls.push_back(free_decl);
 }
 
-void add_default_func::add_main_func_impl() {
-    if (check_used("@main")) {
+void add_default_func::add_main_impl() {
+    if (used_funcs.count("@main")) {
         return;
     }
 
@@ -60,10 +46,16 @@ void add_default_func::add_main_func_impl() {
 
 bool add_default_func::run(mir_context* c) {
     ctx = c;
+    for(auto i : ctx->decls) {
+        used_funcs.insert(i->name);
+    }
+    for(auto i : ctx->impls) {
+        used_funcs.insert(i->name);
+    }
 
     add_malloc_decl();
     add_free_decl();
-    add_main_func_impl();
+    add_main_impl();
     return true;
 }
 
