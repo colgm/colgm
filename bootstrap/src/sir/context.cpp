@@ -1,7 +1,6 @@
 #include "colgm.h"
 #include "sema/symbol.h"
 #include "sir/context.h"
-#include "sir/pass_manager.h"
 
 #include <iomanip>
 
@@ -132,11 +131,6 @@ void sir_context::dump_struct_delete_method(std::ostream& out) const {
 }
 
 void sir_context::dump_code(std::ostream& out) {
-    if (!passes_already_executed) {
-        pass_manager().run(*this);
-        passes_already_executed = true;
-    }
-
     // generate declarations of structs
     for(auto i : struct_decls) {
         i->dump(out);
