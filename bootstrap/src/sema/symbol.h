@@ -52,6 +52,9 @@ public:
         return name!=another.name ||
                pointer_depth!=another.pointer_depth;
     }
+    bool eq_no_ptr(const type& another) const {
+        return name==another.name;
+    }
     friend std::ostream& operator<<(std::ostream&, const type&);
 
 public:

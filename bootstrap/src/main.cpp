@@ -16,7 +16,7 @@ const u32 COMPILE_VIEW_TOKEN = 1;
 const u32 COMPILE_VIEW_AST = 1<<1;
 const u32 COMPILE_VIEW_LIB = 1<<2;
 const u32 COMPILE_VIEW_SEMA = 1<<3;
-const u32 COMPILE_VIEW_IR = 1<<4;
+const u32 COMPILE_VIEW_SIR = 1<<4;
 const u32 COMPILE_VIEW_MIR = 1<<5;
 
 std::ostream& help(std::ostream& out) {
@@ -31,7 +31,7 @@ std::ostream& help(std::ostream& out) {
     << "   -a,   --ast            | view ast.\n"
     << "   -s,   --sema           | view semantic result.\n"
     << "         --mir            | view mir.\n"
-    << "         --sir            | view semantic generated ir.\n"
+    << "         --sir            | view sir.\n"
     << "   -L,   --library <path> | add library path.\n"
     << "         --dump-lib       | view libraries.\n"
     << "file:\n"
@@ -122,7 +122,7 @@ void execute(const std::string& file,
 
     // generate sir code
     mir2sir.generate(*ast2mir.get_context()).chkerr();
-    if (cmd&COMPILE_VIEW_IR) {
+    if (cmd&COMPILE_VIEW_SIR) {
         mir2sir.get_mutable_sir_context().dump_code(std::cout);
     }
 
@@ -161,7 +161,7 @@ i32 main(i32 argc, const char* argv[]) {
         {"--sema", COMPILE_VIEW_SEMA},
         {"-s", COMPILE_VIEW_SEMA},
         {"--mir", COMPILE_VIEW_MIR},
-        {"--sir", COMPILE_VIEW_IR},
+        {"--sir", COMPILE_VIEW_SIR},
         {"--dump-lib", COMPILE_VIEW_LIB}
     };
     u32 cmd = 0;

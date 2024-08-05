@@ -1,5 +1,5 @@
 use std::str::str;
-use std::libc::{ malloc, streq, print, println };
+use std::libc::{ malloc, streq, print, println, putchar, itoa };
 use err::span::span;
 use ast::ast::*;
 use cli::*;
@@ -7,32 +7,38 @@ use std::io::readfile_into_string;
 
 use lexer::lexer;
 
-func test_string_module() {
-    var s = str::new();
-    s->copy_const("for test, first self-host compiler");
-    s->append_char('!');
-    println(s->c_str);
-    s->delete();
-    return;
-}
+func compile(filename: i8*, library_path: i8*, option: cli_option*) {
+    print("[colgm] source file: \"");
+    print(filename);
+    println("\"");
+    if (library_path!=nil) {
+        print("[colgm] library path: \"");
+        print(library_path);
+        println("\"");
+    } else {
+        println("[colgm] library path: <none>");
+    }
 
-func compile(filename: i8*) {
     var lex = lexer::__alloc__();
 
     var source = str::new();
     readfile_into_string(filename, source);
-    print(source->c_str);
+
+    var index = 0 => u64;
+    while(index < source->size) {
+        putchar(source->get(index));
+        index += 1 => u64;
+    }
 
     return;
 }
 
 func main(argc: i32, argv: i8**) -> i32 {
-    test_string_module();
-
     if (argc==(1 => i32)) {
         logo();
         return 0 => i32;
     }
+
     if (argc==(2 => i32) && (streq(argv[1], "-h") || streq(argv[1], "--help"))) {
         help();
         return 0 => i32;
@@ -41,23 +47,27 @@ func main(argc: i32, argv: i8**) -> i32 {
         println(version());
         return 0 => i32;
     }
+
     var i = 1 => i32;
     var filename = nil;
+    var library_path = nil;
+    var option = cli_option::new();
     while(i < argc) {
         if (streq(argv[i], "-l") || streq(argv[i], "--lex")) {
-            println("unimplemented");
+            option->OPTION_VIEW_TOKEN = true;
         } elsif (streq(argv[i], "-a") || streq(argv[i], "--ast")) {
-            println("unimplemented");
+            option->OPTION_VIEW_AST = true;
         } elsif (streq(argv[i], "-s") || streq(argv[i], "--sema")) {
-            println("unimplemented");
-        } elsif (streq(argv[i], "-i") || streq(argv[i], "--ir")) {
-            println("unimplemented");
+            option->OPTION_VIEW_SEMA = true;
         } elsif (streq(argv[i], "-L") || streq(argv[i], "--library")) {
-            println("unimplemented");
+            library_path = argv[i + (1 => i32)];
+            i += 1 => i32;
         } elsif (streq(argv[i], "--dump-lib")) {
-            println("unimplemented");
-        } elsif (streq(argv[i], "-Wt")) {
-            println("unimplemented");
+            option->OPTION_VIEW_LIB = true;
+        } elsif (streq(argv[i], "--mir")) {
+            option->OPTION_VIEW_MIR = true;
+        } elsif (streq(argv[i], "--sir")) {
+            option->OPTION_VIEW_SIR = true;
         } elsif (argv[i][0]=='-') {
             print("invalid argument: ");
             println(argv[i]);
@@ -68,7 +78,6 @@ func main(argc: i32, argv: i8**) -> i32 {
         i += 1 => i32;
     }
 
-    compile(filename);
-
+    compile(filename, library_path, option);
     return 0 => i32;
 }

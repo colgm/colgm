@@ -699,12 +699,16 @@ void semantic::check_method_call_args(const colgm_func& func,
         );
         return;
     }
-    if (self!=func.parameters[0].symbol_type) {
+
+    // make sure self is correct, should be unreachable
+    if (!self.eq_no_ptr(func.parameters[0].symbol_type)) {
         report(node,
             "self should be \"" + func.parameters[0].symbol_type.to_string() +
             "\" but get \"" + self.to_string() + "\"."
         );
     }
+
+    // check args
     size_t index = 1;
     for(auto i : node->get_args()) {
         const auto infer = resolve_expression(i);

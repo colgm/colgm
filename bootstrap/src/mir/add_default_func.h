@@ -20,7 +20,7 @@ private:
 
 public:
     std::string name() override {
-        return "add_default_func";
+        return "add default function";
     }
     bool run(mir_context*) override;
 };

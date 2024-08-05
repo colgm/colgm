@@ -1,5 +1,27 @@
 use std::libc::puts;
 
+struct cli_option {
+    OPTION_VIEW_TOKEN: bool,
+    OPTION_VIEW_AST: bool,
+    OPTION_VIEW_LIB: bool,
+    OPTION_VIEW_SEMA: bool,
+    OPTION_VIEW_SIR: bool,
+    OPTION_VIEW_MIR: bool
+}
+
+impl cli_option {
+    func new() -> cli_option* {
+        var res = cli_option::__alloc__();
+        res->OPTION_VIEW_TOKEN = false;
+        res->OPTION_VIEW_AST = false;
+        res->OPTION_VIEW_LIB = false;
+        res->OPTION_VIEW_SEMA = false;
+        res->OPTION_VIEW_SIR = false;
+        res->OPTION_VIEW_MIR = false;
+        return res;
+    }
+}
+
 func help() {
     puts("\ncolgm <option>");
     puts("option:");
@@ -10,7 +32,8 @@ func help() {
     puts("   -l,   --lex            | view analysed tokens.");
     puts("   -a,   --ast            | view ast.");
     puts("   -s,   --sema           | view semantic result.");
-    puts("   -i,   --ir             | view semantic generated ir.");
+    puts("         --mir            | view mir.");
+    puts("         --sir            | view sir.");
     puts("   -L,   --library <path> | add library path.");
     puts("         --dump-lib       | view libraries.");
     puts("file:");

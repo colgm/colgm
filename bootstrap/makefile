@@ -18,6 +18,8 @@ test: $(COLGMCC)
 	@ lli out.ll
 	@ $(COLGMCC) --mir test/negative.colgm
 	@ lli out.ll
+	@ $(COLGMCC) --mir test/self-ref-test.colgm
+	@ lli out.ll
 	@ $(COLGMCC) --mir test/string.colgm
 	@ lli out.ll
 	@ $(COLGMCC) --mir test/to_str.colgm
