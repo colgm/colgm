@@ -9,21 +9,26 @@ struct str {
 impl str {
     func new() -> str* {
         var res = str::__alloc__();
-
-        # init
-        res->c_str = malloc(256 => u64);
-        res->size = 0 => u64;
-        res->alloc_size = 256 => u64;
-
-        # tail 0
-        res->c_str[0] = '\0';
-
-        # return
+        res->c_str = nil;
+        res->init();
         return res;
     }
 
+    func init(self: str*) {
+        if (self->c_str!=nil) {
+            return;
+        }
+
+        self->c_str = malloc(256 => u64);
+        self->c_str[0] = '\0';
+
+        self->size = 0 => u64;
+        self->alloc_size = 256 => u64;
+        return;
+    }
+
     func copy(self: str*) -> str* {
-        var new_str = str::new();
+        var new_str = str::__alloc__();
         new_str->c_str = malloc(self->alloc_size);
         new_str->size = self->size;
         new_str->alloc_size = self->alloc_size;
@@ -37,7 +42,7 @@ impl str {
     func delete(self: str*) {
         free(self->c_str);
         
-        self->c_str = 0 => i8*;
+        self->c_str = nil;
         self->size = 0 => u64;
         self->alloc_size = 0 => u64;
 

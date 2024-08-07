@@ -1,11 +1,11 @@
 use std::str::str;
-use std::libc::{ malloc, streq, print, println, putchar, itoa };
+use std::libc::{ malloc, free, streq, print, println, putchar, itoa };
 use err::span::span;
 use ast::ast::*;
 use cli::*;
 use std::io::readfile_into_string;
 
-use lexer::lexer;
+use lexer::{lexer, is_identifier_head, is_identifier_body};
 
 func compile(filename: i8*, library_path: i8*, option: cli_option*) {
     print("[colgm] source file: \"");
@@ -26,8 +26,18 @@ func compile(filename: i8*, library_path: i8*, option: cli_option*) {
 
     var index = 0 => u64;
     while(index < source->size) {
-        putchar(source->get(index));
-        index += 1 => u64;
+        var tmp = str::new();
+        if (is_identifier_head(source->get(index))) {
+            while(index < source->size && is_identifier_body(source->get(index))) {
+                tmp->append_char(source->get(index));
+                index += 1 => u64;
+            }
+            println(tmp->c_str);
+        } else {
+            index += 1 => u64;
+        }
+        tmp->delete();
+        free(tmp => i8*);
     }
 
     return;
