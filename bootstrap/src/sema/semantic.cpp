@@ -1376,11 +1376,12 @@ const error& semantic::analyse(root* ast_root) {
         return err;
     }
 
-    ctx.global.domain.at(ctx.this_file).structs.clear();
-    analyse_structs(ast_root);
-
+    // load enum first
     ctx.global.domain.at(ctx.this_file).enums.clear();
     analyse_enums(ast_root);
+
+    ctx.global.domain.at(ctx.this_file).structs.clear();
+    analyse_structs(ast_root);
 
     ctx.global.domain.at(ctx.this_file).functions.clear();
     analyse_functions(ast_root);

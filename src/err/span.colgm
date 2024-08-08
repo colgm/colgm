@@ -1,18 +1,48 @@
-use std::libc::{malloc, print};
+use std::libc::{ malloc, free, print, itoa };
+use std::str::str;
 
 struct span {
     begin_line: i64,
     begin_column: i64,
     end_line: i64,
-    end_column: i64
+    end_column: i64,
+    file: str*
 }
 
 impl span {
     func new() -> span* {
-        return span::__alloc__();
+        var res = span::__alloc__();
+        res->begin_line = 0;
+        res->begin_column = 0;
+        res->end_line = 0;
+        res->end_column = 0;
+        res->file = str::new();
+        return res;
     }
+
+    func delete(self: span*) {
+        self->file->delete();
+        free(self->file => i8*);
+        return;
+    }
+
     func dump(self: span*) {
-        self->dump();
+        var buff = malloc(1024 => u64);
+        var fmt = str::new();
+
+        fmt->append_str(self->file->c_str)->append_char(':');
+
+        itoa(self->begin_line, buff, 10);
+        fmt->append_str(buff)->append_char(':');
+
+        itoa(self->begin_column, buff, 10);
+        fmt->append_str(buff)->append_char('\n');
+
+        print(fmt->c_str);
+
+        free(buff);
+        fmt->delete();
+        free(fmt => i8*);
         return;
     }
 }

@@ -60,6 +60,4 @@ func main() -> i64 {
 
 ## TODO
 
-1. debug mir2sir
-2. sir load/store type change
-3. develop bootstrapped compiler
+1. develop bootstrapped compiler

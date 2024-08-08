@@ -5,7 +5,7 @@ use ast::ast::*;
 use cli::*;
 use std::io::readfile_into_string;
 
-use lexer::{lexer, is_identifier_head, is_identifier_body};
+use lexer::{lexer};
 
 func compile(filename: i8*, library_path: i8*, option: cli_option*) {
     print("[colgm] source file: \"");
@@ -19,26 +19,20 @@ func compile(filename: i8*, library_path: i8*, option: cli_option*) {
         println("[colgm] library path: <none>");
     }
 
-    var lex = lexer::__alloc__();
-
+    var lex = lexer::new();
     var source = str::new();
     readfile_into_string(filename, source);
 
-    var index = 0 => u64;
-    while(index < source->size) {
-        var tmp = str::new();
-        if (is_identifier_head(source->get(index))) {
-            while(index < source->size && is_identifier_body(source->get(index))) {
-                tmp->append_char(source->get(index));
-                index += 1 => u64;
-            }
-            println(tmp->c_str);
-        } else {
-            index += 1 => u64;
-        }
-        tmp->delete();
-        free(tmp => i8*);
+    # do lexer scanning
+    lex->scan(source);
+    if (option->OPTION_VIEW_TOKEN) {
+        lex->dump();
     }
+
+    lex->delete();
+    source->delete();
+    free(lex => i8*);
+    free(source => i8*);
 
     return;
 }
@@ -89,5 +83,6 @@ func main(argc: i32, argv: i8**) -> i32 {
     }
 
     compile(filename, library_path, option);
+    free(option => i8*);
     return 0 => i32;
 }

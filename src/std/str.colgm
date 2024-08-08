@@ -1,4 +1,4 @@
-use std::libc::{ malloc, free, memcpy, strlen, exit, write };
+use std::libc::{ malloc, free, memcpy, strlen, streq, exit, write };
 
 struct str {
     c_str: i8*,
@@ -90,6 +90,16 @@ impl str {
         return self;
     }
 
+    func append_str(self: str*, src: i8*) -> str* {
+        var len = strlen(src);
+        var index = 0;
+        while (index < len) {
+            self->append_char(src[index]);
+            index += 1;
+        }
+        return self;
+    }
+
     func get(self: str*, index: u64) -> i8 {
         if (index >= self->size) {
             var report_info = "std::str::get: index out of range\n\n";
@@ -97,5 +107,9 @@ impl str {
             exit(-1 => i32);
         }
         return self->c_str[index];
+    }
+
+    func eq_const(self: str*, src: i8*) -> bool {
+        return streq(self->c_str, src);
     }
 }

@@ -1,13 +1,91 @@
 use std::str::str;
-use std::libc::{ malloc, free };
+use std::libc::{ malloc, free, streq, println, print };
+
+enum tok_kind {
+    tok_null,
+    tok_eof,
+    tok_num,
+    tok_str,
+    tok_ch,
+    tok_id,
+    tok_true,
+    tok_false,
+    tok_use,
+    tok_enum,
+    tok_while,
+    tok_var,
+    tok_struct,
+    tok_pub,
+    tok_impl,
+    tok_func,
+    tok_break,
+    tok_continue,
+    tok_return,
+    tok_if,
+    tok_elsif,
+    tok_else,
+    tok_nil
+}
+
+func tok_kind_to_str(kind: tok_kind) -> i8* {
+    if (kind == tok_kind::tok_null) {
+        return "[tok_null]";
+    } elsif (kind == tok_kind::tok_eof) {
+        return "[tok_eof]";
+    } elsif (kind == tok_kind::tok_num) {
+        return "[tok_num]";
+    } elsif (kind == tok_kind::tok_str) {
+        return "[tok_str]";
+    } elsif (kind == tok_kind::tok_ch) {
+        return "[tok_ch]";
+    } elsif (kind == tok_kind::tok_id) {
+        return "[tok_id]";
+    } elsif (kind == tok_kind::tok_true) {
+        return "[tok_true]";
+    } elsif (kind == tok_kind::tok_false) {
+        return "[tok_false]";
+    } elsif (kind == tok_kind::tok_use) {
+        return "[tok_use]";
+    } elsif (kind == tok_kind::tok_enum) {
+        return "[tok_enum]";
+    } elsif (kind == tok_kind::tok_while) {
+        return "[tok_while]";
+    } elsif (kind == tok_kind::tok_var) {
+        return "[tok_var]";
+    } elsif (kind == tok_kind::tok_struct) {
+        return "[tok_struct]";
+    } elsif (kind == tok_kind::tok_pub) {
+        return "[tok_pub]";
+    } elsif (kind == tok_kind::tok_impl) {
+        return "[tok_impl]";
+    } elsif (kind == tok_kind::tok_func) {
+        return "[tok_func]";
+    } elsif (kind == tok_kind::tok_break) {
+        return "[tok_break]";
+    } elsif (kind == tok_kind::tok_continue) {
+        return "[tok_continue]";
+    } elsif (kind == tok_kind::tok_return) {
+        return "[tok_return]";
+    } elsif (kind == tok_kind::tok_if) {
+        return "[tok_if]";
+    } elsif(kind == tok_kind::tok_elsif) {
+        return "[tok_elsif]";
+    } elsif (kind == tok_kind::tok_else) {
+        return "[tok_else]";
+    } elsif (kind == tok_kind::tok_nil) {
+        return "[tok_nil]";
+    }
+
+    return "[unknown]";
+}
 
 struct token {
-    kind: i64,
+    kind: tok_kind,
     content: str*
 }
 
 impl token {
-    func new(kind: i64, content: str*) -> token* {
+    func new(kind: tok_kind, content: str*) -> token* {
         var res = token::__alloc__();
         res->kind = kind;
         res->content = content;
@@ -21,40 +99,163 @@ impl token {
     }
 }
 
-struct token_vector {
+struct vec_token {
     data: token*,
     size: u64,
     alloc_size: u64
 }
 
-impl token_vector {
-    func new() -> token_vector* {
-        var res = token_vector::__alloc__();
-        res->data = malloc((1024 => u64) * token::__size__()) => token*;
+impl vec_token {
+    func new() -> vec_token* {
+        var res = vec_token::__alloc__();
+        var size_of_token = token::__size__();
+        res->data = malloc((2048 => u64) * size_of_token) => token*;
         res->size = 0 => u64;
-        res->alloc_size = 1024 => u64;
+        res->alloc_size = 2048 => u64;
         return res;
     }
 
-    func delete(self: token_vector*) {
+    func delete(self: vec_token*) {
         var index = 0 => u64;
         while(index < self->size) {
-            var offset = (self->data => u64 + index) => token*;
-            offset->delete();
+            self->data[index].delete();
+            index += 1 => u64;
         }
         free(self->data => i8*);
+        return;
+    }
+
+    func append(self: vec_token*, kind: tok_kind, content: str*) {
+        if(self->size == self->alloc_size) {
+            var size_of_token = token::__size__();
+            var new_data = malloc(
+                (self->alloc_size * (2 => u64)) * size_of_token
+            ) => token*;
+            var index = 0 => u64;
+            while(index < self->size) {
+                new_data[index] = self->data[index];
+                index += 1 => u64;
+            }
+            free(self->data => i8*);
+            self->data = new_data;
+            self->alloc_size *= 2 => u64;
+        }
+
+        self->data[self->size].kind = kind;
+        self->data[self->size].content = content;
+        self->size += 1 => u64;
         return;
     }
 }
 
 struct lexer {
-    toks: token_vector*
+    toks: vec_token*,
+    pos: u64
 }
 
-func is_identifier_head(c: i8) -> bool {
-    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || (c == '_');
-}
+impl lexer {
+    func new() -> lexer* {
+        var res = lexer::__alloc__();
+        res->toks = vec_token::new();
+        res->pos = 0 => u64;
+        return res;
+    }
 
-func is_identifier_body(c: i8) -> bool {
-    return is_identifier_head(c) || ('0' <= c && c <= '9');
+    func delete(self: lexer*) {
+        self->toks->delete();
+        return;
+    }
+
+    func is_identifier_head(c: i8) -> bool {
+        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || (c == '_');
+    }
+
+    func is_identifier_body(c: i8) -> bool {
+        return lexer::is_identifier_head(c) || ('0' <= c && c <= '9');
+    }
+
+    func check_id_kind(src: str*) -> tok_kind {
+        if (src->eq_const("true")) {
+            return tok_kind::tok_true;
+        } elsif (src->eq_const("false")) {
+            return tok_kind::tok_false;
+        } elsif (src->eq_const("use")) {
+            return tok_kind::tok_use;
+        } elsif (src->eq_const("enum")) {
+            return tok_kind::tok_enum;
+        } elsif (src->eq_const("while")) {
+            return tok_kind::tok_while;
+        } elsif (src->eq_const("var")) {
+            return tok_kind::tok_var;
+        } elsif (src->eq_const("struct")) {
+            return tok_kind::tok_struct;
+        } elsif (src->eq_const("pub")) {
+            return tok_kind::tok_pub;
+        } elsif (src->eq_const("impl")) {
+            return tok_kind::tok_impl;
+        } elsif (src->eq_const("func")) {
+            return tok_kind::tok_func;
+        } elsif (src->eq_const("break")) {
+            return tok_kind::tok_break;
+        } elsif (src->eq_const("continue")) {
+            return tok_kind::tok_continue;
+        } elsif (src->eq_const("return")) {
+            return tok_kind::tok_return;
+        } elsif (src->eq_const("if")) {
+            return tok_kind::tok_if;
+        } elsif (src->eq_const("elsif")) {
+            return tok_kind::tok_elsif;
+        } elsif (src->eq_const("else")) {
+            return tok_kind::tok_else;
+        } elsif (src->eq_const("nil")) {
+            return tok_kind::tok_nil;
+        }
+        return tok_kind::tok_id;
+    }
+
+    func generate_identifier(self: lexer*, src: str*) {
+        var tmp = str::new();
+        while(self->pos < src->size &&
+              lexer::is_identifier_body(src->get(self->pos))) {
+            tmp->append_char(src->get(self->pos));
+            self->pos += 1 => u64;
+        }
+
+        self->toks->append(lexer::check_id_kind(tmp), tmp);
+        return;
+    }
+
+    func skip_note(self: lexer*, src: str*) {
+        while(self->pos < src->size && src->get(self->pos) != '\n') {
+            self->pos += 1 => u64;
+        }
+        return;
+    }
+
+    func scan(self: lexer*, src: str*) {
+        self->pos = 0 => u64;
+        while(self->pos < src->size) {
+            if (lexer::is_identifier_head(src->get(self->pos))) {
+                self->generate_identifier(src);
+            } elsif (src->get(self->pos)=='#') {
+                self->skip_note(src);
+            } else {
+                self->pos += 1 => u64;
+            }
+        }
+
+        self->toks->append(tok_kind::tok_eof, str::new());
+        return;
+    }
+
+    func dump(self: lexer*) {
+        var index = 0 => u64;
+        while(index < self->toks->size) {
+            print(tok_kind_to_str(self->toks->data[index].kind));
+            print(" : ");
+            println(self->toks->data[index].content->c_str);
+            index += 1 => u64;
+        }
+        return;
+    }
 }
