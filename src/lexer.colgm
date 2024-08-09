@@ -24,59 +24,68 @@ enum tok_kind {
     tok_if,
     tok_elsif,
     tok_else,
-    tok_nil
+    tok_nil,
+    tok_coloncolon,
+    tok_arrow,
+    tok_wide_arrow
 }
 
 func tok_kind_to_str(kind: tok_kind) -> i8* {
     if (kind == tok_kind::tok_null) {
-        return "[tok_null]";
+        return "[tok_null      ]";
     } elsif (kind == tok_kind::tok_eof) {
-        return "[tok_eof]";
+        return "[tok_eof       ]";
     } elsif (kind == tok_kind::tok_num) {
-        return "[tok_num]";
+        return "[tok_num       ]";
     } elsif (kind == tok_kind::tok_str) {
-        return "[tok_str]";
+        return "[tok_str       ]";
     } elsif (kind == tok_kind::tok_ch) {
-        return "[tok_ch]";
+        return "[tok_ch        ]";
     } elsif (kind == tok_kind::tok_id) {
-        return "[tok_id]";
+        return "[tok_id        ]";
     } elsif (kind == tok_kind::tok_true) {
-        return "[tok_true]";
+        return "[tok_true      ]";
     } elsif (kind == tok_kind::tok_false) {
-        return "[tok_false]";
+        return "[tok_false     ]";
     } elsif (kind == tok_kind::tok_use) {
-        return "[tok_use]";
+        return "[tok_use       ]";
     } elsif (kind == tok_kind::tok_enum) {
-        return "[tok_enum]";
+        return "[tok_enum      ]";
     } elsif (kind == tok_kind::tok_while) {
-        return "[tok_while]";
+        return "[tok_while     ]";
     } elsif (kind == tok_kind::tok_var) {
-        return "[tok_var]";
+        return "[tok_var       ]";
     } elsif (kind == tok_kind::tok_struct) {
-        return "[tok_struct]";
+        return "[tok_struct    ]";
     } elsif (kind == tok_kind::tok_pub) {
-        return "[tok_pub]";
+        return "[tok_pub       ]";
     } elsif (kind == tok_kind::tok_impl) {
-        return "[tok_impl]";
+        return "[tok_impl      ]";
     } elsif (kind == tok_kind::tok_func) {
-        return "[tok_func]";
+        return "[tok_func      ]";
     } elsif (kind == tok_kind::tok_break) {
-        return "[tok_break]";
+        return "[tok_break     ]";
     } elsif (kind == tok_kind::tok_continue) {
-        return "[tok_continue]";
+        return "[tok_continue  ]";
     } elsif (kind == tok_kind::tok_return) {
-        return "[tok_return]";
+        return "[tok_return    ]";
     } elsif (kind == tok_kind::tok_if) {
-        return "[tok_if]";
+        return "[tok_if        ]";
     } elsif(kind == tok_kind::tok_elsif) {
-        return "[tok_elsif]";
+        return "[tok_elsif     ]";
     } elsif (kind == tok_kind::tok_else) {
-        return "[tok_else]";
+        return "[tok_else      ]";
     } elsif (kind == tok_kind::tok_nil) {
-        return "[tok_nil]";
+        return "[tok_nil       ]";
+    } elsif (kind == tok_kind::tok_coloncolon) {
+        return "[tok_coloncolon]";
+    } elsif (kind == tok_kind::tok_arrow) {
+        return "[tok_arrow     ]";
+    } elsif (kind == tok_kind::tok_wide_arrow) {
+        return "[tok_wide_arrow]";
     }
 
-    return "[unknown]";
+    return "[unknown token ]";
 }
 
 struct token {
@@ -174,6 +183,42 @@ impl lexer {
         return lexer::is_identifier_head(c) || ('0' <= c && c <= '9');
     }
 
+    func is_arrow(pos: u64, src: str*) -> bool {
+        if (src->get(pos)!='-') {
+            return false;
+        }
+        if (pos + 1 => u64 < src->size &&
+            src->get(pos + 1 => u64)=='>') {
+            return true;
+        }
+        return false;
+    }
+
+    func is_wide_arrow(pos: u64, src: str*) -> bool {
+        if (src->get(pos)!='=') {
+            return false;
+        }
+        if (pos + 1 => u64 < src->size &&
+            src->get(pos + 1 => u64)=='>') {
+            return true;
+        }
+        return false;
+    }
+
+    func generate_arrow(self: lexer*, src: str*) {
+        var tmp = str::new();
+        tmp->append_char(src->get(self->pos));
+        self->pos += 1 => u64;
+        tmp->append_char(src->get(self->pos));
+        self->pos += 1 => u64;
+        if (tmp->get(0 => u64)=='-') {
+            self->toks->append(tok_kind::tok_arrow, tmp);
+        } else {
+            self->toks->append(tok_kind::tok_wide_arrow, tmp);
+        }
+        return;
+    }
+
     func check_id_kind(src: str*) -> tok_kind {
         if (src->eq_const("true")) {
             return tok_kind::tok_true;
@@ -225,6 +270,20 @@ impl lexer {
         return;
     }
 
+    func generate_coloncolon(self: lexer*, src: str*) {
+        var tmp = str::new();
+        tmp->append_char(':');
+        self->pos += 1 => u64;
+        if (self->pos < src->size && src->get(self->pos) == ':') {
+            tmp->append_char(':');
+            self->pos += 1 => u64;
+            self->toks->append(tok_kind::tok_coloncolon, tmp);
+        } else {
+            # TODO: report error here
+        }
+        return;
+    }
+
     func skip_note(self: lexer*, src: str*) {
         while(self->pos < src->size && src->get(self->pos) != '\n') {
             self->pos += 1 => u64;
@@ -237,6 +296,11 @@ impl lexer {
         while(self->pos < src->size) {
             if (lexer::is_identifier_head(src->get(self->pos))) {
                 self->generate_identifier(src);
+            } elsif (src->get(self->pos)==':') {
+                self->generate_coloncolon(src);
+            } elsif (lexer::is_arrow(self->pos, src) ||
+                     lexer::is_wide_arrow(self->pos, src)) {
+                self->generate_arrow(src);
             } elsif (src->get(self->pos)=='#') {
                 self->skip_note(src);
             } else {
@@ -252,8 +316,9 @@ impl lexer {
         var index = 0 => u64;
         while(index < self->toks->size) {
             print(tok_kind_to_str(self->toks->data[index].kind));
-            print(" : ");
-            println(self->toks->data[index].content->c_str);
+            print(" \"");
+            print(self->toks->data[index].content->c_str);
+            println("\"");
             index += 1 => u64;
         }
         return;

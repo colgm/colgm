@@ -544,6 +544,25 @@ type semantic::resolve_type_convert(type_convert* node) {
         );
     }
 
+    // normal struct to pointer is not allowed
+    if (ctx.search_symbol_kind(res)==symbol_kind::struct_kind &&
+        !res.is_pointer() &&
+        type_res.is_pointer()) {
+        report(node->get_target(),
+            "cannot convert \"" + res.to_string() +
+            "\" to \"" + type_res.to_string() + "\"."
+        );
+    }
+    // pointer to normal struct is also not allowed
+    if (res.is_pointer() &&
+        ctx.search_symbol_kind(type_res)==symbol_kind::struct_kind &&
+        !type_res.is_pointer()) {
+        report(node->get_target(),
+            "cannot convert \"" + res.to_string() +
+            "\" to \"" + type_res.to_string() + "\"."
+        );
+    }
+
     node->set_resolve_type(type_res);
     return type_res;
 }
@@ -637,12 +656,12 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
         return type::error_type();
     }
 
-    if (!ctx.global.domain.at(ctx.this_file).structs.count(prev.name)) {
+    const auto& domain = ctx.global.domain.at(prev.loc_file);
+    if (!domain.structs.count(prev.name)) {
         report(node, "cannot get field from \"" + prev.to_string() + "\".");
         return type::error_type();
     }
 
-    const auto& domain = ctx.global.domain.at(ctx.this_file);
     const auto& struct_self = domain.structs.at(prev.name);
     if (struct_self.field.count(node->get_name())) {
         node->set_resolve_type(struct_self.field.at(node->get_name()).symbol_type);
