@@ -1,5 +1,5 @@
 use std::str::str;
-use std::libc::{ malloc, free, streq };
+use std::libc::{ malloc, free };
 use std::io::io;
 
 enum tok_kind {
@@ -313,6 +313,143 @@ impl lexer {
         return lexer::is_identifier_head(c) || ('0' <= c && c <= '9');
     }
 
+    func is_single_char_token(c: i8) -> bool {
+        return c == '(' || c == ')' || c == '[' || c == ']' ||
+               c == '{' || c == '}' || c == ';' || c == ',' ||
+               c == '?';
+    }
+
+    func generate_single_char_token(self: lexer*, src: str*) {
+        var tmp = str::new();
+        var ch = src->get(self->pos);
+        tmp->append_char(ch);
+        self->pos += 1 => u64;
+
+        if (ch == '(') {
+            self->toks->append(tok_kind::tok_lparen, tmp);
+        } elsif (ch == ')') {
+            self->toks->append(tok_kind::tok_rparen, tmp);
+        } elsif (ch == '[') {
+            self->toks->append(tok_kind::tok_lbracket, tmp);
+        } elsif (ch == ']') {
+            self->toks->append(tok_kind::tok_rbracket, tmp);
+        } elsif (ch == '{') {
+            self->toks->append(tok_kind::tok_lbrace, tmp);
+        } elsif (ch == ']') {
+            self->toks->append(tok_kind::tok_rbrace, tmp);
+        } elsif (ch == ';') {
+            self->toks->append(tok_kind::tok_semi, tmp);
+        } elsif (ch == ',') {
+            self->toks->append(tok_kind::tok_comma, tmp);
+        } elsif (ch == '?') {
+            self->toks->append(tok_kind::tok_quesmark, tmp);
+        }
+        return;
+    }
+
+    func need_lookahead_eq(c: i8) -> bool {
+        return c == '+' || c == '-' || c == '*' || c == '/' ||
+               c == '%' || c == '~' || c == '^' || c == '=' ||
+               c == '<' || c == '>' || c == '!';
+    }
+
+    func generate_maybe_need_eq_oprs(self: lexer*, src: str*) {
+        var tmp = str::new();
+        tmp->append_char(src->get(self->pos));
+        self->pos += 1 => u64;
+        if (self->pos < src->size && src->get(self->pos) == '=') {
+            tmp->append_char(src->get(self->pos));
+            self->pos += 1 => u64;
+        }
+
+        if (tmp->eq_const("+")) {
+            self->toks->append(tok_kind::tok_add, tmp);
+        } elsif (tmp->eq_const("+=")) {
+            self->toks->append(tok_kind::tok_addeq, tmp);
+        } elsif (tmp->eq_const("-")) {
+            self->toks->append(tok_kind::tok_sub, tmp);
+        } elsif (tmp->eq_const("-=")) {
+            self->toks->append(tok_kind::tok_subeq, tmp);
+        } elsif (tmp->eq_const("*")) {
+            self->toks->append(tok_kind::tok_mul, tmp);
+        } elsif (tmp->eq_const("*=")) {
+            self->toks->append(tok_kind::tok_muleq, tmp);
+        } elsif (tmp->eq_const("/")) {
+            self->toks->append(tok_kind::tok_div, tmp);
+        } elsif (tmp->eq_const("/=")) {
+            self->toks->append(tok_kind::tok_diveq, tmp);
+        } elsif (tmp->eq_const("%")) {
+            self->toks->append(tok_kind::tok_rem, tmp);
+        } elsif (tmp->eq_const("%=")) {
+            self->toks->append(tok_kind::tok_remeq, tmp);
+        } elsif (tmp->eq_const("~")) {
+            self->toks->append(tok_kind::tok_floater, tmp);
+        } elsif (tmp->eq_const("~=")) {
+            self->toks->append(tok_kind::tok_floatereq, tmp);
+        } elsif (tmp->eq_const("^")) {
+            self->toks->append(tok_kind::tok_bit_xor, tmp);
+        } elsif (tmp->eq_const("^=")) {
+            self->toks->append(tok_kind::tok_bit_xor_eq, tmp);
+        } elsif (tmp->eq_const("=")) {
+            self->toks->append(tok_kind::tok_eq, tmp);
+        } elsif (tmp->eq_const("==")) {
+            self->toks->append(tok_kind::tok_cmp_eq, tmp);
+        } elsif (tmp->eq_const("<")) {
+            self->toks->append(tok_kind::tok_less, tmp);
+        } elsif (tmp->eq_const("<=")) {
+            self->toks->append(tok_kind::tok_leq, tmp);
+        } elsif (tmp->eq_const(">")) {
+            self->toks->append(tok_kind::tok_grt, tmp);
+        } elsif (tmp->eq_const(">=")) {
+            self->toks->append(tok_kind::tok_geq, tmp);
+        } elsif (tmp->eq_const("!")) {
+            self->toks->append(tok_kind::tok_op_not, tmp);
+        } elsif (tmp->eq_const("!=")) {
+            self->toks->append(tok_kind::tok_neq, tmp);
+        }
+        return;
+    }
+
+    func need_lookahead_other(c: i8) -> bool {
+        return c == '&' || c == '|';
+    }
+
+    func generate_lookahead_other(self: lexer*, src: str*) {
+        var tmp = str::new();
+        var ch = src->get(self->pos);
+        tmp->append_char(ch);
+        self->pos += 1 => u64;
+        if (ch == '&' && self->pos < src->size) {
+            if (src->get(self->pos) == '&' ||
+                src->get(self->pos) == '=') {
+                tmp->append_char(src->get(self->pos));
+                self->pos += 1 => u64;
+            }
+        } elsif (ch == '|' && self->pos < src->size) {
+            if (src->get(self->pos) == '|' ||
+                src->get(self->pos) == '=') {
+                tmp->append_char(src->get(self->pos));
+                self->pos += 1 => u64;
+            }
+        }
+
+        if (tmp->eq_const("&")) {
+            self->toks->append(tok_kind::tok_bit_and, tmp);
+        } elsif (tmp->eq_const("&=")) {
+            self->toks->append(tok_kind::tok_bit_and_eq, tmp);
+        } elsif (tmp->eq_const("&&")) {
+            self->toks->append(tok_kind::tok_op_and, tmp);
+        } elsif (tmp->eq_const("|")) {
+            self->toks->append(tok_kind::tok_bit_or, tmp);
+        } elsif (tmp->eq_const("|=")) {
+            self->toks->append(tok_kind::tok_bit_or_eq, tmp);
+        } elsif (tmp->eq_const("||")) {
+            self->toks->append(tok_kind::tok_op_or, tmp);
+        }
+        return;
+    }
+
+
     func is_arrow(pos: u64, src: str*) -> bool {
         if (src->get(pos)!='-') {
             return false;
@@ -452,13 +589,21 @@ impl lexer {
         while(self->pos < src->size) {
             if (lexer::is_identifier_head(src->get(self->pos))) {
                 self->generate_identifier(src);
+            } elsif (lexer::is_arrow(self->pos, src) ||
+                     lexer::is_wide_arrow(self->pos, src)) {
+                # need to be put before normal operator scan process
+                # otherwise `=>` will be recognized as `=` `>`
+                self->generate_arrow(src);
+            } elsif (lexer::is_single_char_token(src->get(self->pos))) {
+                self->generate_single_char_token(src);
+            } elsif (lexer::need_lookahead_eq(src->get(self->pos))) {
+                self->generate_maybe_need_eq_oprs(src);
+            } elsif (lexer::need_lookahead_other(src->get(self->pos))) {
+                self->generate_lookahead_other(src);
             } elsif (src->get(self->pos)==':') {
                 self->generate_coloncolon(src);
             } elsif (src->get(self->pos)=='.') {
                 self->generate_ellipsis(src);
-            } elsif (lexer::is_arrow(self->pos, src) ||
-                     lexer::is_wide_arrow(self->pos, src)) {
-                self->generate_arrow(src);
             } elsif (src->get(self->pos)=='#') {
                 self->skip_note(src);
             } else {
@@ -466,7 +611,7 @@ impl lexer {
             }
         }
 
-        self->toks->append(tok_kind::tok_eof, str::new());
+        self->toks->append(tok_kind::tok_eof, str::new()->append_str("<eof>"));
         return;
     }
 
