@@ -2,39 +2,80 @@ use std::str::str;
 use std::libc::{ malloc, free, streq, println, print };
 
 enum tok_kind {
-    tok_null,
-    tok_eof,
-    tok_num,
-    tok_str,
-    tok_ch,
-    tok_id,
-    tok_true,
-    tok_false,
-    tok_use,
-    tok_enum,
-    tok_while,
-    tok_var,
-    tok_struct,
-    tok_pub,
-    tok_impl,
-    tok_func,
-    tok_break,
-    tok_continue,
-    tok_return,
-    tok_if,
-    tok_elsif,
-    tok_else,
-    tok_nil,
-    tok_coloncolon,
-    tok_arrow,
-    tok_wide_arrow
+    tok_null,       # reserved
+    tok_num,        # number literal
+    tok_str,        # string literal
+    tok_ch,         # character literal
+    tok_id,         # identifier
+    tok_true,       # keyword true
+    tok_false,      # keyword false
+    tok_use,        # keyword use
+    tok_enum,       # keyword enum
+    tok_for,        # keyword for
+    tok_forindex,   # keyword forindex
+    tok_foreach,    # keyword foreach
+    tok_while,      # keyword while
+    tok_var,        # keyword var
+    tok_struct,     # keyword struct
+    tok_pub,        # keyword pub
+    tok_impl,       # keyword impl
+    tok_func,       # keyword func
+    tok_break,      # keyword break
+    tok_continue,   # keyword continue
+    tok_return,     # keyword return
+    tok_if,         # keyword if
+    tok_elsif,      # keyword elsif
+    tok_else,       # keyword else
+    tok_nil,        # keyword nil
+    tok_lparen,     # (
+    tok_rparen,     # )
+    tok_lbracket,   # [
+    tok_rbracket,   # ]
+    tok_lbrace,     # {
+    tok_rbrace,     # }
+    tok_semi,       # ;
+    tok_op_and,     # conditional binary operator and/&&
+    tok_op_or,      # conditional binary operator or/||
+    tok_comma,      # ,
+    tok_dot,        # .
+    tok_ellipsis,   # ...
+    tok_quesmark,   # ?
+    tok_colon,      # :
+    tok_coloncolon, # ::
+    tok_add,        # +
+    tok_sub,        # -
+    tok_mul,        # *
+    tok_div,        # /
+    tok_rem,        # %
+    tok_floater,    # bitwise operator not '~'
+    tok_bit_and,    # bitwise operator &
+    tok_bit_or,     # bitwise operator |
+    tok_bit_xor,    # bitwise operator ^
+    tok_op_not,     # conditional binary operator !
+    tok_eq,         # =
+    tok_addeq,      # +=
+    tok_subeq,      # -=
+    tok_muleq,      # *=
+    tok_diveq,      # /=
+    tok_remeq,      # %=
+    tok_floatereq,  # bitwise operator ~=
+    tok_bit_and_eq, # bitwise operator &=
+    tok_bit_or_eq,  # bitwise operator |=
+    tok_bit_xor_eq, # bitwise operator ^=
+    tok_cmp_eq,     # ==
+    tok_neq,        # !=
+    tok_less,       # <
+    tok_leq,        # <=
+    tok_grt,        # >
+    tok_geq,        # >=
+    tok_arrow,      # ->
+    tok_wide_arrow, # =>
+    tok_eof         # <eof> token
 }
 
 func tok_kind_to_str(kind: tok_kind) -> i8* {
     if (kind == tok_kind::tok_null) {
         return "[tok_null      ]";
-    } elsif (kind == tok_kind::tok_eof) {
-        return "[tok_eof       ]";
     } elsif (kind == tok_kind::tok_num) {
         return "[tok_num       ]";
     } elsif (kind == tok_kind::tok_str) {
@@ -51,6 +92,12 @@ func tok_kind_to_str(kind: tok_kind) -> i8* {
         return "[tok_use       ]";
     } elsif (kind == tok_kind::tok_enum) {
         return "[tok_enum      ]";
+    } elsif (kind == tok_kind::tok_for) {
+        return "[tok_for       ]";
+    } elsif (kind == tok_kind::tok_forindex) {
+        return "[tok_forindex  ]";
+    } elsif (kind == tok_kind::tok_foreach) {
+        return "[tok_foreach   ]";
     } elsif (kind == tok_kind::tok_while) {
         return "[tok_while     ]";
     } elsif (kind == tok_kind::tok_var) {
@@ -77,12 +124,94 @@ func tok_kind_to_str(kind: tok_kind) -> i8* {
         return "[tok_else      ]";
     } elsif (kind == tok_kind::tok_nil) {
         return "[tok_nil       ]";
+    } elsif (kind == tok_kind::tok_lparen) {
+        return "[tok_lparen    ]";
+    } elsif (kind == tok_kind::tok_rparen) {
+        return "[tok_rparen    ]";
+    } elsif (kind == tok_kind::tok_lbracket) {
+        return "[tok_lbracket  ]";
+    } elsif (kind == tok_kind::tok_rbracket) {
+        return "[tok_rbracket  ]";
+    } elsif (kind == tok_kind::tok_lbrace) {
+        return "[tok_lbrace    ]";
+    } elsif (kind == tok_kind::tok_rbrace) {
+        return "[tok_rbrace    ]";
+    } elsif (kind == tok_kind::tok_semi) {
+        return "[tok_semi      ]";
+    } elsif (kind == tok_kind::tok_op_and) {
+        return "[tok_op_and    ]";
+    } elsif (kind == tok_kind::tok_op_or) {
+        return "[tok_op_or     ]";
+    } elsif (kind == tok_kind::tok_comma) {
+        return "[tok_comma     ]";
+    } elsif (kind == tok_kind::tok_dot) {
+        return "[tok_dot       ]";
+    } elsif (kind == tok_kind::tok_ellipsis) {
+        return "[tok_ellipsis  ]";
+    } elsif (kind == tok_kind::tok_quesmark) {
+        return "[tok_quesmark  ]";
+    } elsif (kind == tok_kind::tok_colon) {
+        return "[tok_colon     ]";
     } elsif (kind == tok_kind::tok_coloncolon) {
         return "[tok_coloncolon]";
+    } elsif (kind == tok_kind::tok_add) {
+        return "[tok_add       ]";
+    } elsif (kind == tok_kind::tok_sub) {
+        return "[tok_sub       ]";
+    } elsif (kind == tok_kind::tok_mul) {
+        return "[tok_mul       ]";
+    } elsif (kind == tok_kind::tok_div) {
+        return "[tok_div       ]";
+    } elsif (kind == tok_kind::tok_rem) {
+        return "[tok_rem       ]";
+    } elsif (kind == tok_kind::tok_floater) {
+        return "[tok_floater   ]";
+    } elsif (kind == tok_kind::tok_bit_and) {
+        return "[tok_bit_and   ]";
+    } elsif (kind == tok_kind::tok_bit_or) {
+        return "[tok_bit_or    ]";
+    } elsif (kind == tok_kind::tok_bit_xor) {
+        return "[tok_bit_xor   ]";
+    } elsif (kind == tok_kind::tok_op_not) {
+        return "[tok_op_not    ]";
+    } elsif (kind == tok_kind::tok_eq) {
+        return "[tok_eq        ]";
+    } elsif (kind == tok_kind::tok_addeq) {
+        return "[tok_addeq     ]";
+    } elsif (kind == tok_kind::tok_subeq) {
+        return "[tok_subeq     ]";
+    } elsif (kind == tok_kind::tok_muleq) {
+        return "[tok_muleq     ]";
+    } elsif (kind == tok_kind::tok_diveq) {
+        return "[tok_diveq     ]";
+    } elsif (kind == tok_kind::tok_remeq) {
+        return "[tok_remeq     ]";
+    } elsif (kind == tok_kind::tok_floatereq) {
+        return "[tok_floatereq ]";
+    } elsif (kind == tok_kind::tok_bit_and_eq) {
+        return "[tok_bit_and_eq]";
+    } elsif (kind == tok_kind::tok_bit_or_eq) {
+        return "[tok_bit_or_eq ]";
+    } elsif (kind == tok_kind::tok_bit_xor_eq) {
+        return "[tok_bit_xor_eq]";
+    } elsif (kind == tok_kind::tok_cmp_eq) {
+        return "[tok_cmp_eq    ]";
+    } elsif (kind == tok_kind::tok_neq) {
+        return "[tok_neq       ]";
+    } elsif (kind == tok_kind::tok_less) {
+        return "[tok_less      ]";
+    } elsif (kind == tok_kind::tok_leq) {
+        return "[tok_leq       ]";
+    } elsif (kind == tok_kind::tok_grt) {
+        return "[tok_grt       ]";
+    } elsif (kind == tok_kind::tok_geq) {
+        return "[tok_geq       ]";
     } elsif (kind == tok_kind::tok_arrow) {
         return "[tok_arrow     ]";
     } elsif (kind == tok_kind::tok_wide_arrow) {
         return "[tok_wide_arrow]";
+    } elsif (kind == tok_kind::tok_eof) {
+        return "[tok_eof       ]";
     }
 
     return "[unknown token ]";
@@ -228,6 +357,12 @@ impl lexer {
             return tok_kind::tok_use;
         } elsif (src->eq_const("enum")) {
             return tok_kind::tok_enum;
+        } elsif (src->eq_const("for")) {
+            return tok_kind::tok_for;
+        } elsif (src->eq_const("forindex")) {
+            return tok_kind::tok_forindex;
+        } elsif (src->eq_const("foreach")) {
+            return tok_kind::tok_foreach;
         } elsif (src->eq_const("while")) {
             return tok_kind::tok_while;
         } elsif (src->eq_const("var")) {
@@ -254,6 +389,10 @@ impl lexer {
             return tok_kind::tok_else;
         } elsif (src->eq_const("nil")) {
             return tok_kind::tok_nil;
+        } elsif (src->eq_const("and")) {
+            return tok_kind::tok_op_and;
+        } elsif (src->eq_const("or")) {
+            return tok_kind::tok_op_or;
         }
         return tok_kind::tok_id;
     }
@@ -279,7 +418,7 @@ impl lexer {
             self->pos += 1 => u64;
             self->toks->append(tok_kind::tok_coloncolon, tmp);
         } else {
-            # TODO: report error here
+            self->toks->append(tok_kind::tok_colon, tmp);
         }
         return;
     }
