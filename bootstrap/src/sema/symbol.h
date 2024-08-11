@@ -79,7 +79,8 @@ public:
         return t==type::u8_type(t.pointer_depth) ||
                t==type::u16_type(t.pointer_depth) ||
                t==type::u32_type(t.pointer_depth) ||
-               t==type::u64_type(t.pointer_depth);
+               t==type::u64_type(t.pointer_depth) ||
+               t.pointer_depth > 0;
     }
     bool is_integer() const {
         const auto& t = *this;

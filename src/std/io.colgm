@@ -1,4 +1,4 @@
-use std::libc::{open, read, write, close, malloc, free};
+use std::libc::{ open, read, write, close, malloc, free, strlen, itoa };
 use std::str::str;
 
 func O_RDONLY() -> i32 {
@@ -64,4 +64,80 @@ func readfile_into_string(filename: i8*, dst: str*) -> i64 {
     close(fd);
     free(buff);
     return 0;
+}
+
+struct io {
+    fd: i32
+}
+
+impl io {
+    func stdin() -> io* {
+        var instance = io::__alloc__();
+        instance->fd = 0 => i32;
+        return instance;
+    }
+
+    func stdout() -> io* {
+        var instance = io::__alloc__();
+        instance->fd = 1 => i32;
+        return instance;
+    }
+
+    func stderr() -> io* {
+        var instance = io::__alloc__();
+        instance->fd = 2 => i32;
+        return instance;
+    }
+
+    func stdlog() -> io* {
+        var instance = io::__alloc__();
+        instance->fd = 2 => i32;
+        return instance;
+    }
+
+    func out(self: io*, info: i8*) -> io* {
+        # do nothing if is stdin
+        if (self->fd == 0 => i32) {
+            return self;
+        }
+        write(self->fd, info, strlen(info));
+        return self;
+    }
+
+    func out_ch(self: io*, info: i8) -> io* {
+        var tmp = str::new();
+        tmp->append_char(info);
+
+        write(self->fd, tmp->c_str, 1);
+
+        tmp->delete();
+        free(tmp => i8*);
+        return self;
+    }
+
+    func out_i64(self: io*, info: i64) -> io* {
+        var buff = malloc(128 => u64);
+        itoa(info, buff, 10);
+        write(self->fd, buff, strlen(buff));
+        free(buff);
+        return self;
+    }
+
+    func end(self: io*) {
+        if (self != (nil => io*)) {
+            free(self => i8*);
+        }
+        return;
+    }
+
+    func endln(self: io*) {
+        if (self == (nil => io*)) {
+            return;
+        }
+        if (self->fd != (0 => i32)) {
+            write(self->fd, "\n", 1);
+        }
+        free(self => i8*);
+        return;
+    }
 }

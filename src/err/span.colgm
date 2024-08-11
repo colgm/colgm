@@ -1,5 +1,6 @@
-use std::libc::{ malloc, free, print, itoa };
+use std::libc::{ malloc, free, itoa };
 use std::str::str;
+use std::io::io;
 
 struct span {
     begin_line: i64,
@@ -26,22 +27,12 @@ impl span {
     }
 
     func dump(self: span*) {
-        var buff = malloc(1024 => u64);
-        var fmt = str::new();
-
-        fmt->append_str(self->file.c_str)->append_char(':');
-
-        itoa(self->begin_line, buff, 10);
-        fmt->append_str(buff)->append_char(':');
-
-        itoa(self->begin_column, buff, 10);
-        fmt->append_str(buff)->append_char('\n');
-
-        print(fmt->c_str);
-
-        free(buff);
-        fmt->delete();
-        free(fmt => i8*);
+        io::stdlog()->out(self->file.c_str)
+                    ->out_ch(':')
+                    ->out_i64(self->begin_line)
+                    ->out_ch(':')
+                    ->out_i64(self->begin_column)
+                    ->endln();
         return;
     }
 }

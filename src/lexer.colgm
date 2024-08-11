@@ -1,5 +1,6 @@
 use std::str::str;
-use std::libc::{ malloc, free, streq, println, print };
+use std::libc::{ malloc, free, streq };
+use std::io::io;
 
 enum tok_kind {
     tok_null,       # reserved
@@ -423,6 +424,22 @@ impl lexer {
         return;
     }
 
+    func generate_ellipsis(self: lexer*, src: str*) {
+        var tmp = str::new();
+        tmp->append_char('.');
+        self->pos += 1 => u64;
+        if (self->pos + (1 => u64) < src->size &&
+            src->get(self->pos) == '.' &&
+            src->get(self->pos + (1 => u64)) == '.') {
+            tmp->append_char('.')->append_char('.');
+            self->pos += 2 => u64;
+            self->toks->append(tok_kind::tok_ellipsis, tmp);
+        } else {
+            self->toks->append(tok_kind::tok_dot, tmp);
+        }
+        return;
+    }
+
     func skip_note(self: lexer*, src: str*) {
         while(self->pos < src->size && src->get(self->pos) != '\n') {
             self->pos += 1 => u64;
@@ -437,6 +454,8 @@ impl lexer {
                 self->generate_identifier(src);
             } elsif (src->get(self->pos)==':') {
                 self->generate_coloncolon(src);
+            } elsif (src->get(self->pos)=='.') {
+                self->generate_ellipsis(src);
             } elsif (lexer::is_arrow(self->pos, src) ||
                      lexer::is_wide_arrow(self->pos, src)) {
                 self->generate_arrow(src);
@@ -454,10 +473,11 @@ impl lexer {
     func dump(self: lexer*) {
         var index = 0 => u64;
         while(index < self->toks->size) {
-            print(tok_kind_to_str(self->toks->data[index].kind));
-            print(" \"");
-            print(self->toks->data[index].content->c_str);
-            println("\"");
+            io::stdlog()->out(tok_kind_to_str(self->toks->data[index].kind))
+                        ->out(" \"")
+                        ->out(self->toks->data[index].content->c_str)
+                        ->out("\"")
+                        ->endln();
             index += 1 => u64;
         }
         return;
