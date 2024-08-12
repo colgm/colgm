@@ -1,20 +1,30 @@
 use err::span::span;
+use std::libc::free;
+
+enum ast_kind {
+    ast_null
+}
 
 struct ast {
-    location: span,
-    type: i64,
+    kind: ast_kind,
+    location: span*,
     size: i64,
     child: ast*
 }
 
 impl ast {
-    func new() -> ast* {
-        return ast::__alloc__();
+    func new(k: ast_kind, loc: span*) -> ast* {
+        var res = ast::__alloc__();
+        res->kind = k;
+        res->location = loc;
+        res->size = 0;
+        res->child = nil => ast*;
+        return res;
     }
-    func get_type(self: ast*) -> i64 {
-        return self->type;
-    }
-    func get_location(self: ast*) -> span {
-        return self->location;
+
+    func delete(self: ast*) {
+        self->location->delete();
+        free(self->location => i8*);
+        return;
     }
 }

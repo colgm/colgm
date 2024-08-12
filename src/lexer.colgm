@@ -119,7 +119,7 @@ func tok_kind_to_str(kind: tok_kind) -> i8* {
         return "[tok_return    ]";
     } elsif (kind == tok_kind::tok_if) {
         return "[tok_if        ]";
-    } elsif(kind == tok_kind::tok_elsif) {
+    } elsif (kind == tok_kind::tok_elsif) {
         return "[tok_elsif     ]";
     } elsif (kind == tok_kind::tok_else) {
         return "[tok_else      ]";
@@ -304,7 +304,9 @@ impl lexer {
         self->toks->delete();
         return;
     }
+}
 
+impl lexer {
     func is_identifier_head(c: i8) -> bool {
         return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || (c == '_');
     }
@@ -319,6 +321,103 @@ impl lexer {
                c == '?';
     }
 
+    func is_digit(c: i8) -> bool {
+        return '0' <= c && c <= '9';
+    }
+
+    func is_hex(c: i8) -> bool {
+        return ('a' <= c && c <= 'f') ||
+               ('A' <= c && c <= 'F') ||
+               lexer::is_digit(c);
+    }
+
+    func is_oct(c: i8) -> bool {
+        return '0' <= c && c <= '7';
+    }
+
+    func need_lookahead_eq(c: i8) -> bool {
+        return c == '+' || c == '-' || c == '*' || c == '/' ||
+               c == '%' || c == '~' || c == '^' || c == '=' ||
+               c == '<' || c == '>' || c == '!';
+    }
+
+    func need_lookahead_other(c: i8) -> bool {
+        return c == '&' || c == '|';
+    }
+
+    func is_arrow(pos: u64, src: str*) -> bool {
+        if (src->get(pos)!='-') {
+            return false;
+        }
+        if (pos + 1 => u64 < src->size &&
+            src->get(pos + 1 => u64)=='>') {
+            return true;
+        }
+        return false;
+    }
+
+    func is_wide_arrow(pos: u64, src: str*) -> bool {
+        if (src->get(pos)!='=') {
+            return false;
+        }
+        if (pos + 1 => u64 < src->size &&
+            src->get(pos + 1 => u64)=='>') {
+            return true;
+        }
+        return false;
+    }
+
+    func check_id_kind(src: str*) -> tok_kind {
+        if (src->eq_const("true")) {
+            return tok_kind::tok_true;
+        } elsif (src->eq_const("false")) {
+            return tok_kind::tok_false;
+        } elsif (src->eq_const("use")) {
+            return tok_kind::tok_use;
+        } elsif (src->eq_const("enum")) {
+            return tok_kind::tok_enum;
+        } elsif (src->eq_const("for")) {
+            return tok_kind::tok_for;
+        } elsif (src->eq_const("forindex")) {
+            return tok_kind::tok_forindex;
+        } elsif (src->eq_const("foreach")) {
+            return tok_kind::tok_foreach;
+        } elsif (src->eq_const("while")) {
+            return tok_kind::tok_while;
+        } elsif (src->eq_const("var")) {
+            return tok_kind::tok_var;
+        } elsif (src->eq_const("struct")) {
+            return tok_kind::tok_struct;
+        } elsif (src->eq_const("pub")) {
+            return tok_kind::tok_pub;
+        } elsif (src->eq_const("impl")) {
+            return tok_kind::tok_impl;
+        } elsif (src->eq_const("func")) {
+            return tok_kind::tok_func;
+        } elsif (src->eq_const("break")) {
+            return tok_kind::tok_break;
+        } elsif (src->eq_const("continue")) {
+            return tok_kind::tok_continue;
+        } elsif (src->eq_const("return")) {
+            return tok_kind::tok_return;
+        } elsif (src->eq_const("if")) {
+            return tok_kind::tok_if;
+        } elsif (src->eq_const("elsif")) {
+            return tok_kind::tok_elsif;
+        } elsif (src->eq_const("else")) {
+            return tok_kind::tok_else;
+        } elsif (src->eq_const("nil")) {
+            return tok_kind::tok_nil;
+        } elsif (src->eq_const("and")) {
+            return tok_kind::tok_op_and;
+        } elsif (src->eq_const("or")) {
+            return tok_kind::tok_op_or;
+        }
+        return tok_kind::tok_id;
+    }
+}
+
+impl lexer {
     func generate_single_char_token(self: lexer*, src: str*) {
         var tmp = str::new();
         var ch = src->get(self->pos);
@@ -345,12 +444,6 @@ impl lexer {
             self->toks->append(tok_kind::tok_quesmark, tmp);
         }
         return;
-    }
-
-    func need_lookahead_eq(c: i8) -> bool {
-        return c == '+' || c == '-' || c == '*' || c == '/' ||
-               c == '%' || c == '~' || c == '^' || c == '=' ||
-               c == '<' || c == '>' || c == '!';
     }
 
     func generate_maybe_need_eq_oprs(self: lexer*, src: str*) {
@@ -410,10 +503,6 @@ impl lexer {
         return;
     }
 
-    func need_lookahead_other(c: i8) -> bool {
-        return c == '&' || c == '|';
-    }
-
     func generate_lookahead_other(self: lexer*, src: str*) {
         var tmp = str::new();
         var ch = src->get(self->pos);
@@ -449,29 +538,6 @@ impl lexer {
         return;
     }
 
-
-    func is_arrow(pos: u64, src: str*) -> bool {
-        if (src->get(pos)!='-') {
-            return false;
-        }
-        if (pos + 1 => u64 < src->size &&
-            src->get(pos + 1 => u64)=='>') {
-            return true;
-        }
-        return false;
-    }
-
-    func is_wide_arrow(pos: u64, src: str*) -> bool {
-        if (src->get(pos)!='=') {
-            return false;
-        }
-        if (pos + 1 => u64 < src->size &&
-            src->get(pos + 1 => u64)=='>') {
-            return true;
-        }
-        return false;
-    }
-
     func generate_arrow(self: lexer*, src: str*) {
         var tmp = str::new();
         tmp->append_char(src->get(self->pos));
@@ -486,55 +552,6 @@ impl lexer {
         return;
     }
 
-    func check_id_kind(src: str*) -> tok_kind {
-        if (src->eq_const("true")) {
-            return tok_kind::tok_true;
-        } elsif (src->eq_const("false")) {
-            return tok_kind::tok_false;
-        } elsif (src->eq_const("use")) {
-            return tok_kind::tok_use;
-        } elsif (src->eq_const("enum")) {
-            return tok_kind::tok_enum;
-        } elsif (src->eq_const("for")) {
-            return tok_kind::tok_for;
-        } elsif (src->eq_const("forindex")) {
-            return tok_kind::tok_forindex;
-        } elsif (src->eq_const("foreach")) {
-            return tok_kind::tok_foreach;
-        } elsif (src->eq_const("while")) {
-            return tok_kind::tok_while;
-        } elsif (src->eq_const("var")) {
-            return tok_kind::tok_var;
-        } elsif (src->eq_const("struct")) {
-            return tok_kind::tok_struct;
-        } elsif (src->eq_const("pub")) {
-            return tok_kind::tok_pub;
-        } elsif (src->eq_const("impl")) {
-            return tok_kind::tok_impl;
-        } elsif (src->eq_const("func")) {
-            return tok_kind::tok_func;
-        } elsif (src->eq_const("break")) {
-            return tok_kind::tok_break;
-        } elsif (src->eq_const("continue")) {
-            return tok_kind::tok_continue;
-        } elsif (src->eq_const("return")) {
-            return tok_kind::tok_return;
-        } elsif (src->eq_const("if")) {
-            return tok_kind::tok_if;
-        } elsif (src->eq_const("elsif")) {
-            return tok_kind::tok_elsif;
-        } elsif (src->eq_const("else")) {
-            return tok_kind::tok_else;
-        } elsif (src->eq_const("nil")) {
-            return tok_kind::tok_nil;
-        } elsif (src->eq_const("and")) {
-            return tok_kind::tok_op_and;
-        } elsif (src->eq_const("or")) {
-            return tok_kind::tok_op_or;
-        }
-        return tok_kind::tok_id;
-    }
-
     func generate_identifier(self: lexer*, src: str*) {
         var tmp = str::new();
         while(self->pos < src->size &&
@@ -544,6 +561,117 @@ impl lexer {
         }
 
         self->toks->append(lexer::check_id_kind(tmp), tmp);
+        return;
+    }
+
+    func generate_number(self: lexer*, src: str*) {
+        var tmp = str::new();
+        if (src->get(self->pos)=='0' &&
+            self->pos + (1 => u64) < src->size &&
+            src->get(self->pos + (1 => u64)) == 'x') {
+            tmp->append_str("0x");
+            self->pos += 2 => u64;
+            while(self->pos < src->size && lexer::is_hex(src->get(self->pos))) {
+                tmp->append_char(src->get(self->pos));
+                self->pos += 1 => u64;
+            }
+            if (tmp->size > 2 => u64) {
+                self->toks->append(tok_kind::tok_num, tmp);
+            } else {
+                # TODO: report error here
+            }
+            return;
+        }
+        if (src->get(self->pos)=='0' &&
+            self->pos + (1 => u64) < src->size &&
+            src->get(self->pos + (1 => u64)) == 'o') {
+            tmp->append_str("0o");
+            self->pos += 2 => u64;
+            while(self->pos < src->size && lexer::is_oct(src->get(self->pos))) {
+                tmp->append_char(src->get(self->pos));
+                self->pos += 1 => u64;
+            }
+            if (tmp->size > 2 => u64) {
+                self->toks->append(tok_kind::tok_num, tmp);
+            } else {
+                # TODO: report error here
+            }
+            return;
+        }
+
+        # get integer part
+        tmp->append_char(src->get(self->pos));
+        self->pos += 1 => u64;
+        while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+            tmp->append_char(src->get(self->pos));
+            self->pos += 1 => u64;
+        }
+
+        # get float part
+        if (self->pos < src->size && src->get(self->pos) == '.') {
+            var lookahead_pos = self->pos + (1 => u64);
+
+            # just return, this dot is not part of number
+            if (lookahead_pos >= src->size) {
+                self->toks->append(tok_kind::tok_num, tmp);
+                return;
+            }
+
+            var lookahead_ch = src->get(lookahead_pos);
+
+            # just return, this dot is not part of number
+            if (lexer::is_digit(lookahead_ch)==false) {
+                self->toks->append(tok_kind::tok_num, tmp);
+                return;
+            }
+
+            tmp->append_char('.');
+            self->pos += 1 => u64;
+            while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+                tmp->append_char(src->get(self->pos));
+                self->pos += 1 => u64;
+            }
+        }
+
+        # get F-E part
+        if (self->pos < src->size &&
+            (src->get(self->pos) == 'e' || src->get(self->pos) == 'E')) {
+            # just return
+            if (self->pos + (1 => u64) >= src->size) {
+                self->toks->append(tok_kind::tok_num, tmp);
+                return;
+            }
+
+            # FIXME: if defined lookahead_pos, cause error in llvm ir
+            var next_pos = self->pos + (1 => u64);
+
+            if (lexer::is_digit(src->get(next_pos))) {
+                tmp->append_char(src->get(self->pos));
+                self->pos += 1 => u64;
+                while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+                    tmp->append_char(src->get(self->pos));
+                    self->pos += 1 => u64;
+                }
+                self->toks->append(tok_kind::tok_num, tmp);
+                return;
+            }
+
+            if ((src->get(next_pos)=='-' || src->get(next_pos)=='+') &&
+                next_pos + (1 => u64) < src->size &&
+                lexer::is_digit(src->get(next_pos + (1 => u64)))) {
+                tmp->append_char(src->get(self->pos));
+                tmp->append_char(src->get(self->pos + (1 => u64)));
+                self->pos += 2 => u64;
+                while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+                    tmp->append_char(src->get(self->pos));
+                    self->pos += 1 => u64;
+                }
+                self->toks->append(tok_kind::tok_num, tmp);
+                return;
+            }
+        }
+
+        self->toks->append(tok_kind::tok_num, tmp);
         return;
     }
 
@@ -589,6 +717,8 @@ impl lexer {
         while(self->pos < src->size) {
             if (lexer::is_identifier_head(src->get(self->pos))) {
                 self->generate_identifier(src);
+            } elsif (lexer::is_digit(src->get(self->pos))) {
+                self->generate_number(src);
             } elsif (lexer::is_arrow(self->pos, src) ||
                      lexer::is_wide_arrow(self->pos, src)) {
                 # need to be put before normal operator scan process

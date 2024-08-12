@@ -105,6 +105,11 @@ impl io {
     }
 
     func out_ch(self: io*, info: i8) -> io* {
+        # do nothing if is stdin
+        if (self->fd == 0 => i32) {
+            return self;
+        }
+
         var tmp = str::new();
         tmp->append_char(info);
 
@@ -116,6 +121,11 @@ impl io {
     }
 
     func out_i64(self: io*, info: i64) -> io* {
+        # do nothing if is stdin
+        if (self->fd == 0 => i32) {
+            return self;
+        }
+
         var buff = malloc(128 => u64);
         itoa(info, buff, 10);
         write(self->fd, buff, strlen(buff));

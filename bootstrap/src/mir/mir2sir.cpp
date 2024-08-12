@@ -320,6 +320,7 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
         case mir_binary::opr_kind::cmpeq: {
             auto flag_is_integer = left.resolve_type.is_integer() ||
                 left.resolve_type.is_pointer() ||
+                left.resolve_type.is_boolean() ||
                 ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_eq,
@@ -334,6 +335,7 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
         case mir_binary::opr_kind::cmpneq: {
             auto flag_is_integer = left.resolve_type.is_integer() ||
                 left.resolve_type.is_pointer() ||
+                left.resolve_type.is_boolean() ||
                 ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_neq,

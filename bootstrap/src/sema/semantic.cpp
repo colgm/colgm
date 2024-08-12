@@ -381,7 +381,8 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
         return type::bool_type();
     }
 
-    if (!left.is_integer() && !left.is_float() && !left.is_pointer()) {
+    if (!left.is_integer() && !left.is_float() &&
+        !left.is_pointer() && !left.is_boolean()) {
         report(node,
             "cannot compare \"" + left.to_string() +
             "\" and \"" + right.to_string() + "\"."
