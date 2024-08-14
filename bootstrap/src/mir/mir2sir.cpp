@@ -451,7 +451,7 @@ void mir2sir::visit_mir_bool(mir_bool* node) {
 }
 
 void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
-    block->add_nop("[call begin]");
+    block->add_nop("[call begin] " + std::to_string((u64)node));
 
     node->get_content()->accept(this);
 
@@ -466,7 +466,7 @@ void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
     }
 
     if (need_address) {
-        block->add_nop("[call end] need address");
+        block->add_nop("[call end] with address " + std::to_string((u64)node));
         return;
     }
 
@@ -478,7 +478,7 @@ void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
         source.to_value_t(),
         value_t::variable(temp_var)
     ));
-    block->add_nop("[call end] need value");
+    block->add_nop("[call end] with value " + std::to_string((u64)node));
 
     value_stack.push_back(mir_value_t::variable(
         temp_var,

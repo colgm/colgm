@@ -1,11 +1,23 @@
 use std::str::str;
 use std::libc::{ malloc, free, streq, putchar, itoa };
-use err::span::span;
+use err::span::*;
+use err::report::*;
 use ast::ast::*;
 use cli::*;
 use std::io::{readfile_into_string, io};
 
 use lexer::{ lexer };
+
+func test_report(rep: report*, filename: i8*) {
+    var sp = span::new();
+    sp->file.copy_const(filename);
+    sp->begin_line = 1;
+    sp->begin_column = 2;
+    rep->error(sp, "colgm error test, ignore it.");
+    sp->delete();
+    free(sp => i8*);
+    return;
+}
 
 func compile(filename: i8*, library_path: i8*, option: cli_option*) {
     io::stdlog()->out("[colgm] source file: \"")
@@ -21,21 +33,19 @@ func compile(filename: i8*, library_path: i8*, option: cli_option*) {
         io::stdlog()->out("[colgm] library path: <none>")->endln();
     }
 
-    var lex = lexer::new();
-    var source = str::new();
-    readfile_into_string(filename, source);
+    var rep = report::new();
+    var lex = lexer::new(rep);
 
     # do lexer scanning
-    lex->scan(source);
+    lex->scan(filename);
     if (option->OPTION_VIEW_TOKEN) {
         lex->dump();
     }
 
     lex->delete();
-    source->delete();
     free(lex => i8*);
-    free(source => i8*);
 
+    test_report(rep, filename);
     return;
 }
 

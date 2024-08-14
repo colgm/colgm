@@ -1,0 +1,150 @@
+use err::span::*;
+use std::str::str;
+use std::io::{ readfile_into_string, io };
+use std::libc::{ malloc, free };
+
+struct file_lines {
+    source: str*,
+    size: i64,
+    alloc_size: i64
+}
+
+impl file_lines {
+    func init(self: file_lines*) {
+        self->source = malloc((128 => u64)*str::__size__()) => str*;
+        self->size = 0;
+        self->alloc_size = 128;
+
+        var index = 0;
+        while(index < self->alloc_size) {
+            self->source[index].init();
+            index += 1;
+        }
+        return;
+    }
+
+    func delete(self: file_lines*) {
+        var index = 0;
+        while(index < self->size) {
+            self->source[index].delete();
+            index += 1;
+        }
+        free(self->source => i8*);
+        return;
+    }
+
+    func clear(self: file_lines*) {
+        var index = 0;
+        while(index < self->size) {
+            self->source[index].clear();
+            index += 1;
+        }
+        self->size = 0;
+        return;
+    }
+
+    func push(self: file_lines*, line: str*) {
+        if (self->size == self->alloc_size) {
+            self->alloc_size *= 2;
+            var tmp = malloc((self->alloc_size => u64)*str::__size__()) => str*;
+            var index = 0;
+            while(index < self->size) {
+                tmp[index] = self->source[index];
+                index += 1;
+            }
+            while(index < self->alloc_size) {
+                tmp[index].init();
+                index += 1;
+            }
+            free(self->source => i8*);
+            self->source = tmp;
+        }
+
+        self->source[self->size].append_str(line->c_str);
+        self->size += 1;
+        return;
+    }
+}
+
+struct report {
+    filename: str,
+    source: file_lines,
+    error_count: i64
+}
+
+impl report {
+    func new() -> report* {
+        var res = report::__alloc__();
+        res->filename.init();
+        res->source.init();
+        res->error_count = 0;
+        return res;
+    }
+
+    func delete(self: report*) {
+        self->filename.delete();
+        self->source.delete();
+        return;
+    }
+}
+
+impl report {
+    func load_file_source(self: report*, filename: i8*) {
+        self->filename.clear();
+        self->filename.append_str(filename);
+
+        var source = str::new();
+        readfile_into_string(filename, source);
+
+        var pos = 0 => u64;
+        var tmp = str::new();
+        while(pos < source->size) {
+            if (source->get(pos)=='\n') {
+                self->source.push(tmp);
+                tmp->clear();
+                pos += 1 => u64;
+                continue;
+            }
+            tmp->append_char(source->get(pos));
+            pos += 1 => u64;
+        }
+        if (tmp->size > (0 => u64)) {
+            self->source.push(tmp);
+            tmp->clear();
+        }
+
+        source->delete();
+        free(source => i8*);
+        tmp->delete();
+        free(tmp => i8*);
+
+        var ii = 0;
+        while(ii < self->source.size) {
+            io::stdout()->out(" | ")
+                ->white()->out_i64(ii+1)->out("\t")
+                ->reset()->out("| ")
+                ->cyan()->out(self->source.source[ii].c_str)
+                ->reset()->endln();
+            ii += 1;
+        }
+        return;
+    }
+}
+
+impl report {
+    func error(self: report*, location: span*, message: i8*) {
+        if (location->file.eq_const(self->filename.c_str)==false) {
+            self->load_file_source(location->file.c_str);
+        }
+        self->error_count += 1;
+
+        io::stderr()->red()->out("Error: ")->reset()->end();
+        io::stderr()->white()->out(message)->reset()->endln();
+        io::stderr()->cyan()->out("  --> ")->end();
+        io::stderr()->red()->out(location->file.c_str)
+            ->out_ch(':')->out_i64(location->begin_line)
+            ->out_ch(':')->out_i64(location->begin_column + 1)
+            ->reset()->endln();
+        return;
+    }
+}

@@ -45,6 +45,10 @@ void sir_func::dump(std::ostream& out) const {
 void sir_context::dump_raw_string(std::ostream& out,
                                   const std::string& src) const {
     for(const auto c : src) {
+        if (std::isdigit(c) || std::isalpha(c)) {
+            out << c;
+            continue;
+        }
         out << "\\";
         out << std::hex << std::setw(2) << std::setfill('0') << u32(c);
         out << std::dec;
@@ -163,6 +167,9 @@ void sir_context::dump_code(std::ostream& out) {
         i->dump(out);
         out << "\n";
     }
+
+    out << "!llvm.ident = !{!0}\n";
+    out << "!0 = !{!\"colgm compiler version " << __colgm_ver__ << "\"}";
 }
 
 }

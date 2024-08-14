@@ -1,6 +1,7 @@
 use std::str::str;
 use std::libc::{ malloc, free };
-use std::io::io;
+use std::io::{ readfile_into_string, io};
+use err::report::*;
 
 enum tok_kind {
     tok_null,       # reserved
@@ -288,13 +289,15 @@ impl vec_token {
 }
 
 struct lexer {
+    err: report*,
     toks: vec_token*,
     pos: u64
 }
 
 impl lexer {
-    func new() -> lexer* {
+    func new(e: report*) -> lexer* {
         var res = lexer::__alloc__();
+        res->err = e;
         res->toks = vec_token::new();
         res->pos = 0 => u64;
         return res;
@@ -712,7 +715,11 @@ impl lexer {
         return;
     }
 
-    func scan(self: lexer*, src: str*) {
+    func scan(self: lexer*, filename: i8*) {
+        var src = str::new();
+        self->err->load_file_source(filename);
+        readfile_into_string(filename, src);
+
         self->pos = 0 => u64;
         while(self->pos < src->size) {
             if (lexer::is_identifier_head(src->get(self->pos))) {
@@ -742,6 +749,9 @@ impl lexer {
         }
 
         self->toks->append(tok_kind::tok_eof, str::new()->append_str("<eof>"));
+
+        src->delete();
+        free(src => i8*);
         return;
     }
 
