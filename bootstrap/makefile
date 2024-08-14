@@ -2,27 +2,27 @@ COLGMCC = ./build/colgm
 
 .PHONY: test
 test: $(COLGMCC)
-	@ $(COLGMCC) --mir test/assign.colgm
+	@ $(COLGMCC) test/assign.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/bitwise.colgm
+	@ $(COLGMCC) test/bitwise.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/branch.colgm
+	@ $(COLGMCC) test/branch.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/continue_break.colgm
+	@ $(COLGMCC) test/continue_break.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/enum_test.colgm
+	@ $(COLGMCC) test/enum_test.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/func.colgm
+	@ $(COLGMCC) test/func.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/hello.colgm
+	@ $(COLGMCC) test/hello.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/negative.colgm
+	@ $(COLGMCC) test/negative.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/self-ref-test.colgm
+	@ $(COLGMCC) test/self-ref-test.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/string.colgm
+	@ $(COLGMCC) test/string.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/to_str.colgm
+	@ $(COLGMCC) test/to_str.colgm
 	@ lli out.ll
-	@ $(COLGMCC) --mir test/type_convert.colgm
+	@ $(COLGMCC) test/type_convert.colgm
 	@ lli out.ll
