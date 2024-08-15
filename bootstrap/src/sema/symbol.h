@@ -103,7 +103,9 @@ public:
     }
     bool is_pointer() const { return pointer_depth>0; }
     bool is_function() const {
-        return stm_info.flag_is_normal || stm_info.flag_is_static;
+        return stm_info.flag_is_normal ||
+               stm_info.flag_is_static ||
+               is_global_func;
     }
 
 public:
