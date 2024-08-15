@@ -102,6 +102,9 @@ public:
         return *this==type::bool_type(this->pointer_depth);
     }
     bool is_pointer() const { return pointer_depth>0; }
+    bool is_function() const {
+        return stm_info.flag_is_normal || stm_info.flag_is_static;
+    }
 
 public:
     auto get_pointer_copy() const {

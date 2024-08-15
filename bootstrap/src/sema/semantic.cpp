@@ -902,6 +902,11 @@ type semantic::resolve_call(call* node) {
 
     // resolve call chain
     for(auto i : node->get_chain()) {
+        if (i->get_ast_type() != ast_type::ast_call_func_args &&
+            (infer.is_function() || infer.is_global_func)) {
+            report(i, "function should be called before.");
+            return type::error_type();
+        }
         switch(i->get_ast_type()) {
         case ast_type::ast_get_field:
             infer = resolve_get_field(
