@@ -165,14 +165,73 @@ impl report {
 
         while(index <= location->end_line && index < self->source.size) {
             var tmp_str_const = self->source.source[index].c_str;
-            var padding_num = report::to_str(index, max_line_number_length);
-            io::stderr()->cyan()->out(padding_num->c_str)->out(" | ")
+            var len = strlen(tmp_str_const);
+            var pad_num = report::to_str(index, max_line_number_length);
+            io::stderr()->cyan()->out(pad_num->c_str)->out(" | ")
                         ->reset()->out(tmp_str_const)
                         ->endln();
-            index += 1;
 
-            padding_num->delete();
-            free(padding_num => i8*);
+            var underline = str::new();
+            var i = 0;
+            if (index == location->begin_line) {
+                while(i < len) {
+                    if (i < location->begin_column && tmp_str_const[i]!='\t') {
+                        underline->append_char(' ');
+                    }
+                    if (i < location->begin_column && tmp_str_const[i]=='\t') {
+                        underline->append_char('\t');
+                    }
+                    if (i >= location->begin_column && tmp_str_const[i]!='\t') {
+                        underline->append_char('^');
+                    }
+                    if (i >= location->begin_column && tmp_str_const[i]=='\t') {
+                        underline->append_str("^^^^");
+                    }
+                    i += 1;
+                }
+            } elsif (index == location->end_line) {
+                while(i < len) {
+                    if (i < location->end_column && tmp_str_const[i]!='\t') {
+                        underline->append_char('^');
+                    }
+                    if (i < location->end_column && tmp_str_const[i]=='\t') {
+                        underline->append_str("^^^^");
+                    }
+                    if (i >= location->end_column && tmp_str_const[i]!='\t') {
+                        underline->append_char(' ');
+                    }
+                    if (i >= location->end_column && tmp_str_const[i]=='\t') {
+                        underline->append_char('\t');
+                    }
+                    i += 1;
+                }
+            } else {
+                while(i < len) {
+                    if (tmp_str_const[i]=='\t') {
+                        underline->append_str("^^^^");
+                    } elsif(tmp_str_const[i]!='\r' && tmp_str_const[i]!='\n') {
+                        underline->append_char('^');
+                    }
+                    i += 1;
+                }
+            }
+
+            index += 1;
+            
+            if (is_error) {
+                io::stderr()->cyan()->out(pad_str->c_str)->out(" | ")
+                            ->red()->out(underline->c_str)
+                            ->reset()->endln();
+            } else {
+                io::stderr()->cyan()->out(pad_str->c_str)->out(" | ")
+                            ->orange()->out(underline->c_str)
+                            ->reset()->endln();
+            }
+
+            underline->delete();
+            free(underline => i8*);
+            pad_num->delete();
+            free(pad_num => i8*);
         }
 
         io::stderr()->cyan()->out(pad_str->c_str)->out(" | ")->reset()->endln();
@@ -181,7 +240,9 @@ impl report {
         free(pad_str => i8*);
         return;
     }
+}
 
+impl report {
     func error(self: report*, location: span*, message: i8*) {
         if (location->file.eq_const(self->filename.c_str)==false) {
             self->load_file_source(location->file.c_str);
