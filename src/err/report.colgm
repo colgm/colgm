@@ -158,7 +158,7 @@ impl report {
 
     func print_file_line(self: report*, location: span*, is_error: bool) {
         var index = location->begin_line;
-        var max_line_number_length = report::get_number_length(location->end_line);
+        var max_line_number_length = report::get_number_length(location->end_line + 1);
         var pad_str = report::left_pad(max_line_number_length);
 
         io::stderr()->cyan()->out(pad_str->c_str)->out(" | ")->reset()->endln();
@@ -166,7 +166,7 @@ impl report {
         while(index <= location->end_line && index < self->source.size) {
             var tmp_str_const = self->source.source[index].c_str;
             var len = strlen(tmp_str_const);
-            var pad_num = report::to_str(index, max_line_number_length);
+            var pad_num = report::to_str(index + 1, max_line_number_length);
             io::stderr()->cyan()->out(pad_num->c_str)->out(" | ")
                         ->reset()->out(tmp_str_const)
                         ->endln();
@@ -253,7 +253,7 @@ impl report {
         io::stderr()->white()->out(message)->reset()->endln();
         io::stderr()->cyan()->out("  --> ")->end();
         io::stderr()->red()->out(location->file.c_str)
-            ->out_ch(':')->out_i64(location->begin_line)
+            ->out_ch(':')->out_i64(location->begin_line + 1)
             ->out_ch(':')->out_i64(location->begin_column + 1)
             ->reset()->endln();
         self->print_file_line(location, true);
@@ -270,7 +270,7 @@ impl report {
         io::stderr()->white()->out(message)->reset()->endln();
         io::stderr()->cyan()->out("  --> ")->end();
         io::stderr()->orange()->out(location->file.c_str)
-            ->out_ch(':')->out_i64(location->begin_line)
+            ->out_ch(':')->out_i64(location->begin_line + 1)
             ->out_ch(':')->out_i64(location->begin_column + 1)
             ->reset()->endln();
         self->print_file_line(location, false);

@@ -2,6 +2,7 @@ use std::str::str;
 use std::libc::{ malloc, free };
 use std::io::{ readfile_into_string, io};
 use err::report::*;
+use err::span::span;
 
 enum tok_kind {
     tok_null,       # reserved
@@ -221,20 +222,24 @@ func tok_kind_to_str(kind: tok_kind) -> i8* {
 
 struct token {
     kind: tok_kind,
-    content: str*
+    content: str*,
+    location: span*
 }
 
 impl token {
-    func new(kind: tok_kind, content: str*) -> token* {
+    func new(kind: tok_kind, content: str*, loc: span*) -> token* {
         var res = token::__alloc__();
         res->kind = kind;
         res->content = content;
+        res->location = loc;
         return res;
     }
 
     func delete(self: token*) {
         self->content->delete();
         free(self->content => i8*);
+        self->location->delete();
+        free(self->location => i8*);
         return;
     }
 }
@@ -265,7 +270,7 @@ impl vec_token {
         return;
     }
 
-    func append(self: vec_token*, kind: tok_kind, content: str*) {
+    func append(self: vec_token*, kind: tok_kind, content: str*, loc: span*) {
         if(self->size == self->alloc_size) {
             var size_of_token = token::__size__();
             var new_data = malloc(
@@ -283,6 +288,7 @@ impl vec_token {
 
         self->data[self->size].kind = kind;
         self->data[self->size].content = content;
+        self->data[self->size].location = loc;
         self->size += 1 => u64;
         return;
     }
@@ -292,6 +298,7 @@ struct lexer {
     err: report*,
     toks: vec_token*,
     pos: u64,
+    filename: str,
     line: i64,
     column: i64
 }
@@ -302,13 +309,16 @@ impl lexer {
         res->err = e;
         res->toks = vec_token::new();
         res->pos = 0 => u64;
+        res->filename.init();
         res->line = 0;
         res->column = 0;
         return res;
     }
 
     func delete(self: lexer*) {
+        self->filename.delete();
         self->toks->delete();
+        free(self->toks => i8*);
         return;
     }
 }
@@ -430,34 +440,49 @@ impl lexer {
 
 impl lexer {
     func generate_single_char_token(self: lexer*, src: str*) {
+        var loc = span::new();
+        loc->file.copy_const(self->filename.c_str);
+        loc->begin_line = self->line;
+        loc->begin_column = self->column;
+
         var tmp = str::new();
         var ch = src->get(self->pos);
         tmp->append_char(ch);
+
         self->pos += 1 => u64;
+        self->column += 1;
+
+        loc->end_line = self->line;
+        loc->end_column = self->column;
 
         if (ch == '(') {
-            self->toks->append(tok_kind::tok_lparen, tmp);
+            self->toks->append(tok_kind::tok_lparen, tmp, loc);
         } elsif (ch == ')') {
-            self->toks->append(tok_kind::tok_rparen, tmp);
+            self->toks->append(tok_kind::tok_rparen, tmp, loc);
         } elsif (ch == '[') {
-            self->toks->append(tok_kind::tok_lbracket, tmp);
+            self->toks->append(tok_kind::tok_lbracket, tmp, loc);
         } elsif (ch == ']') {
-            self->toks->append(tok_kind::tok_rbracket, tmp);
+            self->toks->append(tok_kind::tok_rbracket, tmp, loc);
         } elsif (ch == '{') {
-            self->toks->append(tok_kind::tok_lbrace, tmp);
+            self->toks->append(tok_kind::tok_lbrace, tmp, loc);
         } elsif (ch == ']') {
-            self->toks->append(tok_kind::tok_rbrace, tmp);
+            self->toks->append(tok_kind::tok_rbrace, tmp, loc);
         } elsif (ch == ';') {
-            self->toks->append(tok_kind::tok_semi, tmp);
+            self->toks->append(tok_kind::tok_semi, tmp, loc);
         } elsif (ch == ',') {
-            self->toks->append(tok_kind::tok_comma, tmp);
+            self->toks->append(tok_kind::tok_comma, tmp, loc);
         } elsif (ch == '?') {
-            self->toks->append(tok_kind::tok_quesmark, tmp);
+            self->toks->append(tok_kind::tok_quesmark, tmp, loc);
         }
         return;
     }
 
     func generate_maybe_need_eq_oprs(self: lexer*, src: str*) {
+        var loc = span::new();
+        loc->file.copy_const(self->filename.c_str);
+        loc->begin_line = self->line;
+        loc->begin_column = self->column;
+
         var tmp = str::new();
         tmp->append_char(src->get(self->pos));
         self->pos += 1 => u64;
@@ -466,55 +491,64 @@ impl lexer {
             self->pos += 1 => u64;
         }
 
+        self->column += tmp->size => i64;
+        loc->end_line = self->line;
+        loc->end_column = self->column;
+
         if (tmp->eq_const("+")) {
-            self->toks->append(tok_kind::tok_add, tmp);
+            self->toks->append(tok_kind::tok_add, tmp, loc);
         } elsif (tmp->eq_const("+=")) {
-            self->toks->append(tok_kind::tok_addeq, tmp);
+            self->toks->append(tok_kind::tok_addeq, tmp, loc);
         } elsif (tmp->eq_const("-")) {
-            self->toks->append(tok_kind::tok_sub, tmp);
+            self->toks->append(tok_kind::tok_sub, tmp, loc);
         } elsif (tmp->eq_const("-=")) {
-            self->toks->append(tok_kind::tok_subeq, tmp);
+            self->toks->append(tok_kind::tok_subeq, tmp, loc);
         } elsif (tmp->eq_const("*")) {
-            self->toks->append(tok_kind::tok_mul, tmp);
+            self->toks->append(tok_kind::tok_mul, tmp, loc);
         } elsif (tmp->eq_const("*=")) {
-            self->toks->append(tok_kind::tok_muleq, tmp);
+            self->toks->append(tok_kind::tok_muleq, tmp, loc);
         } elsif (tmp->eq_const("/")) {
-            self->toks->append(tok_kind::tok_div, tmp);
+            self->toks->append(tok_kind::tok_div, tmp, loc);
         } elsif (tmp->eq_const("/=")) {
-            self->toks->append(tok_kind::tok_diveq, tmp);
+            self->toks->append(tok_kind::tok_diveq, tmp, loc);
         } elsif (tmp->eq_const("%")) {
-            self->toks->append(tok_kind::tok_rem, tmp);
+            self->toks->append(tok_kind::tok_rem, tmp, loc);
         } elsif (tmp->eq_const("%=")) {
-            self->toks->append(tok_kind::tok_remeq, tmp);
+            self->toks->append(tok_kind::tok_remeq, tmp, loc);
         } elsif (tmp->eq_const("~")) {
-            self->toks->append(tok_kind::tok_floater, tmp);
+            self->toks->append(tok_kind::tok_floater, tmp, loc);
         } elsif (tmp->eq_const("~=")) {
-            self->toks->append(tok_kind::tok_floatereq, tmp);
+            self->toks->append(tok_kind::tok_floatereq, tmp, loc);
         } elsif (tmp->eq_const("^")) {
-            self->toks->append(tok_kind::tok_bit_xor, tmp);
+            self->toks->append(tok_kind::tok_bit_xor, tmp, loc);
         } elsif (tmp->eq_const("^=")) {
-            self->toks->append(tok_kind::tok_bit_xor_eq, tmp);
+            self->toks->append(tok_kind::tok_bit_xor_eq, tmp, loc);
         } elsif (tmp->eq_const("=")) {
-            self->toks->append(tok_kind::tok_eq, tmp);
+            self->toks->append(tok_kind::tok_eq, tmp, loc);
         } elsif (tmp->eq_const("==")) {
-            self->toks->append(tok_kind::tok_cmp_eq, tmp);
+            self->toks->append(tok_kind::tok_cmp_eq, tmp, loc);
         } elsif (tmp->eq_const("<")) {
-            self->toks->append(tok_kind::tok_less, tmp);
+            self->toks->append(tok_kind::tok_less, tmp, loc);
         } elsif (tmp->eq_const("<=")) {
-            self->toks->append(tok_kind::tok_leq, tmp);
+            self->toks->append(tok_kind::tok_leq, tmp, loc);
         } elsif (tmp->eq_const(">")) {
-            self->toks->append(tok_kind::tok_grt, tmp);
+            self->toks->append(tok_kind::tok_grt, tmp, loc);
         } elsif (tmp->eq_const(">=")) {
-            self->toks->append(tok_kind::tok_geq, tmp);
+            self->toks->append(tok_kind::tok_geq, tmp, loc);
         } elsif (tmp->eq_const("!")) {
-            self->toks->append(tok_kind::tok_op_not, tmp);
+            self->toks->append(tok_kind::tok_op_not, tmp, loc);
         } elsif (tmp->eq_const("!=")) {
-            self->toks->append(tok_kind::tok_neq, tmp);
+            self->toks->append(tok_kind::tok_neq, tmp, loc);
         }
         return;
     }
 
     func generate_lookahead_other(self: lexer*, src: str*) {
+        var loc = span::new();
+        loc->file.copy_const(self->filename.c_str);
+        loc->begin_line = self->line;
+        loc->begin_column = self->column;
+
         var tmp = str::new();
         var ch = src->get(self->pos);
         tmp->append_char(ch);
@@ -533,37 +567,56 @@ impl lexer {
             }
         }
 
+        self->column += tmp->size => i64;
+        loc->end_line = self->line;
+        loc->end_column = self->column;
+
         if (tmp->eq_const("&")) {
-            self->toks->append(tok_kind::tok_bit_and, tmp);
+            self->toks->append(tok_kind::tok_bit_and, tmp, loc);
         } elsif (tmp->eq_const("&=")) {
-            self->toks->append(tok_kind::tok_bit_and_eq, tmp);
+            self->toks->append(tok_kind::tok_bit_and_eq, tmp, loc);
         } elsif (tmp->eq_const("&&")) {
-            self->toks->append(tok_kind::tok_op_and, tmp);
+            self->toks->append(tok_kind::tok_op_and, tmp, loc);
         } elsif (tmp->eq_const("|")) {
-            self->toks->append(tok_kind::tok_bit_or, tmp);
+            self->toks->append(tok_kind::tok_bit_or, tmp, loc);
         } elsif (tmp->eq_const("|=")) {
-            self->toks->append(tok_kind::tok_bit_or_eq, tmp);
+            self->toks->append(tok_kind::tok_bit_or_eq, tmp, loc);
         } elsif (tmp->eq_const("||")) {
-            self->toks->append(tok_kind::tok_op_or, tmp);
+            self->toks->append(tok_kind::tok_op_or, tmp, loc);
         }
         return;
     }
 
     func generate_arrow(self: lexer*, src: str*) {
+        var loc = span::new();
+        loc->file.copy_const(self->filename.c_str);
+        loc->begin_line = self->line;
+        loc->begin_column = self->column;
+
         var tmp = str::new();
         tmp->append_char(src->get(self->pos));
         self->pos += 1 => u64;
         tmp->append_char(src->get(self->pos));
         self->pos += 1 => u64;
+
+        self->column += 2;
+        loc->end_line = self->line;
+        loc->end_column = self->column;
+
         if (tmp->get(0 => u64)=='-') {
-            self->toks->append(tok_kind::tok_arrow, tmp);
+            self->toks->append(tok_kind::tok_arrow, tmp, loc);
         } else {
-            self->toks->append(tok_kind::tok_wide_arrow, tmp);
+            self->toks->append(tok_kind::tok_wide_arrow, tmp, loc);
         }
         return;
     }
 
     func generate_identifier(self: lexer*, src: str*) {
+        var loc = span::new();
+        loc->file.copy_const(self->filename.c_str);
+        loc->begin_line = self->line;
+        loc->begin_column = self->column;
+
         var tmp = str::new();
         while(self->pos < src->size &&
               lexer::is_identifier_body(src->get(self->pos))) {
@@ -571,11 +624,20 @@ impl lexer {
             self->pos += 1 => u64;
         }
 
-        self->toks->append(lexer::check_id_kind(tmp), tmp);
+        self->column += tmp->size => i64;
+        loc->end_line = self->line;
+        loc->end_column = self->column;
+
+        self->toks->append(lexer::check_id_kind(tmp), tmp, loc);
         return;
     }
 
     func generate_number(self: lexer*, src: str*) {
+        var loc = span::new();
+        loc->file.copy_const(self->filename.c_str);
+        loc->begin_line = self->line;
+        loc->begin_column = self->column;
+
         var tmp = str::new();
         if (src->get(self->pos)=='0' &&
             self->pos + (1 => u64) < src->size &&
@@ -587,7 +649,10 @@ impl lexer {
                 self->pos += 1 => u64;
             }
             if (tmp->size > 2 => u64) {
-                self->toks->append(tok_kind::tok_num, tmp);
+                self->column += tmp->size => i64;
+                loc->end_line = self->line;
+                loc->end_column = self->column;
+                self->toks->append(tok_kind::tok_num, tmp, loc);
             } else {
                 # TODO: report error here
             }
@@ -603,7 +668,10 @@ impl lexer {
                 self->pos += 1 => u64;
             }
             if (tmp->size > 2 => u64) {
-                self->toks->append(tok_kind::tok_num, tmp);
+                self->column += tmp->size => i64;
+                loc->end_line = self->line;
+                loc->end_column = self->column;
+                self->toks->append(tok_kind::tok_num, tmp, loc);
             } else {
                 # TODO: report error here
             }
@@ -624,7 +692,10 @@ impl lexer {
 
             # just return, this dot is not part of number
             if (lookahead_pos >= src->size) {
-                self->toks->append(tok_kind::tok_num, tmp);
+                self->column += tmp->size => i64;
+                loc->end_line = self->line;
+                loc->end_column = self->column;
+                self->toks->append(tok_kind::tok_num, tmp, loc);
                 return;
             }
 
@@ -632,7 +703,10 @@ impl lexer {
 
             # just return, this dot is not part of number
             if (!lexer::is_digit(lookahead_ch)) {
-                self->toks->append(tok_kind::tok_num, tmp);
+                self->column += tmp->size => i64;
+                loc->end_line = self->line;
+                loc->end_column = self->column;
+                self->toks->append(tok_kind::tok_num, tmp, loc);
                 return;
             }
 
@@ -649,7 +723,10 @@ impl lexer {
             (src->get(self->pos) == 'e' || src->get(self->pos) == 'E')) {
             # just return
             if (self->pos + (1 => u64) >= src->size) {
-                self->toks->append(tok_kind::tok_num, tmp);
+                self->column += tmp->size => i64;
+                loc->end_line = self->line;
+                loc->end_column = self->column;
+                self->toks->append(tok_kind::tok_num, tmp, loc);
                 return;
             }
 
@@ -663,7 +740,10 @@ impl lexer {
                     tmp->append_char(src->get(self->pos));
                     self->pos += 1 => u64;
                 }
-                self->toks->append(tok_kind::tok_num, tmp);
+                self->column += tmp->size => i64;
+                loc->end_line = self->line;
+                loc->end_column = self->column;
+                self->toks->append(tok_kind::tok_num, tmp, loc);
                 return;
             }
 
@@ -677,20 +757,33 @@ impl lexer {
                     tmp->append_char(src->get(self->pos));
                     self->pos += 1 => u64;
                 }
-                self->toks->append(tok_kind::tok_num, tmp);
+                self->column += tmp->size => i64;
+                loc->end_line = self->line;
+                loc->end_column = self->column;
+                self->toks->append(tok_kind::tok_num, tmp, loc);
                 return;
             }
         }
 
-        self->toks->append(tok_kind::tok_num, tmp);
+        self->column += tmp->size => i64;
+        loc->end_line = self->line;
+        loc->end_column = self->column;
+        self->toks->append(tok_kind::tok_num, tmp, loc);
         return;
     }
 
     func generate_string(self: lexer*, src: str*) {
+        var loc = span::new();
+        loc->file.copy_const(self->filename.c_str);
+        loc->begin_line = self->line;
+        loc->begin_column = self->column;
+
         var quote_type = src->get(self->pos);
         var tmp = str::new();
         tmp->append_char(quote_type);
         self->pos += 1 => u64;
+        self->column += 1;
+
         while(self->pos < src->size && src->get(self->pos) != quote_type) {
             var this_ch = src->get(self->pos);
             if (this_ch=='\n') {
@@ -751,44 +844,75 @@ impl lexer {
         # add last quote
         tmp->append_char(quote_type);
         self->pos += 1 => u64;
+        self->column += 1;
+
+        loc->end_line = self->line;
+        loc->end_column = self->column;
 
         if (quote_type == '"') {
-            self->toks->append(tok_kind::tok_str, tmp);
+            self->toks->append(tok_kind::tok_str, tmp, loc);
         } else {
             if (tmp->size != 1 => u64) {
                 # TODO: report error here
             }
-            self->toks->append(tok_kind::tok_ch, tmp);
+            self->toks->append(tok_kind::tok_ch, tmp, loc);
         }
         return;
     }
 
     func generate_coloncolon(self: lexer*, src: str*) {
+        var loc = span::new();
+        loc->file.copy_const(self->filename.c_str);
+        loc->begin_line = self->line;
+        loc->begin_column = self->column;
+
         var tmp = str::new();
         tmp->append_char(':');
         self->pos += 1 => u64;
+        self->column += 1;
+
         if (self->pos < src->size && src->get(self->pos) == ':') {
             tmp->append_char(':');
             self->pos += 1 => u64;
-            self->toks->append(tok_kind::tok_coloncolon, tmp);
+            self->column += 1;
+            loc->end_line = self->line;
+            loc->end_column = self->column;
+
+            self->toks->append(tok_kind::tok_coloncolon, tmp, loc);
         } else {
-            self->toks->append(tok_kind::tok_colon, tmp);
+            loc->end_line = self->line;
+            loc->end_column = self->column;
+            self->toks->append(tok_kind::tok_colon, tmp, loc);
         }
         return;
     }
 
     func generate_ellipsis(self: lexer*, src: str*) {
+        var loc = span::new();
+        loc->file.copy_const(self->filename.c_str);
+        loc->begin_line = self->line;
+        loc->begin_column = self->column;
+
         var tmp = str::new();
         tmp->append_char('.');
         self->pos += 1 => u64;
+        self->column += 1;
+
         if (self->pos + (1 => u64) < src->size &&
             src->get(self->pos) == '.' &&
             src->get(self->pos + (1 => u64)) == '.') {
             tmp->append_char('.')->append_char('.');
             self->pos += 2 => u64;
-            self->toks->append(tok_kind::tok_ellipsis, tmp);
+            self->column += 2;
+            loc->end_line = self->line;
+            loc->end_column = self->column;
+
+            self->toks->append(tok_kind::tok_ellipsis, tmp, loc);
         } else {
-            self->toks->append(tok_kind::tok_dot, tmp);
+            loc->end_line = self->line;
+            loc->end_column = self->column;
+
+            self->toks->append(tok_kind::tok_dot, tmp, loc);
         }
         return;
     }
@@ -796,16 +920,21 @@ impl lexer {
     func skip_note(self: lexer*, src: str*) {
         while(self->pos < src->size && src->get(self->pos) != '\n') {
             self->pos += 1 => u64;
+            self->column += 1;
         }
         return;
     }
 
     func scan(self: lexer*, filename: i8*) {
         var src = str::new();
+        self->filename.clear();
+        self->filename.copy_const(filename);
         self->err->load_file_source(filename);
         readfile_into_string(filename, src);
 
         self->pos = 0 => u64;
+        self->line = 0;
+        self->column = 0;
         while(self->pos < src->size) {
             if (lexer::is_identifier_head(src->get(self->pos))) {
                 self->generate_identifier(src);
@@ -841,7 +970,17 @@ impl lexer {
             }
         }
 
-        self->toks->append(tok_kind::tok_eof, str::new()->append_str("<eof>"));
+        var eof_span = span::new();
+        eof_span->file.copy_const(self->filename.c_str);
+        eof_span->begin_line = self->line;
+        eof_span->begin_column = self->column;
+        eof_span->end_line = self->line;
+        eof_span->end_column = self->column;
+        self->toks->append(
+            tok_kind::tok_eof,
+            str::new()->append_str("<eof>"),
+            eof_span
+        );
 
         src->delete();
         free(src => i8*);
@@ -851,11 +990,25 @@ impl lexer {
     func dump(self: lexer*) {
         var index = 0 => u64;
         while(index < self->toks->size) {
+            var loc = self->toks->data[index].location;
             io::stdlog()->out(tok_kind_to_str(self->toks->data[index].kind))
+                        ->out(" ")
+                        ->out(loc->file.c_str)
+                        ->out(":")
+                        ->out_i64(loc->begin_line + 1)
+                        ->out(":")
+                        ->out_i64(loc->begin_column + 1)
+                        ->out(" ~ ")
+                        ->out(loc->file.c_str)
+                        ->out(":")
+                        ->out_i64(loc->end_line + 1)
+                        ->out(":")
+                        ->out_i64(loc->end_column + 1)
                         ->out(" \"")
                         ->out(self->toks->data[index].content->c_str)
                         ->out("\"")
                         ->endln();
+            self->err->warn(loc, "test");
             index += 1 => u64;
         }
         return;

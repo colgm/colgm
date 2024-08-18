@@ -3,7 +3,12 @@
 namespace colgm {
 
 std::ostream& operator<<(std::ostream& out, const span& self) {
-    out << self.file << ":" << self.begin_line << ":" << self.begin_column+1;
+    if (self.file.size()>2 && self.file.substr(0, 2)=="./") {
+        out << self.file.substr(2, self.file.size()-2);
+    } else {
+        out << self.file;
+    }
+    out << ":" << self.begin_line << ":" << self.begin_column+1;
     return out;
 }
 
@@ -116,8 +121,7 @@ void error::err(const std::string& stage,
 
     std::cerr
     << red << stage << ": " << white << info << reset << "\n" << cyan << "  --> "
-    << red << loc.file << ":" << loc.begin_line << ":" << loc.begin_column+1
-    << reset << "\n";
+    << red << loc << reset << "\n";
 
     const usize maxlen = std::to_string(loc.end_line).length();
     const std::string iden = identation(maxlen);
@@ -193,8 +197,7 @@ void error::warn(const std::string& stage,
     std::cerr
     << orange << stage << ": " << white << info << reset
     << "\n" << cyan << "  --> "
-    << orange << loc.file << ":" << loc.begin_line << ":" << loc.begin_column+1
-    << reset << "\n";
+    << orange << loc << reset << "\n";
 
     const usize maxlen = std::to_string(loc.end_line).length();
     const std::string iden = identation(maxlen);
