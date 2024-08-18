@@ -116,6 +116,7 @@ private:
     expr* bitwise_xor_gen();
     expr* bitwise_or_gen();
     expr* compare_gen();
+    expr* not_expression_gen();
     expr* and_expression_gen();
     expr* or_expression_gen();
     expr* calculation_gen();

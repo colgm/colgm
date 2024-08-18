@@ -506,6 +506,16 @@ type semantic::resolve_unary_bnot(unary_operator* node) {
     return value;
 }
 
+type semantic::resolve_unary_lnot(unary_operator* node) {
+    const auto value = resolve_expression(node->get_value());
+    if (!value.is_boolean()) {
+        report(node->get_value(),
+            "logical operator cannot be used on \"" + value.to_string() + "\"."
+        );
+    }
+    return type::bool_type();
+}
+
 type semantic::resolve_unary_operator(unary_operator* node) {
     switch(node->get_opr()) {
         case unary_operator::kind::neg: {
@@ -515,6 +525,11 @@ type semantic::resolve_unary_operator(unary_operator* node) {
         }
         case unary_operator::kind::bnot: {
             const auto res = resolve_unary_bnot(node);
+            node->set_resolve_type(res);
+            return res;
+        }
+        case unary_operator::kind::lnot: {
+            const auto res = resolve_unary_lnot(node);
             node->set_resolve_type(res);
             return res;
         }

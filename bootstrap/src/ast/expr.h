@@ -25,7 +25,8 @@ class unary_operator: public expr {
 public:
     enum class kind {
         neg,
-        bnot
+        bnot,
+        lnot
     };
 
 private:

@@ -308,9 +308,23 @@ expr* parse::compare_gen() {
     return result;
 }
 
+expr* parse::not_expression_gen() {
+    const auto begin_location = toks[ptr].loc;
+    if (!look_ahead(tok::tk_opnot)) {
+        return compare_gen();
+    }
+    match(tok::tk_opnot);
+    auto value = compare_gen();
+    auto result = new unary_operator(begin_location);
+    result->set_opr(unary_operator::kind::lnot);
+    result->set_value(value);
+    update_location(result);
+    return result;
+}
+
 expr* parse::and_expression_gen() {
     const auto begin_location = toks[ptr].loc;
-    auto result = compare_gen();
+    auto result = not_expression_gen();
     if (!look_ahead(tok::tk_opand)) {
         return result;
     }

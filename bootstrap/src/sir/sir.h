@@ -24,6 +24,7 @@ enum class sir_kind {
     sir_call_func,
     sir_neg,
     sir_bnot,
+    sir_lnot,
     sir_add,
     sir_sub,
     sir_mul,
@@ -280,6 +281,23 @@ public:
         source(src), destination(dst),
         type(t) {}
     ~sir_bnot() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_lnot: public sir {
+private:
+    value_t source;
+    value_t destination;
+    std::string type;
+
+public:
+    sir_lnot(const value_t& src,
+             const value_t& dst,
+             const std::string& t):
+        sir(sir_kind::sir_lnot),
+        source(src), destination(dst),
+        type(t) {}
+    ~sir_lnot() override = default;
     void dump(std::ostream&) const override;
 };
 

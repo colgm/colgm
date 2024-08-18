@@ -11,8 +11,9 @@ bool ast2mir::visit_unary_operator(ast::unary_operator* node) {
 
     mir_unary::opr_kind type;
     switch(node->get_opr()) {
-        case ast::unary_operator::kind::bnot: type = mir_unary::opr_kind::bnot; break;
         case ast::unary_operator::kind::neg: type = mir_unary::opr_kind::neg; break;
+        case ast::unary_operator::kind::bnot: type = mir_unary::opr_kind::bnot; break;
+        case ast::unary_operator::kind::lnot: type = mir_unary::opr_kind::lnot; break;
     }
 
     block->add_content(new mir_unary(

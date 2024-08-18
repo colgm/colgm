@@ -223,6 +223,12 @@ void mir2sir::visit_mir_unary(mir_unary* node) {
             value_t::variable(temp_var),
             type_mapping(source.resolve_type)
         ));
+    } else if (node->get_opr()==mir_unary::opr_kind::lnot) {
+        block->add_stmt(new sir_lnot(
+            source.to_value_t(),
+            value_t::variable(temp_var),
+            type_mapping(source.resolve_type)
+        ));
     }
     value_stack.push_back(mir_value_t::variable(temp_var, node->get_type()));
 }

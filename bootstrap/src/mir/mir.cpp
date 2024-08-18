@@ -38,6 +38,7 @@ void mir_unary::dump(const std::string& indent, std::ostream& os) {
     switch(opr) {
         case opr_kind::neg: os << "-"; break;
         case opr_kind::bnot: os << "~"; break;
+        case opr_kind::lnot: os << "!"; break;
     }
     os << "] (\n";
     value->dump(indent + " ", os);

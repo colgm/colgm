@@ -84,6 +84,7 @@ private:
     type resolve_binary_operator(binary_operator*);
     type resolve_unary_neg(unary_operator*);
     type resolve_unary_bnot(unary_operator*);
+    type resolve_unary_lnot(unary_operator*);
     type resolve_unary_operator(unary_operator*);
     type resolve_type_convert(type_convert*);
     type resolve_nil_literal(nil_literal*);

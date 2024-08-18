@@ -79,7 +79,8 @@ class mir_unary: public mir {
 public:
     enum class opr_kind {
         neg,
-        bnot
+        bnot,
+        lnot
     };
 
 private:

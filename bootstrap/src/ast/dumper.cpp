@@ -173,6 +173,7 @@ bool dumper::visit_unary_operator(unary_operator* node) {
     switch(node->get_opr()) {
         case unary_operator::kind::neg: std::cout << "-"; break;
         case unary_operator::kind::bnot: std::cout << "~"; break;
+        case unary_operator::kind::lnot: std::cout << "!"; break;
     }
     std::cout << format_location(node);
     push_indent();

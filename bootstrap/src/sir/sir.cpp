@@ -89,6 +89,10 @@ void sir_bnot::dump(std::ostream& out) const {
     out << destination << " = xor " << type << " " << source << ", -1\n";
 }
 
+void sir_lnot::dump(std::ostream& out) const {
+    out << destination << " = xor " << type << " " << source << ", true\n";
+}
+
 void sir_add::dump(std::ostream& out) const {
     out << destination << " = ";
     out << (is_integer? "add":"fadd") << " ";
