@@ -291,7 +291,9 @@ impl vec_token {
 struct lexer {
     err: report*,
     toks: vec_token*,
-    pos: u64
+    pos: u64,
+    line: i64,
+    column: i64
 }
 
 impl lexer {
@@ -300,6 +302,8 @@ impl lexer {
         res->err = e;
         res->toks = vec_token::new();
         res->pos = 0 => u64;
+        res->line = 0;
+        res->column = 0;
         return res;
     }
 
@@ -368,6 +372,10 @@ impl lexer {
             return true;
         }
         return false;
+    }
+
+    func is_str(c: i8) -> bool {
+        return c == '"' || c == '\'';
     }
 
     func check_id_kind(src: str*) -> tok_kind {
@@ -678,6 +686,83 @@ impl lexer {
         return;
     }
 
+    func generate_string(self: lexer*, src: str*) {
+        var quote_type = src->get(self->pos);
+        var tmp = str::new();
+        tmp->append_char(quote_type);
+        self->pos += 1 => u64;
+        while(self->pos < src->size && src->get(self->pos) != quote_type) {
+            var this_ch = src->get(self->pos);
+            if (this_ch=='\n') {
+                self->line += 1;
+                self->column = 0;
+            } else {
+                self->column += 1;
+            }
+
+            if (this_ch=='\\' && self->pos + (1 => u64) < src->size) {
+                self->pos += 1 => u64;
+                var next_ch = src->get(self->pos);
+                if (next_ch=='0') {
+                    tmp->append_char('\0');
+                } elsif (next_ch=='a') {
+                    tmp->append_char('\a');
+                } elsif (next_ch=='b') {
+                    tmp->append_char('\b');
+                } elsif (next_ch=='e') {
+                    tmp->append_char('\e');
+                } elsif (next_ch=='t') {
+                    tmp->append_char('\t');
+                } elsif (next_ch=='n') {
+                    tmp->append_char('\n');
+                } elsif (next_ch=='v') {
+                    tmp->append_char('\v');
+                } elsif (next_ch=='f') {
+                    tmp->append_char('\f');
+                } elsif (next_ch=='r') {
+                    tmp->append_char('\r');
+                } elsif (next_ch=='?') {
+                    tmp->append_char('\?');
+                } elsif (next_ch=='\\') {
+                    tmp->append_char('\\');
+                } elsif (next_ch=='\'') {
+                    tmp->append_char('\'');
+                } elsif (next_ch=='\"') {
+                    tmp->append_char('\"');
+                } else {
+                    tmp->append_char(next_ch);
+                }
+                if (next_ch=='\n') {
+                    self->line += 1;
+                    self->column = 0;
+                } else {
+                    self->column += 1;
+                }
+            } else {
+                tmp->append_char(this_ch);
+            }
+            self->pos += 1 => u64;
+        }
+        if (self->pos >= src->size) {
+            # TODO: report error here
+            return;
+        }
+
+        # add last quote
+        tmp->append_char(quote_type);
+        self->pos += 1 => u64;
+
+        if (quote_type == '"') {
+            self->toks->append(tok_kind::tok_str, tmp);
+        } else {
+            if (tmp->size != 1 => u64) {
+                # TODO: report error here
+            }
+            self->toks->append(tok_kind::tok_ch, tmp);
+        }
+        return;
+    }
+
     func generate_coloncolon(self: lexer*, src: str*) {
         var tmp = str::new();
         tmp->append_char(':');
@@ -726,6 +811,8 @@ impl lexer {
                 self->generate_identifier(src);
             } elsif (lexer::is_digit(src->get(self->pos))) {
                 self->generate_number(src);
+            } elsif (lexer::is_str(src->get(self->pos))) {
+                self->generate_string(src);
             } elsif (lexer::is_arrow(self->pos, src) ||
                      lexer::is_wide_arrow(self->pos, src)) {
                 # need to be put before normal operator scan process
@@ -744,6 +831,12 @@ impl lexer {
             } elsif (src->get(self->pos)=='#') {
                 self->skip_note(src);
             } else {
+                if (src->get(self->pos)=='\n') {
+                    self->line += 1;
+                    self->column = 0;
+                } else {
+                    self->column += 1;
+                }
                 self->pos += 1 => u64;
             }
         }
