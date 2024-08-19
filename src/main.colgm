@@ -1,12 +1,26 @@
-use std::str::str;
-use std::libc::{ malloc, free, streq, putchar, itoa };
+use std::libc::{ free, streq };
 use err::span::*;
 use err::report::*;
-use ast::ast::*;
 use cli::*;
-use std::io::{readfile_into_string, io};
-
+use std::io::{ readfile_into_string, io };
 use lexer::{ lexer };
+use parser::{ parser };
+
+func free_components(rep: report*, lex: lexer*, par: parser*) {
+    if (rep => i8* != nil) {
+        rep->delete();
+        free(rep => i8*);
+    }
+    if (lex => i8* != nil) {
+        lex->delete();
+        free(lex => i8*);
+    }
+    if (par => i8* != nil) {
+        par->delete();
+        free(par => i8*);
+    }
+    return;
+}
 
 func compile(filename: i8*, library_path: i8*, option: cli_option*) {
     io::stdlog()->out("[colgm] source file: \"")
@@ -24,18 +38,25 @@ func compile(filename: i8*, library_path: i8*, option: cli_option*) {
 
     var rep = report::new();
     var lex = lexer::new(rep);
+    var par = parser::new(rep, lex);
 
     # do lexer scanning
     lex->scan(filename);
+    if (rep->error_count > 0) {
+        free_components(rep, lex, par);
+        return;
+    }
     if (option->OPTION_VIEW_TOKEN) {
         lex->dump();
     }
 
-    rep->delete();
-    free(rep => i8*);
-    lex->delete();
-    free(lex => i8*);
+    par->parse();
+    if (rep->error_count > 0) {
+        free_components(rep, lex, par);
+        return;
+    }
 
+    free_components(rep, lex, par);
     return;
 }
 

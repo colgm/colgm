@@ -465,7 +465,7 @@ impl lexer {
             self->toks->append(tok_kind::tok_rbracket, tmp, loc);
         } elsif (ch == '{') {
             self->toks->append(tok_kind::tok_lbrace, tmp, loc);
-        } elsif (ch == ']') {
+        } elsif (ch == '}') {
             self->toks->append(tok_kind::tok_rbrace, tmp, loc);
         } elsif (ch == ';') {
             self->toks->append(tok_kind::tok_semi, tmp, loc);
@@ -654,7 +654,12 @@ impl lexer {
                 loc->end_column = self->column;
                 self->toks->append(tok_kind::tok_num, tmp, loc);
             } else {
-                # TODO: report error here
+                self->column += tmp->size => i64;
+                loc->end_line = self->line;
+                loc->end_column = self->column;
+                self->err->error(loc, "invalid hex number.");
+                loc->delete();
+                free(loc => i8*);
             }
             return;
         }
@@ -673,7 +678,12 @@ impl lexer {
                 loc->end_column = self->column;
                 self->toks->append(tok_kind::tok_num, tmp, loc);
             } else {
-                # TODO: report error here
+                self->column += tmp->size => i64;
+                loc->end_line = self->line;
+                loc->end_column = self->column;
+                self->err->error(loc, "invalid oct number.");
+                loc->delete();
+                free(loc => i8*);
             }
             return;
         }
@@ -837,7 +847,11 @@ impl lexer {
             self->pos += 1 => u64;
         }
         if (self->pos >= src->size) {
-            # TODO: report error here
+            loc->end_line = self->line;
+            loc->end_column = self->column;
+            self->err->error(loc, "get <eof> when generating string.");
+            loc->delete();
+            free(loc => i8*);
             return;
         }
 
@@ -852,8 +866,8 @@ impl lexer {
         if (quote_type == '"') {
             self->toks->append(tok_kind::tok_str, tmp, loc);
         } else {
-            if (tmp->size != 1 => u64) {
-                # TODO: report error here
+            if (tmp->size != 3 => u64) {
+                self->err->error(loc, "should only contain one character.");
             }
             self->toks->append(tok_kind::tok_ch, tmp, loc);
         }
@@ -992,23 +1006,22 @@ impl lexer {
         while(index < self->toks->size) {
             var loc = self->toks->data[index].location;
             io::stdlog()->out(tok_kind_to_str(self->toks->data[index].kind))
-                        ->out(" ")
+                        ->out(" [")
                         ->out(loc->file.c_str)
                         ->out(":")
                         ->out_i64(loc->begin_line + 1)
                         ->out(":")
                         ->out_i64(loc->begin_column + 1)
-                        ->out(" ~ ")
+                        ->out(" -> ")
                         ->out(loc->file.c_str)
                         ->out(":")
                         ->out_i64(loc->end_line + 1)
                         ->out(":")
                         ->out_i64(loc->end_column + 1)
-                        ->out(" \"")
+                        ->out("] \"")
                         ->out(self->toks->data[index].content->c_str)
                         ->out("\"")
                         ->endln();
-            self->err->warn(loc, "test");
             index += 1 => u64;
         }
         return;

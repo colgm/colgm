@@ -175,6 +175,10 @@ impl report {
             var i = 0;
             if (index == location->begin_line) {
                 while(i < len) {
+                    if (location->begin_line==location->end_line &&
+                        i == location->end_column) {
+                        break;
+                    }
                     if (i < location->begin_column && tmp_str_const[i]!='\t') {
                         underline->append_char(' ');
                     }
@@ -191,6 +195,12 @@ impl report {
                 }
             } elsif (index == location->end_line) {
                 while(i < len) {
+                    # in fact this should be unreachable
+                    if (location->begin_line==location->end_line &&
+                        i < location->begin_column) {
+                        i += 1;
+                        continue;
+                    }
                     if (i < location->end_column && tmp_str_const[i]!='\t') {
                         underline->append_char('^');
                     }
@@ -234,7 +244,7 @@ impl report {
             free(pad_num => i8*);
         }
 
-        io::stderr()->cyan()->out(pad_str->c_str)->out(" | ")->reset()->endln();
+        io::stderr()->endln();
 
         pad_str->delete();
         free(pad_str => i8*);

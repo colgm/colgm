@@ -54,7 +54,7 @@ std::ostream& logo(std::ostream& out) {
     << "std : c++ " << __cplusplus << "\n"
     << "core: " << std::thread::hardware_concurrency() << " core(s)\n"
     << "\n"
-    << "input <colgm -h> to get help .\n\n";
+    << "input <colgm -h> to get help.\n\n";
     return out;
 }
 

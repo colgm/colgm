@@ -692,6 +692,13 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
         node->set_resolve_type(res);
         return res;
     }
+    if (struct_self.static_method.count(node->get_name())) {
+        report(node,
+            "method \"" + node->get_name() +
+            "\" in \"" + prev.name + "\" is static."
+        );
+        return type::error_type();
+    }
     report(node,
         "cannot find field \"" + node->get_name() +
         "\" in \"" + prev.name + "\"."
@@ -900,6 +907,13 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
         };
         node->set_resolve_type(infer);
         return infer;
+    }
+    if (struct_self.static_method.count(node->get_name())) {
+        report(node,
+            "method \"" + node->get_name() +
+            "\" in \"" + prev.name + "\" is static."
+        );
+        return type::error_type();
     }
     report(node,
         "cannot find field \"" + node->get_name() +
