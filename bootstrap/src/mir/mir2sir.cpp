@@ -457,8 +457,6 @@ void mir2sir::visit_mir_bool(mir_bool* node) {
 }
 
 void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
-    block->add_nop("[call begin] " + std::to_string((u64)node));
-
     node->get_content()->accept(this);
 
     auto source = value_stack.back();
@@ -472,7 +470,6 @@ void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
     }
 
     if (need_address) {
-        block->add_nop("[call end] with address " + std::to_string((u64)node));
         return;
     }
 
@@ -484,7 +481,6 @@ void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
         source.to_value_t(),
         value_t::variable(temp_var)
     ));
-    block->add_nop("[call end] with value " + std::to_string((u64)node));
 
     value_stack.push_back(mir_value_t::variable(
         temp_var,
@@ -732,8 +728,6 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
 }
 
 void mir2sir::visit_mir_define(mir_define* node) {
-    block->add_nop("[begin] definition");
-
     block->add_alloca(new sir_alloca(
         node->get_name(),
         type_mapping(node->get_type())
@@ -748,13 +742,9 @@ void mir2sir::visit_mir_define(mir_define* node) {
         source.to_value_t(),
         value_t::variable(node->get_name())
     ));
-
-    block->add_nop("[end] definition");
 }
 
 void mir2sir::visit_mir_assign(mir_assign* node) {
-    block->add_nop("[begin] assignment");
-
     call_expression_generation(
         reinterpret_cast<mir_call*>(node->get_left()->get_content().front()),
         true
@@ -942,7 +932,6 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
             ));
         } break;
     }
-    block->add_nop("[end] assignment");
 }
 
 void mir2sir::visit_mir_if(mir_if* node) {
@@ -976,7 +965,6 @@ void mir2sir::visit_mir_if(mir_if* node) {
 }
 
 void mir2sir::visit_mir_branch(mir_branch* node) {
-    block->add_nop("branch");
     branch_jump_out.push_back({});
 
     for(auto i : node->get_branch()) {
@@ -995,7 +983,6 @@ void mir2sir::visit_mir_branch(mir_branch* node) {
 }
 
 void mir2sir::visit_mir_break(mir_break* node) {
-    block->add_nop("break");
     auto break_br = new sir_br(0);
     break_inst.back().push_back(break_br);
     block->add_stmt(break_br);
@@ -1003,14 +990,11 @@ void mir2sir::visit_mir_break(mir_break* node) {
 }
 
 void mir2sir::visit_mir_continue(mir_continue* node) {
-    block->add_nop("continue");
     block->add_stmt(new sir_br(loop_entry.back()));
     block->add_stmt(new sir_place_holder_label(block->stmt_size()));
 }
 
 void mir2sir::visit_mir_while(mir_while* node) {
-    block->add_nop("while loop");
-
     auto entry_label = block->stmt_size() + 1;
     loop_entry.push_back(entry_label);
     break_inst.push_back({});
