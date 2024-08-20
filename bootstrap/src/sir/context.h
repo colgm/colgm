@@ -65,7 +65,6 @@ private:
 private:
     void dump_struct_size_method(std::ostream&) const;
     void dump_struct_alloc_method(std::ostream&) const;
-    void dump_struct_delete_method(std::ostream&) const;
 
 public:
     ~sir_context() {
