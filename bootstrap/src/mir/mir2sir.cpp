@@ -70,8 +70,13 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
     for(auto i : mctx.impls) {
         auto func = new sir_func(i->name);
         func->set_return_type(type_mapping(i->return_type));
+        // push local scope
+        locals.push();
+        locals.local_scope_counter = 0;
+        // load parameters and locals
         for(const auto& j : i->params) {
             func->add_param(j.first + ".param", type_mapping(j.second));
+            locals.elem.back().insert({j.first, j.first});
         }
 
         // generate code block
@@ -97,6 +102,9 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         block = nullptr;
 
         ictx.func_impls.push_back(func);
+
+        // pop local scope
+        locals.pop();
     }
 }
 
@@ -199,9 +207,13 @@ void mir2sir::generate_or(mir_binary* node) {
 }
 
 void mir2sir::visit_mir_block(mir_block* node) {
+    // push local scope
+    locals.push();
     for(auto i : node->get_content()) {
         i->accept(this);
     }
+    // pop local scope
+    locals.pop();
 }
 
 void mir2sir::visit_mir_unary(mir_unary* node) {
@@ -495,7 +507,7 @@ void mir2sir::visit_mir_call(mir_call* node) {
 void mir2sir::visit_mir_call_id(mir_call_id* node) {
     if (!node->get_type().is_global) {
         value_stack.push_back(mir_value_t::variable(
-            node->get_name(),
+            locals.get_local(node->get_name()),
             node->get_type().get_pointer_copy()
         ));
         return;
@@ -728,8 +740,15 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
 }
 
 void mir2sir::visit_mir_define(mir_define* node) {
-    block->add_alloca(new sir_alloca(
+    const auto name = node->get_name() +
+                      "." + std::to_string(locals.local_scope_counter);
+    locals.elem.back().insert({
         node->get_name(),
+        name
+    });
+
+    block->add_alloca(new sir_alloca(
+        name,
         type_mapping(node->get_type())
     ));
 
@@ -740,7 +759,7 @@ void mir2sir::visit_mir_define(mir_define* node) {
     block->add_stmt(new sir_store(
         type_mapping(node->get_type()),
         source.to_value_t(),
-        value_t::variable(node->get_name())
+        value_t::variable(name)
     ));
 }
 

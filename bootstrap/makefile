@@ -10,6 +10,7 @@ test: $(COLGMCC)
 	@ $(COLGMCC) test/enum_test.colgm && lli out.ll
 	@ $(COLGMCC) test/func.colgm && lli out.ll
 	@ $(COLGMCC) test/hello.colgm && lli out.ll
+	@ $(COLGMCC) test/local.colgm && lli out.ll
 	@ $(COLGMCC) test/negative.colgm && lli out.ll
 	@ $(COLGMCC) test/self-ref-test.colgm && lli out.ll
 	@ $(COLGMCC) test/string.colgm && lli out.ll

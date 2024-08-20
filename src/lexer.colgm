@@ -740,10 +740,9 @@ impl lexer {
                 return;
             }
 
-            # FIXME: if defined lookahead_pos, cause error in llvm ir
-            var next_pos = self->pos + (1 => u64);
+            var lookahead_pos = self->pos + (1 => u64);
 
-            if (lexer::is_digit(src->get(next_pos))) {
+            if (lexer::is_digit(src->get(lookahead_pos))) {
                 tmp->append_char(src->get(self->pos));
                 self->pos += 1 => u64;
                 while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
@@ -757,9 +756,9 @@ impl lexer {
                 return;
             }
 
-            if ((src->get(next_pos)=='-' || src->get(next_pos)=='+') &&
-                next_pos + (1 => u64) < src->size &&
-                lexer::is_digit(src->get(next_pos + (1 => u64)))) {
+            if ((src->get(lookahead_pos)=='-' || src->get(lookahead_pos)=='+') &&
+                lookahead_pos + (1 => u64) < src->size &&
+                lexer::is_digit(src->get(lookahead_pos + (1 => u64)))) {
                 tmp->append_char(src->get(self->pos));
                 tmp->append_char(src->get(self->pos + (1 => u64)));
                 self->pos += 2 => u64;

@@ -25,6 +25,27 @@ public:
     auto create() { return std::to_string(counter++); }
 };
 
+struct local_table {
+    std::vector<std::unordered_map<std::string, std::string>> elem;
+    i64 local_scope_counter;
+
+    local_table(): local_scope_counter(0) {}
+
+    auto get_local(const std::string& name) {
+        for (auto it = elem.rbegin(); it!=elem.rend(); ++it) {
+            if (it->count(name)) {
+                return it->at(name);
+            }
+        }
+        return std::string("");
+    }
+
+    auto size() const { return elem.size(); }
+
+    void push() { elem.push_back({}); local_scope_counter++; }
+    void pop() { elem.pop_back(); }
+};
+
 struct mir_value_t {
 public:
     enum class kind {
@@ -135,6 +156,8 @@ private:
     sir_block* block;
     std::vector<mir_value_t> value_stack;
     error err;
+
+    local_table locals;
 
     std::vector<usize> loop_entry;
     std::vector<std::vector<sir_br*>> break_inst;

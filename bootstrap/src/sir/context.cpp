@@ -45,7 +45,7 @@ void sir_func::dump(std::ostream& out) const {
 void sir_context::dump_raw_string(std::ostream& out,
                                   const std::string& src) const {
     for(const auto c : src) {
-        if (std::isdigit(c) || std::isalpha(c)) {
+        if (std::isdigit(c) || std::isalpha(c) || c=='_' || c==':') {
             out << c;
             continue;
         }
