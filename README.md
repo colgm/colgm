@@ -60,4 +60,6 @@ func main() -> i64 {
 
 ## TODO
 
-1. develop bootstrapped compiler
+1. support constant/struct init syntax
+2. llvm debug info
+3. develop bootstrapped compiler

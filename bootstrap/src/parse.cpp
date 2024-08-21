@@ -411,7 +411,14 @@ enum_decl* parse::enum_gen() {
     result->set_name(identifier_gen());
     match(tok::tk_lbrace);
     while(look_ahead(tok::tk_id)) {
-        result->add_member(identifier_gen());
+        auto name_node = identifier_gen();
+        if (look_ahead(tok::tk_eq)) {
+            match(tok::tk_eq);
+            auto value_node = number_gen();
+            result->add_member(name_node, value_node);
+        } else {
+            result->add_member(name_node, nullptr);
+        }
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {

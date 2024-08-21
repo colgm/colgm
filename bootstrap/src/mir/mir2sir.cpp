@@ -635,8 +635,6 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
 }
 
 void mir2sir::visit_mir_get_field(mir_get_field* node) {
-    // FIXME: maybe not available to use
-
     auto prev = value_stack.back();
     value_stack.pop_back();
 

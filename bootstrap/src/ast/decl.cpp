@@ -9,8 +9,9 @@ void decl::accept(visitor* v) {
 
 enum_decl::~enum_decl() {
     delete name;
-    for(auto i : member) {
-        delete i;
+    for(const auto& i : member) {
+        delete i.name;
+        delete i.value;
     }
 }
 

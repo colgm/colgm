@@ -28,7 +28,7 @@ void semantic::report_unreachable_statements(code_block* node) {
         unreachable_location.end_column = location.end_column;
         unreachable_location.end_line = location.end_line;
     }
-    err.warn("sema", unreachable_location, "unreachable statement(s).");
+    err.err("sema", unreachable_location, "unreachable statement(s).");
 }
 
 void semantic::report_top_level_block_has_no_return(code_block* node) {
@@ -146,13 +146,43 @@ void semantic::analyse_single_enum(enum_decl* node) {
     enum_self.name = name;
     enum_self.location = node->get_location();
 
-    for(auto i : node->get_member()) {
-        if (enum_self.members.count(i->get_name())) {
-            report(i, "enum member already exists");
+    // with specified member with number or not
+    bool has_specified_member = false;
+    bool has_non_specified_member = false;
+    for(const auto& i : node->get_member()) {
+        if (!i.value) {
+            has_non_specified_member = true;
+        } else {
+            has_specified_member = true;
+        }
+    }
+    if (has_specified_member && has_non_specified_member) {
+        report(node, "enum members cannot be both specified and non-specified with number.");
+        return;
+    }
+
+    for(const auto& i : node->get_member()) {
+        if (!i.value) {
             continue;
         }
-        enum_self.members[i->get_name()] = enum_self.ordered_member.size();
-        enum_self.ordered_member.push_back(i->get_name());
+        if (!resolve_number_literal(i.value).is_integer()) {
+            report(i.value, "enum member cannot be specified with a float number.");
+            return;
+        }
+    }
+
+    for(const auto& i : node->get_member()) {
+        if (enum_self.members.count(i.name->get_name())) {
+            report(i.name, "enum member already exists");
+            continue;
+        }
+        const auto& member_name = i.name->get_name();
+        if (i.value) {
+            enum_self.members[member_name] = (usize)str_to_num(i.value->get_number().c_str());
+        } else {
+            enum_self.members[member_name] = enum_self.ordered_member.size();
+        }
+        enum_self.ordered_member.push_back(member_name);
     }
 }
 
@@ -1209,7 +1239,9 @@ void semantic::resolve_code_block(code_block* node, const colgm_func& func_self)
     ctx.push_new_level();
     for(auto i : node->get_stmts()) {
         resolve_statement(i, func_self);
-        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+        if (i->get_ast_type()==ast_type::ast_ret_stmt ||
+            i->get_ast_type()==ast_type::ast_continue_stmt ||
+            i->get_ast_type()==ast_type::ast_break_stmt) {
             report_unreachable_statements(node);
             break;
         }
@@ -1233,7 +1265,9 @@ void semantic::resolve_global_func(func_decl* node) {
     }
     for(auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, func_self);
-        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+        if (i->get_ast_type()==ast_type::ast_ret_stmt ||
+            i->get_ast_type()==ast_type::ast_continue_stmt ||
+            i->get_ast_type()==ast_type::ast_break_stmt) {
             report_unreachable_statements(node->get_code_block());
             break;
         }

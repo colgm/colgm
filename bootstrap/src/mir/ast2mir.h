@@ -60,6 +60,7 @@ private:
     mir_block* block = nullptr;
 
 private:
+    bool visit_enum_decl(ast::enum_decl*) override { return true; }
     bool visit_unary_operator(ast::unary_operator*) override;
     bool visit_binary_operator(ast::binary_operator*) override;
     bool visit_type_convert(ast::type_convert*) override;

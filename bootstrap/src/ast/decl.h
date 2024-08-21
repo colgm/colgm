@@ -34,9 +34,15 @@ public:
 };
 
 class enum_decl: public decl {
+public:
+    struct member {
+        identifier* name;
+        number_literal* value;
+    };
+
 private:
     identifier* name;
-    std::vector<identifier*> member;
+    std::vector<member> member;
 
 public:
     enum_decl(const span& loc):
@@ -47,7 +53,9 @@ public:
 
 public:
     void set_name(identifier* node) { name = node; }
-    void add_member(identifier* node) { member.push_back(node); }
+    void add_member(identifier* node, number_literal* value) {
+        member.push_back({node, value});
+    }
     auto get_name() { return name; }
     const auto& get_member() const { return member; }
 };

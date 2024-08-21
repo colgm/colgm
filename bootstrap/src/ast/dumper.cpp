@@ -77,10 +77,16 @@ bool dumper::visit_enum_decl(enum_decl* node) {
         set_last();
     }
     for(auto i : node->get_member()) {
-        if (i==node->get_member().back()) {
+        if (i.name==node->get_member().back().name) {
             set_last();
         }
-        i->accept(this);
+        i.name->accept(this);
+        if (i.value) {
+            push_indent();
+            set_last();
+            i.value->accept(this);
+            pop_indent();
+        }
     }
     pop_indent();
     return true;

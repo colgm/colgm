@@ -29,8 +29,11 @@ bool visitor::visit_type_def(type_def* node) {
 
 bool visitor::visit_enum_decl(enum_decl* node) {
     node->get_name()->accept(this);
-    for(auto i : node->get_member()) {
-        i->accept(this);
+    for(const auto& i : node->get_member()) {
+        i.name->accept(this);
+        if (i.value) {
+            i.value->accept(this);
+        }
     }
     return true;
 }

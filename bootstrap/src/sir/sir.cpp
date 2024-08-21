@@ -162,11 +162,11 @@ void sir_cmp::dump(std::ostream& out) const {
 }
 
 void sir_label::dump(std::ostream& out) const {
-    out << "label." << label_count << ":\n";
+    out << "label." << std::hex << label_count << std::dec << ":\n";
 }
 
 void sir_place_holder_label::dump(std::ostream& out) const {
-    out << "label.place_holder." << label_count << ":\n";
+    out << "label.place_holder." << std::hex << label_count << std::dec << ":\n";
 }
 
 void sir_store::dump(std::ostream& out) const {
@@ -180,13 +180,13 @@ void sir_load::dump(std::ostream& out) const {
 }
 
 void sir_br::dump(std::ostream& out) const {
-    out << "br label %label." << label << "\n";
+    out << "br label %label." << std::hex << label << std::dec << "\n";
 }
 
 void sir_br_cond::dump(std::ostream& out) const {
     out << "br i1 %" << condition << ", ";
-    out << "label %label." << label_true << ", ";
-    out << "label %label." << label_false << "\n";
+    out << "label %label." << std::hex << label_true << std::dec << ", ";
+    out << "label %label." << std::hex << label_false << std::dec << "\n";
 }
 
 std::string sir_type_convert::convert_instruction(char source_type_mark,
