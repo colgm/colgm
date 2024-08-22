@@ -13,14 +13,14 @@ void mir2sir::generate_type_mapper() {
                 .name = i.second.name,
                 .loc_file = i.second.location.file
             };
-            type_mapper.insert({tp.full_path_name(), symbol_kind::enum_kind});
+            type_mapper.insert({tp.full_path_name(), sym_kind::enum_kind});
         }
         for(const auto& i : dm.second.structs) {
             const auto tp = type {
                 .name = i.second.name,
                 .loc_file = i.second.location.file
             };
-            type_mapper.insert({tp.full_path_name(), symbol_kind::struct_kind});
+            type_mapper.insert({tp.full_path_name(), sym_kind::struct_kind});
         }
     }
 }
@@ -36,10 +36,10 @@ std::string mir2sir::type_mapping(const type& t) {
         return copy.to_string();
     }
     switch(type_mapper.at(full_name)) {
-        case symbol_kind::struct_kind:
+        case sym_kind::struct_kind:
             copy.name = "%struct." + mangle(full_name);
             break;
-        case symbol_kind::enum_kind: copy = type::i64_type(); break;
+        case sym_kind::enum_kind: copy = type::i64_type(); break;
         default: break;
     }
     return copy.to_string();
@@ -339,7 +339,7 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
             auto flag_is_integer = left.resolve_type.is_integer() ||
                 left.resolve_type.is_pointer() ||
                 left.resolve_type.is_boolean() ||
-                ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
+                ctx.search_symbol_kind(left.resolve_type)==sym_kind::enum_kind;
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_eq,
                 left.to_value_t(),
@@ -354,7 +354,7 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
             auto flag_is_integer = left.resolve_type.is_integer() ||
                 left.resolve_type.is_pointer() ||
                 left.resolve_type.is_boolean() ||
-                ctx.search_symbol_kind(left.resolve_type)==symbol_kind::enum_kind;
+                ctx.search_symbol_kind(left.resolve_type)==sym_kind::enum_kind;
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_neq,
                 left.to_value_t(),
@@ -515,19 +515,19 @@ void mir2sir::visit_mir_call_id(mir_call_id* node) {
 
     // get full path
     switch(ctx.search_symbol_kind(node->get_type())) {
-        case symbol_kind::func_kind:
+        case sym_kind::func_kind:
             value_stack.push_back(mir_value_t::func_kind(
                 node->get_type().name,
                 node->get_type()
             ));
             break;
-        case symbol_kind::struct_kind:
+        case sym_kind::struct_kind:
             value_stack.push_back(mir_value_t::struct_kind(
                 node->get_type().full_path_name(),
                 node->get_type()
             ));
             break;
-        case symbol_kind::enum_kind:
+        case sym_kind::enum_kind:
             value_stack.push_back(mir_value_t::enum_kind(
                 node->get_type().full_path_name(),
                 node->get_type()

@@ -13,7 +13,7 @@
 
 namespace colgm {
 
-enum class symbol_kind {
+enum class sym_kind {
     error_kind,
     basic_kind,
     enum_kind,

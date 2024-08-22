@@ -72,7 +72,7 @@ void semantic::analyse_single_struct(struct_decl* node) {
         return;
     }
     ctx.global.domain.at(ctx.this_file).structs.insert({name, {}});
-    ctx.global_symbol.insert({name, {symbol_kind::struct_kind, ctx.this_file}});
+    ctx.global_symbol.insert({name, {sym_kind::struct_kind, ctx.this_file}});
 
     // initialize struct info
     auto& this_domain = ctx.global.domain.at(ctx.this_file);
@@ -138,7 +138,7 @@ void semantic::analyse_single_enum(enum_decl* node) {
         return;
     }
     ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
-    ctx.global_symbol.insert({name, {symbol_kind::enum_kind, ctx.this_file}});
+    ctx.global_symbol.insert({name, {sym_kind::enum_kind, ctx.this_file}});
 
     // initialize enum info
     auto& this_domain = ctx.global.domain.at(ctx.this_file);
@@ -277,7 +277,7 @@ void semantic::analyse_functions(root* ast_root) {
         }
         ctx.global_symbol.insert({
             func_decl_node->get_name(),
-            {symbol_kind::func_kind, ast_root->get_location().file}
+            {sym_kind::func_kind, ast_root->get_location().file}
         });
         if (domain.functions.count(func_decl_node->get_name())) {
             report(func_decl_node,
@@ -386,7 +386,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
     }
 
     // check enum comparison
-    if (ctx.search_symbol_kind(left.name)==symbol_kind::enum_kind) {
+    if (ctx.search_symbol_kind(left)==sym_kind::enum_kind) {
         if (node->get_opr()!=binary_operator::kind::cmpeq &&
             node->get_opr()!=binary_operator::kind::cmpneq) {
             report(node, "only \"==\" and \"!=\" is allowed.");
@@ -428,7 +428,7 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
     }
 
     // cannot calculate enum
-    if (ctx.search_symbol_kind(left.name)==symbol_kind::enum_kind) {
+    if (ctx.search_symbol_kind(left)==sym_kind::enum_kind) {
         report(node, "cannot calculate enum \"" + left.to_string() + "\".");
         return type::error_type();
     }
@@ -574,7 +574,7 @@ type semantic::resolve_type_convert(type_convert* node) {
     }
 
     // normal struct to pointer is not allowed
-    if (ctx.search_symbol_kind(res)==symbol_kind::struct_kind &&
+    if (ctx.search_symbol_kind(res)==sym_kind::struct_kind &&
         !res.is_pointer() &&
         type_res.is_pointer()) {
         report(node->get_target(),
@@ -584,7 +584,7 @@ type semantic::resolve_type_convert(type_convert* node) {
     }
     // pointer to normal struct is also not allowed
     if (res.is_pointer() &&
-        ctx.search_symbol_kind(type_res)==symbol_kind::struct_kind &&
+        ctx.search_symbol_kind(type_res)==sym_kind::struct_kind &&
         !type_res.is_pointer()) {
         report(node->get_target(),
             "cannot convert \"" + res.to_string() +
@@ -654,7 +654,7 @@ type semantic::resolve_identifier(identifier* node) {
             .loc_file = ctx.global_symbol.at(name).loc_file,
             .pointer_depth = 0,
             .is_global = true,
-            .is_global_func = ctx.global_symbol.at(name).kind==symbol_kind::func_kind
+            .is_global_func = ctx.global_symbol.at(name).kind==sym_kind::func_kind
         };
     }
     report(node, "undefined symbol \"" + name + "\".");
@@ -1050,7 +1050,7 @@ type semantic::resolve_assignment(assignment* node) {
     }
 
     // only = is allowed to be applied on enums
-    if (ctx.search_symbol_kind(left.name)==symbol_kind::enum_kind &&
+    if (ctx.search_symbol_kind(left)==sym_kind::enum_kind &&
         node->get_type()!=assignment::kind::eq) {
         report(node, "cannot calculate enum \"" + left.to_string() + "\".");
         return type::bool_type();
@@ -1399,20 +1399,20 @@ void semantic::resolve_single_use(use_stmt* node) {
     const auto& domain = ctx.global.domain.at(file);
     if (node->get_import_symbol().empty()) {
         for(const auto& i : domain.structs) {
-            import_global_symbol(node, i.second.name, {symbol_kind::struct_kind, file});
+            import_global_symbol(node, i.second.name, {sym_kind::struct_kind, file});
         }
         for(const auto& i : domain.functions) {
-            import_global_symbol(node, i.second.name, {symbol_kind::func_kind, file});
+            import_global_symbol(node, i.second.name, {sym_kind::func_kind, file});
         }
         return;
     }
     // specified import
     for(auto i : node->get_import_symbol()) {
         if (domain.structs.count(i->get_name())) {
-            import_global_symbol(i, i->get_name(), {symbol_kind::struct_kind, file});
+            import_global_symbol(i, i->get_name(), {sym_kind::struct_kind, file});
         }
         if (domain.functions.count(i->get_name())) {
-            import_global_symbol(i, i->get_name(), {symbol_kind::func_kind, file});
+            import_global_symbol(i, i->get_name(), {sym_kind::func_kind, file});
         }
     }
 }
@@ -1430,18 +1430,18 @@ const error& semantic::analyse(root* ast_root) {
     }
 
     ctx.global_symbol.clear();
-    ctx.global_symbol.insert({"i64", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"i32", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"i16", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"i8", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"u64", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"u32", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"u16", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"u8", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"f32", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"f64", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"void", {symbol_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"bool", {symbol_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"i64", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"i32", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"i16", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"i8", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"u64", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"u32", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"u16", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"u8", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"f32", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"f64", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"void", {sym_kind::basic_kind, ""}});
+    ctx.global_symbol.insert({"bool", {sym_kind::basic_kind, ""}});
     resolve_use_stmt(ast_root);
     if (err.geterr()) {
         return err;

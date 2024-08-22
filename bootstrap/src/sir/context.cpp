@@ -42,10 +42,18 @@ void sir_func::dump(std::ostream& out) const {
     out << "}\n";
 }
 
+bool sir_context::visiable_char(const char c) const {
+    return std::isdigit(c) || std::isalpha(c) ||
+           c=='_' || c==':' || c==' ' || c==',' ||
+           c=='[' || c==']' || c=='(' || c==')' ||
+           c=='{' || c=='}' || c=='<' || c=='>' ||
+           c=='.';
+}
+
 void sir_context::dump_raw_string(std::ostream& out,
                                   const std::string& src) const {
     for(const auto c : src) {
-        if (std::isdigit(c) || std::isalpha(c) || c=='_' || c==':' || c==' ') {
+        if (visiable_char(c)) {
             out << c;
             continue;
         }

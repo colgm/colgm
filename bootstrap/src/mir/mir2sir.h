@@ -131,7 +131,7 @@ public:
 class mir2sir: public visitor {
 private:
     const semantic_context& ctx;
-    std::unordered_map<std::string, symbol_kind> type_mapper;
+    std::unordered_map<std::string, sym_kind> type_mapper;
 
 private:
     const std::unordered_map<std::string, std::string> basic_type_mapper = {
