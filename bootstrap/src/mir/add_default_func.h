@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mir/pass.h"
+#include "mir/pass_manager.h"
 
 #include <sstream>
 #include <cstring>

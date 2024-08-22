@@ -34,7 +34,6 @@ set(COLGM_OBJECT_SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/mir/mir.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/mir2sir.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/pass_manager.cpp
-    ${CMAKE_SOURCE_DIR}/src/mir/pass.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/type_cast_number_pass.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/visitor.cpp
     ${CMAKE_SOURCE_DIR}/src/package/package.cpp

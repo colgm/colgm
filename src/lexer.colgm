@@ -247,7 +247,7 @@ impl token {
 struct vec_token {
     data: token*,
     size: u64,
-    alloc_size: u64
+    capacity: u64
 }
 
 impl vec_token {
@@ -256,7 +256,7 @@ impl vec_token {
         var size_of_token = token::__size__();
         res->data = malloc((2048 => u64) * size_of_token) => token*;
         res->size = 0 => u64;
-        res->alloc_size = 2048 => u64;
+        res->capacity = 2048 => u64;
         return res;
     }
 
@@ -271,10 +271,10 @@ impl vec_token {
     }
 
     func append(self: vec_token*, kind: tok_kind, content: str*, loc: span*) {
-        if(self->size == self->alloc_size) {
+        if(self->size == self->capacity) {
             var size_of_token = token::__size__();
             var new_data = malloc(
-                (self->alloc_size * (2 => u64)) * size_of_token
+                (self->capacity * (2 => u64)) * size_of_token
             ) => token*;
             var index = 0 => u64;
             while(index < self->size) {
@@ -283,7 +283,7 @@ impl vec_token {
             }
             free(self->data => i8*);
             self->data = new_data;
-            self->alloc_size *= 2 => u64;
+            self->capacity *= 2 => u64;
         }
 
         self->data[self->size].kind = kind;

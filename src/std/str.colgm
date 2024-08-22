@@ -3,7 +3,7 @@ use std::libc::{ malloc, free, memcpy, strlen, streq, exit, write };
 struct str {
     c_str: i8*,
     size: u64,
-    alloc_size: u64
+    capacity: u64
 }
 
 impl str {
@@ -19,15 +19,15 @@ impl str {
         self->c_str[0] = '\0';
 
         self->size = 0 => u64;
-        self->alloc_size = 256 => u64;
+        self->capacity = 256 => u64;
         return;
     }
 
     func copy_new(self: str*) -> str* {
         var new_str = str::__alloc__();
-        new_str->c_str = malloc(self->alloc_size);
+        new_str->c_str = malloc(self->capacity);
         new_str->size = self->size;
-        new_str->alloc_size = self->alloc_size;
+        new_str->capacity = self->capacity;
 
         memcpy(new_str->c_str, self->c_str, self->size);
         new_str->c_str[self->size] = '\0';
@@ -40,7 +40,7 @@ impl str {
         
         self->c_str = nil;
         self->size = 0 => u64;
-        self->alloc_size = 0 => u64;
+        self->capacity = 0 => u64;
 
         return;
     }
@@ -67,7 +67,7 @@ impl str {
             free(self->c_str);
             self->c_str = malloc(len + (1 => u64));
             self->size = len + 1 => u64;
-            self->alloc_size = len + 1 => u64;
+            self->capacity = len + 1 => u64;
         }
 
         memcpy(self->c_str, src, len);
@@ -78,21 +78,21 @@ impl str {
     }
 
     func append_char(self: str*, ch: i8) -> str* {
-        if (self->size + (1 => u64) < self->alloc_size) {
+        if (self->size + (1 => u64) < self->capacity) {
             self->c_str[self->size] = ch;
             self->c_str[self->size + (1 => u64)] = '\0';
             self->size += 1 => u64;
             return self;
         }
 
-        var new_buffer = malloc(self->alloc_size*(2 => u64));
+        var new_buffer = malloc(self->capacity*(2 => u64));
         memcpy(new_buffer, self->c_str, self->size);
         new_buffer[self->size] = ch;
         new_buffer[self->size + (1 => u64)] = '\0';
         free(self->c_str);
         self->c_str = new_buffer;
         self->size += 1 => u64;
-        self->alloc_size *= 2 => u64;
+        self->capacity *= 2 => u64;
         return self;
     }
 

@@ -6,17 +6,17 @@ use std::libc::{ malloc, free, itoa, strlen };
 struct file_lines {
     source: str*,
     size: i64,
-    alloc_size: i64
+    capacity: i64
 }
 
 impl file_lines {
     func init(self: file_lines*) {
         self->source = malloc((128 => u64)*str::__size__()) => str*;
         self->size = 0;
-        self->alloc_size = 128;
+        self->capacity = 128;
 
         var index = 0;
-        while(index < self->alloc_size) {
+        while(index < self->capacity) {
             self->source[index].init();
             index += 1;
         }
@@ -44,15 +44,15 @@ impl file_lines {
     }
 
     func push(self: file_lines*, line: str*) {
-        if (self->size == self->alloc_size) {
-            self->alloc_size *= 2;
-            var tmp = malloc((self->alloc_size => u64)*str::__size__()) => str*;
+        if (self->size == self->capacity) {
+            self->capacity *= 2;
+            var tmp = malloc((self->capacity => u64)*str::__size__()) => str*;
             var index = 0;
             while(index < self->size) {
                 tmp[index] = self->source[index];
                 index += 1;
             }
-            while(index < self->alloc_size) {
+            while(index < self->capacity) {
                 tmp[index].init();
                 index += 1;
             }

@@ -43,17 +43,91 @@ enum ast_kind {
 struct ast {
     kind: ast_kind,
     location: span*,
-    size: i64,
-    child: ast*
+    union_data: i8*
 }
+
+struct vector_ast {
+    data: ast**,
+    size: u64,
+    capacity: u64
+}
+
+struct ast_root {}
+
+struct ast_unary_operator {}
+
+struct ast_binary_operator {}
+
+struct ast_type_convert {}
+
+struct ast_identifier {}
+
+struct ast_nil_literal {}
+
+struct ast_number_literal {}
+
+struct ast_string_literal {}
+
+struct ast_char_literal {}
+
+struct ast_bool_literal {}
+
+struct ast_call_index {}
+
+struct ast_call_func_args {}
+
+struct ast_get_field {}
+
+struct ast_ptr_get_field {}
+
+struct ast_call_path {}
+
+struct ast_call {}
+
+struct ast_assignment {}
+
+struct ast_type_def {}
+
+struct ast_enum_decl {}
+
+struct ast_struct_field {}
+
+struct ast_struct_decl {}
+
+struct ast_param {}
+
+struct ast_param_list {}
+
+struct ast_func_decl {}
+
+struct ast_impl {}
+
+struct ast_use_stmt {}
+
+struct ast_definition {}
+
+struct ast_cond_stmt {}
+
+struct ast_if_stmt {}
+
+struct ast_while_stmt {}
+
+struct ast_in_stmt_expr {}
+
+struct ast_ret_stmt {}
+
+struct ast_continue_stmt {}
+
+struct ast_break_stmt {}
+
+struct ast_code_block {}
 
 impl ast {
     func new(k: ast_kind, loc: span*) -> ast* {
         var res = ast::__alloc__();
         res->kind = k;
         res->location = loc;
-        res->size = 0;
-        res->child = nil => ast*;
+        res->union_data = nil;
         return res;
     }
 
@@ -61,5 +135,9 @@ impl ast {
         self->location->delete();
         free(self->location => i8*);
         return;
+    }
+
+    func get_kind(self: ast*) -> ast_kind {
+        return self->kind;
     }
 }

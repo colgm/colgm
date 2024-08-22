@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mir/ast2mir.h"
-#include "mir/pass.h"
+#include "mir/pass_manager.h"
 
 #include <cstring>
 #include <sstream>
