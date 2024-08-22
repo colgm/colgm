@@ -1,4 +1,4 @@
-# Colgm Bootstrap Compiler
+# <img src="../doc/colgm.svg" height="50px"/> Colgm Bootstrap Compiler
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 

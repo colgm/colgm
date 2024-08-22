@@ -1,4 +1,4 @@
-# Colgm Compiler Project
+# <img src="doc/colgm.svg" height="50px"/> Colgm Compiler Project
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 
