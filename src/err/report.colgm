@@ -1,7 +1,7 @@
 use err::span::*;
-use std::str::str;
+use std::str::{ str };
 use std::io::{ readfile_into_string, io };
-use std::libc::{ malloc, free, itoa, strlen };
+use std::libc::{ malloc, realloc, free, itoa, strlen };
 
 struct file_lines {
     source: str*,
@@ -43,21 +43,23 @@ impl file_lines {
         return;
     }
 
+    func expend_capacity(self: file_lines*) {
+        self->capacity *= 2;
+        self->source = realloc(
+            self->source => i8*,
+            (self->capacity => u64)*str::__size__()
+        ) => str*;
+        var index = self->size;
+        while(index < self->capacity) {
+            self->source[index].init();
+            index += 1;
+        }
+        return;
+    }
+
     func push(self: file_lines*, line: str*) {
         if (self->size == self->capacity) {
-            self->capacity *= 2;
-            var tmp = malloc((self->capacity => u64)*str::__size__()) => str*;
-            var index = 0;
-            while(index < self->size) {
-                tmp[index] = self->source[index];
-                index += 1;
-            }
-            while(index < self->capacity) {
-                tmp[index].init();
-                index += 1;
-            }
-            free(self->source => i8*);
-            self->source = tmp;
+            self->expend_capacity();
         }
 
         self->source[self->size].append_str(line->c_str);

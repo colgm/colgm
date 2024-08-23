@@ -1,5 +1,5 @@
 use std::str::str;
-use std::libc::{ malloc, free };
+use std::libc::{ malloc, realloc, free };
 use std::io::{ readfile_into_string, io};
 use err::report::*;
 use err::span::span;
@@ -270,20 +270,18 @@ impl vec_token {
         return;
     }
 
+    func expend_capacity(self: vec_token*) {
+        self->capacity *= 2 => u64;
+        self->data = realloc(
+            self->data => i8*,
+            self->capacity * token::__size__()
+        ) => token*;
+        return;
+    }
+
     func append(self: vec_token*, kind: tok_kind, content: str*, loc: span*) {
         if(self->size == self->capacity) {
-            var size_of_token = token::__size__();
-            var new_data = malloc(
-                (self->capacity * (2 => u64)) * size_of_token
-            ) => token*;
-            var index = 0 => u64;
-            while(index < self->size) {
-                new_data[index] = self->data[index];
-                index += 1 => u64;
-            }
-            free(self->data => i8*);
-            self->data = new_data;
-            self->capacity *= 2 => u64;
+            self->expend_capacity();
         }
 
         self->data[self->size].kind = kind;

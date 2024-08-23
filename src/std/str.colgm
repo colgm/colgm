@@ -1,4 +1,4 @@
-use std::libc::{ malloc, free, memcpy, strlen, streq, exit, write };
+use std::libc::{ malloc, realloc, free, memcpy, strlen, streq, exit, write };
 
 struct str {
     c_str: i8*,
@@ -77,22 +77,20 @@ impl str {
         return;
     }
 
+    func expend_capacity(self: str*) {
+        self->capacity *= 2 => u64;
+        self->c_str = realloc(self->c_str, self->capacity);
+        return;
+    }
+
     func append_char(self: str*, ch: i8) -> str* {
-        if (self->size + (1 => u64) < self->capacity) {
-            self->c_str[self->size] = ch;
-            self->c_str[self->size + (1 => u64)] = '\0';
-            self->size += 1 => u64;
-            return self;
+        if (self->size == self->capacity) {
+            self->expend_capacity();
         }
 
-        var new_buffer = malloc(self->capacity*(2 => u64));
-        memcpy(new_buffer, self->c_str, self->size);
-        new_buffer[self->size] = ch;
-        new_buffer[self->size + (1 => u64)] = '\0';
-        free(self->c_str);
-        self->c_str = new_buffer;
+        self->c_str[self->size] = ch;
+        self->c_str[self->size + (1 => u64)] = '\0';
         self->size += 1 => u64;
-        self->capacity *= 2 => u64;
         return self;
     }
 
