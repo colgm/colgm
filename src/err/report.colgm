@@ -62,7 +62,7 @@ impl file_lines {
             self->expand_capacity();
         }
 
-        self->source[self->size].append_str(line->c_str);
+        self->source[self->size].append_str(line);
         self->size += 1;
         return;
     }
@@ -93,7 +93,7 @@ impl report {
 impl report {
     func load_file_source(self: report*, filename: i8*) {
         self->filename.clear();
-        self->filename.append_str(filename);
+        self->filename.append_i8_vec(filename);
 
         var source = str::new();
         readfile_into_string(filename, source);
@@ -153,7 +153,7 @@ impl report {
             res->append_char(' ');
             index += 1;
         }
-        res->append_str(tmp);
+        res->append_i8_vec(tmp);
         free(tmp);
         return res;
     }
@@ -191,7 +191,7 @@ impl report {
                         underline->append_char('^');
                     }
                     if (i >= location->begin_column && tmp_str_const[i]=='\t') {
-                        underline->append_str("^^^^");
+                        underline->append_i8_vec("^^^^");
                     }
                     i += 1;
                 }
@@ -207,7 +207,7 @@ impl report {
                         underline->append_char('^');
                     }
                     if (i < location->end_column && tmp_str_const[i]=='\t') {
-                        underline->append_str("^^^^");
+                        underline->append_i8_vec("^^^^");
                     }
                     if (i >= location->end_column && tmp_str_const[i]!='\t') {
                         underline->append_char(' ');
@@ -220,7 +220,7 @@ impl report {
             } else {
                 while(i < len) {
                     if (tmp_str_const[i]=='\t') {
-                        underline->append_str("^^^^");
+                        underline->append_i8_vec("^^^^");
                     } elsif(tmp_str_const[i]!='\r' && tmp_str_const[i]!='\n') {
                         underline->append_char('^');
                     }
