@@ -21,9 +21,7 @@ written by C++(`-std=c++17`):
 Use these commands to build the bootstrap compiler:
 
 ```sh
-cd bootstrap
-mkdir build && cd build && cmake ..
-make -j
+cd bootstrap && mkdir build && cd build && cmake .. && make -j
 ```
 
 The executable is located as `build/colgm`.
@@ -31,8 +29,7 @@ The executable is located as `build/colgm`.
 Then move to the `{repo_path}/src`:
 
 ```sh
-cd src
-make
+cd src && make
 ```
 
 The bootstrapped compiler should be `{repo_path}/src/out.ll`.
@@ -40,7 +37,7 @@ If having `lli`(llvm jit interpreter), you could try this to
 execute bootstrapped new compiler:
 
 ```sh
-lli out.ll
+lli out.ll main.colgm -L .
 ```
 
 Learn more about bootstrap compiler: [Colgm Bootstrap](./bootstrap/README.md).
@@ -60,6 +57,9 @@ func main() -> i64 {
 
 ## TODO
 
-1. support constant/struct init syntax
+1. support for/foreach/forindex:
+    - for loop
+    - forindex loop, container should have `size()` method
+    - foreach loop, container should have iterator-like stuff
 2. llvm debug info
 3. develop bootstrapped compiler

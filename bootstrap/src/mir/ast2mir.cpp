@@ -364,7 +364,7 @@ bool ast2mir::visit_match_stmt(ast::match_stmt* node) {
     node->get_value()->accept(this);
     block = temp;
 
-    const auto name = "match._" + std::to_string(reinterpret_cast<u64>(node->get_value()));
+    const auto name = "match." + std::to_string(reinterpret_cast<u64>(node->get_value()));
 
     block->add_content(new mir_define(
         node->get_value()->get_location(),

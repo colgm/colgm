@@ -11,9 +11,7 @@ This directory stores the source file of colgm bootstrap compiler.
 In the top level directory, use these commands:
 
 ```sh
-cd bootstrap
-mkdir build && cd build && cmake ..
-make -j
+cd bootstrap && mkdir build && cd build && cmake .. && make -j
 ```
 
 ## Usage
@@ -72,7 +70,7 @@ var variable_name = expression; # without type
 
 Colgm allows these assignment operators:
 
-```typescript
+```rust
 a += b;
 a -= b;
 a *= b;
@@ -85,7 +83,7 @@ a &= b;
 
 ### Control Flow
 
-```typescript
+```rust
 # loop
 while (1 == 1) {
     ...
@@ -100,6 +98,12 @@ if (1 == 1) {
     ...
 } else {
     ...
+}
+
+# match
+match (variable) {
+    EnumType::a: ...
+    EnumType::b: ...
 }
 ```
 

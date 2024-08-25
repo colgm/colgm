@@ -1,6 +1,6 @@
 use std::str::str;
 use std::libc::{ malloc, realloc, free };
-use std::io::{ readfile_into_string, io};
+use std::io::{ readfile_into_string, io, fs };
 use err::report::*;
 use err::span::span;
 
@@ -872,10 +872,11 @@ impl lexer {
     }
 
     func scan(self: lexer*, filename: i8*) {
-        var src = str::new();
         self->filename.clear();
         self->filename.copy_const(filename);
         self->err->load_file_source(filename);
+
+        var src = str::new();
         readfile_into_string(filename, src);
 
         self->pos = 0 => u64;

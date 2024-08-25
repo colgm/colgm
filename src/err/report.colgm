@@ -1,6 +1,6 @@
 use err::span::*;
 use std::str::{ str };
-use std::io::{ readfile_into_string, io };
+use std::io::{ readfile_into_string, io, fs };
 use std::libc::{ malloc, realloc, free, itoa, strlen };
 
 struct file_lines {
@@ -92,6 +92,16 @@ impl report {
 
 impl report {
     func load_file_source(self: report*, filename: i8*) {
+        if (!fs::exists(filename)) {
+            self->error_count += 1;
+            io::stderr()->red()->out("Error: ")->reset()->end();
+            io::stderr()->out("failed to load file <")
+                        ->out(filename)
+                        ->out(">, check if it exists and is readable")
+                        ->endln();
+            return;
+        }
+
         self->filename.clear();
         self->filename.append_i8_vec(filename);
 

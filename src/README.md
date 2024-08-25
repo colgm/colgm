@@ -1,8 +1,6 @@
-# Colgm Compiler Project: Source Code
+# <img src="../doc/colgm.svg" height="50px"/> Colgm Compiler
 
-<img src="../doc/png/logo-small.png" style="width:200px"></img>
-
-Still working in progress. The compiled `.ll` file maybe malfunction.
+WIP. The compiled `.ll` file maybe malfunction.
 
 ## Build
 

@@ -2,7 +2,7 @@ use std::libc::{ free, streq };
 use err::span::*;
 use err::report::*;
 use cli::*;
-use std::io::{ readfile_into_string, io };
+use std::io::{ readfile_into_string, io, fs };
 use lexer::{ lexer };
 use parser::{ parser };
 
@@ -23,6 +23,15 @@ func free_components(rep: report*, lex: lexer*, par: parser*) {
 }
 
 func compile(filename: i8*, library_path: i8*, option: cli_option*) {
+    if (!fs::exists(filename)) {
+        io::stderr()->red()->out("Error: ")->reset()->end();
+        io::stderr()->out("failed to load file <")
+                    ->out(filename)
+                    ->out(">, check if it exists and is readable")
+                    ->endln();
+        return;
+    }
+
     io::stdlog()->out("[colgm] source file: \"")
                 ->out(filename)
                 ->out("\"")

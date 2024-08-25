@@ -13,6 +13,19 @@ enum flag {
     O_BINARY= 0x8000
 }
 
+struct fs {}
+
+impl fs {
+    func exists(filename: i8*) -> bool {
+        var fd = open(filename, (flag::O_RDONLY => i32));
+        if (fd < (0 => i32)) {
+            return false;
+        }
+        close(fd);
+        return true;
+    }
+}
+
 func readfile_into_string(filename: i8*, dst: str*) -> i64 {
     var fd = open(filename, (flag::O_RDONLY => i32) | (flag::O_BINARY => i32));
     if (fd < (0 => i32)) {

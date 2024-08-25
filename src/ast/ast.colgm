@@ -139,20 +139,23 @@ impl ast {
     }
 
     func delete_instance(self: ast*) {
-        if (self->kind == ast_kind::ast_null) {
-            return;
-        } elsif(self->kind == ast_kind::ast_root) {
-            var ptr = self->union_data => root*;
-            ptr->delete();
-        } else {
-            # TODO
-            io::stderr()->out("ast::delete_instance: ")
-                        ->out("unsupported ast kind [")
-                        ->out_i64(self->kind => i64)
-                        ->out("]\n")
-                        ->end();
-            exit(-1 => i32);
+        match(self->kind) {
+            ast_kind::ast_null: return;
+            ast_kind::ast_root: {
+                var ptr = self->union_data => root*;
+                ptr->delete();
+                return;
+            }
         }
+
+        io::stderr()->out("ast::delete_instance: ")
+                    ->out("unimplemented ast kind [")
+                    ->out_i64(self->kind => i64)
+                    ->out("], please report bug.\n")
+                    ->end();
+        exit(-1 => i32);
+
+        # unreachable
         return;
     }
 }
