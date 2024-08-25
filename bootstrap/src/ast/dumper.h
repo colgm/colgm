@@ -69,6 +69,8 @@ public:
     bool visit_definition(definition*) override;
     bool visit_cond_stmt(cond_stmt*) override;
     bool visit_if_stmt(if_stmt*) override;
+    bool visit_match_case(match_case*) override;
+    bool visit_match_stmt(match_stmt*) override;
     bool visit_while_stmt(while_stmt*) override;
     bool visit_in_stmt_expr(in_stmt_expr*) override;
     bool visit_ret_stmt(ret_stmt*) override;

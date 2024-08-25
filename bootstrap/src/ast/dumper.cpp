@@ -390,6 +390,39 @@ bool dumper::visit_if_stmt(if_stmt* node) {
     return true;
 }
 
+bool dumper::visit_match_case(match_case* node) {
+    dump_indent();
+    std::cout << "case" << format_location(node);
+    push_indent();
+    node->get_value()->accept(this);
+    set_last();
+    node->get_block()->accept(this);
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_match_stmt(match_stmt* node) {
+    dump_indent();
+    std::cout << "match" << format_location(node);
+    push_indent();
+    if (node->get_cases().empty()) {
+        set_last();
+    }
+    node->get_value()->accept(this);
+
+    push_indent();
+    for(auto i : node->get_cases()) {
+        if (i==node->get_cases().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_while_stmt(while_stmt* node) {
     dump_indent();
     std::cout << "while" << format_location(node);

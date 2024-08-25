@@ -29,6 +29,7 @@ enum class tok:u32 {
     tk_pub,          // keyword pub
     tk_impl,         // keyword impl
     tk_func,         // keyword for definition of function
+    tk_match,        // keyword for match
     tk_brk,          // loop keyword break
     tk_cont,         // loop keyword continue
     tk_ret,          // function keyword return
@@ -116,6 +117,7 @@ private:
         {"struct"  , tok::tk_stct        },
         {"pub"     , tok::tk_pub         },
         {"func"    , tok::tk_func        },
+        {"match"   , tok::tk_match       },
         {"break"   , tok::tk_brk         },
         {"continue", tok::tk_cont        },
         {"return"  , tok::tk_ret         },

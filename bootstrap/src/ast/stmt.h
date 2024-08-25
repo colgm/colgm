@@ -84,6 +84,42 @@ public:
     auto get_block() const { return block; }
 };
 
+class match_case: public stmt {
+private:
+    expr* value;
+    code_block* block;
+
+public:
+    match_case(const span& loc):
+        stmt(ast_type::ast_match_case, loc),
+        value(nullptr), block(nullptr) {}
+    ~match_case() override;
+    void accept(visitor*) override;
+
+    void set_value(expr* node) { value = node; }
+    auto get_value() const { return value; }
+    void set_block(code_block* node){ block = node; }
+    auto get_block() const { return block; }
+};
+
+class match_stmt: public stmt {
+private:
+    expr* value;
+    std::vector<match_case*> cases;
+
+public:
+    match_stmt(const span& loc):
+        stmt(ast_type::ast_match_stmt, loc),
+        value(nullptr) {}
+    ~match_stmt() override;
+    void accept(visitor*) override;
+
+    void set_value(expr* node) { value = node; }
+    auto get_value() const { return value; }
+    void add_case(match_case* node) {cases.push_back(node); }
+    const auto& get_cases() const { return cases; }
+};
+
 class while_stmt: public stmt {
 private:
     expr* condition;

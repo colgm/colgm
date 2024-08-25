@@ -48,6 +48,26 @@ void if_stmt::accept(visitor* v) {
     v->visit_if_stmt(this);
 }
 
+match_case::~match_case() {
+    delete value;
+    delete block;
+}
+
+void match_case::accept(visitor* v) {
+    v->visit_match_case(this);
+}
+
+match_stmt::~match_stmt() {
+    delete value;
+    for(auto i : cases) {
+        delete i;
+    }
+}
+
+void match_stmt::accept(visitor* v) {
+    v->visit_match_stmt(this);
+}
+
 while_stmt::~while_stmt() {
     delete condition;
     delete block;

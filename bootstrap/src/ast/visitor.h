@@ -42,6 +42,8 @@ public:
     virtual bool visit_definition(definition*);
     virtual bool visit_cond_stmt(cond_stmt*);
     virtual bool visit_if_stmt(if_stmt*);
+    virtual bool visit_match_case(match_case*);
+    virtual bool visit_match_stmt(match_stmt*);
     virtual bool visit_while_stmt(while_stmt*);
     virtual bool visit_in_stmt_expr(in_stmt_expr*);
     virtual bool visit_ret_stmt(ret_stmt*);

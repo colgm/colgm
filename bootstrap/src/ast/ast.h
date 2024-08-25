@@ -38,6 +38,8 @@ enum class ast_type {
     ast_definition,
     ast_cond_stmt,
     ast_if_stmt,
+    ast_match_case,
+    ast_match_stmt,
     ast_while_stmt,
     ast_in_stmt_expr,
     ast_ret_stmt,
@@ -78,6 +80,8 @@ class use_stmt;
 class definition;
 class cond_stmt;
 class if_stmt;
+class match_case;
+class match_stmt;
 class while_stmt;
 class in_stmt_expr;
 class ret_stmt;

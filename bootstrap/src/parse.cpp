@@ -604,6 +604,27 @@ cond_stmt* parse::cond_stmt_gen() {
     return result;
 }
 
+match_stmt* parse::match_stmt_gen() {
+    auto result = new match_stmt(toks[ptr].loc);
+    match(tok::tk_match);
+    match(tok::tk_lcurve);
+    result->set_value(calculation_gen());
+    match(tok::tk_rcurve);
+
+    match(tok::tk_lbrace);
+    while(!look_ahead(tok::tk_rbrace)) {
+        auto new_case = new match_case(toks[ptr].loc);
+        new_case->set_value(calculation_gen());
+        match(tok::tk_colon);
+        new_case->set_block(block_gen());
+        update_location(new_case);
+        result->add_case(new_case);
+    }
+    match(tok::tk_rbrace);
+    update_location(result);
+    return result;
+}
+
 while_stmt* parse::while_stmt_gen() {
     auto result = new while_stmt(toks[ptr].loc);
     match(tok::tk_while);
@@ -627,6 +648,7 @@ code_block* parse::block_gen() {
             case tok::tk_str:
             case tok::tk_id: result->add_stmt(in_stmt_expr_gen()); break;
             case tok::tk_if: result->add_stmt(cond_stmt_gen()); break;
+            case tok::tk_match: result->add_stmt(match_stmt_gen()); break;
             case tok::tk_while: result->add_stmt(while_stmt_gen()); break;
             case tok::tk_ret: result->add_stmt(return_gen()); break;
             case tok::tk_cont: result->add_stmt(continue_gen()); break;

@@ -36,6 +36,7 @@ private:
         {tok::tk_var         , "var"     },
         {tok::tk_pub         , "pub"     },
         {tok::tk_func        , "func"    },
+        {tok::tk_match       , "match"   },
         {tok::tk_brk         , "break"   },
         {tok::tk_cont        , "continue"},
         {tok::tk_ret         , "return"  },
@@ -131,6 +132,7 @@ private:
     use_stmt* use_stmt_gen();
     definition* definition_gen();
     cond_stmt* cond_stmt_gen();
+    match_stmt* match_stmt_gen();
     while_stmt* while_stmt_gen();
     code_block* block_gen();
     in_stmt_expr* in_stmt_expr_gen();

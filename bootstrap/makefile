@@ -11,6 +11,7 @@ test: $(COLGMCC)
 	@ $(COLGMCC) test/func.colgm && lli out.ll
 	@ $(COLGMCC) test/hello.colgm && lli out.ll
 	@ $(COLGMCC) test/local.colgm && lli out.ll
+	@ $(COLGMCC) test/match.colgm && lli out.ll
 	@ $(COLGMCC) test/negative.colgm && lli out.ll
 	@ $(COLGMCC) test/self-ref-test.colgm && lli out.ll
 	@ $(COLGMCC) test/string.colgm && lli out.ll

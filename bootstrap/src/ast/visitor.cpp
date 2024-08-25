@@ -204,6 +204,20 @@ bool visitor::visit_if_stmt(if_stmt* node) {
     return true;
 }
 
+bool visitor::visit_match_case(match_case* node) {
+    node->get_value()->accept(this);
+    node->get_block()->accept(this);
+    return true;
+}
+
+bool visitor::visit_match_stmt(match_stmt* node) {
+    node->get_value()->accept(this);
+    for(auto i : node->get_cases()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_while_stmt(while_stmt* node) {
     node->get_condition()->accept(this);
     node->get_block()->accept(this);
