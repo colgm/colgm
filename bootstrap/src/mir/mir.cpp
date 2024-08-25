@@ -294,15 +294,15 @@ void mir_continue::accept(visitor* v) {
     v->visit_mir_continue(this);
 }
 
-void mir_while::dump(const std::string& indent, std::ostream& os) {
-    os << indent << to_hex(this) << " while (\n";
+void mir_loop::dump(const std::string& indent, std::ostream& os) {
+    os << indent << to_hex(this) << " loop (\n";
     condition->dump(indent + " ", os);
     content->dump(indent + " ", os);
     os << indent << ")\n";
 }
 
-void mir_while::accept(visitor* v) {
-    v->visit_mir_while(this);
+void mir_loop::accept(visitor* v) {
+    v->visit_mir_loop(this);
 }
 
 void mir_return::dump(const std::string& indent, std::ostream& os) {

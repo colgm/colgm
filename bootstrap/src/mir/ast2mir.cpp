@@ -438,7 +438,7 @@ bool ast2mir::visit_while_stmt(ast::while_stmt* node) {
     }
     block = temp;
 
-    block->add_content(new mir_while(
+    block->add_content(new mir_loop(
         node->get_location(),
         cond_block,
         body_block

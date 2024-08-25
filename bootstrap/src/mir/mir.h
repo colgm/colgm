@@ -33,7 +33,7 @@ enum class kind {
     mir_branch,
     mir_break,
     mir_continue,
-    mir_while,
+    mir_loop,
     mir_return
 };
 
@@ -493,15 +493,15 @@ public:
     void accept(visitor*) override;
 };
 
-class mir_while: public mir {
+class mir_loop: public mir {
 private:
     mir_block* condition;
     mir_block* content;
 
 public:
-    mir_while(const span& loc, mir_block* cond, mir_block* ct):
-        mir(kind::mir_while, loc), condition(cond), content(ct) {}
-    ~mir_while() override {
+    mir_loop(const span& loc, mir_block* cond, mir_block* ct):
+        mir(kind::mir_loop, loc), condition(cond), content(ct) {}
+    ~mir_loop() override {
         delete condition;
         delete content;
     }

@@ -55,7 +55,7 @@ void visitor::visit_mir_branch(mir_branch* node) {
     }
 }
 
-void visitor::visit_mir_while(mir_while* node) {
+void visitor::visit_mir_loop(mir_loop* node) {
     node->get_condition()->accept(this);
     node->get_content()->accept(this);
 }

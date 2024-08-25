@@ -1011,7 +1011,7 @@ void mir2sir::visit_mir_continue(mir_continue* node) {
     block->add_stmt(new sir_place_holder_label(block->stmt_size()));
 }
 
-void mir2sir::visit_mir_while(mir_while* node) {
+void mir2sir::visit_mir_loop(mir_loop* node) {
     auto entry_label = block->stmt_size() + 1;
     loop_entry.push_back(entry_label);
     break_inst.push_back({});

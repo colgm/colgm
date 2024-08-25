@@ -28,7 +28,7 @@ public:
     virtual void visit_mir_branch(mir_branch*);
     virtual void visit_mir_break(mir_break*) {}
     virtual void visit_mir_continue(mir_continue*) {}
-    virtual void visit_mir_while(mir_while*);
+    virtual void visit_mir_loop(mir_loop*);
     virtual void visit_mir_return(mir_return*);
 };
 

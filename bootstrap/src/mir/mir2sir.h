@@ -207,7 +207,7 @@ private:
     void visit_mir_branch(mir_branch*) override;
     void visit_mir_break(mir_break*) override;
     void visit_mir_continue(mir_continue*) override;
-    void visit_mir_while(mir_while*) override;
+    void visit_mir_loop(mir_loop*) override;
     void visit_mir_return(mir_return*) override;
 
 public:
