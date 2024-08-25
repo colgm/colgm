@@ -1,10 +1,12 @@
 use ast::ast::*;
 use err::report::*;
 use lexer::{ lexer };
+use std::libc::{ free };
 
 struct parser {
     err: report*,
-    lex: lexer*
+    lex: lexer*,
+    root: root*
 }
 
 impl parser {
@@ -12,10 +14,13 @@ impl parser {
         var res = parser::__alloc__();
         res->err = e;
         res->lex = l;
+        res->root = root::new();
         return res;
     }
 
     func delete(self: parser*) {
+        self->root->delete();
+        free(self->root => i8*);
         return;
     }
 }

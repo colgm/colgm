@@ -1,5 +1,6 @@
-use err::span::span;
-use std::libc::free;
+use err::span::{ span };
+use std::libc::{ malloc, realloc, free, exit };
+use std::io::{ io };
 
 enum ast_kind {
     ast_null,
@@ -46,6 +47,78 @@ struct ast {
     union_data: i8*  # store real ast node here
 }
 
+struct vector_ast {
+    data: ast**,
+    size: u64,
+    capacity: u64
+}
+
+impl vector_ast {
+    func init(self: vector_ast*) {
+        var ptr_size = 8 => u64; # now we only support 64bit
+        self->size = 0 => u64;
+        self->capacity = 256 => u64;
+        self->data = malloc(self->capacity * ptr_size) => ast**;
+        return;
+    }
+
+    func delete(self: vector_ast*) {
+        var i = 0 => u64;
+        while (i < self->size) {
+            self->data[i]->delete();
+            i += 1 => u64;
+        }
+        self->size = 0 => u64;
+        self->capacity = 0 => u64;
+        free(self->data => i8*);
+        return;
+    }
+
+    func expand(self: vector_ast*) {
+        var ptr_size = 8 => u64;
+        self->capacity *= 2 => u64;
+        self->data = realloc(
+            self->data => i8*,
+            self->capacity * ptr_size
+        ) => ast**;
+        return;
+    }
+
+    func push(self: vector_ast*, item: ast*) {
+        if (self->size == self->capacity) {
+            self->expand();
+        }
+        self->data[self->size] = item;
+        self->size += 1 => u64;
+        return;
+    }
+}
+
+struct root {
+    imports: vector_ast,
+    declarations: vector_ast
+}
+
+impl root {
+    func new() -> root* {
+        var res = root::__alloc__();
+        res->init();
+        return res;
+    }
+
+    func init(self: root*) {
+        self->imports.init();
+        self->declarations.init();
+        return;
+    }
+
+    func delete(self: root*) {
+        self->imports.delete();
+        self->declarations.delete();
+        return;
+    }
+}
+
 impl ast {
     func new(k: ast_kind, loc: span*) -> ast* {
         var res = ast::__alloc__();
@@ -58,10 +131,102 @@ impl ast {
     func delete(self: ast*) {
         self->location->delete();
         free(self->location => i8*);
+        if (self->union_data != nil) {
+            self->delete_instance();
+            free(self->union_data);
+        }
         return;
     }
 
-    func get_kind(self: ast*) -> ast_kind {
-        return self->kind;
+    func delete_instance(self: ast*) {
+        if (self->kind == ast_kind::ast_null) {
+            return;
+        } elsif(self->kind == ast_kind::ast_root) {
+            var ptr = self->union_data => root*;
+            ptr->delete();
+        } else {
+            # TODO
+            io::stderr()->out("ast::delete_instance: ")
+                        ->out("unsupported ast kind [")
+                        ->out_i64(self->kind => i64)
+                        ->out("]\n")
+                        ->end();
+            exit(-1 => i32);
+        }
+        return;
     }
 }
+
+# expressions
+
+struct ast_unary_operator {}
+
+struct ast_binary_operator {}
+
+struct ast_type_convert {}
+
+struct ast_identifier {}
+
+struct ast_nil_literal {}
+
+struct ast_number_literal {}
+
+struct ast_string_literal {}
+
+struct ast_char_literal {}
+
+struct ast_bool_literal {}
+
+struct ast_call_index {}
+
+struct ast_call_func_args {}
+
+struct ast_get_field {}
+
+struct ast_ptr_get_field {}
+
+struct ast_call_path {}
+
+struct ast_call {}
+
+struct ast_assignment {}
+
+# declarations
+
+struct ast_type_def {}
+
+struct ast_enum_decl {}
+
+struct ast_struct_field {}
+
+struct ast_struct_decl {}
+
+struct ast_param {}
+
+struct ast_param_list {}
+
+struct ast_func_decl {}
+
+struct ast_impl {}
+
+# statements
+
+struct ast_use_stmt {}
+
+struct ast_definition {}
+
+struct ast_cond_stmt {}
+
+struct ast_if_stmt {}
+
+struct ast_while_stmt {}
+
+struct ast_in_stmt_expr {}
+
+struct ast_ret_stmt {}
+
+struct ast_continue_stmt {}
+
+struct ast_break_stmt {}
+
+struct ast_code_block {}
