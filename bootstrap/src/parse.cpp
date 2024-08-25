@@ -503,7 +503,7 @@ func_decl* parse::function_gen() {
         update_location(result);
         return result;
     }
-    result->set_code_block(block_gen());
+    result->set_code_block(block_gen(false));
     update_location(result);
     return result;
 }
@@ -580,7 +580,7 @@ cond_stmt* parse::cond_stmt_gen() {
     match(tok::tk_lcurve);
     new_if->set_condition(calculation_gen());
     match(tok::tk_rcurve);
-    new_if->set_block(block_gen());
+    new_if->set_block(block_gen(true));
     update_location(new_if);
     result->add_stmt(new_if);
     while(look_ahead(tok::tk_elsif)) {
@@ -589,14 +589,14 @@ cond_stmt* parse::cond_stmt_gen() {
         match(tok::tk_lcurve);
         new_elsif->set_condition(calculation_gen());
         match(tok::tk_rcurve);
-        new_elsif->set_block(block_gen());
+        new_elsif->set_block(block_gen(true));
         update_location(new_elsif);
         result->add_stmt(new_elsif);
     }
     if (look_ahead(tok::tk_else)) {
         auto new_else = new if_stmt(toks[ptr].loc);
         match(tok::tk_else);
-        new_else->set_block(block_gen());
+        new_else->set_block(block_gen(true));
         update_location(new_else);
         result->add_stmt(new_else);
     }
@@ -616,7 +616,7 @@ match_stmt* parse::match_stmt_gen() {
         auto new_case = new match_case(toks[ptr].loc);
         new_case->set_value(calculation_gen());
         match(tok::tk_colon);
-        new_case->set_block(block_gen());
+        new_case->set_block(block_gen(true));
         update_location(new_case);
         result->add_case(new_case);
     }
@@ -631,30 +631,41 @@ while_stmt* parse::while_stmt_gen() {
     match(tok::tk_lcurve);
     result->set_condition(calculation_gen());
     match(tok::tk_rcurve);
-    result->set_block(block_gen());
+    result->set_block(block_gen(true));
     update_location(result);
     return result;
 }
 
-code_block* parse::block_gen() {
+void parse::add_gen_stmt(code_block* result) {
+    switch(toks[ptr].type) {
+        case tok::tk_var: result->add_stmt(definition_gen()); break;
+        case tok::tk_lcurve:
+        case tok::tk_nil:
+        case tok::tk_num:
+        case tok::tk_str:
+        case tok::tk_id: result->add_stmt(in_stmt_expr_gen()); break;
+        case tok::tk_if: result->add_stmt(cond_stmt_gen()); break;
+        case tok::tk_match: result->add_stmt(match_stmt_gen()); break;
+        case tok::tk_while: result->add_stmt(while_stmt_gen()); break;
+        case tok::tk_ret: result->add_stmt(return_gen()); break;
+        case tok::tk_cont: result->add_stmt(continue_gen()); break;
+        case tok::tk_brk: result->add_stmt(break_gen()); break;
+        default: match(toks[ptr].type); break;
+    }
+}
+
+code_block* parse::block_gen(bool flag_allow_single_stmt_without_brace) {
     auto result = new code_block(toks[ptr].loc);
+
+    if (flag_allow_single_stmt_without_brace && !look_ahead(tok::tk_lbrace)) {
+        add_gen_stmt(result);
+        update_location(result);
+        return result;
+    }
+
     match(tok::tk_lbrace);
     while(!look_ahead(tok::tk_rbrace)) {
-        switch(toks[ptr].type) {
-            case tok::tk_var: result->add_stmt(definition_gen()); break;
-            case tok::tk_lcurve:
-            case tok::tk_nil:
-            case tok::tk_num:
-            case tok::tk_str:
-            case tok::tk_id: result->add_stmt(in_stmt_expr_gen()); break;
-            case tok::tk_if: result->add_stmt(cond_stmt_gen()); break;
-            case tok::tk_match: result->add_stmt(match_stmt_gen()); break;
-            case tok::tk_while: result->add_stmt(while_stmt_gen()); break;
-            case tok::tk_ret: result->add_stmt(return_gen()); break;
-            case tok::tk_cont: result->add_stmt(continue_gen()); break;
-            case tok::tk_brk: result->add_stmt(break_gen()); break;
-            default: match(toks[ptr].type); break;
-        }
+        add_gen_stmt(result);
         if (look_ahead(tok::tk_eof)) {
             break;
         }

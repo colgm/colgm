@@ -1159,6 +1159,61 @@ void semantic::resolve_cond_stmt(cond_stmt* node, const colgm_func& func_self) {
     }
 }
 
+bool semantic::check_is_enum_literal(expr* node) {
+    if (node->get_ast_type()!=ast_type::ast_call) {
+        return false;
+    }
+    auto call_node = reinterpret_cast<call*>(node);
+    if (call_node->get_chain().size()!=1) {
+        return false;
+    }
+
+    const auto& name = call_node->get_head()->get_name();
+    if (!ctx.global_symbol.count(name)) {
+        return false;
+    }
+    if (ctx.global_symbol.at(name).kind!=sym_kind::enum_kind) {
+        return false;
+    }
+
+    if (call_node->get_chain()[0]->get_ast_type()!=ast_type::ast_call_path) {
+        return false;
+    }
+    return true;
+}
+
+void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self) {
+    const auto infer = resolve_expression(node->get_value());
+    node->get_value()->set_resolve_type(infer);
+    if (ctx.search_symbol_kind(infer)!=sym_kind::enum_kind) {
+        report(node->get_value(), "match value should be enum type.");
+        return;
+    }
+    if (node->get_cases().empty()) {
+        report(node, "expect at least one case.");
+        return;
+    }
+    for(auto i : node->get_cases()) {
+        const auto case_node = i->get_value();
+        const auto case_infer = resolve_expression(case_node);
+        case_node->set_resolve_type(case_infer);
+        if (case_infer!=infer) {
+            report(case_node,
+                "case value should be \"" + infer.to_string() +
+                "\" type but get \"" + case_infer.to_string() + "\"."
+            );
+            continue;
+        }
+
+        if (!check_is_enum_literal(case_node)) {
+            report(case_node, "case value should be enum literal.");
+            continue;
+        }
+
+        resolve_code_block(i->get_block(), func_self);
+    }
+}
+
 void semantic::resolve_while_stmt(while_stmt* node, const colgm_func& func_self) {
     const auto infer = resolve_expression(node->get_condition());
     if (infer!=type::bool_type()) {
@@ -1212,6 +1267,9 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
         break;
     case ast_type::ast_cond_stmt:
         resolve_cond_stmt(reinterpret_cast<cond_stmt*>(node), func_self);
+        break;
+    case ast_type::ast_match_stmt:
+        resolve_match_stmt(reinterpret_cast<match_stmt*>(node), func_self);
         break;
     case ast_type::ast_while_stmt:
         resolve_while_stmt(reinterpret_cast<while_stmt*>(node), func_self);

@@ -106,7 +106,9 @@ private:
     type resolve_type_def(type_def*);
     void resolve_definition(definition*, const colgm_func&);
     void resolve_if_stmt(if_stmt*, const colgm_func&);
+    bool check_is_enum_literal(expr*);
     void resolve_cond_stmt(cond_stmt*, const colgm_func&);
+    void resolve_match_stmt(match_stmt*, const colgm_func&);
     void resolve_while_stmt(while_stmt*, const colgm_func&);
     void resolve_in_stmt_expr(in_stmt_expr*, const colgm_func&);
     void resolve_ret_stmt(ret_stmt*, const colgm_func&);

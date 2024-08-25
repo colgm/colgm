@@ -357,6 +357,75 @@ mir_if* ast2mir::generate_if_stmt(ast::if_stmt* node) {
     );
 }
 
+bool ast2mir::visit_match_stmt(ast::match_stmt* node) {
+    auto new_block = new mir_block(node->get_value()->get_location());
+    auto temp = block;
+    block = new_block;
+    node->get_value()->accept(this);
+    block = temp;
+
+    const auto name = "match._" + std::to_string(reinterpret_cast<u64>(node->get_value()));
+
+    block->add_content(new mir_define(
+        node->get_value()->get_location(),
+        name,
+        new_block,
+        node->get_value()->get_resolve()
+    ));
+
+    auto cond = new mir_branch(node->get_location());
+    for(auto i : node->get_cases()) {
+        cond->add(generate_match_case(i, name));
+    }
+    block->add_content(cond);
+    return true;
+}
+
+mir_if* ast2mir::generate_match_case(ast::match_case* node,
+                                     const std::string& tmp_variable) {
+    auto temp = block;
+
+    // generate match._xxx mir code
+    auto left_call_block = new mir_block(node->get_value()->get_location());
+    left_call_block->add_content(new mir_call_id(
+        node->get_value()->get_location(),
+        tmp_variable,
+        node->get_value()->get_resolve()
+    ));
+    auto left_block = new mir_block(node->get_value()->get_location());
+    left_block->add_content(new mir_call(
+        node->get_value()->get_location(),
+        node->get_value()->get_resolve(),
+        left_call_block
+    ));
+
+    auto right_block = new mir_block(node->get_value()->get_location());
+    block = right_block;
+    node->get_value()->accept(this);
+
+    auto cond_block = new mir_block(node->get_location());
+    cond_block->add_content(new mir_binary(
+        node->get_location(),
+        mir_binary::opr_kind::cmpeq,
+        type::bool_type(),
+        left_block,
+        right_block
+    ));
+
+    auto body_block = new mir_block(node->get_block()->get_location());
+    block = body_block;
+    for(auto i : node->get_block()->get_stmts()) {
+        i->accept(this);
+    }
+
+    block = temp;
+    return new mir_if(
+        node->get_location(),
+        cond_block,
+        body_block
+    );
+}
+
 bool ast2mir::visit_while_stmt(ast::while_stmt* node) {
     auto cond_block = new mir_block(node->get_condition()->get_location());
     auto temp = block;
