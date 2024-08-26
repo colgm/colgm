@@ -4,8 +4,6 @@
 
 This directory stores the source file of colgm bootstrap compiler.
 
-![llvm?](../doc/jpg/llvm-bootstrap.jpg)
-
 ## Build
 
 In the top level directory, use these commands:
@@ -22,7 +20,7 @@ Use this command to get usage:
 ./build/colgm -h
 ```
 
-## Syntax
+## Operators
 
 ### Arithmetic Operator
 
@@ -57,7 +55,7 @@ Logical operators for `and`/`or` all have two types:
 1==1 or 2==2 || 3==3;
 ```
 
-### Definition
+## Definition
 
 Colgm allows two kinds of definition.
 
@@ -66,7 +64,7 @@ var variable_name: type = expression; # with type
 var variable_name = expression; # without type
 ```
 
-### Assignment
+## Assignment
 
 Colgm allows these assignment operators:
 
@@ -81,17 +79,23 @@ a ^= b;
 a &= b;
 ```
 
-### Control Flow
+## Control Flow
+
+### While
+
+while loop is directly translated to `mir_loop` in colgm mir.
 
 ```rust
-# loop
 while (1 == 1) {
     ...
     continue;
     break;
 }
+```
 
-# condition
+### Condition/Branch
+
+```rust
 if (1 == 1) {
     ...
 } elsif (1 == 1) {
@@ -99,11 +103,45 @@ if (1 == 1) {
 } else {
     ...
 }
+```
 
-# match
+### Match
+
+```rust
 match (variable) {
     EnumType::a => ...
     EnumType::b => ...
+}
+```
+
+### For/Foreach/ForIndex [WIP]
+
+```rust
+for (var i = 0; i < 10; i += 1)  {}
+=>
+var i = 0;
+while (i < 10) {
+    i += 1;
+}
+```
+
+```rust
+foreach (var i; container) {}
+=>
+var tmp_i = container.begin();
+while (tmp_i != container.end()) {
+    var i = tmp_i.value();
+    tmp_i = tmp_i.next();
+}
+```
+
+```rust
+forindex (var i; container) {}
+=>
+var tmp_i = 0;
+while (tmp_i < container.size()) {
+    var i = tmp_i;
+    tmp_i += 1;
 }
 ```
 
@@ -114,5 +152,45 @@ A bit like rust, using `=>` instead of `as`:
 ```rust
 func main() -> i32 {
     return 0 => i32;
+}
+```
+
+## Struct Definition
+
+```rust
+struct StructName {
+    field1: type,
+    field2: type
+}
+```
+
+## Implementation
+
+```rust
+impl StructName {
+    func method(self) -> type {
+        ...
+        return ...;
+    }
+    func static_method() -> type {
+        ...
+        return ...;
+    }
+}
+```
+
+## Enum Definition
+
+```rust
+enum EnumName {
+    a,
+    b,
+    c
+}
+
+enum EnumName {
+    a = 0x1,
+    b = 0x2,
+    c = 0x3
 }
 ```

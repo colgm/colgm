@@ -4,8 +4,6 @@
 
 This is the main repository for Colgm compiler.
 
-![llvm?](./doc/jpg/llvm-maybe.jpg)
-
 ## Repo Content
 
 - [Bootstrap](./bootstrap/README.md) -> bootstrap
@@ -61,5 +59,6 @@ func main() -> i64 {
     - for loop
     - forindex loop, container should have `size()` method
     - foreach loop, container should have iterator-like stuff
-2. llvm debug info
-3. develop bootstrapped compiler
+2. still need struct initializer
+3. llvm debug info
+4. develop bootstrapped compiler
