@@ -54,7 +54,7 @@ struct vector_ast {
 }
 
 impl vector_ast {
-    func init(self: vector_ast*) {
+    func init(self) {
         var ptr_size = 8 => u64; # now we only support 64bit
         self->size = 0 => u64;
         self->capacity = 256 => u64;
@@ -62,7 +62,7 @@ impl vector_ast {
         return;
     }
 
-    func delete(self: vector_ast*) {
+    func delete(self) {
         var i = 0 => u64;
         while (i < self->size) {
             self->data[i]->delete();
@@ -74,7 +74,7 @@ impl vector_ast {
         return;
     }
 
-    func expand(self: vector_ast*) {
+    func expand(self) {
         var ptr_size = 8 => u64;
         self->capacity *= 2 => u64;
         self->data = realloc(
@@ -84,7 +84,7 @@ impl vector_ast {
         return;
     }
 
-    func push(self: vector_ast*, item: ast*) {
+    func push(self, item: ast*) {
         if (self->size == self->capacity) {
             self->expand();
         }
@@ -106,13 +106,13 @@ impl root {
         return res;
     }
 
-    func init(self: root*) {
+    func init(self) {
         self->imports.init();
         self->declarations.init();
         return;
     }
 
-    func delete(self: root*) {
+    func delete(self) {
         self->imports.delete();
         self->declarations.delete();
         return;
@@ -128,7 +128,7 @@ impl ast {
         return res;
     }
 
-    func delete(self: ast*) {
+    func delete(self) {
         self->location->delete();
         free(self->location => i8*);
         if (self->union_data != nil) {
@@ -138,7 +138,7 @@ impl ast {
         return;
     }
 
-    func delete_instance(self: ast*) {
+    func delete_instance(self) {
         match(self->kind) {
             ast_kind::ast_null => return;
             ast_kind::ast_root => {

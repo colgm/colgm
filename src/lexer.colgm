@@ -168,7 +168,7 @@ impl token {
         return res;
     }
 
-    func delete(self: token*) {
+    func delete(self) {
         self->content->delete();
         free(self->content => i8*);
         self->location->delete();
@@ -193,7 +193,7 @@ impl vec_token {
         return res;
     }
 
-    func delete(self: vec_token*) {
+    func delete(self) {
         var index = 0 => u64;
         while(index < self->size) {
             self->data[index].delete();
@@ -203,7 +203,7 @@ impl vec_token {
         return;
     }
 
-    func expand_capacity(self: vec_token*) {
+    func expand_capacity(self) {
         self->capacity *= 2 => u64;
         self->data = realloc(
             self->data => i8*,
@@ -212,7 +212,7 @@ impl vec_token {
         return;
     }
 
-    func append(self: vec_token*, kind: tok_kind, content: str*, loc: span*) {
+    func append(self, kind: tok_kind, content: str*, loc: span*) {
         if (self->size == self->capacity) {
             self->expand_capacity();
         }
@@ -246,7 +246,7 @@ impl lexer {
         return res;
     }
 
-    func delete(self: lexer*) {
+    func delete(self) {
         self->filename.delete();
         self->toks->delete();
         free(self->toks => i8*);
@@ -372,7 +372,7 @@ impl lexer {
 }
 
 impl lexer {
-    func generate_single_char_token(self: lexer*, src: str*) {
+    func generate_single_char_token(self, src: str*) {
         var loc = span::new();
         loc->file.copy_const(self->filename.c_str);
         loc->begin_line = self->line;
@@ -410,7 +410,7 @@ impl lexer {
         return;
     }
 
-    func generate_maybe_need_eq_oprs(self: lexer*, src: str*) {
+    func generate_maybe_need_eq_oprs(self, src: str*) {
         var loc = span::new();
         loc->file.copy_const(self->filename.c_str);
         loc->begin_line = self->line;
@@ -476,7 +476,7 @@ impl lexer {
         return;
     }
 
-    func generate_lookahead_other(self: lexer*, src: str*) {
+    func generate_lookahead_other(self, src: str*) {
         var loc = span::new();
         loc->file.copy_const(self->filename.c_str);
         loc->begin_line = self->line;
@@ -520,7 +520,7 @@ impl lexer {
         return;
     }
 
-    func generate_arrow(self: lexer*, src: str*) {
+    func generate_arrow(self, src: str*) {
         var loc = span::new();
         loc->file.copy_const(self->filename.c_str);
         loc->begin_line = self->line;
@@ -544,7 +544,7 @@ impl lexer {
         return;
     }
 
-    func generate_identifier(self: lexer*, src: str*) {
+    func generate_identifier(self, src: str*) {
         var loc = span::new();
         loc->file.copy_const(self->filename.c_str);
         loc->begin_line = self->line;
@@ -565,7 +565,7 @@ impl lexer {
         return;
     }
 
-    func generate_number(self: lexer*, src: str*) {
+    func generate_number(self, src: str*) {
         var loc = span::new();
         loc->file.copy_const(self->filename.c_str);
         loc->begin_line = self->line;
@@ -714,7 +714,7 @@ impl lexer {
         return;
     }
 
-    func generate_string(self: lexer*, src: str*) {
+    func generate_string(self, src: str*) {
         var loc = span::new();
         loc->file.copy_const(self->filename.c_str);
         loc->begin_line = self->line;
@@ -806,7 +806,7 @@ impl lexer {
         return;
     }
 
-    func generate_coloncolon(self: lexer*, src: str*) {
+    func generate_coloncolon(self, src: str*) {
         var loc = span::new();
         loc->file.copy_const(self->filename.c_str);
         loc->begin_line = self->line;
@@ -833,7 +833,7 @@ impl lexer {
         return;
     }
 
-    func generate_ellipsis(self: lexer*, src: str*) {
+    func generate_ellipsis(self, src: str*) {
         var loc = span::new();
         loc->file.copy_const(self->filename.c_str);
         loc->begin_line = self->line;
@@ -863,7 +863,7 @@ impl lexer {
         return;
     }
 
-    func skip_note(self: lexer*, src: str*) {
+    func skip_note(self, src: str*) {
         while(self->pos < src->size && src->get(self->pos) != '\n') {
             self->pos += 1 => u64;
             self->column += 1;
@@ -871,7 +871,7 @@ impl lexer {
         return;
     }
 
-    func scan(self: lexer*, filename: i8*) {
+    func scan(self, filename: i8*) {
         self->filename.clear();
         self->filename.copy_const(filename);
         self->err->load_file_source(filename);
@@ -934,7 +934,7 @@ impl lexer {
         return;
     }
 
-    func dump(self: lexer*) {
+    func dump(self) {
         var index = 0 => u64;
         while(index < self->toks->size) {
             var loc = self->toks->data[index].location;

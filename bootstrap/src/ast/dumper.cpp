@@ -121,9 +121,14 @@ bool dumper::visit_param(param* node) {
     dump_indent();
     std::cout << "param" << format_location(node);
     push_indent();
+    if (!node->get_type()) {
+        set_last();
+    }
     node->get_name()->accept(this);
-    set_last();
-    node->get_type()->accept(this);
+    if (node->get_type()) {
+        set_last();
+        node->get_type()->accept(this);
+    }
     pop_indent();
     return true;
 }

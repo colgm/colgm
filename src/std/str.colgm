@@ -14,7 +14,7 @@ impl str {
         return res;
     }
 
-    func init(self: str*) {
+    func init(self) {
         self->c_str = malloc(256 => u64);
         self->c_str[0] = '\0';
 
@@ -23,7 +23,7 @@ impl str {
         return;
     }
 
-    func copy_new(self: str*) -> str* {
+    func copy_new(self) -> str* {
         var new_str = str::__alloc__();
         new_str->c_str = malloc(self->capacity);
         new_str->size = self->size;
@@ -35,7 +35,7 @@ impl str {
         return new_str;
     }
 
-    func delete(self: str*) {
+    func delete(self) {
         free(self->c_str);
         
         self->c_str = nil;
@@ -47,11 +47,11 @@ impl str {
 }
 
 impl str {
-    func empty(self: str*) -> bool {
+    func empty(self) -> bool {
         return self->size == (0 => u64);
     }
 
-    func clear(self: str*) {
+    func clear(self) {
         self->c_str[0] = '\0';
         self->size = 0 => u64;
         return;
@@ -59,7 +59,7 @@ impl str {
 }
 
 impl str {
-    func copy_const(self: str*, src: i8*) {
+    func copy_const(self, src: i8*) {
         var len = strlen(src) => u64;
 
         # re-allocate memory
@@ -77,13 +77,13 @@ impl str {
         return;
     }
 
-    func expand_capacity(self: str*) {
+    func expand_capacity(self) {
         self->capacity *= 2 => u64;
         self->c_str = realloc(self->c_str, self->capacity);
         return;
     }
 
-    func append_char(self: str*, ch: i8) -> str* {
+    func append_char(self, ch: i8) -> str* {
         if (self->size == self->capacity) {
             self->expand_capacity();
         }
@@ -94,7 +94,7 @@ impl str {
         return self;
     }
 
-    func append_str(self: str*, src: str*) -> str* {
+    func append_str(self, src: str*) -> str* {
         var len = src->size => i64;
         var index = 0;
         while (index < len) {
@@ -104,7 +104,7 @@ impl str {
         return self;
     }
 
-    func append_i8_vec(self: str*, src: i8*) -> str* {
+    func append_i8_vec(self, src: i8*) -> str* {
         var len = strlen(src);
         var index = 0;
         while (index < len) {
@@ -116,7 +116,7 @@ impl str {
 }
 
 impl str {
-    func get(self: str*, index: u64) -> i8 {
+    func get(self, index: u64) -> i8 {
         if (index >= self->size) {
             var report_info = "std::str::get: index out of range\n\n";
             write(2 => i32, report_info, strlen(report_info));
@@ -125,7 +125,7 @@ impl str {
         return self->c_str[index];
     }
 
-    func eq_const(self: str*, src: i8*) -> bool {
+    func eq_const(self, src: i8*) -> bool {
         return streq(self->c_str, src);
     }
 }

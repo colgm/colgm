@@ -211,16 +211,30 @@ void semantic::analyse_method_parameter_list(param_list* node,
                                              colgm_func& func_self,
                                              const colgm_struct& stct) {
     for(auto i : node->get_params()) {
-        if (i->get_name()->get_name()=="self" &&
-            i!=node->get_params().front()) {
+        bool is_self = i->get_name()->get_name()=="self";
+        if (is_self && i!=node->get_params().front()) {
             report(i->get_name(), "\"self\" must be the first parameter.");
+        }
+        if (is_self && i->get_type()) {
+            warning(i->get_type(), "\"self\" does not need type.");
+        }
+        if (is_self && !i->get_type()) {
+            i->set_type(new type_def(i->get_name()->get_location()));
+            i->get_type()->set_name(new identifier(
+                i->get_name()->get_location(),
+                stct.name
+            ));
+            i->get_type()->add_pointer_level();
         }
         analyse_parameter(i, func_self);
     }
+
     if (func_self.parameters.empty() ||
         func_self.parameters.front().name!="self") {
         return;
     }
+
+    // we still need to check self type, for user may specify a wrong type
     // check self type is the pointer of implemented struct
     const auto& self_type = func_self.parameters.front().symbol_type;
     if (self_type.name!=stct.name ||
@@ -294,11 +308,12 @@ void semantic::analyse_functions(root* ast_root) {
 }
 
 void semantic::analyse_single_impl(impl_struct* node) {
-    if (!ctx.global.domain.at(ctx.this_file).structs.count(node->get_struct_name())) {
+    auto& dm = ctx.global.domain.at(ctx.this_file);
+    if (!dm.structs.count(node->get_struct_name())) {
         report(node, "undefined struct \"" + node->get_struct_name() + "\".");
         return;
     }
-    auto& stct = ctx.global.domain.at(ctx.this_file).structs.at(node->get_struct_name());
+    auto& stct = dm.structs.at(node->get_struct_name());
     for(auto i : node->get_methods()) {
         if (stct.method.count(i->get_name())) {
             report(i, "method \"" + i->get_name() + "\" already exists.");
@@ -306,15 +321,9 @@ void semantic::analyse_single_impl(impl_struct* node) {
         }
         auto func = analyse_single_method(i, stct);
         if (func.parameters.size() && func.parameters[0].name=="self") {
-            stct.method.insert({
-                i->get_name(),
-                func
-            });
+            stct.method.insert({i->get_name(), func});
         } else {
-            stct.static_method.insert({
-                i->get_name(),
-                func
-            });
+            stct.static_method.insert({i->get_name(), func});
         }
     }
 }

@@ -53,7 +53,9 @@ bool visitor::visit_struct_decl(struct_decl* node) {
 
 bool visitor::visit_param(param* node) {
     node->get_name()->accept(this);
-    node->get_type()->accept(this);
+    if (node->get_type()) {
+        node->get_type()->accept(this);
+    }
     return true;
 }
 

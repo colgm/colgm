@@ -10,7 +10,7 @@ struct file_lines {
 }
 
 impl file_lines {
-    func init(self: file_lines*) {
+    func init(self) {
         self->source = malloc((128 => u64)*str::__size__()) => str*;
         self->size = 0;
         self->capacity = 128;
@@ -23,7 +23,7 @@ impl file_lines {
         return;
     }
 
-    func delete(self: file_lines*) {
+    func delete(self) {
         var index = 0;
         while(index < self->size) {
             self->source[index].delete();
@@ -33,7 +33,7 @@ impl file_lines {
         return;
     }
 
-    func clear(self: file_lines*) {
+    func clear(self) {
         var index = 0;
         while(index < self->size) {
             self->source[index].clear();
@@ -43,7 +43,7 @@ impl file_lines {
         return;
     }
 
-    func expand_capacity(self: file_lines*) {
+    func expand_capacity(self) {
         self->capacity *= 2;
         self->source = realloc(
             self->source => i8*,
@@ -57,7 +57,7 @@ impl file_lines {
         return;
     }
 
-    func push(self: file_lines*, line: str*) {
+    func push(self, line: str*) {
         if (self->size == self->capacity) {
             self->expand_capacity();
         }
@@ -83,7 +83,7 @@ impl report {
         return res;
     }
 
-    func delete(self: report*) {
+    func delete(self) {
         self->filename.delete();
         self->source.delete();
         return;
@@ -91,7 +91,7 @@ impl report {
 }
 
 impl report {
-    func load_file_source(self: report*, filename: i8*) {
+    func load_file_source(self, filename: i8*) {
         if (!fs::exists(filename)) {
             self->error_count += 1;
             io::stderr()->red()->out("Error: ")->reset()->end();
@@ -168,7 +168,7 @@ impl report {
         return res;
     }
 
-    func print_file_line(self: report*, location: span*, is_error: bool) {
+    func print_file_line(self, location: span*, is_error: bool) {
         var index = location->begin_line;
         var max_line_number_length = report::get_number_length(location->end_line + 1);
         var pad_str = report::left_pad(max_line_number_length);
@@ -265,7 +265,7 @@ impl report {
 }
 
 impl report {
-    func error(self: report*, location: span*, message: i8*) {
+    func error(self, location: span*, message: i8*) {
         if (!location->file.eq_const(self->filename.c_str)) {
             self->load_file_source(location->file.c_str);
         }
@@ -282,7 +282,7 @@ impl report {
         return;
     }
 
-    func warn(self: report*, location: span*, message: i8*) {
+    func warn(self, location: span*, message: i8*) {
         if (!location->file.eq_const(self->filename.c_str)) {
             self->load_file_source(location->file.c_str);
         }

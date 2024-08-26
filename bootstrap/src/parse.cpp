@@ -461,8 +461,10 @@ struct_decl* parse::struct_gen() {
 param* parse::param_gen() {
     auto result = new param(toks[ptr].loc);
     result->set_name(identifier_gen());
-    match(tok::tk_colon);
-    result->set_type(type_gen());
+    if (look_ahead(tok::tk_colon)) {
+        match(tok::tk_colon);
+        result->set_type(type_gen());
+    }
     update_location(result);
     return result;
 }
