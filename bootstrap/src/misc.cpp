@@ -1,5 +1,9 @@
 #include "colgm.h"
 
+#include <cstring>
+#include <sstream>
+#include <iomanip>
+
 #ifndef _MSC_VER
 #include <unistd.h>
 #else
@@ -272,36 +276,6 @@ std::string char_to_hex(const char c) {
     return {hextbl[(c&0xf0)>>4], hextbl[c&0x0f]};
 }
 
-std::string rawstr(const std::string& str, const usize maxlen) {
-    std::string ret("");
-    for(auto i : str) {
-        // windows doesn't output unicode normally, so we output the hex
-        if (is_windows() && i<=0) {
-            ret += "\\x" + char_to_hex(i);
-            continue;
-        }
-        switch(i) {
-            case '\0':  ret += "\\0";  break;
-            case '\a':  ret += "\\a";  break;
-            case '\b':  ret += "\\b";  break;
-            case '\t':  ret += "\\t";  break;
-            case '\n':  ret += "\\n";  break;
-            case '\v':  ret += "\\v";  break;
-            case '\f':  ret += "\\f";  break;
-            case '\r':  ret += "\\r";  break;
-            case '\033':ret += "\\e";  break;
-            case '\"':  ret += "\\\""; break;
-            case '\'':  ret += "\\\'"; break;
-            case '\\':  ret += "\\\\"; break;
-            default:    ret += i;      break;
-        }
-    }
-    if (maxlen && ret.length()>maxlen) {
-        ret = ret.substr(0, maxlen)+"...";
-    }
-    return ret;
-}
-
 std::string mangle(const std::string& name) {
     auto copy = std::string("");
     for(size_t i = 0; i<name.length(); ++i) {
@@ -313,6 +287,28 @@ std::string mangle(const std::string& name) {
         copy += name[i];
     }
     return copy;
+}
+
+bool llvm_visible_char(char c) {
+    return std::isdigit(c) || std::isalpha(c) ||
+           c=='_' || c==':' || c==' ' || c==',' ||
+           c=='[' || c==']' || c=='(' || c==')' ||
+           c=='{' || c=='}' || c=='<' || c=='>' ||
+           c=='.';
+}
+
+std::string llvm_raw_string(const std::string& str) {
+    std::stringstream ss;
+    for(const auto c : str) {
+        if (llvm_visible_char(c)) {
+            ss << c;
+            continue;
+        }
+        ss << "\\";
+        ss << std::hex << std::setw(2) << std::setfill('0') << u32(c) << std::dec;
+    }
+    ss << "\\00";
+    return ss.str();
 }
 
 }

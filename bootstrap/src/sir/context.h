@@ -59,11 +59,7 @@ private:
     bool passes_already_executed = false;
 
 private:
-    bool visiable_char(const char) const;
-    void dump_raw_string(std::ostream&, const std::string&) const;
     void dump_const_string(std::ostream&) const;
-
-private:
     void dump_struct_size_method(std::ostream&) const;
     void dump_struct_alloc_method(std::ostream&) const;
 

@@ -511,7 +511,7 @@ void ast2mir::dump(std::ostream& os) {
         const_strings[i.second] = i.first;
     }
     for(usize i = 0; i<mctx.const_strings.size(); ++i) {
-        os << i << " \"" << rawstr(const_strings[i]) << "\"\n";
+        os << i << " \"" << llvm_raw_string(const_strings[i]) << "\"\n";
     }
     if (const_strings.size()) {
         os << "\n";

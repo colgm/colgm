@@ -108,11 +108,7 @@ void mir_number::accept(visitor* v) {
 
 void mir_string::dump(const std::string& indent, std::ostream& os) {
     os << indent << to_hex(this) << " [" << resolve_type << "] string: \"";
-    for(const auto i : literal) {
-        os << "\\";
-        os << std::hex << std::setw(2) << std::setfill('0') << int(i) << std::dec;
-    }
-    os << "\\00\"\n";
+    os << llvm_raw_string(literal) << "\"\n";
 }
 
 void mir_string::accept(visitor* v) {

@@ -52,8 +52,10 @@ f64 dec_to_f64(const char*);
 f64 str_to_num(const char*);
 usize utf8_hdchk(const char);
 std::string char_to_hex(const char);
-std::string rawstr(const std::string&, const usize maxlen = 0);
 
 std::string mangle(const std::string&);
+
+bool llvm_visible_char(char c);
+std::string llvm_raw_string(const std::string&);
 
 }

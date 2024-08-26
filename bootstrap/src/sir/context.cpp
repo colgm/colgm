@@ -42,28 +42,6 @@ void sir_func::dump(std::ostream& out) const {
     out << "}\n";
 }
 
-bool sir_context::visiable_char(const char c) const {
-    return std::isdigit(c) || std::isalpha(c) ||
-           c=='_' || c==':' || c==' ' || c==',' ||
-           c=='[' || c==']' || c=='(' || c==')' ||
-           c=='{' || c=='}' || c=='<' || c=='>' ||
-           c=='.';
-}
-
-void sir_context::dump_raw_string(std::ostream& out,
-                                  const std::string& src) const {
-    for(const auto c : src) {
-        if (visiable_char(c)) {
-            out << c;
-            continue;
-        }
-        out << "\\";
-        out << std::hex << std::setw(2) << std::setfill('0') << u32(c);
-        out << std::dec;
-    }
-    out << "\\00";
-}
-
 void sir_context::dump_const_string(std::ostream& out) const {
     // make sure constant strings are in order
     std::vector<std::string> ordered_const_string;
@@ -76,7 +54,7 @@ void sir_context::dump_const_string(std::ostream& out) const {
         out << "@const.str." << i;
         out << " = private unnamed_addr constant [";
         out << ordered_const_string[i].length() + 1 << " x i8] c\"";
-        dump_raw_string(out, ordered_const_string[i]);
+        out << llvm_raw_string(ordered_const_string[i]);
         out << "\"\n";
     }
 

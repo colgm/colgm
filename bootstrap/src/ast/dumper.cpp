@@ -42,14 +42,15 @@ bool dumper::visit_number_literal(number_literal* node) {
 
 bool dumper::visit_string_literal(string_literal* node) {
     dump_indent();
-    std::cout << "string " << rawstr(node->get_string()) << format_location(node);
+    std::cout << "string \"" << llvm_raw_string(node->get_string()) << "\"";
+    std::cout << format_location(node);
     return true;
 }
 
 bool dumper::visit_char_literal(char_literal* node) {
     dump_indent();
     std::string literal = std::string(1, node->get_char());
-    std::cout << "char " << rawstr(literal) << format_location(node);
+    std::cout << "char " << llvm_raw_string(literal) << format_location(node);
     return true;
 }
 
