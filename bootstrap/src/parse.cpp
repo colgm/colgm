@@ -614,8 +614,8 @@ match_stmt* parse::match_stmt_gen() {
     match(tok::tk_lbrace);
     while(!look_ahead(tok::tk_rbrace)) {
         auto new_case = new match_case(toks[ptr].loc);
-        new_case->set_value(calculation_gen());
-        match(tok::tk_colon);
+        new_case->set_value(call_gen());
+        match(tok::tk_wide_arrow);
         new_case->set_block(block_gen(true));
         update_location(new_case);
         result->add_case(new_case);
