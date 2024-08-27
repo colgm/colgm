@@ -41,6 +41,7 @@ enum class ast_type {
     ast_match_case,
     ast_match_stmt,
     ast_while_stmt,
+    ast_for_stmt,
     ast_in_stmt_expr,
     ast_ret_stmt,
     ast_continue_stmt,
@@ -83,6 +84,7 @@ class if_stmt;
 class match_case;
 class match_stmt;
 class while_stmt;
+class for_stmt;
 class in_stmt_expr;
 class ret_stmt;
 class continue_stmt;

@@ -226,6 +226,20 @@ bool visitor::visit_while_stmt(while_stmt* node) {
     return true;
 }
 
+bool visitor::visit_for_stmt(for_stmt* node) {
+    if (node->get_init()) {
+        node->get_init()->accept(this);
+    }
+    if (node->get_condition()) {
+        node->get_condition()->accept(this);
+    }
+    if (node->get_update()) {
+        node->get_update()->accept(this);
+    }
+    node->get_block()->accept(this);
+    return true;
+}
+
 bool visitor::visit_in_stmt_expr(in_stmt_expr* node) {
     node->get_expr()->accept(this);
     return true;

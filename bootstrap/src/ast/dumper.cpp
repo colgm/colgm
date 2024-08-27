@@ -440,6 +440,25 @@ bool dumper::visit_while_stmt(while_stmt* node) {
     return true;
 }
 
+bool dumper::visit_for_stmt(for_stmt* node) {
+    dump_indent();
+    std::cout << "for" << format_location(node);
+    push_indent();
+    if (node->get_init()) {
+        node->get_init()->accept(this);
+    }
+    if (node->get_condition()) {
+        node->get_condition()->accept(this);
+    }
+    if (node->get_update()) {
+        node->get_update()->accept(this);
+    }
+    set_last();
+    node->get_block()->accept(this);
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_in_stmt_expr(in_stmt_expr* node) {
     dump_indent();
     std::cout << "in statement" << format_location(node);

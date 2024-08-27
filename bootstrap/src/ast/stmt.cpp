@@ -77,6 +77,17 @@ void while_stmt::accept(visitor* v) {
     v->visit_while_stmt(this);
 }
 
+for_stmt::~for_stmt() {
+    delete init;
+    delete condition;
+    delete update;
+    delete block;
+}
+
+void for_stmt::accept(visitor* v) {
+    v->visit_for_stmt(this);
+}
+
 in_stmt_expr::~in_stmt_expr() {
     delete calculation;
 }

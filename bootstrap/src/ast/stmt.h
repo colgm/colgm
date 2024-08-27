@@ -138,6 +138,30 @@ public:
     auto get_block() const { return block; }
 };
 
+class for_stmt: public stmt {
+private:
+    stmt* init;
+    expr* condition;
+    stmt* update;
+    code_block* block;
+
+public:
+    for_stmt(const span& loc):
+        stmt(ast_type::ast_for_stmt, loc),
+        condition(nullptr), update(nullptr), block(nullptr) {}
+    ~for_stmt() override;
+    void accept(visitor*) override;
+
+    void set_init(stmt* node) { init = node; }
+    auto get_init() const { return init; }
+    void set_condition(expr* node) { condition = node; }
+    auto get_condition() const { return condition; }
+    void set_update(stmt* node) { update = node; }
+    auto get_update() const { return update; }
+    void set_block(code_block* node) { block = node; }
+    auto get_block() const { return block; }
+};
+
 class in_stmt_expr: public stmt {
 private:
     expr* calculation;
