@@ -101,6 +101,22 @@ void sir_context::dump_struct_alloc_method(std::ostream& out) const {
     }
 }
 
+void sir_context::dump_struct_instance_method(std::ostream& out) const {
+    for(const auto& st: struct_decls) {
+        const auto st_type = type {
+            .name = st->get_name(),
+            .loc_file = st->get_location().file
+        };
+        const auto st_name = mangle(st_type.full_path_name());
+        const auto st_real_name = "%struct." + st_name;
+        out << "define " << st_real_name << " @" << st_name;
+        out << ".__instance__() alwaysinline {\n";
+        out << "entry:\n";
+        out << " ret " << st_real_name << " zeroinitializer\n";
+        out << "}\n";
+    }
+}
+
 void sir_context::dump_code(std::ostream& out) {
     // generate declarations of structs
     for(auto i : struct_decls) {
@@ -116,6 +132,7 @@ void sir_context::dump_code(std::ostream& out) {
     // generate builtin methods for structs
     dump_struct_size_method(out);
     dump_struct_alloc_method(out);
+    dump_struct_instance_method(out);
     if (struct_decls.size()) {
         out << "\n";
     }

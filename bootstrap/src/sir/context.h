@@ -25,6 +25,7 @@ public:
     const auto& get_location() const { return location; }
 
     void add_field_type(const std::string& type) { field_type.push_back(type); }
+    const auto& get_field_type() const { return field_type; }
 };
 
 class sir_func {
@@ -62,6 +63,7 @@ private:
     void dump_const_string(std::ostream&) const;
     void dump_struct_size_method(std::ostream&) const;
     void dump_struct_alloc_method(std::ostream&) const;
+    void dump_struct_instance_method(std::ostream&) const;
 
 public:
     ~sir_context() {

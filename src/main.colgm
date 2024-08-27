@@ -24,25 +24,23 @@ func free_components(rep: report*, lex: lexer*, par: parser*) {
 
 func compile(filename: i8*, library_path: i8*, option: cli_option*) {
     if (!fs::exists(filename)) {
-        io::stderr()->red()->out("Error: ")->reset()->end();
-        io::stderr()->out("failed to load file <")
-                    ->out(filename)
-                    ->out(">, check if it exists and is readable")
-                    ->endln();
+        io::stderr().red().out("Error: ").reset();
+        io::stderr().out("failed to load file <").out(filename)
+                    .out(">, check if it exists and is readable\n");
         return;
     }
 
-    io::stdlog()->out("[colgm] source file: \"")
-                ->out(filename)
-                ->out("\"")
-                ->endln();
+    io::stderr().out("[colgm] source file: \"")
+                .out(filename)
+                .out("\"")
+                .endln();
     if (library_path!=nil) {
-        io::stdlog()->out("[colgm] library path: \"")
-                    ->out(library_path)
-                    ->out("\"")
-                    ->endln();
+        io::stderr().out("[colgm] library path: \"")
+                    .out(library_path)
+                    .out("\"")
+                    .endln();
     } else {
-        io::stdlog()->out("[colgm] library path: <none>")->endln();
+        io::stderr().out("[colgm] library path: <none>").endln();
     }
 
     var rep = report::new();
@@ -80,7 +78,7 @@ func main(argc: i32, argv: i8**) -> i32 {
         return 0 => i32;
     }
     if (argc==(2 => i32) && (streq(argv[1], "-v") || streq(argv[1], "--version"))) {
-        io::stdlog()->out(version())->endln();
+        io::stderr().out(version()).endln();
         return 0 => i32;
     }
 
@@ -105,7 +103,7 @@ func main(argc: i32, argv: i8**) -> i32 {
         } elsif (streq(argv[i], "--sir")) {
             option->OPTION_VIEW_SIR = true;
         } elsif (argv[i][0]=='-') {
-            io::stderr()->out("invalid argument: ")->out(argv[i])->endln();
+            io::stderr().out("invalid argument: ").out(argv[i]).endln();
             return (-1) => i32;
         } else {
             filename = argv[i];
@@ -114,7 +112,7 @@ func main(argc: i32, argv: i8**) -> i32 {
     }
 
     if (filename == nil) {
-        io::stderr()->out("no source file specified")->endln();
+        io::stderr().out("no source file specified").endln();
         return (-1) => i32;
     }
 

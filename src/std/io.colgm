@@ -60,43 +60,37 @@ struct io {
 }
 
 impl io {
-    func stdin() -> io* {
-        var instance = io::__alloc__();
-        instance->fd = 0 => i32;
+    func stdin() -> io {
+        var instance = io::__instance__();
+        instance.fd = 0 => i32;
         return instance;
     }
 
-    func stdout() -> io* {
-        var instance = io::__alloc__();
-        instance->fd = 1 => i32;
+    func stdout() -> io {
+        var instance = io::__instance__();
+        instance.fd = 1 => i32;
         return instance;
     }
 
-    func stderr() -> io* {
-        var instance = io::__alloc__();
-        instance->fd = 2 => i32;
+    func stderr() -> io {
+        var instance = io::__instance__();
+        instance.fd = 2 => i32;
         return instance;
     }
 
-    func stdlog() -> io* {
-        var instance = io::__alloc__();
-        instance->fd = 2 => i32;
-        return instance;
-    }
-
-    func out(self, info: i8*) -> io* {
+    func out(self, info: i8*) -> io {
         # do nothing if is stdin
         if (self->fd == 0 => i32) {
-            return self;
+            return self[0];
         }
         write(self->fd, info, strlen(info));
-        return self;
+        return self[0];
     }
 
-    func out_ch(self, info: i8) -> io* {
+    func out_ch(self, info: i8) -> io {
         # do nothing if is stdin
         if (self->fd == 0 => i32) {
-            return self;
+            return self[0];
         }
 
         var tmp = str::new();
@@ -106,27 +100,20 @@ impl io {
 
         tmp->delete();
         free(tmp => i8*);
-        return self;
+        return self[0];
     }
 
-    func out_i64(self, info: i64) -> io* {
+    func out_i64(self, info: i64) -> io {
         # do nothing if is stdin
         if (self->fd == 0 => i32) {
-            return self;
+            return self[0];
         }
 
         var buff = malloc(128 => u64);
         itoa(info, buff, 10);
         write(self->fd, buff, strlen(buff));
         free(buff);
-        return self;
-    }
-
-    func end(self) {
-        if (self != (nil => io*)) {
-            free(self => i8*);
-        }
-        return;
+        return self[0];
     }
 
     func endln(self) {
@@ -136,34 +123,33 @@ impl io {
         if (self->fd != (0 => i32)) {
             write(self->fd, "\n", 1);
         }
-        free(self => i8*);
         return;
     }
 }
 
 impl io {
-    func red(self) -> io* {
+    func red(self) -> io {
         self->out("\e[91;1m");
-        return self;
+        return self[0];
     }
 
-    func cyan(self) -> io* {
+    func cyan(self) -> io {
         self->out("\e[36;1m");
-        return self;
+        return self[0];
     }
 
-    func orange(self) -> io* {
+    func orange(self) -> io {
         self->out("\e[93;1m");
-        return self;
+        return self[0];
     }
 
-    func white(self) -> io* {
+    func white(self) -> io {
         self->out("\e[0m\e[1m");
-        return self;
+        return self[0];
     }
 
-    func reset(self) -> io* {
+    func reset(self) -> io {
         self->out("\e[0m");
-        return self;
+        return self[0];
     }
 }
