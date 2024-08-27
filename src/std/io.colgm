@@ -93,13 +93,10 @@ impl io {
             return self[0];
         }
 
-        var tmp = str::new();
-        tmp->append_char(info);
-
-        write(self->fd, tmp->c_str, 1);
-
-        tmp->delete();
-        free(tmp => i8*);
+        var buff = malloc(128 => u64);
+        buff[0] = info;
+        write(self->fd, buff, 1);
+        free(buff);
         return self[0];
     }
 
