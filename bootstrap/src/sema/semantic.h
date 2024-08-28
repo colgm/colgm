@@ -111,6 +111,7 @@ private:
     void resolve_cond_stmt(cond_stmt*, const colgm_func&);
     void resolve_match_stmt(match_stmt*, const colgm_func&);
     void resolve_while_stmt(while_stmt*, const colgm_func&);
+    void resolve_for_stmt(for_stmt*, const colgm_func&);
     void resolve_in_stmt_expr(in_stmt_expr*, const colgm_func&);
     void resolve_ret_stmt(ret_stmt*, const colgm_func&);
     void resolve_statement(stmt*, const colgm_func&);

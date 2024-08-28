@@ -1009,13 +1009,28 @@ void mir2sir::visit_mir_break(mir_break* node) {
 }
 
 void mir2sir::visit_mir_continue(mir_continue* node) {
-    block->add_stmt(new sir_br(loop_entry.back()));
+    auto continue_br = new sir_br(0);
+    continue_inst.back().push_back(continue_br);
+    block->add_stmt(continue_br);
     block->add_stmt(new sir_place_holder_label(block->stmt_size()));
 }
 
 void mir2sir::visit_mir_loop(mir_loop* node) {
+    // mir loop will generate llvm ir in this form:
+    //
+    // %loop.entry:
+    //   ... ; condition
+    //   br i1 %cond %loop.cond.true, %loop.exit
+    // %loop.cond.true:
+    //   ... ; content
+    // br %loop.continue
+    // %loop.continue:   ; continue jumps here
+    //   ... ; update
+    // br %loop.entry
+    // %loop.exit:       ; break jumps here
+    //
     auto entry_label = block->stmt_size() + 1;
-    loop_entry.push_back(entry_label);
+    continue_inst.push_back({});
     break_inst.push_back({});
 
     block->add_stmt(new sir_br(entry_label));
@@ -1034,6 +1049,16 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
     block->add_stmt(new sir_label(block->stmt_size(), "loop.cond.true"));
 
     node->get_content()->accept(this);
+
+    auto continue_label = block->stmt_size() + 1;
+    block->add_stmt(new sir_br(continue_label));
+    block->add_stmt(new sir_label(continue_label, "loop.continue"));
+    for(auto i : continue_inst.back()) {
+        i->set_label(continue_label);
+    }
+    if (node->get_update()) {
+        node->get_update()->accept(this);
+    }
     block->add_stmt(new sir_br(entry_label));
 
     auto exit_label = block->stmt_size();
@@ -1043,7 +1068,7 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
         i->set_label(exit_label);
     }
 
-    loop_entry.pop_back();
+    continue_inst.pop_back();
     break_inst.pop_back();
 }
 

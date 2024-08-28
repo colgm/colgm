@@ -497,13 +497,15 @@ class mir_loop: public mir {
 private:
     mir_block* condition;
     mir_block* content;
+    mir_block* update;
 
 public:
-    mir_loop(const span& loc, mir_block* cond, mir_block* ct):
-        mir(kind::mir_loop, loc), condition(cond), content(ct) {}
+    mir_loop(const span& loc, mir_block* cond, mir_block* ct, mir_block* ud):
+        mir(kind::mir_loop, loc), condition(cond), content(ct), update(ud) {}
     ~mir_loop() override {
         delete condition;
         delete content;
+        delete update;
     }
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
@@ -511,6 +513,7 @@ public:
 public:
     auto get_condition() const { return condition; }
     auto get_content() const { return content; }
+    auto get_update() const { return update; }
 };
 
 class mir_return: public mir {

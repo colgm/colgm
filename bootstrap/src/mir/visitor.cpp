@@ -58,6 +58,9 @@ void visitor::visit_mir_branch(mir_branch* node) {
 void visitor::visit_mir_loop(mir_loop* node) {
     node->get_condition()->accept(this);
     node->get_content()->accept(this);
+    if (node->get_update()) {
+        node->get_update()->accept(this);
+    }
 }
 
 void visitor::visit_mir_return(mir_return* node) {

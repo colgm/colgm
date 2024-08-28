@@ -294,6 +294,9 @@ void mir_loop::dump(const std::string& indent, std::ostream& os) {
     os << indent << to_hex(this) << " loop (\n";
     condition->dump(indent + " ", os);
     content->dump(indent + " ", os);
+    if (update) {
+        update->dump(indent + " ", os);
+    }
     os << indent << ")\n";
 }
 

@@ -37,7 +37,7 @@ struct local_table {
                 return it->at(name);
             }
         }
-        return std::string("");
+        return "<" + name + "-not-found>";
     }
 
     auto size() const { return elem.size(); }
@@ -159,7 +159,7 @@ private:
 
     local_table locals;
 
-    std::vector<usize> loop_entry;
+    std::vector<std::vector<sir_br*>> continue_inst;
     std::vector<std::vector<sir_br*>> break_inst;
     std::vector<std::vector<sir_br*>> branch_jump_out;
 

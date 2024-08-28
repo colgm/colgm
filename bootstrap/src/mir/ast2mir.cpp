@@ -441,7 +441,54 @@ bool ast2mir::visit_while_stmt(ast::while_stmt* node) {
     block->add_content(new mir_loop(
         node->get_location(),
         cond_block,
-        body_block
+        body_block,
+        nullptr // no update in while loop
+    ));
+    return true;
+}
+
+bool ast2mir::visit_for_stmt(ast::for_stmt* node) {
+    auto temp = block;
+
+    auto for_top_level = new mir_block(node->get_location());
+    block->add_content(for_top_level);
+
+    if (node->get_init()) {
+        block = for_top_level;
+        node->get_init()->accept(this);
+        block = temp;
+    }
+
+    auto cond_block = new mir_block(node->get_condition()
+                                    ? node->get_condition()->get_location()
+                                    : node->get_location());
+    if (node->get_condition()) {
+        block = cond_block;
+        node->get_condition()->accept(this);
+        block = temp;
+    }
+
+    auto update_block = new mir_block(node->get_update()
+                                    ? node->get_update()->get_location()
+                                    : node->get_location());
+    if (node->get_update()) {
+        block = update_block;
+        node->get_update()->accept(this);
+        block = temp;
+    }
+
+    auto body_block = new mir_block(node->get_block()->get_location());
+    block = body_block;
+    for(auto i : node->get_block()->get_stmts()) {
+        i->accept(this);
+    }
+    block = temp;
+
+    for_top_level->add_content(new mir_loop(
+        node->get_location(),
+        cond_block,
+        body_block,
+        update_block
     ));
     return true;
 }

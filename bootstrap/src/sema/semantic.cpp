@@ -1253,6 +1253,33 @@ void semantic::resolve_while_stmt(while_stmt* node, const colgm_func& func_self)
     }
 }
 
+void semantic::resolve_for_stmt(for_stmt* node, const colgm_func& func_self) {
+    ctx.push_new_level();
+    if (node->get_init()) {
+        resolve_definition(node->get_init(), func_self);
+    }
+    if (node->get_condition()) {
+        const auto infer = resolve_expression(node->get_condition());
+        node->get_condition()->set_resolve_type(infer);
+        if (infer!=type::bool_type()) {
+            report(node->get_condition(),
+                "condition should be \"bool\" type but get \"" +
+                infer.to_string() + "\"."
+            );
+        }
+    }
+    if (node->get_update()) {
+        const auto infer = resolve_expression(node->get_update());
+        node->get_update()->set_resolve_type(infer);
+    }
+    if (node->get_block()) {
+        ++in_loop_level;
+        resolve_code_block(node->get_block(), func_self);
+        --in_loop_level;
+    }
+    ctx.pop_new_level();
+}
+
 void semantic::resolve_in_stmt_expr(in_stmt_expr* node, const colgm_func& func_self) {
     node->set_resolve_type(resolve_expression(node->get_expr()));
 }
@@ -1297,6 +1324,9 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
         break;
     case ast_type::ast_while_stmt:
         resolve_while_stmt(reinterpret_cast<while_stmt*>(node), func_self);
+        break;
+    case ast_type::ast_for_stmt:
+        resolve_for_stmt(reinterpret_cast<for_stmt*>(node), func_self);
         break;
     case ast_type::ast_in_stmt_expr:
         resolve_in_stmt_expr(reinterpret_cast<in_stmt_expr*>(node), func_self);

@@ -140,9 +140,9 @@ public:
 
 class for_stmt: public stmt {
 private:
-    stmt* init;
+    definition* init;
     expr* condition;
-    stmt* update;
+    expr* update;
     code_block* block;
 
 public:
@@ -152,11 +152,11 @@ public:
     ~for_stmt() override;
     void accept(visitor*) override;
 
-    void set_init(stmt* node) { init = node; }
+    void set_init(definition* node) { init = node; }
     auto get_init() const { return init; }
     void set_condition(expr* node) { condition = node; }
     auto get_condition() const { return condition; }
-    void set_update(stmt* node) { update = node; }
+    void set_update(expr* node) { update = node; }
     auto get_update() const { return update; }
     void set_block(code_block* node) { block = node; }
     auto get_block() const { return block; }
