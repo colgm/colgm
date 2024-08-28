@@ -162,7 +162,11 @@ void sir_cmp::dump(std::ostream& out) const {
 }
 
 void sir_label::dump(std::ostream& out) const {
-    out << "label." << std::hex << label_count << std::dec << ":\n";
+    out << "label." << std::hex << label_count << std::dec << ":";
+    if (comment.length()) {
+        out << " ; " << comment;
+    }
+    out << "\n";
 }
 
 void sir_place_holder_label::dump(std::ostream& out) const {

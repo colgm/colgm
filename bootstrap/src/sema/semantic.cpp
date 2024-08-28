@@ -1436,7 +1436,7 @@ void semantic::resolve_single_use(use_stmt* node) {
             mp += "::";
         }
     }
-    
+
     const auto& file = package_manager::singleton()->get_file_name(mp);
     if (file.empty()) {
         report(node, "cannot find module \"" + mp + "\".");

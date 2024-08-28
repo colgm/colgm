@@ -499,10 +499,11 @@ public:
 class sir_label: public sir {
 private:
     usize label_count;
+    std::string comment;
 
 public:
-    sir_label(usize count):
-        sir(sir_kind::sir_label), label_count(count) {}
+    sir_label(usize count, const std::string& cm = ""):
+        sir(sir_kind::sir_label), label_count(count), comment(cm) {}
     ~sir_label() override = default;
     void dump(std::ostream&) const override;
 };

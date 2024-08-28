@@ -129,7 +129,7 @@ void mir2sir::generate_and(mir_binary* node) {
         0
     );
     block->add_stmt(br);
-    block->add_stmt(new sir_label(true_label));
+    block->add_stmt(new sir_label(true_label, "and.true"));
 
     node->get_right()->accept(this);
     auto right = value_stack.back();
@@ -146,7 +146,7 @@ void mir2sir::generate_and(mir_binary* node) {
     auto false_label = block->stmt_size();
     br->set_false_label(false_label);
 
-    block->add_stmt(new sir_label(next_label));
+    block->add_stmt(new sir_label(next_label, "and.false"));
     auto temp_1 = ssa_gen.create();
     block->add_stmt(new sir_load(
         "i1",
@@ -178,7 +178,7 @@ void mir2sir::generate_or(mir_binary* node) {
         false_label
     );
     block->add_stmt(br);
-    block->add_stmt(new sir_label(false_label));
+    block->add_stmt(new sir_label(false_label, "or.false"));
 
     node->get_right()->accept(this);
     auto right = value_stack.back();
@@ -195,7 +195,7 @@ void mir2sir::generate_or(mir_binary* node) {
     auto true_label = block->stmt_size();
     br->set_true_label(true_label);
 
-    block->add_stmt(new sir_label(next_label));
+    block->add_stmt(new sir_label(next_label, "or.true"));
     auto temp_1 = ssa_gen.create();
     block->add_stmt(new sir_load(
         "i1",
@@ -963,10 +963,12 @@ void mir2sir::visit_mir_if(mir_if* node) {
             0
         );
         block->add_stmt(br_cond);
-        block->add_stmt(new sir_label(block->stmt_size()));
+        block->add_stmt(new sir_label(block->stmt_size(), "cond.true"));
     }
     node->get_content()->accept(this);
 
+    // for block ends with ret instruction, another basic block is needed
+    // because ret instruction is the terminator instruction
     if (block->back_is_ret_stmt()) {
         block->add_stmt(new sir_place_holder_label(block->stmt_size()));
     }
@@ -977,7 +979,7 @@ void mir2sir::visit_mir_if(mir_if* node) {
 
     if (br_cond) {
         br_cond->set_false_label(block->stmt_size());
-        block->add_stmt(new sir_label(block->stmt_size()));
+        block->add_stmt(new sir_label(block->stmt_size(), "cond.false"));
     }
 }
 
@@ -996,7 +998,7 @@ void mir2sir::visit_mir_branch(mir_branch* node) {
     }
     branch_jump_out.pop_back();
 
-    block->add_stmt(new sir_label(block->stmt_size()));
+    block->add_stmt(new sir_label(block->stmt_size(), "branch.end"));
 }
 
 void mir2sir::visit_mir_break(mir_break* node) {
@@ -1017,7 +1019,7 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
     break_inst.push_back({});
 
     block->add_stmt(new sir_br(entry_label));
-    block->add_stmt(new sir_label(entry_label));
+    block->add_stmt(new sir_label(entry_label, "loop.entry"));
 
     node->get_condition()->accept(this);
     auto cond = value_stack.back();
@@ -1029,14 +1031,14 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
         0
     );
     block->add_stmt(cond_ir);
-    block->add_stmt(new sir_label(block->stmt_size()));
+    block->add_stmt(new sir_label(block->stmt_size(), "loop.cond.true"));
 
     node->get_content()->accept(this);
     block->add_stmt(new sir_br(entry_label));
 
     auto exit_label = block->stmt_size();
     cond_ir->set_false_label(exit_label);
-    block->add_stmt(new sir_label(exit_label));
+    block->add_stmt(new sir_label(exit_label, "loop.exit"));
     for(auto i : break_inst.back()) {
         i->set_label(exit_label);
     }
