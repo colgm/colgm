@@ -38,7 +38,7 @@ enum class sir_kind {
     sir_place_holder_label,
     sir_store,
     sir_load,
-    sir_br_direct,
+    sir_br,
     sir_br_cond,
     sir_type_convert
 };
@@ -559,8 +559,7 @@ private:
     usize label;
 
 public:
-    sir_br(usize dst):
-        sir(sir_kind::sir_br_direct), label(dst) {}
+    sir_br(usize dst): sir(sir_kind::sir_br), label(dst) {}
     ~sir_br() override = default;
     void dump(std::ostream&) const override;
 

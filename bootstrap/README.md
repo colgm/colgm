@@ -100,6 +100,8 @@ if (1 == 1) {
     ...
 } elsif (1 == 1) {
     ...
+} else if (1 == 1) {
+    ...
 } else {
     ...
 }
@@ -114,7 +116,7 @@ match (variable) {
 }
 ```
 
-### For/Foreach/ForIndex [WIP]
+### For
 
 ```rust
 for (var i = 0; i < 10; i += 1)  {}
@@ -124,6 +126,8 @@ while (i < 10) {
     i += 1;
 }
 ```
+
+### Foreach/ForIndex [WIP]
 
 ```rust
 foreach (var i; container) {}

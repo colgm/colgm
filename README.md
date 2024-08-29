@@ -55,8 +55,7 @@ func main() -> i64 {
 
 ## TODO
 
-1. support for/foreach/forindex:
-    - for loop
+1. support foreach/forindex:
     - forindex loop, container should have `size()` method
     - foreach loop, container should have iterator-like stuff
 2. still need struct initializer

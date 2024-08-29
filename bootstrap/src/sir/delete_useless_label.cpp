@@ -17,7 +17,7 @@ void delete_useless_label::delete_label(sir_block* cb) {
     std::unordered_map<std::string, u64> used_label;
     for(auto i : cb->get_stmts()) {
         switch(i->get_ir_type()) {
-            case sir_kind::sir_br_direct: {
+            case sir_kind::sir_br: {
                 auto label = reinterpret_cast<sir_br*>(i)->get_label();
                 add_count(used_label, label);
             } break;
@@ -38,7 +38,7 @@ void delete_useless_label::delete_label(sir_block* cb) {
         }
         auto this_node = cb->get_stmts()[i];
         auto next_node = cb->get_stmts()[i+1];
-        if (this_node->get_ir_type()!=sir_kind::sir_br_direct) {
+        if (this_node->get_ir_type()!=sir_kind::sir_br) {
             continue;
         }
         if (next_node->get_ir_type()!=sir_kind::sir_label &&
