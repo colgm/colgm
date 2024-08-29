@@ -18,12 +18,12 @@ void delete_useless_label::delete_label(sir_block* cb) {
     for(auto i : cb->get_stmts()) {
         switch(i->get_ir_type()) {
             case sir_kind::sir_br: {
-                auto label = reinterpret_cast<sir_br*>(i)->get_label();
+                auto label = i->to<sir_br>()->get_label();
                 add_count(used_label, label);
             } break;
             case sir_kind::sir_br_cond: {
-                auto left = reinterpret_cast<sir_br_cond*>(i)->get_label_true();
-                auto right = reinterpret_cast<sir_br_cond*>(i)->get_label_false();
+                auto left = i->to<sir_br_cond>()->get_label_true();
+                auto right = i->to<sir_br_cond>()->get_label_false();
                 add_count(used_label, left);
                 add_count(used_label, right);
             } break;
@@ -46,10 +46,10 @@ void delete_useless_label::delete_label(sir_block* cb) {
             continue;
         }
 
-        const auto br_label = reinterpret_cast<sir_br*>(this_node)->get_label();
+        const auto br_label = this_node->to<sir_br>()->get_label();
         const auto real_label = next_node->get_ir_type()==sir_kind::sir_label ?
-            reinterpret_cast<sir_label*>(next_node)->get_label() :
-            reinterpret_cast<sir_place_holder_label*>(next_node)->get_label();
+                            next_node->to<sir_label>()->get_label() :
+                            next_node->to<sir_place_holder_label>()->get_label();
         if (br_label==real_label && used_label.at(br_label)==1) {
             useless_inst.insert(this_node);
             useless_inst.insert(next_node);
@@ -69,7 +69,7 @@ void delete_useless_label::delete_label(sir_block* cb) {
 
     for(auto i : cb->get_stmts()) {
         if (i->get_ir_type()==sir_kind::sir_block) {
-            delete_label(reinterpret_cast<sir_block*>(i));
+            delete_label(i->to<sir_block>());
         }
     }
 }

@@ -95,6 +95,12 @@ public:
     virtual ~sir() = default;
     virtual void dump(std::ostream&) const = 0;
     auto get_ir_type() const { return type; }
+
+public:
+    template<typename T>
+    auto to() {
+        return reinterpret_cast<T*>(this);
+    }
 };
 
 class sir_nop: public sir {
