@@ -450,6 +450,8 @@ bool ast2mir::visit_while_stmt(ast::while_stmt* node) {
 bool ast2mir::visit_for_stmt(ast::for_stmt* node) {
     auto temp = block;
 
+    // for top level block will keep defined variable in live range
+    // util for loop exit
     auto for_top_level = new mir_block(node->get_location());
     block->add_content(for_top_level);
 
@@ -466,6 +468,25 @@ bool ast2mir::visit_for_stmt(ast::for_stmt* node) {
         block = cond_block;
         node->get_condition()->accept(this);
         block = temp;
+    } else {
+        auto cond = new mir_binary(
+            node->get_location(),
+            mir_binary::opr_kind::cmpeq,
+            type::bool_type(),
+            new mir_block(node->get_location()),
+            new mir_block(node->get_location())
+        );
+        cond->get_left()->add_content(new mir_number(
+            node->get_location(),
+            "1",
+            type::i64_type()
+        ));
+        cond->get_right()->add_content(new mir_number(
+            node->get_location(),
+            "1",
+            type::i64_type()
+        ));
+        cond_block->add_content(cond);
     }
 
     auto update_block = new mir_block(node->get_update()

@@ -15,29 +15,23 @@ impl file_lines {
         self->size = 0;
         self->capacity = 128;
 
-        var index = 0;
-        while(index < self->capacity) {
+        for (var index = 0; index < self->capacity; index += 1) {
             self->source[index].init();
-            index += 1;
         }
         return;
     }
 
     func delete(self) {
-        var index = 0;
-        while(index < self->size) {
+        for (var index = 0; index < self->size; index += 1) {
             self->source[index].delete();
-            index += 1;
         }
         free(self->source => i8*);
         return;
     }
 
     func clear(self) {
-        var index = 0;
-        while(index < self->size) {
+        for (var index = 0; index < self->size; index += 1) {
             self->source[index].clear();
-            index += 1;
         }
         self->size = 0;
         return;
@@ -49,10 +43,8 @@ impl file_lines {
             self->source => i8*,
             (self->capacity => u64)*str::__size__()
         ) => str*;
-        var index = self->size;
-        while(index < self->capacity) {
+        for (var index = self->size; index < self->capacity; index += 1) {
             self->source[index].init();
-            index += 1;
         }
         return;
     }
@@ -106,17 +98,14 @@ impl report {
         var source = str::new();
         readfile_into_string(filename, source);
 
-        var pos = 0 => u64;
         var tmp = str::new();
-        while(pos < source->size) {
+        for (var pos = 0 => u64; pos < source->size; pos += 1 => u64) {
             if (source->get(pos)=='\n') {
                 self->source.push(tmp);
                 tmp->clear();
-                pos += 1 => u64;
                 continue;
             }
             tmp->append_char(source->get(pos));
-            pos += 1 => u64;
         }
         if (tmp->size > (0 => u64)) {
             self->source.push(tmp);
@@ -156,10 +145,8 @@ impl report {
         var tmp = malloc(256 => u64);
         itoa(num, tmp, 10);
         var res = str::new();
-        var index = strlen(tmp);
-        while(index < padding) {
+        for (var index = strlen(tmp); index < padding; index += 1) {
             res->append_char(' ');
-            index += 1;
         }
         res->append_i8_vec(tmp);
         free(tmp);
@@ -181,9 +168,8 @@ impl report {
                         .reset().out(tmp_str_const).endln();
 
             var underline = str::new();
-            var i = 0;
             if (index == location->begin_line) {
-                while(i < len) {
+                for (var i = 0; i < len; i += 1) {
                     if (location->begin_line==location->end_line &&
                         i == location->end_column) {
                         break;
@@ -200,14 +186,12 @@ impl report {
                     if (i >= location->begin_column && tmp_str_const[i]=='\t') {
                         underline->append_i8_vec("^^^^");
                     }
-                    i += 1;
                 }
             } elsif (index == location->end_line) {
-                while(i < len) {
+                for (var i = 0; i < len; i += 1) {
                     # in fact this should be unreachable
                     if (location->begin_line==location->end_line &&
                         i < location->begin_column) {
-                        i += 1;
                         continue;
                     }
                     if (i < location->end_column && tmp_str_const[i]!='\t') {
@@ -222,16 +206,14 @@ impl report {
                     if (i >= location->end_column && tmp_str_const[i]=='\t') {
                         underline->append_char('\t');
                     }
-                    i += 1;
                 }
             } else {
-                while(i < len) {
+                for (var i = 0; i < len; i += 1) {
                     if (tmp_str_const[i]=='\t') {
                         underline->append_i8_vec("^^^^");
-                    } elsif(tmp_str_const[i]!='\r' && tmp_str_const[i]!='\n') {
+                    } elsif (tmp_str_const[i]!='\r' && tmp_str_const[i]!='\n') {
                         underline->append_char('^');
                     }
-                    i += 1;
                 }
             }
 
