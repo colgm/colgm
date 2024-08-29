@@ -28,6 +28,8 @@ set(COLGM_OBJECT_SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/ast/stmt.cpp
     ${CMAKE_SOURCE_DIR}/src/ast/visitor.cpp
     ${CMAKE_SOURCE_DIR}/src/sir/context.cpp
+    ${CMAKE_SOURCE_DIR}/src/sir/delete_useless_label.cpp
+    ${CMAKE_SOURCE_DIR}/src/sir/pass_manager.cpp
     ${CMAKE_SOURCE_DIR}/src/sir/sir.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/add_default_func.cpp
     ${CMAKE_SOURCE_DIR}/src/mir/ast2mir.cpp

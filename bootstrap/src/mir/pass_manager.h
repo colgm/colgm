@@ -4,6 +4,8 @@
 #include "mir/ast2mir.h"
 #include "mir/visitor.h"
 
+#include <cstring>
+#include <sstream>
 #include <vector>
 
 namespace colgm::mir {

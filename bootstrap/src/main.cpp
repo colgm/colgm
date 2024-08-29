@@ -6,6 +6,7 @@
 #include "mir/ast2mir.h"
 #include "mir/pass_manager.h"
 #include "mir/mir2sir.h"
+#include "sir/pass_manager.h"
 #include "package/package.h"
 
 #include <unordered_map>
@@ -89,8 +90,9 @@ void execute(const std::string& file,
     colgm::parse parser;
     colgm::semantic sema;
     colgm::mir::ast2mir ast2mir(sema.get_context());
-    colgm::mir::pass_manager pm;
+    colgm::mir::pass_manager mpm;
     colgm::mir::mir2sir mir2sir(sema.get_context());
+    colgm::sir_pass_manager spm;
 
     // lexer scans file to get tokens
     lexer.scan(file).chkerr();
@@ -115,13 +117,14 @@ void execute(const std::string& file,
 
     // generate mir code
     ast2mir.generate(parser.get_result()).chkerr();
-    pm.execute(colgm::mir::ast2mir::get_context());
+    mpm.execute(colgm::mir::ast2mir::get_context());
     if (cmd&COMPILE_VIEW_MIR) {
         colgm::mir::ast2mir::dump(std::cout);
     }
 
     // generate sir code
     mir2sir.generate(*ast2mir.get_context()).chkerr();
+    spm.execute(&mir2sir.get_mutable_sir_context());
     if (cmd&COMPILE_VIEW_SIR) {
         mir2sir.get_mutable_sir_context().dump_code(std::cout);
     }

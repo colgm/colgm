@@ -162,15 +162,27 @@ void sir_cmp::dump(std::ostream& out) const {
 }
 
 void sir_label::dump(std::ostream& out) const {
-    out << "label." << std::hex << label_count << std::dec << ":";
+    out << get_label() << ":";
     if (comment.length()) {
         out << "\t\t\t; " << comment;
     }
     out << "\n";
 }
 
+std::string sir_label::get_label() const {
+    std::stringstream ss;
+    ss << "label." << std::hex << label_count << std::dec;
+    return ss.str();
+}
+
 void sir_place_holder_label::dump(std::ostream& out) const {
-    out << "label.place_holder." << std::hex << label_count << std::dec << ":\n";
+    out << get_label() << ":\n";
+}
+
+std::string sir_place_holder_label::get_label() const {
+    std::stringstream ss;
+    ss << "label.place_holder." << std::hex << label_count << std::dec;
+    return ss.str();
 }
 
 void sir_store::dump(std::ostream& out) const {
@@ -184,13 +196,31 @@ void sir_load::dump(std::ostream& out) const {
 }
 
 void sir_br::dump(std::ostream& out) const {
-    out << "br label %label." << std::hex << label << std::dec << "\n";
+    out << "br label %" << get_label() << "\n";
+}
+
+std::string sir_br::get_label() const {
+    std::stringstream ss;
+    ss << "label." << std::hex << label << std::dec;
+    return ss.str();
 }
 
 void sir_br_cond::dump(std::ostream& out) const {
     out << "br i1 %" << condition << ", ";
-    out << "label %label." << std::hex << label_true << std::dec << ", ";
-    out << "label %label." << std::hex << label_false << std::dec << "\n";
+    out << "label %" << get_label_true() << ", ";
+    out << "label %" << get_label_false() << "\n";
+}
+
+std::string sir_br_cond::get_label_true() const {
+    std::stringstream ss;
+    ss << "label." << std::hex << label_true << std::dec;
+    return ss.str();
+}
+
+std::string sir_br_cond::get_label_false() const {
+    std::stringstream ss;
+    ss << "label." << std::hex << label_false << std::dec;
+    return ss.str();
 }
 
 std::string sir_type_convert::convert_instruction(char source_type_mark,

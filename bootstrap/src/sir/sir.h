@@ -162,6 +162,9 @@ public:
     bool back_is_ret_stmt() const {
         return stmts.size() && stmts.back()->get_ir_type()==sir_kind::sir_ret;
     }
+
+    const auto& get_stmts() const { return stmts; }
+    auto& get_mut_stmts() { return stmts; }
 };
 
 class sir_ret: public sir {
@@ -506,6 +509,7 @@ public:
         sir(sir_kind::sir_label), label_count(count), comment(cm) {}
     ~sir_label() override = default;
     void dump(std::ostream&) const override;
+    std::string get_label() const;
 };
 
 class sir_place_holder_label: public sir {
@@ -517,6 +521,7 @@ public:
         sir(sir_kind::sir_place_holder_label), label_count(count) {}
     ~sir_place_holder_label() override = default;
     void dump(std::ostream&) const override;
+    std::string get_label() const;
 };
 
 class sir_store: public sir {
@@ -560,6 +565,7 @@ public:
     void dump(std::ostream&) const override;
 
     void set_label(usize dst) { label = dst; }
+    std::string get_label() const;
 };
 
 class sir_br_cond: public sir {
@@ -574,6 +580,8 @@ public:
         label_true(dst_true), label_false(dst_false) {}
     ~sir_br_cond() override = default;
     void dump(std::ostream&) const override;
+    std::string get_label_true() const;
+    std::string get_label_false() const;
 
 public:
     void set_true_label(u64 dst_true) {
