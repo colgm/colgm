@@ -18,7 +18,7 @@ using namespace ast;
 class parse {
 private:
     usize ptr;
-    error err;
+    error& err;
     root* result;
     const token* toks;
 
@@ -143,6 +143,7 @@ private:
     break_stmt* break_gen();
 
 public:
+    parse(error& e): ptr(0), err(e), result(nullptr) {}
     const error& analyse(const std::vector<token>&);
     auto get_result() { return result; }
 };

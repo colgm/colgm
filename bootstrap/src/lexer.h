@@ -99,7 +99,7 @@ private:
     std::string filename;
     std::string res;
 
-    error err;
+    error& err;
     u64 invalid_char;
     std::vector<token> toks;
 
@@ -199,7 +199,9 @@ private:
     token calc_opr();
 
 public:
-    lexer(): line(1), column(0), ptr(0), filename(""), res(""), invalid_char(0) {}
+    lexer(error& e):
+        line(1), column(0), ptr(0),
+        filename(""), res(""), err(e), invalid_char(0) {}
     const error& scan(const std::string&);
     const auto& result() const { return toks; }
 };

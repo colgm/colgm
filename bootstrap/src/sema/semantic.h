@@ -20,7 +20,7 @@ using namespace ast;
 
 class semantic {
 private:
-    error err;
+    error& err;
     semantic_context ctx;
     i64 in_loop_level = 0;
 
@@ -127,6 +127,7 @@ private:
     void resolve_use_stmt(root*);
 
 public:
+    semantic(error& e): err(e) {}
     const error& analyse(root*);
     void dump();
     const auto& get_context() const { return ctx; }

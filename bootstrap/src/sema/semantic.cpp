@@ -1482,20 +1482,17 @@ void semantic::resolve_single_use(use_stmt* node) {
     }
     if (pkgman->get_analyse_status(file)==package_manager::status::not_used) {
         pkgman->set_analyse_status(file, package_manager::status::analysing);
-        lexer lex;
-        parse par;
-        semantic sema;
-        mir::ast2mir ast2mir(sema.get_context());
+        lexer lex(err);
+        parse par(err);
+        semantic sema(err);
+        mir::ast2mir ast2mir(err, sema.get_context());
         if (lex.scan(file).geterr()) {
-            report(node, "error ocurred when analysing module \"" + mp + "\".");
             return;
         }
         if (par.analyse(lex.result()).geterr()) {
-            report(node, "error ocurred when analysing module \"" + mp + "\".");
             return;
         }
         if (sema.analyse(par.get_result()).geterr()) {
-            report(node, "error ocurred when analysing module \"" + mp + "\".");
             return;
         }
         pkgman->set_analyse_status(file, package_manager::status::analysed);

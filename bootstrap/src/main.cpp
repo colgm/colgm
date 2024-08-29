@@ -86,10 +86,14 @@ void scan_package(const std::string& library_path, const u32 cmd) {
 
 void execute(const std::string& file,
              const u32 cmd = 0) {
-    colgm::lexer lexer;
-    colgm::parse parser;
-    colgm::semantic sema;
-    colgm::mir::ast2mir ast2mir(sema.get_context());
+    // main components of compiler
+    colgm::error err;
+    colgm::lexer lexer(err);
+    colgm::parse parser(err);
+    colgm::semantic sema(err);
+    colgm::mir::ast2mir ast2mir(err, sema.get_context());
+
+    // ast -> mir -> sir generator pass
     colgm::mir::pass_manager mpm;
     colgm::mir::mir2sir mir2sir(sema.get_context());
     colgm::sir_pass_manager spm;
@@ -147,7 +151,7 @@ i32 main(i32 argc, const char* argv[]) {
             std::clog << help;
         } else if (s=="-v" || s=="--version") {
             std::clog << version;
-        }else if (s[0]!='-') {
+        } else if (s[0]!='-') {
             execute(s, {});
         } else {
             err();
