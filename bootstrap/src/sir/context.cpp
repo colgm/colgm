@@ -152,7 +152,7 @@ void sir_context::dump_code(std::ostream& out) {
     }
 
     out << "!llvm.ident = !{!0}\n";
-    out << "!0 = !{!\"colgm compiler version " << __colgm_ver__ << "\"}";
+    out << "!0 = !{!\"colgm compiler version " << __colgm_ver__ << "\"}\n";
 }
 
 }

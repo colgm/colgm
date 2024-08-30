@@ -31,7 +31,8 @@ void semantic::report_unreachable_statements(code_block* node) {
     err.err("sema", unreachable_location, "unreachable statement(s).");
 }
 
-void semantic::report_top_level_block_has_no_return(code_block* node) {
+void semantic::report_top_level_block_has_no_return(code_block* node,
+                                                    const colgm_func& func) {
     bool flag_has_return = false;
     for(auto i : node->get_stmts()) {
         if (i->get_ast_type()==ast_type::ast_ret_stmt) {
@@ -40,6 +41,10 @@ void semantic::report_top_level_block_has_no_return(code_block* node) {
         }
     }
     if (flag_has_return) {
+        return;
+    }
+    if (func.return_type.is_void()) {
+        node->add_stmt(new ret_stmt(node->get_location()));
         return;
     }
     report(node, "expect at least one return statement.");
@@ -1384,7 +1389,7 @@ void semantic::resolve_global_func(func_decl* node) {
             break;
         }
     }
-    report_top_level_block_has_no_return(node->get_code_block());
+    report_top_level_block_has_no_return(node->get_code_block(), func_self);
     ctx.pop_new_level();
 }
 
@@ -1410,7 +1415,7 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
             break;
         }
     }
-    report_top_level_block_has_no_return(node->get_code_block());
+    report_top_level_block_has_no_return(node->get_code_block(), method_self);
     ctx.pop_new_level();
 }
 

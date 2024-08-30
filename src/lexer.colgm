@@ -173,7 +173,6 @@ impl token {
         free(self->content => i8*);
         self->location->delete();
         free(self->location => i8*);
-        return;
     }
 }
 
@@ -200,7 +199,6 @@ impl vec_token {
             index += 1 => u64;
         }
         free(self->data => i8*);
-        return;
     }
 
     func expand_capacity(self) {
@@ -209,7 +207,6 @@ impl vec_token {
             self->data => i8*,
             self->capacity * token::__size__()
         ) => token*;
-        return;
     }
 
     func append(self, kind: tok_kind, content: str*, loc: span*) {
@@ -221,7 +218,6 @@ impl vec_token {
         self->data[self->size].content = content;
         self->data[self->size].location = loc;
         self->size += 1 => u64;
-        return;
     }
 }
 
@@ -250,7 +246,6 @@ impl lexer {
         self->filename.delete();
         self->toks->delete();
         free(self->toks => i8*);
-        return;
     }
 }
 
@@ -407,7 +402,6 @@ impl lexer {
         } elsif (ch == '?') {
             self->toks->append(tok_kind::tok_quesmark, tmp, loc);
         }
-        return;
     }
 
     func generate_maybe_need_eq_oprs(self, src: str*) {
@@ -473,7 +467,6 @@ impl lexer {
         } elsif (tmp->eq_const("!=")) {
             self->toks->append(tok_kind::tok_neq, tmp, loc);
         }
-        return;
     }
 
     func generate_lookahead_other(self, src: str*) {
@@ -517,7 +510,6 @@ impl lexer {
         } elsif (tmp->eq_const("||")) {
             self->toks->append(tok_kind::tok_op_or, tmp, loc);
         }
-        return;
     }
 
     func generate_arrow(self, src: str*) {
@@ -541,7 +533,6 @@ impl lexer {
         } else {
             self->toks->append(tok_kind::tok_wide_arrow, tmp, loc);
         }
-        return;
     }
 
     func generate_identifier(self, src: str*) {
@@ -562,7 +553,6 @@ impl lexer {
         loc->end_column = self->column;
 
         self->toks->append(lexer::check_id_kind(tmp), tmp, loc);
-        return;
     }
 
     func generate_number(self, src: str*) {
@@ -711,7 +701,6 @@ impl lexer {
         loc->end_line = self->line;
         loc->end_column = self->column;
         self->toks->append(tok_kind::tok_num, tmp, loc);
-        return;
     }
 
     func generate_string(self, src: str*) {
@@ -803,7 +792,6 @@ impl lexer {
             }
             self->toks->append(tok_kind::tok_ch, tmp, loc);
         }
-        return;
     }
 
     func generate_coloncolon(self, src: str*) {
@@ -830,7 +818,6 @@ impl lexer {
             loc->end_column = self->column;
             self->toks->append(tok_kind::tok_colon, tmp, loc);
         }
-        return;
     }
 
     func generate_ellipsis(self, src: str*) {
@@ -860,7 +847,6 @@ impl lexer {
 
             self->toks->append(tok_kind::tok_dot, tmp, loc);
         }
-        return;
     }
 
     func skip_note(self, src: str*) {
@@ -868,7 +854,6 @@ impl lexer {
             self->pos += 1 => u64;
             self->column += 1;
         }
-        return;
     }
 
     func scan(self, filename: i8*) {
@@ -931,7 +916,6 @@ impl lexer {
 
         src->delete();
         free(src => i8*);
-        return;
     }
 
     func dump(self) {
@@ -951,6 +935,5 @@ impl lexer {
                         .endln();
             index += 1 => u64;
         }
-        return;
     }
 }

@@ -163,8 +163,17 @@ func main() -> i32 {
 
 ```rust
 struct StructName {
-    field1: type,
-    field2: type
+    field1: i64,
+    field2: i64
+}
+```
+
+### Struct Initializer
+
+```rust
+func test() {
+    var s1 = StructName {};
+    var s2 = StructName { field1: 1, field2: 2 };
 }
 ```
 

@@ -29,6 +29,8 @@ void sir_block::dump(std::ostream& out) const {
         if (i->get_ir_type()!=sir_kind::sir_label &&
             i->get_ir_type()!=sir_kind::sir_place_holder_label) {
             out << "  ";
+        } else {
+            out << "\n";
         }
         i->dump(out);
     }

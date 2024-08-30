@@ -44,7 +44,7 @@ private:
         );
     }
     void report_unreachable_statements(code_block*);
-    void report_top_level_block_has_no_return(code_block*);
+    void report_top_level_block_has_no_return(code_block*, const colgm_func&);
 
 private:
     colgm_func builtin_struct_size(const span&);

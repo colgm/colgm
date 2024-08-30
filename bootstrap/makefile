@@ -18,3 +18,4 @@ test: $(COLGMCC)
 	@ $(COLGMCC) test/string.colgm && lli out.ll
 	@ $(COLGMCC) test/to_str.colgm && lli out.ll
 	@ $(COLGMCC) test/type_convert.colgm && lli out.ll
+	@ $(COLGMCC) test/void_return.colgm && lli out.ll

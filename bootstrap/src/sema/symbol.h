@@ -101,6 +101,7 @@ public:
     bool is_boolean() const {
         return *this==type::bool_type(this->pointer_depth);
     }
+    bool is_void() const { return *this==type::void_type(0); }
     bool is_pointer() const { return pointer_depth>0; }
     bool is_function() const {
         return stm_info.flag_is_normal ||
