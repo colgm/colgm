@@ -66,14 +66,6 @@ colgm_func semantic::builtin_struct_alloc(const span& loc, const type& ty) {
     return func;
 }
 
-colgm_func semantic::builtin_struct_instance(const span& loc, const type& ty) {
-    auto func = colgm_func();
-    func.name = "__instance__";
-    func.location = loc;
-    func.return_type = ty;
-    return func;
-}
-
 void semantic::analyse_single_struct(struct_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol.count(name)) {
@@ -126,13 +118,6 @@ void semantic::analyse_single_struct(struct_decl* node) {
             .name = name,
             .loc_file = node->get_location().file,
             .pointer_depth = 1
-        })}
-    );
-    struct_self.static_method.insert(
-        {"__instance__", builtin_struct_instance(node->get_location(), {
-            .name = name,
-            .loc_file = node->get_location().file,
-            .pointer_depth = 0
         })}
     );
 }
