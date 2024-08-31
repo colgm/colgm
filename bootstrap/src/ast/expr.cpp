@@ -83,6 +83,14 @@ void ptr_get_field::accept(visitor* v) {
     v->visit_ptr_get_field(this);
 }
 
+void init_pair::accept(visitor* v) {
+    v->visit_init_pair(this);
+}
+
+void initializer::accept(visitor* v) {
+    v->visit_initializer(this);
+}
+
 void call_path::accept(visitor* v) {
     v->visit_call_path(this);
 }

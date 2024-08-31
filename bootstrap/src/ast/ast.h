@@ -23,6 +23,8 @@ enum class ast_type {
     ast_call_func_args,
     ast_get_field,
     ast_ptr_get_field,
+    ast_init_pair,
+    ast_initializer,
     ast_call_path,
     ast_call,
     ast_assignment,
@@ -73,6 +75,8 @@ class call_index;
 class call_func_args;
 class get_field;
 class ptr_get_field;
+class init_pair;
+class initializer;
 class call_path;
 class call;
 class assignment;

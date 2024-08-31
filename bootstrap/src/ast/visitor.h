@@ -34,6 +34,8 @@ public:
     virtual bool visit_call_func_args(call_func_args*);
     virtual bool visit_get_field(get_field*);
     virtual bool visit_ptr_get_field(ptr_get_field*);
+    virtual bool visit_init_pair(init_pair*);
+    virtual bool visit_initializer(initializer*);
     virtual bool visit_call_path(call_path*);
     virtual bool visit_call(call*);
     virtual bool visit_assignment(assignment*);

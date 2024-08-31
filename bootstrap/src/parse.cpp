@@ -59,7 +59,7 @@ call* parse::call_gen() {
     result->set_head(identifier_gen());
     while(look_ahead(tok::tk_lcurve) || look_ahead(tok::tk_lbracket) ||
           look_ahead(tok::tk_dot) || look_ahead(tok::tk_arrow) ||
-          look_ahead(tok::tk_double_colon)) {
+          look_ahead(tok::tk_double_colon) || look_ahead(tok::tk_lbrace)) {
         if (look_ahead(tok::tk_lcurve)) {
             match(tok::tk_lcurve);
             auto new_call_func = new call_func_args(toks[ptr].loc);
@@ -99,8 +99,35 @@ call* parse::call_gen() {
             match(tok::tk_id);
             update_location(new_call_path);
             result->add_chain(new_call_path);
+        } else if (look_ahead(tok::tk_lbrace)) {
+            result->add_chain(initializer_gen());
         }
     }
+    update_location(result);
+    return result;
+}
+
+initializer* parse::initializer_gen() {
+    auto result = new initializer(toks[ptr].loc);
+
+    match(tok::tk_lbrace);
+    while(!look_ahead(tok::tk_rbrace)) {
+        auto pair_node = new init_pair(toks[ptr].loc);
+
+        pair_node->set_field(identifier_gen());
+        match(tok::tk_colon);
+        pair_node->set_value(calculation_gen());
+        update_location(pair_node);
+
+        result->add_pair(pair_node);
+        if (look_ahead(tok::tk_comma)) {
+            match(tok::tk_comma);
+        } else {
+            break;
+        }
+    }
+    match(tok::tk_rbrace);
+
     update_location(result);
     return result;
 }

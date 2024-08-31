@@ -148,6 +148,19 @@ bool visitor::visit_ptr_get_field(ptr_get_field* node) {
     return true;
 }
 
+bool visitor::visit_init_pair(init_pair* node) {
+    node->get_field()->accept(this);
+    node->get_value()->accept(this);
+    return true;
+}
+
+bool visitor::visit_initializer(initializer* node) {
+    for(auto i : node->get_pairs()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_call_path(call_path* node) {
     return true;
 }

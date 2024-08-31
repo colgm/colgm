@@ -234,6 +234,45 @@ public:
     const auto& get_name() const { return name; }
 };
 
+class init_pair: public expr {
+private:
+    identifier* field;
+    expr* value;
+
+public:
+    init_pair(const span& loc):
+        expr(ast_type::ast_init_pair, loc),
+        field(nullptr), value(nullptr) {}
+    ~init_pair() override {
+        delete field;
+        delete value;
+    }
+    void accept(visitor*) override;
+
+    void set_field(identifier* node) { field = node; }
+    auto get_field() const { return field; }
+    void set_value(expr* node) { value = node; }
+    auto get_value() const { return value; }
+};
+
+class initializer: public expr {
+private:
+    std::vector<init_pair*> pairs;
+
+public:
+    initializer(const span& loc):
+        expr(ast_type::ast_initializer, loc) {}
+    ~initializer() override {
+        for(auto i : pairs) {
+            delete i;
+        }
+    }
+    void accept(visitor*) override;
+
+    void add_pair(init_pair* node) { pairs.push_back(node); }
+    const auto& get_pairs() const { return pairs; }
+};
+
 class call_path: public expr {
 private:
     std::string name;

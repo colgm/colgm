@@ -272,6 +272,31 @@ bool dumper::visit_ptr_get_field(ptr_get_field* node) {
     return true;
 }
 
+bool dumper::visit_init_pair(init_pair* node) {
+    dump_indent();
+    std::cout << "init pair" << format_location(node);
+    push_indent();
+    node->get_field()->accept(this);
+    set_last();
+    node->get_value()->accept(this);
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_initializer(initializer* node) {
+    dump_indent();
+    std::cout << "initializer" << format_location(node);
+    push_indent();
+    for(auto i : node->get_pairs()) {
+        if (i==node->get_pairs().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_call_path(call_path* node) {
     dump_indent();
     std::cout << "call path @" << node->get_name() << format_location(node);

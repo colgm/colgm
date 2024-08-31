@@ -62,6 +62,8 @@ public:
     bool visit_call_func_args(call_func_args*) override;
     bool visit_get_field(get_field*) override;
     bool visit_ptr_get_field(ptr_get_field*) override;
+    bool visit_init_pair(init_pair*) override;
+    bool visit_initializer(initializer*) override;
     bool visit_call_path(call_path*) override;
     bool visit_call(call*) override;
     bool visit_assignment(assignment*) override;
