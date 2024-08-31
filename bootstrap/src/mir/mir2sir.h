@@ -195,6 +195,7 @@ private:
     void visit_mir_bool(mir_bool*) override;
     void call_expression_generation(mir_call*, bool);
     void visit_mir_call(mir_call*) override;
+    void visit_mir_struct_init(mir_struct_init*) override;
     void visit_mir_call_id(mir_call_id*) override;
     void visit_mir_call_index(mir_call_index*) override;
     void visit_mir_call_func(mir_call_func*) override;

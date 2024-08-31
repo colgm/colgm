@@ -98,6 +98,7 @@ private:
     void check_method_call_args(const colgm_func&, const type&, call_func_args*);
     type resolve_call_func_args(const type&, call_func_args*);
     type resolve_call_index(const type&, call_index*);
+    type resolve_initializer(const type&, initializer*);
     type resolve_call_path(const type&, call_path*);
     type resolve_ptr_get_field(const type&, ptr_get_field*);
     type resolve_call(call*);

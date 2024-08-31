@@ -20,6 +20,7 @@ enum class kind {
     mir_string,
     mir_char,
     mir_bool,
+    mir_struct_init,
     mir_call,
     mir_call_id,
     mir_call_index,
@@ -252,6 +253,34 @@ public:
 public:
     auto get_literal() const { return literal; }
     const auto& get_type() const { return resolve_type; }
+};
+
+class mir_struct_init: public mir {
+public:
+    struct field {
+        std::string name;
+        mir_block* content;
+        type resolve_type;
+    };
+
+private:
+    std::vector<field> fields;
+    type resolve_type;
+
+public:
+    mir_struct_init(const span& loc, const type& t):
+        mir(kind::mir_struct_init, loc), resolve_type(t) {}
+    ~mir_struct_init() override;
+    void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    void add_field(const std::string& n, mir_block* c, const type& t) {
+        fields.push_back({n, c, t});
+    }
+    const auto& get_fields() const { return fields; }
+    const auto& get_type() const { return resolve_type; }
+
 };
 
 class mir_call: public mir {

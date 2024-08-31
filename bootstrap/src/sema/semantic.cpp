@@ -859,6 +859,51 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
     return result;
 }
 
+type semantic::resolve_initializer(const type& prev, initializer* node) {
+    if (!prev.is_global) {
+        report(node, "need a global symbol to initialize.");
+        return type::error_type();
+    }
+
+    if (prev.loc_file.empty()) {
+        report(node, "basic type cannot be initialized as a struct.");
+        return type::error_type();
+    }
+
+    const auto& domain = ctx.global.domain.at(prev.loc_file);
+    if (!domain.structs.count(prev.name)) {
+        report(node, "\"" + prev.name + "\" is not a struct type, cannot initialize.");
+        return type::error_type();
+    }
+
+    const auto& st = domain.structs.at(prev.name);
+    for(auto i : node->get_pairs()) {
+        const auto& field = i->get_field()->get_name();
+        if (!st.field.count(field)) {
+            report(i,
+                "cannot find field \"" + field + "\" in \"" + prev.name + "\"."
+            );
+            continue;
+        }
+
+        const auto infer = resolve_expression(i->get_value());
+        i->get_value()->set_resolve_type(infer);
+
+        if (infer != st.field.at(field).symbol_type) {
+            report(i,
+                "expect \"" + st.field.at(field).symbol_type.to_string() +
+                "\" but get \"" + infer.to_string() + "\"."
+            );
+            continue;
+        }
+    }
+
+    auto copy = prev;
+    copy.is_global = false;
+    node->set_resolve_type(copy);
+    return copy;
+}
+
 type semantic::resolve_call_path(const type& prev, call_path* node) {
     if (!prev.is_global) {
         report(node, "cannot get path from a value.");
@@ -999,6 +1044,11 @@ type semantic::resolve_call(call* node) {
                 infer, reinterpret_cast<call_path*>(i)
             );
             break;
+        case ast_type::ast_initializer:
+            infer = resolve_initializer(
+                infer, reinterpret_cast<initializer*>(i)
+            );
+            break;
         case ast_type::ast_ptr_get_field:
             infer = resolve_ptr_get_field(
                 infer, reinterpret_cast<ptr_get_field*>(i)
@@ -1030,7 +1080,8 @@ bool semantic::check_valid_left_value(expr* node) {
     }
     for(auto i : mem_get_node->get_chain()) {
         if (i->get_ast_type()==ast_type::ast_call_path ||
-            i->get_ast_type()==ast_type::ast_call_func_args) {
+            i->get_ast_type()==ast_type::ast_call_func_args ||
+            i->get_ast_type()==ast_type::ast_initializer) {
             return false;
         }
     }

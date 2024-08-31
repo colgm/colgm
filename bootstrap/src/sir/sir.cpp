@@ -53,6 +53,11 @@ void sir_string::dump(std::ostream& out) const {
     out << ", i64 0, i64 0\n";
 }
 
+void sir_zeroinitializer::dump(std::ostream& out) const {
+    out << "store " << type << " zeroinitializer";
+    out << ", " << type << "* " << destination << "\n";
+}
+
 void sir_call_index::dump(std::ostream& out) const {
     out << destination << " = getelementptr " << type << ", ";
     out << type << "* " << source << ", ";

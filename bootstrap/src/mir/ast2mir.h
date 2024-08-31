@@ -76,6 +76,7 @@ private:
     bool visit_call_func_args(ast::call_func_args*) override;
     bool visit_get_field(ast::get_field*) override;
     bool visit_ptr_get_field(ast::ptr_get_field*) override;
+    bool visit_initializer(ast::initializer*) override;
     bool visit_call_path(ast::call_path*) override;
     bool visit_call(ast::call*) override;
     bool visit_definition(ast::definition*) override;

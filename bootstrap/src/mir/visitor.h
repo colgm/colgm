@@ -15,6 +15,7 @@ public:
     virtual void visit_mir_string(mir_string*) {}
     virtual void visit_mir_char(mir_char*) {}
     virtual void visit_mir_bool(mir_bool*) {}
+    virtual void visit_mir_struct_init(mir_struct_init*);
     virtual void visit_mir_call(mir_call*);
     virtual void visit_mir_call_id(mir_call_id*) {}
     virtual void visit_mir_call_index(mir_call_index*);

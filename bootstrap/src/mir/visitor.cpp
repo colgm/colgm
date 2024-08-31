@@ -21,6 +21,12 @@ void visitor::visit_mir_type_convert(mir_type_convert* node) {
     node->get_source()->accept(this);
 }
 
+void visitor::visit_mir_struct_init(mir_struct_init* node) {
+    for(const auto& i : node->get_fields()) {
+        i.content->accept(this);
+    }
+}
+
 void visitor::visit_mir_call(mir_call* node) {
     node->get_content()->accept(this);
 }

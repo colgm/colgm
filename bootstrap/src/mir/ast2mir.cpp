@@ -238,6 +238,26 @@ bool ast2mir::visit_ptr_get_field(ast::ptr_get_field* node) {
     return true;
 }
 
+bool ast2mir::visit_initializer(ast::initializer* node) {
+    auto temp = block;
+    auto struct_init = new mir_struct_init(
+        node->get_location(),
+        node->get_resolve()
+    );
+    for(auto i : node->get_pairs()) {
+        block = new mir_block(i->get_location());
+        i->get_value()->accept(this);
+        struct_init->add_field(
+            i->get_field()->get_name(),
+            block,
+            i->get_value()->get_resolve()
+        );
+    }
+    block = temp;
+    block->add_content(struct_init);
+    return true;
+}
+
 bool ast2mir::visit_call_path(ast::call_path* node) {
     block->add_content(new mir_get_path(
         node->get_location(),

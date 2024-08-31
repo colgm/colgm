@@ -19,6 +19,7 @@ enum class sir_kind {
     sir_temp_ptr,
     sir_ret,
     sir_str,
+    sir_zeroinitializer,
     sir_call_index,
     sir_call_field,
     sir_call_func,
@@ -195,6 +196,18 @@ public:
     sir_string(const usize sl, const usize i, const value_t& tgt):
         sir(sir_kind::sir_str), index(i), length(sl), target(tgt) {}
     ~sir_string() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_zeroinitializer: public sir {
+private:
+    value_t destination;
+    std::string type;
+
+public:
+    sir_zeroinitializer(const value_t& dst, const std::string& t):
+        sir(sir_kind::sir_zeroinitializer), destination(dst), type(t) {}
+    ~sir_zeroinitializer() override = default;
     void dump(std::ostream&) const override;
 };
 

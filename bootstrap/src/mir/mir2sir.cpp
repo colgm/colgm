@@ -504,6 +504,48 @@ void mir2sir::visit_mir_call(mir_call* node) {
     call_expression_generation(node, false);
 }
 
+void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
+    const auto temp_var = ssa_gen.create();
+    block->add_alloca(new sir_alloca(
+        "real." + temp_var,
+        type_mapping(node->get_type())
+    ));
+    block->add_stmt(new sir_temp_ptr(
+        temp_var,
+        type_mapping(node->get_type())
+    ));
+    block->add_stmt(new sir_zeroinitializer(
+        value_t::variable(temp_var),
+        type_mapping(node->get_type())
+    ));
+
+    const auto& dm = ctx.global.domain.at(node->get_type().loc_file);
+    const auto& st = dm.structs.at(node->get_type().name);
+    for(const auto& i : node->get_fields()) {
+        const auto target = ssa_gen.create();
+        const auto index = st.field_index(i.name);
+        block->add_stmt(new sir_call_field(
+            target,
+            temp_var,
+            type_mapping(node->get_type()),
+            index
+        ));
+        i.content->accept(this);
+
+        const auto res = value_stack.back();
+        block->add_stmt(new sir_store(
+            type_mapping(res.resolve_type),
+            res.to_value_t(),
+            value_t::variable(target)
+        ));
+        value_stack.pop_back();
+    }
+    value_stack.push_back(mir_value_t::variable(
+        temp_var,
+        node->get_type().get_pointer_copy()
+    ));
+}
+
 void mir2sir::visit_mir_call_id(mir_call_id* node) {
     if (!node->get_type().is_global) {
         value_stack.push_back(mir_value_t::variable(

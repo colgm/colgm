@@ -136,6 +136,26 @@ void mir_bool::accept(visitor* v) {
     v->visit_mir_bool(this);
 }
 
+mir_struct_init::~mir_struct_init() {
+    for(const auto& i : fields) {
+        delete i.content;
+    }
+}
+
+void mir_struct_init::dump(const std::string& indent, std::ostream& os) {
+    os << indent << to_hex(this) << " [" << resolve_type << "] struct (\n";
+    for(const auto& i : fields) {
+        os << indent << "  [" << i.resolve_type << "] " << i.name << " : (\n";
+        i.content->dump(indent + "    ", os);
+        os << indent << "  )\n";
+    };
+    os << indent << ")\n";
+}
+
+void mir_struct_init::accept(visitor* v) {
+    v->visit_mir_struct_init(this);
+}
+
 void mir_call::dump(const std::string& indent, std::ostream& os) {
     os << indent << to_hex(this) << " [" << resolve_type << "] call (\n";
     for(auto i : content->get_content()) {
