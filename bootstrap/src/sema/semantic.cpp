@@ -1182,8 +1182,11 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         const auto real_type = resolve_expression(node->get_init_value());
         node->set_resolve_type(real_type);
         ctx.add_symbol(name, real_type);
+        check_defined_variable_is_void(node, real_type);
         return;
     }
+
+    // with type declaration
     const auto expected_type = resolve_type_def(node->get_type());
     const auto real_type = resolve_expression(node->get_init_value());
     if (expected_type.is_pointer() && real_type.is_pointer()) {
@@ -1201,6 +1204,14 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     }
     node->set_resolve_type(expected_type);
     ctx.add_symbol(name, expected_type);
+    check_defined_variable_is_void(node, expected_type);
+}
+
+void semantic::check_defined_variable_is_void(definition* node, const type& t) {
+    if (!t.is_void()) {
+        return;
+    }
+    report(node, "cannot define variable with void type.");
 }
 
 void semantic::resolve_if_stmt(if_stmt* node, const colgm_func& func_self) {

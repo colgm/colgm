@@ -173,7 +173,8 @@ struct StructName {
 ```rust
 func test() {
     var s1 = StructName {};
-    var s2 = StructName { field1: 1, field2: 2 };
+    var s2 = StructName { field1: 1 };
+    var s3 = StructName { field1: 1, field2: 2 };
 }
 ```
 
