@@ -38,8 +38,8 @@ void sir_block::dump(std::ostream& out) const {
 
 void sir_temp_ptr::dump(std::ostream& out) const {
     out << "%" << temp_name << " = getelementptr " << type_name << ", ";
-    out << type_name << "* %real." << temp_name << ", i32 0";
-    out << " ; %real." << temp_name << " -> %" << temp_name << "\n"; 
+    out << type_name << "* %_" << temp_name << ".real, i32 0";
+    out << " ; %_" << temp_name << ".real -> %" << temp_name << "\n"; 
 }
 
 void sir_ret::dump(std::ostream& out) const {
