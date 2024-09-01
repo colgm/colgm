@@ -702,7 +702,14 @@ void parse::add_gen_stmt(code_block* result) {
         case tok::tk_ret: result->add_stmt(return_gen()); break;
         case tok::tk_cont: result->add_stmt(continue_gen()); break;
         case tok::tk_brk: result->add_stmt(break_gen()); break;
-        default: match(toks[ptr].type); break;
+        case tok::tk_semi: match(tok::tk_semi); break;
+        default:
+            err.err("parse",
+                toks[ptr].loc,
+                "unexpected token for statement syntax \"" + toks[ptr].str + "\"."
+            );
+            match(toks[ptr].type);
+            break;
     }
 }
 

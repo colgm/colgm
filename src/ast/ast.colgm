@@ -1,6 +1,7 @@
 use err::span::{ span };
 use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ io };
+use std::str::{ str };
 
 enum ast_kind {
     ast_null,
@@ -18,6 +19,8 @@ enum ast_kind {
     ast_call_func_args,
     ast_get_field,
     ast_ptr_get_field,
+    ast_init_pair,
+    ast_initializer,
     ast_call_path,
     ast_call,
     ast_assignment,
@@ -33,7 +36,10 @@ enum ast_kind {
     ast_definition,
     ast_cond_stmt,
     ast_if_stmt,
+    ast_match_case,
+    ast_match_stmt,
     ast_while_stmt,
+    ast_for_stmt,
     ast_in_stmt_expr,
     ast_ret_stmt,
     ast_continue_stmt,
@@ -96,12 +102,26 @@ impl ptr_vec {
         self->data[self->size] = item;
         self->size += 1 => u64;
     }
+
+    func back(self) -> i8* {
+        if (self->size == 0 => u64) {
+            return nil;
+        }
+        return self->data[self->size - 1 => u64];
+    }
+
+    func pop(self) {
+        if (self->size == 0 => u64) {
+            return;
+        }
+        self->size -= 1 => u64;
+    }
 }
 
 struct root {
     base: ast,
     imports: ptr_vec,
-    declarations: ptr_vec
+    decls: ptr_vec
 }
 
 impl root {
@@ -114,86 +134,196 @@ impl root {
     func init(self, loc: span*) {
         self->base = ast::instance(ast_kind::ast_root, loc);
         self->imports.init();
-        self->declarations.init();
+        self->decls.init();
     }
 
     func delete(self) {
         self->base.delete();
         self->imports.delete();
-        self->declarations.delete();
+        self->decls.delete();
     }
 }
 
 # expressions
 
-struct ast_unary_operator {}
+struct ast_unary_operator {
+    base: ast
+}
 
-struct ast_binary_operator {}
+struct ast_binary_operator {
+    base: ast
+}
 
-struct ast_type_convert {}
+struct ast_type_convert {
+    base: ast
+}
 
-struct ast_identifier {}
+struct ast_identifier {
+    base: ast,
+    name: str
+}
 
-struct ast_nil_literal {}
+impl ast_identifier {
+    func new(loc: span*, name: str*) -> ast_identifier* {
+        var res = ast_identifier::__alloc__();
+        res->base = ast::instance(ast_kind::ast_identifier, loc);
+        res->name = name->copy_instance();
+        return res;
+    }
+}
 
-struct ast_number_literal {}
+struct ast_nil_literal {
+    base: ast
+}
 
-struct ast_string_literal {}
+struct ast_number_literal {
+    base: ast
+}
 
-struct ast_char_literal {}
+struct ast_string_literal {
+    base: ast
+}
 
-struct ast_bool_literal {}
+struct ast_char_literal {
+    base: ast
+}
 
-struct ast_call_index {}
+struct ast_bool_literal {
+    base: ast
+}
 
-struct ast_call_func_args {}
+struct ast_call_index {
+    base: ast
+}
 
-struct ast_get_field {}
+struct ast_call_func_args {
+    base: ast
+}
 
-struct ast_ptr_get_field {}
+struct ast_get_field {
+    base: ast
+}
 
-struct ast_call_path {}
+struct ast_ptr_get_field {
+    base: ast
+}
 
-struct ast_call {}
+struct ast_init_pair {
+    base: ast
+}
 
-struct ast_assignment {}
+struct ast_initializer {
+    base: ast
+}
+
+struct ast_call_path {
+    base: ast
+}
+
+struct ast_call {
+    base: ast
+}
+
+struct ast_assignment {
+    base: ast
+}
 
 # declarations
 
-struct ast_type_def {}
+struct ast_type_def {
+    base: ast
+}
 
-struct ast_enum_decl {}
+struct ast_enum_decl {
+    base: ast
+}
 
-struct ast_struct_field {}
+struct ast_struct_field {
+    base: ast
+}
 
-struct ast_struct_decl {}
+struct ast_struct_decl {
+    base: ast
+}
 
-struct ast_param {}
+struct ast_param {
+    base: ast
+}
 
-struct ast_param_list {}
+struct ast_param_list {
+    base: ast
+}
 
-struct ast_func_decl {}
+struct ast_func_decl {
+    base: ast
+}
 
-struct ast_impl {}
+struct ast_impl {
+    base: ast
+}
 
 # statements
 
-struct ast_use_stmt {}
+struct ast_use_stmt {
+    base: ast,
+    module_path: ptr_vec,
+    import_symbol: ptr_vec
+}
 
-struct ast_definition {}
+impl ast_use_stmt {
+    func new(loc: span*) -> ast_use_stmt* {
+        var res = ast_use_stmt::__alloc__();
+        res->base = ast::instance(ast_kind::ast_use_stmt, loc);
+        res->module_path.init();
+        res->import_symbol.init();
+        return res;
+    }
+}
 
-struct ast_cond_stmt {}
+struct ast_definition {
+    base: ast
+}
 
-struct ast_if_stmt {}
+struct ast_cond_stmt {
+    base: ast
+}
 
-struct ast_while_stmt {}
+struct ast_if_stmt {
+    base: ast
+}
 
-struct ast_in_stmt_expr {}
+struct ast_match_case {
+    base: ast
+}
 
-struct ast_ret_stmt {}
+struct ast_match_stmt {
+    base: ast
+}
 
-struct ast_continue_stmt {}
+struct ast_while_stmt {
+    base: ast
+}
 
-struct ast_break_stmt {}
+struct ast_for_stmt {
+    base: ast
+}
 
-struct ast_code_block {}
+struct ast_in_stmt_expr {
+    base: ast
+}
+
+struct ast_ret_stmt {
+    base: ast
+}
+
+struct ast_continue_stmt {
+    base: ast
+}
+
+struct ast_break_stmt {
+    base: ast
+}
+
+struct ast_code_block {
+    base: ast
+}

@@ -934,6 +934,10 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
             node->set_resolve_type(res);
             return res;
         }
+        report(node,
+            "cannot find enum member \"" + node->get_name() +
+            "\" in \"" + prev.name + "\"."
+        );
     }
     return type::error_type();
 }
@@ -1055,6 +1059,12 @@ type semantic::resolve_call(call* node) {
         return type::error_type();
     }
     node->set_resolve_type(infer);
+    if (infer.is_global) {
+        report(node,
+            "get global \"" + infer.to_string() + "\" type, " +
+            "but not an instance."
+        );
+    }
     return infer;
 }
 

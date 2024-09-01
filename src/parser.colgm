@@ -1,8 +1,11 @@
 use ast::ast::*;
+use ast::dumper::{ ast_dumper };
 use err::report::*;
+use err::span::{ span };
 use lexer::{ lexer, vec_token, tok_kind };
 use std::libc::{ free };
 use std::io::{ io };
+use std::str::{ str };
 
 struct parser {
     err: report*,
@@ -29,17 +32,121 @@ impl parser {
         }
     }
 
+    func this_tok_loc(self) -> span* {
+        return self->toks->get(self->index).location->copy();
+    }
+
     func lookahead(self, kind: tok_kind) -> bool {
         return self->toks->get(self->index).kind == kind;
+    }
+
+    func next(self) {
+        if (self->toks->get(self->index).kind == tok_kind::tok_eof) {
+            return;
+        }
+        self->index += 1;
+    }
+
+    func match_token(self, kind: tok_kind) {
+        var tp = self->toks->get(self->index).kind;
+        if (tp == kind) {
+            self->next();
+            return;
+        }
+        var loc = self->toks->get(self->index).location;
+        match (tp) {
+            tok_kind::tok_id => {
+                self->err->error(loc, "expected identifier here.");
+                self->next();
+                return;
+            }
+            tok_kind::tok_num => {
+                self->err->error(loc, "expected number here.");
+                self->next();
+                return;
+            }
+            tok_kind::tok_str => {
+                self->err->error(loc, "expected string here.");
+                self->next();
+                return;
+            }
+        }
+
+        var error_message = str::instance();
+        error_message.append_i8_vec("unexpected token ")
+                     ->append_char('\"')
+                     ->append_str(self->toks->get(self->index).content)
+                     ->append_char('\"')
+                     ->append_i8_vec(" here.");
+        self->err->error(loc, error_message.c_str);
+        error_message.delete();
+        self->next();
     }
 }
 
 impl parser {
+    func identifier_gen(self) -> ast_identifier* {
+        var res = ast_identifier::new(
+            self->this_tok_loc(),
+            self->toks->get(self->index).content
+        );
+        self->match_token(tok_kind::tok_id);
+        return res;
+    }
+
+    func use_stmt_gen(self) -> ast_use_stmt* {
+        var res = ast_use_stmt::new(self->this_tok_loc());
+        self->match_token(tok_kind::tok_use);
+        res->module_path.push(self->identifier_gen() => i8*);
+        while (self->lookahead(tok_kind::tok_coloncolon)) {
+            self->match_token(tok_kind::tok_coloncolon);
+            if (self->lookahead(tok_kind::tok_lbrace) ||
+                self->lookahead(tok_kind::tok_mul)) {
+                break;
+            }
+            res->module_path.push(self->identifier_gen() => i8*);
+        }
+        if (self->lookahead(tok_kind::tok_lbrace)) {
+            self->match_token(tok_kind::tok_lbrace);
+            while (self->lookahead(tok_kind::tok_id)) {
+                res->import_symbol.push(self->identifier_gen() => i8*);
+                if (self->lookahead(tok_kind::tok_comma)) {
+                    self->match_token(tok_kind::tok_comma);
+                } else {
+                    break;
+                }
+            }
+            self->match_token(tok_kind::tok_rbrace);
+        } else if (!self->lookahead(tok_kind::tok_mul)) {
+            var last = res->module_path.back();
+            res->module_path.pop();
+            res->import_symbol.push(last);
+        } else {
+            self->match_token(tok_kind::tok_mul);
+        }
+        self->match_token(tok_kind::tok_semi);
+        return res;
+    }
+
     func parse(self) {
         self->index = 0;
-        self->root = root::new(self->toks->get(0).location->copy());
+        self->root = root::new(self->this_tok_loc());
         if (self->lookahead(tok_kind::tok_eof)) {
             return;
         }
+        while (self->lookahead(tok_kind::tok_use)) {
+            self->root->imports.push(self->use_stmt_gen() => i8*);
+        }
+        while (!self->lookahead(tok_kind::tok_eof)) {
+            self->next();
+        }
+    }
+}
+
+impl parser {
+    func dump(self) {
+        var dumper = ast_dumper::instance();
+        dumper.dump(self->root => ast*, io::stdout());
+        dumper.delete();
     }
 }

@@ -1,0 +1,92 @@
+use ast::ast::*;
+use std::str::{ str };
+use std::io::{ io };
+
+struct ast_dumper {
+    indent: str
+}
+
+impl ast_dumper {
+    func instance() -> ast_dumper {
+        var res = ast_dumper {
+            indent: str::instance()
+        };
+        res.indent.clear();
+        return res;
+    }
+
+    func delete(self) {
+        self->indent.delete();
+    }
+
+    func push_indent(self) {
+        self->indent.append_i8_vec("  ");
+    }
+
+    func pop_indent(self) {
+        self->indent.pop();
+        self->indent.pop();
+    }
+}
+
+impl ast_dumper {
+    func dump(self, node: ast*, out: io) {
+        match(node->kind) {
+            ast_kind::ast_null => return;
+            ast_kind::ast_root => self->dump_root(node => root*, out);
+            ast_kind::ast_identifier =>
+                self->dump_identifier(node => ast_identifier*, out);
+            ast_kind::ast_use_stmt =>
+                self->dump_use_stmt(node => ast_use_stmt*, out);
+        }
+    }
+
+    func dump_root(self, node: root*, out: io) {
+        out.out(self->indent.c_str).out("root -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        for (var index = 0 => u64; index < node->imports.size; index += 1 => u64) {
+            self->dump(node->imports.data[index] => ast*, out);
+        }
+        for (var index = 0 => u64; index < node->decls.size; index += 1 => u64) {
+            self->dump(node->decls.data[index] => ast*, out);
+        }
+        self->pop_indent();
+    }
+
+    func dump_identifier(self, node: ast_identifier*, out: io) {
+        out.out(self->indent.c_str)
+           .out("identifier: ")
+           .out(node->name.c_str)
+           .out(" -> ");
+        node->base.location->dump(out);
+    }
+
+    func dump_use_stmt(self, node: ast_use_stmt*, out: io) {
+        out.out(self->indent.c_str).out("use -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+
+        out.out(self->indent.c_str).out("module\n");
+        self->push_indent();
+        for (var index = 0 => u64; index < node->module_path.size; index += 1 => u64) {
+            self->dump(node->module_path.data[index] => ast*, out);
+        }
+        self->pop_indent();
+
+        if (node->import_symbol.size == 0 => u64) {
+            out.out(self->indent.c_str).out("import-all\n");
+        } else {
+            out.out(self->indent.c_str).out("import-specified\n");
+            self->push_indent();
+            for (var index = 0 => u64; index < node->import_symbol.size; index += 1 => u64) {
+                self->dump(node->import_symbol.data[index] => ast*, out);
+            }
+            self->pop_indent();
+        }
+
+        self->pop_indent();
+    }
+}
