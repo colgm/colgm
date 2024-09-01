@@ -42,29 +42,39 @@ enum ast_kind {
 }
 
 struct ast {
-    kind: ast_kind,  # ast node kind
-    location: span*, # location of ast node
-    union_data: i8*  # store real ast node here
+    kind: ast_kind, # ast node kind
+    location: span* # location of ast node
 }
 
-struct vector_ast {
-    data: ast**,
+impl ast {
+    func instance(k: ast_kind, loc: span*) -> ast {
+        return ast {
+            kind: k,
+            location: loc
+        };
+    }
+
+    func delete(self) {
+        self->location->delete();
+        free(self->location => i8*);
+    }
+}
+
+struct ptr_vec {
+    data: i8**,
     size: u64,
     capacity: u64
 }
 
-impl vector_ast {
+impl ptr_vec {
     func init(self) {
         var ptr_size = 8 => u64; # now we only support 64bit
         self->size = 0 => u64;
         self->capacity = 256 => u64;
-        self->data = malloc(self->capacity * ptr_size) => ast**;
+        self->data = malloc(self->capacity * ptr_size) => i8**;
     }
 
     func delete(self) {
-        for (var i = 0 => u64; i < self->size; i += 1 => u64) {
-            self->data[i]->delete();
-        }
         self->size = 0 => u64;
         self->capacity = 0 => u64;
         free(self->data => i8*);
@@ -76,10 +86,10 @@ impl vector_ast {
         self->data = realloc(
             self->data => i8*,
             self->capacity * ptr_size
-        ) => ast**;
+        ) => i8**;
     }
 
-    func push(self, item: ast*) {
+    func push(self, item: i8*) {
         if (self->size == self->capacity) {
             self->expand();
         }
@@ -89,61 +99,28 @@ impl vector_ast {
 }
 
 struct root {
-    imports: vector_ast,
-    declarations: vector_ast
+    base: ast,
+    imports: ptr_vec,
+    declarations: ptr_vec
 }
 
 impl root {
-    func new() -> root* {
+    func new(loc: span*) -> root* {
         var res = root::__alloc__();
-        res->init();
+        res->init(loc);
         return res;
     }
 
-    func init(self) {
+    func init(self, loc: span*) {
+        self->base = ast::instance(ast_kind::ast_root, loc);
         self->imports.init();
         self->declarations.init();
     }
 
     func delete(self) {
+        self->base.delete();
         self->imports.delete();
         self->declarations.delete();
-    }
-}
-
-impl ast {
-    func new(k: ast_kind, loc: span*) -> ast* {
-        var res = ast::__alloc__();
-        res->kind = k;
-        res->location = loc;
-        res->union_data = nil;
-        return res;
-    }
-
-    func delete(self) {
-        self->location->delete();
-        free(self->location => i8*);
-        if (self->union_data != nil) {
-            self->delete_instance();
-            free(self->union_data);
-        }
-    }
-
-    func delete_instance(self) {
-        match(self->kind) {
-            ast_kind::ast_null => return;
-            ast_kind::ast_root => {
-                var ptr = self->union_data => root*;
-                ptr->delete();
-                return;
-            }
-        }
-
-        io::stderr().out("ast::delete_instance: ")
-                    .out("unimplemented ast kind [")
-                    .out_i64(self->kind => i64)
-                    .out("], please report bug.\n");
-        exit(-1 => i32);
     }
 }
 

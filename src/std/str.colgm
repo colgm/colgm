@@ -28,14 +28,15 @@ impl str {
         self->capacity = 256 => u64;
     }
 
-    func copy_new(self) -> str* {
-        var new_str = str::__alloc__();
-        new_str->c_str = malloc(self->capacity);
-        new_str->size = self->size;
-        new_str->capacity = self->capacity;
+    func copy_instance(self) -> str {
+        var new_str = str {
+            c_str: malloc(self->capacity),
+            size: self->size,
+            capacity: self->capacity
+        };
 
-        memcpy(new_str->c_str, self->c_str, self->size);
-        new_str->c_str[self->size] = '\0';
+        memcpy(new_str.c_str, self->c_str, self->size);
+        new_str.c_str[self->size] = '\0';
 
         return new_str;
     }

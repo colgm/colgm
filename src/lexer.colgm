@@ -1,5 +1,5 @@
 use std::str::str;
-use std::libc::{ malloc, realloc, free };
+use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ readfile_into_string, io, fs };
 use err::report::*;
 use err::span::span;
@@ -219,6 +219,15 @@ impl vec_token {
         self->data[self->size].location = loc;
         self->size += 1 => u64;
     }
+
+    func get(self, index: i64) -> token {
+        if (index < 0 || (index => u64) >= self->size) {
+            io::stderr().out("index out of bounds: ")
+                        .out_i64(index).out("\n");
+            exit((-1) => i32);
+        }
+        return self->data[index];
+    }
 }
 
 struct lexer {
@@ -243,7 +252,9 @@ impl lexer {
     }
 
     func delete(self) {
+        io::stderr().out("[lexer] delete lexer::filename\n");
         self->filename.delete();
+        io::stderr().out("[lexer] delete lexer::toks\n");
         self->toks->delete();
         free(self->toks => i8*);
     }

@@ -1568,6 +1568,9 @@ void semantic::resolve_single_use(use_stmt* node) {
         for(const auto& i : domain.functions) {
             import_global_symbol(node, i.second.name, {sym_kind::func_kind, file});
         }
+        for(const auto& i : domain.enums) {
+            import_global_symbol(node, i.second.name, {sym_kind::enum_kind, file});
+        }
         return;
     }
     // specified import
@@ -1577,6 +1580,9 @@ void semantic::resolve_single_use(use_stmt* node) {
         }
         if (domain.functions.count(i->get_name())) {
             import_global_symbol(i, i->get_name(), {sym_kind::func_kind, file});
+        }
+        if (domain.enums.count(i->get_name())) {
+            import_global_symbol(i, i->get_name(), {sym_kind::enum_kind, file});
         }
     }
 }

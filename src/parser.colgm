@@ -1,31 +1,45 @@
 use ast::ast::*;
 use err::report::*;
-use lexer::{ lexer };
+use lexer::{ lexer, vec_token, tok_kind };
 use std::libc::{ free };
+use std::io::{ io };
 
 struct parser {
     err: report*,
-    lex: lexer*,
-    root: root*
+    toks: vec_token*,
+    root: root*,
+    index: i64
 }
 
 impl parser {
     func new(e: report*, l: lexer*) -> parser* {
         var res = parser::__alloc__();
         res->err = e;
-        res->lex = l;
-        res->root = root::new();
+        res->toks = l->toks;
+        res->root = nil => root*;
+        res->index = 0;
         return res;
     }
 
     func delete(self) {
-        self->root->delete();
-        free(self->root => i8*);
+        if (self->root != (nil => root*)) {
+            io::stderr().out("[parse] delete parse::root\n");
+            self->root->delete();
+            free(self->root => i8*);
+        }
+    }
+
+    func lookahead(self, kind: tok_kind) -> bool {
+        return self->toks->get(self->index).kind == kind;
     }
 }
 
 impl parser {
     func parse(self) {
-        # TODO
+        self->index = 0;
+        self->root = root::new(self->toks->get(0).location->copy());
+        if (self->lookahead(tok_kind::tok_eof)) {
+            return;
+        }
     }
 }
