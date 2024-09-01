@@ -278,6 +278,9 @@ colgm_func semantic::analyse_single_func(func_decl* node) {
     func_self.location = node->get_location();
     analyse_func_parameter_list(node->get_params(), func_self);
     analyse_return_type(node->get_return_type(), func_self);
+    if (node->get_name()=="main" && func_self.return_type.is_void()) {
+        warning(node, "main function should return integer.");
+    }
     return func_self;
 }
 
