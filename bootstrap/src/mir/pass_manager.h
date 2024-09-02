@@ -21,6 +21,7 @@ private:
     std::vector<pass*> work_list;
 
 public:
+    ~pass_manager();
     void execute(mir_context*);
 };
 

@@ -21,6 +21,7 @@ private:
     std::vector<sir_pass*> passes;
 
 public:
+    ~sir_pass_manager();
     void execute(sir_context*);
 };
 

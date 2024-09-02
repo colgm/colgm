@@ -129,6 +129,8 @@ public:
         sir(sir_kind::sir_alloca), variable_name(v), type_name(t) {}
     ~sir_alloca() override = default;
     void dump(std::ostream&) const override;
+    const auto& get_variable_name() const { return variable_name; }
+    const auto& get_type_name() const { return type_name; }
 };
 
 class sir_temp_ptr: public sir {
@@ -140,19 +142,26 @@ this operand will do this:
 and %1 is i32*
 */
 private:
-    std::string temp_name;
+    std::string target;
+    std::string source;
     std::string type_name;
 
 public:
-    sir_temp_ptr(const std::string& tmp, const std::string type):
-        sir(sir_kind::sir_temp_ptr), temp_name(tmp), type_name(type) {}
+    sir_temp_ptr(const std::string& tgt,
+                 const std::string& src,
+                 const std::string type):
+        sir(sir_kind::sir_temp_ptr), target(tgt),
+        source(src), type_name(type) {}
     ~sir_temp_ptr() override = default;
     void dump(std::ostream&) const override;
+    const auto& get_type_name() const { return type_name; }
+    void set_source(const std::string& src) { source = src; }
 };
 
 class sir_block: public sir {
 private:
     std::vector<sir_alloca*> allocas;
+    std::vector<sir_alloca*> move_register;
     std::vector<sir*> stmts;
 
 public:
@@ -161,6 +170,7 @@ public:
     void dump(std::ostream&) const override;
 
     void add_alloca(sir_alloca* node) { allocas.push_back(node); }
+    void add_move_register(sir_alloca* node) { move_register.push_back(node); }
     void add_stmt(sir* node) { stmts.push_back(node); }
     void add_nop(const std::string& info = "") {
         stmts.push_back(new sir_nop(info));
@@ -172,6 +182,8 @@ public:
 
     const auto& get_stmts() const { return stmts; }
     auto& get_mut_stmts() { return stmts; }
+    const auto& get_move_register() const { return move_register; }
+    auto& get_mut_move_register() { return move_register; }
 };
 
 class sir_ret: public sir {

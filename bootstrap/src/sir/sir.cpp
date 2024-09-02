@@ -25,6 +25,10 @@ void sir_block::dump(std::ostream& out) const {
         out << "  ";
         i->dump(out);
     }
+    for(auto i : move_register) {
+        out << "  ";
+        i->dump(out);
+    }
     for(auto i : stmts) {
         if (i->get_ir_type()!=sir_kind::sir_label &&
             i->get_ir_type()!=sir_kind::sir_place_holder_label) {
@@ -37,9 +41,9 @@ void sir_block::dump(std::ostream& out) const {
 }
 
 void sir_temp_ptr::dump(std::ostream& out) const {
-    out << "%" << temp_name << " = getelementptr " << type_name << ", ";
-    out << type_name << "* %_" << temp_name << ".real, i32 0";
-    out << " ; %_" << temp_name << ".real -> %" << temp_name << "\n"; 
+    out << "%" << target << " = getelementptr " << type_name << ", ";
+    out << type_name << "* %" << source << ", i32 0";
+    out << " ; %" << source << " -> %" << target << "\n"; 
 }
 
 void sir_ret::dump(std::ostream& out) const {
