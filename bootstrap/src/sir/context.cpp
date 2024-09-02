@@ -12,14 +12,18 @@ void sir_struct::dump(std::ostream& out) const {
         .loc_file = location.file
     };
     out << "%struct." << mangle(ty.full_path_name());
-    out << " = type {";
+    if (field_type.empty()) {
+        out << " = type {}\n";
+        return;
+    }
+    out << " = type { ";
     for(usize i = 0; i<field_type.size(); ++i) {
         out << field_type[i];
         if (i!=field_type.size()-1) {
             out << ", ";
         }
     }
-    out << "}\n";
+    out << " }\n";
 }
 
 void sir_func::dump(std::ostream& out) const {

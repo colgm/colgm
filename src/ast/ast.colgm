@@ -170,6 +170,11 @@ impl ast_identifier {
         res->name = name->copy_instance();
         return res;
     }
+
+    func delete(self) {
+        self->base.delete();
+        self->name.delete();
+    }
 }
 
 struct ast_nil_literal {
@@ -231,7 +236,26 @@ struct ast_assignment {
 # declarations
 
 struct ast_type_def {
-    base: ast
+    base: ast,
+    name: ast_identifier*,
+    pointer_depth: i64
+}
+
+impl ast_type_def {
+    func new(loc: span*) -> ast_type_def* {
+        var res = ast_type_def::__alloc__();
+        res->base = ast::instance(ast_kind::ast_type_def, loc);
+        res->name = nil => ast_identifier*;
+        res->pointer_depth = 0;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->name => i8* != nil) {
+            self->name->delete();
+        }
+    }
 }
 
 struct ast_enum_decl {
@@ -239,11 +263,51 @@ struct ast_enum_decl {
 }
 
 struct ast_struct_field {
-    base: ast
+    base: ast,
+    name: ast_identifier*,
+    type: ast_type_def*
+}
+
+impl ast_struct_field {
+    func new(loc: span*) -> ast_struct_field* {
+        var res = ast_struct_field::__alloc__();
+        res->base = ast::instance(ast_kind::ast_struct_field, loc);
+        res->name = nil => ast_identifier*;
+        res->type = nil => ast_type_def*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->name => i8* != nil) {
+            self->name->delete();
+        }
+        if (self->type => i8* != nil) {
+            self->type->delete();
+        }
+    }
 }
 
 struct ast_struct_decl {
-    base: ast
+    base: ast,
+    fields: ptr_vec,
+    name: str
+}
+
+impl ast_struct_decl {
+    func new(loc: span*, name: str*) -> ast_struct_decl* {
+        var res = ast_struct_decl::__alloc__();
+        res->base = ast::instance(ast_kind::ast_struct_decl, loc);
+        res->fields.init();
+        res->name = name->copy_instance();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->fields.delete();
+        self->name.delete();
+    }
 }
 
 struct ast_param {

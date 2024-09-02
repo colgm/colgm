@@ -38,6 +38,12 @@ impl ast_dumper {
                 self->dump_identifier(node => ast_identifier*, out);
             ast_kind::ast_use_stmt =>
                 self->dump_use_stmt(node => ast_use_stmt*, out);
+            ast_kind::ast_type_def =>
+                self->dump_type_def(node => ast_type_def*, out);
+            ast_kind::ast_struct_field =>
+                self->dump_struct_field(node => ast_struct_field*, out);
+            ast_kind::ast_struct_decl =>
+                self->dump_struct_decl(node => ast_struct_decl*, out);
         }
     }
 
@@ -87,6 +93,38 @@ impl ast_dumper {
             self->pop_indent();
         }
 
+        self->pop_indent();
+    }
+
+    func dump_type_def(self, node: ast_type_def*, out: io) {
+        out.out(self->indent.c_str).out("type-def [")
+           .out_i64(node->pointer_depth).out("] -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump(node->name => ast*, out);
+        self->pop_indent();
+    }
+
+    func dump_struct_field(self, node: ast_struct_field*, out: io) {
+        out.out(self->indent.c_str).out("struct-field -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump(node->name => ast*, out);
+        self->dump(node->type => ast*, out);
+        self->pop_indent();
+    }
+
+    func dump_struct_decl(self, node: ast_struct_decl*, out: io) {
+        out.out(self->indent.c_str).out("struct-decl [")
+           .out(node->name.c_str).out("] -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        for (var index = 0 => u64; index < node->fields.size; index += 1 => u64) {
+            self->dump(node->fields.data[index] => ast*, out);
+        }
         self->pop_indent();
     }
 }

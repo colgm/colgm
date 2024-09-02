@@ -32,7 +32,7 @@ impl parser {
         }
     }
 
-    func this_tok_loc(self) -> span* {
+    func this_tok_loc_copy(self) -> span* {
         return self->toks->get(self->index).location->copy();
     }
 
@@ -87,15 +87,54 @@ impl parser {
 impl parser {
     func identifier_gen(self) -> ast_identifier* {
         var res = ast_identifier::new(
-            self->this_tok_loc(),
+            self->this_tok_loc_copy(),
             self->toks->get(self->index).content
         );
         self->match_token(tok_kind::tok_id);
         return res;
     }
 
+    func type_def_gen(self) -> ast_type_def* {
+        var res = ast_type_def::new(self->this_tok_loc_copy());
+        res->name = self->identifier_gen();
+        while (self->lookahead(tok_kind::tok_mul)) {
+            res->pointer_depth += 1;
+            self->match_token(tok_kind::tok_mul);
+        }
+        return res;
+    }
+
+    func struct_field_gen(self) -> ast_struct_field* {
+        var res = ast_struct_field::new(self->this_tok_loc_copy());
+        res->name = self->identifier_gen();
+        self->match_token(tok_kind::tok_colon);
+        res->type = self->type_def_gen();
+        return res;
+    }
+
+    func struct_decl_gen(self) -> ast_struct_decl* {
+        var begin_loc = self->this_tok_loc_copy();
+        self->match_token(tok_kind::tok_struct);
+        var res = ast_struct_decl::new(
+            begin_loc,
+            self->toks->get(self->index).content
+        );
+        self->match_token(tok_kind::tok_id);
+        self->match_token(tok_kind::tok_lbrace);
+        while (!self->lookahead(tok_kind::tok_rbrace)) {
+            res->fields.push(self->struct_field_gen() => i8*);
+            if (self->lookahead(tok_kind::tok_comma)) {
+                self->match_token(tok_kind::tok_comma);
+            } else {
+                break;
+            }
+        }
+        self->match_token(tok_kind::tok_rbrace);
+        return res;
+    }
+
     func use_stmt_gen(self) -> ast_use_stmt* {
-        var res = ast_use_stmt::new(self->this_tok_loc());
+        var res = ast_use_stmt::new(self->this_tok_loc_copy());
         self->match_token(tok_kind::tok_use);
         res->module_path.push(self->identifier_gen() => i8*);
         while (self->lookahead(tok_kind::tok_coloncolon)) {
@@ -130,7 +169,7 @@ impl parser {
 
     func parse(self) {
         self->index = 0;
-        self->root = root::new(self->this_tok_loc());
+        self->root = root::new(self->this_tok_loc_copy());
         if (self->lookahead(tok_kind::tok_eof)) {
             return;
         }
@@ -138,6 +177,12 @@ impl parser {
             self->root->imports.push(self->use_stmt_gen() => i8*);
         }
         while (!self->lookahead(tok_kind::tok_eof)) {
+            match (self->toks->get(self->index).kind) {
+                tok_kind::tok_struct => {
+                    self->root->decls.push(self->struct_decl_gen() => i8*);
+                    continue;
+                }
+            }
             self->next();
         }
     }
