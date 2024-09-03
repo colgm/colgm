@@ -175,7 +175,7 @@ void sir_cmp::dump(std::ostream& out) const {
 void sir_label::dump(std::ostream& out) const {
     out << get_label() << ":";
     if (comment.length()) {
-        out << "\t\t\t; " << comment;
+        out << "\t\t\t\t; " << comment;
     }
     out << "\n";
 }

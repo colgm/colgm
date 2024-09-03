@@ -38,6 +38,8 @@ impl ast_dumper {
                 self->dump_identifier(node => ast_identifier*, out);
             ast_kind::ast_number_literal =>
                 self->dump_number_literal(node => ast_number_literal*, out);
+            ast_kind::ast_string_literal =>
+                self->dump_string_literal(node => ast_string_literal*, out);
             ast_kind::ast_use_stmt =>
                 self->dump_use_stmt(node => ast_use_stmt*, out);
             ast_kind::ast_type_def =>
@@ -78,6 +80,14 @@ impl ast_dumper {
     func dump_number_literal(self, node: ast_number_literal*, out: io) {
         out.out(self->indent.c_str)
            .out("number-literal: ")
+           .out(node->literal.c_str)
+           .out(" -> ");
+        node->base.location->dump(out);
+    }
+
+    func dump_string_literal(self, node: ast_string_literal*, out: io) {
+        out.out(self->indent.c_str)
+           .out("string-literal: ")
            .out(node->literal.c_str)
            .out(" -> ");
         node->base.location->dump(out);

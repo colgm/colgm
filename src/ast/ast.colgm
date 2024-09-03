@@ -202,7 +202,22 @@ impl ast_number_literal {
 }
 
 struct ast_string_literal {
-    base: ast
+    base: ast,
+    literal: str
+}
+
+impl ast_string_literal {
+    func new(loc: span*, literal: str*) -> ast_string_literal* {
+        var res = ast_string_literal::__alloc__();
+        res->base = ast::instance(ast_kind::ast_string_literal, loc);
+        res->literal = literal->copy_instance();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->literal.delete();
+    }
 }
 
 struct ast_char_literal {
