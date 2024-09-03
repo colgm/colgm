@@ -36,10 +36,16 @@ impl ast_dumper {
             ast_kind::ast_root => self->dump_root(node => root*, out);
             ast_kind::ast_identifier =>
                 self->dump_identifier(node => ast_identifier*, out);
+            ast_kind::ast_number_literal =>
+                self->dump_number_literal(node => ast_number_literal*, out);
             ast_kind::ast_use_stmt =>
                 self->dump_use_stmt(node => ast_use_stmt*, out);
             ast_kind::ast_type_def =>
                 self->dump_type_def(node => ast_type_def*, out);
+            ast_kind::ast_enum_member =>
+                self->dump_enum_member(node => ast_enum_member*, out);
+            ast_kind::ast_enum_decl =>
+                self->dump_enum_decl(node => ast_enum_decl*, out);
             ast_kind::ast_struct_field =>
                 self->dump_struct_field(node => ast_struct_field*, out);
             ast_kind::ast_struct_decl =>
@@ -65,6 +71,14 @@ impl ast_dumper {
         out.out(self->indent.c_str)
            .out("identifier: ")
            .out(node->name.c_str)
+           .out(" -> ");
+        node->base.location->dump(out);
+    }
+
+    func dump_number_literal(self, node: ast_number_literal*, out: io) {
+        out.out(self->indent.c_str)
+           .out("number-literal: ")
+           .out(node->literal.c_str)
            .out(" -> ");
         node->base.location->dump(out);
     }
@@ -103,6 +117,30 @@ impl ast_dumper {
 
         self->push_indent();
         self->dump(node->name => ast*, out);
+        self->pop_indent();
+    }
+
+    func dump_enum_member(self, node: ast_enum_member*, out: io) {
+        out.out(self->indent.c_str).out("enum-member -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump(node->name => ast*, out);
+        if (node->value => i8* != nil) {
+            self->dump(node->value => ast*, out);
+        }
+        self->pop_indent();
+    }
+
+    func dump_enum_decl(self, node: ast_enum_decl*, out: io) {
+        out.out(self->indent.c_str).out("enum-decl [")
+           .out(node->name.c_str).out("] -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        for (var index = 0 => u64; index < node->members.size; index += 1 => u64) {
+            self->dump(node->members.data[index] => ast*, out);
+        }
         self->pop_indent();
     }
 

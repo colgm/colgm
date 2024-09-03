@@ -95,6 +95,15 @@ impl parser {
         return res;
     }
 
+    func number_literal_gen(self) -> ast_number_literal* {
+        var res = ast_number_literal::new(
+            self->this_tok_loc_copy(),
+            self->toks->get(self->index).content
+        );
+        self->match_token(tok_kind::tok_num);
+        return res;
+    }
+
     func type_def_gen(self) -> ast_type_def* {
         var res = ast_type_def::new(self->this_tok_loc_copy());
         res->name = self->identifier_gen();
@@ -124,6 +133,37 @@ impl parser {
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
             res->fields.push(self->struct_field_gen() => i8*);
+            if (self->lookahead(tok_kind::tok_comma)) {
+                self->match_token(tok_kind::tok_comma);
+            } else {
+                break;
+            }
+        }
+        self->match_token(tok_kind::tok_rbrace);
+        return res;
+    }
+
+    func enum_member_gen(self) -> ast_enum_member* {
+        var res = ast_enum_member::new(self->this_tok_loc_copy());
+        res->name = self->identifier_gen();
+        if (self->lookahead(tok_kind::tok_eq)) {
+            self->match_token(tok_kind::tok_eq);
+            res->value = self->number_literal_gen();
+        }
+        return res;
+    }
+
+    func enum_decl_gen(self) -> ast_enum_decl* {
+        var begin_loc = self->this_tok_loc_copy();
+        self->match_token(tok_kind::tok_enum);
+        var res = ast_enum_decl::new(
+            begin_loc,
+            self->toks->get(self->index).content
+        );
+        self->match_token(tok_kind::tok_id);
+        self->match_token(tok_kind::tok_lbrace);
+        while (!self->lookahead(tok_kind::tok_rbrace)) {
+            res->members.push(self->enum_member_gen() => i8*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
@@ -181,6 +221,10 @@ impl parser {
             match (self->toks->get(self->index).kind) {
                 tok_kind::tok_struct => {
                     self->root->decls.push(self->struct_decl_gen() => i8*);
+                    continue;
+                }
+                tok_kind::tok_enum => {
+                    self->root->decls.push(self->enum_decl_gen() => i8*);
                     continue;
                 }
             }

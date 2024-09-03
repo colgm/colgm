@@ -25,6 +25,7 @@ enum ast_kind {
     ast_call,
     ast_assignment,
     ast_type_def,
+    ast_enum_member,
     ast_enum_decl,
     ast_struct_field,
     ast_struct_decl,
@@ -182,7 +183,22 @@ struct ast_nil_literal {
 }
 
 struct ast_number_literal {
-    base: ast
+    base: ast,
+    literal: str
+}
+
+impl ast_number_literal {
+    func new(loc: span*, literal: str*) -> ast_number_literal* {
+        var res = ast_number_literal::__alloc__();
+        res->base = ast::instance(ast_kind::ast_number_literal, loc);
+        res->literal = literal->copy_instance();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->literal.delete();
+    }
 }
 
 struct ast_string_literal {
@@ -258,8 +274,52 @@ impl ast_type_def {
     }
 }
 
+struct ast_enum_member {
+    base: ast,
+    name: ast_identifier*,
+    value: ast_number_literal*
+}
+
+impl ast_enum_member {
+    func new(loc: span*) -> ast_enum_member* {
+        var res = ast_enum_member::__alloc__();
+        res->base = ast::instance(ast_kind::ast_enum_member, loc);
+        res->name = nil => ast_identifier*;
+        res->value = nil => ast_number_literal*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->name => i8* != nil) {
+            self->name->delete();
+        }
+        if (self->value => i8* != nil) {
+            self->value->delete();
+        }
+    }
+}
+
 struct ast_enum_decl {
-    base: ast
+    base: ast,
+    members: ptr_vec,
+    name: str
+}
+
+impl ast_enum_decl {
+    func new(loc: span*, name: str*) -> ast_enum_decl* {
+        var res = ast_enum_decl::__alloc__();
+        res->base = ast::instance(ast_kind::ast_enum_decl, loc);
+        res->members.init();
+        res->name = name->copy_instance();
+        return res;
+    }
+
+    func delete(self) {
+       self->base.delete();
+       self->members.delete();
+       self->name.delete();
+    }
 }
 
 struct ast_struct_field {
