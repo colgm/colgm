@@ -36,10 +36,16 @@ impl ast_dumper {
             ast_kind::ast_root => self->dump_root(node => root*, out);
             ast_kind::ast_identifier =>
                 self->dump_identifier(node => ast_identifier*, out);
+            ast_kind::ast_nil_literal =>
+                self->dump_nil_literal(node => ast_nil_literal*, out);
             ast_kind::ast_number_literal =>
                 self->dump_number_literal(node => ast_number_literal*, out);
             ast_kind::ast_string_literal =>
                 self->dump_string_literal(node => ast_string_literal*, out);
+            ast_kind::ast_char_literal =>
+                self->dump_char_literal(node => ast_char_literal*, out);
+            ast_kind::ast_bool_literal =>
+                self->dump_bool_literal(node => ast_bool_literal*, out);
             ast_kind::ast_use_stmt =>
                 self->dump_use_stmt(node => ast_use_stmt*, out);
             ast_kind::ast_type_def =>
@@ -77,6 +83,12 @@ impl ast_dumper {
         node->base.location->dump(out);
     }
 
+    func dump_nil_literal(self, node: ast_nil_literal*, out: io) {
+        out.out(self->indent.c_str)
+           .out("nil-literal -> ");
+        node->base.location->dump(out);
+    }
+
     func dump_number_literal(self, node: ast_number_literal*, out: io) {
         out.out(self->indent.c_str)
            .out("number-literal: ")
@@ -90,6 +102,26 @@ impl ast_dumper {
            .out("string-literal: ")
            .out(node->literal.c_str)
            .out(" -> ");
+        node->base.location->dump(out);
+    }
+
+    func dump_char_literal(self, node: ast_char_literal*, out: io) {
+        out.out(self->indent.c_str)
+           .out("char-literal: ")
+           .out_ch(node->literal)
+           .out(" -> ");
+        node->base.location->dump(out);
+    }
+
+    func dump_bool_literal(self, node: ast_bool_literal*, out: io) {
+        out.out(self->indent.c_str)
+           .out("bool-literal: ");
+        if (node->flag) {
+            out.out("true");
+        } else {
+            out.out("false");
+        }
+        out.out(" -> ");
         node->base.location->dump(out);
     }
 

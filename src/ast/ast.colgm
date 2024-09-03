@@ -182,6 +182,18 @@ struct ast_nil_literal {
     base: ast
 }
 
+impl ast_nil_literal {
+    func new(loc: span*) -> ast_nil_literal* {
+        var res = ast_nil_literal::__alloc__();
+        res->base = ast::instance(ast_kind::ast_nil_literal, loc);
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+    }
+}
+
 struct ast_number_literal {
     base: ast,
     literal: str
@@ -221,11 +233,39 @@ impl ast_string_literal {
 }
 
 struct ast_char_literal {
-    base: ast
+    base: ast,
+    literal: i8
+}
+
+impl ast_char_literal {
+    func new(loc: span*, literal: i8) -> ast_char_literal* {
+        var res = ast_char_literal::__alloc__();
+        res->base = ast::instance(ast_kind::ast_char_literal, loc);
+        res->literal = literal;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+    }
 }
 
 struct ast_bool_literal {
-    base: ast
+    base: ast,
+    flag: bool
+}
+
+impl ast_bool_literal {
+    func new(loc: span*, flag: bool) -> ast_bool_literal* {
+        var res = ast_bool_literal::__alloc__();
+        res->base = ast::instance(ast_kind::ast_bool_literal, loc);
+        res->flag = flag;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+    }
 }
 
 struct ast_call_index {
