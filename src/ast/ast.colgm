@@ -62,13 +62,14 @@ impl ast {
     }
 
     func delete(self) {
+        io::stderr().out("free ast ").out_i64(self => i64).endln();
         self->location->delete();
         free(self->location => i8*);
     }
 }
 
 struct ptr_vec {
-    data: i8**,
+    data: ast**,
     size: u64,
     capacity: u64
 }
@@ -78,12 +79,16 @@ impl ptr_vec {
         var ptr_size = 8 => u64; # now we only support 64bit
         self->size = 0 => u64;
         self->capacity = 256 => u64;
-        self->data = malloc(self->capacity * ptr_size) => i8**;
+        self->data = malloc(self->capacity * ptr_size) => ast**;
     }
 
     func delete(self) {
         self->size = 0 => u64;
         self->capacity = 0 => u64;
+        for (var i = 0 => u64; i < self->size; i += 1 => u64) {
+            self->data[i]->delete();
+            free(self->data[i] => i8*);
+        }
         free(self->data => i8*);
     }
 
@@ -93,10 +98,10 @@ impl ptr_vec {
         self->data = realloc(
             self->data => i8*,
             self->capacity * ptr_size
-        ) => i8**;
+        ) => ast**;
     }
 
-    func push(self, item: i8*) {
+    func push(self, item: ast*) {
         if (self->size == self->capacity) {
             self->expand();
         }
@@ -104,9 +109,9 @@ impl ptr_vec {
         self->size += 1 => u64;
     }
 
-    func back(self) -> i8* {
+    func back(self) -> ast* {
         if (self->size == 0 => u64) {
-            return nil;
+            return nil => ast*;
         }
         return self->data[self->size - 1 => u64];
     }
@@ -128,14 +133,10 @@ struct root {
 impl root {
     func new(loc: span*) -> root* {
         var res = root::__alloc__();
-        res->init(loc);
+        res->base = ast::instance(ast_kind::ast_root, loc);
+        res->imports.init();
+        res->decls.init();
         return res;
-    }
-
-    func init(self, loc: span*) {
-        self->base = ast::instance(ast_kind::ast_root, loc);
-        self->imports.init();
-        self->decls.init();
     }
 
     func delete(self) {

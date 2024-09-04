@@ -15,6 +15,84 @@ struct parser {
 }
 
 impl parser {
+    func tok_kind_to_content(kind: tok_kind) -> i8* {
+        match(kind) {
+            tok_kind::tok_null =>       return "<null>";
+            tok_kind::tok_num =>        return "<number-literal>";
+            tok_kind::tok_str =>        return "<string-literal>";
+            tok_kind::tok_ch =>         return "<char-literal>";
+            tok_kind::tok_id =>         return "<identifier>";
+            tok_kind::tok_true =>       return "true";
+            tok_kind::tok_false =>      return "false";
+            tok_kind::tok_use =>        return "use";
+            tok_kind::tok_enum =>       return "enum";
+            tok_kind::tok_for =>        return "for";
+            tok_kind::tok_forindex =>   return "forindex";
+            tok_kind::tok_foreach =>    return "foreach";
+            tok_kind::tok_while =>      return "while";
+            tok_kind::tok_var =>        return "var";
+            tok_kind::tok_struct =>     return "struct";
+            tok_kind::tok_pub =>        return "pub";
+            tok_kind::tok_impl =>       return "impl";
+            tok_kind::tok_func =>       return "func";
+            tok_kind::tok_match =>      return "match";
+            tok_kind::tok_break =>      return "break";
+            tok_kind::tok_continue =>   return "continue";
+            tok_kind::tok_return =>     return "return";
+            tok_kind::tok_if =>         return "if";
+            tok_kind::tok_elsif =>      return "elsif";
+            tok_kind::tok_else =>       return "else";
+            tok_kind::tok_nil =>        return "nil";
+            tok_kind::tok_lparen =>     return "(";
+            tok_kind::tok_rparen =>     return ")";
+            tok_kind::tok_lbracket =>   return "[";
+            tok_kind::tok_rbracket =>   return "]";
+            tok_kind::tok_lbrace =>     return "{";
+            tok_kind::tok_rbrace =>     return "}";
+            tok_kind::tok_semi =>       return ";";
+            tok_kind::tok_op_and =>     return "&&";
+            tok_kind::tok_op_or =>      return "||";
+            tok_kind::tok_comma =>      return ",";
+            tok_kind::tok_dot =>        return ".";
+            tok_kind::tok_ellipsis =>   return "...";
+            tok_kind::tok_quesmark =>   return "?";
+            tok_kind::tok_colon =>      return ":";
+            tok_kind::tok_coloncolon => return "::";
+            tok_kind::tok_add =>        return "+";
+            tok_kind::tok_sub =>        return "-";
+            tok_kind::tok_mul =>        return "*";
+            tok_kind::tok_div =>        return "/";
+            tok_kind::tok_rem =>        return "%";
+            tok_kind::tok_floater =>    return "~";
+            tok_kind::tok_bit_and =>    return "&";
+            tok_kind::tok_bit_or =>     return "|";
+            tok_kind::tok_bit_xor =>    return "^";
+            tok_kind::tok_op_not =>     return "!";
+            tok_kind::tok_eq =>         return "=";
+            tok_kind::tok_addeq =>      return "+=";
+            tok_kind::tok_subeq =>      return "-=";
+            tok_kind::tok_muleq =>      return "*=";
+            tok_kind::tok_diveq =>      return "/=";
+            tok_kind::tok_remeq =>      return "%=";
+            tok_kind::tok_floatereq =>  return "~=";
+            tok_kind::tok_bit_and_eq => return "&=";
+            tok_kind::tok_bit_or_eq =>  return "|=";
+            tok_kind::tok_bit_xor_eq => return "^=";
+            tok_kind::tok_cmp_eq =>     return "==";
+            tok_kind::tok_neq =>        return "!=";
+            tok_kind::tok_less =>       return "<";
+            tok_kind::tok_leq =>        return "<=";
+            tok_kind::tok_grt =>        return ">";
+            tok_kind::tok_geq =>        return ">=";
+            tok_kind::tok_arrow =>      return "->";
+            tok_kind::tok_wide_arrow => return "=>";
+            tok_kind::tok_eof =>        return "<eof>";
+        }
+        return "<unknown>";
+    }
+}
+
+impl parser {
     func new(e: report*, l: lexer*) -> parser* {
         var res = parser::__alloc__();
         res->err = e;
@@ -25,12 +103,13 @@ impl parser {
     }
 
     func delete(self) {
-        if (self->root != (nil => root*)) {
-            io::stderr().out("[").green().out("parse").reset().out("]")
-                        .out(" delete parse::root\n");
-            self->root->delete();
-            free(self->root => i8*);
+        if (self->root == (nil => root*)) {
+            return;
         }
+        io::stderr().out("[").green().out("parse").reset().out("]")
+                    .out(" delete parse::root\n");
+        self->root->delete();
+        free(self->root => i8*);
     }
 
     func this_tok_loc_copy(self) -> span* {
@@ -74,11 +153,11 @@ impl parser {
         }
 
         var error_message = str::instance();
-        error_message.append_i8_vec("unexpected token ")
-                     ->append_char('\"')
+        error_message.append_i8_vec("unexpected token \"")
                      ->append_str(self->toks->get(self->index).content)
-                     ->append_char('\"')
-                     ->append_i8_vec(" here.");
+                     ->append_i8_vec("\" here, but expected \"")
+                     ->append_i8_vec(parser::tok_kind_to_content(kind))
+                     ->append_i8_vec("\".");
         self->err->error(loc, error_message.c_str);
         error_message.delete();
         self->next();
@@ -132,7 +211,7 @@ impl parser {
         self->match_token(tok_kind::tok_id);
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
-            res->fields.push(self->struct_field_gen() => i8*);
+            res->fields.push(self->struct_field_gen() => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
@@ -163,7 +242,7 @@ impl parser {
         self->match_token(tok_kind::tok_id);
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
-            res->members.push(self->enum_member_gen() => i8*);
+            res->members.push(self->enum_member_gen() => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
@@ -177,19 +256,19 @@ impl parser {
     func use_stmt_gen(self) -> ast_use_stmt* {
         var res = ast_use_stmt::new(self->this_tok_loc_copy());
         self->match_token(tok_kind::tok_use);
-        res->module_path.push(self->identifier_gen() => i8*);
+        res->module_path.push(self->identifier_gen() => ast*);
         while (self->lookahead(tok_kind::tok_coloncolon)) {
             self->match_token(tok_kind::tok_coloncolon);
             if (self->lookahead(tok_kind::tok_lbrace) ||
                 self->lookahead(tok_kind::tok_mul)) {
                 break;
             }
-            res->module_path.push(self->identifier_gen() => i8*);
+            res->module_path.push(self->identifier_gen() => ast*);
         }
         if (self->lookahead(tok_kind::tok_lbrace)) {
             self->match_token(tok_kind::tok_lbrace);
             while (self->lookahead(tok_kind::tok_id)) {
-                res->import_symbol.push(self->identifier_gen() => i8*);
+                res->import_symbol.push(self->identifier_gen() => ast*);
                 if (self->lookahead(tok_kind::tok_comma)) {
                     self->match_token(tok_kind::tok_comma);
                 } else {
@@ -215,16 +294,16 @@ impl parser {
             return;
         }
         while (self->lookahead(tok_kind::tok_use)) {
-            self->root->imports.push(self->use_stmt_gen() => i8*);
+            self->root->imports.push(self->use_stmt_gen() => ast*);
         }
         while (!self->lookahead(tok_kind::tok_eof)) {
             match (self->toks->get(self->index).kind) {
                 tok_kind::tok_struct => {
-                    self->root->decls.push(self->struct_decl_gen() => i8*);
+                    self->root->decls.push(self->struct_decl_gen() => ast*);
                     continue;
                 }
                 tok_kind::tok_enum => {
-                    self->root->decls.push(self->enum_decl_gen() => i8*);
+                    self->root->decls.push(self->enum_decl_gen() => ast*);
                     continue;
                 }
             }

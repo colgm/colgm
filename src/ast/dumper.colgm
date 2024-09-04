@@ -67,10 +67,10 @@ impl ast_dumper {
 
         self->push_indent();
         for (var index = 0 => u64; index < node->imports.size; index += 1 => u64) {
-            self->dump(node->imports.data[index] => ast*, out);
+            self->dump(node->imports.data[index], out);
         }
         for (var index = 0 => u64; index < node->decls.size; index += 1 => u64) {
-            self->dump(node->decls.data[index] => ast*, out);
+            self->dump(node->decls.data[index], out);
         }
         self->pop_indent();
     }
@@ -134,7 +134,7 @@ impl ast_dumper {
         out.out(self->indent.c_str).out("module\n");
         self->push_indent();
         for (var index = 0 => u64; index < node->module_path.size; index += 1 => u64) {
-            self->dump(node->module_path.data[index] => ast*, out);
+            self->dump(node->module_path.data[index], out);
         }
         self->pop_indent();
 
@@ -144,7 +144,7 @@ impl ast_dumper {
             out.out(self->indent.c_str).out("import-specified\n");
             self->push_indent();
             for (var index = 0 => u64; index < node->import_symbol.size; index += 1 => u64) {
-                self->dump(node->import_symbol.data[index] => ast*, out);
+                self->dump(node->import_symbol.data[index], out);
             }
             self->pop_indent();
         }
@@ -158,7 +158,7 @@ impl ast_dumper {
         node->base.location->dump(out);
 
         self->push_indent();
-        self->dump(node->name => ast*, out);
+        self->dump_identifier(node->name, out);
         self->pop_indent();
     }
 
@@ -167,9 +167,9 @@ impl ast_dumper {
         node->base.location->dump(out);
 
         self->push_indent();
-        self->dump(node->name => ast*, out);
+        self->dump_identifier(node->name, out);
         if (node->value => i8* != nil) {
-            self->dump(node->value => ast*, out);
+            self->dump_number_literal(node->value, out);
         }
         self->pop_indent();
     }
@@ -181,7 +181,7 @@ impl ast_dumper {
 
         self->push_indent();
         for (var index = 0 => u64; index < node->members.size; index += 1 => u64) {
-            self->dump(node->members.data[index] => ast*, out);
+            self->dump(node->members.data[index], out);
         }
         self->pop_indent();
     }
@@ -191,8 +191,8 @@ impl ast_dumper {
         node->base.location->dump(out);
 
         self->push_indent();
-        self->dump(node->name => ast*, out);
-        self->dump(node->type => ast*, out);
+        self->dump_identifier(node->name, out);
+        self->dump_type_def(node->type, out);
         self->pop_indent();
     }
 
@@ -203,7 +203,7 @@ impl ast_dumper {
 
         self->push_indent();
         for (var index = 0 => u64; index < node->fields.size; index += 1 => u64) {
-            self->dump(node->fields.data[index] => ast*, out);
+            self->dump(node->fields.data[index], out);
         }
         self->pop_indent();
     }

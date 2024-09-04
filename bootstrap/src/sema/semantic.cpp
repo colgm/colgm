@@ -750,7 +750,8 @@ void semantic::check_static_call_args(const colgm_func& func,
     for(auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
         const auto param = func.parameters[index].symbol_type;
-        if (infer!=param) {
+        // do not report if infer is error, because it must be reported before
+        if (infer!=param && !infer.is_error()) {
             report(i,
                 "expect \"" + param.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."
@@ -785,7 +786,8 @@ void semantic::check_method_call_args(const colgm_func& func,
     for(auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
         const auto param = func.parameters[index].symbol_type;
-        if (infer!=param) {
+        // do not report if infer is error, because it must be reported before
+        if (infer!=param && !infer.is_error()) {
             report(i,
                 "expect \"" + param.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."
@@ -1093,6 +1095,9 @@ type semantic::resolve_assignment(assignment* node) {
     }
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
+    if (left.is_error() || right.is_error()) {
+        return type::error_type();
+    }
     switch(node->get_type()) {
         case assignment::kind::andeq:
         case assignment::kind::xoreq:
