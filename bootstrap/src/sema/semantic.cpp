@@ -393,6 +393,9 @@ type semantic::resolve_logical_operator(binary_operator* node) {
 type semantic::resolve_comparison_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
+    if (left.is_error() || right.is_error()) {
+        return type::bool_type();
+    }
     if (left!=right) {
         report(node,
             "get \"" + left.to_string() +

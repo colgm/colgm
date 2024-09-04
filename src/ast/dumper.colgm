@@ -34,6 +34,8 @@ impl ast_dumper {
         match(node->kind) {
             ast_kind::ast_null => return;
             ast_kind::ast_root => self->dump_root(node => root*, out);
+            ast_kind::ast_code_block =>
+                self->dump_code_block(node => ast_code_block*, out);
             ast_kind::ast_identifier =>
                 self->dump_identifier(node => ast_identifier*, out);
             ast_kind::ast_nil_literal =>
@@ -58,6 +60,12 @@ impl ast_dumper {
                 self->dump_struct_field(node => ast_struct_field*, out);
             ast_kind::ast_struct_decl =>
                 self->dump_struct_decl(node => ast_struct_decl*, out);
+            ast_kind::ast_param =>
+                self->dump_param(node => ast_param*, out);
+            ast_kind::ast_param_list =>
+                self->dump_param_list(node => ast_param_list*, out);
+            ast_kind::ast_func_decl => 
+                self->dump_func_decl(node => ast_func_decl*, out);
         }
     }
 
@@ -153,7 +161,7 @@ impl ast_dumper {
     }
 
     func dump_type_def(self, node: ast_type_def*, out: io) {
-        out.out(self->indent.c_str).out("type-def [")
+        out.out(self->indent.c_str).out("type-def [pointer depth=")
            .out_i64(node->pointer_depth).out("] -> ");
         node->base.location->dump(out);
 
@@ -204,6 +212,54 @@ impl ast_dumper {
         self->push_indent();
         for (var index = 0 => u64; index < node->fields.size; index += 1 => u64) {
             self->dump(node->fields.data[index], out);
+        }
+        self->pop_indent();
+    }
+
+    func dump_param(self, node: ast_param*, out: io) {
+        out.out(self->indent.c_str).out("param -> ");
+        node->base.location->dump(out);
+        self->push_indent();
+        self->dump_identifier(node->name, out);
+        if (node->type => i8* != nil) {
+            self->dump_type_def(node->type, out);
+        }
+        self->pop_indent();
+    }
+
+    func dump_param_list(self, node: ast_param_list*, out: io) {
+        out.out(self->indent.c_str).out("param-list -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        for (var index = 0 => u64; index < node->params.size; index += 1 => u64) {
+            self->dump(node->params.data[index], out);
+        }
+        self->pop_indent();
+    }
+
+    func dump_func_decl(self, node: ast_func_decl*, out: io) {
+        out.out(self->indent.c_str).out("func-decl [")
+           .out(node->name.c_str).out("] -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump_param_list(node->params, out);
+        if (node->return_type => i8* != nil) {
+            self->dump_type_def(node->return_type, out);
+        }
+        if (node->body => i8* != nil) {
+            self->dump_code_block(node->body, out);
+        }
+        self->pop_indent();
+    }
+
+    func dump_code_block(self, node: ast_code_block*, out: io) {
+        out.out(self->indent.c_str).out("code-block -> ");
+        node->base.location->dump(out);
+        self->push_indent();
+        for (var index = 0 => u64; index < node->stmts.size; index += 1 => u64) {
+            self->dump(node->stmts.data[index], out);
         }
         self->pop_indent();
     }

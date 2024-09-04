@@ -287,6 +287,54 @@ impl parser {
         return res;
     }
 
+    func param_gen(self) -> ast_param* {
+        var res = ast_param::new(self->this_tok_loc_copy());
+        res->name = self->identifier_gen();
+        if (self->lookahead(tok_kind::tok_colon)) {
+            self->match_token(tok_kind::tok_colon);
+            res->type = self->type_def_gen();
+        }
+        return res;
+    }
+
+    func param_list_gen(self) -> ast_param_list* {
+        var res = ast_param_list::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_lparen);
+        while (!self->lookahead(tok_kind::tok_rparen)) {
+            res->params.push(self->param_gen() => ast*);
+            if (self->lookahead(tok_kind::tok_comma)) {
+                self->match_token(tok_kind::tok_comma);
+            } else {
+                break;
+            }
+        }
+        self->match_token(tok_kind::tok_rparen);
+        return res;
+    }
+
+    func function_decl_gen(self) -> ast_func_decl* {
+        var begin_loc = self->this_tok_loc_copy();
+        self->match_token(tok_kind::tok_func);
+        var res = ast_func_decl::new(
+            begin_loc,
+            self->toks->get(self->index).content
+        );
+        self->match_token(tok_kind::tok_id);
+        res->params = self->param_list_gen();
+        if (self->lookahead(tok_kind::tok_arrow)) {
+            self->match_token(tok_kind::tok_arrow);
+            res->return_type = self->type_def_gen();
+        }
+        res->body = ast_code_block::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_lbrace);
+        while (!self->lookahead(tok_kind::tok_rbrace)) {
+            # res->body->stmts.push(self->stmt_gen() => ast*);
+            self->next(); # TODO: parse stmt
+        }
+        self->match_token(tok_kind::tok_rbrace);
+        return res;
+    }
+
     func parse(self) {
         self->index = 0;
         self->root = root::new(self->this_tok_loc_copy());
@@ -304,6 +352,10 @@ impl parser {
                 }
                 tok_kind::tok_enum => {
                     self->root->decls.push(self->enum_decl_gen() => ast*);
+                    continue;
+                }
+                tok_kind::tok_func => {
+                    self->root->decls.push(self->function_decl_gen() => ast*);
                     continue;
                 }
             }
