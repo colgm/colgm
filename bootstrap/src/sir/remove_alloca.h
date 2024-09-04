@@ -16,6 +16,7 @@ private:
 
 public:
     remove_alloca(): sir_pass(), removed_count(0) {}
+    ~remove_alloca() override = default;
     std::string name() override {
         return "remove alloca";
     }

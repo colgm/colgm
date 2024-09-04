@@ -19,6 +19,7 @@ private:
     void add_main_impl();
 
 public:
+    ~add_default_func() override = default;
     std::string name() override {
         return "add default function";
     }

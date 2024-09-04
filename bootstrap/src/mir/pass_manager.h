@@ -12,6 +12,7 @@ namespace colgm::mir {
 
 class pass: public visitor {
 public:
+    virtual ~pass() = default;
     virtual std::string name() = 0;
     virtual bool run(mir_context*) = 0;
 };

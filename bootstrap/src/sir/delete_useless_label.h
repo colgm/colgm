@@ -18,6 +18,7 @@ private:
 
 public:
     delete_useless_label(): sir_pass(), removed_count(0) {}
+    ~delete_useless_label() override = default;
     std::string name() override {
         return "delete useless label";
     }

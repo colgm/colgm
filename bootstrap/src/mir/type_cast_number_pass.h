@@ -15,6 +15,7 @@ private:
     void visit_mir_block(mir_block*) override;
 
 public:
+    ~type_cast_number() override = default;
     std::string name() override {
         return "constant number type cast optimization";
     }

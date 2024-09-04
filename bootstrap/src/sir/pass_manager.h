@@ -11,6 +11,7 @@ namespace colgm {
 
 class sir_pass {
 public:
+    virtual ~sir_pass() = default;
     virtual std::string name() = 0;
     virtual std::string info() = 0;
     virtual bool run(sir_context*) = 0;
