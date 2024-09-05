@@ -51,6 +51,7 @@ private:
     colgm_func builtin_struct_alloc(const span&, const type&);
 
 private:
+    void register_struct(struct_decl*);
     void analyse_single_struct(struct_decl*);
     void analyse_structs(root*);
     void analyse_single_enum(enum_decl*);

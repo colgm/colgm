@@ -66,7 +66,7 @@ colgm_func semantic::builtin_struct_alloc(const span& loc, const type& ty) {
     return func;
 }
 
-void semantic::analyse_single_struct(struct_decl* node) {
+void semantic::register_struct(struct_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol.count(name)) {
         report(node, "\"" + name + "\" conflicts with a exist symbol.");
@@ -78,6 +78,13 @@ void semantic::analyse_single_struct(struct_decl* node) {
     }
     ctx.global.domain.at(ctx.this_file).structs.insert({name, {}});
     ctx.global_symbol.insert({name, {sym_kind::struct_kind, ctx.this_file}});
+}
+
+void semantic::analyse_single_struct(struct_decl* node) {
+    const auto& name = node->get_name();
+    if (!ctx.global.domain.at(ctx.this_file).structs.count(name)) {
+        return;
+    }
 
     // initialize struct info
     auto& this_domain = ctx.global.domain.at(ctx.this_file);
@@ -123,6 +130,13 @@ void semantic::analyse_single_struct(struct_decl* node) {
 }
 
 void semantic::analyse_structs(root* ast_root) {
+    for(auto i : ast_root->get_decls()) {
+        if (i->get_ast_type()!=ast_type::ast_struct_decl) {
+            continue;
+        }
+        auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
+        register_struct(struct_decl_node);
+    }
     for(auto i : ast_root->get_decls()) {
         if (i->get_ast_type()!=ast_type::ast_struct_decl) {
             continue;
