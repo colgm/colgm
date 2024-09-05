@@ -506,7 +506,24 @@ impl ast_func_decl {
 }
 
 struct ast_impl {
-    base: ast
+    base: ast,
+    name: str,
+    methods: ptr_vec
+}
+
+impl ast_impl {
+    func new(loc: span*, name: str*) -> ast_impl* {
+        var res = ast_impl::__alloc__();
+        res->base = ast::instance(ast_kind::ast_impl, loc);
+        res->name = name->copy_instance();
+        res->methods.init();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->name.delete();
+    }
 }
 
 # statements
@@ -563,12 +580,32 @@ struct ast_ret_stmt {
     base: ast
 }
 
-struct ast_continue_stmt {
-    base: ast
+struct ast_continue_stmt { base: ast }
+
+impl ast_continue_stmt {
+    func new(loc: span*) -> ast_continue_stmt* {
+        var res = ast_continue_stmt::__alloc__();
+        res->base = ast::instance(ast_kind::ast_continue_stmt, loc);
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+    }
 }
 
-struct ast_break_stmt {
-    base: ast
+struct ast_break_stmt { base: ast }
+
+impl ast_break_stmt {
+    func new(loc: span*) -> ast_break_stmt* {
+        var res = ast_break_stmt::__alloc__();
+        res->base = ast::instance(ast_kind::ast_break_stmt, loc);
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+    }
 }
 
 struct ast_code_block {

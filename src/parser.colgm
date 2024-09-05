@@ -160,7 +160,10 @@ impl parser {
                      ->append_i8_vec("\".");
         self->err->error(loc, error_message.c_str);
         error_message.delete();
-        self->next();
+        while (self->toks->get(self->index).kind != tok_kind::tok_eof &&
+               self->toks->get(self->index).kind != kind) {
+            self->next();
+        }
     }
 }
 
@@ -335,6 +338,22 @@ impl parser {
         return res;
     }
 
+    func impl_gen(self) -> ast_impl* {
+        var begin_loc = self->this_tok_loc_copy();
+        self->match_token(tok_kind::tok_impl);
+        var res = ast_impl::new(
+            begin_loc,
+            self->toks->get(self->index).content
+        );
+        self->match_token(tok_kind::tok_id);
+        self->match_token(tok_kind::tok_lbrace);
+        while (!self->lookahead(tok_kind::tok_rbrace)) {
+            res->methods.push(self->function_decl_gen() => ast*);
+        }
+        self->match_token(tok_kind::tok_rbrace);
+        return res;
+    }
+
     func parse(self) {
         self->index = 0;
         self->root = root::new(self->this_tok_loc_copy());
@@ -356,6 +375,10 @@ impl parser {
                 }
                 tok_kind::tok_func => {
                     self->root->decls.push(self->function_decl_gen() => ast*);
+                    continue;
+                }
+                tok_kind::tok_impl => {
+                    self->root->decls.push(self->impl_gen() => ast*);
                     continue;
                 }
             }
