@@ -51,9 +51,11 @@ private:
     colgm_func builtin_struct_alloc(const span&, const type&);
 
 private:
-    void register_struct(struct_decl*);
+    void regist_basic_types();
+    void regist_struct(struct_decl*);
     void analyse_single_struct(struct_decl*);
     void analyse_structs(root*);
+    void regist_enum(enum_decl*);
     void analyse_single_enum(enum_decl*);
     void analyse_enums(root*);
     void analyse_parameter(param*, colgm_func&);
@@ -64,6 +66,7 @@ private:
     void analyse_return_type(type_def*, colgm_func&);
     colgm_func analyse_single_method(func_decl*, const colgm_struct&);
     colgm_func analyse_single_func(func_decl*);
+    void regist_function(func_decl*);
     void analyse_functions(root*);
     void analyse_single_impl(impl_struct*);
     void analyse_impls(root*);

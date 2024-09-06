@@ -66,14 +66,31 @@ colgm_func semantic::builtin_struct_alloc(const span& loc, const type& ty) {
     return func;
 }
 
-void semantic::register_struct(struct_decl* node) {
+void semantic::regist_basic_types() {
+    ctx.global_symbol = {
+        {"i64", {sym_kind::basic_kind, ""}},
+        {"i32", {sym_kind::basic_kind, ""}},
+        {"i16", {sym_kind::basic_kind, ""}},
+        {"i8", {sym_kind::basic_kind, ""}},
+        {"u64", {sym_kind::basic_kind, ""}},
+        {"u32", {sym_kind::basic_kind, ""}},
+        {"u16", {sym_kind::basic_kind, ""}},
+        {"u8", {sym_kind::basic_kind, ""}},
+        {"f32", {sym_kind::basic_kind, ""}},
+        {"f64", {sym_kind::basic_kind, ""}},
+        {"void", {sym_kind::basic_kind, ""}},
+        {"bool", {sym_kind::basic_kind, ""}}
+    };
+}
+
+void semantic::regist_struct(struct_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol.count(name)) {
-        report(node, "\"" + name + "\" conflicts with a exist symbol.");
+        report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
     if (ctx.global.domain.at(ctx.this_file).structs.count(name)) {
-        report(node, "struct \"" + name + "\" conflicts with a exist symbol.");
+        report(node, "struct \"" + name + "\" conflicts with exist symbol.");
         return;
     }
     ctx.global.domain.at(ctx.this_file).structs.insert({name, {}});
@@ -135,7 +152,7 @@ void semantic::analyse_structs(root* ast_root) {
             continue;
         }
         auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
-        register_struct(struct_decl_node);
+        regist_struct(struct_decl_node);
     }
     for(auto i : ast_root->get_decls()) {
         if (i->get_ast_type()!=ast_type::ast_struct_decl) {
@@ -146,18 +163,25 @@ void semantic::analyse_structs(root* ast_root) {
     }
 }
 
-void semantic::analyse_single_enum(enum_decl* node) {
+void semantic::regist_enum(enum_decl* node) {
     const auto& name = node->get_name()->get_name();
     if (ctx.global_symbol.count(name)) {
-        report(node, "\"" + name + "\" conflicts with a exist symbol.");
+        report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
-    if (ctx.global.domain.at(ctx.this_file).structs.count(name)) {
-        report(node, "enum \"" + name + "\" conflicts with a exist symbol.");
+    if (ctx.global.domain.at(ctx.this_file).enums.count(name)) {
+        report(node, "enum \"" + name + "\" conflicts with exist symbol.");
         return;
     }
     ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
     ctx.global_symbol.insert({name, {sym_kind::enum_kind, ctx.this_file}});
+}
+
+void semantic::analyse_single_enum(enum_decl* node) {
+    const auto& name = node->get_name()->get_name();
+    if (!ctx.global.domain.at(ctx.this_file).enums.count(name)) {
+        return;
+    }
 
     // initialize enum info
     auto& this_domain = ctx.global.domain.at(ctx.this_file);
@@ -185,7 +209,7 @@ void semantic::analyse_single_enum(enum_decl* node) {
             continue;
         }
         if (!resolve_number_literal(i.value).is_integer()) {
-            report(i.value, "enum member cannot be specified with a float number.");
+            report(i.value, "enum member cannot be specified with float number.");
             return;
         }
     }
@@ -206,6 +230,13 @@ void semantic::analyse_single_enum(enum_decl* node) {
 }
 
 void semantic::analyse_enums(root* ast_root) {
+    for(auto i : ast_root->get_decls()) {
+        if (i->get_ast_type()!=ast_type::ast_enum_decl) {
+            continue;
+        }
+        auto enum_decl_node = reinterpret_cast<enum_decl*>(i);
+        regist_enum(enum_decl_node);
+    }
     for(auto i : ast_root->get_decls()) {
         if (i->get_ast_type()!=ast_type::ast_enum_decl) {
             continue;
@@ -298,6 +329,23 @@ colgm_func semantic::analyse_single_func(func_decl* node) {
     return func_self;
 }
 
+void semantic::regist_function(func_decl* node) {
+    const auto& name = node->get_name();
+    if (ctx.global_symbol.count(name)) {
+        report(node, "\"" + name + "\" conflicts with exist symbol.");
+        return;
+    }
+    if (ctx.global.domain.at(ctx.this_file).functions.count(name)) {
+        report(node, "function \"" + name + "\" conflicts with exist symbol.");
+        return;
+    }
+    ctx.global_symbol.insert({name, {sym_kind::func_kind, ctx.this_file}});
+    ctx.global.domain.at(ctx.this_file).functions.insert({
+        name,
+        analyse_single_func(node)
+    });
+}
+
 void semantic::analyse_functions(root* ast_root) {
     auto& domain = ctx.global.domain.at(ctx.this_file);
     for(auto i : ast_root->get_decls()) {
@@ -305,27 +353,7 @@ void semantic::analyse_functions(root* ast_root) {
             continue;
         }
         auto func_decl_node = reinterpret_cast<func_decl*>(i);
-        if (ctx.global_symbol.count(func_decl_node->get_name())) {
-            report(i, "\"" + func_decl_node->get_name() +
-                "\" conflicts with a exist symbol."
-            );
-            continue;
-        }
-        ctx.global_symbol.insert({
-            func_decl_node->get_name(),
-            {sym_kind::func_kind, ast_root->get_location().file}
-        });
-        if (domain.functions.count(func_decl_node->get_name())) {
-            report(func_decl_node,
-                "function \"" + func_decl_node->get_name() +
-                "\" conflicts with a exist symbol."
-            );
-            continue;
-        }
-        domain.functions.insert({
-            func_decl_node->get_name(),
-            analyse_single_func(func_decl_node)
-        });
+        regist_function(func_decl_node);
     }
 }
 
@@ -1574,12 +1602,15 @@ void semantic::resolve_single_use(use_stmt* node) {
         semantic sema(err);
         mir::ast2mir ast2mir(err, sema.get_context());
         if (lex.scan(file).geterr()) {
+            pkgman->set_analyse_status(file, package_manager::status::analysed);
             return;
         }
         if (par.analyse(lex.result()).geterr()) {
+            pkgman->set_analyse_status(file, package_manager::status::analysed);
             return;
         }
         if (sema.analyse(par.get_result()).geterr()) {
+            pkgman->set_analyse_status(file, package_manager::status::analysed);
             return;
         }
         pkgman->set_analyse_status(file, package_manager::status::analysed);
@@ -1631,19 +1662,8 @@ const error& semantic::analyse(root* ast_root) {
         ctx.global.domain.insert({ctx.this_file, {}});
     }
 
-    ctx.global_symbol.clear();
-    ctx.global_symbol.insert({"i64", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"i32", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"i16", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"i8", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"u64", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"u32", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"u16", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"u8", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"f32", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"f64", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"void", {sym_kind::basic_kind, ""}});
-    ctx.global_symbol.insert({"bool", {sym_kind::basic_kind, ""}});
+    regist_basic_types();
+
     resolve_use_stmt(ast_root);
     if (err.geterr()) {
         return err;
