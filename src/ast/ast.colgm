@@ -48,6 +48,43 @@ enum ast_kind {
     ast_code_block
 }
 
+enum unary_kind {
+    neg,
+    bnot,
+    lnot
+}
+
+enum binary_kind {
+    add,
+    sub,
+    mult,
+    div,
+    rem,
+    cmpeq,
+    cmpneq,
+    less,
+    leq,
+    grt,
+    geq,
+    cmpand,
+    cmpor,
+    band,
+    bor,
+    bxor
+}
+
+enum assignment_kind {
+    eq,
+    addeq,
+    subeq,
+    multeq,
+    diveq,
+    remeq,
+    andeq,
+    xoreq,
+    oreq
+}
+
 struct ast {
     kind: ast_kind, # ast node kind
     location: span* # location of ast node
@@ -149,15 +186,80 @@ impl root {
 # expressions
 
 struct ast_unary_operator {
-    base: ast
+    base: ast,
+    kind: unary_kind,
+    value: ast*
+}
+
+impl ast_unary_operator {
+    func new(loc: span*, kind: unary_kind) -> ast_unary_operator* {
+        var res = ast_unary_operator::__alloc__();
+        res->base = ast::instance(ast_kind::ast_unary_operator, loc);
+        res->kind = kind;
+        res->value = nil => ast*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->value => i8* != nil) {
+            self->value->delete();
+        }
+    }
 }
 
 struct ast_binary_operator {
-    base: ast
+    base: ast,
+    kind: binary_kind,
+    left: ast*,
+    right: ast*
+}
+
+impl ast_binary_operator {
+    func new(loc: span*, kind: binary_kind) -> ast_binary_operator* {
+        var res = ast_binary_operator::__alloc__();
+        res->base = ast::instance(ast_kind::ast_binary_operator, loc);
+        res->kind = kind;
+        res->left = nil => ast*;
+        res->right = nil => ast*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->left => i8* != nil) {
+            self->left->delete();
+        }
+        if (self->right => i8* != nil) {
+            self->right->delete();
+        }
+    }
 }
 
 struct ast_type_convert {
-    base: ast
+    base: ast,
+    from: ast*,
+    to: ast_type_def*
+}
+
+impl ast_type_convert {
+    func new(loc: span*) -> ast_type_convert* {
+        var res = ast_type_convert::__alloc__();
+        res->base = ast::instance(ast_kind::ast_type_convert, loc);
+        res->from = nil => ast*;
+        res->to = nil => ast_type_def*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->from => i8* != nil) {
+            self->from->delete();
+        }
+        if (self->to => i8* != nil) {
+            self->to->delete();
+        }
+    }
 }
 
 struct ast_identifier {
@@ -270,39 +372,196 @@ impl ast_bool_literal {
 }
 
 struct ast_call_index {
-    base: ast
+    base: ast,
+    index: ast*
+}
+
+impl ast_call_index {
+    func new(loc: span*) -> ast_call_index* {
+        var res = ast_call_index::__alloc__();
+        res->base = ast::instance(ast_kind::ast_call_index, loc);
+        res->index = nil => ast*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->index => i8* != nil) {
+            self->index->delete();
+        }
+    }
 }
 
 struct ast_call_func_args {
-    base: ast
+    base: ast,
+    args: ptr_vec
+}
+
+impl ast_call_func_args {
+    func new(loc: span*) -> ast_call_func_args* {
+        var res = ast_call_func_args::__alloc__();
+        res->base = ast::instance(ast_kind::ast_call_func_args, loc);
+        res->args.init();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->args.delete();
+    }
 }
 
 struct ast_get_field {
-    base: ast
+    base: ast,
+    name: str
+}
+
+impl ast_get_field {
+    func new(loc: span*, name: str*) -> ast_get_field* {
+        var res = ast_get_field::__alloc__();
+        res->base = ast::instance(ast_kind::ast_get_field, loc);
+        res->name = name->copy_instance();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->name.delete();
+    }
 }
 
 struct ast_ptr_get_field {
-    base: ast
+    base: ast,
+    name: str
+}
+
+impl ast_ptr_get_field {
+    func new(loc: span*, name: str*) -> ast_ptr_get_field* {
+        var res = ast_ptr_get_field::__alloc__();
+        res->base = ast::instance(ast_kind::ast_ptr_get_field, loc);
+        res->name = name->copy_instance();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->name.delete();
+    }
 }
 
 struct ast_init_pair {
-    base: ast
+    base: ast,
+    field: ast_identifier*,
+    value: ast*
+}
+
+impl ast_init_pair {
+    func new(loc: span*) -> ast_init_pair* {
+        var res = ast_init_pair::__alloc__();
+        res->base = ast::instance(ast_kind::ast_init_pair, loc);
+        res->field = nil => ast_identifier*;
+        res->value = nil => ast*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->field => i8* != nil) {
+            self->field->delete();
+        }
+        if (self->value => i8* != nil) {
+            self->value->delete();
+        }
+    }
 }
 
 struct ast_initializer {
-    base: ast
+    base: ast,
+    pairs: ptr_vec
+}
+
+impl ast_initializer {
+    func new(loc: span*) -> ast_initializer* {
+        var res = ast_initializer::__alloc__();
+        res->base = ast::instance(ast_kind::ast_initializer, loc);
+        res->pairs.init();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->pairs.delete();
+    }
 }
 
 struct ast_call_path {
-    base: ast
+    base: ast,
+    name: str
+}
+
+impl ast_call_path {
+    func new(loc: span*, name: str*) -> ast_call_path* {
+        var res = ast_call_path::__alloc__();
+        res->base = ast::instance(ast_kind::ast_call_path, loc);
+        res->name = name->copy_instance();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->name.delete();
+    }
 }
 
 struct ast_call {
-    base: ast
+    base: ast,
+    head: ast_identifier*,
+    chain: ptr_vec
+}
+
+impl ast_call {
+    func new(loc: span*) -> ast_call* {
+        var res = ast_call::__alloc__();
+        res->base = ast::instance(ast_kind::ast_call, loc);
+        res->head = nil => ast_identifier*;
+        res->chain.init();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if(self->head => i8* != nil) {
+            self->head->delete();
+        }
+        self->chain.delete();
+    }
 }
 
 struct ast_assignment {
-    base: ast
+    base: ast,
+    kind: assignment_kind,
+    left: ast_call*,
+    right: ast*
+}
+
+impl ast_assignment {
+    func new(loc: span*) -> ast_assignment* {
+        var res = ast_assignment::__alloc__();
+        res->base = ast::instance(ast_kind::ast_assignment, loc);
+        res->left = nil => ast_call*;
+        res->right = nil => ast*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->left => i8* != nil) {
+            self->left->delete();
+        }
+        if (self->right => i8* != nil) {
+            self->right->delete();
+        }
+    }
 }
 
 # declarations
@@ -545,39 +804,229 @@ impl ast_use_stmt {
 }
 
 struct ast_definition {
-    base: ast
+    base: ast,
+    name: str,
+    type: ast_type_def*,
+    value: ast*
+}
+
+impl ast_definition {
+    func new(loc: span*, name: str*) -> ast_definition* {
+        var res = ast_definition::__alloc__();
+        res->base = ast::instance(ast_kind::ast_definition, loc);
+        res->name = name->copy_instance();
+        res->type = nil => ast_type_def*;
+        res->value = nil => ast*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->name.delete();
+        if (self->type => i8* != nil) {
+            self->type->delete();
+        }
+        if (self->value => i8* != nil) {
+            self->value->delete();
+        }
+    }
 }
 
 struct ast_cond_stmt {
-    base: ast
+    base: ast,
+    stmts: ptr_vec
+}
+
+impl ast_cond_stmt {
+    func new(loc: span*) -> ast_cond_stmt* {
+        var res = ast_cond_stmt::__alloc__();
+        res->base = ast::instance(ast_kind::ast_cond_stmt, loc);
+        res->stmts.init();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->stmts.delete();
+    }
 }
 
 struct ast_if_stmt {
-    base: ast
+    base: ast,
+    condition: ast*,
+    body: ast_code_block*
+}
+
+impl ast_if_stmt {
+    func new(loc: span*) -> ast_if_stmt* {
+        var res = ast_if_stmt::__alloc__();
+        res->base = ast::instance(ast_kind::ast_if_stmt, loc);
+        res->condition = nil => ast*;
+        res->body = nil => ast_code_block*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->condition => i8* != nil) {
+            self->condition->delete();
+        }
+        if (self->body => i8* != nil) {
+            self->body->delete();
+        }
+    }
 }
 
 struct ast_match_case {
-    base: ast
+    base: ast,
+    pattern: ast*,
+    body: ast_code_block*
+}
+
+impl ast_match_case {
+    func new(loc: span*) -> ast_match_case* {
+        var res = ast_match_case::__alloc__();
+        res->base = ast::instance(ast_kind::ast_match_case, loc);
+        res->pattern = nil => ast*;
+        res->body = nil => ast_code_block*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->pattern => i8* != nil) {
+            self->pattern->delete();
+        }
+        if (self->body => i8* != nil) {
+            self->body->delete();
+        }
+    }
 }
 
 struct ast_match_stmt {
-    base: ast
+    base: ast,
+    value: ast*,
+    cases: ptr_vec
+}
+
+impl ast_match_stmt {
+    func new(loc: span*) -> ast_match_stmt* {
+        var res = ast_match_stmt::__alloc__();
+        res->base = ast::instance(ast_kind::ast_match_stmt, loc);
+        res->value = nil => ast*;
+        res->cases.init();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        self->value->delete();
+        self->cases.delete();
+    }
 }
 
 struct ast_while_stmt {
-    base: ast
+    base: ast,
+    condition: ast*,
+    body: ast_code_block*
+}
+
+impl ast_while_stmt {
+    func new(loc: span*) -> ast_while_stmt* {
+        var res = ast_while_stmt::__alloc__();
+        res->base = ast::instance(ast_kind::ast_while_stmt, loc);
+        res->condition = nil => ast*;
+        res->body = nil => ast_code_block*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->condition => i8* != nil) {
+            self->condition->delete();
+        }
+        if (self->body => i8* != nil) {
+            self->body->delete();
+        }
+    }
 }
 
 struct ast_for_stmt {
-    base: ast
+    base: ast,
+    init: ast_definition*,
+    condition: ast*,
+    update: ast*,
+    body: ast_code_block*
+}
+
+impl ast_for_stmt {
+    func new(loc: span*) -> ast_for_stmt* {
+        var res = ast_for_stmt::__alloc__();
+        res->base = ast::instance(ast_kind::ast_for_stmt, loc);
+        res->init = nil => ast_definition*;
+        res->condition = nil => ast*;
+        res->update = nil => ast*;
+        res->body = nil => ast_code_block*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->init => i8* != nil) {
+            self->init->delete();
+        }
+        if (self->condition => i8* != nil) {
+            self->condition->delete();
+        }
+        if (self->update => i8* != nil) {
+            self->update->delete();
+        }
+        if (self->body => i8* !=nil) {
+            self->body->delete();
+        }
+    }
 }
 
 struct ast_in_stmt_expr {
-    base: ast
+    base: ast,
+    value: ast*
+}
+
+impl ast_in_stmt_expr {
+    func new(loc: span*) -> ast_in_stmt_expr* {
+        var res = ast_in_stmt_expr::__alloc__();
+        res->base = ast::instance(ast_kind::ast_in_stmt_expr, loc);
+        res->value = nil => ast*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->value => i8* != nil) {
+            self->value->delete();
+        }
+    }
 }
 
 struct ast_ret_stmt {
-    base: ast
+    base: ast,
+    value: ast*
+}
+
+impl ast_ret_stmt {
+    func new(loc: span*) -> ast_ret_stmt* {
+        var res = ast_ret_stmt::__alloc__();
+        res->base = ast::instance(ast_kind::ast_ret_stmt, loc);
+        res->value = nil => ast*;
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+        if (self->value => i8* != nil) {
+            self->value->delete();
+        }
+    }
 }
 
 struct ast_continue_stmt { base: ast }

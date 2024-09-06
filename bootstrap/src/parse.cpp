@@ -476,6 +476,8 @@ struct_decl* parse::struct_gen() {
         result->add_field(struct_field_gen());
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
+        } else if (look_ahead(tok::tk_id)) {
+            err.err("parse", toks[ptr-1].loc, "expected ',' here.");
         } else {
             break;
         }

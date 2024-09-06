@@ -1591,7 +1591,7 @@ void semantic::resolve_single_use(use_stmt* node) {
     auto pkgman = package_manager::singleton();
     if (pkgman->get_analyse_status(file)==package_manager::status::analysing) {
         report(node, "module \"" + mp +
-            "\" is not totally analysed, maybe encounter self-reference."
+            "\" is not totally analysed, maybe encounter circular import."
         );
         return;
     }
