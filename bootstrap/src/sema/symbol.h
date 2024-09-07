@@ -35,6 +35,7 @@ struct type {
     i64 pointer_depth = 0;
     bool is_global = false;
     bool is_global_func = false;
+    bool is_enum = false;
 
     struct_method stm_info;
 
@@ -91,7 +92,8 @@ public:
                t==type::i32_type(t.pointer_depth) ||
                t==type::u32_type(t.pointer_depth) ||
                t==type::i64_type(t.pointer_depth) ||
-               t==type::u64_type(t.pointer_depth);
+               t==type::u64_type(t.pointer_depth) ||
+               (this->is_enum && !t.pointer_depth);
     }
     bool is_float() const {
         const auto& t = *this;

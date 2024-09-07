@@ -3,7 +3,7 @@ use ast::dumper::{ ast_dumper };
 use err::report::*;
 use err::span::{ span };
 use lexer::{ lexer, vec_token, tok_kind };
-use std::libc::{ free };
+use std::libc::{ free, streq };
 use std::io::{ io };
 use std::str::{ str };
 
@@ -116,6 +116,10 @@ impl parser {
         return self->toks->get(self->index).location->copy();
     }
 
+    func this_tok_loc(self) -> span* {
+        return self->toks->get(self->index).location;
+    }
+
     func lookahead(self, kind: tok_kind) -> bool {
         return self->toks->get(self->index).kind == kind;
     }
@@ -177,6 +181,17 @@ impl parser {
         return res;
     }
 
+    func call_gen(self) -> ast_call* {
+        # TODO: unfinished
+        return ast_null::new() => ast_call*;
+    }
+
+    func nil_gen(self) -> ast_nil_literal* {
+        var res = ast_nil_literal::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_nil);
+        return res;
+    }
+
     func number_literal_gen(self) -> ast_number_literal* {
         var res = ast_number_literal::new(
             self->this_tok_loc_copy(),
@@ -184,6 +199,242 @@ impl parser {
         );
         self->match_token(tok_kind::tok_num);
         return res;
+    }
+
+    func string_literal_gen(self) -> ast_string_literal* {
+        var res = ast_string_literal::new(
+            self->this_tok_loc_copy(),
+            self->toks->get(self->index).content
+        );
+        self->match_token(tok_kind::tok_str);
+        return res;
+    }
+
+    func char_gen(self) -> ast_char_literal* {
+        var res = ast_char_literal::new(
+            self->this_tok_loc_copy(),
+            self->toks->get(self->index).content
+        );
+        self->match_token(tok_kind::tok_ch);
+        return res;
+    }
+
+    func bool_gen(self) -> ast_bool_literal* {
+        var res = nil => ast_bool_literal*;
+        if (streq(self->toks->get(self->index).content->c_str, "true")) {
+            res = ast_bool_literal::new(
+                self->this_tok_loc_copy(),
+                true
+            );
+            self->match_token(tok_kind::tok_true);
+        } else if (streq(self->toks->get(self->index).content->c_str, "false")) {
+            res = ast_bool_literal::new(
+                self->this_tok_loc_copy(),
+                false
+            );
+            self->match_token(tok_kind::tok_false);
+        } else {
+            self->err->error(
+                self->toks->get(self->index).location,
+                "expected \"true\" or \"false\" here."
+            );
+        }
+        return res;
+    }
+
+    func scalar_gen(self) -> ast* {
+        if (self->lookahead(tok_kind::tok_lparen)) {
+            self->match_token(tok_kind::tok_lparen);
+            var res = self->calculation_gen();
+            self->match_token(tok_kind::tok_rparen);
+            return res;
+        }
+        if (self->lookahead(tok_kind::tok_sub)) {
+            return self->unary_neg_gen() => ast*;
+        } elsif (self->lookahead(tok_kind::tok_floater)) {
+            return self->unary_bnot_gen() => ast*;
+        } elsif (self->lookahead(tok_kind::tok_nil)) {
+            return self->nil_gen() => ast*;
+        } elsif (self->lookahead(tok_kind::tok_num)) {
+            return self->number_literal_gen() => ast*;
+        } elsif (self->lookahead(tok_kind::tok_str)) {
+            return self->string_literal_gen() => ast*;
+        } elsif (self->lookahead(tok_kind::tok_ch)) {
+            return self->char_gen() => ast*;
+        } elsif (self->lookahead(tok_kind::tok_true) ||
+                 self->lookahead(tok_kind::tok_false)) {
+            return self->bool_gen() => ast*;
+        } elsif (self->lookahead(tok_kind::tok_id)) {
+            return self->call_gen() => ast*;
+        }
+
+        self->err->error(
+            self->toks->get(self->index).location,
+            "expected scalar here."
+        );
+        return ast_null::new() => ast*;
+    }
+
+    func unary_neg_gen(self) -> ast_unary_operator* {
+        var res = ast_unary_operator::new(
+            self->this_tok_loc_copy(),
+            unary_kind::neg
+        );
+        self->match_token(tok_kind::tok_sub);
+        res->value = self->scalar_gen();
+        return res;
+    }
+
+    func unary_bnot_gen(self) -> ast_unary_operator* {
+        var res = ast_unary_operator::new(
+            self->this_tok_loc_copy(),
+            unary_kind::bnot
+        );
+        self->match_token(tok_kind::tok_floater);
+        res->value = self->scalar_gen();
+        return res;
+    }
+
+    func type_convert_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        var result = self->scalar_gen();
+        if (self->lookahead(tok_kind::tok_wide_arrow)) {
+            var type_cast_node = ast_type_convert::new(begin_loc->copy());
+            type_cast_node->from = result;
+            type_cast_node->to = self->type_def_gen();
+            return type_cast_node => ast*;
+        }
+        return result;
+    }
+
+    func multive_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        var res = self->type_convert_gen();
+        while (self->lookahead(tok_kind::tok_mul) ||
+               self->lookahead(tok_kind::tok_div) ||
+               self->lookahead(tok_kind::tok_rem)) {
+            var kind = 0 => binary_kind;
+            match(self->toks->get(self->index).kind) {
+                tok_kind::tok_mul => kind = binary_kind::mult;
+                tok_kind::tok_div => kind = binary_kind::div;
+                tok_kind::tok_rem => kind = binary_kind::rem;
+            }
+            var binary = ast_binary_operator::new(begin_loc->copy(), kind);
+            self->match_token(self->toks->get(self->index).kind);
+            binary->left = res;
+            binary->right = self->type_convert_gen();
+            res = binary => ast*;
+        }
+        return res;
+    }
+
+    func additive_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        var res = self->multive_gen();
+        while (self->lookahead(tok_kind::tok_add) ||
+               self->lookahead(tok_kind::tok_sub)) {
+            var binary = nil => ast_binary_operator*;
+            match(self->toks->get(self->index).kind) {
+                tok_kind::tok_add => {
+                    binary = ast_binary_operator::new(
+                        begin_loc->copy(),
+                        binary_kind::add
+                    );
+                }
+                tok_kind::tok_sub => {
+                    binary = ast_binary_operator::new(
+                        begin_loc->copy(),
+                        binary_kind::sub
+                    );
+                }
+            }
+            self->match_token(self->toks->get(self->index).kind);
+            binary->left = res;
+            binary->right = self->multive_gen();
+            res = binary => ast*;
+        }
+        return res;
+    }
+
+    func bitwise_and_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        var res = self->additive_gen();
+        while (self->lookahead(tok_kind::tok_bit_and)) {
+            var binary = ast_binary_operator::new(
+                begin_loc->copy(),
+                binary_kind::band
+            );
+            self->match_token(tok_kind::tok_bit_and);
+            binary->left = res;
+            binary->right = self->additive_gen();
+            res = binary => ast*;
+        }
+        return res;
+    }
+
+    func bitwise_xor_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        var res = self->bitwise_and_gen();
+        while (self->lookahead(tok_kind::tok_bit_xor)) {
+            var binary = ast_binary_operator::new(
+                begin_loc->copy(),
+                binary_kind::bxor
+            );
+            self->match_token(tok_kind::tok_bit_xor);
+            binary->left = res;
+            binary->right = self->bitwise_and_gen();
+            res = binary => ast*;
+        }
+        return res;
+    }
+
+    func bitwise_or_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        var res = self->bitwise_xor_gen();
+        while (self->lookahead(tok_kind::tok_bit_or)) {
+            var binary = ast_binary_operator::new(
+                begin_loc->copy(),
+                binary_kind::bor
+            );
+            self->match_token(tok_kind::tok_bit_or);
+            binary->left = res;
+            binary->right = self->bitwise_xor_gen();
+            res = binary => ast*;
+        }
+        return res;
+    }
+
+    func compare_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        var res = self->type_convert_gen();
+        while (self->lookahead(tok_kind::tok_cmp_eq) ||
+               self->lookahead(tok_kind::tok_neq) ||
+               self->lookahead(tok_kind::tok_less) ||
+               self->lookahead(tok_kind::tok_leq) ||
+               self->lookahead(tok_kind::tok_grt) ||
+               self->lookahead(tok_kind::tok_geq)) {
+            # FIXME: directly use `var kind = binary_kind::add;` may cause ir error
+            var kind = 0 => binary_kind;
+            match (self->toks->get(self->index).kind) {
+                tok_kind::tok_cmp_eq => kind = binary_kind::cmpeq;
+                tok_kind::tok_neq => kind = binary_kind::cmpneq;
+                tok_kind::tok_less => kind = binary_kind::less;
+                tok_kind::tok_leq => kind = binary_kind::leq;
+                tok_kind::tok_grt => kind = binary_kind::grt;
+                tok_kind::tok_geq => kind = binary_kind::geq;
+            }
+            var binary = ast_binary_operator::new(begin_loc->copy(), kind);
+            self->match_token(self->toks->get(self->index).kind);
+            binary->left = res;
+            binary->right = self->type_convert_gen();
+            res = binary => ast*;
+        }
+        return res;
+    }
+
+    func calculation_gen(self) -> ast* {
+        # TODO: unfinished
+        return ast_null::new() => ast*;
     }
 
     func type_def_gen(self) -> ast_type_def* {
@@ -353,7 +604,9 @@ impl parser {
         self->match_token(tok_kind::tok_rbrace);
         return res;
     }
+}
 
+impl parser {
     func parse(self) {
         self->index = 0;
         self->root = root::new(self->this_tok_loc_copy());

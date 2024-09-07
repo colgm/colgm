@@ -870,7 +870,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         return method.return_type;
     }
 
-    unimplemented(node);
+    report(node, "cannot call non-function.");
     return type::error_type();
 }
 
@@ -1101,6 +1101,10 @@ type semantic::resolve_call(call* node) {
             return infer;
         }
     }
+    if (infer.stm_info.flag_is_normal || infer.stm_info.flag_is_static) {
+        report(node, "function should be called here.");
+        return type::error_type();
+    }
     if (ctx.global.domain.at(ctx.this_file).functions.count(infer.name)) {
         report(node, "function should be called here.");
         return type::error_type();
@@ -1280,7 +1284,7 @@ void semantic::check_defined_variable_is_void(definition* node, const type& t) {
 void semantic::resolve_if_stmt(if_stmt* node, const colgm_func& func_self) {
     if (node->get_condition()) {
         const auto infer = resolve_expression(node->get_condition());
-        if (infer!=type::bool_type()) {
+        if (infer!=type::bool_type() && infer!=type::error_type()) {
             report(node->get_condition(),
                 "condition should be \"bool\" type but get \"" +
                 infer.to_string() + "\"."
@@ -1355,7 +1359,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
 
 void semantic::resolve_while_stmt(while_stmt* node, const colgm_func& func_self) {
     const auto infer = resolve_expression(node->get_condition());
-    if (infer!=type::bool_type()) {
+    if (infer!=type::bool_type() && infer!=type::error_type()) {
         report(node->get_condition(),
             "condition should be \"bool\" type but get \"" +
             infer.to_string() + "\"."
@@ -1376,7 +1380,7 @@ void semantic::resolve_for_stmt(for_stmt* node, const colgm_func& func_self) {
     if (node->get_condition()) {
         const auto infer = resolve_expression(node->get_condition());
         node->get_condition()->set_resolve_type(infer);
-        if (infer!=type::bool_type()) {
+        if (infer!=type::bool_type() && infer!=type::error_type()) {
             report(node->get_condition(),
                 "condition should be \"bool\" type but get \"" +
                 infer.to_string() + "\"."
@@ -1412,13 +1416,13 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
     }
     const auto infer = resolve_expression(node->get_value());
     if (infer.is_pointer() && func_self.return_type.is_pointer()) {
-        if (infer!=func_self.return_type) {
+        if (infer!=func_self.return_type && infer!=type::error_type()) {
             warning(node,
                 "expected return type \"" + func_self.return_type.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."
             );
         }
-    } else if (infer!=func_self.return_type) {
+    } else if (infer!=func_self.return_type && infer!=type::error_type()) {
         report(node,
             "expected return type \"" + func_self.return_type.to_string() +
             "\" but get \"" + infer.to_string() + "\"."
@@ -1640,13 +1644,19 @@ void semantic::resolve_single_use(use_stmt* node) {
     for(auto i : node->get_import_symbol()) {
         if (domain.structs.count(i->get_name())) {
             import_global_symbol(i, i->get_name(), {sym_kind::struct_kind, file});
+            continue;
         }
         if (domain.functions.count(i->get_name())) {
             import_global_symbol(i, i->get_name(), {sym_kind::func_kind, file});
+            continue;
         }
         if (domain.enums.count(i->get_name())) {
             import_global_symbol(i, i->get_name(), {sym_kind::enum_kind, file});
+            continue;
         }
+        report(i, "cannot find symbol \"" + i->get_name() +
+            "\" in module \"" + mp + "\"."
+        );
     }
 }
 

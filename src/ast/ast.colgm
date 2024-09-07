@@ -161,6 +161,19 @@ impl ptr_vec {
     }
 }
 
+struct ast_null { base: ast }
+
+impl ast_null {
+    func new() -> ast_null* {
+        var res = ast_null::__alloc__();
+        return res;
+    }
+
+    func delete(self) {
+        self->base.delete();
+    }
+}
+
 struct root {
     base: ast,
     imports: ptr_vec,
@@ -337,19 +350,20 @@ impl ast_string_literal {
 
 struct ast_char_literal {
     base: ast,
-    literal: i8
+    literal: str
 }
 
 impl ast_char_literal {
-    func new(loc: span*, literal: i8) -> ast_char_literal* {
+    func new(loc: span*, literal: str*) -> ast_char_literal* {
         var res = ast_char_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_char_literal, loc);
-        res->literal = literal;
+        res->literal = literal->copy_instance();
         return res;
     }
 
     func delete(self) {
         self->base.delete();
+        self->literal.delete();
     }
 }
 
