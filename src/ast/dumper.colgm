@@ -32,8 +32,14 @@ impl ast_dumper {
 impl ast_dumper {
     func dump(self, node: ast*, out: io) {
         match(node->kind) {
-            ast_kind::ast_null => return;
+            ast_kind::ast_null => self->dump_null(node => ast_null*, out);
             ast_kind::ast_root => self->dump_root(node => root*, out);
+            ast_kind::ast_unary_operator =>
+                self->dump_unary_operator(node => ast_unary_operator*, out);
+            ast_kind::ast_binary_operator =>
+                self->dump_binary_operator(node => ast_binary_operator*, out);
+            ast_kind::ast_type_convert =>
+                self->dump_type_convert(node => ast_type_convert*, out);
             ast_kind::ast_identifier =>
                 self->dump_identifier(node => ast_identifier*, out);
             ast_kind::ast_nil_literal =>
@@ -46,8 +52,15 @@ impl ast_dumper {
                 self->dump_char_literal(node => ast_char_literal*, out);
             ast_kind::ast_bool_literal =>
                 self->dump_bool_literal(node => ast_bool_literal*, out);
-            ast_kind::ast_use_stmt =>
-                self->dump_use_stmt(node => ast_use_stmt*, out);
+            ast_kind::ast_get_field =>
+                self->dump_get_field(node => ast_get_field*, out);
+            ast_kind::ast_ptr_get_field =>
+                self->dump_ptr_get_field(node => ast_ptr_get_field*, out);
+            ast_kind::ast_call_path =>
+                self->dump_call_path(node => ast_call_path*, out);
+            ast_kind::ast_call => self->dump_call(node => ast_call*, out);
+            ast_kind::ast_assignment =>
+                self->dump_assignment(node => ast_assignment*, out);
             ast_kind::ast_type_def =>
                 self->dump_type_def(node => ast_type_def*, out);
             ast_kind::ast_enum_member =>
@@ -66,6 +79,14 @@ impl ast_dumper {
                 self->dump_func_decl(node => ast_func_decl*, out);
             ast_kind::ast_impl =>
                 self->dump_impl(node => ast_impl*, out);
+            ast_kind::ast_use_stmt =>
+                self->dump_use_stmt(node => ast_use_stmt*, out);
+            ast_kind::ast_definition =>
+                self->dump_definition(node => ast_definition*, out);
+            ast_kind::ast_in_stmt_expr =>
+                self->dump_in_stmt_expr(node => ast_in_stmt_expr*, out);
+            ast_kind::ast_ret_stmt =>
+                self->dump_ret_stmt(node => ast_ret_stmt*, out);
             ast_kind::ast_continue_stmt =>
                 self->dump_continue_stmt(node => ast_continue_stmt*, out);
             ast_kind::ast_break_stmt =>
@@ -73,6 +94,11 @@ impl ast_dumper {
             ast_kind::ast_code_block =>
                 self->dump_code_block(node => ast_code_block*, out);
         }
+    }
+
+    func dump_null(self, node: ast_null*, out: io) {
+        out.out(self->indent.c_str).out("null -> ");
+        node->base.location->dump(out);
     }
 
     func dump_root(self, node: root*, out: io) {
@@ -86,6 +112,39 @@ impl ast_dumper {
         for (var index = 0 => u64; index < node->decls.size; index += 1 => u64) {
             self->dump(node->decls.data[index], out);
         }
+        self->pop_indent();
+    }
+
+    func dump_unary_operator(self, node: ast_unary_operator*, out: io) {
+        out.out(self->indent.c_str)
+           .out("unary-operator: [")
+           .out("] -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump(node->value, out);
+        self->pop_indent();
+    }
+
+    func dump_binary_operator(self, node: ast_binary_operator*, out: io) {
+        out.out(self->indent.c_str)
+           .out("binary-operator: [")
+           .out("] -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump(node->left, out);
+        self->dump(node->right, out);
+        self->pop_indent();
+    }
+
+    func dump_type_convert(self, node: ast_type_convert*, out: io) {
+        out.out(self->indent.c_str).out("type-convert -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump(node->from, out);
+        self->dump_type_def(node->to, out);
         self->pop_indent();
     }
 
@@ -139,30 +198,43 @@ impl ast_dumper {
         node->base.location->dump(out);
     }
 
-    func dump_use_stmt(self, node: ast_use_stmt*, out: io) {
-        out.out(self->indent.c_str).out("use -> ");
+    func dump_get_field(self, node: ast_get_field*, out: io) {
+        out.out(self->indent.c_str).out("get-field [")
+           .out(node->name.c_str).out("] -> ");
+        node->base.location->dump(out);
+    }
+
+    func dump_ptr_get_field(self, node: ast_ptr_get_field*, out: io) {
+        out.out(self->indent.c_str).out("ptr-get-field [")
+           .out(node->name.c_str).out("] -> ");
+        node->base.location->dump(out);
+    }
+
+    func dump_call_path(self, node: ast_call_path*, out: io) {
+        out.out(self->indent.c_str).out("call-path [")
+           .out(node->name.c_str).out("] -> ");
+        node->base.location->dump(out);
+    }
+
+    func dump_call(self, node: ast_call*, out: io) {
+        out.out(self->indent.c_str).out("call -> ");
         node->base.location->dump(out);
 
         self->push_indent();
-
-        out.out(self->indent.c_str).out("module\n");
-        self->push_indent();
-        for (var index = 0 => u64; index < node->module_path.size; index += 1 => u64) {
-            self->dump(node->module_path.data[index], out);
+        self->dump_identifier(node->head, out);
+        for (var index = 0 => u64; index < node->chain.size; index += 1 => u64) {
+            self->dump(node->chain.data[index], out);
         }
         self->pop_indent();
+    }
 
-        if (node->import_symbol.size == 0 => u64) {
-            out.out(self->indent.c_str).out("import-all\n");
-        } else {
-            out.out(self->indent.c_str).out("import-specified\n");
-            self->push_indent();
-            for (var index = 0 => u64; index < node->import_symbol.size; index += 1 => u64) {
-                self->dump(node->import_symbol.data[index], out);
-            }
-            self->pop_indent();
-        }
+    func dump_assignment(self, node: ast_assignment*, out: io) {
+        out.out(self->indent.c_str).out("assignment -> ");
+        node->base.location->dump(out);
 
+        self->push_indent();
+        self->dump_call(node->left, out);
+        self->dump(node->right, out);
         self->pop_indent();
     }
 
@@ -260,16 +332,6 @@ impl ast_dumper {
         self->pop_indent();
     }
 
-    func dump_continue_stmt(self, node: ast_continue_stmt*, out: io) {
-        out.out(self->indent.c_str).out("continue -> ");
-        node->base.location->dump(out);
-    }
-
-    func dump_break_stmt(self, node: ast_break_stmt*, out: io) {
-        out.out(self->indent.c_str).out("break -> ");
-        node->base.location->dump(out);
-    }
-
     func dump_impl(self, node: ast_impl*, out: io) {
         out.out(self->indent.c_str).out("impl [")
            .out(node->name.c_str).out("] -> ");
@@ -280,6 +342,75 @@ impl ast_dumper {
             self->dump(node->methods.data[index], out);
         }
         self->pop_indent();
+    }
+
+    func dump_use_stmt(self, node: ast_use_stmt*, out: io) {
+        out.out(self->indent.c_str).out("use -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+
+        out.out(self->indent.c_str).out("module\n");
+        self->push_indent();
+        for (var index = 0 => u64; index < node->module_path.size; index += 1 => u64) {
+            self->dump(node->module_path.data[index], out);
+        }
+        self->pop_indent();
+
+        if (node->import_symbol.size == 0 => u64) {
+            out.out(self->indent.c_str).out("import-all\n");
+        } else {
+            out.out(self->indent.c_str).out("import-specified\n");
+            self->push_indent();
+            for (var index = 0 => u64; index < node->import_symbol.size; index += 1 => u64) {
+                self->dump(node->import_symbol.data[index], out);
+            }
+            self->pop_indent();
+        }
+
+        self->pop_indent();
+    }
+
+    func dump_definition(self, node: ast_definition*, out: io) {
+        out.out(self->indent.c_str).out("definition [")
+           .out(node->name.c_str).out("] -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        if (node->type => i8* != nil) {
+            self->dump_type_def(node->type, out);
+        }
+        self->dump(node->value, out);
+        self->pop_indent();
+    }
+
+    func dump_in_stmt_expr(self, node: ast_in_stmt_expr*, out: io) {
+        out.out(self->indent.c_str).out("in-stmt-expr -> ");
+        node->base.location->dump(out);
+        self->push_indent();
+        self->dump(node->value, out);
+        self->pop_indent();
+    }
+
+    func dump_ret_stmt(self, node: ast_ret_stmt*, out: io) {
+        out.out(self->indent.c_str).out("ret -> ");
+        node->base.location->dump(out);
+
+        if (node->value => i8* != nil) {
+            self->push_indent();
+            self->dump(node->value, out);
+            self->pop_indent();
+        }
+    }
+
+    func dump_continue_stmt(self, node: ast_continue_stmt*, out: io) {
+        out.out(self->indent.c_str).out("continue -> ");
+        node->base.location->dump(out);
+    }
+
+    func dump_break_stmt(self, node: ast_break_stmt*, out: io) {
+        out.out(self->indent.c_str).out("break -> ");
+        node->base.location->dump(out);
     }
 
     func dump_code_block(self, node: ast_code_block*, out: io) {
