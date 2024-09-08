@@ -181,9 +181,89 @@ impl parser {
         return res;
     }
 
+    func initializer_gen(self) -> ast_initializer* {
+        var res = ast_initializer::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_lbrace);
+        while (!self->lookahead(tok_kind::tok_rbrace)) {
+            var pair_node = ast_init_pair::new(self->this_tok_loc_copy());
+            pair_node->field = self->identifier_gen();
+            self->match_token(tok_kind::tok_colon);
+            pair_node->value = self->calculation_gen();
+            res->pairs.push(pair_node => ast*);
+            if (self->lookahead(tok_kind::tok_comma)) {
+                self->match_token(tok_kind::tok_comma);
+            } else {
+                break;
+            }
+        }
+        self->match_token(tok_kind::tok_rbrace);
+        return res;
+    }
+
     func call_gen(self) -> ast_call* {
-        # TODO: unfinished
-        return ast_null::new() => ast_call*;
+        var res = ast_call::new(self->this_tok_loc_copy());
+        res->head = self->identifier_gen();
+        while (self->lookahead(tok_kind::tok_lparen) ||
+               self->lookahead(tok_kind::tok_lbracket) ||
+               self->lookahead(tok_kind::tok_lbrace) ||
+               self->lookahead(tok_kind::tok_dot) ||
+               self->lookahead(tok_kind::tok_arrow) ||
+               self->lookahead(tok_kind::tok_coloncolon)) {
+            match (self->toks->get(self->index).kind) {
+                tok_kind::tok_lparen => {
+                    self->match_token(tok_kind::tok_lparen);
+                    var call_func = ast_call_func_args::new(self->this_tok_loc_copy());
+                    while (!self->lookahead(tok_kind::tok_rparen)) {
+                        call_func->args.push(self->calculation_gen());
+                        if (self->lookahead(tok_kind::tok_comma)) {
+                            self->match_token(tok_kind::tok_comma);
+                        } else {
+                            break;
+                        }
+                    }
+                    self->match_token(tok_kind::tok_rparen);
+                    res->chain.push(call_func => ast*);
+                }
+                tok_kind::tok_lbracket => {
+                    self->match_token(tok_kind::tok_lbracket);
+                    var call_index = ast_call_index::new(self->this_tok_loc_copy());
+                    call_index->index = self->calculation_gen();
+                    self->match_token(tok_kind::tok_rbracket);
+                    res->chain.push(call_index => ast*);
+                }
+                tok_kind::tok_lbrace => {
+                    res->chain.push(self->initializer_gen() => ast*);
+                }
+                tok_kind::tok_dot => {
+                    self->match_token(tok_kind::tok_dot);
+                    var get_field = ast_get_field::new(
+                        self->this_tok_loc_copy(),
+                        self->toks->get(self->index).content
+                    );
+                    self->match_token(tok_kind::tok_id);
+                    res->chain.push(get_field => ast*);
+                }
+                tok_kind::tok_arrow => {
+                    self->match_token(tok_kind::tok_arrow);
+                    var ptr_get_field = ast_ptr_get_field::new(
+                        self->this_tok_loc_copy(),
+                        self->toks->get(self->index).content
+                    );
+                    self->match_token(tok_kind::tok_id);
+                    res->chain.push(ptr_get_field => ast*);
+                }
+                tok_kind::tok_coloncolon => {
+                    self->match_token(tok_kind::tok_coloncolon);
+                    var call_path = ast_call_path::new(
+                        self->this_tok_loc_copy(),
+                        self->toks->get(self->index).content
+                    );
+                    self->match_token(tok_kind::tok_id);
+                    res->chain.push(call_path => ast*);
+                }
+            }
+        }
+        return res;
     }
 
     func nil_gen(self) -> ast_nil_literal* {
@@ -299,6 +379,7 @@ impl parser {
         var begin_loc = self->this_tok_loc();
         var result = self->scalar_gen();
         if (self->lookahead(tok_kind::tok_wide_arrow)) {
+            self->match_token(tok_kind::tok_wide_arrow);
             var type_cast_node = ast_type_convert::new(begin_loc->copy());
             type_cast_node->from = result;
             type_cast_node->to = self->type_def_gen();
@@ -406,7 +487,7 @@ impl parser {
 
     func compare_gen(self) -> ast* {
         var begin_loc = self->this_tok_loc();
-        var res = self->type_convert_gen();
+        var res = self->bitwise_or_gen();
         while (self->lookahead(tok_kind::tok_cmp_eq) ||
                self->lookahead(tok_kind::tok_neq) ||
                self->lookahead(tok_kind::tok_less) ||
@@ -426,15 +507,91 @@ impl parser {
             var binary = ast_binary_operator::new(begin_loc->copy(), kind);
             self->match_token(self->toks->get(self->index).kind);
             binary->left = res;
-            binary->right = self->type_convert_gen();
+            binary->right = self->bitwise_or_gen();
             res = binary => ast*;
         }
         return res;
     }
 
+    func not_expression_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        if (!self->lookahead(tok_kind::tok_op_not)) {
+            return self->compare_gen();
+        }
+        self->match_token(tok_kind::tok_op_not);
+        var value = self->compare_gen();
+        var res = ast_unary_operator::new(begin_loc->copy(), unary_kind::lnot);
+        res->value = value;
+        return res => ast*;
+    }
+
+    func and_expression_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        var res = self->not_expression_gen();
+        if (!self->lookahead(tok_kind::tok_op_and)) {
+            return res;
+        }
+        var binary = ast_binary_operator::new(
+            begin_loc->copy(),
+            binary_kind::cmpand
+        );
+        binary->left = res;
+        self->match_token(tok_kind::tok_op_and);
+        binary->right = self->and_expression_gen();
+        return binary => ast*;
+    }
+
+    func or_expression_gen(self) -> ast* {
+        var begin_loc = self->this_tok_loc();
+        var res = self->and_expression_gen();
+        if (!self->lookahead(tok_kind::tok_op_or)) {
+            return res;
+        }
+        var binary = ast_binary_operator::new(
+            begin_loc->copy(),
+            binary_kind::cmpor
+        );
+        binary->left = res;
+        self->match_token(tok_kind::tok_op_or);
+        binary->right = self->or_expression_gen();
+        return binary => ast*;
+    }
+
     func calculation_gen(self) -> ast* {
-        # TODO: unfinished
-        return ast_null::new() => ast*;
+        var begin_loc = self->this_tok_loc();
+        var res = self->or_expression_gen();
+        if (res->kind != ast_kind::ast_call) {
+            return res;
+        }
+        # if is call node, check assignment syntax
+        if (self->lookahead(tok_kind::tok_addeq) ||
+            self->lookahead(tok_kind::tok_subeq) ||
+            self->lookahead(tok_kind::tok_muleq) ||
+            self->lookahead(tok_kind::tok_diveq) ||
+            self->lookahead(tok_kind::tok_remeq) ||
+            self->lookahead(tok_kind::tok_bit_and_eq) ||
+            self->lookahead(tok_kind::tok_bit_xor_eq) ||
+            self->lookahead(tok_kind::tok_bit_or_eq) ||
+            self->lookahead(tok_kind::tok_eq)) {
+            var assignment = ast_assignment::new(begin_loc->copy());
+            assignment->left = res => ast_call*;
+            match (self->toks->get(self->index).kind) {
+                tok_kind::tok_addeq => assignment->kind = assignment_kind::addeq;
+                tok_kind::tok_subeq => assignment->kind = assignment_kind::subeq;
+                tok_kind::tok_muleq => assignment->kind = assignment_kind::muleq;
+                tok_kind::tok_diveq => assignment->kind = assignment_kind::diveq;
+                tok_kind::tok_remeq => assignment->kind = assignment_kind::remeq;
+                tok_kind::tok_bit_and_eq => assignment->kind = assignment_kind::andeq;
+                tok_kind::tok_bit_xor_eq => assignment->kind = assignment_kind::xoreq;
+                tok_kind::tok_bit_or_eq => assignment->kind = assignment_kind::oreq;
+                tok_kind::tok_eq => assignment->kind = assignment_kind::eq;
+            }
+            self->match_token(self->toks->get(self->index).kind);
+            assignment->right = self->calculation_gen();
+            return assignment => ast*;
+        }
+
+        return res;
     }
 
     func type_def_gen(self) -> ast_type_def* {
@@ -579,13 +736,7 @@ impl parser {
             self->match_token(tok_kind::tok_arrow);
             res->return_type = self->type_def_gen();
         }
-        res->body = ast_code_block::new(self->this_tok_loc_copy());
-        self->match_token(tok_kind::tok_lbrace);
-        while (!self->lookahead(tok_kind::tok_rbrace)) {
-            # res->body->stmts.push(self->stmt_gen() => ast*);
-            self->next(); # TODO: parse stmt
-        }
-        self->match_token(tok_kind::tok_rbrace);
+        res->body = self->block_gen(false);
         return res;
     }
 
@@ -602,6 +753,183 @@ impl parser {
             res->methods.push(self->function_decl_gen() => ast*);
         }
         self->match_token(tok_kind::tok_rbrace);
+        return res;
+    }
+
+    func block_gen(self, flag_allow_single_stmt_without_brace: bool) -> ast_code_block* {
+        var res = ast_code_block::new(self->this_tok_loc_copy());
+        if (flag_allow_single_stmt_without_brace &&
+            !self->lookahead(tok_kind::tok_lbrace)) {
+            res->stmts.push(self->stmt_gen());
+            return res;
+        }
+        
+        self->match_token(tok_kind::tok_lbrace);
+        while (!self->lookahead(tok_kind::tok_rbrace)) {
+            res->stmts.push(self->stmt_gen());
+        }
+        self->match_token(tok_kind::tok_rbrace);
+        return res;
+    }
+}
+
+impl parser {
+    func stmt_gen(self) -> ast* {
+        match (self->toks->get(self->index).kind) {
+            tok_kind::tok_var => return self->definition_gen() => ast*;
+            tok_kind::tok_lparen => return self->in_stmt_expr_gen() => ast*;
+            tok_kind::tok_nil => return self->in_stmt_expr_gen() => ast*;
+            tok_kind::tok_num => return self->in_stmt_expr_gen() => ast*;
+            tok_kind::tok_str => return self->in_stmt_expr_gen() => ast*;
+            tok_kind::tok_id => return self->in_stmt_expr_gen() => ast*;
+            tok_kind::tok_if => return self->cond_stmt_gen() => ast*;
+            tok_kind::tok_match => return self->match_stmt_gen() => ast*;
+            tok_kind::tok_while => return self->while_stmt_gen() => ast*;
+            tok_kind::tok_for => return self->for_stmt_gen() => ast*;
+            tok_kind::tok_return => return self->return_gen() => ast*;
+            tok_kind::tok_continue => return self->continue_gen() => ast*;
+            tok_kind::tok_break => return self->break_gen() => ast*;
+            tok_kind::tok_semi => {
+                self->match_token(tok_kind::tok_semi);
+                return ast_null::new() => ast*;
+            }
+        }
+
+        self->err->error(
+            self->toks->get(self->index).location,
+            "expected statement here."
+        );
+        self->next();
+        return ast_null::new() => ast*;
+    }
+
+    func definition_gen(self) -> ast_definition* {
+        var begin_loc = self->this_tok_loc_copy();
+        self->match_token(tok_kind::tok_var);
+        var res = ast_definition::new(
+            begin_loc,
+            self->toks->get(self->index).content
+        );
+        self->match_token(tok_kind::tok_id);
+        if (self->lookahead(tok_kind::tok_colon)) {
+            self->match_token(tok_kind::tok_colon);
+            res->type = self->type_def_gen();
+        }
+        self->match_token(tok_kind::tok_eq);
+        res->value = self->calculation_gen();
+        self->match_token(tok_kind::tok_semi);
+        return res;
+    }
+
+    func cond_stmt_gen(self) -> ast_cond_stmt* {
+        var res = ast_cond_stmt::new(self->this_tok_loc_copy());
+        
+        var new_if = ast_if_stmt::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_if);
+        self->match_token(tok_kind::tok_lparen);
+        new_if->condition = self->calculation_gen();
+        self->match_token(tok_kind::tok_rparen);
+        new_if->body = self->block_gen(true);
+        res->stmts.push(new_if => ast*);
+
+        while (self->lookahead(tok_kind::tok_elsif)) {
+            var new_elsif = ast_if_stmt::new(self->this_tok_loc_copy());
+            self->match_token(tok_kind::tok_elsif);
+            self->match_token(tok_kind::tok_lparen);
+            new_elsif->condition = self->calculation_gen();
+            self->match_token(tok_kind::tok_rparen);
+            new_elsif->body = self->block_gen(true);
+            res->stmts.push(new_elsif => ast*);
+        }
+
+        if (self->lookahead(tok_kind::tok_else)) {
+            var new_else = ast_if_stmt::new(self->this_tok_loc_copy());
+            self->match_token(tok_kind::tok_else);
+            new_else->body = self->block_gen(true);
+            res->stmts.push(new_else => ast*);
+        }
+
+        return res;
+    }
+
+    func match_stmt_gen(self) -> ast_match_stmt* {
+        var res = ast_match_stmt::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_match);
+        self->match_token(tok_kind::tok_lparen);
+        res->value = self->calculation_gen();
+        self->match_token(tok_kind::tok_rparen);
+
+        self->match_token(tok_kind::tok_lbrace);
+        while(!self->lookahead(tok_kind::tok_rbrace)) {
+            var new_case = ast_match_case::new(self->this_tok_loc_copy());
+            new_case->pattern = self->call_gen();
+            self->match_token(tok_kind::tok_wide_arrow);
+            new_case->body = self->block_gen(true);
+            res->cases.push(new_case => ast*);
+        }
+        self->match_token(tok_kind::tok_rbrace);
+        return res;
+    }
+
+    func while_stmt_gen(self) -> ast_while_stmt* {
+        var res = ast_while_stmt::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_while);
+        self->match_token(tok_kind::tok_lparen);
+        res->condition = self->calculation_gen();
+        self->match_token(tok_kind::tok_rparen);
+        res->body = self->block_gen(true);
+        return res;
+    }
+
+    func for_stmt_gen(self) -> ast_for_stmt* {
+        var res = ast_for_stmt::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_for);
+        self->match_token(tok_kind::tok_lparen);
+        if (self->lookahead(tok_kind::tok_var)) {
+            res->init = self->definition_gen();
+        } else {
+            self->match_token(tok_kind::tok_semi);
+        }
+        if (!self->lookahead(tok_kind::tok_semi)) {
+            res->condition = self->calculation_gen();
+        }
+        self->match_token(tok_kind::tok_semi);
+        if (!self->lookahead(tok_kind::tok_rparen)) {
+            res->update = self->calculation_gen();
+        }
+        self->match_token(tok_kind::tok_rparen);
+        res->body = self->block_gen(true);
+        return res;
+    }
+
+    func in_stmt_expr_gen(self) -> ast_in_stmt_expr* {
+        var res = ast_in_stmt_expr::new(self->this_tok_loc_copy());
+        res->value = self->calculation_gen();
+        self->match_token(tok_kind::tok_semi);
+        return res;
+    }
+
+    func return_gen(self) -> ast_ret_stmt* {
+        var res = ast_ret_stmt::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_return);
+        if (!self->lookahead(tok_kind::tok_semi)) {
+            res->value = self->calculation_gen();
+        }
+        self->match_token(tok_kind::tok_semi);
+        return res;
+    }
+
+    func continue_gen(self) -> ast_continue_stmt* {
+        var res = ast_continue_stmt::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_continue);
+        self->match_token(tok_kind::tok_semi);
+        return res;
+    }
+
+    func break_gen(self) -> ast_break_stmt* {
+        var res = ast_break_stmt::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_break);
+        self->match_token(tok_kind::tok_semi);
         return res;
     }
 }

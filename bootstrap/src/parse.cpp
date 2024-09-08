@@ -595,10 +595,8 @@ definition* parse::definition_gen() {
         match(tok::tk_colon);
         result->set_type(type_gen());
     }
-    if (look_ahead(tok::tk_eq)) {
-        match(tok::tk_eq);
-        result->set_init_value(calculation_gen());
-    }
+    match(tok::tk_eq);
+    result->set_init_value(calculation_gen());
     match(tok::tk_semi);
     update_location(result);
     return result;
@@ -758,12 +756,14 @@ ret_stmt* parse::return_gen() {
 continue_stmt* parse::continue_gen() {
     auto result = new continue_stmt(toks[ptr].loc);
     match(tok::tk_cont);
+    match(tok::tk_semi);
     return result;
 }
 
 break_stmt* parse::break_gen() {
     auto result = new break_stmt(toks[ptr].loc);
     match(tok::tk_brk);
+    match(tok::tk_semi);
     return result;
 }
 
