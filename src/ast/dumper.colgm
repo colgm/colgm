@@ -52,10 +52,18 @@ impl ast_dumper {
                 self->dump_char_literal(node => ast_char_literal*, out);
             ast_kind::ast_bool_literal =>
                 self->dump_bool_literal(node => ast_bool_literal*, out);
+            ast_kind::ast_call_index =>
+                self->dump_call_index(node => ast_call_index*, out);
+            ast_kind::ast_call_func_args =>
+                self->dump_call_func_args(node => ast_call_func_args*, out);
             ast_kind::ast_get_field =>
                 self->dump_get_field(node => ast_get_field*, out);
             ast_kind::ast_ptr_get_field =>
                 self->dump_ptr_get_field(node => ast_ptr_get_field*, out);
+            ast_kind::ast_init_pair =>
+                self->dump_init_pair(node => ast_init_pair*, out);
+            ast_kind::ast_initializer =>
+                self->dump_initializer(node => ast_initializer*, out);
             ast_kind::ast_call_path =>
                 self->dump_call_path(node => ast_call_path*, out);
             ast_kind::ast_call => self->dump_call(node => ast_call*, out);
@@ -83,6 +91,18 @@ impl ast_dumper {
                 self->dump_use_stmt(node => ast_use_stmt*, out);
             ast_kind::ast_definition =>
                 self->dump_definition(node => ast_definition*, out);
+            ast_kind::ast_cond_stmt =>
+                self->dump_cond_stmt(node => ast_cond_stmt*, out);
+            ast_kind::ast_if_stmt =>
+                self->dump_if_stmt(node => ast_if_stmt*, out);
+            ast_kind::ast_match_case =>
+                self->dump_match_case(node => ast_match_case*, out);
+            ast_kind::ast_match_stmt =>
+                self->dump_match_stmt(node => ast_match_stmt*, out);
+            ast_kind::ast_while_stmt =>
+                self->dump_while_stmt(node => ast_while_stmt*, out);
+            ast_kind::ast_for_stmt =>
+                self->dump_for_stmt(node => ast_for_stmt*, out);
             ast_kind::ast_in_stmt_expr =>
                 self->dump_in_stmt_expr(node => ast_in_stmt_expr*, out);
             ast_kind::ast_ret_stmt =>
@@ -117,8 +137,13 @@ impl ast_dumper {
 
     func dump_unary_operator(self, node: ast_unary_operator*, out: io) {
         out.out(self->indent.c_str)
-           .out("unary-operator: [")
-           .out("] -> ");
+           .out("unary-operator [");
+        match (node->kind) {
+            unary_kind::neg => out.out("-");
+            unary_kind::bnot => out.out("~");
+            unary_kind::lnot => out.out("!");
+        }
+        out.out("] -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -128,8 +153,26 @@ impl ast_dumper {
 
     func dump_binary_operator(self, node: ast_binary_operator*, out: io) {
         out.out(self->indent.c_str)
-           .out("binary-operator: [")
-           .out("] -> ");
+           .out("binary-operator [");
+        match (node->kind) {
+            binary_kind::add => out.out("+");
+            binary_kind::sub => out.out("-");
+            binary_kind::mul => out.out("*");
+            binary_kind::div => out.out("/");
+            binary_kind::rem => out.out("%");
+            binary_kind::cmpeq => out.out("==");
+            binary_kind::cmpne => out.out("!=");
+            binary_kind::less => out.out("<");
+            binary_kind::leq => out.out("<=");
+            binary_kind::grt => out.out(">");
+            binary_kind::geq => out.out(">=");
+            binary_kind::cmpand => out.out("&&");
+            binary_kind::cmpor => out.out("||");
+            binary_kind::band => out.out("&");
+            binary_kind::bor => out.out("|");
+            binary_kind::bxor => out.out("^");
+        }
+        out.out("] -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -198,6 +241,25 @@ impl ast_dumper {
         node->base.location->dump(out);
     }
 
+    func dump_call_index(self, node: ast_call_index*, out: io) {
+        out.out(self->indent.c_str).out("call-index -> ");
+        node->base.location->dump(out);
+        self->push_indent();
+        self->dump(node->index, out);
+        self->pop_indent();
+    }
+
+    func dump_call_func_args(self, node: ast_call_func_args*, out: io) {
+        out.out(self->indent.c_str).out("call-func-args -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        for (var index = 0 => u64; index < node->args.size; index += 1 => u64) {
+            self->dump(node->args.data[index], out);
+        }
+        self->pop_indent();
+    }
+
     func dump_get_field(self, node: ast_get_field*, out: io) {
         out.out(self->indent.c_str).out("get-field [")
            .out(node->name.c_str).out("] -> ");
@@ -208,6 +270,27 @@ impl ast_dumper {
         out.out(self->indent.c_str).out("ptr-get-field [")
            .out(node->name.c_str).out("] -> ");
         node->base.location->dump(out);
+    }
+
+    func dump_init_pair(self, node: ast_init_pair*, out: io) {
+        out.out(self->indent.c_str).out("init-pair -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump_identifier(node->field, out);
+        self->dump(node->value, out);
+        self->pop_indent();
+    }
+
+    func dump_initializer(self, node: ast_initializer*, out: io) {
+        out.out(self->indent.c_str).out("initializer -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        for (var index = 0 => u64; index < node->pairs.size; index += 1 => u64) {
+            self->dump(node->pairs.data[index], out);
+        }
+        self->pop_indent();
     }
 
     func dump_call_path(self, node: ast_call_path*, out: io) {
@@ -229,7 +312,19 @@ impl ast_dumper {
     }
 
     func dump_assignment(self, node: ast_assignment*, out: io) {
-        out.out(self->indent.c_str).out("assignment -> ");
+        out.out(self->indent.c_str).out("assignment [");
+        match (node->kind) {
+            assignment_kind::eq => out.out("=");
+            assignment_kind::addeq => out.out("+=");
+            assignment_kind::subeq => out.out("-=");
+            assignment_kind::muleq => out.out("*=");
+            assignment_kind::diveq => out.out("/=");
+            assignment_kind::remeq => out.out("%=");
+            assignment_kind::andeq => out.out("&=");
+            assignment_kind::xoreq => out.out("^=");
+            assignment_kind::oreq => out.out("|=");
+        }
+        out.out("]-> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -381,6 +476,78 @@ impl ast_dumper {
             self->dump_type_def(node->type, out);
         }
         self->dump(node->value, out);
+        self->pop_indent();
+    }
+
+    func dump_cond_stmt(self, node: ast_cond_stmt*, out: io) {
+        out.out(self->indent.c_str).out("cond-stmt -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        for (var index = 0 => u64; index < node->stmts.size; index += 1 => u64) {
+            self->dump(node->stmts.data[index], out);
+        }
+        self->pop_indent();
+    }
+
+    func dump_if_stmt(self, node: ast_if_stmt*, out: io) {
+        out.out(self->indent.c_str).out("if -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        if (node->condition => i8* != nil) {
+            self->dump(node->condition, out);
+        }
+        self->dump_code_block(node->body, out);
+        self->pop_indent();
+    }
+
+    func dump_match_case(self, node: ast_match_case*, out: io) {
+        out.out(self->indent.c_str).out("match-case -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump_call(node->pattern, out);
+        self->dump_code_block(node->body, out);
+        self->pop_indent();
+    }
+
+    func dump_match_stmt(self, node: ast_match_stmt*, out: io) {
+        out.out(self->indent.c_str).out("match -> ");
+        node->base.location->dump(out);
+        self->push_indent();
+        self->dump(node->value, out);
+        for (var index = 0 => u64; index < node->cases.size; index += 1 => u64) {
+            self->dump(node->cases.data[index], out);
+        }
+        self->pop_indent();
+    }
+
+    func dump_while_stmt(self, node: ast_while_stmt*, out: io) {
+        out.out(self->indent.c_str).out("while -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        self->dump(node->condition, out);
+        self->dump_code_block(node->body, out);
+        self->pop_indent();
+    }
+
+    func dump_for_stmt(self, node: ast_for_stmt*, out: io) {
+        out.out(self->indent.c_str).out("for -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        if (node->init => i8* != nil) {
+            self->dump_definition(node->init, out);
+        }
+        if (node->condition => i8* != nil) {
+            self->dump(node->condition, out);
+        }
+        if (node->update => i8* != nil) {
+            self->dump(node->update, out);
+        }
+        self->dump_code_block(node->body, out);
         self->pop_indent();
     }
 
