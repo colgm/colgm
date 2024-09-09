@@ -6,8 +6,8 @@ This is the main repository for Colgm compiler.
 
 ## Repo Content
 
-- [bootstrap](./bootstrap/README.md): still under development
-- [src](./src/README.md): for bootstrapped compiler, not available now
+- [bootstrap](./bootstrap/README.md) : available now
+- [src](./src/README.md) : for bootstrapped compiler, not available now
 
 ## Bootstrapping Compiler
 

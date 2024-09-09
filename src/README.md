@@ -1,6 +1,6 @@
 # <img src="../doc/colgm.svg" height="50px"/> Colgm Compiler
 
-Work in progress.
+Work in progress. Lexer and parser are done.
 
 ## Build
 

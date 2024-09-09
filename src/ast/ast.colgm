@@ -99,9 +99,160 @@ impl ast {
     }
 
     func delete(self) {
-        io::stderr().out("free ast ").out_i64(self => i64).endln();
         self->location->delete();
         free(self->location => i8*);
+
+        match (self->kind) {
+            ast_kind::ast_null => return;
+            ast_kind::ast_root => {
+                var tmp = self => root*;
+                tmp->delete();
+            }
+            ast_kind::ast_unary_operator => {
+                var tmp = self => ast_unary_operator*;
+                tmp->delete();
+            }
+            ast_kind::ast_binary_operator => {
+                var tmp = self => ast_binary_operator*;
+                tmp->delete();
+            }
+            ast_kind::ast_type_convert => {
+                var tmp = self => ast_type_convert*;
+                tmp->delete();
+            }
+            ast_kind::ast_identifier => {
+                var tmp = self => ast_identifier*;
+                tmp->delete();
+            }
+            ast_kind::ast_nil_literal => return;
+            ast_kind::ast_number_literal => {
+                var tmp = self => ast_number_literal*;
+                tmp->delete();
+            }
+            ast_kind::ast_string_literal => {
+                var tmp = self => ast_string_literal*;
+                tmp->delete();
+            }
+            ast_kind::ast_char_literal => {
+                var tmp = self => ast_char_literal*;
+                tmp->delete();
+            }
+            ast_kind::ast_bool_literal => return;
+            ast_kind::ast_call_index => {
+                var tmp = self => ast_call_index*;
+                tmp->delete();
+            }
+            ast_kind::ast_call_func_args => {
+                var tmp = self => ast_call_func_args*;
+                tmp->delete();
+            }
+            ast_kind::ast_get_field => {
+                var tmp = self => ast_get_field*;
+                tmp->delete();
+            }
+            ast_kind::ast_init_pair => {
+                var tmp = self => ast_init_pair*;
+                tmp->delete();
+            }
+            ast_kind::ast_initializer => {
+                var tmp = self => ast_initializer*;
+                tmp->delete();
+            }
+            ast_kind::ast_call_path => {
+                var tmp = self => ast_call_path*;
+                tmp->delete();
+            }
+            ast_kind::ast_call => {
+                var tmp = self => ast_call*;
+                tmp->delete();
+            }
+            ast_kind::ast_assignment => {
+                var tmp = self => ast_assignment*;
+                tmp->delete();
+            }
+            ast_kind::ast_type_def => {
+                var tmp = self => ast_type_def*;
+                tmp->delete();
+            }
+            ast_kind::ast_enum_member => {
+                var tmp = self => ast_enum_member*;
+                tmp->delete();
+            }
+            ast_kind::ast_enum_decl => {
+                var tmp = self => ast_enum_decl*;
+                tmp->delete();
+            }
+            ast_kind::ast_struct_field => {
+                var tmp = self =>ast_struct_field*;
+                tmp->delete();
+            }
+            ast_kind::ast_struct_decl => {
+                var tmp = self => ast_struct_decl*;
+                tmp->delete();
+            }
+            ast_kind::ast_param => {
+                var tmp = self => ast_param*;
+                tmp->delete();
+            }
+            ast_kind::ast_param_list => {
+                var tmp = self => ast_param_list*;
+                tmp->delete();
+            }
+            ast_kind::ast_func_decl => {
+                var tmp = self => ast_func_decl*;
+                tmp->delete();
+            }
+            ast_kind::ast_impl => {
+                var tmp = self => ast_impl*;
+                tmp->delete();
+            }
+            ast_kind::ast_use_stmt => {
+                var tmp = self => ast_use_stmt*;
+                tmp->delete();
+            }
+            ast_kind::ast_definition => {
+                var tmp = self => ast_definition*;
+                tmp->delete();
+            }
+            ast_kind::ast_cond_stmt => {
+                var tmp = self => ast_cond_stmt*;
+                tmp->delete();
+            }
+            ast_kind::ast_if_stmt => {
+                var tmp = self => ast_if_stmt*;
+                tmp->delete();
+            }
+            ast_kind::ast_match_case => {
+                var tmp = self => ast_match_case*;
+                tmp->delete();
+            }
+            ast_kind::ast_match_stmt => {
+                var tmp = self => ast_match_stmt*;
+                tmp->delete();
+            }
+            ast_kind::ast_while_stmt => {
+                var tmp = self => ast_while_stmt*;
+                tmp->delete();
+            }
+            ast_kind::ast_for_stmt => {
+                var tmp = self => ast_for_stmt*;
+                tmp->delete();
+            }
+            ast_kind::ast_in_stmt_expr => {
+                var tmp = self => ast_in_stmt_expr*;
+                tmp->delete();
+            }
+            ast_kind::ast_ret_stmt => {
+                var tmp = self => ast_ret_stmt*;
+                tmp->delete();
+            }
+            ast_kind::ast_continue_stmt => return;
+            ast_kind::ast_break_stmt => return;
+            ast_kind::ast_code_block => {
+                var tmp = self => ast_code_block*;
+                tmp->delete();
+            }
+        }
     }
 }
 
@@ -120,13 +271,14 @@ impl ptr_vec {
     }
 
     func delete(self) {
-        self->size = 0 => u64;
-        self->capacity = 0 => u64;
         for (var i = 0 => u64; i < self->size; i += 1 => u64) {
             self->data[i]->delete();
             free(self->data[i] => i8*);
         }
         free(self->data => i8*);
+        self->size = 0 => u64;
+        self->capacity = 0 => u64;
+        self->data = nil => ast**;
     }
 
     func expand(self) {
@@ -168,10 +320,6 @@ impl ast_null {
         var res = ast_null::__alloc__();
         return res;
     }
-
-    func delete(self) {
-        self->base.delete();
-    }
 }
 
 struct root {
@@ -190,7 +338,6 @@ impl root {
     }
 
     func delete(self) {
-        self->base.delete();
         self->imports.delete();
         self->decls.delete();
     }
@@ -214,7 +361,6 @@ impl ast_unary_operator {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->value => i8* != nil) {
             self->value->delete();
         }
@@ -239,7 +385,6 @@ impl ast_binary_operator {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->left => i8* != nil) {
             self->left->delete();
         }
@@ -265,7 +410,6 @@ impl ast_type_convert {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->from => i8* != nil) {
             self->from->delete();
         }
@@ -289,7 +433,6 @@ impl ast_identifier {
     }
 
     func delete(self) {
-        self->base.delete();
         self->name.delete();
     }
 }
@@ -303,10 +446,6 @@ impl ast_nil_literal {
         var res = ast_nil_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_nil_literal, loc);
         return res;
-    }
-
-    func delete(self) {
-        self->base.delete();
     }
 }
 
@@ -324,7 +463,6 @@ impl ast_number_literal {
     }
 
     func delete(self) {
-        self->base.delete();
         self->literal.delete();
     }
 }
@@ -343,7 +481,6 @@ impl ast_string_literal {
     }
 
     func delete(self) {
-        self->base.delete();
         self->literal.delete();
     }
 }
@@ -362,7 +499,6 @@ impl ast_char_literal {
     }
 
     func delete(self) {
-        self->base.delete();
         self->literal.delete();
     }
 }
@@ -378,10 +514,6 @@ impl ast_bool_literal {
         res->base = ast::instance(ast_kind::ast_bool_literal, loc);
         res->flag = flag;
         return res;
-    }
-
-    func delete(self) {
-        self->base.delete();
     }
 }
 
@@ -399,7 +531,6 @@ impl ast_call_index {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->index => i8* != nil) {
             self->index->delete();
         }
@@ -420,7 +551,6 @@ impl ast_call_func_args {
     }
 
     func delete(self) {
-        self->base.delete();
         self->args.delete();
     }
 }
@@ -439,7 +569,6 @@ impl ast_get_field {
     }
 
     func delete(self) {
-        self->base.delete();
         self->name.delete();
     }
 }
@@ -458,7 +587,6 @@ impl ast_ptr_get_field {
     }
 
     func delete(self) {
-        self->base.delete();
         self->name.delete();
     }
 }
@@ -479,7 +607,6 @@ impl ast_init_pair {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->field => i8* != nil) {
             self->field->delete();
         }
@@ -503,7 +630,6 @@ impl ast_initializer {
     }
 
     func delete(self) {
-        self->base.delete();
         self->pairs.delete();
     }
 }
@@ -522,7 +648,6 @@ impl ast_call_path {
     }
 
     func delete(self) {
-        self->base.delete();
         self->name.delete();
     }
 }
@@ -543,7 +668,6 @@ impl ast_call {
     }
 
     func delete(self) {
-        self->base.delete();
         if(self->head => i8* != nil) {
             self->head->delete();
         }
@@ -568,7 +692,6 @@ impl ast_assignment {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->left => i8* != nil) {
             self->left->delete();
         }
@@ -596,7 +719,6 @@ impl ast_type_def {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->name => i8* != nil) {
             self->name->delete();
         }
@@ -619,7 +741,6 @@ impl ast_enum_member {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->name => i8* != nil) {
             self->name->delete();
         }
@@ -645,7 +766,6 @@ impl ast_enum_decl {
     }
 
     func delete(self) {
-       self->base.delete();
        self->members.delete();
        self->name.delete();
     }
@@ -667,7 +787,6 @@ impl ast_struct_field {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->name => i8* != nil) {
             self->name->delete();
         }
@@ -693,7 +812,6 @@ impl ast_struct_decl {
     }
 
     func delete(self) {
-        self->base.delete();
         self->fields.delete();
         self->name.delete();
     }
@@ -715,7 +833,6 @@ impl ast_param {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->name => i8* != nil) {
             self->name->delete();
         }
@@ -739,7 +856,6 @@ impl ast_param_list {
     }
 
     func delete(self) {
-        self->base.delete();
         self->params.delete();
    }
 }
@@ -764,7 +880,6 @@ impl ast_func_decl {
     }
 
     func delete(self) {
-        self->base.delete();
         self->name.delete();
         if (self->params => i8* != nil) {
             self->params->delete();
@@ -794,8 +909,8 @@ impl ast_impl {
     }
 
     func delete(self) {
-        self->base.delete();
         self->name.delete();
+        self->methods.delete();
     }
 }
 
@@ -814,6 +929,11 @@ impl ast_use_stmt {
         res->module_path.init();
         res->import_symbol.init();
         return res;
+    }
+
+    func delete(self) {
+        self->module_path.delete();
+        self->import_symbol.delete();
     }
 }
 
@@ -835,7 +955,6 @@ impl ast_definition {
     }
 
     func delete(self) {
-        self->base.delete();
         self->name.delete();
         if (self->type => i8* != nil) {
             self->type->delete();
@@ -860,7 +979,6 @@ impl ast_cond_stmt {
     }
 
     func delete(self) {
-        self->base.delete();
         self->stmts.delete();
     }
 }
@@ -881,7 +999,6 @@ impl ast_if_stmt {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->condition => i8* != nil) {
             self->condition->delete();
         }
@@ -907,7 +1024,6 @@ impl ast_match_case {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->pattern => i8* != nil) {
             self->pattern->delete();
         }
@@ -933,7 +1049,6 @@ impl ast_match_stmt {
     }
 
     func delete(self) {
-        self->base.delete();
         self->value->delete();
         self->cases.delete();
     }
@@ -955,7 +1070,6 @@ impl ast_while_stmt {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->condition => i8* != nil) {
             self->condition->delete();
         }
@@ -985,7 +1099,6 @@ impl ast_for_stmt {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->init => i8* != nil) {
             self->init->delete();
         }
@@ -1015,7 +1128,6 @@ impl ast_in_stmt_expr {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->value => i8* != nil) {
             self->value->delete();
         }
@@ -1036,7 +1148,6 @@ impl ast_ret_stmt {
     }
 
     func delete(self) {
-        self->base.delete();
         if (self->value => i8* != nil) {
             self->value->delete();
         }
@@ -1051,10 +1162,6 @@ impl ast_continue_stmt {
         res->base = ast::instance(ast_kind::ast_continue_stmt, loc);
         return res;
     }
-
-    func delete(self) {
-        self->base.delete();
-    }
 }
 
 struct ast_break_stmt { base: ast }
@@ -1064,10 +1171,6 @@ impl ast_break_stmt {
         var res = ast_break_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_break_stmt, loc);
         return res;
-    }
-
-    func delete(self) {
-        self->base.delete();
     }
 }
 
@@ -1085,7 +1188,6 @@ impl ast_code_block {
     }
 
     func delete(self) {
-        self->base.delete();
         self->stmts.delete();
     }
 }
