@@ -41,7 +41,7 @@ void sir_func::dump(std::ostream& out) const {
         return;
     }
     out << " {\n";
-    out << "entry:\n";
+    out << "label.entry:\n";
     block->dump(out);
     out << "}\n";
 }
@@ -77,7 +77,7 @@ void sir_context::dump_struct_size_method(std::ostream& out) const {
         const auto st_real_name = "%struct." + st_name;
         out << "define i64 @" << st_name;
         out << ".__size__() alwaysinline {\n";
-        out << "entry:\n";
+        out << "label.entry:\n";
         out << "  %0 = getelementptr " << st_real_name;
         out << ", " << st_real_name << "* null, i64 1\n";
         out << "  %1 = ptrtoint " << st_real_name << "* %0 to i64\n";
@@ -96,7 +96,7 @@ void sir_context::dump_struct_alloc_method(std::ostream& out) const {
         const auto st_real_name = "%struct." + st_name;
         out << "define " << st_real_name << "* @" << st_name;
         out << ".__alloc__() alwaysinline {\n";
-        out << "entry:\n";
+        out << "label.entry:\n";
         out << "  %0 = call i64 @" << st_name << ".__size__()\n";
         out << "  %1 = call i8* @malloc(i64 %0)\n";
         out << "  %2 = bitcast i8* %1 to " << st_real_name << "*\n";
