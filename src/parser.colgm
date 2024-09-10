@@ -156,14 +156,15 @@ impl parser {
             }
         }
 
-        var error_message = str::instance();
-        error_message.append_i8_vec("get \"")
-                     ->append_str(self->toks->get(self->index).content)
-                     ->append_i8_vec("\" here, but expected \"")
-                     ->append_i8_vec(parser::tok_kind_to_content(kind))
-                     ->append_i8_vec("\".");
-        self->err->error(loc, error_message.c_str);
-        error_message.delete();
+        var message = str::instance();
+        message.append_i8_vec("get \"")
+               ->append_str(self->toks->get(self->index).content)
+               ->append_i8_vec("\" here, but expected \"")
+               ->append_i8_vec(parser::tok_kind_to_content(kind))
+               ->append_i8_vec("\".");
+        self->err->error(loc, message.c_str);
+        message.delete();
+
         while (self->toks->get(self->index).kind != tok_kind::tok_eof &&
                self->toks->get(self->index).kind != kind) {
             self->next();

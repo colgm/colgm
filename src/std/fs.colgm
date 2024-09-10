@@ -1,0 +1,54 @@
+use std::io::{ flag };
+use std::libc::{ open, close, free };
+
+enum stat_flag {
+    S_IFMT = 0xF000,
+    S_IFDIR = 0x4000,
+    S_IFCHR = 0x2000,
+    S_IFIFO = 0x1000,
+    S_IFREG = 0x8000,
+    S_IREAD = 0x0100,
+    S_IWRITE = 0x0080,
+    S_IEXEC = 0x0040,
+    S_IFBLK = 0x3000
+}
+
+struct stat_info {
+    st_dev: u32,
+    st_ino: u16,
+    st_mode: u16,
+    st_nlink: i16,
+    st_uid: i16,
+    st_gid: i16,
+    st_rdev: u32,
+    st_size: i32,
+    st_atime: i64,
+    st_mtime: i64,
+    st_ctime: i64,
+}
+
+func stat(filename: i8*, stat_ptr: stat_info*) -> i32;
+
+struct fs {}
+
+impl fs {
+    func exists(filename: i8*) -> bool {
+        var fd = open(filename, (flag::O_RDONLY => i32));
+        if (fd < (0 => i32)) {
+            return false;
+        }
+        close(fd);
+        return true;
+    }
+
+    func is_dir(filename: i8*) -> bool {
+        var info = stat_info::__alloc__();
+        if (stat(filename, info) == (-1 => i32)) {
+            free(info => i8*);
+            return false;
+        }
+        var res = (info->st_mode & (stat_flag::S_IFMT => u16)) => stat_flag == stat_flag::S_IFDIR;
+        free(info => i8*);
+        return res;
+    }
+}

@@ -146,6 +146,7 @@ std::string lexer::utf8_gen() {
 }
 
 token lexer::id_gen() {
+    stat;
     u32 begin_line = line;
     u32 begin_column = column;
     std::string str = "";

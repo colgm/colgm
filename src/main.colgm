@@ -2,73 +2,101 @@ use std::libc::{ free, streq, strlen };
 use err::span::*;
 use err::report::*;
 use cli::*;
-use std::io::{ readfile_into_string, io, fs };
+use std::io::{ readfile_into_string, io };
+use std::fs::{ fs };
 use lexer::{ lexer };
 use parser::{ parser };
+use package::{ package };
 
-func free_components(rep: report*, lex: lexer*, par: parser*) {
-    if (rep => i8* != nil) {
-        rep->delete();
-        free(rep => i8*);
+struct compiler {
+    rep: report*,
+    pkg: package*,
+    lex: lexer*,
+    par: parser*
+}
+
+impl compiler {
+    func instance() -> compiler {
+        var rep = report::new();
+        var pkg = package::new(rep);
+        var lex = lexer::new(rep);
+        var par = parser::new(rep, lex);
+        return compiler {
+            rep: rep,
+            pkg: pkg,
+            lex: lex,
+            par: par
+        };
     }
-    if (lex => i8* != nil) {
-        lex->delete();
-        free(lex => i8*);
-    }
-    if (par => i8* != nil) {
-        par->delete();
-        free(par => i8*);
+
+    func delete(self) {
+        if (self->rep => i8* != nil) {
+            self->rep->delete();
+            free(self->rep => i8*);
+        }
+        if (self->pkg => i8* != nil) {
+            self->pkg->delete();
+            free(self->pkg => i8*);
+        }
+        if (self->lex => i8* != nil) {
+            self->lex->delete();
+            free(self->lex => i8*);
+        }
+        if (self->par => i8* != nil) {
+            self->par->delete();
+            free(self->par => i8*);
+        }
     }
 }
 
 func compile(option: cli_option) {
+    var err = io::stderr();
     if (!fs::exists(option.filename)) {
-        io::stderr().red().out("Error: ").reset();
-        io::stderr().out("failed to load file <").out(option.filename)
-                    .out(">, check if it exists and is readable\n");
+        err.red().out("Error: ").reset();
+        err.out("failed to load file <").out(option.filename)
+           .out(">, check if exists and is readable\n");
         return;
     }
+    #if (option.library_path != nil &&
+    #    !fs::is_dir(option.library_path)) {
+    #    err.red().out("Error: ").reset();
+    #    err.out("failed to load library path <").out(option.library_path)
+    #       .out(">, check if exists and is directory\n");
+    #    return;
+    #}
 
-    io::stderr().out("[").green().out("colgm").reset().out("]")
-                .out(" source file: \"")
-                .out(option.filename)
-                .out("\"")
-                .endln();
+    err.out("[").green().out("colgm").reset().out("]")
+       .out(" source file  : ").out(option.filename).out("\n");
     if (option.library_path != nil) {
-        io::stderr().out("[").green().out("colgm").reset().out("]")
-                    .out(" library path: \"")
-                    .out(option.library_path)
-                    .out("\"")
-                    .endln();
+        err.out("[").green().out("colgm").reset().out("]")
+           .out(" library path : ").out(option.library_path).out("\n");
     } else {
-        io::stderr().out("[").green().out("colgm").reset().out("]")
-                    .out(" library path: <none>").endln();
+        err.out("[").green().out("colgm").reset().out("]")
+           .out(" library path: <none>\n");
     }
 
-    var rep = report::new();
-    var lex = lexer::new(rep);
-    var par = parser::new(rep, lex);
+    var cc = compiler::instance();
 
     # do lexer scanning
-    lex->scan(option.filename);
-    if (rep->error_count > 0) {
-        free_components(rep, lex, par);
+    cc.lex->scan(option.filename);
+    if (cc.rep->error_count > 0) {
+        cc.delete();
         return;
     }
     if (option.OPTION_VIEW_TOKEN) {
-        lex->dump();
+        cc.lex->dump();
     }
 
-    par->parse();
-    if (rep->error_count > 0) {
-        free_components(rep, lex, par);
+    cc.par->parse();
+    if (cc.rep->error_count > 0) {
+        cc.delete();
         return;
     }
     if (option.OPTION_VIEW_AST) {
-        par->dump();
+        cc.par->dump();
     }
 
-    free_components(rep, lex, par);
+    cc.delete();
 }
 
 func main(argc: i32, argv: i8**) -> i32 {
