@@ -95,6 +95,7 @@ private:
     type resolve_string_literal(string_literal*);
     type resolve_char_literal(char_literal*);
     type resolve_bool_literal(bool_literal*);
+    type resolve_array_literal(array_literal*);
     type resolve_identifier(identifier*);
     type resolve_get_field(const type&, get_field*);
     void check_static_call_args(const colgm_func&, call_func_args*);

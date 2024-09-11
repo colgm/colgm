@@ -162,6 +162,17 @@ bool_literal* parse::bool_gen() {
     return result;
 }
 
+array_literal* parse::array_gen() {
+    auto result = new array_literal(toks[ptr].loc);
+    match(tok::tk_lbracket);
+    result->set_type(type_gen());
+    match(tok::tk_semi);
+    result->set_size(number_gen());
+    match(tok::tk_rbracket);
+    update_location(result);
+    return result;
+}
+
 expr* parse::scalar_gen() {
     if (look_ahead(tok::tk_lcurve)) {
         match(tok::tk_lcurve);
@@ -183,6 +194,8 @@ expr* parse::scalar_gen() {
         return char_gen();
     } else if (look_ahead(tok::tk_true) || look_ahead(tok::tk_false)) {
         return bool_gen();
+    } else if (look_ahead(tok::tk_lbracket)) {
+        return array_gen();
     } else if (look_ahead(tok::tk_id)) {
         return call_gen();
     }

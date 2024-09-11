@@ -57,6 +57,15 @@ void bool_literal::accept(visitor* v) {
     v->visit_bool_literal(this);
 }
 
+array_literal::~array_literal() {
+    delete size;
+    delete type;
+}
+
+void array_literal::accept(visitor* v) {
+    v->visit_array_literal(this);
+}
+
 call_index::~call_index() {
     delete index;
 }

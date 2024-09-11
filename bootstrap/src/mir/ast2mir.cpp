@@ -130,6 +130,19 @@ bool ast2mir::visit_bool_literal(ast::bool_literal* node) {
     return true;
 }
 
+bool ast2mir::visit_array_literal(ast::array_literal* node) {
+    const auto& num_str = node->get_size()->get_number();
+    u64 res = (num_str.size()>=2 && num_str[0]=='0' && num_str[1]=='x')
+              ? hex_to_u64(num_str.c_str())
+              : dec_to_u64(num_str.c_str());
+    block->add_content(new mir_array(
+        node->get_location(),
+        res,
+        node->get_resolve()
+    ));
+    return true;
+}
+
 bool ast2mir::visit_struct_decl(ast::struct_decl* node) {
     auto new_struct = new mir_struct;
     new_struct->name = node->get_name();

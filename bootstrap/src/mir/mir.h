@@ -20,6 +20,7 @@ enum class kind {
     mir_string,
     mir_char,
     mir_bool,
+    mir_array,
     mir_struct_init,
     mir_call,
     mir_call_id,
@@ -252,6 +253,23 @@ public:
 
 public:
     auto get_literal() const { return literal; }
+    const auto& get_type() const { return resolve_type; }
+};
+
+class mir_array: public mir {
+private:
+    u64 size;
+    type resolve_type;
+
+public:
+    mir_array(const span& loc, u64 sz, const type& t):
+        mir(kind::mir_array, loc), size(sz), resolve_type(t) {}
+    ~mir_array() override = default;
+    void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_size() const { return size; }
     const auto& get_type() const { return resolve_type; }
 };
 

@@ -48,6 +48,7 @@ u64 oct_to_u64(const char*);
 // but this also makes 0.1+0.2==0.3,
 // not another result that you may get in other languages.
 f64 dec_to_f64(const char*);
+u64 dec_to_u64(const char*);
 
 f64 str_to_num(const char*);
 usize utf8_hdchk(const char);

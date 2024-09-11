@@ -30,6 +30,7 @@ public:
     virtual bool visit_string_literal(string_literal*);
     virtual bool visit_char_literal(char_literal*);
     virtual bool visit_bool_literal(bool_literal*);
+    virtual bool visit_array_literal(array_literal*);
     virtual bool visit_call_index(call_index*);
     virtual bool visit_call_func_args(call_func_args*);
     virtual bool visit_get_field(get_field*);

@@ -17,7 +17,7 @@ written by C++(`-std=c++17`):
 Use these commands to build the bootstrap compiler:
 
 ```sh
-cd bootstrap && mkdir build && cd build && cmake .. && make -j
+cd bootstrap && mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j
 ```
 
 The executable is located as `build/colgm`.

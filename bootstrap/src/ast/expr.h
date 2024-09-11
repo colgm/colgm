@@ -180,6 +180,22 @@ public:
     auto get_flag() const { return flag; }
 };
 
+class array_literal: public expr {
+private:
+    number_literal* size;
+    type_def* type;
+
+public:
+    array_literal(const span& loc):
+        expr(ast_type::ast_array_literal, loc), size(nullptr), type(nullptr) {}
+    ~array_literal() override;
+    void accept(visitor*) override;
+    void set_size(number_literal* node) { size = node; }
+    auto get_size() const { return size; }
+    void set_type(type_def* node) { type = node; }
+    auto get_type() const { return type; }
+};
+
 class call_index: public expr {
 private:
     expr* index;

@@ -128,6 +128,12 @@ bool visitor::visit_bool_literal(bool_literal* node) {
     return true;
 }
 
+bool visitor::visit_array_literal(array_literal* node) {
+    node->get_size()->accept(this);
+    node->get_type()->accept(this);
+    return true;
+}
+
 bool visitor::visit_call_index(call_index* node) {
     node->get_index()->accept(this);
     return true;

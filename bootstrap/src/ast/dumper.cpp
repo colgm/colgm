@@ -60,6 +60,17 @@ bool dumper::visit_bool_literal(bool_literal* node) {
     return true;
 }
 
+bool dumper::visit_array_literal(array_literal* node) {
+    dump_indent();
+    std::cout << "array" << format_location(node);
+    push_indent();
+    node->get_size()->accept(this);
+    set_last();
+    node->get_type()->accept(this);
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_type_def(type_def* node) {
     dump_indent();
     std::cout << "type ptr " << node->get_pointer_level() << format_location(node);
@@ -227,7 +238,7 @@ bool dumper::visit_binary_operator(binary_operator* node) {
 
 bool dumper::visit_type_convert(type_convert* node) {
     dump_indent();
-    std::cout << "type convert " << format_location(node);
+    std::cout << "type convert" << format_location(node);
     push_indent();
     node->get_source()->accept(this);
     set_last();
@@ -346,7 +357,7 @@ bool dumper::visit_assignment(assignment* node) {
 
 bool dumper::visit_use_stmt(use_stmt* node) {
     dump_indent();
-    std::cout << "use " << format_location(node);
+    std::cout << "use" << format_location(node);
     push_indent();
     for(auto i : node->get_module_path()) {
         i->accept(this);

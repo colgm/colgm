@@ -16,9 +16,6 @@ if (APPLE)
     add_compile_options(-mmacosx-version-min=10.15)
 endif()
 
-# generate release executables
-set(CMAKE_BUILD_TYPE "Release")
-
 # build colgm used object
 set(COLGM_OBJECT_SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/ast/ast.cpp

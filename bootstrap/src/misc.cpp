@@ -237,6 +237,17 @@ f64 dec_to_f64(const char* str) {
         ret*std::pow(10, num_pow-1)*10;
 }
 
+u64 dec_to_u64(const char* str) {
+    u64 ret = 0, num_pow = 0;
+    while('0'<=*str && *str<='9') {
+        ret = ret*10 + (*str++ - '0');
+    }
+    if (*str) {
+        return 0;
+    }
+    return ret;
+}
+
 f64 str_to_num(const char* str) {
     bool negative = false;
     f64 res = 0;

@@ -153,6 +153,7 @@ private:
 private:
     sir_context ictx;
     ssa_generator ssa_gen;
+    ssa_generator array_ssa_gen;
     sir_block* block;
     std::vector<mir_value_t> value_stack;
     error err;
@@ -193,6 +194,7 @@ private:
     void visit_mir_string(mir_string*) override;
     void visit_mir_char(mir_char*) override;
     void visit_mir_bool(mir_bool*) override;
+    void visit_mir_array(mir_array*) override;
     void call_expression_generation(mir_call*, bool);
     void visit_mir_call(mir_call*) override;
     void visit_mir_struct_init(mir_struct_init*) override;

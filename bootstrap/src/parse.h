@@ -108,6 +108,7 @@ private:
     string_literal* string_gen();
     char_literal* char_gen();
     bool_literal* bool_gen();
+    array_literal* array_gen();
     expr* scalar_gen();
     unary_operator* unary_neg_gen();
     unary_operator* unary_bnot_gen();

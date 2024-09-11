@@ -705,6 +705,16 @@ type semantic::resolve_bool_literal(bool_literal* node) {
     return type::bool_type();
 }
 
+type semantic::resolve_array_literal(array_literal* node) {
+    const auto size_infer = resolve_number_literal(node->get_size());
+    if (!size_infer.is_integer()) {
+        report(node->get_size(), "array size must be integer.");
+    }
+    const auto type_infer = resolve_type_def(node->get_type());
+    node->set_resolve_type(type_infer.get_pointer_copy());
+    return type_infer.get_pointer_copy();
+}
+
 type semantic::resolve_identifier(identifier* node) {
     const auto& name = node->get_name();
     if (ctx.find_symbol(name)) {
@@ -1208,6 +1218,8 @@ type semantic::resolve_expression(expr* node) {
         return resolve_char_literal(reinterpret_cast<char_literal*>(node));
     case ast_type::ast_bool_literal:
         return resolve_bool_literal(reinterpret_cast<bool_literal*>(node));
+    case ast_type::ast_array_literal:
+        return resolve_array_literal(reinterpret_cast<array_literal*>(node));
     case ast_type::ast_call:
         return resolve_call(reinterpret_cast<call*>(node));
     case ast_type::ast_assignment:
@@ -1625,6 +1637,10 @@ void semantic::resolve_single_use(use_stmt* node) {
             );
             return;
         }
+    }
+
+    if (!ctx.global.domain.count(file)) {
+        return;
     }
 
     const auto& domain = ctx.global.domain.at(file);

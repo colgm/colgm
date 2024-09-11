@@ -83,6 +83,7 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         func->set_code_block(new sir_block);
         // init ssa generator
         ssa_gen.clear();
+        array_ssa_gen.clear();
         // clear value stack
         value_stack.clear();
 
@@ -466,6 +467,26 @@ void mir2sir::visit_mir_bool(mir_bool* node) {
         node->get_literal()? "1":"0",
         node->get_type()
     ));
+}
+
+void mir2sir::visit_mir_array(mir_array* node) {
+    auto index = array_ssa_gen.create();
+    auto temp_0 = "arr." + index + ".ptr";
+    auto temp_1 = "arr." + index + ".cast_ptr";
+    const auto array_type = "[" + std::to_string(node->get_size()) + " x " +
+                            type_mapping(node->get_type().get_ref_copy()) + "]";
+    auto array_new = new sir_alloca(
+        temp_0,
+        array_type
+    );
+    block->add_alloca(array_new);
+    block->add_stmt(new sir_type_convert(
+        value_t::variable(temp_0),
+        value_t::variable(temp_1),
+        array_type + "*",
+        type_mapping(node->get_type())
+    ));
+    value_stack.push_back(mir_value_t::variable(temp_1, node->get_type()));
 }
 
 void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
