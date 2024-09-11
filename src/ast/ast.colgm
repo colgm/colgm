@@ -15,6 +15,7 @@ enum ast_kind {
     ast_string_literal,
     ast_char_literal,
     ast_bool_literal,
+    ast_array_literal,
     ast_call_index,
     ast_call_func_args,
     ast_get_field,
@@ -138,6 +139,10 @@ impl ast {
                 tmp->delete();
             }
             ast_kind::ast_bool_literal => return;
+            ast_kind::ast_array_literal => {
+                var tmp = self => ast_array_literal*;
+                tmp->delete();
+            }
             ast_kind::ast_call_index => {
                 var tmp = self => ast_call_index*;
                 tmp->delete();
@@ -516,6 +521,32 @@ impl ast_bool_literal {
         return res;
     }
 }
+
+struct ast_array_literal {
+    base: ast,
+    size: ast_number_literal*,
+    type: ast_type_def*
+}
+
+impl ast_array_literal {
+    func new(loc: span*) -> ast_array_literal* {
+        var res = ast_array_literal::__alloc__();
+        res->base = ast::instance(ast_kind::ast_array_literal, loc);
+        res->size = nil => ast_number_literal*;
+        res->type = nil => ast_type_def*;
+        return res;
+    }
+
+    func delete(self) {
+        if (self->size => i8* != nil) {
+            self->size->delete();
+        }
+        if (self->type => i8* != nil) {
+            self->type->delete();
+        }
+    }
+}
+
 
 struct ast_call_index {
     base: ast,

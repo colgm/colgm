@@ -323,6 +323,16 @@ impl parser {
         return res;
     }
 
+    func array_gen(self) -> ast_array_literal* {
+        var res = ast_array_literal::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_lbracket);
+        res->type = self->type_def_gen();
+        self->match_token(tok_kind::tok_semi);
+        res->size = self->number_literal_gen();
+        self->match_token(tok_kind::tok_rbracket);
+        return res;
+    }
+
     func scalar_gen(self) -> ast* {
         if (self->lookahead(tok_kind::tok_lparen)) {
             self->match_token(tok_kind::tok_lparen);
@@ -345,6 +355,8 @@ impl parser {
         } elsif (self->lookahead(tok_kind::tok_true) ||
                  self->lookahead(tok_kind::tok_false)) {
             return self->bool_gen() => ast*;
+        } elsif (self->lookahead(tok_kind::tok_lbracket)) {
+            return self->array_gen() => ast*;
         } elsif (self->lookahead(tok_kind::tok_id)) {
             return self->call_gen() => ast*;
         }

@@ -20,6 +20,20 @@ Use this command to get usage:
 ./build/colgm -h
 ```
 
+## Literal
+
+```typescript
+func main() -> i32 {
+    var a = 1;              # i64
+    var b = 2.0;            # f64
+    var c = "hello world!"; # i8*
+    var d = 'd';            # i8
+    var e = [i8; 128];      # i8*
+    var f = true;           # bool
+    return 0 => i32;
+}
+```
+
 ## Operators
 
 ### Arithmetic Operator
