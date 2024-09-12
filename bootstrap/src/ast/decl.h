@@ -43,11 +43,12 @@ public:
 private:
     identifier* name;
     std::vector<member> member;
+    bool is_public;
 
 public:
     enum_decl(const span& loc):
         decl(ast_type::ast_enum_decl, loc),
-        name(nullptr) {}
+        name(nullptr), is_public(false) {}
     ~enum_decl() override;
     void accept(visitor*) override;
 
@@ -58,6 +59,8 @@ public:
     }
     auto get_name() { return name; }
     const auto& get_member() const { return member; }
+    void set_public(bool b) { is_public = b; }
+    bool is_public_enum() const { return is_public; }
 };
 
 class struct_field: public decl {

@@ -83,7 +83,11 @@ bool dumper::visit_type_def(type_def* node) {
 
 bool dumper::visit_enum_decl(enum_decl* node) {
     dump_indent();
-    std::cout << "enum " << node->get_name()->get_name() << format_location(node);
+    std::cout << "enum ";
+    if (node->is_public_enum()) {
+        std::cout << "[pub]";
+    }
+    std::cout << node->get_name()->get_name() << format_location(node);
     push_indent();
     if (node->get_member().empty()) {
         set_last();

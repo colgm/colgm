@@ -70,6 +70,10 @@ decl* parse::pub_decl_gen() {
         auto res = struct_gen();
         res->set_public(true);
         return res;
+    } else if (look_ahead(tok::tk_enum)) {
+        auto res = enum_gen();
+        res->set_public(true);
+        return res;
     }
     err.err("parse",
         toks[ptr].loc,

@@ -95,6 +95,14 @@ void semantic::regist_struct(struct_decl* node) {
     }
     ctx.global.domain.at(ctx.this_file).structs.insert({name, {}});
     ctx.global_symbol.insert({name, {sym_kind::struct_kind, ctx.this_file}});
+
+    auto& self = ctx.global.domain.at(ctx.this_file).structs.at(name);
+    if (node->is_public_struct()) {
+        self.is_public = true;
+    }
+    if (node->is_extern_struct()) {
+        self.is_extern = true;
+    }
 }
 
 void semantic::analyse_single_struct(struct_decl* node) {
@@ -175,6 +183,11 @@ void semantic::regist_enum(enum_decl* node) {
     }
     ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
     ctx.global_symbol.insert({name, {sym_kind::enum_kind, ctx.this_file}});
+
+    auto& self = ctx.global.domain.at(ctx.this_file).enums.at(name);
+    if (node->is_public_enum()) {
+        self.is_public = true;
+    }
 }
 
 void semantic::analyse_single_enum(enum_decl* node) {
@@ -344,6 +357,14 @@ void semantic::regist_function(func_decl* node) {
         name,
         analyse_single_func(node)
     });
+
+    auto& self = ctx.global.domain.at(ctx.this_file).functions.at(name);
+    if (node->is_public_func()) {
+        self.is_public = true;
+    }
+    if (node->is_extern_func()) {
+        self.is_extern = true;
+    }
 }
 
 void semantic::analyse_functions(root* ast_root) {
@@ -370,6 +391,12 @@ void semantic::analyse_single_impl(impl_struct* node) {
             continue;
         }
         auto func = analyse_single_method(i, stct);
+        if (i->is_public_func()) {
+            func.is_public = true;
+        }
+        if (i->is_extern_func()) {
+            report(i, "extern method is not supported.");
+        }
         if (func.parameters.size() && func.parameters[0].name=="self") {
             stct.method.insert({i->get_name(), func});
         } else {

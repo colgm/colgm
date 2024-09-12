@@ -23,7 +23,7 @@ enum class sym_kind {
     module_kind
 };
 
-struct struct_method {
+struct struct_method_info {
     bool flag_is_static = false; // mark static method
     bool flag_is_normal = false; // mark normal method
     std::string method_name;
@@ -37,7 +37,7 @@ struct type {
     bool is_global_func = false;
     bool is_enum = false;
 
-    struct_method stm_info;
+    struct_method_info stm_info;
 
 private:
     void check_pointer_depth() const;
@@ -136,6 +136,9 @@ struct colgm_func {
     std::vector<symbol> parameters;
     std::unordered_map<std::string, symbol> unordered_params;
 
+    bool is_public = false;
+    bool is_extern = false;
+
     bool find_parameter(const std::string&);
     void add_parameter(const std::string&, const type&);
 };
@@ -148,6 +151,9 @@ struct colgm_struct {
     std::unordered_map<std::string, colgm_func> static_method;
     std::unordered_map<std::string, colgm_func> method;
 
+    bool is_public = false;
+    bool is_extern = false;
+
     usize field_index(const std::string&) const;
 };
 
@@ -156,6 +162,8 @@ struct colgm_enum {
     span location;
     std::vector<std::string> ordered_member;
     std::unordered_map<std::string, size_t> members;
+
+    bool is_public = false;
 };
 
 }
