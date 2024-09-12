@@ -117,7 +117,14 @@ bool dumper::visit_struct_field(struct_field* node) {
 
 bool dumper::visit_struct_decl(struct_decl* node) {
     dump_indent();
-    std::cout << "struct " << node->get_name() << format_location(node);
+    std::cout << "struct ";
+    if (node->is_public_struct()) {
+        std::cout << "[pub]";
+    }
+    if (node->is_extern_struct()) {
+        std::cout << "[extern]";
+    }
+    std::cout << node->get_name() << format_location(node);
     push_indent();
     for(auto i : node->get_fields()) {
         if (i==node->get_fields().back()) {
@@ -161,7 +168,14 @@ bool dumper::visit_param_list(param_list* node) {
 
 bool dumper::visit_func_decl(func_decl* node) {
     dump_indent();
-    std::cout << "func " << node->get_name() << format_location(node);
+    std::cout << "func ";
+    if (node->is_public_func()) {
+        std::cout << "[pub]";
+    }
+    if (node->is_extern_func()) {
+        std::cout << "[extern]";
+    }
+    std::cout << node->get_name() << format_location(node);
     push_indent();
     node->get_params()->accept(this);
     if (!node->get_code_block()) {

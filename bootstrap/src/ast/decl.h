@@ -82,10 +82,13 @@ class struct_decl: public decl {
 private:
     std::vector<struct_field*> fields;
     std::string name;
+    bool is_public;
+    bool is_extern;
 
 public:
     struct_decl(const span& loc):
-        decl(ast_type::ast_struct_decl, loc) {}
+        decl(ast_type::ast_struct_decl, loc),
+        is_public(false), is_extern(false) {}
     ~struct_decl() override;
     void accept(visitor*) override;
 
@@ -93,6 +96,10 @@ public:
     const auto& get_fields() const { return fields; }
     void set_name(const std::string& n) { name = n; }
     const auto& get_name() const { return name; }
+    void set_public(bool b) { is_public = b; }
+    bool is_public_struct() const { return is_public; }
+    void set_extern(bool b) { is_extern = b; }
+    bool is_extern_struct() const { return is_extern; }
 };
 
 class param: public decl {
@@ -133,12 +140,15 @@ private:
     param_list* parameters;
     type_def* return_type;
     code_block* block;
+    bool is_public;
+    bool is_extern;
 
 public:
     func_decl(const span& loc):
         decl(ast_type::ast_func_decl, loc),
         name(""), parameters(nullptr),
-        return_type(nullptr), block(nullptr) {}
+        return_type(nullptr), block(nullptr),
+        is_public(false), is_extern(false) {}
     ~func_decl() override;
     void accept(visitor*) override;
 
@@ -150,6 +160,10 @@ public:
     auto get_return_type() { return return_type; }
     void set_code_block(code_block* node) { block = node; }
     auto get_code_block() { return block; }
+    void set_public(bool b) { is_public = b; }
+    bool is_public_func() const { return is_public; }
+    void set_extern(bool b) { is_extern = b; }
+    bool is_extern_func() const { return is_extern; }
 };
 
 class impl_struct: public decl {

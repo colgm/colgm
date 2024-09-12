@@ -48,6 +48,54 @@ void parse::update_location(node* n) {
     n->update_location(toks[ptr-1].loc);
 }
 
+decl* parse::pub_decl_gen() {
+    match(tok::tk_pub);
+    if (look_ahead(tok::tk_extern)) {
+        auto res = extern_decl_gen();
+        if (res->get_ast_type()==ast_type::ast_func_decl) {
+            reinterpret_cast<func_decl*>(res)->set_public(true);
+        } else if (res->get_ast_type()==ast_type::ast_struct_decl) {
+            reinterpret_cast<struct_decl*>(res)->set_public(true);
+        } else {
+            err.err("parse", res->get_location(),
+                "unreachable, please report this bug."
+            );
+        }
+        return res;
+    } else if (look_ahead(tok::tk_func)) {
+        auto res = function_gen();
+        res->set_public(true);
+        return res;
+    } else if (look_ahead(tok::tk_stct)) {
+        auto res = struct_gen();
+        res->set_public(true);
+        return res;
+    }
+    err.err("parse",
+        toks[ptr].loc,
+        "expected function or struct but get \"" + toks[ptr].str + "\"."
+    );
+    return nullptr;
+}
+
+decl* parse::extern_decl_gen() {
+    match(tok::tk_extern);
+    if (look_ahead(tok::tk_func)) {
+        auto res = function_gen();
+        res->set_extern(true);
+        return res;
+    } else if (look_ahead(tok::tk_stct)) {
+        auto res = struct_gen();
+        res->set_extern(true);
+        return res;
+    }
+    err.err("parse",
+        toks[ptr].loc,
+        "expected function or struct but get \"" + toks[ptr].str + "\"."
+    );
+    return nullptr;
+}
+
 identifier* parse::identifier_gen() {
     auto result = new identifier(toks[ptr].loc, toks[ptr].str);
     match(tok::tk_id);
@@ -792,6 +840,8 @@ const error& parse::analyse(const std::vector<token>& token_list) {
     }
     while (!look_ahead(tok::tk_eof)) {
         switch(toks[ptr].type) {
+            case tok::tk_pub: result->add_decl(pub_decl_gen()); break;
+            case tok::tk_extern: result->add_decl(extern_decl_gen()); break;
             case tok::tk_func: result->add_decl(function_gen()); break;
             case tok::tk_stct: result->add_decl(struct_gen()); break;
             case tok::tk_impl: result->add_decl(impl_gen()); break;

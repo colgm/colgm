@@ -35,6 +35,7 @@ private:
         {tok::tk_while       , "while"   },
         {tok::tk_var         , "var"     },
         {tok::tk_pub         , "pub"     },
+        {tok::tk_extern      , "extern"  },
         {tok::tk_func        , "func"    },
         {tok::tk_match       , "match"   },
         {tok::tk_brk         , "break"   },
@@ -100,6 +101,8 @@ private:
     void update_location(node*);
 
 private:
+    decl* pub_decl_gen();
+    decl* extern_decl_gen();
     identifier* identifier_gen();
     call* call_gen();
     initializer* initializer_gen();

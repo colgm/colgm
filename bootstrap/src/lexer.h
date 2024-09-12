@@ -27,6 +27,7 @@ enum class tok:u32 {
     tk_var,          // keyword for definition
     tk_stct,         // keyword for struct
     tk_pub,          // keyword pub
+    tk_extern,       // keyword extern
     tk_impl,         // keyword impl
     tk_func,         // keyword for definition of function
     tk_match,        // keyword for match
@@ -116,6 +117,7 @@ private:
         {"var"     , tok::tk_var         },
         {"struct"  , tok::tk_stct        },
         {"pub"     , tok::tk_pub         },
+        {"extern"  , tok::tk_extern      },
         {"func"    , tok::tk_func        },
         {"match"   , tok::tk_match       },
         {"break"   , tok::tk_brk         },
