@@ -73,7 +73,9 @@ bool dumper::visit_array_literal(array_literal* node) {
 
 bool dumper::visit_type_def(type_def* node) {
     dump_indent();
-    std::cout << "type ptr " << node->get_pointer_level() << format_location(node);
+    std::cout << "type " << (node->is_constant()? "[const]":"[mut]");
+    std::cout << "[ptr " << node->get_pointer_level() << "]";
+    std::cout << format_location(node);
     push_indent();
     set_last();
     node->get_name()->accept(this);

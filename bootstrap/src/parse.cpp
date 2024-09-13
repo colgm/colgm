@@ -488,6 +488,10 @@ expr* parse::calculation_gen() {
 
 type_def* parse::type_gen() {
     auto result = new type_def(toks[ptr].loc);
+    if (look_ahead(tok::tk_const)) {
+        result->set_constant();
+        match(tok::tk_const);
+    }
     result->set_name(identifier_gen());
     while(look_ahead(tok::tk_mult)) {
         result->add_pointer_level();

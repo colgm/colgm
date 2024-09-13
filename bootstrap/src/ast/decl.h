@@ -19,11 +19,12 @@ class type_def: public decl {
 private:
     identifier* name;
     i64 pointer_depth;
+    bool is_const;
 
 public:
     type_def(const span& loc):
         decl(ast_type::ast_type_def, loc),
-        name(nullptr), pointer_depth(0) {}
+        name(nullptr), pointer_depth(0), is_const(false) {}
     ~type_def() override;
     void accept(visitor*) override;
 
@@ -31,6 +32,8 @@ public:
     auto get_name() { return name; }
     void add_pointer_level() { ++pointer_depth; }
     auto get_pointer_level() { return pointer_depth; }
+    void set_constant() { is_const = true; }
+    bool is_constant() const { return is_const; }
 };
 
 class enum_decl: public decl {
