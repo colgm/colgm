@@ -1598,6 +1598,45 @@ void semantic::resolve_function_block(root* ast_root) {
     }
 }
 
+void semantic::check_is_public_struct(identifier* node,
+                                      const colgm_module& domain) {
+    if (!domain.structs.count(node->get_name())) {
+        return;
+    }
+    if (!domain.structs.at(node->get_name()).is_public) {
+        report(node,
+            "cannot import private struct \"" +
+            node->get_name() + "\"."
+        );
+    }
+}
+
+void semantic::check_is_public_func(identifier* node,
+                                    const colgm_module& domain) {
+    if (!domain.functions.count(node->get_name())) {
+        return;
+    }
+    if (!domain.functions.at(node->get_name()).is_public) {
+        report(node,
+            "cannot import private function \"" +
+            node->get_name() + "\"."
+        );
+    }
+}
+
+void semantic::check_is_public_enum(identifier* node,
+                                    const colgm_module& domain) {
+    if (!domain.enums.count(node->get_name())) {
+        return;
+    }
+    if (!domain.enums.at(node->get_name()).is_public) {
+        report(node,
+            "cannot import private enum \"" +
+            node->get_name() + "\"."
+        );
+    }
+}
+
 void semantic::import_global_symbol(node* n, 
                                     const std::string& name,
                                     const symbol_info& sym) {
@@ -1686,14 +1725,17 @@ void semantic::resolve_single_use(use_stmt* node) {
     // specified import
     for(auto i : node->get_import_symbol()) {
         if (domain.structs.count(i->get_name())) {
+            check_is_public_struct(i, domain);
             import_global_symbol(i, i->get_name(), {sym_kind::struct_kind, file});
             continue;
         }
         if (domain.functions.count(i->get_name())) {
+            check_is_public_func(i, domain);
             import_global_symbol(i, i->get_name(), {sym_kind::func_kind, file});
             continue;
         }
         if (domain.enums.count(i->get_name())) {
+            check_is_public_enum(i, domain);
             import_global_symbol(i, i->get_name(), {sym_kind::enum_kind, file});
             continue;
         }
