@@ -68,18 +68,18 @@ colgm_func semantic::builtin_struct_alloc(const span& loc, const type& ty) {
 
 void semantic::regist_basic_types() {
     ctx.global_symbol = {
-        {"i64", {sym_kind::basic_kind, ""}},
-        {"i32", {sym_kind::basic_kind, ""}},
-        {"i16", {sym_kind::basic_kind, ""}},
-        {"i8", {sym_kind::basic_kind, ""}},
-        {"u64", {sym_kind::basic_kind, ""}},
-        {"u32", {sym_kind::basic_kind, ""}},
-        {"u16", {sym_kind::basic_kind, ""}},
-        {"u8", {sym_kind::basic_kind, ""}},
-        {"f32", {sym_kind::basic_kind, ""}},
-        {"f64", {sym_kind::basic_kind, ""}},
-        {"void", {sym_kind::basic_kind, ""}},
-        {"bool", {sym_kind::basic_kind, ""}}
+        {"i64", {sym_kind::basic_kind, "", true}},
+        {"i32", {sym_kind::basic_kind, "", true}},
+        {"i16", {sym_kind::basic_kind, "", true}},
+        {"i8", {sym_kind::basic_kind, "", true}},
+        {"u64", {sym_kind::basic_kind, "", true}},
+        {"u32", {sym_kind::basic_kind, "", true}},
+        {"u16", {sym_kind::basic_kind, "", true}},
+        {"u8", {sym_kind::basic_kind, "", true}},
+        {"f32", {sym_kind::basic_kind, "", true}},
+        {"f64", {sym_kind::basic_kind, "", true}},
+        {"void", {sym_kind::basic_kind, "", true}},
+        {"bool", {sym_kind::basic_kind, "", true}}
     };
 }
 
@@ -94,7 +94,7 @@ void semantic::regist_struct(struct_decl* node) {
         return;
     }
     ctx.global.domain.at(ctx.this_file).structs.insert({name, {}});
-    ctx.global_symbol.insert({name, {sym_kind::struct_kind, ctx.this_file}});
+    ctx.global_symbol.insert({name, {sym_kind::struct_kind, ctx.this_file, true}});
 
     auto& self = ctx.global.domain.at(ctx.this_file).structs.at(name);
     if (node->is_public_struct()) {
@@ -182,7 +182,7 @@ void semantic::regist_enum(enum_decl* node) {
         return;
     }
     ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
-    ctx.global_symbol.insert({name, {sym_kind::enum_kind, ctx.this_file}});
+    ctx.global_symbol.insert({name, {sym_kind::enum_kind, ctx.this_file, true}});
 
     auto& self = ctx.global.domain.at(ctx.this_file).enums.at(name);
     if (node->is_public_enum()) {
@@ -352,7 +352,7 @@ void semantic::regist_function(func_decl* node) {
         report(node, "function \"" + name + "\" conflicts with exist symbol.");
         return;
     }
-    ctx.global_symbol.insert({name, {sym_kind::func_kind, ctx.this_file}});
+    ctx.global_symbol.insert({name, {sym_kind::func_kind, ctx.this_file, true}});
     ctx.global.domain.at(ctx.this_file).functions.insert({
         name,
         analyse_single_func(node)
@@ -1265,6 +1265,9 @@ type semantic::resolve_type_def(type_def* node) {
         report(node->get_name(), "unknown type \"" + name + "\".");
         return type::error_type();
     }
+    if (!ctx.global_symbol.at(name).is_public) {
+        report(node->get_name(), "private type \"" + name + "\" cannot be used.");
+    }
     return {name, ctx.global_symbol.at(name).loc_file, node->get_pointer_level()};
 }
 
@@ -1598,43 +1601,49 @@ void semantic::resolve_function_block(root* ast_root) {
     }
 }
 
-void semantic::check_is_public_struct(identifier* node,
+bool semantic::check_is_public_struct(identifier* node,
                                       const colgm_module& domain) {
     if (!domain.structs.count(node->get_name())) {
-        return;
+        return false;
     }
     if (!domain.structs.at(node->get_name()).is_public) {
         report(node,
             "cannot import private struct \"" +
             node->get_name() + "\"."
         );
+        return false;
     }
+    return true;
 }
 
-void semantic::check_is_public_func(identifier* node,
+bool semantic::check_is_public_func(identifier* node,
                                     const colgm_module& domain) {
     if (!domain.functions.count(node->get_name())) {
-        return;
+        return false;
     }
     if (!domain.functions.at(node->get_name()).is_public) {
         report(node,
             "cannot import private function \"" +
             node->get_name() + "\"."
         );
+        return false;
     }
+    return true;
 }
 
-void semantic::check_is_public_enum(identifier* node,
+bool semantic::check_is_public_enum(identifier* node,
                                     const colgm_module& domain) {
     if (!domain.enums.count(node->get_name())) {
-        return;
+        return false;
     }
     if (!domain.enums.at(node->get_name()).is_public) {
         report(node,
             "cannot import private enum \"" +
             node->get_name() + "\"."
         );
+        return false;
     }
+    return true;
 }
 
 void semantic::import_global_symbol(node* n, 
@@ -1712,31 +1721,40 @@ void semantic::resolve_single_use(use_stmt* node) {
     const auto& domain = ctx.global.domain.at(file);
     if (node->get_import_symbol().empty()) {
         for(const auto& i : domain.structs) {
-            import_global_symbol(node, i.second.name, {sym_kind::struct_kind, file});
+            import_global_symbol(node, i.second.name,
+                {sym_kind::struct_kind, file, i.second.is_public}
+            );
         }
         for(const auto& i : domain.functions) {
-            import_global_symbol(node, i.second.name, {sym_kind::func_kind, file});
+            import_global_symbol(node, i.second.name,
+                {sym_kind::func_kind, file, i.second.is_public}
+            );
         }
         for(const auto& i : domain.enums) {
-            import_global_symbol(node, i.second.name, {sym_kind::enum_kind, file});
+            import_global_symbol(node, i.second.name,
+                {sym_kind::enum_kind, file, i.second.is_public}
+            );
         }
         return;
     }
     // specified import
     for(auto i : node->get_import_symbol()) {
         if (domain.structs.count(i->get_name())) {
-            check_is_public_struct(i, domain);
-            import_global_symbol(i, i->get_name(), {sym_kind::struct_kind, file});
+            import_global_symbol(i, i->get_name(),
+                {sym_kind::struct_kind, file, check_is_public_struct(i, domain)}
+            );
             continue;
         }
         if (domain.functions.count(i->get_name())) {
-            check_is_public_func(i, domain);
-            import_global_symbol(i, i->get_name(), {sym_kind::func_kind, file});
+            import_global_symbol(i, i->get_name(),
+                {sym_kind::func_kind, file, check_is_public_func(i, domain)}
+            );
             continue;
         }
         if (domain.enums.count(i->get_name())) {
-            check_is_public_enum(i, domain);
-            import_global_symbol(i, i->get_name(), {sym_kind::enum_kind, file});
+            import_global_symbol(i, i->get_name(),
+                {sym_kind::enum_kind, file, check_is_public_enum(i, domain)}
+            );
             continue;
         }
         report(i, "cannot find symbol \"" + i->get_name() +

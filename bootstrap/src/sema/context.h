@@ -18,6 +18,7 @@ struct global_symbol_table {
 struct symbol_info {
     sym_kind kind;
     std::string loc_file;
+    bool is_public = false;
 };
 
 struct semantic_context {

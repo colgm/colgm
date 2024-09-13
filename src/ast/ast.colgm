@@ -49,13 +49,13 @@ pub enum ast_kind {
     ast_code_block
 }
 
-enum unary_kind {
+pub enum unary_kind {
     neg,
     bnot,
     lnot
 }
 
-enum binary_kind {
+pub enum binary_kind {
     add,
     sub,
     mul,
@@ -74,7 +74,7 @@ enum binary_kind {
     bxor
 }
 
-enum assignment_kind {
+pub enum assignment_kind {
     eq,
     addeq,
     subeq,
@@ -86,7 +86,7 @@ enum assignment_kind {
     oreq
 }
 
-struct ast {
+pub struct ast {
     kind: ast_kind, # ast node kind
     location: span* # location of ast node
 }
@@ -100,8 +100,10 @@ impl ast {
     }
 
     func delete(self) {
-        self->location->delete();
-        free(self->location => i8*);
+        if (self->location => i8* != nil) {
+            self->location->delete();
+            free(self->location => i8*);
+        }
 
         match (self->kind) {
             ast_kind::ast_null => return;
@@ -261,7 +263,7 @@ impl ast {
     }
 }
 
-struct ptr_vec {
+pub struct ptr_vec {
     data: ast**,
     size: u64,
     capacity: u64
@@ -276,7 +278,13 @@ impl ptr_vec {
     }
 
     func delete(self) {
+        if (self->data => i8* == nil) {
+            return;
+        }
         for (var i = 0 => u64; i < self->size; i += 1 => u64) {
+            if (self->data[i] => i8* == nil) {
+                continue;
+            }
             self->data[i]->delete();
             free(self->data[i] => i8*);
         }
@@ -318,16 +326,17 @@ impl ptr_vec {
     }
 }
 
-struct ast_null { base: ast }
+pub struct ast_null { base: ast }
 
 impl ast_null {
     func new() -> ast_null* {
         var res = ast_null::__alloc__();
+        res->base = ast::instance(ast_kind::ast_null, nil => span*);
         return res;
     }
 }
 
-struct root {
+pub struct root {
     base: ast,
     imports: ptr_vec,
     decls: ptr_vec
@@ -350,7 +359,7 @@ impl root {
 
 # expressions
 
-struct ast_unary_operator {
+pub struct ast_unary_operator {
     base: ast,
     kind: unary_kind,
     value: ast*
@@ -372,7 +381,7 @@ impl ast_unary_operator {
     }
 }
 
-struct ast_binary_operator {
+pub struct ast_binary_operator {
     base: ast,
     kind: binary_kind,
     left: ast*,
@@ -399,7 +408,7 @@ impl ast_binary_operator {
     }
 }
 
-struct ast_type_convert {
+pub struct ast_type_convert {
     base: ast,
     from: ast*,
     to: ast_type_def*
@@ -424,7 +433,7 @@ impl ast_type_convert {
     }
 }
 
-struct ast_identifier {
+pub struct ast_identifier {
     base: ast,
     name: str
 }
@@ -442,7 +451,7 @@ impl ast_identifier {
     }
 }
 
-struct ast_nil_literal {
+pub struct ast_nil_literal {
     base: ast
 }
 
@@ -454,7 +463,7 @@ impl ast_nil_literal {
     }
 }
 
-struct ast_number_literal {
+pub struct ast_number_literal {
     base: ast,
     literal: str
 }
@@ -472,7 +481,7 @@ impl ast_number_literal {
     }
 }
 
-struct ast_string_literal {
+pub struct ast_string_literal {
     base: ast,
     literal: str
 }
@@ -490,7 +499,7 @@ impl ast_string_literal {
     }
 }
 
-struct ast_char_literal {
+pub struct ast_char_literal {
     base: ast,
     literal: str
 }
@@ -508,7 +517,7 @@ impl ast_char_literal {
     }
 }
 
-struct ast_bool_literal {
+pub struct ast_bool_literal {
     base: ast,
     flag: bool
 }
@@ -522,7 +531,7 @@ impl ast_bool_literal {
     }
 }
 
-struct ast_array_literal {
+pub struct ast_array_literal {
     base: ast,
     size: ast_number_literal*,
     type: ast_type_def*
@@ -548,7 +557,7 @@ impl ast_array_literal {
 }
 
 
-struct ast_call_index {
+pub struct ast_call_index {
     base: ast,
     index: ast*
 }
@@ -568,7 +577,7 @@ impl ast_call_index {
     }
 }
 
-struct ast_call_func_args {
+pub struct ast_call_func_args {
     base: ast,
     args: ptr_vec
 }
@@ -586,7 +595,7 @@ impl ast_call_func_args {
     }
 }
 
-struct ast_get_field {
+pub struct ast_get_field {
     base: ast,
     name: str
 }
@@ -604,7 +613,7 @@ impl ast_get_field {
     }
 }
 
-struct ast_ptr_get_field {
+pub struct ast_ptr_get_field {
     base: ast,
     name: str
 }
@@ -622,7 +631,7 @@ impl ast_ptr_get_field {
     }
 }
 
-struct ast_init_pair {
+pub struct ast_init_pair {
     base: ast,
     field: ast_identifier*,
     value: ast*
@@ -647,7 +656,7 @@ impl ast_init_pair {
     }
 }
 
-struct ast_initializer {
+pub struct ast_initializer {
     base: ast,
     pairs: ptr_vec
 }
@@ -665,7 +674,7 @@ impl ast_initializer {
     }
 }
 
-struct ast_call_path {
+pub struct ast_call_path {
     base: ast,
     name: str
 }
@@ -683,7 +692,7 @@ impl ast_call_path {
     }
 }
 
-struct ast_call {
+pub struct ast_call {
     base: ast,
     head: ast_identifier*,
     chain: ptr_vec
@@ -706,7 +715,7 @@ impl ast_call {
     }
 }
 
-struct ast_assignment {
+pub struct ast_assignment {
     base: ast,
     kind: assignment_kind,
     left: ast_call*,
@@ -734,7 +743,7 @@ impl ast_assignment {
 
 # declarations
 
-struct ast_type_def {
+pub struct ast_type_def {
     base: ast,
     name: ast_identifier*,
     pointer_depth: i64
@@ -756,7 +765,7 @@ impl ast_type_def {
     }
 }
 
-struct ast_enum_member {
+pub struct ast_enum_member {
     base: ast,
     name: ast_identifier*,
     value: ast_number_literal*
@@ -781,7 +790,7 @@ impl ast_enum_member {
     }
 }
 
-struct ast_enum_decl {
+pub struct ast_enum_decl {
     base: ast,
     members: ptr_vec,
     name: str
@@ -802,7 +811,7 @@ impl ast_enum_decl {
     }
 }
 
-struct ast_struct_field {
+pub struct ast_struct_field {
     base: ast,
     name: ast_identifier*,
     type: ast_type_def*
@@ -827,7 +836,7 @@ impl ast_struct_field {
     }
 }
 
-struct ast_struct_decl {
+pub struct ast_struct_decl {
     base: ast,
     fields: ptr_vec,
     name: str
@@ -848,7 +857,7 @@ impl ast_struct_decl {
     }
 }
 
-struct ast_param {
+pub struct ast_param {
     base: ast,
     name: ast_identifier*,
     type: ast_type_def*
@@ -873,7 +882,7 @@ impl ast_param {
     }
 }
 
-struct ast_param_list {
+pub struct ast_param_list {
     base: ast,
     params: ptr_vec
 }
@@ -891,7 +900,7 @@ impl ast_param_list {
    }
 }
 
-struct ast_func_decl {
+pub struct ast_func_decl {
     base: ast,
     name: str,
     params: ast_param_list*,
@@ -924,7 +933,7 @@ impl ast_func_decl {
     }
 }
 
-struct ast_impl {
+pub struct ast_impl {
     base: ast,
     name: str,
     methods: ptr_vec
@@ -947,7 +956,7 @@ impl ast_impl {
 
 # statements
 
-struct ast_use_stmt {
+pub struct ast_use_stmt {
     base: ast,
     module_path: ptr_vec,
     import_symbol: ptr_vec
@@ -968,7 +977,7 @@ impl ast_use_stmt {
     }
 }
 
-struct ast_definition {
+pub struct ast_definition {
     base: ast,
     name: str,
     type: ast_type_def*,
@@ -996,7 +1005,7 @@ impl ast_definition {
     }
 }
 
-struct ast_cond_stmt {
+pub struct ast_cond_stmt {
     base: ast,
     stmts: ptr_vec
 }
@@ -1014,7 +1023,7 @@ impl ast_cond_stmt {
     }
 }
 
-struct ast_if_stmt {
+pub struct ast_if_stmt {
     base: ast,
     condition: ast*,
     body: ast_code_block*
@@ -1039,7 +1048,7 @@ impl ast_if_stmt {
     }
 }
 
-struct ast_match_case {
+pub struct ast_match_case {
     base: ast,
     pattern: ast_call*,
     body: ast_code_block*
@@ -1064,7 +1073,7 @@ impl ast_match_case {
     }
 }
 
-struct ast_match_stmt {
+pub struct ast_match_stmt {
     base: ast,
     value: ast*,
     cases: ptr_vec
@@ -1085,7 +1094,7 @@ impl ast_match_stmt {
     }
 }
 
-struct ast_while_stmt {
+pub struct ast_while_stmt {
     base: ast,
     condition: ast*,
     body: ast_code_block*
@@ -1110,7 +1119,7 @@ impl ast_while_stmt {
     }
 }
 
-struct ast_for_stmt {
+pub struct ast_for_stmt {
     base: ast,
     init: ast_definition*,
     condition: ast*,
@@ -1145,7 +1154,7 @@ impl ast_for_stmt {
     }
 }
 
-struct ast_in_stmt_expr {
+pub struct ast_in_stmt_expr {
     base: ast,
     value: ast*
 }
@@ -1165,7 +1174,7 @@ impl ast_in_stmt_expr {
     }
 }
 
-struct ast_ret_stmt {
+pub struct ast_ret_stmt {
     base: ast,
     value: ast*
 }
@@ -1185,7 +1194,7 @@ impl ast_ret_stmt {
     }
 }
 
-struct ast_continue_stmt { base: ast }
+pub struct ast_continue_stmt { base: ast }
 
 impl ast_continue_stmt {
     func new(loc: span*) -> ast_continue_stmt* {
@@ -1195,7 +1204,7 @@ impl ast_continue_stmt {
     }
 }
 
-struct ast_break_stmt { base: ast }
+pub struct ast_break_stmt { base: ast }
 
 impl ast_break_stmt {
     func new(loc: span*) -> ast_break_stmt* {
@@ -1205,7 +1214,7 @@ impl ast_break_stmt {
     }
 }
 
-struct ast_code_block {
+pub struct ast_code_block {
     base: ast,
     stmts: ptr_vec
 }
