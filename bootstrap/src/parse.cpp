@@ -77,7 +77,8 @@ decl* parse::pub_decl_gen() {
     }
     err.err("parse",
         toks[ptr].loc,
-        "expected function or struct but get \"" + toks[ptr].str + "\"."
+        "expected function, struct or enum but get \"" +
+        toks[ptr].str + "\"."
     );
     return nullptr;
 }

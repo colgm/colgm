@@ -341,8 +341,13 @@ impl ast_dumper {
     }
 
     func dump_type_def(self, node: ast_type_def*, out: io) {
-        out.out(self->indent.c_str).out("type-def [pointer depth=")
-           .out_i64(node->pointer_depth).out("] -> ");
+        out.out(self->indent.c_str).out("type-def ");
+        if (!node->is_const) {
+            out.out("[mut]");
+        } else {
+            out.out("[const]");
+        }
+        out.out("[ptr depth=").out_i64(node->pointer_depth).out("] -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -363,8 +368,11 @@ impl ast_dumper {
     }
 
     func dump_enum_decl(self, node: ast_enum_decl*, out: io) {
-        out.out(self->indent.c_str).out("enum-decl [")
-           .out(node->name.c_str).out("] -> ");
+        out.out(self->indent.c_str).out("enum-decl ");
+        if (node->is_public) {
+            out.out("[pub]");
+        }
+        out.out("[@").out(node->name.c_str).out("] -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -385,8 +393,14 @@ impl ast_dumper {
     }
 
     func dump_struct_decl(self, node: ast_struct_decl*, out: io) {
-        out.out(self->indent.c_str).out("struct-decl [")
-           .out(node->name.c_str).out("] -> ");
+        out.out(self->indent.c_str).out("struct-decl ");
+        if (node->is_public) {
+            out.out("[pub]");
+        }
+        if (node->is_extern) {
+            out.out("[extern]");
+        }
+        out.out("[@").out(node->name.c_str).out("] -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -419,8 +433,14 @@ impl ast_dumper {
     }
 
     func dump_func_decl(self, node: ast_func_decl*, out: io) {
-        out.out(self->indent.c_str).out("func-decl [")
-           .out(node->name.c_str).out("] -> ");
+        out.out(self->indent.c_str).out("func-decl ");
+        if (node->is_public) {
+            out.out("[pub]");
+        }
+        if (node->is_extern) {
+            out.out("[extern]");
+        }
+        out.out("[@").out(node->name.c_str).out("] -> ");
         node->base.location->dump(out);
 
         self->push_indent();

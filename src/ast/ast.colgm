@@ -746,7 +746,8 @@ impl ast_assignment {
 pub struct ast_type_def {
     base: ast,
     name: ast_identifier*,
-    pointer_depth: i64
+    pointer_depth: i64,
+    is_const: bool
 }
 
 impl ast_type_def {
@@ -755,6 +756,7 @@ impl ast_type_def {
         res->base = ast::instance(ast_kind::ast_type_def, loc);
         res->name = nil => ast_identifier*;
         res->pointer_depth = 0;
+        res->is_const = false;
         return res;
     }
 
@@ -793,7 +795,8 @@ impl ast_enum_member {
 pub struct ast_enum_decl {
     base: ast,
     members: ptr_vec,
-    name: str
+    name: str,
+    is_public: bool
 }
 
 impl ast_enum_decl {
@@ -802,6 +805,7 @@ impl ast_enum_decl {
         res->base = ast::instance(ast_kind::ast_enum_decl, loc);
         res->members.init();
         res->name = name->copy_instance();
+        res->is_public = false;
         return res;
     }
 
@@ -839,7 +843,9 @@ impl ast_struct_field {
 pub struct ast_struct_decl {
     base: ast,
     fields: ptr_vec,
-    name: str
+    name: str,
+    is_public: bool,
+    is_extern: bool
 }
 
 impl ast_struct_decl {
@@ -848,6 +854,8 @@ impl ast_struct_decl {
         res->base = ast::instance(ast_kind::ast_struct_decl, loc);
         res->fields.init();
         res->name = name->copy_instance();
+        res->is_public = false;
+        res->is_extern = false;
         return res;
     }
 
@@ -905,7 +913,9 @@ pub struct ast_func_decl {
     name: str,
     params: ast_param_list*,
     return_type: ast_type_def*,
-    body: ast_code_block*
+    body: ast_code_block*,
+    is_public: bool,
+    is_extern: bool
 }
 
 impl ast_func_decl {
@@ -916,6 +926,8 @@ impl ast_func_decl {
         res->params = nil => ast_param_list*;
         res->return_type = nil => ast_type_def*;
         res->body = nil => ast_code_block*;
+        res->is_public = false;
+        res->is_extern = false;
         return res;
     }
 

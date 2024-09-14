@@ -33,6 +33,8 @@ impl parser {
             tok_kind::tok_var =>        return "var";
             tok_kind::tok_struct =>     return "struct";
             tok_kind::tok_pub =>        return "pub";
+            tok_kind::tok_extern =>     return "extern";
+            tok_kind::tok_const =>      return "const";
             tok_kind::tok_impl =>       return "impl";
             tok_kind::tok_func =>       return "func";
             tok_kind::tok_match =>      return "match";
@@ -609,6 +611,10 @@ impl parser {
 
     func type_def_gen(self) -> ast_type_def* {
         var res = ast_type_def::new(self->this_tok_loc_copy());
+        if (self->lookahead(tok_kind::tok_const)) {
+            self->match_token(tok_kind::tok_const);
+            res->is_const = true;
+        }
         res->name = self->identifier_gen();
         while (self->lookahead(tok_kind::tok_mul)) {
             res->pointer_depth += 1;
@@ -952,6 +958,57 @@ impl parser {
 }
 
 impl parser {
+    func pub_decl_gen(self) -> ast* {
+        self->match_token(tok_kind::tok_pub);
+        if (self->lookahead(tok_kind::tok_extern)) {
+            var res = self->extern_decl_gen();
+            if (res->kind == ast_kind::ast_func_decl) {
+                var tmp = res => ast_func_decl*;
+                tmp->is_public = true;
+                return tmp => ast*;
+            } elsif (res->kind == ast_kind::ast_struct_decl) {
+                var tmp = res => ast_struct_decl*;
+                tmp->is_public = true;
+                return tmp => ast*;
+            } else {
+                self->err->error(res->location, "unreachable, please report bug.");
+            }
+        } elsif (self->lookahead(tok_kind::tok_func)) {
+            var res = self->function_decl_gen();
+            res->is_public = true;
+            return res => ast*;
+        } elsif (self->lookahead(tok_kind::tok_struct)) {
+            var res = self->struct_decl_gen();
+            res->is_public = true;
+            return res => ast*;
+        } elsif (self->lookahead(tok_kind::tok_enum)) {
+            var res = self->enum_decl_gen();
+            res->is_public = true;
+            return res => ast*;
+        }
+    
+        self->err->error(self->this_tok_loc(), "expect function, struct or enum.");
+        return ast_null::new() => ast*;
+    }
+
+    func extern_decl_gen(self) -> ast* {
+        self->match_token(tok_kind::tok_extern);
+        if (self->lookahead(tok_kind::tok_func)) {
+            var res = self->function_decl_gen();
+            res->is_extern = true;
+            return res => ast*;
+        }
+        if (self->lookahead(tok_kind::tok_struct)) {
+            var res = self->struct_decl_gen();
+            res->is_extern = true;
+            return res => ast*;
+        }
+        self->err->error(self->this_tok_loc(), "expect function or struct.");
+        return ast_null::new() => ast*;
+    }
+}
+
+impl parser {
     func parse(self) {
         self->index = 0;
         self->root = root::new(self->this_tok_loc_copy());
@@ -977,6 +1034,14 @@ impl parser {
                 }
                 tok_kind::tok_impl => {
                     self->root->decls.push(self->impl_gen() => ast*);
+                    continue;
+                }
+                tok_kind::tok_pub => {
+                    self->root->decls.push(self->pub_decl_gen());
+                    continue;
+                }
+                tok_kind::tok_extern => {
+                    self->root->decls.push(self->extern_decl_gen());
                     continue;
                 }
             }
