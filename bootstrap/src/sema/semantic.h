@@ -107,6 +107,7 @@ private:
     type resolve_ptr_get_field(const type&, ptr_get_field*);
     type resolve_call(call*);
     bool check_valid_left_value(expr*);
+    void check_mutable_left_value(expr*, const type&);
     type resolve_assignment(assignment*);
     type resolve_expression(expr*);
     type resolve_type_def(type_def*);

@@ -36,6 +36,8 @@ struct type {
     bool is_global = false;
     bool is_global_func = false;
     bool is_enum = false;
+    bool is_immutable_array_address = false;
+    bool is_constant_type = false;
 
     struct_method_info stm_info;
 

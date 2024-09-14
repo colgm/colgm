@@ -739,7 +739,9 @@ type semantic::resolve_array_literal(array_literal* node) {
     }
     const auto type_infer = resolve_type_def(node->get_type());
     node->set_resolve_type(type_infer.get_pointer_copy());
-    return type_infer.get_pointer_copy();
+    auto result_type = type_infer.get_pointer_copy();
+    result_type.is_immutable_array_address = true;
+    return result_type;
 }
 
 type semantic::resolve_identifier(identifier* node) {
@@ -927,6 +929,9 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
     resolve_expression(node->get_index());
     auto result = prev;
     result.pointer_depth--;
+    if (result.is_immutable_array_address) {
+        result.is_immutable_array_address = false;
+    }
     node->set_resolve_type(result);
     return result;
 }
@@ -1174,12 +1179,25 @@ bool semantic::check_valid_left_value(expr* node) {
     return true;
 }
 
+void semantic::check_mutable_left_value(expr* node, const type& lt) {
+    if (lt.is_immutable_array_address) {
+        report(node, "cannot assign to immutable array address.");
+        return;
+    }
+    if (lt.is_constant_type) {
+        report(node, "cannot assign to \"const " + lt.to_string() + "\".");
+        return;
+    }
+    return;
+}
+
 type semantic::resolve_assignment(assignment* node) {
     if (!check_valid_left_value(node->get_left())) {
         report(node->get_left(), "bad left value.");
         return type::error_type();
     }
     const auto left = resolve_expression(node->get_left());
+    check_mutable_left_value(node->get_left(), left);
     const auto right = resolve_expression(node->get_right());
     if (left.is_error() || right.is_error()) {
         return type::error_type();
@@ -1268,7 +1286,15 @@ type semantic::resolve_type_def(type_def* node) {
     if (!ctx.global_symbol.at(name).is_public) {
         report(node->get_name(), "private type \"" + name + "\" cannot be used.");
     }
-    return {name, ctx.global_symbol.at(name).loc_file, node->get_pointer_level()};
+    auto res = type {
+        name,
+        ctx.global_symbol.at(name).loc_file,
+        node->get_pointer_level()
+    };
+    if (node->is_constant()) {
+        res.is_constant_type = true;
+    }
+    return res;
 }
 
 void semantic::resolve_definition(definition* node, const colgm_func& func_self) {
@@ -1311,9 +1337,17 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
             "\", but get \"" + real_type.to_string() + "\"."
         );
     }
-    node->set_resolve_type(expected_type);
-    ctx.add_symbol(name, expected_type);
-    check_defined_variable_is_void(node, expected_type);
+
+    // if immutable, make sure the type is correct
+    if (real_type.is_constant_type || real_type.is_immutable_array_address) {
+        node->set_resolve_type(real_type);
+        ctx.add_symbol(name, real_type);
+        check_defined_variable_is_void(node, real_type);
+    } else {
+        node->set_resolve_type(expected_type);
+        ctx.add_symbol(name, expected_type);
+        check_defined_variable_is_void(node, expected_type);
+    }
 }
 
 void semantic::check_defined_variable_is_void(definition* node, const type& t) {
