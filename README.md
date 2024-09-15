@@ -1,23 +1,21 @@
-# <img src="doc/colgm.svg" height="50px"/> Colgm Compiler Project
+# <img src="doc/colgm.svg" height="45px"/> Colgm Compiler Project
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 
-This is the main repository for Colgm compiler.
-
 ## Repo Content
 
-- [bootstrap](./bootstrap/README.md) : available now
-- [src](./src/README.md) : for bootstrapped compiler, not available now
+- [bootstrap](./bootstrap/README.md) : available now, features not stable these days, but welcome to try.
+- [src](./src/README.md) : for bootstrapped compiler, not available now (lexer and parser is ready).
 
-## Bootstrapping Compiler
+## Bootstrap Compiler
 
-Bootstrap compiler locates at `{repo_path}/bootstrap`,
-written by C++(`-std=c++17`):
+Bootstrap compiler locates at `{repo_path}/bootstrap`, written by C++(`-std=c++17`):
 
-Use these commands to build the bootstrap compiler:
+Use these commands to build the bootstrap compiler, use `-DCMAKE_BUILD_TYPE=Debug` if want debug version:
 
 ```sh
-cd bootstrap && mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j
+cd bootstrap && mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release && make -j
 ```
 
 The executable is located as `build/colgm`.
@@ -34,6 +32,12 @@ execute bootstrapped new compiler:
 
 ```sh
 lli out.ll main.colgm -L .
+```
+
+LLVM jit interpreter maybe untable on some platforms, if lli crashed, try using `clang` to build `out.ll` to executable:
+
+```sh
+clang out.ll -o colgm
 ```
 
 Learn more about bootstrap compiler: [Colgm Bootstrap](./bootstrap/README.md).
