@@ -752,12 +752,17 @@ type semantic::resolve_identifier(identifier* node) {
         return ctx.get_symbol(name);
     }
     if (ctx.global_symbol.count(name)) {
+        const auto& sym = ctx.global_symbol.at(name);
+        if (!sym.is_public) {
+            report(node, "\"" + name + "\" is not imported.");
+            return type::error_type();
+        }
         return {
             .name = name,
-            .loc_file = ctx.global_symbol.at(name).loc_file,
+            .loc_file = sym.loc_file,
             .pointer_depth = 0,
             .is_global = true,
-            .is_global_func = ctx.global_symbol.at(name).kind==sym_kind::func_kind
+            .is_global_func = sym.kind==sym_kind::func_kind
         };
     }
     report(node, "undefined symbol \"" + name + "\".");
