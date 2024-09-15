@@ -11,7 +11,7 @@ struct file_lines {
 }
 
 impl file_lines {
-    func init(self) {
+    pub func init(self) {
         self->source = malloc((128 => u64)*str::__size__()) => str*;
         self->size = 0;
         self->capacity = 128;
@@ -21,7 +21,7 @@ impl file_lines {
         }
     }
 
-    func delete(self) {
+    pub func delete(self) {
         for (var index = 0; index < self->size; index += 1) {
             self->source[index].delete();
         }
@@ -46,7 +46,7 @@ impl file_lines {
         }
     }
 
-    func push(self, line: str*) {
+    pub func push(self, line: str*) {
         if (self->size == self->capacity) {
             self->expand_capacity();
         }
@@ -63,7 +63,7 @@ pub struct report {
 }
 
 impl report {
-    func new() -> report* {
+    pub func new() -> report* {
         var res = report::__alloc__();
         res->filename.init();
         res->source.init();
@@ -71,14 +71,14 @@ impl report {
         return res;
     }
 
-    func delete(self) {
+    pub func delete(self) {
         self->filename.delete();
         self->source.delete();
     }
 }
 
 impl report {
-    func load_file_source(self, filename: i8*) {
+    pub func load_file_source(self, filename: i8*) {
         if (!fs::exists(filename)) {
             self->error_count += 1;
             io::stderr().red().out("Error: ").reset();
@@ -237,7 +237,7 @@ impl report {
 }
 
 impl report {
-    func error(self, location: span*, message: i8*) {
+    pub func error(self, location: span*, message: i8*) {
         if (!location->file.eq_const(self->filename.c_str)) {
             self->load_file_source(location->file.c_str);
         }
@@ -252,7 +252,7 @@ impl report {
         self->print_file_line(location, true);
     }
 
-    func warn(self, location: span*, message: i8*) {
+    pub func warn(self, location: span*, message: i8*) {
         if (!location->file.eq_const(self->filename.c_str)) {
             self->load_file_source(location->file.c_str);
         }

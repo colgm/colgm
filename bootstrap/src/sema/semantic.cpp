@@ -55,6 +55,7 @@ colgm_func semantic::builtin_struct_size(const span& loc) {
     func.name = "__size__";
     func.location = loc;
     func.return_type = type::u64_type();
+    func.is_public = true;
     return func;
 }
 
@@ -63,6 +64,7 @@ colgm_func semantic::builtin_struct_alloc(const span& loc, const type& ty) {
     func.name = "__alloc__";
     func.location = loc;
     func.return_type = ty;
+    func.is_public = true;
     return func;
 }
 
@@ -762,6 +764,39 @@ type semantic::resolve_identifier(identifier* node) {
     return type::error_type();
 }
 
+void semantic::check_pub_method(ast::node* node,
+                                const std::string& name,
+                                const colgm_struct& self) {
+    if (!self.method.count(name)) {
+        return;
+    }
+    if (self.method.at(name).is_public) {
+        return;
+    }
+    if (impl_struct_name.empty() || impl_struct_name!=self.name) {
+        report(node,
+            "cannot call private method \"" + self.name + "::" + name + "\"."
+        );
+    }
+}
+
+void semantic::check_pub_static_method(ast::node* node,
+                                       const std::string& name,
+                                       const colgm_struct& self) {
+    if (!self.static_method.count(name)) {
+        return;
+    }
+    if (self.static_method.at(name).is_public) {
+        return;
+    }
+    if (impl_struct_name.empty()) {
+        report(node,
+            "cannot call private static method \"" +
+            self.name + "::" + name + "\"."
+        );
+    }
+}
+
 type semantic::resolve_get_field(const type& prev, get_field* node) {
     if (prev.is_global) {
         report(node,
@@ -798,6 +833,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
         return struct_self.field.at(node->get_name()).symbol_type;
     }
     if (struct_self.method.count(node->get_name())) {
+        check_pub_method(node, node->get_name(), struct_self);
         const auto res = struct_method_infer(
             prev.name,
             prev.loc_file,
@@ -1000,6 +1036,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
     if (domain.structs.count(prev.name) && prev.is_global) {
         const auto& st = domain.structs.at(prev.name);
         if (st.static_method.count(node->get_name())) {
+            check_pub_static_method(node, node->get_name(), st);
             const auto res = struct_static_method_infer(
                 prev.name,
                 prev.loc_file,
@@ -1067,6 +1104,7 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
         return struct_self.field.at(node->get_name()).symbol_type;
     }
     if (struct_self.method.count(node->get_name())) {
+        check_pub_method(node, node->get_name(), struct_self);
         auto infer = type({prev.name, prev.loc_file, prev.pointer_depth, false});
         infer.stm_info = {
             .flag_is_static = false,
@@ -1619,9 +1657,11 @@ void semantic::resolve_impl(impl_struct* node) {
         return;
     }
     const auto& struct_self = domain.structs.at(node->get_struct_name());
+    impl_struct_name = node->get_struct_name();
     for(auto i : node->get_methods()) {
         resolve_method(i, struct_self);
     }
+    impl_struct_name = "";
 }
 
 void semantic::resolve_function_block(root* ast_root) {

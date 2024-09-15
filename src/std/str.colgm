@@ -7,20 +7,20 @@ pub struct str {
 }
 
 impl str {
-    func new() -> str* {
+    pub func new() -> str* {
         var res = str::__alloc__();
         res->c_str = nil;
         res->init();
         return res;
     }
 
-    func instance() -> str {
+    pub func instance() -> str {
         var res = str {};
         res.init();
         return res;
     }
 
-    func init(self) {
+    pub func init(self) {
         self->c_str = malloc(256 => u64);
         self->c_str[0] = '\0';
 
@@ -28,7 +28,7 @@ impl str {
         self->capacity = 256 => u64;
     }
 
-    func copy_instance(self) -> str {
+    pub func copy_instance(self) -> str {
         var new_str = str {
             c_str: malloc(self->capacity),
             size: self->size,
@@ -41,7 +41,7 @@ impl str {
         return new_str;
     }
 
-    func delete(self) {
+    pub func delete(self) {
         free(self->c_str);
         
         self->c_str = nil;
@@ -51,18 +51,18 @@ impl str {
 }
 
 impl str {
-    func empty(self) -> bool {
+    pub func empty(self) -> bool {
         return self->size == (0 => u64);
     }
 
-    func clear(self) {
+    pub func clear(self) {
         self->c_str[0] = '\0';
         self->size = 0 => u64;
     }
 }
 
 impl str {
-    func copy_const(self, src: i8*) {
+    pub func copy_const(self, src: i8*) {
         var len = strlen(src) => u64;
 
         # re-allocate memory
@@ -83,7 +83,7 @@ impl str {
         self->c_str = realloc(self->c_str, self->capacity);
     }
 
-    func append_char(self, ch: i8) -> str* {
+    pub func append_char(self, ch: i8) -> str* {
         if (self->size == self->capacity) {
             self->expand_capacity();
         }
@@ -94,7 +94,7 @@ impl str {
         return self;
     }
 
-    func append_str(self, src: str*) -> str* {
+    pub func append_str(self, src: str*) -> str* {
         var len = src->size => i64;
         for (var index = 0; index < len; index += 1) {
             self->append_char(src->c_str[index]);
@@ -102,7 +102,7 @@ impl str {
         return self;
     }
 
-    func append_i8_vec(self, src: i8*) -> str* {
+    pub func append_i8_vec(self, src: i8*) -> str* {
         var len = strlen(src);
         for (var index = 0; index < len; index += 1) {
             self->append_char(src[index]);
@@ -110,7 +110,7 @@ impl str {
         return self;
     }
 
-    func pop(self) {
+    pub func pop(self) {
         if (self->size > 0 => u64) {
             self->size -= 1 => u64;
             self->c_str[self->size] = '\0';
@@ -119,7 +119,7 @@ impl str {
 }
 
 impl str {
-    func get(self, index: u64) -> i8 {
+    pub func get(self, index: u64) -> i8 {
         if (index >= self->size) {
             var report_info = "std::str::get: index out of range\n\n";
             write(2 => i32, report_info, strlen(report_info));
@@ -128,11 +128,11 @@ impl str {
         return self->c_str[index];
     }
 
-    func eq_const(self, src: i8*) -> bool {
+    pub func eq_const(self, src: i8*) -> bool {
         return streq(self->c_str, src);
     }
 
-    func eq(self, src: str*) -> bool {
+    pub func eq(self, src: str*) -> bool {
         return streq(self->c_str, src->c_str);
     }
 }

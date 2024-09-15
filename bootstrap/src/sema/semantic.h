@@ -23,6 +23,7 @@ private:
     error& err;
     semantic_context ctx;
     i64 in_loop_level = 0;
+    std::string impl_struct_name;
 
 private:
     void report(node* n, const std::string& info) {
@@ -97,6 +98,8 @@ private:
     type resolve_bool_literal(bool_literal*);
     type resolve_array_literal(array_literal*);
     type resolve_identifier(identifier*);
+    void check_pub_method(node*, const std::string&, const colgm_struct&);
+    void check_pub_static_method(node*, const std::string&, const colgm_struct&);
     type resolve_get_field(const type&, get_field*);
     void check_static_call_args(const colgm_func&, call_func_args*);
     void check_method_call_args(const colgm_func&, const type&, call_func_args*);
@@ -137,7 +140,7 @@ private:
     void resolve_use_stmt(root*);
 
 public:
-    semantic(error& e): err(e) {}
+    semantic(error& e): err(e), impl_struct_name("") {}
     const error& analyse(root*);
     void dump();
     const auto& get_context() const { return ctx; }

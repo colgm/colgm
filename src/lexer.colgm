@@ -87,7 +87,7 @@ struct token {
 }
 
 impl token {
-    func new(kind: tok_kind, content: str*, loc: span*) -> token* {
+    pub func new(kind: tok_kind, content: str*, loc: span*) -> token* {
         var res = token::__alloc__();
         res->kind = kind;
         res->content = content;
@@ -95,7 +95,7 @@ impl token {
         return res;
     }
 
-    func delete(self) {
+    pub func delete(self) {
         self->content->delete();
         free(self->content => i8*);
         self->location->delete();
@@ -110,7 +110,7 @@ pub struct vec_token {
 }
 
 impl vec_token {
-    func new() -> vec_token* {
+    pub func new() -> vec_token* {
         var res = vec_token::__alloc__();
         var size_of_token = token::__size__();
         res->data = malloc((2048 => u64) * size_of_token) => token*;
@@ -119,7 +119,7 @@ impl vec_token {
         return res;
     }
 
-    func delete(self) {
+    pub func delete(self) {
         var index = 0 => u64;
         while(index < self->size) {
             self->data[index].delete();
@@ -136,7 +136,7 @@ impl vec_token {
         ) => token*;
     }
 
-    func append(self, kind: tok_kind, content: str*, loc: span*) {
+    pub func append(self, kind: tok_kind, content: str*, loc: span*) {
         if (self->size == self->capacity) {
             self->expand_capacity();
         }
@@ -147,7 +147,7 @@ impl vec_token {
         self->size += 1 => u64;
     }
 
-    func get(self, index: i64) -> token {
+    pub func get(self, index: i64) -> token {
         if (index < 0 || (index => u64) >= self->size) {
             io::stderr().out("index out of bounds: ")
                         .out_i64(index).out("\n");
@@ -167,7 +167,7 @@ pub struct lexer {
 }
 
 impl lexer {
-    func new(e: report*) -> lexer* {
+    pub func new(e: report*) -> lexer* {
         var res = lexer::__alloc__();
         res->err = e;
         res->toks = vec_token::new();
@@ -178,7 +178,7 @@ impl lexer {
         return res;
     }
 
-    func delete(self) {
+    pub func delete(self) {
         io::stderr().out("[").green().out("lexer").reset().out("]")
                     .out(" delete lexer::filename\n");
         self->filename.delete();
@@ -880,7 +880,7 @@ impl lexer {
         }
     }
 
-    func scan(self, filename: i8*) {
+    pub func scan(self, filename: i8*) {
         self->filename.clear();
         self->filename.copy_const(filename);
         self->err->load_file_source(filename);
@@ -942,7 +942,7 @@ impl lexer {
         free(src => i8*);
     }
 
-    func dump(self) {
+    pub func dump(self) {
         var index = 0 => u64;
         while(index < self->toks->size) {
             var loc = self->toks->data[index].location;

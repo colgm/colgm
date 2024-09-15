@@ -614,8 +614,15 @@ impl_struct* parse::impl_gen() {
     auto result = new impl_struct(toks[ptr].loc, toks[ptr].str);
     match(tok::tk_id);
     match(tok::tk_lbrace);
-    while(look_ahead(tok::tk_func)) {
-        result->add_method(function_gen());
+    while(look_ahead(tok::tk_func) || look_ahead(tok::tk_pub)) {
+        bool is_pub = false;
+        if (look_ahead(tok::tk_pub)) {
+            match(tok::tk_pub);
+            is_pub = true;
+        }
+        auto func = function_gen();
+        func->set_public(is_pub);
+        result->add_method(func);
     }
     match(tok::tk_rbrace);
     update_location(result);
