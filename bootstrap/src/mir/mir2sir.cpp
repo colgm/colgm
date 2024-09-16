@@ -568,6 +568,38 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
     ));
 }
 
+void mir2sir::push_global_func(const type& t) {
+    // avoid out of range error
+    if (!ctx.global.domain.count(t.loc_file)) {
+        value_stack.push_back(mir_value_t::func_kind(t.name, t));
+        return;
+    }
+    const auto& dm = ctx.global.domain.at(t.loc_file);
+
+    // avoid out of range error
+    if (!dm.functions.count(t.name)) {
+        value_stack.push_back(mir_value_t::func_kind(t.name, t));
+        return;
+    }
+    const auto& fn = dm.functions.at(t.name);
+
+    // extern function will reserve raw name, others are mangled
+    if (fn.is_extern) {
+        value_stack.push_back(mir_value_t::func_kind(t.name, t));
+        return;
+    }
+
+    // do mangling
+    const auto tmp = type {
+        .name = t.name,
+        .loc_file = fn.location.file
+    };
+    value_stack.push_back(mir_value_t::func_kind(
+        mangle(tmp.full_path_name()),
+        t
+    ));
+}
+
 void mir2sir::visit_mir_call_id(mir_call_id* node) {
     if (!node->get_type().is_global) {
         value_stack.push_back(mir_value_t::variable(
@@ -580,10 +612,7 @@ void mir2sir::visit_mir_call_id(mir_call_id* node) {
     // get full path
     switch(ctx.search_symbol_kind(node->get_type())) {
         case sym_kind::func_kind:
-            value_stack.push_back(mir_value_t::func_kind(
-                node->get_type().name,
-                node->get_type()
-            ));
+            push_global_func(node->get_type());
             break;
         case sym_kind::struct_kind:
             value_stack.push_back(mir_value_t::struct_kind(

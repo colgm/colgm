@@ -164,6 +164,14 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
         };
         name = mangle(tmp.full_path_name()) + "." + name;
     }
+    // global function which is not extern
+    if (impl_struct_name.empty() && !node->is_extern_func()) {
+        const auto tmp = type {
+            .name = name,
+            .loc_file = node->get_location().file
+        };
+        name = mangle(tmp.full_path_name());
+    }
     name = "@" + name;
 
     auto func = new mir_func();
