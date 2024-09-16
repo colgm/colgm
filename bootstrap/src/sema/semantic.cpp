@@ -1600,16 +1600,22 @@ void semantic::resolve_code_block(code_block* node, const colgm_func& func_self)
 }
 
 void semantic::resolve_global_func(func_decl* node) {
-    if (!node->get_code_block()) {
-        return;
-    }
     const auto& domain = ctx.global.domain.at(ctx.this_file);
     if (!domain.functions.count(node->get_name())) {
         report(node, "cannot find function \"" + node->get_name() + "\".");
         return;
     }
-    ctx.push_new_level();
     const auto& func_self = domain.functions.at(node->get_name());
+    if (!node->get_code_block()) {
+        if (!func_self.is_extern) {
+            warning(node,
+                "non-extern function \"" + node->get_name() +
+                "\" is not implemented."
+            );
+        }
+        return;
+    }
+    ctx.push_new_level();
     for(const auto& p : func_self.parameters) {
         ctx.add_symbol(p.name, p.symbol_type);
     }
