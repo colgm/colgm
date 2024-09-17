@@ -4,6 +4,11 @@
 #include "sema/semantic.h"
 #include "mir/ast2mir.h"
 
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+#include <queue>
+
 namespace colgm {
 
 void semantic::report_unreachable_statements(code_block* node) {
@@ -170,6 +175,50 @@ void semantic::analyse_structs(root* ast_root) {
         }
         auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
         analyse_single_struct(struct_decl_node);
+    }
+}
+
+void semantic::check_self_reference() {
+    const auto& structs = ctx.global.domain.at(ctx.this_file).structs;
+
+    std::vector<std::string> need_check = {};
+    for(const auto& st : structs) {
+        for(const auto& field : st.second.field) {
+            if (!field.second.symbol_type.is_pointer() &&
+                structs.count(field.second.symbol_type.name)) {
+                need_check.push_back(st.first);
+                break;
+            }
+        }
+    }
+    for(const auto& st : need_check) {
+        std::queue<std::pair<std::string, std::string>> bfs;
+        std::unordered_set<std::string> visited;
+        bfs.push({st, st});
+        while (!bfs.empty()) {
+            auto [cur, path] = bfs.front();
+            bfs.pop();
+            if (visited.count(cur)) {
+                continue;
+            } else {
+                visited.insert(cur);
+            }
+
+            for(const auto& field : structs.at(cur).field) {
+                if (field.second.symbol_type.is_pointer()) {
+                    continue;
+                }
+                const auto& type_name = field.second.symbol_type.name;
+                auto new_path = path + "::" + field.first + " -> " + type_name;
+                if (type_name == st) {
+                    err.err("semantic", structs.at(st).location,
+                        "self reference detected: " + new_path + "."
+                    );
+                } else if (structs.count(type_name)) {
+                    bfs.push({type_name, new_path});
+                }
+            }
+        }
     }
 }
 
@@ -1873,6 +1922,7 @@ const error& semantic::analyse(root* ast_root) {
 
     ctx.global.domain.at(ctx.this_file).structs.clear();
     analyse_structs(ast_root);
+    check_self_reference();
 
     ctx.global.domain.at(ctx.this_file).functions.clear();
     analyse_functions(ast_root);

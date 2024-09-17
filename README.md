@@ -60,7 +60,6 @@ pub func main() -> i64 {
 1. support foreach/forindex:
     - forindex loop, container should have `size()` method
     - foreach loop, container should have iterator-like stuff
-2. public access authorization, use `pub` keyword
-3. circular reference detection of structs
-4. llvm debug info
-5. develop bootstrapped compiler
+2. circular reference detection of structs
+3. llvm debug info
+4. develop bootstrapped compiler
