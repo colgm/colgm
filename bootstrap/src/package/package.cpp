@@ -92,7 +92,8 @@ std::string package_manager::replace_string(const std::string& src) {
     return result;
 }
 
-const error& package_manager::scan(const std::string& directory) {
+const error& package_manager::scan(const std::string& directory,
+                                   const std::string& entry_file) {
     if (!std::filesystem::is_directory(directory)) {
         err.err("package",
             "\"" + directory + "\" does not exist or is not a directory."
@@ -100,6 +101,9 @@ const error& package_manager::scan(const std::string& directory) {
         return err;
     }
     for(auto i : std::filesystem::recursive_directory_iterator(directory)) {
+        if (std::filesystem::absolute(i)==std::filesystem::absolute(entry_file)) {
+            continue;
+        }
         if (i.is_regular_file()) {
             if (i.path().extension()==".colgm") {
                 add_new_file(std::filesystem::relative(i.path(), directory), i.path());

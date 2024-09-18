@@ -74,11 +74,13 @@ void err() {
     std::exit(1);
 }
 
-void scan_package(const std::string& library_path, const u32 cmd) {
+void scan_package(const std::string& library_path,
+                  const std::string& entry_file,
+                  const u32 cmd) {
     if (library_path.empty()) {
         return;
     }
-    colgm::package_manager::singleton()->scan(library_path).chkerr();
+    colgm::package_manager::singleton()->scan(library_path, entry_file).chkerr();
     if (cmd&COMPILE_VIEW_LIB) {
         colgm::package_manager::singleton()->dump_packages();
     }
@@ -195,7 +197,11 @@ i32 main(i32 argc, const char* argv[]) {
         err();
     }
 
-    scan_package(library_path, cmd);
+    if (library_path.empty()) {
+        library_path = ".";
+    }
+
+    scan_package(library_path, filename, cmd);
     execute(filename, cmd);
     return 0;
 }

@@ -27,25 +27,23 @@ jobs:
           lli --version
     - name: build
       run: |
-          cd bootstrap
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release
           make -j8
     - name: verify
       run: |
           export PATH="/opt/homebrew/opt/llvm@17/bin:$PATH"
-          cd bootstrap
           make test
     - name: colgm-build
       run: |
           export PATH="/opt/homebrew/opt/llvm@17/bin:$PATH"
-          cd src
+          rm out.ll
           make
           /opt/homebrew/opt/llvm@17/bin/clang out.ll -o colgm
           ./colgm
-          ./colgm out.ll main.colgm --lex --ast
-          ./colgm out.ll lexer.colgm --lex --ast
+          ./colgm out.ll src/main.colgm --lex --ast
+          ./colgm out.ll src/lexer.colgm --lex --ast
     - name: release
       run: |
           tar -czf colgm-mac-nightly.tgz .
@@ -64,25 +62,23 @@ jobs:
           lli --version
     - name: build
       run: |
-          cd bootstrap
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release
           make -j8
     - name: verify
       run: |
           export PATH="/usr/lib/llvm-14/bin:$PATH"
-          cd bootstrap
           make test
     - name: colgm-build
       run: |
           export PATH="/usr/lib/llvm-14/bin:$PATH"
-          cd src
+          rm out.ll
           make
           /usr/lib/llvm-14/bin/clang out.ll -o colgm
           ./colgm
-          ./colgm out.ll main.colgm --lex --ast
-          ./colgm out.ll lexer.colgm --lex --ast
+          ./colgm out.ll src/main.colgm --lex --ast
+          ./colgm out.ll src/lexer.colgm --lex --ast
     - name: release
       run: |
           touch colgm-linux-x86_64-nightly.tgz

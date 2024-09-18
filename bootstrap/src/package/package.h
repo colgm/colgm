@@ -100,7 +100,7 @@ public:
             analyse_status_map.at(file_name) = as;
         }
     }
-    const error& scan(const std::string&);
+    const error& scan(const std::string&, const std::string&);
 };
 
 }

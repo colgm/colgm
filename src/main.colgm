@@ -67,13 +67,8 @@ func compile(option: cli_option) {
 
     err.out("[").green().out("colgm").reset().out("]")
        .out(" source file  : ").out(option.filename).out("\n");
-    if (option.library_path != nil) {
-        err.out("[").green().out("colgm").reset().out("]")
-           .out(" library path : ").out(option.library_path).out("\n");
-    } else {
-        err.out("[").green().out("colgm").reset().out("]")
-           .out(" library path : <none>\n");
-    }
+    err.out("[").green().out("colgm").reset().out("]")
+       .out(" library path : ").out(option.library_path).out("\n");
 
     var cc = compiler::instance();
 
@@ -155,6 +150,9 @@ func main(argc: i32, argv: i8**) -> i32 {
         io::stderr().red().out("Error:").reset()
                     .out(" no source file specified").endln();
         return (-1) => i32;
+    }
+    if (option.library_path == nil) {
+        option.library_path = ".";
     }
 
     compile(option);
