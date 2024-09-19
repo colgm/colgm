@@ -14,33 +14,31 @@ Bootstrap compiler locates at `{repo_path}/bootstrap`, written by C++(`-std=c++1
 Use these commands to build the bootstrap compiler, use `-DCMAKE_BUILD_TYPE=Debug` if want debug version:
 
 ```sh
-cd bootstrap && mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release && make -j
+mkdir build && cd build
+cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release && make -j
 ```
 
 The executable is located as `build/colgm`.
 
-Then move to the `{repo_path}/src`:
+Then use this command to build bootstrapped compiler:
 
 ```sh
-cd src && make
+make colgm.ll
 ```
 
-The bootstrapped compiler should be `{repo_path}/src/out.ll`.
+The bootstrapped compiler should be `{repo_path}/colgm.ll`.
 If having `lli`(llvm jit interpreter), you could try this to
 execute bootstrapped new compiler:
 
 ```sh
-lli out.ll main.colgm -L .
+lli colgm.ll main.colgm -L .
 ```
 
 LLVM jit interpreter maybe untable on some platforms, if lli crashed, try using `clang` to build `out.ll` to executable:
 
 ```sh
-clang out.ll -o colgm
+clang colgm.ll -o colgm
 ```
-
-Learn more about bootstrap compiler: [Colgm Bootstrap](./bootstrap/README.md).
 
 ## Hello World
 
@@ -55,10 +53,14 @@ pub func main() -> i64 {
 }
 ```
 
+## Try it
+
+See simple tutorial in [bootstrap/README.md](./bootstrap/README.md).
+
 ## TODO
 
-1. support foreach/forindex:
+1. support foreach/forindex, may not support in bootstrap compiler:
     - forindex loop, container should have `size()` method
     - foreach loop, container should have iterator-like stuff
-2. llvm debug info
+2. llvm debug info, may not support in bootstrap compiler
 3. develop bootstrapped compiler

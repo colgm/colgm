@@ -33,7 +33,7 @@ std::ostream& help(std::ostream& out) {
     << "   -s,   --sema           | view semantic result.\n"
     << "         --mir            | view mir.\n"
     << "         --sir            | view sir.\n"
-    << "   -L,   --library <path> | add library path.\n"
+    << "         --library <path> | add library path.\n"
     << "         --dump-lib       | view libraries.\n"
     << "file:\n"
     << "   <filename>             | input file.\n"
@@ -182,7 +182,7 @@ i32 main(i32 argc, const char* argv[]) {
             break;
         } else if (cmdlst.count(argv[i])) {
             cmd |= cmdlst.at(argv[i]);
-        } else if (argv[i]==std::string("-L") || argv[i]==std::string("--library")) {
+        } else if (argv[i]==std::string("--library")) {
             if (i+1<argc) {
                 library_path = argv[i+1];
                 ++i;

@@ -117,10 +117,15 @@ func main(argc: i32, argv: i8**) -> i32 {
             option.OPTION_VIEW_AST = true;
         } elsif (streq(argv[i], "-s") || streq(argv[i], "--sema")) {
             option.OPTION_VIEW_SEMA = true;
-        } elsif (streq(argv[i], "-L") || streq(argv[i], "--library")) {
+        } elsif (streq(argv[i], "--library")) {
             if (i + (1 => i32) >= argc) {
                 io::stderr().red().out("Error:").reset()
                             .out(" missing library path").endln();
+                return (-1) => i32;
+            }
+            if (option.library_path != nil) {
+                io::stderr().red().out("Error:").reset()
+                            .out(" multiple library path specified").endln();
                 return (-1) => i32;
             }
             option.library_path = argv[i + (1 => i32)];
@@ -141,8 +146,12 @@ func main(argc: i32, argv: i8**) -> i32 {
             io::stderr().red().out("Error:").reset()
                         .out(" invalid argument: ").out(argv[i]).endln();
             return (-1) => i32;
-        } else {
+        } else if (option.filename == nil) {
             option.filename = argv[i];
+        } else {
+            io::stderr().red().out("Error:").reset()
+                        .out(" invalid argument: ").out(argv[i]).endln();
+            return (-1) => i32;
         }
     }
 
