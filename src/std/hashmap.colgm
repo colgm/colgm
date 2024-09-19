@@ -1,0 +1,33 @@
+use std::str::{ str };
+use std::libc::{ malloc, free };
+
+pub struct pair {
+    key: str,
+    value: i8*
+}
+
+pub struct bucket {
+    pair: pair,
+    next: bucket*
+}
+
+pub struct hashmap {
+    size: i64,
+    data: bucket**
+}
+
+impl hashmap {
+    pub func new() -> hashmap* {
+        var res = malloc(hashmap::__size__()) => hashmap*;
+        res->size = 0;
+        res->data = malloc((1024*8) => u64) => bucket**;
+        for (var i = 0; i < 1024; i+=1) {
+            res->data[i] = nil => bucket*;
+        }
+        return res;
+    }
+
+    pub func delete(self) {
+        free(self->data => i8*);
+    }
+}
