@@ -1,4 +1,4 @@
-use std::libc::{ free, streq, strlen };
+use std::libc::{ free, streq, strlen, exit };
 use err::span::*;
 use err::report::*;
 use cli::*;
@@ -51,9 +51,9 @@ impl compiler {
 
 func compile(option: cli_option) {
     var err = io::stderr();
-    if (!fs::exists(option.filename)) {
+    if (!fs::exists(option.input_file)) {
         err.red().out("Error: ").reset();
-        err.out("failed to load file <").out(option.filename)
+        err.out("failed to load file <").out(option.input_file)
            .out(">, check if exists and is readable\n");
         return;
     }
@@ -66,14 +66,16 @@ func compile(option: cli_option) {
     #}
 
     err.out("[").green().out("colgm").reset().out("]")
-       .out(" source file  : ").out(option.filename).out("\n");
+       .out(" source file  : ").out(option.input_file).out("\n");
+    err.out("[").green().out("colgm").reset().out("]")
+       .out(" output file  : ").out(option.output_file).out("\n");
     err.out("[").green().out("colgm").reset().out("]")
        .out(" library path : ").out(option.library_path).out("\n");
 
     var cc = compiler::instance();
 
     # do lexer scanning
-    cc.lex->scan(option.filename);
+    cc.lex->scan(option.input_file);
     if (cc.rep->error_count > 0) {
         cc.delete();
         return;
@@ -92,6 +94,35 @@ func compile(option: cli_option) {
     }
 
     cc.delete();
+}
+
+func report_missing_given_info(info: i8*) {
+    io::stderr().red().out("Error:").reset()
+                .out(" missing ").out(info).out("\n\n");
+    exit(-1 => i32);
+}
+
+func report_multiple_given_info(info: i8*) {
+    io::stderr().red().out("Error:").reset()
+                .out(" multiple ").out(info).out(" specified\n\n");
+    exit(-1 => i32);
+}
+
+func report_invalid_given_info(info: i8*, actual: i8*) {
+    io::stderr().red().out("Error:").reset()
+                .out(" invalid ").out(info)
+                .red().out(" <").out(actual).out(">").reset()
+                .out("\n\n");
+    exit(-1 => i32);
+}
+
+func report_invalid_argument(arg: i8*) {
+    io::stderr().red().out("Error:").reset()
+                .out(" invalid argument ")
+                .red().out(arg).reset()
+                .out(", use ").green().out("--help").reset()
+                .out(" for help.\n\n");
+    exit(-1 => i32);
 }
 
 func main(argc: i32, argv: i8**) -> i32 {
@@ -119,21 +150,26 @@ func main(argc: i32, argv: i8**) -> i32 {
             option.OPTION_VIEW_SEMA = true;
         } elsif (streq(argv[i], "--library")) {
             if (i + (1 => i32) >= argc) {
-                io::stderr().red().out("Error:").reset()
-                            .out(" missing library path").endln();
-                return (-1) => i32;
+                report_missing_given_info("library path");
             }
             if (option.library_path != nil) {
-                io::stderr().red().out("Error:").reset()
-                            .out(" multiple library path specified").endln();
-                return (-1) => i32;
+                report_multiple_given_info("library path");
             }
             option.library_path = argv[i + (1 => i32)];
             if (strlen(option.library_path)==0 || option.library_path[0]=='-') {
-                io::stderr().red().out("Error:").reset()
-                            .out(" invalid library path <")
-                            .out(option.library_path).out(">").endln();
-                return (-1) => i32;
+                report_invalid_given_info("library path", option.library_path);
+            }
+            i += 1 => i32;
+        } elsif (streq(argv[i], "-o") || streq(argv[i], "--output")) {
+            if (i + (1 => i32) >= argc) {
+                report_missing_given_info("output file");
+            }
+            if (option.output_file != nil) {
+                report_multiple_given_info("output file");
+            }
+            option.output_file = argv[i + (1 => i32)];
+            if (strlen(option.output_file)==0 || option.output_file[0]=='-') {
+                report_invalid_given_info("output file", option.output_file);
             }
             i += 1 => i32;
         } elsif (streq(argv[i], "--dump-lib")) {
@@ -143,22 +179,21 @@ func main(argc: i32, argv: i8**) -> i32 {
         } elsif (streq(argv[i], "--sir")) {
             option.OPTION_VIEW_SIR = true;
         } elsif (argv[i][0]=='-') {
-            io::stderr().red().out("Error:").reset()
-                        .out(" invalid argument: ").out(argv[i]).endln();
-            return (-1) => i32;
-        } else if (option.filename == nil) {
-            option.filename = argv[i];
+            report_invalid_argument(argv[i]);
+        } else if (option.input_file == nil) {
+            option.input_file = argv[i];
         } else {
-            io::stderr().red().out("Error:").reset()
-                        .out(" invalid argument: ").out(argv[i]).endln();
-            return (-1) => i32;
+            report_invalid_argument(argv[i]);
         }
     }
 
-    if (option.filename == nil) {
+    if (option.input_file == nil) {
         io::stderr().red().out("Error:").reset()
                     .out(" no source file specified").endln();
         return (-1) => i32;
+    }
+    if (option.output_file == nil) {
+        option.output_file = "out.ll";
     }
     if (option.library_path == nil) {
         option.library_path = ".";
