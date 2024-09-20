@@ -1,8 +1,7 @@
 COLGMCC = ./build/colgm
 
 colgm.ll: $(COLGMCC) src/ast/*.colgm src/err/*.colgm src/std/*.colgm src/*.colgm
-	$(COLGMCC) --library src src/main.colgm
-	mv out.ll colgm.ll
+	$(COLGMCC) --library src src/main.colgm -o colgm.ll
 
 .PHONY: test
 test: $(COLGMCC) bootstrap/test/*

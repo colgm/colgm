@@ -28,6 +28,7 @@ std::ostream& help(std::ostream& out) {
     << "   -v,   --version        | get version.\n"
     << "\ncolgm [option] <file>\n"
     << "option:\n"
+    << "   -o,   --output <file>  | output file, default <out.ll>.\n"
     << "   -l,   --lex            | view analysed tokens.\n"
     << "   -a,   --ast            | view ast.\n"
     << "   -s,   --sema           | view semantic result.\n"
@@ -86,7 +87,8 @@ void scan_package(const std::string& library_path,
     }
 }
 
-void execute(const std::string& file,
+void execute(const std::string& input_file,
+             const std::string& output_file,
              const u32 cmd = 0) {
     // main components of compiler
     colgm::error err;
@@ -101,7 +103,7 @@ void execute(const std::string& file,
     colgm::sir_pass_manager spm;
 
     // lexer scans file to get tokens
-    lexer.scan(file).chkerr();
+    lexer.scan(input_file).chkerr();
     if (cmd&COMPILE_VIEW_TOKEN) {
         for(const auto& token : lexer.result()) {
             std::cout << token.loc << ": " << token.str << "\n";
@@ -135,7 +137,7 @@ void execute(const std::string& file,
         mir2sir.get_mutable_sir_context().dump_code(std::cout);
     }
 
-    std::ofstream out("out.ll");
+    std::ofstream out(output_file);
     mir2sir.get_mutable_sir_context().dump_code(out);
 }
 
@@ -154,7 +156,7 @@ i32 main(i32 argc, const char* argv[]) {
         } else if (s=="-v" || s=="--version") {
             std::clog << version;
         } else if (s[0]!='-') {
-            execute(s, {});
+            execute(s, "out.ll");
         } else {
             err();
         }
@@ -174,7 +176,8 @@ i32 main(i32 argc, const char* argv[]) {
         {"--dump-lib", COMPILE_VIEW_LIB}
     };
     u32 cmd = 0;
-    std::string filename = "";
+    std::string input_file = "";
+    std::string output_file = "out.ll";
     std::string library_path = "";
     for(i32 i = 1; i<argc; ++i) {
         if (argv[i]==std::string("-h") || argv[i]==std::string("--help")) {
@@ -183,17 +186,27 @@ i32 main(i32 argc, const char* argv[]) {
         } else if (cmdlst.count(argv[i])) {
             cmd |= cmdlst.at(argv[i]);
         } else if (argv[i]==std::string("--library")) {
-            if (i+1<argc) {
+            if (i+1 < argc) {
                 library_path = argv[i+1];
                 ++i;
+            } else {
+                err();
             }
-        } else if (!filename.length()) {
-            filename = argv[i];
+        } else if (argv[i]==std::string("-o") ||
+                   argv[i]==std::string("--output")) {
+            if (i+1 < argc) {
+                output_file = argv[i+1];
+                ++i;
+            } else {
+                err();
+            }
+        } else if (!input_file.length()) {
+            input_file = argv[i];
         } else {
             err();
         }
     }
-    if (!filename.length()) {
+    if (!input_file.length()) {
         err();
     }
 
@@ -201,7 +214,11 @@ i32 main(i32 argc, const char* argv[]) {
         library_path = ".";
     }
 
-    scan_package(library_path, filename, cmd);
-    execute(filename, cmd);
+    if (output_file.empty()) {
+        output_file = "out.ll";
+    }
+
+    scan_package(library_path, input_file, cmd);
+    execute(input_file, output_file, cmd);
     return 0;
 }
