@@ -36,6 +36,20 @@ public:
     bool is_constant() const { return is_const; }
 };
 
+class generic_type_list: public decl {
+private:
+    std::vector<type_def*> types;
+
+public:
+    generic_type_list(const span& loc):
+        decl(ast_type::ast_generic_type_list, loc) {}
+    ~generic_type_list() override;
+    void accept(visitor*) override;
+
+    void add_type(type_def* node) { types.push_back(node); }
+    const auto& get_types() const { return types; }
+};
+
 class enum_decl: public decl {
 public:
     struct member {

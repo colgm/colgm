@@ -27,6 +27,13 @@ bool visitor::visit_type_def(type_def* node) {
     return true;
 }
 
+bool visitor::visit_generic_type_list(generic_type_list* node) {
+    for(auto i : node->get_types()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_enum_decl(enum_decl* node) {
     node->get_name()->accept(this);
     for(const auto& i : node->get_member()) {

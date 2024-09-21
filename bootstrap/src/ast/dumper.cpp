@@ -83,6 +83,20 @@ bool dumper::visit_type_def(type_def* node) {
     return true;
 }
 
+bool dumper::visit_generic_type_list(generic_type_list* node) {
+    dump_indent();
+    std::cout << "generic-type-list" << format_location(node);
+    push_indent();
+    for(auto i : node->get_types()) {
+        if (i==node->get_types().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_enum_decl(enum_decl* node) {
     dump_indent();
     std::cout << "enum ";

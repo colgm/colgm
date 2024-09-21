@@ -49,6 +49,7 @@ public:
     bool visit_bool_literal(bool_literal*) override;
     bool visit_array_literal(array_literal*) override;
     bool visit_type_def(type_def*) override;
+    bool visit_generic_type_list(generic_type_list*) override;
     bool visit_enum_decl(enum_decl*) override;
     bool visit_struct_field(struct_field*) override;
     bool visit_struct_decl(struct_decl*) override;

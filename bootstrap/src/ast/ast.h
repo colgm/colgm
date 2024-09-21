@@ -30,6 +30,7 @@ enum class ast_type {
     ast_call,
     ast_assignment,
     ast_type_def,
+    ast_generic_type_list,
     ast_enum_decl,
     ast_struct_field,
     ast_struct_decl,

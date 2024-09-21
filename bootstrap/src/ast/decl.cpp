@@ -7,6 +7,16 @@ void decl::accept(visitor* v) {
     v->visit_decl(this);
 }
 
+generic_type_list::~generic_type_list() {
+    for(auto i : types) {
+        delete i;
+    }
+}
+
+void generic_type_list::accept(visitor* v) {
+    v->visit_generic_type_list(this);
+}
+
 enum_decl::~enum_decl() {
     delete name;
     for(const auto& i : member) {
