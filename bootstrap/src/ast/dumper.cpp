@@ -74,13 +74,10 @@ bool dumper::visit_array_literal(array_literal* node) {
 bool dumper::visit_type_def(type_def* node) {
     dump_indent();
     std::cout << "type " << (node->is_constant()? "[const]":"[mut]");
-    std::cout << "[ptr " << node->get_pointer_level() << "]";
+    std::cout << "[ptr " << node->get_pointer_level() << "] ";
+    std::cout << node->get_name()->get_name();
     std::cout << format_location(node);
     push_indent();
-    if (!node->get_generic_types()) {
-        set_last();
-    }
-    node->get_name()->accept(this);
     if (node->get_generic_types()) {
         set_last();
         node->get_generic_types()->accept(this);
@@ -91,7 +88,7 @@ bool dumper::visit_type_def(type_def* node) {
 
 bool dumper::visit_generic_type_list(generic_type_list* node) {
     dump_indent();
-    std::cout << "generic type list" << format_location(node);
+    std::cout << "generics" << format_location(node);
     push_indent();
     for(auto i : node->get_types()) {
         if (i==node->get_types().back()) {
@@ -170,12 +167,9 @@ bool dumper::visit_struct_decl(struct_decl* node) {
 
 bool dumper::visit_param(param* node) {
     dump_indent();
-    std::cout << "param" << format_location(node);
+    std::cout << "param " << node->get_name()->get_name();
+    std::cout << format_location(node);
     push_indent();
-    if (!node->get_type()) {
-        set_last();
-    }
-    node->get_name()->accept(this);
     if (node->get_type()) {
         set_last();
         node->get_type()->accept(this);
@@ -186,7 +180,7 @@ bool dumper::visit_param(param* node) {
 
 bool dumper::visit_param_list(param_list* node) {
     dump_indent();
-    std::cout << "param list" << format_location(node);
+    std::cout << "params" << format_location(node);
     push_indent();
     for(auto i : node->get_params()) {
         if (i==node->get_params().back()) {
@@ -296,7 +290,7 @@ bool dumper::visit_binary_operator(binary_operator* node) {
 
 bool dumper::visit_type_convert(type_convert* node) {
     dump_indent();
-    std::cout << "type convert" << format_location(node);
+    std::cout << "type_convert" << format_location(node);
     push_indent();
     node->get_source()->accept(this);
     set_last();
@@ -307,7 +301,7 @@ bool dumper::visit_type_convert(type_convert* node) {
 
 bool dumper::visit_call_index(call_index* node) {
     dump_indent();
-    std::cout << "call index" << format_location(node);
+    std::cout << "call_index" << format_location(node);
     push_indent();
     set_last();
     node->get_index()->accept(this);
@@ -317,7 +311,7 @@ bool dumper::visit_call_index(call_index* node) {
 
 bool dumper::visit_call_func_args(call_func_args* node) {
     dump_indent();
-    std::cout << "call func" << format_location(node);
+    std::cout << "call_func_args" << format_location(node);
     push_indent();
     for(auto i : node->get_args()) {
         if (i==node->get_args().back()) {
@@ -331,19 +325,19 @@ bool dumper::visit_call_func_args(call_func_args* node) {
 
 bool dumper::visit_get_field(get_field* node) {
     dump_indent();
-    std::cout << "call field @" << node->get_name() << format_location(node);
+    std::cout << "call_field @" << node->get_name() << format_location(node);
     return true;
 }
 
 bool dumper::visit_ptr_get_field(ptr_get_field* node) {
     dump_indent();
-    std::cout << "ptr call field @" << node->get_name() << format_location(node);
+    std::cout << "ptr_call_field @" << node->get_name() << format_location(node);
     return true;
 }
 
 bool dumper::visit_init_pair(init_pair* node) {
     dump_indent();
-    std::cout << "init pair" << format_location(node);
+    std::cout << "initializer_pair" << format_location(node);
     push_indent();
     node->get_field()->accept(this);
     set_last();
@@ -368,22 +362,19 @@ bool dumper::visit_initializer(initializer* node) {
 
 bool dumper::visit_call_path(call_path* node) {
     dump_indent();
-    std::cout << "call path @" << node->get_name() << format_location(node);
+    std::cout << "call_path @" << node->get_name() << format_location(node);
     return true;
 }
 
 bool dumper::visit_call(call* node) {
     dump_indent();
-    std::cout << "call" << format_location(node);
+    std::cout << "call @" << node->get_head()->get_name();
+    std::cout << format_location(node);
     push_indent();
-    if (node->get_chain().empty() && !node->get_generic_types()) {
-        set_last();
-    }
-    node->get_head()->accept(this);
-    if (node->get_chain().empty()) {
-        set_last();
-    }
     if (node->get_generic_types()) {
+        if (node->get_chain().empty()) {
+            set_last();
+        }
         node->get_generic_types()->accept(this);
     }
     for(auto i : node->get_chain()) {
@@ -429,9 +420,9 @@ bool dumper::visit_use_stmt(use_stmt* node) {
     set_last();
     dump_indent();
     if (node->get_import_symbol().empty()) {
-        std::cout << "import all\n";
+        std::cout << "import_all\n";
     } else {
-        std::cout << "import symbol\n";
+        std::cout << "import_symbol\n";
         push_indent();
         for(auto i : node->get_import_symbol()) {
             if (i==node->get_import_symbol().back()) {
@@ -485,7 +476,7 @@ bool dumper::visit_if_stmt(if_stmt* node) {
     } else {
         std::cout << "else";
     }
-    std::cout << "-statement" << format_location(node);
+    std::cout << "_statement" << format_location(node);
     push_indent();
     if (node->get_condition()) {
         node->get_condition()->accept(this);
@@ -561,7 +552,7 @@ bool dumper::visit_for_stmt(for_stmt* node) {
 
 bool dumper::visit_in_stmt_expr(in_stmt_expr* node) {
     dump_indent();
-    std::cout << "in statement" << format_location(node);
+    std::cout << "in_statement_expression" << format_location(node);
     push_indent();
     set_last();
     node->get_expr()->accept(this);
@@ -595,7 +586,7 @@ bool dumper::visit_break_stmt(break_stmt* node) {
 
 bool dumper::visit_code_block(code_block* node) {
     dump_indent();
-    std::cout << "code block" << format_location(node);
+    std::cout << "block" << format_location(node);
     push_indent();
     for(auto i : node->get_stmts()) {
         if (i==node->get_stmts().back()) {

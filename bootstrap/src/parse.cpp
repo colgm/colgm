@@ -69,6 +69,9 @@ bool parse::look_ahead_generic() {
             toks[tmp_ptr].type!=tok::tk_grt) {
             return false;
         }
+        if (toks[tmp_ptr].type==tok::tk_comma) {
+            tmp_ptr++;
+        }
     }
     return true;
 }
