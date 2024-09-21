@@ -99,6 +99,7 @@ private:
         }
     }
     bool look_ahead(tok);
+    bool look_ahead_generic();
     void update_location(node*);
 
 private:
@@ -127,7 +128,8 @@ private:
     expr* and_expression_gen();
     expr* or_expression_gen();
     expr* calculation_gen();
-    type_def* type_gen();
+    type_def* type_def_gen();
+    generic_type_list* generic_type_list_gen();
     enum_decl* enum_gen();
     struct_field* struct_field_gen();
     struct_decl* struct_gen();

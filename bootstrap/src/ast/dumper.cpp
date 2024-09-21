@@ -77,15 +77,21 @@ bool dumper::visit_type_def(type_def* node) {
     std::cout << "[ptr " << node->get_pointer_level() << "]";
     std::cout << format_location(node);
     push_indent();
-    set_last();
+    if (!node->get_generic_types()) {
+        set_last();
+    }
     node->get_name()->accept(this);
+    if (node->get_generic_types()) {
+        set_last();
+        node->get_generic_types()->accept(this);
+    }
     pop_indent();
     return true;
 }
 
 bool dumper::visit_generic_type_list(generic_type_list* node) {
     dump_indent();
-    std::cout << "generic-type-list" << format_location(node);
+    std::cout << "generic type list" << format_location(node);
     push_indent();
     for(auto i : node->get_types()) {
         if (i==node->get_types().back()) {
@@ -146,6 +152,12 @@ bool dumper::visit_struct_decl(struct_decl* node) {
     }
     std::cout << node->get_name() << format_location(node);
     push_indent();
+    if (node->get_generic_types()) {
+        if (node->get_fields().empty()) {
+            set_last();
+        }
+        node->get_generic_types()->accept(this);
+    }
     for(auto i : node->get_fields()) {
         if (i==node->get_fields().back()) {
             set_last();
@@ -195,8 +207,14 @@ bool dumper::visit_func_decl(func_decl* node) {
     if (node->is_extern_func()) {
         std::cout << "[extern]";
     }
+    if (node->is_public_func() || node->is_extern_func()) {
+        std::cout << " ";
+    }
     std::cout << node->get_name() << format_location(node);
     push_indent();
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
     node->get_params()->accept(this);
     if (!node->get_code_block()) {
         set_last();
@@ -214,6 +232,12 @@ bool dumper::visit_impl_struct(impl_struct* node) {
     dump_indent();
     std::cout << "impl " << node->get_struct_name() << format_location(node);
     push_indent();
+    if (node->get_generic_types()) {
+        if (node->get_methods().empty()) {
+            set_last();
+        }
+        node->get_generic_types()->accept(this);
+    }
     for(auto i : node->get_methods()) {
         if (i==node->get_methods().back()) {
             set_last();
@@ -352,10 +376,16 @@ bool dumper::visit_call(call* node) {
     dump_indent();
     std::cout << "call" << format_location(node);
     push_indent();
-    if (node->get_chain().empty()) {
+    if (node->get_chain().empty() && !node->get_generic_types()) {
         set_last();
     }
     node->get_head()->accept(this);
+    if (node->get_chain().empty()) {
+        set_last();
+    }
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
     for(auto i : node->get_chain()) {
         if (i==node->get_chain().back()) {
             set_last();

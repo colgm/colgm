@@ -305,16 +305,20 @@ public:
 class call: public expr {
 private:
     identifier* head;
+    generic_type_list* head_generics;
     std::vector<expr*> chain;
 
 public:
     call(const span& loc):
-        expr(ast_type::ast_call, loc), head(nullptr) {}
+        expr(ast_type::ast_call, loc), head(nullptr),
+        head_generics(nullptr) {}
     ~call() override;
     void accept(visitor*) override;
 
     void set_head(identifier* node) { head = node; }
     auto get_head() const { return head; }
+    void set_generic_types(generic_type_list* node) { head_generics = node; }
+    auto get_generic_types() const { return head_generics; }
     void add_chain(expr* node) { chain.push_back(node); }
     const auto& get_chain() const { return chain; }
 };

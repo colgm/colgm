@@ -24,6 +24,9 @@ bool visitor::visit_decl(decl* node) {
 
 bool visitor::visit_type_def(type_def* node) {
     node->get_name()->accept(this);
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
     return true;
 }
 
@@ -52,6 +55,9 @@ bool visitor::visit_struct_field(struct_field* node) {
 }
 
 bool visitor::visit_struct_decl(struct_decl* node) {
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
     for(auto i : node->get_fields()) {
         i->accept(this);
     }
@@ -74,6 +80,9 @@ bool visitor::visit_param_list(param_list* node) {
 }
 
 bool visitor::visit_func_decl(func_decl* node) {
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
     node->get_params()->accept(this);
     node->get_return_type()->accept(this);
     if (node->get_code_block()) {
@@ -83,6 +92,9 @@ bool visitor::visit_func_decl(func_decl* node) {
 }
 
 bool visitor::visit_impl_struct(impl_struct* node) {
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
     for(auto i : node->get_methods()) {
         i->accept(this);
     }
@@ -180,6 +192,9 @@ bool visitor::visit_call_path(call_path* node) {
 
 bool visitor::visit_call(call* node) {
     node->get_head()->accept(this);
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
     for(auto i : node->get_chain()) {
         i->accept(this);
     }

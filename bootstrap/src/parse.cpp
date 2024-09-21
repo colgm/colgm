@@ -44,6 +44,35 @@ bool parse::look_ahead(tok type) {
     return type==toks[ptr].type;
 }
 
+bool parse::look_ahead_generic() {
+    if (toks[ptr].type!=tok::tk_less) {
+        return false;
+    }
+    auto tmp_ptr = ptr + 1;
+    // check if is end of file token
+    if (toks[tmp_ptr].type==tok::tk_eof) {
+        return false;
+    }
+    // check if is generic
+    while(toks[tmp_ptr].type!=tok::tk_grt) {
+        if (toks[tmp_ptr].type==tok::tk_eof) {
+            return false;
+        }
+        if (toks[tmp_ptr].type!=tok::tk_id) {
+            return false;
+        }
+        tmp_ptr++;
+        if (toks[tmp_ptr].type==tok::tk_eof) {
+            return false;
+        }
+        if (toks[tmp_ptr].type!=tok::tk_comma &&
+            toks[tmp_ptr].type!=tok::tk_grt) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void parse::update_location(node* n) {
     n->update_location(toks[ptr-1].loc);
 }
@@ -110,6 +139,9 @@ identifier* parse::identifier_gen() {
 call* parse::call_gen() {
     auto result = new call(toks[ptr].loc);
     result->set_head(identifier_gen());
+    if (look_ahead_generic()) {
+        result->set_generic_types(generic_type_list_gen());
+    }
     while(look_ahead(tok::tk_lcurve) || look_ahead(tok::tk_lbracket) ||
           look_ahead(tok::tk_dot) || look_ahead(tok::tk_arrow) ||
           look_ahead(tok::tk_double_colon) || look_ahead(tok::tk_lbrace)) {
@@ -218,7 +250,7 @@ bool_literal* parse::bool_gen() {
 array_literal* parse::array_gen() {
     auto result = new array_literal(toks[ptr].loc);
     match(tok::tk_lbracket);
-    result->set_type(type_gen());
+    result->set_type(type_def_gen());
     match(tok::tk_semi);
     result->set_size(number_gen());
     match(tok::tk_rbracket);
@@ -282,7 +314,7 @@ expr* parse::type_convert_gen() {
         match(tok::tk_wide_arrow);
         auto type_cast_node = new type_convert(begin_location);
         type_cast_node->set_source(result);
-        type_cast_node->set_target(type_gen());
+        type_cast_node->set_target(type_def_gen());
         result = type_cast_node;
     }
 
@@ -487,17 +519,47 @@ expr* parse::calculation_gen() {
     return result;
 }
 
-type_def* parse::type_gen() {
+type_def* parse::type_def_gen() {
     auto result = new type_def(toks[ptr].loc);
     if (look_ahead(tok::tk_const)) {
         result->set_constant();
         match(tok::tk_const);
     }
     result->set_name(identifier_gen());
+    // this is LL(k) look ahead
+    // because in this case there's a confliction:
+    //
+    // foo => bar<T>
+    //        ^^^^^^ type convert with <T>
+    // foo => bar < exp
+    //            ^^^^^^ compare expression `<`
+    //
+    if (look_ahead_generic()) {
+        result->set_generic_types(generic_type_list_gen());
+    }
     while(look_ahead(tok::tk_mult)) {
         result->add_pointer_level();
         match(tok::tk_mult);
     }
+    update_location(result);
+    return result;
+}
+
+generic_type_list* parse::generic_type_list_gen() {
+    auto result = new generic_type_list(toks[ptr].loc);
+    match(tok::tk_less);
+    while(look_ahead(tok::tk_id)) {
+        // generic type does not allow pointer or other forms
+        auto type_node = new type_def(toks[ptr].loc);
+        type_node->set_name(identifier_gen());
+        result->add_type(type_node);
+        if (look_ahead(tok::tk_comma)) {
+            match(tok::tk_comma);
+        } else if (look_ahead(tok::tk_id)) {
+            err.err("parse", toks[ptr-1].loc, "expected ',' here.");
+        }
+    }
+    match(tok::tk_grt);
     update_location(result);
     return result;
 }
@@ -531,7 +593,7 @@ struct_field* parse::struct_field_gen() {
     auto result = new struct_field(toks[ptr].loc);
     result->set_name(identifier_gen());
     match(tok::tk_colon);
-    result->set_type(type_gen());
+    result->set_type(type_def_gen());
     update_location(result);
     return result;
 }
@@ -541,6 +603,9 @@ struct_decl* parse::struct_gen() {
     match(tok::tk_stct);
     result->set_name(toks[ptr].str);
     match(tok::tk_id);
+    if (look_ahead_generic()) {
+        result->set_generic_types(generic_type_list_gen());
+    }
     match(tok::tk_lbrace);
     while(!look_ahead(tok::tk_rbrace)) {
         result->add_field(struct_field_gen());
@@ -562,7 +627,7 @@ param* parse::param_gen() {
     result->set_name(identifier_gen());
     if (look_ahead(tok::tk_colon)) {
         match(tok::tk_colon);
-        result->set_type(type_gen());
+        result->set_type(type_def_gen());
     }
     update_location(result);
     return result;
@@ -589,6 +654,9 @@ func_decl* parse::function_gen() {
     match(tok::tk_func);
     result->set_name(toks[ptr].str);
     match(tok::tk_id);
+    if (look_ahead_generic()) {
+        result->set_generic_types(generic_type_list_gen());
+    }
     result->set_params(param_list_gen());
     if (!look_ahead(tok::tk_arrow)) {
         auto ret = new type_def(toks[ptr].loc);
@@ -597,7 +665,7 @@ func_decl* parse::function_gen() {
         result->set_return_type(ret);
     } else {
         match(tok::tk_arrow);
-        result->set_return_type(type_gen());
+        result->set_return_type(type_def_gen());
     }
     if (look_ahead(tok::tk_semi)) {
         match(tok::tk_semi);
@@ -613,6 +681,9 @@ impl_struct* parse::impl_gen() {
     match(tok::tk_impl);
     auto result = new impl_struct(toks[ptr].loc, toks[ptr].str);
     match(tok::tk_id);
+    if (look_ahead_generic()) {
+        result->set_generic_types(generic_type_list_gen());
+    }
     match(tok::tk_lbrace);
     while(look_ahead(tok::tk_func) || look_ahead(tok::tk_pub)) {
         bool is_pub = false;
@@ -670,7 +741,7 @@ definition* parse::definition_gen() {
     match(tok::tk_id);
     if (look_ahead(tok::tk_colon)) {
         match(tok::tk_colon);
-        result->set_type(type_gen());
+        result->set_type(type_def_gen());
     }
     match(tok::tk_eq);
     result->set_init_value(calculation_gen());

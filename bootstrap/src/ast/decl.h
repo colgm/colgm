@@ -18,18 +18,22 @@ public:
 class type_def: public decl {
 private:
     identifier* name;
+    generic_type_list* generic_types;
     i64 pointer_depth;
     bool is_const;
 
 public:
     type_def(const span& loc):
         decl(ast_type::ast_type_def, loc),
-        name(nullptr), pointer_depth(0), is_const(false) {}
+        name(nullptr), generic_types(nullptr),
+        pointer_depth(0), is_const(false) {}
     ~type_def() override;
     void accept(visitor*) override;
 
     void set_name(identifier* node) { name = node; }
     auto get_name() { return name; }
+    void set_generic_types(generic_type_list* node) { generic_types = node; }
+    auto get_generic_types() const { return generic_types; }
     void add_pointer_level() { ++pointer_depth; }
     auto get_pointer_level() { return pointer_depth; }
     void set_constant() { is_const = true; }
@@ -102,13 +106,14 @@ class struct_decl: public decl {
 private:
     std::vector<struct_field*> fields;
     std::string name;
+    generic_type_list* generic_types;
     bool is_public;
     bool is_extern;
 
 public:
     struct_decl(const span& loc):
         decl(ast_type::ast_struct_decl, loc),
-        is_public(false), is_extern(false) {}
+        generic_types(nullptr), is_public(false), is_extern(false) {}
     ~struct_decl() override;
     void accept(visitor*) override;
 
@@ -116,6 +121,8 @@ public:
     const auto& get_fields() const { return fields; }
     void set_name(const std::string& n) { name = n; }
     const auto& get_name() const { return name; }
+    void set_generic_types(generic_type_list* node) { generic_types = node; }
+    auto get_generic_types() const { return generic_types; }
     void set_public(bool b) { is_public = b; }
     bool is_public_struct() const { return is_public; }
     void set_extern(bool b) { is_extern = b; }
@@ -157,6 +164,7 @@ public:
 class func_decl: public decl {
 private:
     std::string name;
+    generic_type_list* generic_types;
     param_list* parameters;
     type_def* return_type;
     code_block* block;
@@ -166,7 +174,7 @@ private:
 public:
     func_decl(const span& loc):
         decl(ast_type::ast_func_decl, loc),
-        name(""), parameters(nullptr),
+        name(""), generic_types(nullptr), parameters(nullptr),
         return_type(nullptr), block(nullptr),
         is_public(false), is_extern(false) {}
     ~func_decl() override;
@@ -174,6 +182,8 @@ public:
 
     void set_name(const std::string& n) { name = n; }
     const auto& get_name() const { return name; }
+    void set_generic_types(generic_type_list* node) { generic_types = node; }
+    auto get_generic_types() const { return generic_types; }
     void set_params(param_list* node) { parameters = node; }
     auto get_params() { return parameters; }
     void set_return_type(type_def* node) { return_type = node; }
@@ -189,15 +199,19 @@ public:
 class impl_struct: public decl {
 private:
     std::string struct_name;
+    generic_type_list* generic_types;
     std::vector<func_decl*> methods;
 
 public:
     impl_struct(const span& loc, const std::string& sn):
-        decl(ast_type::ast_impl, loc), struct_name(sn) {}
+        decl(ast_type::ast_impl, loc), struct_name(sn),
+        generic_types(nullptr) {}
     ~impl_struct() override;
     void accept(visitor*) override;
 
     const auto& get_struct_name() const { return struct_name; }
+    void set_generic_types(generic_type_list* node) { generic_types = node; }
+    auto get_generic_types() const { return generic_types; }
     void add_method(func_decl* node) { methods.push_back(node); }
     const auto& get_methods() const { return methods; }
 };

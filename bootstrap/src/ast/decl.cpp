@@ -31,6 +31,7 @@ void enum_decl::accept(visitor* v) {
 
 type_def::~type_def() {
     delete name;
+    delete generic_types;
 }
 
 void type_def::accept(visitor* v) {
@@ -47,6 +48,7 @@ void struct_field::accept(visitor* v) {
 }
 
 struct_decl::~struct_decl() {
+    delete generic_types;
     for(auto i : fields) {
         delete i;
     }
@@ -76,6 +78,7 @@ void param_list::accept(visitor* v) {
 }
 
 func_decl::~func_decl() {
+    delete generic_types;
     delete parameters;
     delete return_type;
     delete block;
@@ -86,6 +89,7 @@ void func_decl::accept(visitor* v) {
 }
 
 impl_struct::~impl_struct() {
+    delete generic_types;
     for(auto i : methods) {
         delete i;
     }

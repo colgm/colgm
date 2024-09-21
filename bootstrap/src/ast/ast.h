@@ -57,6 +57,7 @@ class visitor;
 
 class decl;
 class type_def;
+class generic_type_list;
 class enum_decl;
 class struct_field;
 class struct_decl;

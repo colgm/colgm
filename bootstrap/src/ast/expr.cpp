@@ -106,6 +106,7 @@ void call_path::accept(visitor* v) {
 
 call::~call() {
     delete head;
+    delete head_generics;
     for(auto i : chain) {
         delete i;
     }
