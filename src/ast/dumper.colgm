@@ -192,8 +192,8 @@ impl ast_dumper {
 
     func dump_identifier(self, node: ast_identifier*, out: io) {
         out.out(self->indent.c_str)
-           .out("identifier: ")
-           .out(node->name.c_str)
+           .out("identifier ")
+           .green().out(node->name.c_str).reset()
            .out(" -> ");
         node->base.location->dump(out);
     }
@@ -282,11 +282,12 @@ impl ast_dumper {
     }
 
     func dump_init_pair(self, node: ast_init_pair*, out: io) {
-        out.out(self->indent.c_str).out("init-pair -> ");
+        out.out(self->indent.c_str).out("init-pair ");
+        out.green().out(node->field->name.c_str).reset();
+        out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
-        self->dump_identifier(node->field, out);
         self->dump(node->value, out);
         self->pop_indent();
     }
@@ -303,17 +304,19 @@ impl ast_dumper {
     }
 
     func dump_call_path(self, node: ast_call_path*, out: io) {
-        out.out(self->indent.c_str).out("call-path [")
-           .out(node->name.c_str).out("] -> ");
+        out.out(self->indent.c_str).out("call-path ")
+           .green().out(node->name.c_str).reset()
+           .out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_call(self, node: ast_call*, out: io) {
-        out.out(self->indent.c_str).out("call -> ");
+        out.out(self->indent.c_str).out("call ");
+        out.green().out(node->head->name.c_str).reset();
+        out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
-        self->dump_identifier(node->head, out);
         if (node->head_generics => i8* != nil) {
             self->dump_generic_type_list(node->head_generics, out);
         }
@@ -346,14 +349,14 @@ impl ast_dumper {
     }
 
     func dump_type_def(self, node: ast_type_def*, out: io) {
-        out.out(self->indent.c_str).out("type-def ");
+        out.out(self->indent.c_str).out("type ");
         if (!node->is_const) {
             out.out("[mut]");
         } else {
             out.out("[const]");
         }
         out.out("[ptr depth=").out_i64(node->pointer_depth).out("] ");
-        out.out(node->name->name.c_str).out(" -> ");
+        out.green().out(node->name->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
 
         if (node->generic_types => i8* != nil) {
@@ -375,15 +378,16 @@ impl ast_dumper {
     }
 
     func dump_enum_member(self, node: ast_enum_member*, out: io) {
-        out.out(self->indent.c_str).out("enum-member -> ");
+        out.out(self->indent.c_str).out("enum-member ");
+        out.green().out(node->name->name.c_str).reset();
+        out.out(" -> ");
         node->base.location->dump(out);
 
-        self->push_indent();
-        self->dump_identifier(node->name, out);
         if (node->value => i8* != nil) {
+            self->push_indent();
             self->dump_number_literal(node->value, out);
+            self->pop_indent();
         }
-        self->pop_indent();
     }
 
     func dump_enum_decl(self, node: ast_enum_decl*, out: io) {
@@ -402,11 +406,12 @@ impl ast_dumper {
     }
 
     func dump_struct_field(self, node: ast_struct_field*, out: io) {
-        out.out(self->indent.c_str).out("struct-field -> ");
+        out.out(self->indent.c_str).out("struct-field ");
+        out.green().out("@").out(node->name->name.c_str).reset();
+        out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
-        self->dump_identifier(node->name, out);
         self->dump_type_def(node->type, out);
         self->pop_indent();
     }
@@ -419,7 +424,8 @@ impl ast_dumper {
         if (node->is_extern) {
             out.out("[extern]");
         }
-        out.out("[@").out(node->name.c_str).out("] -> ");
+        out.green().out("@").out(node->name.c_str).reset();
+        out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -433,14 +439,16 @@ impl ast_dumper {
     }
 
     func dump_param(self, node: ast_param*, out: io) {
-        out.out(self->indent.c_str).out("param -> ");
+        out.out(self->indent.c_str).out("param ");
+        out.green().out(node->name->name.c_str).reset();
+        out.out(" -> ");
         node->base.location->dump(out);
-        self->push_indent();
-        self->dump_identifier(node->name, out);
+
         if (node->type => i8* != nil) {
+            self->push_indent();
             self->dump_type_def(node->type, out);
+            self->pop_indent();
         }
-        self->pop_indent();
     }
 
     func dump_param_list(self, node: ast_param_list*, out: io) {
