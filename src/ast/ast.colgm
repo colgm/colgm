@@ -26,6 +26,7 @@ pub enum ast_kind {
     ast_call,
     ast_assignment,
     ast_type_def,
+    ast_generic_type_list,
     ast_enum_member,
     ast_enum_decl,
     ast_struct_field,
@@ -179,6 +180,10 @@ impl ast {
             }
             ast_kind::ast_type_def => {
                 var tmp = self => ast_type_def*;
+                tmp->delete();
+            }
+            ast_kind::ast_generic_type_list => {
+                var tmp = self => ast_generic_type_list*;
                 tmp->delete();
             }
             ast_kind::ast_enum_member => {
@@ -695,6 +700,7 @@ impl ast_call_path {
 pub struct ast_call {
     base: ast,
     head: ast_identifier*,
+    head_generics: ast_generic_type_list*,
     chain: ptr_vec
 }
 
@@ -703,13 +709,17 @@ impl ast_call {
         var res = ast_call::__alloc__();
         res->base = ast::instance(ast_kind::ast_call, loc);
         res->head = nil => ast_identifier*;
+        res->head_generics = nil => ast_generic_type_list*;
         res->chain.init();
         return res;
     }
 
     pub func delete(self) {
-        if(self->head => i8* != nil) {
+        if (self->head => i8* != nil) {
             self->head->delete();
+        }
+        if (self->head_generics => i8* != nil) {
+            self->head_generics->delete();
         }
         self->chain.delete();
     }
@@ -746,6 +756,7 @@ impl ast_assignment {
 pub struct ast_type_def {
     base: ast,
     name: ast_identifier*,
+    generic_types: ast_generic_type_list*,
     pointer_depth: i64,
     is_const: bool
 }
@@ -755,6 +766,7 @@ impl ast_type_def {
         var res = ast_type_def::__alloc__();
         res->base = ast::instance(ast_kind::ast_type_def, loc);
         res->name = nil => ast_identifier*;
+        res->generic_types = nil => ast_generic_type_list*;
         res->pointer_depth = 0;
         res->is_const = false;
         return res;
@@ -764,6 +776,27 @@ impl ast_type_def {
         if (self->name => i8* != nil) {
             self->name->delete();
         }
+        if (self->generic_types => i8* != nil) {
+            self->generic_types->delete();
+        }
+    }
+}
+
+pub struct ast_generic_type_list {
+    base: ast,
+    types: ptr_vec
+}
+
+impl ast_generic_type_list {
+    pub func new(loc: span*) -> ast_generic_type_list* {
+        var res = ast_generic_type_list::__alloc__();
+        res->base = ast::instance(ast_kind::ast_generic_type_list, loc);
+        res->types.init();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->types.delete();
     }
 }
 
@@ -844,6 +877,7 @@ pub struct ast_struct_decl {
     base: ast,
     fields: ptr_vec,
     name: str,
+    generic_types: ast_generic_type_list*,
     is_public: bool,
     is_extern: bool
 }
@@ -854,6 +888,7 @@ impl ast_struct_decl {
         res->base = ast::instance(ast_kind::ast_struct_decl, loc);
         res->fields.init();
         res->name = name->copy_instance();
+        res->generic_types = nil => ast_generic_type_list*;
         res->is_public = false;
         res->is_extern = false;
         return res;
@@ -862,6 +897,9 @@ impl ast_struct_decl {
     pub func delete(self) {
         self->fields.delete();
         self->name.delete();
+        if (self->generic_types => i8* != nil) {
+            self->generic_types->delete();
+        }
     }
 }
 
@@ -911,6 +949,7 @@ impl ast_param_list {
 pub struct ast_func_decl {
     base: ast,
     name: str,
+    generic_types: ast_generic_type_list*,
     params: ast_param_list*,
     return_type: ast_type_def*,
     body: ast_code_block*,
@@ -923,6 +962,7 @@ impl ast_func_decl {
         var res = ast_func_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_func_decl, loc);
         res->name = name->copy_instance();
+        res->generic_types = nil => ast_generic_type_list*;
         res->params = nil => ast_param_list*;
         res->return_type = nil => ast_type_def*;
         res->body = nil => ast_code_block*;
@@ -933,6 +973,9 @@ impl ast_func_decl {
 
     pub func delete(self) {
         self->name.delete();
+        if (self->generic_types => i8* != nil) {
+            self->generic_types->delete();
+        }
         if (self->params => i8* != nil) {
             self->params->delete();
         }
@@ -948,6 +991,7 @@ impl ast_func_decl {
 pub struct ast_impl {
     base: ast,
     name: str,
+    generic_types: ast_generic_type_list*,
     methods: ptr_vec
 }
 
@@ -956,12 +1000,16 @@ impl ast_impl {
         var res = ast_impl::__alloc__();
         res->base = ast::instance(ast_kind::ast_impl, loc);
         res->name = name->copy_instance();
+        res->generic_types = nil => ast_generic_type_list*;
         res->methods.init();
         return res;
     }
 
     pub func delete(self) {
         self->name.delete();
+        if (self->generic_types => i8* != nil) {
+            self->generic_types->delete();
+        }
         self->methods.delete();
     }
 }

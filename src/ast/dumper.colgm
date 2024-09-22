@@ -73,6 +73,8 @@ impl ast_dumper {
                 self->dump_assignment(node => ast_assignment*, out);
             ast_kind::ast_type_def =>
                 self->dump_type_def(node => ast_type_def*, out);
+            ast_kind::ast_generic_type_list =>
+                self->dump_generic_type_list(node => ast_generic_type_list*, out);
             ast_kind::ast_enum_member =>
                 self->dump_enum_member(node => ast_enum_member*, out);
             ast_kind::ast_enum_decl =>
@@ -312,6 +314,9 @@ impl ast_dumper {
 
         self->push_indent();
         self->dump_identifier(node->head, out);
+        if (node->head_generics => i8* != nil) {
+            self->dump_generic_type_list(node->head_generics, out);
+        }
         for (var index = 0 => u64; index < node->chain.size; index += 1 => u64) {
             self->dump(node->chain.data[index], out);
         }
@@ -347,11 +352,25 @@ impl ast_dumper {
         } else {
             out.out("[const]");
         }
-        out.out("[ptr depth=").out_i64(node->pointer_depth).out("] -> ");
+        out.out("[ptr depth=").out_i64(node->pointer_depth).out("] ");
+        out.out(node->name->name.c_str).out(" -> ");
+        node->base.location->dump(out);
+
+        if (node->generic_types => i8* != nil) {
+            self->push_indent();
+            self->dump_generic_type_list(node->generic_types, out);
+            self->pop_indent();
+        }
+    }
+
+    func dump_generic_type_list(self, node: ast_generic_type_list*, out: io) {
+        out.out(self->indent.c_str).out("generic-type-list -> ");
         node->base.location->dump(out);
 
         self->push_indent();
-        self->dump_identifier(node->name, out);
+        for (var index = 0 => u64; index < node->types.size; index += 1 => u64) {
+            self->dump(node->types.data[index], out);
+        }
         self->pop_indent();
     }
 
@@ -404,6 +423,9 @@ impl ast_dumper {
         node->base.location->dump(out);
 
         self->push_indent();
+        if (node->generic_types => i8* != nil) {
+            self->dump_generic_type_list(node->generic_types, out);
+        }
         for (var index = 0 => u64; index < node->fields.size; index += 1 => u64) {
             self->dump(node->fields.data[index], out);
         }
@@ -444,6 +466,9 @@ impl ast_dumper {
         node->base.location->dump(out);
 
         self->push_indent();
+        if (node->generic_types => i8* != nil) {
+            self->dump_generic_type_list(node->generic_types, out);
+        }
         self->dump_param_list(node->params, out);
         if (node->return_type => i8* != nil) {
             self->dump_type_def(node->return_type, out);
@@ -460,6 +485,9 @@ impl ast_dumper {
         node->base.location->dump(out);
 
         self->push_indent();
+        if (node->generic_types => i8* != nil) {
+            self->dump_generic_type_list(node->generic_types, out);
+        }
         for (var index = 0 => u64; index < node->methods.size; index += 1 => u64) {
             self->dump(node->methods.data[index], out);
         }

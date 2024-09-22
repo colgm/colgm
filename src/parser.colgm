@@ -126,6 +126,39 @@ impl parser {
         return self->toks->get(self->index).kind == kind;
     }
 
+    func lookahead_generic(self) -> bool {
+        if (self->toks->get(self->index).kind != tok_kind::tok_less) {
+            return false;
+        }
+
+        var tmp_ptr = self->index + 1;
+        # check if is end of file token
+        if (self->toks->get(tmp_ptr).kind == tok_kind::tok_eof) {
+            return false;
+        }
+        # check if is generic
+        while(self->toks->get(tmp_ptr).kind != tok_kind::tok_grt) {
+            if (self->toks->get(tmp_ptr).kind == tok_kind::tok_eof) {
+                return false;
+            }
+            if (self->toks->get(tmp_ptr).kind != tok_kind::tok_id) {
+                return false;
+            }
+            tmp_ptr += 1;
+            if (self->toks->get(tmp_ptr).kind == tok_kind::tok_eof) {
+                return false;
+            }
+            if (self->toks->get(tmp_ptr).kind != tok_kind::tok_comma &&
+                self->toks->get(tmp_ptr).kind != tok_kind::tok_grt) {
+                return false;
+            }
+            if (self->toks->get(tmp_ptr).kind == tok_kind::tok_comma) {
+                tmp_ptr += 1;
+            }
+        }
+        return true;
+    }
+
     func next(self) {
         if (self->toks->get(self->index).kind == tok_kind::tok_eof) {
             return;
@@ -161,7 +194,7 @@ impl parser {
         var message = str::instance();
         message.append_i8_vec("get \"")
                ->append_str(self->toks->get(self->index).content)
-               ->append_i8_vec("\" here, but expected \"")
+               ->append_i8_vec("\" here, but expect \"")
                ->append_i8_vec(parser::tok_kind_to_content(kind))
                ->append_i8_vec("\".");
         self->err->error(loc, message.c_str);
@@ -206,6 +239,9 @@ impl parser {
     func call_gen(self) -> ast_call* {
         var res = ast_call::new(self->this_tok_loc_copy());
         res->head = self->identifier_gen();
+        if (self->lookahead_generic()) {
+            res->head_generics = self->generic_type_list_gen();
+        }
         while (self->lookahead(tok_kind::tok_lparen) ||
                self->lookahead(tok_kind::tok_lbracket) ||
                self->lookahead(tok_kind::tok_lbrace) ||
@@ -616,10 +652,31 @@ impl parser {
             res->is_const = true;
         }
         res->name = self->identifier_gen();
+        if (self->lookahead_generic()) {
+            res->generic_types = self->generic_type_list_gen();
+        }
         while (self->lookahead(tok_kind::tok_mul)) {
             res->pointer_depth += 1;
             self->match_token(tok_kind::tok_mul);
         }
+        return res;
+    }
+
+    func generic_type_list_gen(self) -> ast_generic_type_list* {
+        var res = ast_generic_type_list::new(self->this_tok_loc_copy());
+        self->match_token(tok_kind::tok_less);
+        while (self->lookahead(tok_kind::tok_id)) {
+            # generic type does not allow pointer or other forms
+            var type_node = ast_type_def::new(self->this_tok_loc_copy());
+            type_node->name = self->identifier_gen();
+            res->types.push(type_node => ast*);
+            if (self->lookahead(tok_kind::tok_comma)) {
+                self->match_token(tok_kind::tok_comma);
+            } else if (self->lookahead(tok_kind::tok_id)) {
+                self->err->error(self->this_tok_loc(), "expected comma here.");
+            }
+        }
+        self->match_token(tok_kind::tok_grt);
         return res;
     }
 
@@ -639,6 +696,9 @@ impl parser {
             self->toks->get(self->index).content
         );
         self->match_token(tok_kind::tok_id);
+        if (self->lookahead_generic()) {
+            res->generic_types = self->generic_type_list_gen();
+        }
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
             res->fields.push(self->struct_field_gen() => ast*);
@@ -750,6 +810,9 @@ impl parser {
             self->toks->get(self->index).content
         );
         self->match_token(tok_kind::tok_id);
+        if (self->lookahead_generic()) {
+            res->generic_types = self->generic_type_list_gen();
+        }
         res->params = self->param_list_gen();
         if (self->lookahead(tok_kind::tok_arrow)) {
             self->match_token(tok_kind::tok_arrow);
@@ -771,6 +834,9 @@ impl parser {
             self->toks->get(self->index).content
         );
         self->match_token(tok_kind::tok_id);
+        if (self->lookahead_generic()) {
+            res->generic_types = self->generic_type_list_gen();
+        }
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
             var is_pub = false;
