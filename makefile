@@ -1,6 +1,6 @@
 COLGMCC = ./build/colgm
 
-colgm.ll: $(COLGMCC) src/ast/*.colgm src/err/*.colgm src/std/*.colgm src/*.colgm
+colgm.ll: $(COLGMCC) src/ast/*.colgm src/err/*.colgm src/sema/*.colgm src/*.colgm src/std/*.colgm
 	$(COLGMCC) --library src src/main.colgm -o colgm.ll
 
 .PHONY: test

@@ -7,12 +7,14 @@ use std::fs::{ fs };
 use lexer::{ lexer };
 use parser::{ parser };
 use package::{ package };
+use sema::sema::{ sema };
 
 struct compiler {
     rep: report*,
     pkg: package*,
     lex: lexer*,
-    par: parser*
+    par: parser*,
+    sema: sema*
 }
 
 impl compiler {
@@ -21,11 +23,13 @@ impl compiler {
         var pkg = package::new(rep);
         var lex = lexer::new(rep);
         var par = parser::new(rep, lex);
+        var semantic = sema::new(rep, pkg);
         return compiler {
             rep: rep,
             pkg: pkg,
             lex: lex,
-            par: par
+            par: par,
+            sema: semantic
         };
     }
 
@@ -45,6 +49,10 @@ impl compiler {
         if (self->par => i8* != nil) {
             self->par->delete();
             free(self->par => i8*);
+        }
+        if (self->sema => i8* != nil) {
+            self->sema->delete();
+            free(self->sema => i8*);
         }
     }
 }
@@ -91,6 +99,12 @@ func compile(option: cli_option) {
     }
     if (option.OPTION_VIEW_AST) {
         cc.par->dump();
+    }
+
+    cc.sema->scan(cc.par->root);
+    if (cc.rep->error_count > 0) {
+        cc.delete();
+        return;
     }
 
     cc.delete();
