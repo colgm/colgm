@@ -31,7 +31,7 @@ If having `lli`(llvm jit interpreter), you could try this to
 execute bootstrapped new compiler:
 
 ```sh
-lli colgm.ll main.colgm -L .
+lli colgm.ll main.colgm --library .
 ```
 
 LLVM jit interpreter maybe untable on some platforms, if lli crashed, try using `clang` to build `out.ll` to executable:

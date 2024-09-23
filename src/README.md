@@ -7,7 +7,7 @@ Work in progress. Lexer and parser are done.
 First you need bootstrap compiler, then use this command:
 
 ```bash
-[path of the compiler] main.colgm -L .
+[path of the compiler] main.colgm --library .
 ```
 
 And `out.ll` is generated, try `lli` or `clang`.

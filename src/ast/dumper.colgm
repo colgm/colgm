@@ -270,14 +270,14 @@ impl ast_dumper {
     }
 
     func dump_get_field(self, node: ast_get_field*, out: io) {
-        out.out(self->indent.c_str).out("get-field [")
-           .out(node->name.c_str).out("] -> ");
+        out.out(self->indent.c_str).out("get-field ")
+           .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_ptr_get_field(self, node: ast_ptr_get_field*, out: io) {
-        out.out(self->indent.c_str).out("ptr-get-field [")
-           .out(node->name.c_str).out("] -> ");
+        out.out(self->indent.c_str).out("ptr-get-field ")
+           .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
@@ -393,9 +393,9 @@ impl ast_dumper {
     func dump_enum_decl(self, node: ast_enum_decl*, out: io) {
         out.out(self->indent.c_str).out("enum-decl ");
         if (node->is_public) {
-            out.out("[pub]");
+            out.out("[pub] ");
         }
-        out.out("[@").out(node->name.c_str).out("] -> ");
+        out.green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -407,7 +407,7 @@ impl ast_dumper {
 
     func dump_struct_field(self, node: ast_struct_field*, out: io) {
         out.out(self->indent.c_str).out("struct-field ");
-        out.green().out("@").out(node->name->name.c_str).reset();
+        out.green().out(node->name->name.c_str).reset();
         out.out(" -> ");
         node->base.location->dump(out);
 
@@ -424,7 +424,7 @@ impl ast_dumper {
         if (node->is_extern) {
             out.out("[extern]");
         }
-        out.green().out("@").out(node->name.c_str).reset();
+        out.green().out(node->name.c_str).reset();
         out.out(" -> ");
         node->base.location->dump(out);
 
@@ -470,7 +470,10 @@ impl ast_dumper {
         if (node->is_extern) {
             out.out("[extern]");
         }
-        out.out("[@").out(node->name.c_str).out("] -> ");
+        if (node->is_public || node->is_extern) {
+            out.out(" ");
+        }
+        out.green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -530,8 +533,8 @@ impl ast_dumper {
     }
 
     func dump_definition(self, node: ast_definition*, out: io) {
-        out.out(self->indent.c_str).out("definition [")
-           .out(node->name.c_str).out("] -> ");
+        out.out(self->indent.c_str).out("definition ")
+           .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();

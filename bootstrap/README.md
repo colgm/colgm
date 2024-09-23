@@ -9,7 +9,7 @@ This directory stores the source file of colgm bootstrap compiler.
 In the top level directory, use these commands:
 
 ```sh
-cd bootstrap && mkdir build && cd build && cmake .. && make -j
+mkdir build && cd build && cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release && make -j
 ```
 
 ## Usage
@@ -180,6 +180,11 @@ struct StructName {
     field1: i64,
     field2: i64
 }
+
+struct StructWithGeneric<T> {
+    __size: i64,
+    __data: T*
+}
 ```
 
 ### Struct Initializer
@@ -204,6 +209,10 @@ impl StructName {
         ...
         return ...;
     }
+}
+
+impl StructWithGeneric<T> {
+    ...
 }
 ```
 
