@@ -1092,29 +1092,57 @@ impl parser {
             self->root->imports.push(self->use_stmt_gen() => ast*);
         }
         while (!self->lookahead(tok_kind::tok_eof)) {
+            var flag_is_public = false;
+            var flag_is_extern = false;
+            var pub_loc = nil => span*;
+            var extern_loc = nil => span*;
+            while (self->lookahead(tok_kind::tok_pub) || self->lookahead(tok_kind::tok_extern)) {
+                if (self->lookahead(tok_kind::tok_pub) && !flag_is_public) {
+                    flag_is_public = true;
+                    pub_loc = self->this_tok_loc();
+                } else if (self->lookahead(tok_kind::tok_pub) && flag_is_public) {
+                    self->err->error(self->this_tok_loc(), "duplicate 'pub' modifier.");
+                }
+                if (self->lookahead(tok_kind::tok_extern) && !flag_is_extern) {
+                    flag_is_extern = true;
+                    extern_loc = self->this_tok_loc();
+                } else if (self->lookahead(tok_kind::tok_extern) && flag_is_extern) {
+                    self->err->error(self->this_tok_loc(), "duplicate 'extern' modifier.");
+                }
+                self->next();
+            }
             match (self->toks->get(self->index).kind) {
                 tok_kind::tok_struct => {
-                    self->root->decls.push(self->struct_decl_gen() => ast*);
+                    var tmp = self->struct_decl_gen();
+                    tmp->is_public = flag_is_public;
+                    tmp->is_extern = flag_is_extern;
+                    self->root->decls.push(tmp => ast*);
                     continue;
                 }
                 tok_kind::tok_enum => {
-                    self->root->decls.push(self->enum_decl_gen() => ast*);
+                    var tmp = self->enum_decl_gen();
+                    tmp->is_public = flag_is_public;
+                    if (flag_is_extern) {
+                        self->err->error(extern_loc, "extern enum not supported.");
+                    }
+                    self->root->decls.push(tmp => ast*);
                     continue;
                 }
                 tok_kind::tok_func => {
-                    self->root->decls.push(self->function_decl_gen() => ast*);
+                    var tmp = self->function_decl_gen();
+                    tmp->is_public = flag_is_public;
+                    tmp->is_extern = flag_is_extern;
+                    self->root->decls.push(tmp => ast*);
                     continue;
                 }
                 tok_kind::tok_impl => {
+                    if (flag_is_public) {
+                        self->err->error(pub_loc, "cannot use 'pub' with 'impl'.");
+                    }
+                    if (flag_is_extern) {
+                        self->err->error(extern_loc, "cannot use 'extern' with 'impl'.");
+                    }
                     self->root->decls.push(self->impl_gen() => ast*);
-                    continue;
-                }
-                tok_kind::tok_pub => {
-                    self->root->decls.push(self->pub_decl_gen());
-                    continue;
-                }
-                tok_kind::tok_extern => {
-                    self->root->decls.push(self->extern_decl_gen());
                     continue;
                 }
             }

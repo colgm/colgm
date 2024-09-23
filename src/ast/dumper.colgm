@@ -136,13 +136,13 @@ impl ast_dumper {
 
     func dump_unary_operator(self, node: ast_unary_operator*, out: io) {
         out.out(self->indent.c_str)
-           .out("unary-operator [");
+           .out("unary-operator ");
         match (node->kind) {
-            unary_kind::neg => out.out("-");
-            unary_kind::bnot => out.out("~");
-            unary_kind::lnot => out.out("!");
+            unary_kind::neg => out.cyan().out("-").reset();
+            unary_kind::bnot => out.cyan().out("~").reset();
+            unary_kind::lnot => out.cyan().out("!").reset();
         }
-        out.out("] -> ");
+        out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -152,26 +152,26 @@ impl ast_dumper {
 
     func dump_binary_operator(self, node: ast_binary_operator*, out: io) {
         out.out(self->indent.c_str)
-           .out("binary-operator [");
+           .out("binary-operator ");
         match (node->kind) {
-            binary_kind::add => out.out("+");
-            binary_kind::sub => out.out("-");
-            binary_kind::mul => out.out("*");
-            binary_kind::div => out.out("/");
-            binary_kind::rem => out.out("%");
-            binary_kind::cmpeq => out.out("==");
-            binary_kind::cmpne => out.out("!=");
-            binary_kind::less => out.out("<");
-            binary_kind::leq => out.out("<=");
-            binary_kind::grt => out.out(">");
-            binary_kind::geq => out.out(">=");
-            binary_kind::cmpand => out.out("&&");
-            binary_kind::cmpor => out.out("||");
-            binary_kind::band => out.out("&");
-            binary_kind::bor => out.out("|");
-            binary_kind::bxor => out.out("^");
+            binary_kind::add => out.cyan().out("+").reset();
+            binary_kind::sub => out.cyan().out("-").reset();
+            binary_kind::mul => out.cyan().out("*").reset();
+            binary_kind::div => out.cyan().out("/").reset();
+            binary_kind::rem => out.cyan().out("%").reset();
+            binary_kind::cmpeq => out.cyan().out("==").reset();
+            binary_kind::cmpne => out.cyan().out("!=").reset();
+            binary_kind::less => out.cyan().out("<").reset();
+            binary_kind::leq => out.cyan().out("<=").reset();
+            binary_kind::grt => out.cyan().out(">").reset();
+            binary_kind::geq => out.cyan().out(">=").reset();
+            binary_kind::cmpand => out.cyan().out("&&").reset();
+            binary_kind::cmpor => out.cyan().out("||").reset();
+            binary_kind::band => out.cyan().out("&").reset();
+            binary_kind::bor => out.cyan().out("|").reset();
+            binary_kind::bxor => out.cyan().out("^").reset();
         }
-        out.out("] -> ");
+        out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -199,42 +199,35 @@ impl ast_dumper {
     }
 
     func dump_nil_literal(self, node: ast_nil_literal*, out: io) {
-        out.out(self->indent.c_str)
-           .out("nil-literal -> ");
+        out.out(self->indent.c_str).out("nil-literal ")
+           .orange().out("nil").reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_number_literal(self, node: ast_number_literal*, out: io) {
-        out.out(self->indent.c_str)
-           .out("number-literal: ")
-           .out(node->literal.c_str)
-           .out(" -> ");
+        out.out(self->indent.c_str).out("number-literal ")
+           .orange().out(node->literal.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_string_literal(self, node: ast_string_literal*, out: io) {
-        out.out(self->indent.c_str)
-           .out("string-literal: ")
-           .out(node->literal.c_str)
-           .out(" -> ");
+        out.out(self->indent.c_str).out("string-literal ")
+           .orange().out(node->literal.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_char_literal(self, node: ast_char_literal*, out: io) {
-        out.out(self->indent.c_str)
-           .out("char-literal: ")
-           .out(node->literal.c_str)
-           .out(" -> ");
+        out.out(self->indent.c_str).out("char-literal: ")
+           .orange().out(node->literal.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_bool_literal(self, node: ast_bool_literal*, out: io) {
-        out.out(self->indent.c_str)
-           .out("bool-literal: ");
+        out.out(self->indent.c_str).out("bool-literal ");
         if (node->flag) {
-            out.out("true");
+            out.orange().out("true").reset();
         } else {
-            out.out("false");
+            out.orange().out("false").reset();
         }
         out.out(" -> ");
         node->base.location->dump(out);
@@ -327,19 +320,19 @@ impl ast_dumper {
     }
 
     func dump_assignment(self, node: ast_assignment*, out: io) {
-        out.out(self->indent.c_str).out("assignment [");
+        out.out(self->indent.c_str).out("assignment ");
         match (node->kind) {
-            assignment_kind::eq => out.out("=");
-            assignment_kind::addeq => out.out("+=");
-            assignment_kind::subeq => out.out("-=");
-            assignment_kind::muleq => out.out("*=");
-            assignment_kind::diveq => out.out("/=");
-            assignment_kind::remeq => out.out("%=");
-            assignment_kind::andeq => out.out("&=");
-            assignment_kind::xoreq => out.out("^=");
-            assignment_kind::oreq => out.out("|=");
+            assignment_kind::eq => out.cyan().out("=").reset();
+            assignment_kind::addeq => out.cyan().out("+=").reset();
+            assignment_kind::subeq => out.cyan().out("-=").reset();
+            assignment_kind::muleq => out.cyan().out("*=").reset();
+            assignment_kind::diveq => out.cyan().out("/=").reset();
+            assignment_kind::remeq => out.cyan().out("%=").reset();
+            assignment_kind::andeq => out.cyan().out("&=").reset();
+            assignment_kind::xoreq => out.cyan().out("^=").reset();
+            assignment_kind::oreq => out.cyan().out("|=").reset();
         }
-        out.out("]-> ");
+        out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -351,11 +344,11 @@ impl ast_dumper {
     func dump_type_def(self, node: ast_type_def*, out: io) {
         out.out(self->indent.c_str).out("type ");
         if (!node->is_const) {
-            out.out("[mut]");
+            out.cyan().out("[mut]").reset();
         } else {
-            out.out("[const]");
+            out.cyan().out("[const]").reset();
         }
-        out.out("[ptr depth=").out_i64(node->pointer_depth).out("] ");
+        out.cyan().out("[ptr-depth=").out_i64(node->pointer_depth).out("] ").reset();
         out.green().out(node->name->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
 
@@ -367,7 +360,7 @@ impl ast_dumper {
     }
 
     func dump_generic_type_list(self, node: ast_generic_type_list*, out: io) {
-        out.out(self->indent.c_str).out("generic-type-list -> ");
+        out.out(self->indent.c_str).out("generic-types -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -391,9 +384,9 @@ impl ast_dumper {
     }
 
     func dump_enum_decl(self, node: ast_enum_decl*, out: io) {
-        out.out(self->indent.c_str).out("enum-decl ");
+        out.out(self->indent.c_str).out("enum ");
         if (node->is_public) {
-            out.out("[pub] ");
+            out.cyan().out("[pub] ").reset();
         }
         out.green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
@@ -406,7 +399,7 @@ impl ast_dumper {
     }
 
     func dump_struct_field(self, node: ast_struct_field*, out: io) {
-        out.out(self->indent.c_str).out("struct-field ");
+        out.out(self->indent.c_str).out("field ");
         out.green().out(node->name->name.c_str).reset();
         out.out(" -> ");
         node->base.location->dump(out);
@@ -417,12 +410,12 @@ impl ast_dumper {
     }
 
     func dump_struct_decl(self, node: ast_struct_decl*, out: io) {
-        out.out(self->indent.c_str).out("struct-decl ");
+        out.out(self->indent.c_str).out("struct ");
         if (node->is_public) {
-            out.out("[pub]");
+            out.cyan().out("[pub]").reset();
         }
         if (node->is_extern) {
-            out.out("[extern]");
+            out.cyan().out("[extern]").reset();
         }
         out.green().out(node->name.c_str).reset();
         out.out(" -> ");
@@ -463,12 +456,12 @@ impl ast_dumper {
     }
 
     func dump_func_decl(self, node: ast_func_decl*, out: io) {
-        out.out(self->indent.c_str).out("func-decl ");
+        out.out(self->indent.c_str).out("func ");
         if (node->is_public) {
-            out.out("[pub]");
+            out.cyan().out("[pub]").reset();
         }
         if (node->is_extern) {
-            out.out("[extern]");
+            out.cyan().out("[extern]").reset();
         }
         if (node->is_public || node->is_extern) {
             out.out(" ");
