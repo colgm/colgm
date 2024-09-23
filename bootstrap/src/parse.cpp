@@ -80,59 +80,6 @@ void parse::update_location(node* n) {
     n->update_location(toks[ptr-1].loc);
 }
 
-decl* parse::pub_decl_gen() {
-    match(tok::tk_pub);
-    if (look_ahead(tok::tk_extern)) {
-        auto res = extern_decl_gen();
-        if (res->get_ast_type()==ast_type::ast_func_decl) {
-            reinterpret_cast<func_decl*>(res)->set_public(true);
-        } else if (res->get_ast_type()==ast_type::ast_struct_decl) {
-            reinterpret_cast<struct_decl*>(res)->set_public(true);
-        } else {
-            err.err("parse", res->get_location(),
-                "unreachable, please report this bug."
-            );
-        }
-        return res;
-    } else if (look_ahead(tok::tk_func)) {
-        auto res = function_gen();
-        res->set_public(true);
-        return res;
-    } else if (look_ahead(tok::tk_stct)) {
-        auto res = struct_gen();
-        res->set_public(true);
-        return res;
-    } else if (look_ahead(tok::tk_enum)) {
-        auto res = enum_gen();
-        res->set_public(true);
-        return res;
-    }
-    err.err("parse",
-        toks[ptr].loc,
-        "expected function, struct or enum but get \"" +
-        toks[ptr].str + "\"."
-    );
-    return nullptr;
-}
-
-decl* parse::extern_decl_gen() {
-    match(tok::tk_extern);
-    if (look_ahead(tok::tk_func)) {
-        auto res = function_gen();
-        res->set_extern(true);
-        return res;
-    } else if (look_ahead(tok::tk_stct)) {
-        auto res = struct_gen();
-        res->set_extern(true);
-        return res;
-    }
-    err.err("parse",
-        toks[ptr].loc,
-        "expected function or struct but get \"" + toks[ptr].str + "\"."
-    );
-    return nullptr;
-}
-
 identifier* parse::identifier_gen() {
     auto result = new identifier(toks[ptr].loc, toks[ptr].str);
     match(tok::tk_id);
@@ -567,8 +514,14 @@ generic_type_list* parse::generic_type_list_gen() {
     return result;
 }
 
-enum_decl* parse::enum_gen() {
+enum_decl* parse::enum_gen(bool flag_is_public, bool flag_is_extern) {
     auto result = new enum_decl(toks[ptr].loc);
+    if (flag_is_public) {
+        result->set_public(true);
+    }
+    if (flag_is_extern) {
+        err.err("parse", toks[ptr].loc, "extern enum is not supported.");
+    }
     match(tok::tk_enum);
     result->set_name(identifier_gen());
     match(tok::tk_lbrace);
@@ -601,8 +554,14 @@ struct_field* parse::struct_field_gen() {
     return result;
 }
 
-struct_decl* parse::struct_gen() {
+struct_decl* parse::struct_gen(bool flag_is_public, bool flag_is_extern) {
     auto result = new struct_decl(toks[ptr].loc);
+    if (flag_is_public) {
+        result->set_public(true);
+    }
+    if (flag_is_extern) {
+        result->set_extern(true);
+    }
     match(tok::tk_stct);
     result->set_name(toks[ptr].str);
     match(tok::tk_id);
@@ -652,8 +611,14 @@ param_list* parse::param_list_gen() {
     return result;
 }
 
-func_decl* parse::function_gen() {
+func_decl* parse::function_gen(bool flag_is_public, bool flag_is_extern) {
     auto result = new func_decl(toks[ptr].loc);
+    if (flag_is_public) {
+        result->set_public(true);
+    }
+    if (flag_is_extern) {
+        result->set_extern(true);
+    }
     match(tok::tk_func);
     result->set_name(toks[ptr].str);
     match(tok::tk_id);
@@ -680,7 +645,13 @@ func_decl* parse::function_gen() {
     return result;
 }
 
-impl_struct* parse::impl_gen() {
+impl_struct* parse::impl_gen(bool flag_is_public, bool flag_is_extern) {
+    if (flag_is_public) {
+        err.err("parse", toks[ptr].loc, "\"pub\" is not used for impl struct.");
+    }
+    if (flag_is_extern) {
+        err.err("parse", toks[ptr].loc, "\"extern\" is not used for impl struct.");
+    }
     match(tok::tk_impl);
     auto result = new impl_struct(toks[ptr].loc, toks[ptr].str);
     match(tok::tk_id);
@@ -694,8 +665,7 @@ impl_struct* parse::impl_gen() {
             match(tok::tk_pub);
             is_pub = true;
         }
-        auto func = function_gen();
-        func->set_public(is_pub);
+        auto func = function_gen(is_pub, false);
         result->add_method(func);
     }
     match(tok::tk_rbrace);
@@ -925,17 +895,38 @@ const error& parse::analyse(const std::vector<token>& token_list) {
     if (look_ahead(tok::tk_eof)) {
         return err;
     }
+
+    // generate imports
     while (look_ahead(tok::tk_use)) {
         result->add_use_stmt(use_stmt_gen());
     }
+
+    // generate decls
     while (!look_ahead(tok::tk_eof)) {
+        bool flag_is_public = false;
+        bool flag_is_extern = false;
+        while (look_ahead(tok::tk_pub) || look_ahead(tok::tk_extern)) {
+            if (look_ahead(tok::tk_pub) && !flag_is_public) {
+                flag_is_public = true;
+            } else if (look_ahead(tok::tk_pub) && flag_is_public) {
+                err.err("parse", toks[ptr].loc,
+                    "duplicate modifier \"pub\"."
+                );
+            }
+            if (look_ahead(tok::tk_extern) && !flag_is_extern) {
+                flag_is_extern = true;
+            } else if (look_ahead(tok::tk_extern) && flag_is_extern) {
+                err.err("parse", toks[ptr].loc,
+                    "duplicate modifier \"extern\"."
+                );
+            }
+            match(toks[ptr].type);
+        }
         switch(toks[ptr].type) {
-            case tok::tk_pub: result->add_decl(pub_decl_gen()); break;
-            case tok::tk_extern: result->add_decl(extern_decl_gen()); break;
-            case tok::tk_func: result->add_decl(function_gen()); break;
-            case tok::tk_stct: result->add_decl(struct_gen()); break;
-            case tok::tk_impl: result->add_decl(impl_gen()); break;
-            case tok::tk_enum: result->add_decl(enum_gen()); break;
+            case tok::tk_func: result->add_decl(function_gen(flag_is_public, flag_is_extern)); break;
+            case tok::tk_stct: result->add_decl(struct_gen(flag_is_public, flag_is_extern)); break;
+            case tok::tk_impl: result->add_decl(impl_gen(flag_is_public, flag_is_extern)); break;
+            case tok::tk_enum: result->add_decl(enum_gen(flag_is_public, flag_is_extern)); break;
             default:
                 err.err("parse", toks[ptr].loc,
                     "unexpected token \"" + toks[ptr].str + "\"."

@@ -103,8 +103,6 @@ private:
     void update_location(node*);
 
 private:
-    decl* pub_decl_gen();
-    decl* extern_decl_gen();
     identifier* identifier_gen();
     call* call_gen();
     initializer* initializer_gen();
@@ -130,13 +128,13 @@ private:
     expr* calculation_gen();
     type_def* type_def_gen();
     generic_type_list* generic_type_list_gen();
-    enum_decl* enum_gen();
+    enum_decl* enum_gen(bool, bool);
     struct_field* struct_field_gen();
-    struct_decl* struct_gen();
+    struct_decl* struct_gen(bool, bool);
     param* param_gen();
     param_list* param_list_gen();
-    func_decl* function_gen();
-    impl_struct* impl_gen();
+    func_decl* function_gen(bool, bool);
+    impl_struct* impl_gen(bool, bool);
     use_stmt* use_stmt_gen();
     definition* definition_gen();
     cond_stmt* cond_stmt_gen();
