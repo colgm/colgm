@@ -110,6 +110,11 @@ void semantic::regist_struct(struct_decl* node) {
     if (node->is_extern_struct()) {
         self.is_extern = true;
     }
+    if (node->get_generic_types()) {
+        for(auto i : node->get_generic_types()->get_types()) {
+            self.generic_template.push_back(i->get_name()->get_name());
+        }
+    }
 }
 
 void semantic::analyse_single_struct(struct_decl* node) {
@@ -167,10 +172,6 @@ void semantic::analyse_structs(root* ast_root) {
             continue;
         }
         auto struct_decl_node = reinterpret_cast<struct_decl*>(i);
-        if (struct_decl_node->get_generic_types()) {
-            warning(struct_decl_node, "generic struct is not supported yet.");
-            continue;
-        }
         regist_struct(struct_decl_node);
     }
     for(auto i : ast_root->get_decls()) {
@@ -420,6 +421,11 @@ void semantic::regist_function(func_decl* node) {
     if (node->is_extern_func()) {
         self.is_extern = true;
     }
+    if (node->get_generic_types()) {
+        for(auto i : node->get_generic_types()->get_types()) {
+            self.generic_template.push_back(i->get_name()->get_name());
+        }
+    }
 }
 
 void semantic::analyse_functions(root* ast_root) {
@@ -429,10 +435,6 @@ void semantic::analyse_functions(root* ast_root) {
             continue;
         }
         auto func_decl_node = reinterpret_cast<func_decl*>(i);
-        if (func_decl_node->get_generic_types()) {
-            warning(func_decl_node, "generic function is not supported.");
-            continue;
-        }
         regist_function(func_decl_node);
     }
 }
@@ -470,10 +472,6 @@ void semantic::analyse_impls(root* ast_root) {
             continue;
         }
         auto impl_node = reinterpret_cast<impl_struct*>(i);
-        if (impl_node->get_generic_types()) {
-            warning(impl_node, "generic implementation is not supported.");
-            continue;
-        }
         analyse_single_impl(impl_node);
     }
 }

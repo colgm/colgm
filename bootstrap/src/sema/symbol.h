@@ -137,6 +137,7 @@ struct colgm_func {
     type return_type;
     std::vector<symbol> parameters;
     std::unordered_map<std::string, symbol> unordered_params;
+    std::vector<std::string> generic_template;
 
     bool is_public = false;
     bool is_extern = false;
@@ -152,6 +153,7 @@ struct colgm_struct {
     std::vector<symbol> ordered_field;
     std::unordered_map<std::string, colgm_func> static_method;
     std::unordered_map<std::string, colgm_func> method;
+    std::vector<std::string> generic_template;
 
     bool is_public = false;
     bool is_extern = false;
