@@ -2,6 +2,13 @@ use ast::ast::*;
 use std::str::{ str };
 use std::io::{ io };
 
+enum indent_state {
+    indent_none,
+    indent_middle,
+    indent_bar,
+    indent_end
+}
+
 pub struct ast_dumper {
     indent: str
 }
@@ -19,13 +26,74 @@ impl ast_dumper {
         self->indent.delete();
     }
 
+    func indent_back(self) -> indent_state {
+        var s = self->indent.size => i64;
+        if (s == 0) {
+            return indent_state::indent_none;
+        }
+        if (self->indent.c_str[s - 1] == '-' &&
+            self->indent.c_str[s - 2] == '-' &&
+            self->indent.c_str[s - 3] == '|') {
+            return indent_state::indent_middle;
+        }
+        if (self->indent.c_str[s - 1] == ' ' &&
+            self->indent.c_str[s - 2] == ' ' &&
+            self->indent.c_str[s - 3] == '|') {
+            return indent_state::indent_bar;
+        }
+        if (self->indent.c_str[s - 1] == '-' &&
+            self->indent.c_str[s - 2] == '-' &&
+            self->indent.c_str[s - 3] == '+') {
+            return indent_state::indent_end;
+        }
+        return indent_state::indent_none;
+    }
+
     func push_indent(self) {
-        self->indent.append_i8_vec("  ");
+        if (self->indent.size => i64 > 0) {
+            var state = self->indent_back();
+            match (state) {
+                indent_state::indent_none => {}
+                indent_state::indent_middle => {
+                    self->indent.pop();
+                    self->indent.pop();
+                    self->indent.pop();
+                    self->indent.append_i8_vec("|  ");
+                }
+                indent_state::indent_bar => {}
+                indent_state::indent_end => {
+                    self->indent.pop();
+                    self->indent.pop();
+                    self->indent.pop();
+                    self->indent.append_i8_vec("   ");
+                }
+            }
+        }
+        self->indent.append_i8_vec("|--");
+    }
+
+    func set_last(self) {
+        self->indent.pop();
+        self->indent.pop();
+        self->indent.pop();
+        self->indent.append_i8_vec("+--");
     }
 
     func pop_indent(self) {
         self->indent.pop();
         self->indent.pop();
+        self->indent.pop();
+    }
+
+    func dump_indent(self, out: io) {
+        if (self->indent.size => i64 > 0 &&
+            self->indent_back() == indent_state::indent_bar) {
+            self->indent.pop();
+            self->indent.pop();
+            self->indent.pop();
+            self->indent.append_i8_vec("|--");
+        }
+        out.out(self->indent.c_str);
     }
 }
 
@@ -121,22 +189,30 @@ impl ast_dumper {
     }
 
     func dump_root(self, node: root*, out: io) {
-        out.out(self->indent.c_str).out("root -> ");
+        self->dump_indent(out);
+        out.out("root -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         for (var index = 0 => u64; index < node->imports.size; index += 1 => u64) {
+            if (index == node->imports.size - (1 => u64) &&
+                node->decls.size == 0 => u64) {
+                self->set_last();
+            }
             self->dump(node->imports.data[index], out);
         }
         for (var index = 0 => u64; index < node->decls.size; index += 1 => u64) {
+            if (index == node->decls.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->decls.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_unary_operator(self, node: ast_unary_operator*, out: io) {
-        out.out(self->indent.c_str)
-           .out("unary-operator ");
+        self->dump_indent(out);
+        out.out("unary-operator ");
         match (node->kind) {
             unary_kind::neg => out.cyan().out("-").reset();
             unary_kind::bnot => out.cyan().out("~").reset();
@@ -146,13 +222,14 @@ impl ast_dumper {
         node->base.location->dump(out);
 
         self->push_indent();
+        self->set_last();
         self->dump(node->value, out);
         self->pop_indent();
     }
 
     func dump_binary_operator(self, node: ast_binary_operator*, out: io) {
-        out.out(self->indent.c_str)
-           .out("binary-operator ");
+        self->dump_indent(out);
+        out.out("binary-operator ");
         match (node->kind) {
             binary_kind::add => out.cyan().out("+").reset();
             binary_kind::sub => out.cyan().out("-").reset();
@@ -176,54 +253,62 @@ impl ast_dumper {
 
         self->push_indent();
         self->dump(node->left, out);
+        self->set_last();
         self->dump(node->right, out);
         self->pop_indent();
     }
 
     func dump_type_convert(self, node: ast_type_convert*, out: io) {
-        out.out(self->indent.c_str).out("type-convert -> ");
+        self->dump_indent(out);
+        out.out("type-convert -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         self->dump(node->from, out);
+        self->set_last();
         self->dump_type_def(node->to, out);
         self->pop_indent();
     }
 
     func dump_identifier(self, node: ast_identifier*, out: io) {
-        out.out(self->indent.c_str)
-           .out("identifier ")
+        self->dump_indent(out);
+        out.out("identifier ")
            .green().out(node->name.c_str).reset()
            .out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_nil_literal(self, node: ast_nil_literal*, out: io) {
-        out.out(self->indent.c_str).out("nil-literal ")
+        self->dump_indent(out);
+        out.out("nil-literal ")
            .orange().out("nil").reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_number_literal(self, node: ast_number_literal*, out: io) {
-        out.out(self->indent.c_str).out("number-literal ")
+        self->dump_indent(out);
+        out.out("number-literal ")
            .orange().out(node->literal.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_string_literal(self, node: ast_string_literal*, out: io) {
-        out.out(self->indent.c_str).out("string-literal ")
+        self->dump_indent(out);
+        out.out("string-literal ")
            .orange().out(node->literal.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_char_literal(self, node: ast_char_literal*, out: io) {
-        out.out(self->indent.c_str).out("char-literal: ")
+        self->dump_indent(out);
+        out.out("char-literal: ")
            .orange().out(node->literal.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_bool_literal(self, node: ast_bool_literal*, out: io) {
-        out.out(self->indent.c_str).out("bool-literal ");
+        self->dump_indent(out);
+        out.out("bool-literal ");
         if (node->flag) {
             out.orange().out("true").reset();
         } else {
@@ -234,93 +319,118 @@ impl ast_dumper {
     }
 
     func dump_array_literal(self, node: ast_array_literal*, out: io) {
-        out.out(self->indent.c_str).out("array-literal -> ");
+        self->dump_indent(out);
+        out.out("array-literal -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         self->dump_number_literal(node->size, out);
+        self->set_last();
         self->dump_type_def(node->type, out);
         self->pop_indent();
     }
 
     func dump_call_index(self, node: ast_call_index*, out: io) {
-        out.out(self->indent.c_str).out("call-index -> ");
+        self->dump_indent(out);
+        out.out("call-index -> ");
         node->base.location->dump(out);
         self->push_indent();
+        self->set_last();
         self->dump(node->index, out);
         self->pop_indent();
     }
 
     func dump_call_func_args(self, node: ast_call_func_args*, out: io) {
-        out.out(self->indent.c_str).out("call-func-args -> ");
+        self->dump_indent(out);
+        out.out("call-func-args -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         for (var index = 0 => u64; index < node->args.size; index += 1 => u64) {
+            if (index == node->args.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->args.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_get_field(self, node: ast_get_field*, out: io) {
-        out.out(self->indent.c_str).out("get-field ")
+        self->dump_indent(out);
+        out.out("get-field ")
            .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_ptr_get_field(self, node: ast_ptr_get_field*, out: io) {
-        out.out(self->indent.c_str).out("ptr-get-field ")
+        self->dump_indent(out);
+        out.out("ptr-get-field ")
            .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_init_pair(self, node: ast_init_pair*, out: io) {
-        out.out(self->indent.c_str).out("init-pair ");
+        self->dump_indent(out);
+        out.out("init-pair ");
         out.green().out(node->field->name.c_str).reset();
         out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
+        self->set_last();
         self->dump(node->value, out);
         self->pop_indent();
     }
 
     func dump_initializer(self, node: ast_initializer*, out: io) {
-        out.out(self->indent.c_str).out("initializer -> ");
+        self->dump_indent(out);
+        out.out("initializer -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         for (var index = 0 => u64; index < node->pairs.size; index += 1 => u64) {
+            if (index == node->pairs.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->pairs.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_call_path(self, node: ast_call_path*, out: io) {
-        out.out(self->indent.c_str).out("call-path ")
+        self->dump_indent(out);
+        out.out("call-path ")
            .green().out(node->name.c_str).reset()
            .out(" -> ");
         node->base.location->dump(out);
     }
 
     func dump_call(self, node: ast_call*, out: io) {
-        out.out(self->indent.c_str).out("call ");
+        self->dump_indent(out);
+        out.out("call ");
         out.green().out(node->head->name.c_str).reset();
         out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         if (node->head_generics => i8* != nil) {
+            if (node->chain.size == (0 => u64)) {
+                self->set_last();
+            }
             self->dump_generic_type_list(node->head_generics, out);
         }
         for (var index = 0 => u64; index < node->chain.size; index += 1 => u64) {
+            if (index == node->chain.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->chain.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_assignment(self, node: ast_assignment*, out: io) {
-        out.out(self->indent.c_str).out("assignment ");
+        self->dump_indent(out);
+        out.out("assignment ");
         match (node->kind) {
             assignment_kind::eq => out.cyan().out("=").reset();
             assignment_kind::addeq => out.cyan().out("+=").reset();
@@ -337,12 +447,14 @@ impl ast_dumper {
 
         self->push_indent();
         self->dump_call(node->left, out);
+        self->set_last();
         self->dump(node->right, out);
         self->pop_indent();
     }
 
     func dump_type_def(self, node: ast_type_def*, out: io) {
-        out.out(self->indent.c_str).out("type ");
+        self->dump_indent(out);
+        out.out("type ");
         if (!node->is_const) {
             out.cyan().out("[mut]").reset();
         } else {
@@ -354,37 +466,45 @@ impl ast_dumper {
 
         if (node->generic_types => i8* != nil) {
             self->push_indent();
+            self->set_last();
             self->dump_generic_type_list(node->generic_types, out);
             self->pop_indent();
         }
     }
 
     func dump_generic_type_list(self, node: ast_generic_type_list*, out: io) {
-        out.out(self->indent.c_str).out("generic-types -> ");
+        self->dump_indent(out);
+        out.out("generic-types -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         for (var index = 0 => u64; index < node->types.size; index += 1 => u64) {
+            if (index == node->types.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->types.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_enum_member(self, node: ast_enum_member*, out: io) {
-        out.out(self->indent.c_str).out("enum-member ");
+        self->dump_indent(out);
+        out.out("enum-member ");
         out.green().out(node->name->name.c_str).reset();
         out.out(" -> ");
         node->base.location->dump(out);
 
         if (node->value => i8* != nil) {
             self->push_indent();
+            self->set_last();
             self->dump_number_literal(node->value, out);
             self->pop_indent();
         }
     }
 
     func dump_enum_decl(self, node: ast_enum_decl*, out: io) {
-        out.out(self->indent.c_str).out("enum ");
+        self->dump_indent(out);
+        out.out("enum ");
         if (node->is_public) {
             out.cyan().out("[pub] ").reset();
         }
@@ -393,24 +513,30 @@ impl ast_dumper {
 
         self->push_indent();
         for (var index = 0 => u64; index < node->members.size; index += 1 => u64) {
+            if (index == node->members.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->members.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_struct_field(self, node: ast_struct_field*, out: io) {
-        out.out(self->indent.c_str).out("field ");
+        self->dump_indent(out);
+        out.out("field ");
         out.green().out(node->name->name.c_str).reset();
         out.out(" -> ");
         node->base.location->dump(out);
 
         self->push_indent();
+        self->set_last();
         self->dump_type_def(node->type, out);
         self->pop_indent();
     }
 
     func dump_struct_decl(self, node: ast_struct_decl*, out: io) {
-        out.out(self->indent.c_str).out("struct ");
+        self->dump_indent(out);
+        out.out("struct ");
         if (node->is_public) {
             out.cyan().out("[pub]").reset();
         }
@@ -423,40 +549,53 @@ impl ast_dumper {
 
         self->push_indent();
         if (node->generic_types => i8* != nil) {
+            if (node->fields.size == (0 => u64)) {
+                self->set_last();
+            }
             self->dump_generic_type_list(node->generic_types, out);
         }
         for (var index = 0 => u64; index < node->fields.size; index += 1 => u64) {
+            if (index == node->fields.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->fields.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_param(self, node: ast_param*, out: io) {
-        out.out(self->indent.c_str).out("param ");
+        self->dump_indent(out);
+        out.out("param ");
         out.green().out(node->name->name.c_str).reset();
         out.out(" -> ");
         node->base.location->dump(out);
 
         if (node->type => i8* != nil) {
             self->push_indent();
+            self->set_last();
             self->dump_type_def(node->type, out);
             self->pop_indent();
         }
     }
 
     func dump_param_list(self, node: ast_param_list*, out: io) {
-        out.out(self->indent.c_str).out("param-list -> ");
+        self->dump_indent(out);
+        out.out("param-list -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         for (var index = 0 => u64; index < node->params.size; index += 1 => u64) {
+            if (index == node->params.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->params.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_func_decl(self, node: ast_func_decl*, out: io) {
-        out.out(self->indent.c_str).out("func ");
+        self->dump_indent(out);
+        out.out("func ");
         if (node->is_public) {
             out.cyan().out("[pub]").reset();
         }
@@ -473,50 +612,76 @@ impl ast_dumper {
         if (node->generic_types => i8* != nil) {
             self->dump_generic_type_list(node->generic_types, out);
         }
+        if (node->return_type => i8* == nil &&
+            node->body => i8* == nil) {
+            self->set_last();
+        }
         self->dump_param_list(node->params, out);
         if (node->return_type => i8* != nil) {
+            if (node->body => i8* == nil) {
+                self->set_last();
+            }
             self->dump_type_def(node->return_type, out);
         }
         if (node->body => i8* != nil) {
+            self->set_last();
             self->dump_code_block(node->body, out);
         }
         self->pop_indent();
     }
 
     func dump_impl(self, node: ast_impl*, out: io) {
-        out.out(self->indent.c_str).out("impl [")
-           .out(node->name.c_str).out("] -> ");
+        self->dump_indent(out);
+        out.out("impl [").out(node->name.c_str).out("] -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         if (node->generic_types => i8* != nil) {
+            if (node->methods.size == 0 => u64) {
+                self->set_last();
+            }
             self->dump_generic_type_list(node->generic_types, out);
         }
         for (var index = 0 => u64; index < node->methods.size; index += 1 => u64) {
+            if (index == node->methods.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->methods.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_use_stmt(self, node: ast_use_stmt*, out: io) {
-        out.out(self->indent.c_str).out("use -> ");
+        self->dump_indent(out);
+        out.out("use -> ");
         node->base.location->dump(out);
 
         self->push_indent();
 
-        out.out(self->indent.c_str).out("module\n");
+        self->dump_indent(out);
+        out.out("module\n");
         self->push_indent();
         for (var index = 0 => u64; index < node->module_path.size; index += 1 => u64) {
+            if (index == node->module_path.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->module_path.data[index], out);
         }
         self->pop_indent();
 
         if (node->import_symbol.size == 0 => u64) {
-            out.out(self->indent.c_str).out("import-all\n");
+            self->set_last();
+            self->dump_indent(out);
+            out.out("import-all\n");
         } else {
-            out.out(self->indent.c_str).out("import-specified\n");
+            self->set_last();
+            self->dump_indent(out);
+            out.out("import-specified\n");
             self->push_indent();
             for (var index = 0 => u64; index < node->import_symbol.size; index += 1 => u64) {
+                if (index == node->import_symbol.size - (1 => u64)) {
+                    self->set_last();
+                }
                 self->dump(node->import_symbol.data[index], out);
             }
             self->pop_indent();
@@ -526,7 +691,8 @@ impl ast_dumper {
     }
 
     func dump_definition(self, node: ast_definition*, out: io) {
-        out.out(self->indent.c_str).out("definition ")
+        self->dump_indent(out);
+        out.out("definition ")
            .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
 
@@ -534,66 +700,82 @@ impl ast_dumper {
         if (node->type => i8* != nil) {
             self->dump_type_def(node->type, out);
         }
+        self->set_last();
         self->dump(node->value, out);
         self->pop_indent();
     }
 
     func dump_cond_stmt(self, node: ast_cond_stmt*, out: io) {
-        out.out(self->indent.c_str).out("cond-stmt -> ");
+        self->dump_indent(out);
+        out.out("cond-stmt -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         for (var index = 0 => u64; index < node->stmts.size; index += 1 => u64) {
+            if (index == node->stmts.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->stmts.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_if_stmt(self, node: ast_if_stmt*, out: io) {
-        out.out(self->indent.c_str).out("if -> ");
+        self->dump_indent(out);
+        out.out("if -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         if (node->condition => i8* != nil) {
             self->dump(node->condition, out);
         }
+        self->set_last();
         self->dump_code_block(node->body, out);
         self->pop_indent();
     }
 
     func dump_match_case(self, node: ast_match_case*, out: io) {
-        out.out(self->indent.c_str).out("match-case -> ");
+        self->dump_indent(out);
+        out.out("match-case -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         self->dump_call(node->pattern, out);
+        self->set_last();
         self->dump_code_block(node->body, out);
         self->pop_indent();
     }
 
     func dump_match_stmt(self, node: ast_match_stmt*, out: io) {
-        out.out(self->indent.c_str).out("match -> ");
+        self->dump_indent(out);
+        out.out("match -> ");
         node->base.location->dump(out);
         self->push_indent();
         self->dump(node->value, out);
         for (var index = 0 => u64; index < node->cases.size; index += 1 => u64) {
+            if (index == node->cases.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->cases.data[index], out);
         }
         self->pop_indent();
     }
 
     func dump_while_stmt(self, node: ast_while_stmt*, out: io) {
-        out.out(self->indent.c_str).out("while -> ");
+        self->dump_indent(out);
+        out.out("while -> ");
         node->base.location->dump(out);
 
         self->push_indent();
         self->dump(node->condition, out);
+        self->set_last();
         self->dump_code_block(node->body, out);
         self->pop_indent();
     }
 
     func dump_for_stmt(self, node: ast_for_stmt*, out: io) {
-        out.out(self->indent.c_str).out("for -> ");
+        self->dump_indent(out);
+        out.out("for -> ");
         node->base.location->dump(out);
 
         self->push_indent();
@@ -606,44 +788,55 @@ impl ast_dumper {
         if (node->update => i8* != nil) {
             self->dump(node->update, out);
         }
+        self->set_last();
         self->dump_code_block(node->body, out);
         self->pop_indent();
     }
 
     func dump_in_stmt_expr(self, node: ast_in_stmt_expr*, out: io) {
-        out.out(self->indent.c_str).out("in-stmt-expr -> ");
+        self->dump_indent(out);
+        out.out("in-stmt-expr -> ");
         node->base.location->dump(out);
         self->push_indent();
+        self->set_last();
         self->dump(node->value, out);
         self->pop_indent();
     }
 
     func dump_ret_stmt(self, node: ast_ret_stmt*, out: io) {
-        out.out(self->indent.c_str).out("ret -> ");
+        self->dump_indent(out);
+        out.out("ret -> ");
         node->base.location->dump(out);
 
         if (node->value => i8* != nil) {
             self->push_indent();
+            self->set_last();
             self->dump(node->value, out);
             self->pop_indent();
         }
     }
 
     func dump_continue_stmt(self, node: ast_continue_stmt*, out: io) {
-        out.out(self->indent.c_str).out("continue -> ");
+        self->dump_indent(out);
+        out.out("continue -> ");
         node->base.location->dump(out);
     }
 
     func dump_break_stmt(self, node: ast_break_stmt*, out: io) {
-        out.out(self->indent.c_str).out("break -> ");
+        self->dump_indent(out);
+        out.out("break -> ");
         node->base.location->dump(out);
     }
 
     func dump_code_block(self, node: ast_code_block*, out: io) {
-        out.out(self->indent.c_str).out("code-block -> ");
+        self->dump_indent(out);
+        out.out("code-block -> ");
         node->base.location->dump(out);
         self->push_indent();
         for (var index = 0 => u64; index < node->stmts.size; index += 1 => u64) {
+            if (index == node->stmts.size - (1 => u64)) {
+                self->set_last();
+            }
             self->dump(node->stmts.data[index], out);
         }
         self->pop_indent();
