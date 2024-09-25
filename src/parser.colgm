@@ -122,6 +122,15 @@ impl parser {
         return self->toks->get(self->index).location;
     }
 
+    func update_location(self, node: ast*) {
+        if (self->index <= 0) {
+            return;
+        }
+        var last_loc = self->toks->get(self->index - 1).location;
+        node->location->end_line = last_loc->end_line;
+        node->location->end_column = last_loc->end_column;
+    }
+
     func lookahead(self, kind: tok_kind) -> bool {
         return self->toks->get(self->index).kind == kind;
     }
@@ -225,6 +234,7 @@ impl parser {
             pair_node->field = self->identifier_gen();
             self->match_token(tok_kind::tok_colon);
             pair_node->value = self->calculation_gen();
+            self->update_location(pair_node => ast*);
             res->pairs.push(pair_node => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
@@ -233,6 +243,7 @@ impl parser {
             }
         }
         self->match_token(tok_kind::tok_rbrace);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -261,12 +272,14 @@ impl parser {
                         }
                     }
                     self->match_token(tok_kind::tok_rparen);
+                    self->update_location(call_func => ast*);
                     res->chain.push(call_func => ast*);
                 }
                 tok_kind::tok_lbracket => {
                     self->match_token(tok_kind::tok_lbracket);
                     var call_index = ast_call_index::new(self->this_tok_loc_copy());
                     call_index->index = self->calculation_gen();
+                    self->update_location(call_index => ast*);
                     self->match_token(tok_kind::tok_rbracket);
                     res->chain.push(call_index => ast*);
                 }
@@ -302,6 +315,7 @@ impl parser {
                 }
             }
         }
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -368,6 +382,7 @@ impl parser {
         self->match_token(tok_kind::tok_semi);
         res->size = self->number_literal_gen();
         self->match_token(tok_kind::tok_rbracket);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -413,6 +428,7 @@ impl parser {
         );
         self->match_token(tok_kind::tok_sub);
         res->value = self->scalar_gen();
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -423,6 +439,7 @@ impl parser {
         );
         self->match_token(tok_kind::tok_floater);
         res->value = self->scalar_gen();
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -434,6 +451,7 @@ impl parser {
             var type_cast_node = ast_type_convert::new(begin_loc->copy());
             type_cast_node->from = result;
             type_cast_node->to = self->type_def_gen();
+            self->update_location(type_cast_node => ast*);
             return type_cast_node => ast*;
         }
         return result;
@@ -457,6 +475,7 @@ impl parser {
             binary->right = self->type_convert_gen();
             res = binary => ast*;
         }
+        self->update_location(res);
         return res;
     }
 
@@ -485,6 +504,7 @@ impl parser {
             binary->right = self->multive_gen();
             res = binary => ast*;
         }
+        self->update_location(res);
         return res;
     }
 
@@ -501,6 +521,7 @@ impl parser {
             binary->right = self->additive_gen();
             res = binary => ast*;
         }
+        self->update_location(res);
         return res;
     }
 
@@ -517,6 +538,7 @@ impl parser {
             binary->right = self->bitwise_and_gen();
             res = binary => ast*;
         }
+        self->update_location(res);
         return res;
     }
 
@@ -533,6 +555,7 @@ impl parser {
             binary->right = self->bitwise_xor_gen();
             res = binary => ast*;
         }
+        self->update_location(res);
         return res;
     }
 
@@ -561,6 +584,7 @@ impl parser {
             binary->right = self->bitwise_or_gen();
             res = binary => ast*;
         }
+        self->update_location(res);
         return res;
     }
 
@@ -573,6 +597,7 @@ impl parser {
         var value = self->compare_gen();
         var res = ast_unary_operator::new(begin_loc->copy(), unary_kind::lnot);
         res->value = value;
+        self->update_location(res => ast*);
         return res => ast*;
     }
 
@@ -589,6 +614,7 @@ impl parser {
         binary->left = res;
         self->match_token(tok_kind::tok_op_and);
         binary->right = self->and_expression_gen();
+        self->update_location(binary => ast*);
         return binary => ast*;
     }
 
@@ -605,6 +631,7 @@ impl parser {
         binary->left = res;
         self->match_token(tok_kind::tok_op_or);
         binary->right = self->or_expression_gen();
+        self->update_location(binary => ast*);
         return binary => ast*;
     }
 
@@ -639,9 +666,10 @@ impl parser {
             }
             self->match_token(self->toks->get(self->index).kind);
             assignment->right = self->calculation_gen();
+            self->update_location(assignment => ast*);
             return assignment => ast*;
         }
-
+        self->update_location(res);
         return res;
     }
 
@@ -659,6 +687,7 @@ impl parser {
             res->pointer_depth += 1;
             self->match_token(tok_kind::tok_mul);
         }
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -677,6 +706,7 @@ impl parser {
             }
         }
         self->match_token(tok_kind::tok_grt);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -685,6 +715,7 @@ impl parser {
         res->name = self->identifier_gen();
         self->match_token(tok_kind::tok_colon);
         res->type = self->type_def_gen();
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -709,6 +740,7 @@ impl parser {
             }
         }
         self->match_token(tok_kind::tok_rbrace);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -719,6 +751,7 @@ impl parser {
             self->match_token(tok_kind::tok_eq);
             res->value = self->number_literal_gen();
         }
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -740,6 +773,7 @@ impl parser {
             }
         }
         self->match_token(tok_kind::tok_rbrace);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -773,6 +807,7 @@ impl parser {
         } else {
             self->match_token(tok_kind::tok_mul);
         }
+        self->update_location(res => ast*);
         self->match_token(tok_kind::tok_semi);
         return res;
     }
@@ -784,6 +819,7 @@ impl parser {
             self->match_token(tok_kind::tok_colon);
             res->type = self->type_def_gen();
         }
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -799,6 +835,7 @@ impl parser {
             }
         }
         self->match_token(tok_kind::tok_rparen);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -820,9 +857,11 @@ impl parser {
         }
         if (self->lookahead(tok_kind::tok_semi)) {
             self->match_token(tok_kind::tok_semi);
+            self->update_location(res => ast*);
             return res;
         }
         res->body = self->block_gen(false);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -849,6 +888,7 @@ impl parser {
             res->methods.push(tmp => ast*);
         }
         self->match_token(tok_kind::tok_rbrace);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -857,6 +897,7 @@ impl parser {
         if (flag_allow_single_stmt_without_brace &&
             !self->lookahead(tok_kind::tok_lbrace)) {
             res->stmts.push(self->stmt_gen());
+            self->update_location(res => ast*);
             return res;
         }
         
@@ -865,6 +906,7 @@ impl parser {
             res->stmts.push(self->stmt_gen());
         }
         self->match_token(tok_kind::tok_rbrace);
+        self->update_location(res => ast*);
         return res;
     }
 }
@@ -913,6 +955,7 @@ impl parser {
         }
         self->match_token(tok_kind::tok_eq);
         res->value = self->calculation_gen();
+        self->update_location(res => ast*);
         self->match_token(tok_kind::tok_semi);
         return res;
     }
@@ -926,6 +969,7 @@ impl parser {
         new_if->condition = self->calculation_gen();
         self->match_token(tok_kind::tok_rparen);
         new_if->body = self->block_gen(true);
+        self->update_location(new_if => ast*);
         res->stmts.push(new_if => ast*);
 
         while (self->lookahead(tok_kind::tok_elsif)) {
@@ -935,6 +979,7 @@ impl parser {
             new_elsif->condition = self->calculation_gen();
             self->match_token(tok_kind::tok_rparen);
             new_elsif->body = self->block_gen(true);
+            self->update_location(new_elsif => ast*);
             res->stmts.push(new_elsif => ast*);
         }
 
@@ -942,9 +987,11 @@ impl parser {
             var new_else = ast_if_stmt::new(self->this_tok_loc_copy());
             self->match_token(tok_kind::tok_else);
             new_else->body = self->block_gen(true);
+            self->update_location(new_else => ast*);
             res->stmts.push(new_else => ast*);
         }
 
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -964,6 +1011,7 @@ impl parser {
             res->cases.push(new_case => ast*);
         }
         self->match_token(tok_kind::tok_rbrace);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -974,6 +1022,7 @@ impl parser {
         res->condition = self->calculation_gen();
         self->match_token(tok_kind::tok_rparen);
         res->body = self->block_gen(true);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -995,6 +1044,7 @@ impl parser {
         }
         self->match_token(tok_kind::tok_rparen);
         res->body = self->block_gen(true);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -1011,6 +1061,7 @@ impl parser {
         if (!self->lookahead(tok_kind::tok_semi)) {
             res->value = self->calculation_gen();
         }
+        self->update_location(res => ast*);
         self->match_token(tok_kind::tok_semi);
         return res;
     }
@@ -1148,6 +1199,7 @@ impl parser {
             }
             self->next();
         }
+        self->update_location(self->root => ast*);
     }
 }
 
