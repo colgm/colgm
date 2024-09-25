@@ -98,6 +98,47 @@ impl ast_dumper {
 }
 
 impl ast_dumper {
+    func llvm_visible_char(c: i8) -> bool {
+        if ('0' <= c && c <= '9') {
+            return true;
+        }
+        if ('a' <= c && c <= 'z') {
+            return true;
+        }
+        if ('A' <= c && c <= 'Z') {
+            return true;
+        }
+        if (c=='_' || c==':' || c==' ' || c==',' ||
+            c=='[' || c==']' || c=='(' || c==')' ||
+            c=='{' || c=='}' || c=='<' || c=='>' ||
+            c=='.' || c==';' || c=='-' || c=='+' ||
+            c=='*' || c=='/' || c=='~' || c=='?' ||
+            c=='!' || c=='=' || c=='&' || c=='|' ||
+            c=='%' || c=='^' || c=='@') {
+            return true;
+        }
+        return false;
+    }
+
+    func llvm_raw_string(s: str) -> str {
+        var num_chr_tbl = "0123456789abcdef";
+        var res = str::instance();
+        for (var i = 0 => u64; i < s.size; i += 1 => u64) {
+            var tmp = s.c_str[i];
+            if (ast_dumper::llvm_visible_char(tmp)) {
+                res.append_char(tmp);
+                continue;
+            }
+            res.append_char('\\');
+            res.append_char(num_chr_tbl[((tmp => u8)/(16 => u8)) & (0xff => u8)]);
+            res.append_char(num_chr_tbl[(tmp => u8) & (0xff => u8)]);
+        }
+        res.append_i8_vec("\\00");
+        return res;
+    }
+}
+
+impl ast_dumper {
     pub func dump(self, node: ast*, out: io) {
         match(node->kind) {
             ast_kind::ast_null => return;
@@ -294,15 +335,19 @@ impl ast_dumper {
 
     func dump_string_literal(self, node: ast_string_literal*, out: io) {
         self->dump_indent(out);
+        var tmp = ast_dumper::llvm_raw_string(node->literal);
         out.out("string-literal ")
-           .orange().out(node->literal.c_str).reset().out(" -> ");
+           .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
+        tmp.delete();
         node->base.location->dump(out);
     }
 
     func dump_char_literal(self, node: ast_char_literal*, out: io) {
         self->dump_indent(out);
+        var tmp = ast_dumper::llvm_raw_string(node->literal);
         out.out("char-literal: ")
-           .orange().out(node->literal.c_str).reset().out(" -> ");
+           .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
+        tmp.delete();
         node->base.location->dump(out);
     }
 

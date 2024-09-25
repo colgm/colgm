@@ -735,7 +735,7 @@ impl lexer {
 
         var quote_type = src->get(self->pos);
         var tmp = str::new();
-        tmp->append_char(quote_type);
+        # skip first quote
         self->pos += 1 => u64;
         self->column += 1;
 
@@ -800,8 +800,7 @@ impl lexer {
             return;
         }
 
-        # add last quote
-        tmp->append_char(quote_type);
+        # skip last quote
         self->pos += 1 => u64;
         self->column += 1;
 
@@ -811,7 +810,7 @@ impl lexer {
         if (quote_type == '"') {
             self->toks->append(tok_kind::tok_str, tmp, loc);
         } else {
-            if (tmp->size != 3 => u64) {
+            if (tmp->size != 1 => u64) {
                 self->err->error(loc, "should only contain one character.");
             }
             self->toks->append(tok_kind::tok_ch, tmp, loc);
