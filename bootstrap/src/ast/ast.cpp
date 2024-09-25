@@ -12,6 +12,10 @@ root::~root() {
     }
 }
 
+root* root::clone() const {
+    return new root(span::null());
+}
+
 void root::accept(visitor* v) {
     v->visit_root(this);
 }

@@ -13,6 +13,7 @@ public:
     decl(ast_type type, const span& loc): node(type, loc) {}
     ~decl() override = default;
     void accept(visitor*) override;
+    decl* clone() const override { return nullptr; };
 };
 
 class type_def: public decl {

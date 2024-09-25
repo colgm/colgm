@@ -12,6 +12,7 @@ public:
     expr(ast_type type, const span& loc): node(type, loc) {}
     ~expr() override = default;
     void accept(visitor*) override;
+    expr* clone() const override { return nullptr; };
 };
 
 class null: public expr {

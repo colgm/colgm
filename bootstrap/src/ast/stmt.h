@@ -11,7 +11,8 @@ class stmt: public node {
 public:
     stmt(ast_type type, const span& loc): node(type, loc) {}
     ~stmt() override = default;
-    void accept(visitor*) override;  
+    void accept(visitor*) override;
+    stmt* clone() const override { return nullptr; }
 };
 
 class use_stmt: public stmt {

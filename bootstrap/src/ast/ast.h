@@ -110,6 +110,7 @@ public:
         node_type(type), location(loc), resolve({"", "", 0}) {}
     virtual ~node() = default;
     virtual void accept(visitor*) = 0;
+    virtual node* clone() const { return nullptr; };
 
     const auto& get_location() const { return location; }
     const auto get_ast_type() const { return node_type; }
@@ -130,6 +131,7 @@ public:
     root(const span& loc): node(ast_type::ast_root, loc) {}
     ~root() override;
     void accept(visitor*) override;
+    root* clone() const override;
 
     void add_decl(decl* node) { declarations.push_back(node); }
     void add_use_stmt(use_stmt* node) { imports.push_back(node); }
