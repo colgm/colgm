@@ -4,6 +4,7 @@
 
 #include <cstring>
 #include <sstream>
+#include <cassert>
 
 namespace colgm::ast {
 
@@ -12,7 +13,10 @@ public:
     expr(ast_type type, const span& loc): node(type, loc) {}
     ~expr() override = default;
     void accept(visitor*) override;
-    expr* clone() const override { return nullptr; };
+    expr* clone() const override {
+        assert(false && "not implemented: class expr");
+        return nullptr;
+    };
 };
 
 class null: public expr {
@@ -20,6 +24,7 @@ public:
     null(): expr(ast_type::ast_null, span::null()) {}
     ~null() override = default;
     void accept(visitor*) override { return; }
+    null* clone() const override { return new null(); }
 };
 
 class unary_operator: public expr {
@@ -39,6 +44,7 @@ public:
         expr(ast_type::ast_unary_operator, loc), value(nullptr) {}
     ~unary_operator() override;
     void accept(visitor*) override;
+    unary_operator* clone() const override;
 
     void set_opr(kind t) { opr = t; }
     auto get_opr() const { return opr; }
@@ -78,6 +84,7 @@ public:
         left(nullptr), right(nullptr) {}
     ~binary_operator() override;
     void accept(visitor*) override;
+    binary_operator* clone() const override;
 
     void set_opr(kind t) { opr = t; }
     auto get_opr() const { return opr; }
@@ -98,6 +105,7 @@ public:
         source(nullptr), target(nullptr) {}
     ~type_convert() override;
     void accept(visitor*) override;
+    type_convert* clone() const override;
 
 public:
     void set_source(expr* s) { source = s; }
@@ -115,6 +123,9 @@ public:
         expr(ast_type::ast_identifier, loc), name(id_name) {}
     ~identifier() override = default;
     void accept(visitor*) override;
+    identifier* clone() const override {
+        return new identifier(location, name);
+    }
 
     const auto& get_name() const { return name; }
 };
@@ -125,6 +136,7 @@ public:
         expr(ast_type::ast_nil_literal, loc) {}
     ~nil_literal() override = default;
     void accept(visitor*) override;
+    nil_literal* clone() const override { return new nil_literal(location); }
 };
 
 class number_literal: public expr {
@@ -136,6 +148,9 @@ public:
         expr(ast_type::ast_number_literal, loc), literal(number) {}
     ~number_literal() override = default;
     void accept(visitor*) override;
+    number_literal* clone() const override {
+        return new number_literal(location, literal);
+    }
 
     const auto& get_number() const { return literal; }
     // used to set 0o____ & 0x____ number to literal that llvm could recognize
@@ -151,6 +166,9 @@ public:
         expr(ast_type::ast_string_literal, loc), literal(str) {}
     ~string_literal() override = default;
     void accept(visitor*) override;
+    string_literal* clone() const override {
+        return new string_literal(location, literal);
+    }
 
     const auto& get_string() const { return literal; }
 };
@@ -164,6 +182,9 @@ public:
         expr(ast_type::ast_char_literal, loc), literal(c) {}
     ~char_literal() override = default;
     void accept(visitor*) override;
+    char_literal* clone() const override {
+        return new char_literal(location, literal);
+    }
 
     auto get_char() const { return literal; }
 };
@@ -177,6 +198,9 @@ public:
         expr(ast_type::ast_bool_literal, loc), flag(f) {}
     ~bool_literal() override = default;
     void accept(visitor*) override;
+    bool_literal* clone() const override {
+        return new bool_literal(location, flag);
+    }
 
     auto get_flag() const { return flag; }
 };
@@ -191,6 +215,7 @@ public:
         expr(ast_type::ast_array_literal, loc), size(nullptr), type(nullptr) {}
     ~array_literal() override;
     void accept(visitor*) override;
+    array_literal* clone() const override;
     void set_size(number_literal* node) { size = node; }
     auto get_size() const { return size; }
     void set_type(type_def* node) { type = node; }
@@ -206,6 +231,7 @@ public:
         expr(ast_type::ast_call_index, loc), index(nullptr) {}
     ~call_index() override;
     void accept(visitor*) override;
+    call_index* clone() const override;
 
     void set_index(expr* node) { index = node; }
     auto get_index() const { return index; }
@@ -220,6 +246,7 @@ public:
         expr(ast_type::ast_call_func_args, loc) {}
     ~call_func_args() override;
     void accept(visitor*) override;
+    call_func_args* clone() const override;
 
     void add_arg(expr* node) { args.push_back(node); }
     const auto& get_args() const { return args; }
@@ -234,6 +261,9 @@ public:
         expr(ast_type::ast_get_field, loc), name(f) {}
     ~get_field() override = default;
     void accept(visitor*) override;
+    get_field* clone() const override {
+        return new get_field(location, name);
+    }
 
     const auto& get_name() const { return name; }
 };
@@ -247,6 +277,9 @@ public:
         expr(ast_type::ast_ptr_get_field, loc), name(f) {}
     ~ptr_get_field() override = default;
     void accept(visitor*) override;
+    ptr_get_field* clone() const override {
+        return new ptr_get_field(location, name);
+    }
 
     const auto& get_name() const { return name; }
 };
@@ -265,6 +298,7 @@ public:
         delete value;
     }
     void accept(visitor*) override;
+    init_pair* clone() const override;
 
     void set_field(identifier* node) { field = node; }
     auto get_field() const { return field; }
@@ -285,6 +319,7 @@ public:
         }
     }
     void accept(visitor*) override;
+    initializer* clone() const override;
 
     void add_pair(init_pair* node) { pairs.push_back(node); }
     const auto& get_pairs() const { return pairs; }
@@ -299,6 +334,9 @@ public:
         expr(ast_type::ast_call_path, loc), name(f) {}
     ~call_path() override = default;
     void accept(visitor*) override;
+    call_path* clone() const override {
+        return new call_path(location, name);
+    }
 
     const auto& get_name() const { return name; }
 };
@@ -315,6 +353,7 @@ public:
         head_generics(nullptr) {}
     ~call() override;
     void accept(visitor*) override;
+    call* clone() const override;
 
     void set_head(identifier* node) { head = node; }
     auto get_head() const { return head; }
@@ -349,6 +388,7 @@ public:
         left(nullptr), right(nullptr) {}
     ~assignment() override;
     void accept(visitor*) override;
+    assignment* clone() const override;
 
     void set_type(kind t) { type = t; }
     auto get_type() const { return type; }

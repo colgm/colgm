@@ -4,6 +4,7 @@
 #include "sema/symbol.h"
 
 #include <vector>
+#include <cassert>
 
 namespace colgm::ast {
 
@@ -100,7 +101,7 @@ class break_stmt;
 class code_block;
 
 class node {
-private:
+protected:
     ast_type node_type;
     span location;
     type resolve;
@@ -110,7 +111,10 @@ public:
         node_type(type), location(loc), resolve({"", "", 0}) {}
     virtual ~node() = default;
     virtual void accept(visitor*) = 0;
-    virtual node* clone() const { return nullptr; };
+    virtual node* clone() const {
+        assert(false && "not implemented: class node");
+        return nullptr;
+    };
 
     const auto& get_location() const { return location; }
     const auto get_ast_type() const { return node_type; }

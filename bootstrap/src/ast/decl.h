@@ -5,6 +5,7 @@
 
 #include <cstring>
 #include <sstream>
+#include <cassert>
 
 namespace colgm::ast {
 
@@ -13,7 +14,10 @@ public:
     decl(ast_type type, const span& loc): node(type, loc) {}
     ~decl() override = default;
     void accept(visitor*) override;
-    decl* clone() const override { return nullptr; };
+    decl* clone() const override {
+        assert(false && "not implemented: class decl");
+        return nullptr;
+    };
 };
 
 class type_def: public decl {
@@ -30,6 +34,7 @@ public:
         pointer_depth(0), is_const(false) {}
     ~type_def() override;
     void accept(visitor*) override;
+    type_def* clone() const override;
 
     void set_name(identifier* node) { name = node; }
     auto get_name() { return name; }
@@ -50,6 +55,7 @@ public:
         decl(ast_type::ast_generic_type_list, loc) {}
     ~generic_type_list() override;
     void accept(visitor*) override;
+    generic_type_list* clone() const override;
 
     void add_type(type_def* node) { types.push_back(node); }
     const auto& get_types() const { return types; }
@@ -73,6 +79,7 @@ public:
         name(nullptr), is_public(false) {}
     ~enum_decl() override;
     void accept(visitor*) override;
+    enum_decl* clone() const override;
 
 public:
     void set_name(identifier* node) { name = node; }
@@ -96,6 +103,7 @@ public:
         name(nullptr), type(nullptr) {}
     ~struct_field() override;
     void accept(visitor*) override;
+    struct_field* clone() const override;
 
     void set_name(identifier* node) { name = node; }
     auto get_name() { return name; }
@@ -117,6 +125,7 @@ public:
         generic_types(nullptr), is_public(false), is_extern(false) {}
     ~struct_decl() override;
     void accept(visitor*) override;
+    struct_decl* clone() const override;
 
     void add_field(struct_field* node) { fields.push_back(node); }
     const auto& get_fields() const { return fields; }
@@ -141,6 +150,7 @@ public:
         name(nullptr), type(nullptr) {}
     ~param() override;
     void accept(visitor*) override;
+    param* clone() const override;
 
     void set_name(identifier* node) { name = node; }
     auto get_name() { return name; }
@@ -157,6 +167,7 @@ public:
         decl(ast_type::ast_param_list, loc) {}
     ~param_list() override;
     void accept(visitor*) override;
+    param_list* clone() const override;
 
     void add_param(param* node) { params.push_back(node); }
     auto& get_params() { return params; }
@@ -180,6 +191,7 @@ public:
         is_public(false), is_extern(false) {}
     ~func_decl() override;
     void accept(visitor*) override;
+    func_decl* clone() const override;
 
     void set_name(const std::string& n) { name = n; }
     const auto& get_name() const { return name; }
@@ -209,6 +221,7 @@ public:
         generic_types(nullptr) {}
     ~impl_struct() override;
     void accept(visitor*) override;
+    impl_struct* clone() const override;
 
     const auto& get_struct_name() const { return struct_name; }
     void set_generic_types(generic_type_list* node) { generic_types = node; }

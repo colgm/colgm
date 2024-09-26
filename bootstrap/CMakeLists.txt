@@ -7,7 +7,7 @@ message("CMAKE_HOST_SYSTEM_NAME: ${CMAKE_HOST_SYSTEM_NAME}")
 # -std=c++17 -Wshadow -Wall
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS_RELEASE_INIT "-Wshadow -Wall")
+set(CMAKE_CXX_FLAGS "-Wuninitialized")
 
 # set compile option
 add_compile_options(-fPIC)

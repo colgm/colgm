@@ -4,6 +4,7 @@
 #include "ast/expr.h"
 
 #include <vector>
+#include <cassert>
 
 namespace colgm::ast {
 
@@ -12,7 +13,10 @@ public:
     stmt(ast_type type, const span& loc): node(type, loc) {}
     ~stmt() override = default;
     void accept(visitor*) override;
-    stmt* clone() const override { return nullptr; }
+    stmt* clone() const override {
+        assert(false && "not implemented: class stmt");
+        return nullptr;
+    }
 };
 
 class use_stmt: public stmt {
@@ -25,6 +29,7 @@ public:
         stmt(ast_type::ast_use_stmt, loc) {}
     ~use_stmt() override;
     void accept(visitor*) override;
+    use_stmt* clone() const override;
 
     void add_path(identifier* node) { module_path.push_back(node); }
     void add_import_symbol(identifier* node) { import_symbol.push_back(node); }
@@ -45,6 +50,7 @@ public:
         name(n), type(nullptr), init_value(nullptr) {}
     ~definition() override;
     void accept(visitor*) override;
+    definition* clone() const override;
 
     const auto& get_name() const { return name; }
     void set_type(type_def* node) { type = node; }
@@ -62,6 +68,7 @@ public:
         stmt(ast_type::ast_cond_stmt, loc) {}
     ~cond_stmt() override;
     void accept(visitor*) override;
+    cond_stmt* clone() const override;
 
     void add_stmt(if_stmt* node) { stmts.push_back(node); }
     const auto& get_stmts() const { return stmts; }
@@ -78,6 +85,7 @@ public:
         condition(nullptr), block(nullptr) {}
     ~if_stmt() override;
     void accept(visitor*) override;
+    if_stmt* clone() const override;
 
     void set_condition(expr* node) { condition = node; }
     auto get_condition() const { return condition; }
@@ -96,6 +104,7 @@ public:
         value(nullptr), block(nullptr) {}
     ~match_case() override;
     void accept(visitor*) override;
+    match_case* clone() const override;
 
     void set_value(expr* node) { value = node; }
     auto get_value() const { return value; }
@@ -114,6 +123,7 @@ public:
         value(nullptr) {}
     ~match_stmt() override;
     void accept(visitor*) override;
+    match_stmt* clone() const override;
 
     void set_value(expr* node) { value = node; }
     auto get_value() const { return value; }
@@ -132,6 +142,7 @@ public:
         condition(nullptr), block(nullptr) {}
     ~while_stmt() override;
     void accept(visitor*) override;
+    while_stmt* clone() const override;
 
     void set_condition(expr* node) { condition = node; }
     auto get_condition() const { return condition; }
@@ -149,9 +160,11 @@ private:
 public:
     for_stmt(const span& loc):
         stmt(ast_type::ast_for_stmt, loc),
-        condition(nullptr), update(nullptr), block(nullptr) {}
+        init(nullptr), condition(nullptr),
+        update(nullptr), block(nullptr) {}
     ~for_stmt() override;
     void accept(visitor*) override;
+    for_stmt* clone() const override;
 
     void set_init(definition* node) { init = node; }
     auto get_init() const { return init; }
@@ -173,6 +186,11 @@ public:
         calculation(nullptr) {}
     ~in_stmt_expr() override;
     void accept(visitor*) override;
+    in_stmt_expr* clone() const override {
+        auto ret = new in_stmt_expr(location);
+        ret->calculation = calculation->clone();
+        return ret;
+    }
 
     void set_expr(expr* node) { calculation = node; }
     auto get_expr() const { return calculation; }
@@ -187,6 +205,13 @@ public:
         stmt(ast_type::ast_ret_stmt, loc), value(nullptr) {}
     ~ret_stmt() override;
     void accept(visitor*) override;
+    ret_stmt* clone() const override {
+        auto ret = new ret_stmt(*this);
+        if (value) {
+            ret->value = value->clone();
+        }
+        return ret;
+    }
 
     void set_value(expr* node) { value = node; }
     auto get_value() const { return value; }
@@ -198,6 +223,9 @@ public:
         stmt(ast_type::ast_continue_stmt, loc) {}
     ~continue_stmt() override = default;
     void accept(visitor*) override;
+    continue_stmt* clone() const override {
+        return new continue_stmt(location);
+    }
 };
 
 class break_stmt: public stmt {
@@ -206,6 +234,9 @@ public:
         stmt(ast_type::ast_break_stmt, loc) {}
     ~break_stmt() override = default;
     void accept(visitor*) override;
+    break_stmt* clone() const override {
+        return new break_stmt(location);
+    }
 };
 
 class code_block: public stmt {
@@ -216,6 +247,7 @@ public:
     code_block(const span& loc): stmt(ast_type::ast_code_block, loc) {}
     ~code_block() override;
     void accept(visitor*) override;
+    code_block* clone() const override;
 
     void add_stmt(stmt* node) { statements.push_back(node); }
     const auto& get_stmts() const { return statements; }

@@ -13,7 +13,14 @@ root::~root() {
 }
 
 root* root::clone() const {
-    return new root(span::null());
+    auto ret = new root(location);
+    for(auto i : imports) {
+        ret->add_use_stmt(i->clone());
+    }
+    for(auto i : declarations) {
+        ret->add_decl(i->clone());
+    }
+    return ret;
 }
 
 void root::accept(visitor* v) {
