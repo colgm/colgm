@@ -111,8 +111,16 @@ void semantic::regist_struct(struct_decl* node) {
         self.is_extern = true;
     }
     if (node->get_generic_types()) {
+        std::unordered_set<std::string> used_generic;
         for(auto i : node->get_generic_types()->get_types()) {
-            self.generic_template.push_back(i->get_name()->get_name());
+            const auto& generic_name = i->get_name()->get_name();
+            if (used_generic.count(generic_name)) {
+                report(i, "generic type \"" + generic_name +
+                    "\" conflicts with exist generic type."
+                );
+            }
+            used_generic.insert(generic_name);
+            self.generic_template.push_back(generic_name);
         }
     }
 }
@@ -422,7 +430,15 @@ void semantic::regist_function(func_decl* node) {
         self.is_extern = true;
     }
     if (node->get_generic_types()) {
+        std::unordered_set<std::string> used_generic;
         for(auto i : node->get_generic_types()->get_types()) {
+            const auto& generic_name = i->get_name()->get_name();
+            if (used_generic.count(generic_name)) {
+                report(i, "generic type \"" + generic_name +
+                    "\" conflicts with exist generic type."
+                );
+            }
+            used_generic.insert(generic_name);
             self.generic_template.push_back(i->get_name()->get_name());
         }
     }
@@ -446,6 +462,22 @@ void semantic::analyse_single_impl(impl_struct* node) {
         return;
     }
     auto& stct = dm.structs.at(node->get_struct_name());
+    if (node->get_generic_types()) {
+        const auto& impl_generic_vec = node->get_generic_types()->get_types();
+        if (stct.generic_template.size() != impl_generic_vec.size()) {
+            report(node, "generic type count does not match.");
+            return;
+        }
+        for(u64 i = 0; i < stct.generic_template.size(); ++i) {
+            const auto& name = impl_generic_vec[i]->get_name()->get_name();
+            if (stct.generic_template[i] != name) {
+                report(impl_generic_vec[i], "generic type \"" + name +
+                    "\" does not match with \"" +
+                    stct.generic_template[i] + "\"."
+                );
+            }
+        }
+    }
     for(auto i : node->get_methods()) {
         if (stct.method.count(i->get_name())) {
             report(i, "method \"" + i->get_name() + "\" already exists.");
@@ -1938,6 +1970,10 @@ const error& semantic::analyse(root* ast_root) {
     analyse_functions(ast_root);
 
     analyse_impls(ast_root);
+
+    if (err.geterr()) {
+        return err;
+    }
 
     // resolve pass
     resolve_function_block(ast_root);
