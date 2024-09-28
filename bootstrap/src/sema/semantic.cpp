@@ -111,6 +111,11 @@ void semantic::regist_struct(struct_decl* node) {
         self.is_extern = true;
     }
     if (node->get_generic_types()) {
+        if (node->get_generic_types()->get_types().empty()) {
+            report(node, "generic struct \"" + name +
+                "\" must have at least one generic type."
+            );
+        }
         std::unordered_set<std::string> used_generic;
         for(auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
@@ -137,21 +142,34 @@ void semantic::analyse_single_struct(struct_decl* node) {
     struct_self.name = name;
     struct_self.location = node->get_location();
 
+    // initializer generic if needed
+    ctx.generics = {};
+    if (node->get_generic_types()) {
+        for(auto i : node->get_generic_types()->get_types()) {
+            ctx.generics.insert(i->get_name()->get_name());
+        }
+    }
+
     // load fields
     for(auto i : node->get_fields()) {
         auto type_node = i->get_type();
         auto type_name_node = type_node->get_name();
-        if (!ctx.global_symbol.count(type_name_node->get_name())) {
+        const auto& basic_type_name = type_name_node->get_name();
+        if (!ctx.global_symbol.count(basic_type_name) &&
+            !ctx.generics.count(basic_type_name)) {
             report(type_name_node,
-                "undefined type \"" + type_name_node->get_name() + "\"."
+                "undefined type \"" + basic_type_name + "\"."
             );
             continue;
         }
         auto field_type = symbol {
-            i->get_name()->get_name(), {
-                i->get_type()->get_name()->get_name(),
-                ctx.global_symbol.at(type_name_node->get_name()).loc_file,
-                i->get_type()->get_pointer_level()
+            .name = i->get_name()->get_name(),
+            .symbol_type = {
+                .name = basic_type_name,
+                .loc_file = ctx.global_symbol.count(basic_type_name)
+                    ? ctx.global_symbol.at(basic_type_name).loc_file
+                    : "",
+                .pointer_depth = type_node->get_pointer_level()
             }
         };
         if (struct_self.field.count(i->get_name()->get_name())) {
@@ -172,6 +190,9 @@ void semantic::analyse_single_struct(struct_decl* node) {
             .pointer_depth = 1
         })}
     );
+
+    // clear
+    ctx.generics.clear();
 }
 
 void semantic::analyse_structs(root* ast_root) {
@@ -430,6 +451,11 @@ void semantic::regist_function(func_decl* node) {
         self.is_extern = true;
     }
     if (node->get_generic_types()) {
+        if (node->get_generic_types()->get_types().empty()) {
+            report(node, "generic function \"" + name +
+                "\" must have at least one generic type."
+            );
+        }
         std::unordered_set<std::string> used_generic;
         for(auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
@@ -463,6 +489,10 @@ void semantic::analyse_single_impl(impl_struct* node) {
     }
     auto& stct = dm.structs.at(node->get_struct_name());
     if (node->get_generic_types()) {
+        if (node->get_generic_types()->get_types().empty()) {
+            report(node, "generic impl must have at least one generic type.");
+            return;
+        }
         const auto& impl_generic_vec = node->get_generic_types()->get_types();
         if (stct.generic_template.size() != impl_generic_vec.size()) {
             report(node, "generic type count does not match.");
@@ -477,6 +507,11 @@ void semantic::analyse_single_impl(impl_struct* node) {
                 );
             }
         }
+    }
+
+    ctx.generics = {};
+    for(const auto& i : stct.generic_template) {
+        ctx.generics.insert(i);
     }
     for(auto i : node->get_methods()) {
         if (stct.method.count(i->get_name())) {
@@ -496,6 +531,7 @@ void semantic::analyse_single_impl(impl_struct* node) {
             stct.static_method.insert({i->get_name(), func});
         }
     }
+    ctx.generics.clear();
 }
 
 void semantic::analyse_impls(root* ast_root) {
@@ -1413,20 +1449,27 @@ type semantic::resolve_expression(expr* node) {
 
 type semantic::resolve_type_def(type_def* node) {
     const auto& name = node->get_name()->get_name();
-    if (!ctx.global_symbol.count(name)) {
+    if (!ctx.global_symbol.count(name) &&
+        !ctx.generics.count(name)) {
         report(node->get_name(), "unknown type \"" + name + "\".");
         return type::error_type();
     }
-    if (!ctx.global_symbol.at(name).is_public) {
+    if (ctx.global_symbol.count(name) &&
+        !ctx.global_symbol.at(name).is_public) {
         report(node->get_name(), "private type \"" + name + "\" cannot be used.");
     }
     auto res = type {
-        name,
-        ctx.global_symbol.at(name).loc_file,
-        node->get_pointer_level()
+        .name = name,
+        .loc_file = ctx.global_symbol.count(name)
+            ? ctx.global_symbol.at(name).loc_file
+            : "",
+        .pointer_depth = node->get_pointer_level()
     };
     if (node->is_constant()) {
         res.is_constant_type = true;
+    }
+    if (ctx.generics.size() && ctx.generics.count(name)) {
+        res.is_generic_placeholder = true;
     }
     return res;
 }
@@ -1691,6 +1734,9 @@ void semantic::resolve_code_block(code_block* node, const colgm_func& func_self)
 }
 
 void semantic::resolve_global_func(func_decl* node) {
+    if (node->get_generic_types()) {
+        return; // do not resolve generic impl
+    }
     const auto& domain = ctx.global.domain.at(ctx.this_file);
     if (!domain.functions.count(node->get_name())) {
         report(node, "cannot find function \"" + node->get_name() + "\".");
@@ -1750,6 +1796,9 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
 }
 
 void semantic::resolve_impl(impl_struct* node) {
+    if (node->get_generic_types()) {
+        return; // do not resolve generic impl
+    }
     const auto& domain = ctx.global.domain.at(ctx.this_file);
     if (!domain.structs.count(node->get_struct_name())) {
         report(node,

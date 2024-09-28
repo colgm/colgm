@@ -30,6 +30,9 @@ struct semantic_context {
     // store global symbol used in this file
     std::unordered_map<std::string, symbol_info> global_symbol;
 
+    // store generics in current scope
+    std::unordered_set<std::string> generics;
+
     // local scope
     std::vector<std::unordered_map<std::string, type>> scope = {};
 

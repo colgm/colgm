@@ -38,6 +38,7 @@ struct type {
     bool is_enum = false;
     bool is_immutable_array_address = false;
     bool is_constant_type = false;
+    bool is_generic_placeholder = false;
 
     struct_method_info stm_info;
 
