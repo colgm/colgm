@@ -9,7 +9,7 @@ bool ast2mir::visit_unary_operator(ast::unary_operator* node) {
     node->get_value()->accept(this);
     block = temp;
 
-    mir_unary::opr_kind type;
+    mir_unary::opr_kind type = mir_unary::opr_kind::neg;
     switch(node->get_opr()) {
         case ast::unary_operator::kind::neg: type = mir_unary::opr_kind::neg; break;
         case ast::unary_operator::kind::bnot: type = mir_unary::opr_kind::bnot; break;
@@ -36,7 +36,7 @@ bool ast2mir::visit_binary_operator(ast::binary_operator* node) {
     node->get_right()->accept(this);
     block = temp;
 
-    mir_binary::opr_kind type;
+    mir_binary::opr_kind type = mir_binary::opr_kind::add;
     switch(node->get_opr()) {
         case ast::binary_operator::kind::add: type = mir_binary::opr_kind::add; break;
         case ast::binary_operator::kind::sub: type = mir_binary::opr_kind::sub; break;
@@ -342,7 +342,7 @@ bool ast2mir::visit_assignment(ast::assignment* node) {
     node->get_right()->accept(this);
     block = temp;
 
-    mir_assign::opr_kind type;
+    mir_assign::opr_kind type = mir_assign::opr_kind::eq;
     switch(node->get_type()) {
         case ast::assignment::kind::eq: type = mir_assign::opr_kind::eq; break;
         case ast::assignment::kind::addeq: type = mir_assign::opr_kind::addeq; break;

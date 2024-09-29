@@ -210,10 +210,6 @@ i32 main(i32 argc, const char* argv[]) {
         err();
     }
 
-    if (library_path.empty()) {
-        library_path = ".";
-    }
-
     if (output_file.empty()) {
         output_file = "out.ll";
     }

@@ -23,6 +23,7 @@ test: $(COLGMCC) bootstrap/test/*
 	@ $(COLGMCC) bootstrap/test/to_str.colgm && lli out.ll
 	@ $(COLGMCC) bootstrap/test/type_convert.colgm && lli out.ll
 	@ $(COLGMCC) bootstrap/test/void_return.colgm && lli out.ll
+	@ rm out.ll
 
 .PHONY: clean
 clean: out.ll
