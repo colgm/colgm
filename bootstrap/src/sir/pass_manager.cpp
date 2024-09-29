@@ -16,15 +16,13 @@ void sir_pass_manager::execute(sir_context* sctx) {
     passes.push_back(new remove_alloca);
     for(auto i : passes) {
         std::clog << "[" << green << "sir" << reset;
-        std::clog << "] run " << i->name() << " pass...\n";
+        std::clog << "] run " << i->name() << " pass...\r";
         if (!i->run(sctx)) {
             break;
         }
         std::clog << "[" << green << "sir" << reset;
         std::clog << "] run " << i->name() << " pass: ";
         std::clog << i->info() << "\n";
-        std::clog << "[" << green << "sir" << reset;
-        std::clog << "] run " << i->name() << " finished.\n";
     }
 }
 

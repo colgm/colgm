@@ -17,7 +17,7 @@ private:
 public:
     ~type_cast_number() override = default;
     std::string name() override {
-        return "constant number type cast optimization";
+        return "constant type cast optimization";
     }
     bool run(mir_context*) override;
 };
