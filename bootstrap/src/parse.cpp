@@ -88,10 +88,7 @@ identifier* parse::identifier_gen() {
 
 call* parse::call_gen() {
     auto result = new call(toks[ptr].loc);
-    result->set_head(identifier_gen());
-    if (look_ahead_generic()) {
-        result->set_generic_types(generic_type_list_gen());
-    }
+    result->set_head(call_id_gen());
     while(look_ahead(tok::tk_lcurve) || look_ahead(tok::tk_lbracket) ||
           look_ahead(tok::tk_dot) || look_ahead(tok::tk_arrow) ||
           look_ahead(tok::tk_double_colon) || look_ahead(tok::tk_lbrace)) {
@@ -137,6 +134,16 @@ call* parse::call_gen() {
         } else if (look_ahead(tok::tk_lbrace)) {
             result->add_chain(initializer_gen());
         }
+    }
+    update_location(result);
+    return result;
+}
+
+call_id* parse::call_id_gen() {
+    auto result = new call_id(toks[ptr].loc);
+    result->set_id(identifier_gen());
+    if (look_ahead_generic()) {
+        result->set_generic_types(generic_type_list_gen());
     }
     update_location(result);
     return result;

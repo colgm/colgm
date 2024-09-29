@@ -1261,7 +1261,7 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
 }
 
 type semantic::resolve_call(call* node) {
-    auto infer = resolve_identifier(node->get_head());
+    auto infer = resolve_identifier(node->get_head()->get_id());
     node->get_head()->set_resolve_type(infer);
     if (infer.is_error()) {
         return infer;
@@ -1336,9 +1336,6 @@ bool semantic::check_valid_left_value(expr* node) {
         return false;
     }
     const auto mem_get_node = reinterpret_cast<call*>(node);
-    if (mem_get_node->get_head()->get_ast_type()!=ast_type::ast_identifier) {
-        return false;
-    }
     for(auto i : mem_get_node->get_chain()) {
         if (i->get_ast_type()==ast_type::ast_call_path ||
             i->get_ast_type()==ast_type::ast_call_func_args ||
@@ -1564,7 +1561,7 @@ bool semantic::check_is_enum_literal(expr* node) {
         return false;
     }
 
-    const auto& name = call_node->get_head()->get_name();
+    const auto& name = call_node->get_head()->get_id()->get_name();
     if (!ctx.global_symbol.count(name)) {
         return false;
     }

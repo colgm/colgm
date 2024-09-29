@@ -95,6 +95,24 @@ array_literal* array_literal::clone() const {
     return copy;
 }
 
+call_id::~call_id() {
+    delete id;
+    delete generic_types;
+}
+
+void call_id::accept(visitor* v) {
+    v->visit_call_id(this);
+}
+
+call_id* call_id::clone() const {
+    auto copy = new call_id(location);
+    copy->id = id->clone();
+    if (generic_types) {
+        copy->generic_types = generic_types->clone();
+    }
+    return copy;
+}
+
 call_index::~call_index() {
     delete index;
 }
@@ -164,7 +182,6 @@ void call_path::accept(visitor* v) {
 
 call::~call() {
     delete head;
-    delete head_generics;
     for(auto i : chain) {
         delete i;
     }
@@ -177,9 +194,6 @@ void call::accept(visitor* v) {
 call* call::clone() const {
     auto copy = new call(location);
     copy->head = head->clone();
-    if (head_generics) {
-        copy->head_generics = head_generics->clone();
-    }
     for(auto i : chain) {
         copy->chain.push_back(i->clone());
     }

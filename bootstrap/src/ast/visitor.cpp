@@ -153,6 +153,14 @@ bool visitor::visit_array_literal(array_literal* node) {
     return true;
 }
 
+bool visitor::visit_call_id(call_id* node) {
+    node->get_id()->accept(this);
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_call_index(call_index* node) {
     node->get_index()->accept(this);
     return true;
@@ -192,9 +200,6 @@ bool visitor::visit_call_path(call_path* node) {
 
 bool visitor::visit_call(call* node) {
     node->get_head()->accept(this);
-    if (node->get_generic_types()) {
-        node->get_generic_types()->accept(this);
-    }
     for(auto i : node->get_chain()) {
         i->accept(this);
     }

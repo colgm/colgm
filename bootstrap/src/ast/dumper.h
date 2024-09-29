@@ -60,6 +60,7 @@ public:
     bool visit_unary_operator(unary_operator*) override;
     bool visit_binary_operator(binary_operator*) override;
     bool visit_type_convert(type_convert*) override;
+    bool visit_call_id(call_id*) override;
     bool visit_call_index(call_index*) override;
     bool visit_call_func_args(call_func_args*) override;
     bool visit_get_field(get_field*) override;

@@ -222,6 +222,24 @@ public:
     auto get_type() const { return type; }
 };
 
+class call_id: public expr {
+private:
+    identifier* id;
+    generic_type_list* generic_types;
+
+public:
+    call_id(const span& loc):
+        expr(ast_type::ast_call_id, loc),
+        id(nullptr), generic_types(nullptr) {}
+    ~call_id() override;
+    void accept(visitor*) override;
+    call_id* clone() const override;
+    void set_id(identifier* node) { id = node; }
+    auto get_id() const { return id; }
+    void set_generic_types(generic_type_list* node) { generic_types = node; }
+    auto get_generic_types() const { return generic_types; }
+};
+
 class call_index: public expr {
 private:
     expr* index;
@@ -343,22 +361,18 @@ public:
 
 class call: public expr {
 private:
-    identifier* head;
-    generic_type_list* head_generics;
+    call_id* head;
     std::vector<expr*> chain;
 
 public:
     call(const span& loc):
-        expr(ast_type::ast_call, loc), head(nullptr),
-        head_generics(nullptr) {}
+        expr(ast_type::ast_call, loc), head(nullptr) {}
     ~call() override;
     void accept(visitor*) override;
     call* clone() const override;
 
-    void set_head(identifier* node) { head = node; }
+    void set_head(call_id* node) { head = node; }
     auto get_head() const { return head; }
-    void set_generic_types(generic_type_list* node) { head_generics = node; }
-    auto get_generic_types() const { return head_generics; }
     void add_chain(expr* node) { chain.push_back(node); }
     const auto& get_chain() const { return chain; }
 };

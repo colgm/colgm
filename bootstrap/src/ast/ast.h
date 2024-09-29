@@ -21,6 +21,7 @@ enum class ast_type {
     ast_char_literal,
     ast_bool_literal,
     ast_array_literal,
+    ast_call_id,
     ast_call_index,
     ast_call_func_args,
     ast_get_field,
@@ -76,6 +77,7 @@ class number_literal;
 class string_literal;
 class bool_literal;
 class array_literal;
+class call_id;
 class call_index;
 class call_func_args;
 class get_field;

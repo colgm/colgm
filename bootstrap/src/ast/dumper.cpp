@@ -299,6 +299,19 @@ bool dumper::visit_type_convert(type_convert* node) {
     return true;
 }
 
+bool dumper::visit_call_id(call_id* node) {
+    dump_indent();
+    std::cout << "call_id " << node->get_id()->get_name();
+    std::cout << format_location(node);
+    if (node->get_generic_types()) {
+        push_indent();
+        set_last();
+        node->get_generic_types()->accept(this);
+        pop_indent();
+    }
+    return true;
+}
+
 bool dumper::visit_call_index(call_index* node) {
     dump_indent();
     std::cout << "call_index" << format_location(node);
@@ -368,15 +381,12 @@ bool dumper::visit_call_path(call_path* node) {
 
 bool dumper::visit_call(call* node) {
     dump_indent();
-    std::cout << "call @" << node->get_head()->get_name();
-    std::cout << format_location(node);
+    std::cout << "call" << format_location(node);
     push_indent();
-    if (node->get_generic_types()) {
-        if (node->get_chain().empty()) {
-            set_last();
-        }
-        node->get_generic_types()->accept(this);
+    if (node->get_chain().empty()) {
+        set_last();
     }
+    node->get_head()->accept(this);
     for(auto i : node->get_chain()) {
         if (i==node->get_chain().back()) {
             set_last();

@@ -299,7 +299,7 @@ bool ast2mir::visit_call(ast::call* node) {
     block = new_block;
     block->add_content(new mir_call_id(
         node->get_head()->get_location(),
-        node->get_head()->get_name(),
+        node->get_head()->get_id()->get_name(),
         node->get_head()->get_resolve()
     ));
     for(auto i : node->get_chain()) {
