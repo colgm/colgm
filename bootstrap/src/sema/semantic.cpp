@@ -1049,6 +1049,21 @@ void semantic::check_method_call_args(const colgm_func& func,
     }
 }
 
+type semantic::resolve_call_id(call_id* node) {
+    auto infer = resolve_identifier(node->get_id());
+    node->set_resolve_type(infer);
+    if (infer.is_error()) {
+        return infer;
+    }
+    if (node->get_generic_types() && !infer.is_global) {
+        report(node,
+            "non global symbol \"" + node->get_id()->get_name() +
+            "\" cannot be generic."
+        );
+    }
+    return infer;
+}
+
 type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // global function call
     if (prev.is_global_func) {
@@ -1261,8 +1276,7 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
 }
 
 type semantic::resolve_call(call* node) {
-    auto infer = resolve_identifier(node->get_head()->get_id());
-    node->get_head()->set_resolve_type(infer);
+    auto infer = resolve_call_id(node->get_head());
     if (infer.is_error()) {
         return infer;
     }

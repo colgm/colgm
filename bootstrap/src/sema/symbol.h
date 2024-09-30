@@ -132,42 +132,14 @@ struct symbol {
     type symbol_type;
 };
 
-struct colgm_func {
-    std::string name;
-    span location;
-    type return_type;
-    std::vector<symbol> parameters;
-    std::unordered_map<std::string, symbol> unordered_params;
-    std::vector<std::string> generic_template;
-
-    bool is_public = false;
-    bool is_extern = false;
-
-    bool find_parameter(const std::string&);
-    void add_parameter(const std::string&, const type&);
-};
-
-struct colgm_struct {
-    std::string name;
-    span location;
-    std::unordered_map<std::string, symbol> field;
-    std::vector<symbol> ordered_field;
-    std::unordered_map<std::string, colgm_func> static_method;
-    std::unordered_map<std::string, colgm_func> method;
-    std::vector<std::string> generic_template;
-
-    bool is_public = false;
-    bool is_extern = false;
-
-    usize field_index(const std::string&) const;
-};
-
 struct colgm_enum {
+public:
     std::string name;
     span location;
     std::vector<std::string> ordered_member;
     std::unordered_map<std::string, size_t> members;
 
+public:
     bool is_public = false;
 };
 

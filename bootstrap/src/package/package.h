@@ -2,6 +2,8 @@
 
 #include "report.h"
 #include "sema/symbol.h"
+#include "sema/func.h"
+#include "sema/struct.h"
 
 #include <cstring>
 #include <sstream>
