@@ -71,7 +71,7 @@ void sir_context::dump_struct_size_method(std::ostream& out) const {
     for(const auto& st : struct_decls) {
         const auto st_type = type {
             .name = st->get_name(),
-            .loc_file = st->get_location().file
+            .loc_file = st->get_file()
         };
         const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
@@ -90,7 +90,7 @@ void sir_context::dump_struct_alloc_method(std::ostream& out) const {
     for(const auto& st: struct_decls) {
         const auto st_type = type {
             .name = st->get_name(),
-            .loc_file = st->get_location().file
+            .loc_file = st->get_file()
         };
         const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;

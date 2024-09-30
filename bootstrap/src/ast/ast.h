@@ -119,6 +119,7 @@ public:
     };
 
     const auto& get_location() const { return location; }
+    const auto& get_file() const { return location.file; }
     const auto get_ast_type() const { return node_type; }
     const auto& get_resolve() const { return resolve; }
     void set_resolve_type(const type& rs) { resolve = rs; }

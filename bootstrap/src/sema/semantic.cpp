@@ -2,6 +2,7 @@
 #include "lexer.h"
 #include "parse.h"
 #include "sema/semantic.h"
+#include "sema/regist.h"
 #include "mir/ast2mir.h"
 
 #include <unordered_map>
@@ -71,23 +72,6 @@ colgm_func semantic::builtin_struct_alloc(const span& loc, const type& ty) {
     func.return_type = ty;
     func.is_public = true;
     return func;
-}
-
-void semantic::regist_basic_types() {
-    ctx.global_symbol = {
-        {"i64", {sym_kind::basic_kind, "", true}},
-        {"i32", {sym_kind::basic_kind, "", true}},
-        {"i16", {sym_kind::basic_kind, "", true}},
-        {"i8", {sym_kind::basic_kind, "", true}},
-        {"u64", {sym_kind::basic_kind, "", true}},
-        {"u32", {sym_kind::basic_kind, "", true}},
-        {"u16", {sym_kind::basic_kind, "", true}},
-        {"u8", {sym_kind::basic_kind, "", true}},
-        {"f32", {sym_kind::basic_kind, "", true}},
-        {"f64", {sym_kind::basic_kind, "", true}},
-        {"void", {sym_kind::basic_kind, "", true}},
-        {"bool", {sym_kind::basic_kind, "", true}}
-    };
 }
 
 void semantic::regist_struct(struct_decl* node) {
@@ -186,7 +170,7 @@ void semantic::analyse_single_struct(struct_decl* node) {
     struct_self.static_method.insert(
         {"__alloc__", builtin_struct_alloc(node->get_location(), {
             .name = name,
-            .loc_file = node->get_location().file,
+            .loc_file = node->get_file(),
             .pointer_depth = 1
         })}
     );
@@ -467,6 +451,8 @@ void semantic::regist_function(func_decl* node) {
             used_generic.insert(generic_name);
             self.generic_template.push_back(i->get_name()->get_name());
         }
+        // copy the node for template expansion
+        self.generic_func_decl = node->clone();
     }
 }
 
@@ -507,6 +493,8 @@ void semantic::analyse_single_impl(impl_struct* node) {
                 );
             }
         }
+        // copy ast of this impl struct for template expansion
+        stct.generic_struct_impl.push_back(node->clone());
     }
 
     ctx.generics = {};
@@ -1837,196 +1825,24 @@ void semantic::resolve_function_block(root* ast_root) {
     }
 }
 
-bool semantic::check_is_public_struct(identifier* node,
-                                      const colgm_module& domain) {
-    if (!domain.structs.count(node->get_name())) {
-        return false;
-    }
-    if (!domain.structs.at(node->get_name()).is_public) {
-        report(node,
-            "cannot import private struct \"" +
-            node->get_name() + "\"."
-        );
-        return false;
-    }
-    return true;
-}
-
-bool semantic::check_is_public_func(identifier* node,
-                                    const colgm_module& domain) {
-    if (!domain.functions.count(node->get_name())) {
-        return false;
-    }
-    if (!domain.functions.at(node->get_name()).is_public) {
-        report(node,
-            "cannot import private function \"" +
-            node->get_name() + "\"."
-        );
-        return false;
-    }
-    return true;
-}
-
-bool semantic::check_is_public_enum(identifier* node,
-                                    const colgm_module& domain) {
-    if (!domain.enums.count(node->get_name())) {
-        return false;
-    }
-    if (!domain.enums.at(node->get_name()).is_public) {
-        report(node,
-            "cannot import private enum \"" +
-            node->get_name() + "\"."
-        );
-        return false;
-    }
-    return true;
-}
-
-void semantic::import_global_symbol(node* n, 
-                                    const std::string& name,
-                                    const symbol_info& sym) {
-    if (ctx.global_symbol.count(name)) {
-        const auto& info = ctx.global_symbol.at(name);
-        report(n, "\"" + name +
-            "\" conflicts, another declaration is in \"" +
-            info.loc_file + "\"."
-        );
-        return;
-    }
-    ctx.global_symbol.insert({name, sym});
-}
-
-void semantic::resolve_single_use(use_stmt* node) {
-    if (node->get_module_path().empty()) {
-        report(node, "must import at least one symbol from this module.");
-        return;
-    }
-    auto mp = std::string("");
-    for(auto i : node->get_module_path()) {
-        mp += i->get_name();
-        if (i!=node->get_module_path().back()) {
-            mp += "::";
-        }
-    }
-
-    const auto& file = package_manager::singleton()->get_file_name(mp);
-    if (file.empty()) {
-        report(node, "cannot find module \"" + mp + "\".");
-        return;
-    }
-
-    auto pkgman = package_manager::singleton();
-    if (pkgman->get_analyse_status(file)==package_manager::status::analysing) {
-        report(node, "module \"" + mp +
-            "\" is not totally analysed, maybe encounter circular import."
-        );
-        return;
-    }
-    if (pkgman->get_analyse_status(file)==package_manager::status::not_used) {
-        pkgman->set_analyse_status(file, package_manager::status::analysing);
-        lexer lex(err);
-        parse par(err);
-        semantic sema(err);
-        mir::ast2mir ast2mir(err, sema.get_context());
-        if (lex.scan(file).geterr()) {
-            pkgman->set_analyse_status(file, package_manager::status::analysed);
-            return;
-        }
-        if (par.analyse(lex.result()).geterr()) {
-            pkgman->set_analyse_status(file, package_manager::status::analysed);
-            return;
-        }
-        if (sema.analyse(par.get_result()).geterr()) {
-            pkgman->set_analyse_status(file, package_manager::status::analysed);
-            return;
-        }
-        pkgman->set_analyse_status(file, package_manager::status::analysed);
-        // generate mir
-        if (ast2mir.generate(par.get_result()).geterr()) {
-            report(node,
-                "error ocurred when generating mir for module \"" + mp + "\"."
-            );
-            return;
-        }
-    }
-
-    if (!ctx.global.domain.count(file)) {
-        return;
-    }
-
-    const auto& domain = ctx.global.domain.at(file);
-    if (node->get_import_symbol().empty()) {
-        for(const auto& i : domain.structs) {
-            import_global_symbol(node, i.second.name,
-                {sym_kind::struct_kind, file, i.second.is_public}
-            );
-        }
-        for(const auto& i : domain.functions) {
-            import_global_symbol(node, i.second.name,
-                {sym_kind::func_kind, file, i.second.is_public}
-            );
-        }
-        for(const auto& i : domain.enums) {
-            import_global_symbol(node, i.second.name,
-                {sym_kind::enum_kind, file, i.second.is_public}
-            );
-        }
-        return;
-    }
-    // specified import
-    for(auto i : node->get_import_symbol()) {
-        if (domain.structs.count(i->get_name())) {
-            import_global_symbol(i, i->get_name(),
-                {sym_kind::struct_kind, file, check_is_public_struct(i, domain)}
-            );
-            continue;
-        }
-        if (domain.functions.count(i->get_name())) {
-            import_global_symbol(i, i->get_name(),
-                {sym_kind::func_kind, file, check_is_public_func(i, domain)}
-            );
-            continue;
-        }
-        if (domain.enums.count(i->get_name())) {
-            import_global_symbol(i, i->get_name(),
-                {sym_kind::enum_kind, file, check_is_public_enum(i, domain)}
-            );
-            continue;
-        }
-        report(i, "cannot find symbol \"" + i->get_name() +
-            "\" in module \"" + mp + "\"."
-        );
-    }
-}
-
-void semantic::resolve_use_stmt(root* node) {
-    for(auto i : node->get_use_stmts()) {
-        resolve_single_use(i);
-    }
-}
-
 const error& semantic::analyse(root* ast_root) {
-    ctx.this_file = ast_root->get_location().file;
+    ctx.this_file = ast_root->get_file();
     if (!ctx.global.domain.count(ctx.this_file)) {
         ctx.global.domain.insert({ctx.this_file, {}});
     }
 
-    regist_basic_types();
-
-    resolve_use_stmt(ast_root);
+    regist_pass(err, ctx).run(ast_root);
     if (err.geterr()) {
         return err;
     }
 
+    // TODO: move logic to regist pass
     // load enum first
-    ctx.global.domain.at(ctx.this_file).enums.clear();
     analyse_enums(ast_root);
 
-    ctx.global.domain.at(ctx.this_file).structs.clear();
     analyse_structs(ast_root);
     check_self_reference();
 
-    ctx.global.domain.at(ctx.this_file).functions.clear();
     analyse_functions(ast_root);
 
     analyse_impls(ast_root);

@@ -23,6 +23,7 @@ public:
     void dump(std::ostream&) const;
     const auto& get_name() const { return name; }
     const auto& get_location() const { return location; }
+    const auto& get_file() const { return location.file; }
 
     void add_field_type(const std::string& type) { field_type.push_back(type); }
     const auto& get_field_type() const { return field_type; }

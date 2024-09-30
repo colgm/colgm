@@ -54,7 +54,6 @@ private:
     colgm_func builtin_struct_alloc(const span&, const type&);
 
 private:
-    void regist_basic_types();
     void regist_struct(struct_decl*);
     void analyse_single_struct(struct_decl*);
     void analyse_structs(root*);
@@ -134,14 +133,6 @@ private:
     void resolve_method(func_decl*, const colgm_struct&);
     void resolve_impl(impl_struct*);
     void resolve_function_block(root*);
-
-private:
-    bool check_is_public_struct(identifier*, const colgm_module&);
-    bool check_is_public_func(identifier*, const colgm_module&);
-    bool check_is_public_enum(identifier*, const colgm_module&);
-    void import_global_symbol(node* n, const std::string&, const symbol_info&);
-    void resolve_single_use(use_stmt*);
-    void resolve_use_stmt(root*);
 
 public:
     semantic(error& e): err(e), impl_struct_name("") {}

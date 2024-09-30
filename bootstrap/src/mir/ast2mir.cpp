@@ -160,7 +160,7 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
     if (impl_struct_name.length()) {
         const auto tmp = type {
             .name = impl_struct_name,
-            .loc_file = node->get_location().file
+            .loc_file = node->get_file()
         };
         name = mangle(tmp.full_path_name()) + "." + name;
     }
@@ -168,7 +168,7 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
     if (impl_struct_name.empty() && !node->is_extern_func()) {
         const auto tmp = type {
             .name = name,
-            .loc_file = node->get_location().file
+            .loc_file = node->get_file()
         };
         name = mangle(tmp.full_path_name());
     }
@@ -607,7 +607,7 @@ bool ast2mir::visit_code_block(ast::code_block* node) {
 
 type ast2mir::generate_type(ast::type_def* node) {
     const auto& name = node->get_name()->get_name();
-    auto loc_file = node->get_location().file;
+    auto loc_file = node->get_file();
     if (ctx.global_symbol.count(name)) {
         loc_file = ctx.global_symbol.at(name).loc_file;
     }

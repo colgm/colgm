@@ -43,6 +43,7 @@ set(COLGM_PACKAGE
 set(COLGM_SEMA
     ${CMAKE_SOURCE_DIR}/src/sema/context.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/func.cpp
+    ${CMAKE_SOURCE_DIR}/src/sema/regist.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/semantic.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/struct.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/symbol.cpp)
