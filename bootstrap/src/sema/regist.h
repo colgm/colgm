@@ -9,7 +9,7 @@ namespace colgm {
 class regist_pass {
 private:
     error& err;
-    semantic_context& ctx;
+    sema_context& ctx;
 
 private:
     void report(ast::node* n, const std::string& info) {
@@ -31,7 +31,7 @@ private:
     void regist_single_enum(ast::enum_decl*);
 
 public:
-    regist_pass(error& e, semantic_context& c): err(e), ctx(c) {}
+    regist_pass(error& e, sema_context& c): err(e), ctx(c) {}
     void run(ast::root*);
 };
 

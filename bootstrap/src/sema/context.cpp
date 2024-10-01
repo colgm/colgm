@@ -2,7 +2,7 @@
 
 namespace colgm {
 
-bool semantic_context::find_symbol(const std::string& name) {
+bool sema_context::find_symbol(const std::string& name) {
     for(auto i = scope.rbegin(); i!=scope.rend(); ++i) {
         if (i->count(name)) {
             return true;
@@ -11,7 +11,7 @@ bool semantic_context::find_symbol(const std::string& name) {
     return false;
 }
 
-type semantic_context::get_symbol(const std::string& name) {
+type sema_context::get_symbol(const std::string& name) {
     for(auto i = scope.rbegin(); i!=scope.rend(); ++i) {
         if (i->count(name)) {
             return i->at(name);
@@ -20,18 +20,34 @@ type semantic_context::get_symbol(const std::string& name) {
     return type::error_type();
 }
 
-void semantic_context::add_symbol(const std::string& name, const type& t) {
+void sema_context::add_symbol(const std::string& name, const type& t) {
     scope.back().insert({name, t});
 }
 
-void semantic_context::dump_structs() const {
+void sema_context::dump_generics(const std::vector<std::string>& v) const {
+    if (v.empty()) {
+        return;
+    }
+    std::cout << "<";
+    for(const auto& i : v) {
+        std::cout << i;
+        if (i != v.back()) {
+            std::cout << ", ";
+        }
+    }
+    std::cout << ">";
+}
+
+void sema_context::dump_structs() const {
     for(const auto& domain : global.domain) {
         if (domain.second.structs.empty()) {
             continue;
         }
         std::cout << "info of " << domain.first << ":\n";
         for(const auto& i : domain.second.structs) {
-            std::cout << "  struct " << i.first << " {\n";
+            std::cout << "  struct " << i.first;
+            dump_generics(i.second.generic_template);
+            std::cout << " {\n";
             for(const auto& field : i.second.ordered_field) {
                 std::cout << "    " << field.name << ": " << field.symbol_type;
                 if (field.name!=i.second.ordered_field.back().name) {
@@ -52,7 +68,7 @@ void semantic_context::dump_structs() const {
     }
 }
 
-void semantic_context::dump_enums() const {
+void sema_context::dump_enums() const {
     for(const auto& domain : global.domain) {
         if (domain.second.enums.empty()) {
             continue;
@@ -69,7 +85,7 @@ void semantic_context::dump_enums() const {
     }
 }
 
-void semantic_context::dump_functions() const {
+void sema_context::dump_functions() const {
     for(const auto& domain : global.domain) {
         if (domain.second.functions.empty()) {
             continue;
@@ -81,9 +97,11 @@ void semantic_context::dump_functions() const {
     }
 }
 
-void semantic_context::dump_single_function(const colgm_func& func,
+void sema_context::dump_single_function(const colgm_func& func,
                                             const std::string& indent) const {
-    std::cout << indent << "  func " << func.name << "(";
+    std::cout << indent << "  func " << func.name;
+    dump_generics(func.generic_template);
+    std::cout << "(";
     for(const auto& param : func.parameters) {
         std::cout << param.name << ": " << param.symbol_type;
         if (param.name!=func.parameters.back().name) {

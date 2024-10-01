@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <cstring>
 #include <sstream>
+#include <vector>
 
 namespace colgm {
 
@@ -21,7 +22,7 @@ struct symbol_info {
     bool is_public = false;
 };
 
-struct semantic_context {
+struct sema_context {
     static inline global_symbol_table global;
 
     // store the file name this context belongs to
@@ -42,6 +43,8 @@ struct semantic_context {
     void push_new_level() { scope.push_back({}); }
     void pop_new_level() { scope.pop_back(); }
 
+public:
+    void dump_generics(const std::vector<std::string>&) const;
     void dump_structs() const;
     void dump_enums() const;
     void dump_functions() const;

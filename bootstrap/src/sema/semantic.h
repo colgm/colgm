@@ -23,7 +23,7 @@ using namespace ast;
 class semantic {
 private:
     error& err;
-    semantic_context ctx;
+    sema_context ctx;
     i64 in_loop_level = 0;
     std::string impl_struct_name;
 

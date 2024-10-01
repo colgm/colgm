@@ -130,7 +130,7 @@ public:
 
 class mir2sir: public visitor {
 private:
-    const semantic_context& ctx;
+    const sema_context& ctx;
     std::unordered_map<std::string, sym_kind> type_mapper;
 
 private:
@@ -215,7 +215,7 @@ private:
     void visit_mir_return(mir_return*) override;
 
 public:
-    mir2sir(const semantic_context& c):
+    mir2sir(const sema_context& c):
         ctx(c), block(nullptr) {}
     const error& generate(const mir_context&);
     auto& get_mutable_sir_context() { return ictx; }

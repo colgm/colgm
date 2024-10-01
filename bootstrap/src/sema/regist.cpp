@@ -74,6 +74,9 @@ bool regist_pass::check_is_specified_enum_member(ast::number_literal* node) {
         return false;
     }
     f64 num = str_to_num(num_str.c_str());
+    if (std::isinf(num) || std::isnan(num)) {
+        return false;
+    }
     if (num - std::floor(num) != 0) {
         return false;
     }

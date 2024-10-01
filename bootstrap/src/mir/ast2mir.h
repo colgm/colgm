@@ -52,7 +52,7 @@ struct mir_context {
 class ast2mir: public ast::visitor {
 private:
     error& err;
-    const semantic_context& ctx;
+    const sema_context& ctx;
 
 private:
     static inline mir_context mctx;
@@ -97,7 +97,7 @@ private:
     type generate_type(ast::type_def*);
 
 public:
-    ast2mir(error& e, const semantic_context& c): err(e), ctx(c) {}
+    ast2mir(error& e, const sema_context& c): err(e), ctx(c) {}
 
 public:
     static void dump(std::ostream&);
