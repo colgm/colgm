@@ -67,6 +67,19 @@ void regist_pass::import_global_symbol(ast::node* n,
     ctx.global_symbol.insert({name, sym});
 }
 
+bool regist_pass::check_is_specified_enum_member(ast::number_literal* node) {
+    const auto& num_str = node->get_number();
+    if (num_str.find('.') != std::string::npos ||
+        num_str.find('e') != std::string::npos) {
+        return false;
+    }
+    f64 num = str_to_num(num_str.c_str());
+    if (num - std::floor(num) != 0) {
+        return false;
+    }
+    return true;
+}
+
 void regist_pass::regist_basic_types() {
     ctx.global_symbol = {
         {"i64", {sym_kind::basic_kind, "", true}},
@@ -193,6 +206,76 @@ void regist_pass::regist_imported_types(ast::root* node) {
     }
 }
 
+void regist_pass::regist_enums(ast::root* node) {
+    for(auto i : node->get_decls()) {
+        if (i->get_ast_type()!=ast_type::ast_enum_decl) {
+            continue;
+        }
+        auto enum_decl_node = reinterpret_cast<ast::enum_decl*>(i);
+        regist_single_enum(enum_decl_node);
+    }
+}
+
+void regist_pass::regist_single_enum(ast::enum_decl* node) {
+    const auto& name = node->get_name()->get_name();
+    if (ctx.global_symbol.count(name)) {
+        report(node, "\"" + name + "\" conflicts with exist symbol.");
+        return;
+    }
+    if (ctx.global.domain.at(ctx.this_file).enums.count(name)) {
+        report(node, "enum \"" + name + "\" conflicts with exist symbol.");
+        return;
+    }
+    ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
+    ctx.global_symbol.insert({name, {sym_kind::enum_kind, ctx.this_file, true}});
+
+    auto& self = ctx.global.domain.at(ctx.this_file).enums.at(name);
+    self.name = name;
+    self.location = node->get_location();
+    if (node->is_public_enum()) {
+        self.is_public = true;
+    }
+
+    // with specified member with number or not
+    bool has_specified_member = false;
+    bool has_non_specified_member = false;
+    for(const auto& i : node->get_member()) {
+        if (!i.value) {
+            has_non_specified_member = true;
+        } else {
+            has_specified_member = true;
+        }
+    }
+    if (has_specified_member && has_non_specified_member) {
+        report(node, "enum members cannot be both specified and non-specified with number.");
+        return;
+    }
+
+    for(const auto& i : node->get_member()) {
+        if (!i.value) {
+            continue;
+        }
+        if (!check_is_specified_enum_member(i.value)) {
+            report(i.value, "enum member cannot be specified with float number.");
+            return;
+        }
+    }
+
+    for(const auto& i : node->get_member()) {
+        if (self.members.count(i.name->get_name())) {
+            report(i.name, "enum member already exists");
+            continue;
+        }
+        const auto& member_name = i.name->get_name();
+        if (i.value) {
+            self.members[member_name] = (usize)str_to_num(i.value->get_number().c_str());
+        } else {
+            self.members[member_name] = self.ordered_member.size();
+        }
+        self.ordered_member.push_back(member_name);
+    }
+}
+
 void regist_pass::run(ast::root* ast_root) {
     regist_basic_types();
     regist_imported_types(ast_root);
@@ -203,6 +286,8 @@ void regist_pass::run(ast::root* ast_root) {
     ctx.global.domain.at(ctx.this_file).enums.clear();
     ctx.global.domain.at(ctx.this_file).structs.clear();
     ctx.global.domain.at(ctx.this_file).functions.clear();
+
+    regist_enums(ast_root);
 }
 
 }

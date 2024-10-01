@@ -4,6 +4,7 @@
 #include "sema/symbol.h"
 #include "sema/func.h"
 #include "sema/struct.h"
+#include "sema/enum.h"
 
 #include <cstring>
 #include <sstream>

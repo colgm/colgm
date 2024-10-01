@@ -58,9 +58,6 @@ private:
     void analyse_single_struct(struct_decl*);
     void analyse_structs(root*);
     void check_self_reference();
-    void regist_enum(enum_decl*);
-    void analyse_single_enum(enum_decl*);
-    void analyse_enums(root*);
     void analyse_parameter(param*, colgm_func&);
     void analyse_method_parameter_list(param_list*,
                                        colgm_func&,

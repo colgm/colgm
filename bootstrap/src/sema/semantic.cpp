@@ -240,94 +240,6 @@ void semantic::check_self_reference() {
     }
 }
 
-void semantic::regist_enum(enum_decl* node) {
-    const auto& name = node->get_name()->get_name();
-    if (ctx.global_symbol.count(name)) {
-        report(node, "\"" + name + "\" conflicts with exist symbol.");
-        return;
-    }
-    if (ctx.global.domain.at(ctx.this_file).enums.count(name)) {
-        report(node, "enum \"" + name + "\" conflicts with exist symbol.");
-        return;
-    }
-    ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
-    ctx.global_symbol.insert({name, {sym_kind::enum_kind, ctx.this_file, true}});
-
-    auto& self = ctx.global.domain.at(ctx.this_file).enums.at(name);
-    if (node->is_public_enum()) {
-        self.is_public = true;
-    }
-}
-
-void semantic::analyse_single_enum(enum_decl* node) {
-    const auto& name = node->get_name()->get_name();
-    if (!ctx.global.domain.at(ctx.this_file).enums.count(name)) {
-        return;
-    }
-
-    // initialize enum info
-    auto& this_domain = ctx.global.domain.at(ctx.this_file);
-    auto& enum_self = this_domain.enums.at(name);
-    enum_self.name = name;
-    enum_self.location = node->get_location();
-
-    // with specified member with number or not
-    bool has_specified_member = false;
-    bool has_non_specified_member = false;
-    for(const auto& i : node->get_member()) {
-        if (!i.value) {
-            has_non_specified_member = true;
-        } else {
-            has_specified_member = true;
-        }
-    }
-    if (has_specified_member && has_non_specified_member) {
-        report(node, "enum members cannot be both specified and non-specified with number.");
-        return;
-    }
-
-    for(const auto& i : node->get_member()) {
-        if (!i.value) {
-            continue;
-        }
-        if (!resolve_number_literal(i.value).is_integer()) {
-            report(i.value, "enum member cannot be specified with float number.");
-            return;
-        }
-    }
-
-    for(const auto& i : node->get_member()) {
-        if (enum_self.members.count(i.name->get_name())) {
-            report(i.name, "enum member already exists");
-            continue;
-        }
-        const auto& member_name = i.name->get_name();
-        if (i.value) {
-            enum_self.members[member_name] = (usize)str_to_num(i.value->get_number().c_str());
-        } else {
-            enum_self.members[member_name] = enum_self.ordered_member.size();
-        }
-        enum_self.ordered_member.push_back(member_name);
-    }
-}
-
-void semantic::analyse_enums(root* ast_root) {
-    for(auto i : ast_root->get_decls()) {
-        if (i->get_ast_type()!=ast_type::ast_enum_decl) {
-            continue;
-        }
-        auto enum_decl_node = reinterpret_cast<enum_decl*>(i);
-        regist_enum(enum_decl_node);
-    }
-    for(auto i : ast_root->get_decls()) {
-        if (i->get_ast_type()!=ast_type::ast_enum_decl) {
-            continue;
-        }
-        auto enum_decl_node = reinterpret_cast<enum_decl*>(i);
-        analyse_single_enum(enum_decl_node);
-    }
-}
-
 void semantic::analyse_parameter(param* node, colgm_func& func_self) {
     const auto& name = node->get_name()->get_name();
     if (func_self.find_parameter(name)) {
@@ -1837,8 +1749,6 @@ const error& semantic::analyse(root* ast_root) {
     }
 
     // TODO: move logic to regist pass
-    // load enum first
-    analyse_enums(ast_root);
 
     analyse_structs(ast_root);
     check_self_reference();

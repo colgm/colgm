@@ -21,11 +21,14 @@ private:
     bool check_is_public_func(ast::identifier*, const colgm_module&);
     bool check_is_public_enum(ast::identifier*, const colgm_module&);
     void import_global_symbol(ast::node*, const std::string&, const symbol_info&);
+    bool check_is_specified_enum_member(ast::number_literal*);
 
 private:
     void regist_basic_types();
     void regist_single_import(ast::use_stmt*);
     void regist_imported_types(ast::root*);
+    void regist_enums(ast::root*);
+    void regist_single_enum(ast::enum_decl*);
 
 public:
     regist_pass(error& e, semantic_context& c): err(e), ctx(c) {}
