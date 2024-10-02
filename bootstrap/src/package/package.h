@@ -19,6 +19,8 @@ struct colgm_module {
     std::unordered_map<std::string, colgm_enum> enums;
     std::unordered_map<std::string, colgm_struct> structs;
     std::unordered_map<std::string, colgm_func> functions;
+    std::unordered_map<std::string, colgm_struct> generic_structs;
+    std::unordered_map<std::string, colgm_func> generic_functions;
 };
 
 struct colgm_package {

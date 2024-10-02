@@ -50,14 +50,6 @@ private:
     void report_top_level_block_has_no_return(code_block*, const colgm_func&);
 
 private:
-    colgm_func builtin_struct_size(const span&);
-    colgm_func builtin_struct_alloc(const span&, const type&);
-
-private:
-    void regist_struct(struct_decl*);
-    void analyse_single_struct(struct_decl*);
-    void analyse_structs(root*);
-    void check_self_reference();
     void analyse_parameter(param*, colgm_func&);
     void analyse_method_parameter_list(param_list*,
                                        colgm_func&,
