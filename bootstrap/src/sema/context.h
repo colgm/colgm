@@ -46,6 +46,7 @@ struct sema_context {
 public:
     void dump_generics(const std::vector<std::string>&) const;
     void dump_structs() const;
+    void dump_single_struct(const colgm_struct&) const;
     void dump_enums() const;
     void dump_functions() const;
     void dump_single_function(const colgm_func&,

@@ -498,7 +498,6 @@ void regist_pass::run(ast::root* ast_root) {
 
     regist_enums(ast_root);
     regist_structs(ast_root);
-    // regist_funcs(ast_root);
     if (err.geterr()) {
         return;
     }

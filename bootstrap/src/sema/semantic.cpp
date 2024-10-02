@@ -145,17 +145,27 @@ void semantic::regist_function(func_decl* node) {
         report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
-    if (ctx.global.domain.at(ctx.this_file).functions.count(name)) {
+    auto& this_domain = ctx.global.domain.at(ctx.this_file);
+    if (this_domain.functions.count(name)) {
         report(node, "function \"" + name + "\" conflicts with exist symbol.");
         return;
     }
     ctx.global_symbol.insert({name, {sym_kind::func_kind, ctx.this_file, true}});
-    ctx.global.domain.at(ctx.this_file).functions.insert({
-        name,
-        analyse_single_func(node)
-    });
+    if (node->get_generic_types()) {
+        this_domain.generic_functions.insert({
+            name,
+            analyse_single_func(node)
+        });
+    } else {
+        this_domain.functions.insert({
+            name,
+            analyse_single_func(node)
+        });
+    }
 
-    auto& self = ctx.global.domain.at(ctx.this_file).functions.at(name);
+    auto& self = this_domain.functions.count(name)
+        ? this_domain.functions.at(name)
+        : this_domain.generic_functions.at(name);
     if (node->is_public_func()) {
         self.is_public = true;
     }
@@ -185,7 +195,6 @@ void semantic::regist_function(func_decl* node) {
 }
 
 void semantic::analyse_functions(root* ast_root) {
-    auto& domain = ctx.global.domain.at(ctx.this_file);
     for(auto i : ast_root->get_decls()) {
         if (i->get_ast_type()!=ast_type::ast_func_decl) {
             continue;
@@ -197,11 +206,14 @@ void semantic::analyse_functions(root* ast_root) {
 
 void semantic::analyse_single_impl(impl_struct* node) {
     auto& dm = ctx.global.domain.at(ctx.this_file);
-    if (!dm.structs.count(node->get_struct_name())) {
+    if (!dm.structs.count(node->get_struct_name()) &&
+        !dm.generic_structs.count(node->get_struct_name())) {
         report(node, "undefined struct \"" + node->get_struct_name() + "\".");
         return;
     }
-    auto& stct = dm.structs.at(node->get_struct_name());
+    auto& stct = dm.structs.count(node->get_struct_name())
+        ? dm.structs.at(node->get_struct_name())
+        : dm.generic_structs.at(node->get_struct_name());
     if (node->get_generic_types()) {
         if (node->get_generic_types()->get_types().empty()) {
             report(node, "generic impl must have at least one generic type.");

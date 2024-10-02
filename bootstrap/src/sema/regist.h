@@ -37,8 +37,6 @@ private:
     void regist_single_struct_symbol(ast::struct_decl*);
     void regist_single_struct_field(ast::struct_decl*);
     void check_struct_self_reference();
-    void regist_funcs(ast::root*);
-    void regist_single_func(ast::func_decl*);
 
 public:
     regist_pass(error& e, sema_context& c): err(e), ctx(c) {}
