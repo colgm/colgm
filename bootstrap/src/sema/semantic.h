@@ -10,6 +10,8 @@
 #include "sema/struct.h"
 #include "package/package.h"
 #include "sema/context.h"
+#include "sema/reporter.h"
+#include "sema/resolver.h"
 
 #include <unordered_map>
 #include <cstring>
@@ -24,28 +26,12 @@ class semantic {
 private:
     error& err;
     sema_context ctx;
+    reporter rp;
+    resolver rs;
     i64 in_loop_level = 0;
     std::string impl_struct_name;
 
 private:
-    void report(node* n, const std::string& info) {
-        err.err("semantic", n->get_location(), info);
-    }
-    void warning(node* n, const std::string& info) {
-        err.warn("semantic", n->get_location(), info);
-    }
-    void unimplemented(node* n) {
-        err.err("semantic",
-            n->get_location(),
-            "unimplemented, please report a bug."
-        );
-    }
-    void unreachable(node* n) {
-        err.err("semantic",
-            n->get_location(),
-            "unreachable, please report a bug."
-        );
-    }
     void report_unreachable_statements(code_block*);
     void report_top_level_block_has_no_return(code_block*, const colgm_func&);
 
@@ -105,7 +91,6 @@ private:
     void check_mutable_left_value(expr*, const type&);
     type resolve_assignment(assignment*);
     type resolve_expression(expr*);
-    type resolve_type_def(type_def*);
     void resolve_definition(definition*, const colgm_func&);
     void check_defined_variable_is_void(definition*, const type&);
     void resolve_if_stmt(if_stmt*, const colgm_func&);
@@ -124,7 +109,9 @@ private:
     void resolve_function_block(root*);
 
 public:
-    semantic(error& e): err(e), impl_struct_name("") {}
+    semantic(error& e):
+        err(e), ctx(), rp(err), rs(err, ctx),
+        impl_struct_name("") {}
     const error& analyse(root*);
     void dump();
     const auto& get_context() const { return ctx; }

@@ -2,6 +2,7 @@
 
 #include "report.h"
 #include "sema/context.h"
+#include "sema/reporter.h"
 #include "ast/ast.h"
 
 namespace colgm {
@@ -10,11 +11,7 @@ class regist_pass {
 private:
     error& err;
     sema_context& ctx;
-
-private:
-    void report(ast::node* n, const std::string& info) {
-        err.err("semantic", n->get_location(), info);
-    }
+    reporter rp;
 
 private:
     bool check_is_public_struct(ast::identifier*, const colgm_module&);
@@ -39,7 +36,7 @@ private:
     void check_struct_self_reference();
 
 public:
-    regist_pass(error& e, sema_context& c): err(e), ctx(c) {}
+    regist_pass(error& e, sema_context& c): err(e), ctx(c), rp(e) {}
     void run(ast::root*);
 };
 

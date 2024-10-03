@@ -19,7 +19,7 @@ bool regist_pass::check_is_public_struct(ast::identifier* node,
         return false;
     }
     if (!domain.structs.at(node->get_name()).is_public) {
-        report(node,
+        rp.report(node,
             "cannot import private struct \"" +
             node->get_name() + "\"."
         );
@@ -34,7 +34,7 @@ bool regist_pass::check_is_public_func(ast::identifier* node,
         return false;
     }
     if (!domain.functions.at(node->get_name()).is_public) {
-        report(node,
+        rp.report(node,
             "cannot import private function \"" +
             node->get_name() + "\"."
         );
@@ -49,7 +49,7 @@ bool regist_pass::check_is_public_enum(ast::identifier* node,
         return false;
     }
     if (!domain.enums.at(node->get_name()).is_public) {
-        report(node,
+        rp.report(node,
             "cannot import private enum \"" +
             node->get_name() + "\"."
         );
@@ -63,7 +63,7 @@ void regist_pass::import_global_symbol(ast::node* n,
                                        const symbol_info& sym) {
     if (ctx.global_symbol.count(name)) {
         const auto& info = ctx.global_symbol.at(name);
-        report(n, "\"" + name +
+        rp.report(n, "\"" + name +
             "\" conflicts, another declaration is in \"" +
             info.loc_file + "\"."
         );
@@ -125,7 +125,7 @@ void regist_pass::regist_basic_types() {
 
 void regist_pass::regist_single_import(ast::use_stmt* node) {
     if (node->get_module_path().empty()) {
-        report(node, "must import at least one symbol from this module.");
+        rp.report(node, "must import at least one symbol from this module.");
         return;
     }
     auto mp = std::string("");
@@ -138,13 +138,13 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
 
     const auto& file = package_manager::singleton()->get_file_name(mp);
     if (file.empty()) {
-        report(node, "cannot find module \"" + mp + "\".");
+        rp.report(node, "cannot find module \"" + mp + "\".");
         return;
     }
 
     auto pkgman = package_manager::singleton();
     if (pkgman->get_analyse_status(file)==package_manager::status::analysing) {
-        report(node, "module \"" + mp +
+        rp.report(node, "module \"" + mp +
             "\" is not totally analysed, maybe encounter circular import."
         );
         return;
@@ -170,7 +170,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
         pkgman->set_analyse_status(file, package_manager::status::analysed);
         // generate mir
         if (ast2mir.generate(par.get_result()).geterr()) {
-            report(node,
+            rp.report(node,
                 "error ocurred when generating mir for module \"" + mp + "\"."
             );
             return;
@@ -220,7 +220,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
             );
             continue;
         }
-        report(i, "cannot find symbol \"" + i->get_name() +
+        rp.report(i, "cannot find symbol \"" + i->get_name() +
             "\" in module \"" + mp + "\"."
         );
     }
@@ -245,11 +245,11 @@ void regist_pass::regist_enums(ast::root* node) {
 void regist_pass::regist_single_enum(ast::enum_decl* node) {
     const auto& name = node->get_name()->get_name();
     if (ctx.global_symbol.count(name)) {
-        report(node, "\"" + name + "\" conflicts with exist symbol.");
+        rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
     if (ctx.global.domain.at(ctx.this_file).enums.count(name)) {
-        report(node, "enum \"" + name + "\" conflicts with exist symbol.");
+        rp.report(node, "enum \"" + name + "\" conflicts with exist symbol.");
         return;
     }
     ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
@@ -273,7 +273,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
         }
     }
     if (has_specified_member && has_non_specified_member) {
-        report(node, "enum members cannot be both specified and non-specified with number.");
+        rp.report(node, "enum members cannot be both specified and non-specified with number.");
         return;
     }
 
@@ -282,14 +282,14 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
             continue;
         }
         if (!check_is_specified_enum_member(i.value)) {
-            report(i.value, "enum member cannot be specified with float number.");
+            rp.report(i.value, "enum member cannot be specified with float number.");
             return;
         }
     }
 
     for(const auto& i : node->get_member()) {
         if (self.members.count(i.name->get_name())) {
-            report(i.name, "enum member already exists");
+            rp.report(i.name, "enum member already exists");
             continue;
         }
         const auto& member_name = i.name->get_name();
@@ -326,14 +326,14 @@ void regist_pass::regist_structs(ast::root* node) {
 void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol.count(name)) {
-        report(node, "\"" + name + "\" conflicts with exist symbol.");
+        rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
 
     auto& this_domain = ctx.global.domain.at(ctx.this_file);
     if (this_domain.structs.count(name) ||
         this_domain.generic_structs.count(name)) {
-        report(node, "struct \"" + name + "\" conflicts with exist symbol.");
+        rp.report(node, "struct \"" + name + "\" conflicts with exist symbol.");
     }
 
     // insert to global symbol table and domain
@@ -357,7 +357,7 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
     }
     if (node->get_generic_types()) {
         if (node->get_generic_types()->get_types().empty()) {
-            report(node, "generic struct \"" + name +
+            rp.report(node, "generic struct \"" + name +
                 "\" must have at least one generic type."
             );
         }
@@ -365,7 +365,7 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
         for(auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
             if (used_generic.count(generic_name)) {
-                report(i, "generic type \"" + generic_name +
+                rp.report(i, "generic type \"" + generic_name +
                     "\" conflicts with exist generic type."
                 );
             }
@@ -403,7 +403,7 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
         const auto& basic_type_name = type_name_node->get_name();
         if (!ctx.global_symbol.count(basic_type_name) &&
             !ctx.generics.count(basic_type_name)) {
-            report(type_name_node,
+            rp.report(type_name_node,
                 "undefined type \"" + basic_type_name + "\"."
             );
             continue;
@@ -419,7 +419,7 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
             }
         };
         if (self.field.count(i->get_name()->get_name())) {
-            report(i, "field name already exists");
+            rp.report(i, "field name already exists");
         }
         self.field.insert({i->get_name()->get_name(), field_type});
         self.ordered_field.push_back(field_type);

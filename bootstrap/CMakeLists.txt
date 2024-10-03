@@ -44,6 +44,8 @@ set(COLGM_SEMA
     ${CMAKE_SOURCE_DIR}/src/sema/context.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/func.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/regist.cpp
+    ${CMAKE_SOURCE_DIR}/src/sema/reporter.cpp
+    ${CMAKE_SOURCE_DIR}/src/sema/resolver.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/semantic.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/struct.cpp
     ${CMAKE_SOURCE_DIR}/src/sema/symbol.cpp)
