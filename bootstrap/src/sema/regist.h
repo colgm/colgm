@@ -3,6 +3,7 @@
 #include "report.h"
 #include "sema/context.h"
 #include "sema/reporter.h"
+#include "sema/resolver.h"
 #include "ast/ast.h"
 
 namespace colgm {
@@ -12,6 +13,7 @@ private:
     error& err;
     sema_context& ctx;
     reporter rp;
+    resolver rs;
 
 private:
     bool check_is_public_struct(ast::identifier*, const colgm_module&);
@@ -24,19 +26,36 @@ private:
     colgm_func builtin_struct_size(const span&);
     colgm_func builtin_struct_alloc(const span&, const type&);
 
-private:
+private: // basic types
+    // basic types, now support:
+    // bool, i8, i16, i32, i64, u8, u16, u32, u64, f32, f64, void
     void regist_basic_types();
+
+private: // import symbols
     void regist_single_import(ast::use_stmt*);
     void regist_imported_types(ast::root*);
+
+private: // enums
     void regist_enums(ast::root*);
     void regist_single_enum(ast::enum_decl*);
+
+private: // structs
     void regist_structs(ast::root*);
     void regist_single_struct_symbol(ast::struct_decl*);
     void regist_single_struct_field(ast::struct_decl*);
     void check_struct_self_reference();
 
+private: // global functions
+    void regist_global_funcs(ast::root*);
+    void regist_single_global_func(ast::func_decl*);
+    colgm_func generate_single_global_func(ast::func_decl*);
+    void generate_parameter_list(ast::param_list*, colgm_func&);
+    void generate_parameter(ast::param*, colgm_func&);
+    void generate_return_type(ast::type_def*, colgm_func&);
+
 public:
-    regist_pass(error& e, sema_context& c): err(e), ctx(c), rp(e) {}
+    regist_pass(error& e, sema_context& c):
+        err(e), ctx(c), rp(e), rs(err, ctx) {}
     void run(ast::root*);
 };
 

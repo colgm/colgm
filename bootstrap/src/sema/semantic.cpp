@@ -49,10 +49,14 @@ void semantic::report_top_level_block_has_no_return(code_block* node,
     if (flag_has_return) {
         return;
     }
+
+    // if return type is void and without return statement, just add one
     if (func.return_type.is_void()) {
         node->add_stmt(new ret_stmt(node->get_location()));
         return;
     }
+
+    // report
     rp.report(node, "expect at least one return statement.");
 }
 
@@ -107,12 +111,6 @@ void semantic::analyse_method_parameter_list(param_list* node,
     }
 }
 
-void semantic::analyse_func_parameter_list(param_list* node, colgm_func& func_self) {
-    for(auto i : node->get_params()) {
-        analyse_parameter(i, func_self);
-    }
-}
-
 void semantic::analyse_return_type(type_def* node, colgm_func& func_self) {
     func_self.return_type = rs.resolve_type_def(node);
 }
@@ -125,83 +123,6 @@ colgm_func semantic::analyse_single_method(func_decl* node,
     analyse_method_parameter_list(node->get_params(), func_self, stct);
     analyse_return_type(node->get_return_type(), func_self);
     return func_self;
-}
-
-colgm_func semantic::analyse_single_func(func_decl* node) {
-    auto func_self = colgm_func();
-    func_self.name = node->get_name();
-    func_self.location = node->get_location();
-    analyse_func_parameter_list(node->get_params(), func_self);
-    analyse_return_type(node->get_return_type(), func_self);
-    if (node->get_name()=="main" && func_self.return_type.is_void()) {
-        rp.warning(node, "main function should return integer.");
-    }
-    return func_self;
-}
-
-void semantic::regist_function(func_decl* node) {
-    const auto& name = node->get_name();
-    if (ctx.global_symbol.count(name)) {
-        rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
-        return;
-    }
-    auto& this_domain = ctx.global.domain.at(ctx.this_file);
-    if (this_domain.functions.count(name)) {
-        rp.report(node, "function \"" + name + "\" conflicts with exist symbol.");
-        return;
-    }
-    ctx.global_symbol.insert({name, {sym_kind::func_kind, ctx.this_file, true}});
-    if (node->get_generic_types()) {
-        this_domain.generic_functions.insert({
-            name,
-            analyse_single_func(node)
-        });
-    } else {
-        this_domain.functions.insert({
-            name,
-            analyse_single_func(node)
-        });
-    }
-
-    auto& self = this_domain.functions.count(name)
-        ? this_domain.functions.at(name)
-        : this_domain.generic_functions.at(name);
-    if (node->is_public_func()) {
-        self.is_public = true;
-    }
-    if (node->is_extern_func()) {
-        self.is_extern = true;
-    }
-    if (node->get_generic_types()) {
-        if (node->get_generic_types()->get_types().empty()) {
-            rp.report(node, "generic function \"" + name +
-                "\" must have at least one generic type."
-            );
-        }
-        std::unordered_set<std::string> used_generic;
-        for(auto i : node->get_generic_types()->get_types()) {
-            const auto& generic_name = i->get_name()->get_name();
-            if (used_generic.count(generic_name)) {
-                rp.report(i, "generic type \"" + generic_name +
-                    "\" conflicts with exist generic type."
-                );
-            }
-            used_generic.insert(generic_name);
-            self.generic_template.push_back(i->get_name()->get_name());
-        }
-        // copy the node for template expansion
-        self.generic_func_decl = node->clone();
-    }
-}
-
-void semantic::analyse_functions(root* ast_root) {
-    for(auto i : ast_root->get_decls()) {
-        if (i->get_ast_type()!=ast_type::ast_func_decl) {
-            continue;
-        }
-        auto func_decl_node = reinterpret_cast<func_decl*>(i);
-        regist_function(func_decl_node);
-    }
 }
 
 void semantic::analyse_single_impl(impl_struct* node) {
@@ -1550,9 +1471,6 @@ const error& semantic::analyse(root* ast_root) {
     }
 
     // TODO: move logic to regist pass
-
-    analyse_functions(ast_root);
-
     analyse_impls(ast_root);
 
     if (err.geterr()) {

@@ -40,12 +40,8 @@ private:
     void analyse_method_parameter_list(param_list*,
                                        colgm_func&,
                                        const colgm_struct&);
-    void analyse_func_parameter_list(param_list*, colgm_func&);
     void analyse_return_type(type_def*, colgm_func&);
     colgm_func analyse_single_method(func_decl*, const colgm_struct&);
-    colgm_func analyse_single_func(func_decl*);
-    void regist_function(func_decl*);
-    void analyse_functions(root*);
     void analyse_single_impl(impl_struct*);
     void analyse_impls(root*);
 

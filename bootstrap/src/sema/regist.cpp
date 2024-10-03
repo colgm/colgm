@@ -485,6 +485,104 @@ void regist_pass::check_struct_self_reference() {
     }
 }
 
+void regist_pass::regist_global_funcs(ast::root* node) {
+    for(auto i : node->get_decls()) {
+        if (i->get_ast_type() != ast_type::ast_func_decl) {
+            continue;
+        }
+        auto func_decl = static_cast<ast::func_decl*>(i);
+        regist_single_global_func(func_decl);
+    }
+}
+
+void regist_pass::regist_single_global_func(ast::func_decl* node) {
+    const auto& name = node->get_name();
+    if (ctx.global_symbol.count(name)) {
+        rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
+        return;
+    }
+    auto& this_domain = ctx.global.domain.at(ctx.this_file);
+    if (this_domain.functions.count(name)) {
+        rp.report(node, "function \"" + name + "\" conflicts with exist symbol.");
+        return;
+    }
+    ctx.global_symbol.insert({name, {sym_kind::func_kind, ctx.this_file, true}});
+    if (node->get_generic_types()) {
+        this_domain.generic_functions.insert({
+            name,
+            generate_single_global_func(node)
+        });
+    } else {
+        this_domain.functions.insert({
+            name,
+            generate_single_global_func(node)
+        });
+    }
+
+    auto& self = this_domain.functions.count(name)
+        ? this_domain.functions.at(name)
+        : this_domain.generic_functions.at(name);
+    if (node->is_public_func()) {
+        self.is_public = true;
+    }
+    if (node->is_extern_func()) {
+        self.is_extern = true;
+    }
+    if (node->get_generic_types()) {
+        if (node->get_generic_types()->get_types().empty()) {
+            rp.report(node, "generic function \"" + name +
+                "\" must have at least one generic type."
+            );
+        }
+        std::unordered_set<std::string> used_generic;
+        for(auto i : node->get_generic_types()->get_types()) {
+            const auto& generic_name = i->get_name()->get_name();
+            if (used_generic.count(generic_name)) {
+                rp.report(i, "generic type \"" + generic_name +
+                    "\" conflicts with exist generic type."
+                );
+            }
+            used_generic.insert(generic_name);
+            self.generic_template.push_back(i->get_name()->get_name());
+        }
+        // copy the node for template expansion
+        self.generic_func_decl = node->clone();
+    }
+}
+
+colgm_func regist_pass::generate_single_global_func(func_decl* node) {
+    auto func_self = colgm_func();
+    func_self.name = node->get_name();
+    func_self.location = node->get_location();
+    generate_parameter_list(node->get_params(), func_self);
+    generate_return_type(node->get_return_type(), func_self);
+    if (node->get_name()=="main" && func_self.return_type.is_void()) {
+        rp.warning(node, "main function should return integer.");
+    }
+    return func_self;
+}
+
+void regist_pass::generate_parameter_list(param_list* node, colgm_func& self) {
+    for(auto i : node->get_params()) {
+        generate_parameter(i, self);
+    }
+}
+
+void regist_pass::generate_parameter(param* node, colgm_func& self) {
+    const auto& name = node->get_name()->get_name();
+    if (self.find_parameter(name)) {
+        rp.report(node->get_name(),
+            "redefinition of parameter \"" + name + "\"."
+        );
+        return;
+    }
+    self.add_parameter(name, rs.resolve_type_def(node->get_type()));
+}
+
+void regist_pass::generate_return_type(type_def* node, colgm_func& self) {
+    self.return_type = rs.resolve_type_def(node);
+}
+
 void regist_pass::run(ast::root* ast_root) {
     regist_basic_types();
     regist_imported_types(ast_root);
@@ -498,6 +596,7 @@ void regist_pass::run(ast::root* ast_root) {
 
     regist_enums(ast_root);
     regist_structs(ast_root);
+    regist_global_funcs(ast_root);
     if (err.geterr()) {
         return;
     }
