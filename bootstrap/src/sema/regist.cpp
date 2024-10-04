@@ -17,7 +17,18 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     if (!node->get_generic_types()) {
         return true;
     }
-    std::cerr << node->get_id()->get_name() << "<";
+    const auto& type_name = node->get_id()->get_name();
+    // FIXME: check
+    if (!ctx.global_symbol.count(type_name)) {
+        rp.report(node, "unknown type \"" + type_name + "\".");
+        return true;
+    }
+    if (!ctx.generics.count(type_name)) {
+        rp.report(node, "\"" + type_name + "\" is not a generic type.");
+        return true;
+    }
+
+    std::cerr << type_name << "<";
     for (auto i : node->get_generic_types()->get_types()) {
         std::cerr << i->get_name()->get_name();
         if (i != node->get_generic_types()->get_types().back()) {
@@ -649,6 +660,11 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
         if (stct.method.count(i->get_name())) {
             rp.report(i, "method \"" + i->get_name() + "\" already exists.");
             continue;
+        }
+
+        // generic methods are not allowed
+        if (i->get_generic_types()) {
+            rp.report(i, "method \"" + i->get_name() + "\" cannot be generic.");
         }
         auto func = generate_method(i, stct);
         if (i->is_public_func()) {

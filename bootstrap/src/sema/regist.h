@@ -11,9 +11,14 @@ namespace colgm {
 
 class generic_visitor: public ast::visitor {
 private:
+    sema_context& ctx;
+    reporter rp;
+
+private:
     bool visit_call_id(ast::call_id*) override;
 
 public:
+    generic_visitor(error& e, sema_context& c): ctx(c), rp(e) {}
     void visit(ast::root* n) { n->accept(this); }
 };
 
@@ -75,7 +80,7 @@ private: // implementations
 
 public:
     regist_pass(error& e, sema_context& c):
-        err(e), ctx(c), rp(e), rs(err, ctx) {}
+        err(e), ctx(c), rp(e), rs(err, ctx), gnv(err, ctx) {}
     void run(ast::root*);
 };
 
