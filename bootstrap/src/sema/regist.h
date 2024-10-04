@@ -5,8 +5,17 @@
 #include "sema/reporter.h"
 #include "sema/resolver.h"
 #include "ast/ast.h"
+#include "ast/visitor.h"
 
 namespace colgm {
+
+class generic_visitor: public ast::visitor {
+private:
+    bool visit_call_id(ast::call_id*) override;
+
+public:
+    void visit(ast::root* n) { n->accept(this); }
+};
 
 class regist_pass {
 private:
@@ -14,12 +23,15 @@ private:
     sema_context& ctx;
     reporter rp;
     resolver rs;
+    generic_visitor gnv;
 
 private:
     bool check_is_public_struct(ast::identifier*, const colgm_module&);
     bool check_is_public_func(ast::identifier*, const colgm_module&);
     bool check_is_public_enum(ast::identifier*, const colgm_module&);
-    void import_global_symbol(ast::node*, const std::string&, const symbol_info&);
+    void import_global_symbol(ast::node*,
+                              const std::string&,
+                              const symbol_info&);
     bool check_is_specified_enum_member(ast::number_literal*);
 
 private:
@@ -52,6 +64,14 @@ private: // global functions
     void generate_parameter_list(ast::param_list*, colgm_func&);
     void generate_parameter(ast::param*, colgm_func&);
     void generate_return_type(ast::type_def*, colgm_func&);
+
+private: // implementations
+    void regist_impls(ast::root*);
+    void regist_single_impl(ast::impl_struct*);
+    colgm_func generate_method(ast::func_decl*, const colgm_struct&);
+    void generate_method_parameter_list(ast::param_list*,
+                                        colgm_func&,
+                                        const colgm_struct&);
 
 public:
     regist_pass(error& e, sema_context& c):

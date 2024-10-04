@@ -36,16 +36,6 @@ private:
     void report_top_level_block_has_no_return(code_block*, const colgm_func&);
 
 private:
-    void analyse_parameter(param*, colgm_func&);
-    void analyse_method_parameter_list(param_list*,
-                                       colgm_func&,
-                                       const colgm_struct&);
-    void analyse_return_type(type_def*, colgm_func&);
-    colgm_func analyse_single_method(func_decl*, const colgm_struct&);
-    void analyse_single_impl(impl_struct*);
-    void analyse_impls(root*);
-
-private:
     type struct_static_method_infer(const std::string&,
                                     const std::string&,
                                     const std::string&);

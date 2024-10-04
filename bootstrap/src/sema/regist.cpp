@@ -13,6 +13,21 @@
 
 namespace colgm {
 
+bool generic_visitor::visit_call_id(ast::call_id* node) {
+    if (!node->get_generic_types()) {
+        return true;
+    }
+    std::cerr << node->get_id()->get_name() << "<";
+    for (auto i : node->get_generic_types()->get_types()) {
+        std::cerr << i->get_name()->get_name();
+        if (i != node->get_generic_types()->get_types().back()) {
+            std::cerr << ", ";
+        }
+    }
+    std::cerr << ">\n";
+    return true;
+}
+
 bool regist_pass::check_is_public_struct(ast::identifier* node,
                                          const colgm_module& domain) {
     if (!domain.structs.count(node->get_name())) {
@@ -583,6 +598,124 @@ void regist_pass::generate_return_type(type_def* node, colgm_func& self) {
     self.return_type = rs.resolve_type_def(node);
 }
 
+void regist_pass::regist_impls(ast::root* node) {
+    for(auto i : node->get_decls()) {
+        if (i->get_ast_type() != ast_type::ast_impl) {
+            continue;
+        }
+        auto impl_decl = reinterpret_cast<ast::impl_struct*>(i);
+        regist_single_impl(impl_decl);
+    }
+}
+
+void regist_pass::regist_single_impl(ast::impl_struct* node) {
+    auto& dm = ctx.global.domain.at(ctx.this_file);
+    if (!dm.structs.count(node->get_struct_name()) &&
+        !dm.generic_structs.count(node->get_struct_name())) {
+        rp.report(node, "undefined struct \"" + node->get_struct_name() + "\".");
+        return;
+    }
+    auto& stct = dm.structs.count(node->get_struct_name())
+        ? dm.structs.at(node->get_struct_name())
+        : dm.generic_structs.at(node->get_struct_name());
+    if (node->get_generic_types()) {
+        if (node->get_generic_types()->get_types().empty()) {
+            rp.report(node, "generic impl must have at least one generic type.");
+            return;
+        }
+        const auto& impl_generic_vec = node->get_generic_types()->get_types();
+        if (stct.generic_template.size() != impl_generic_vec.size()) {
+            rp.report(node, "generic type count does not match.");
+            return;
+        }
+        for(u64 i = 0; i < stct.generic_template.size(); ++i) {
+            const auto& name = impl_generic_vec[i]->get_name()->get_name();
+            if (stct.generic_template[i] != name) {
+                rp.report(impl_generic_vec[i], "generic type \"" + name +
+                    "\" does not match with \"" +
+                    stct.generic_template[i] + "\"."
+                );
+            }
+        }
+        // copy ast of this impl struct for template expansion
+        stct.generic_struct_impl.push_back(node->clone());
+    }
+
+    ctx.generics = {};
+    for(const auto& i : stct.generic_template) {
+        ctx.generics.insert(i);
+    }
+    for(auto i : node->get_methods()) {
+        if (stct.method.count(i->get_name())) {
+            rp.report(i, "method \"" + i->get_name() + "\" already exists.");
+            continue;
+        }
+        auto func = generate_method(i, stct);
+        if (i->is_public_func()) {
+            func.is_public = true;
+        }
+        if (i->is_extern_func()) {
+            rp.report(i, "extern method is not supported.");
+        }
+        if (func.parameters.size() && func.parameters[0].name=="self") {
+            stct.method.insert({i->get_name(), func});
+        } else {
+            stct.static_method.insert({i->get_name(), func});
+        }
+    }
+    ctx.generics.clear();
+}
+
+colgm_func regist_pass::generate_method(ast::func_decl* node,
+                                        const colgm_struct& stct) {
+    auto func_self = colgm_func();
+    func_self.name = node->get_name();
+    func_self.location = node->get_location();
+    generate_method_parameter_list(node->get_params(), func_self, stct);
+    generate_return_type(node->get_return_type(), func_self);
+    return func_self;
+}
+
+void regist_pass::generate_method_parameter_list(param_list* node,
+                                                 colgm_func& self,
+                                                 const colgm_struct& stct) {
+    for(auto i : node->get_params()) {
+        bool is_self = i->get_name()->get_name()=="self";
+        if (is_self && i!=node->get_params().front()) {
+            rp.report(i->get_name(), "\"self\" must be the first parameter.");
+        }
+        if (is_self && i->get_type()) {
+            rp.warning(i->get_type(), "\"self\" does not need type.");
+        }
+        if (is_self && !i->get_type()) {
+            i->set_type(new type_def(i->get_name()->get_location()));
+            i->get_type()->set_name(new identifier(
+                i->get_name()->get_location(),
+                stct.name
+            ));
+            i->get_type()->add_pointer_level();
+        }
+        generate_parameter(i, self);
+    }
+
+    if (self.parameters.empty() ||
+        self.parameters.front().name!="self") {
+        return;
+    }
+
+    // we still need to check self type, for user may specify a wrong type
+    // check self type is the pointer of implemented struct
+    const auto& self_type = self.parameters.front().symbol_type;
+    if (self_type.name!=stct.name ||
+        self_type.loc_file!=stct.location.file ||
+        self_type.pointer_depth!=1) {
+        rp.report(node->get_params().front(),
+            "\"self\" should be \"" + stct.name + "*\", but get \"" +
+            self_type.to_string() + "\"."
+        );
+    }
+}
+
 void regist_pass::run(ast::root* ast_root) {
     regist_basic_types();
     regist_imported_types(ast_root);
@@ -596,10 +729,21 @@ void regist_pass::run(ast::root* ast_root) {
 
     regist_enums(ast_root);
     regist_structs(ast_root);
+    if (err.geterr()) {
+        return;
+    }
+
     regist_global_funcs(ast_root);
     if (err.geterr()) {
         return;
     }
+
+    regist_impls(ast_root);
+    if (err.geterr()) {
+        return;
+    }
+
+    gnv.visit(ast_root);
 }
 
 }
