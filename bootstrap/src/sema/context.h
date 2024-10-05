@@ -28,10 +28,15 @@ struct sema_context {
     // store the file name this context belongs to
     std::string this_file;
 
-    // store global symbol used in this file
+    // store global symbols used in current scope
+    // both normal and generic symbols are stored
     std::unordered_map<std::string, symbol_info> global_symbol;
 
-    // store generics in current scope
+    // only store generics in current scope
+    std::unordered_set<std::string> generic_symbol;
+
+    // store generics type name
+    // for field analysis or generic methods type infer
     std::unordered_set<std::string> generics;
 
     // local scope
@@ -42,6 +47,16 @@ struct sema_context {
     type get_symbol(const std::string&);
     void push_new_level() { scope.push_back({}); }
     void pop_new_level() { scope.pop_back(); }
+
+public:
+    void insert(const std::string& name,
+                const symbol_info& si,
+                bool is_generic = false) {
+        global_symbol.insert({name, si});
+        if (is_generic) {
+            generic_symbol.insert(name);
+        }
+    }
 
 public:
     void dump_generics(const std::vector<std::string>&) const;

@@ -23,11 +23,12 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
         rp.report(node, "unknown type \"" + type_name + "\".");
         return true;
     }
-    if (!ctx.generics.count(type_name)) {
+    if (!ctx.generic_symbol.count(type_name)) {
         rp.report(node, "\"" + type_name + "\" is not a generic type.");
         return true;
     }
 
+    // TODO: just dump, delete it later
     std::cerr << type_name << "<";
     for (auto i : node->get_generic_types()->get_types()) {
         std::cerr << i->get_name()->get_name();
@@ -279,7 +280,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
         return;
     }
     ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
-    ctx.global_symbol.insert({name, {sym_kind::enum_kind, ctx.this_file, true}});
+    ctx.insert(name, {sym_kind::enum_kind, ctx.this_file, true}, false);
 
     auto& self = ctx.global.domain.at(ctx.this_file).enums.at(name);
     self.name = name;
@@ -363,7 +364,11 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
     }
 
     // insert to global symbol table and domain
-    ctx.global_symbol.insert({name, {sym_kind::struct_kind, ctx.this_file, true}});
+    ctx.insert(
+        name,
+        {sym_kind::struct_kind, ctx.this_file, true},
+        node->get_generic_types()
+    );
     if (node->get_generic_types()) {
         this_domain.generic_structs.insert({name, {}});
     } else {
@@ -414,7 +419,7 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
         ? this_domain.generic_structs.at(name)
         : this_domain.structs.at(name);
 
-    // initializer generic if needed
+    // initializer generic if needed for field analysis
     ctx.generics = {};
     if (node->get_generic_types()) {
         for(auto i : node->get_generic_types()->get_types()) {
@@ -462,9 +467,6 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
             .pointer_depth = 1
         })}
     );
-
-    // clear
-    ctx.generics.clear();
 }
 
 void regist_pass::check_struct_self_reference() {
@@ -527,12 +529,21 @@ void regist_pass::regist_single_global_func(ast::func_decl* node) {
         rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
+
     auto& this_domain = ctx.global.domain.at(ctx.this_file);
     if (this_domain.functions.count(name)) {
         rp.report(node, "function \"" + name + "\" conflicts with exist symbol.");
         return;
     }
-    ctx.global_symbol.insert({name, {sym_kind::func_kind, ctx.this_file, true}});
+
+    // insert into symbol table
+    ctx.insert(
+        name,
+        {sym_kind::func_kind, ctx.this_file, true},
+        node->get_generic_types()
+    );
+
+    // generate data structure
     if (node->get_generic_types()) {
         this_domain.generic_functions.insert({
             name,
@@ -679,7 +690,6 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
             stct.static_method.insert({i->get_name(), func});
         }
     }
-    ctx.generics.clear();
 }
 
 colgm_func regist_pass::generate_method(ast::func_decl* node,
