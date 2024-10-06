@@ -7,19 +7,38 @@
 #include "ast/ast.h"
 #include "ast/visitor.h"
 
+#include <cstring>
+#include <sstream>
+#include <vector>
+#include <unordered_map>
+
 namespace colgm {
 
 class generic_visitor: public ast::visitor {
 private:
-    sema_context& ctx;
-    reporter rp;
+    struct generic_data {
+        std::string name;
+        std::unordered_map<std::string, type> types;
+    };
 
 private:
+    sema_context& ctx;
+    reporter rp;
+    resolver rs;
+    std::unordered_map<std::string, generic_data> generic_data_map;
+
+private:
+    bool visit_func_decl(ast::func_decl*) override;
+    bool visit_impl_struct(ast::impl_struct*) override;
     bool visit_call_id(ast::call_id*) override;
 
 public:
-    generic_visitor(error& e, sema_context& c): ctx(c), rp(e) {}
-    void visit(ast::root* n) { n->accept(this); }
+    generic_visitor(error& e, sema_context& c): ctx(c), rp(e), rs(e, ctx) {}
+    void visit(ast::root* n) {
+        generic_data_map = {};
+        n->accept(this);
+    }
+    void dump() const;
 };
 
 class regist_pass {

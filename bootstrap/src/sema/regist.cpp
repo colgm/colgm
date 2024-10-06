@@ -13,12 +13,36 @@
 
 namespace colgm {
 
+bool generic_visitor::visit_func_decl(func_decl* node) {
+    // do not scan generic function block
+    if (node->get_generic_types()) {
+        return true;
+    }
+    node->get_params()->accept(this);
+    node->get_return_type()->accept(this);
+    if (node->get_code_block()) {
+        node->get_code_block()->accept(this);
+    }
+    return true;
+}
+
+bool generic_visitor::visit_impl_struct(ast::impl_struct* node) {
+    // do not scan generic impl block
+    if (node->get_generic_types()) {
+        return true;
+    }
+    for(auto i : node->get_methods()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool generic_visitor::visit_call_id(ast::call_id* node) {
     if (!node->get_generic_types()) {
         return true;
     }
+
     const auto& type_name = node->get_id()->get_name();
-    // FIXME: check
     if (!ctx.global_symbol.count(type_name)) {
         rp.report(node, "unknown type \"" + type_name + "\".");
         return true;
@@ -28,16 +52,52 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
         return true;
     }
 
-    // TODO: just dump, delete it later
-    std::cerr << type_name << "<";
+    const auto& sym = ctx.global_symbol.at(type_name);;
+    const auto& dm = ctx.global.domain.at(sym.loc_file);
+    const auto& generic_template = sym.kind == sym_kind::struct_kind
+        ? dm.generic_structs.at(type_name).generic_template
+        : dm.generic_functions.at(type_name).generic_template;
+
+    // generate real name
+    bool error_flag = false;
+    std::stringstream ss;
+    ss << type_name << "<";
     for (auto i : node->get_generic_types()->get_types()) {
-        std::cerr << i->get_name()->get_name();
+        const auto& name = i->get_name()->get_name();
+        if (!ctx.global_symbol.count(name)) {
+            rp.report(i, "unknown type \"" + name + "\".");
+            error_flag = true;
+        }
+        ss << name;
         if (i != node->get_generic_types()->get_types().back()) {
-            std::cerr << ", ";
+            ss << ", ";
         }
     }
-    std::cerr << ">\n";
+    ss << ">";
+    if (error_flag) {
+        return true;
+    }
+
+    if (generic_data_map.count(ss.str())) {
+        return true;
+    }
+    generic_data_map.insert({ss.str(), {}});
+    auto& data = generic_data_map.at(ss.str());
+    for(i64 i = 0; i < generic_template.size(); ++i) {
+        auto t = node->get_generic_types()->get_types()[i];
+        data.types.insert({generic_template[i], rs.resolve_type_def(t)});
+    }
     return true;
+}
+
+void generic_visitor::dump() const {
+    for(const auto& i : generic_data_map) {
+        std::cout << i.first << ": <";
+        for(const auto& real : i.second.types) {
+            std::cout << real.first << ": " << real.second << ", ";
+        }
+        std::cout << ">\n";
+    }
 }
 
 bool regist_pass::check_is_public_struct(ast::identifier* node,
@@ -770,6 +830,7 @@ void regist_pass::run(ast::root* ast_root) {
     }
 
     gnv.visit(ast_root);
+    gnv.dump();
 }
 
 }
