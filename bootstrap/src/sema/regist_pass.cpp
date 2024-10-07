@@ -58,31 +58,36 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
         ? dm.generic_structs.at(type_name).generic_template
         : dm.generic_functions.at(type_name).generic_template;
 
+    if (node->get_generic_types()->get_types().size() != generic_template.size()) {
+        rp.report(node, "generic type count does not match.");
+        return true;
+    }
+
     // generate real name
-    bool error_flag = false;
     std::stringstream ss;
     ss << type_name << "<";
     for (auto i : node->get_generic_types()->get_types()) {
         const auto& name = i->get_name()->get_name();
-        if (!ctx.global_symbol.count(name)) {
-            rp.report(i, "unknown type \"" + name + "\".");
-            error_flag = true;
-        }
-        ss << name;
+        const auto type = tr.resolve(i);
+        ss << type.full_path_name();
         if (i != node->get_generic_types()->get_types().back()) {
             ss << ", ";
         }
     }
     ss << ">";
-    if (error_flag) {
+    if (rp.has_error()) {
         return true;
     }
 
+    // insert data
     if (generic_data_map.count(ss.str())) {
         return true;
     }
     generic_data_map.insert({ss.str(), {}});
     auto& data = generic_data_map.at(ss.str());
+    data.name = type_name;
+    data.loc_file = sym.loc_file;
+
     for(i64 i = 0; i < generic_template.size(); ++i) {
         auto t = node->get_generic_types()->get_types()[i];
         data.types.insert({generic_template[i], tr.resolve(t)});
@@ -92,11 +97,13 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
 
 void generic_visitor::dump() const {
     for(const auto& i : generic_data_map) {
-        std::cout << i.first << ": <";
+        std::cout << i.first << ": " << i.second.loc_file << "\n";
         for(const auto& real : i.second.types) {
-            std::cout << real.first << ": " << real.second.full_path_name() << ", ";
+            std::cout << "  " << real.first << ": ";
+            std::cout << real.second.full_path_name() << " ";
+            std::cout << real.second.loc_file << "\n";
         }
-        std::cout << ">\n";
+        std::cout << "\n";
     }
 }
 

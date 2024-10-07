@@ -18,6 +18,7 @@ class generic_visitor: public ast::visitor {
 private:
     struct generic_data {
         std::string name;
+        std::string loc_file;
         std::unordered_map<std::string, type> types;
     };
 

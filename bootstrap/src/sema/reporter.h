@@ -11,6 +11,7 @@ private:
 
 public:
     reporter(error& e): err(e) {}
+    bool has_error() const { return err.geterr(); }
 
 public:
     void report(ast::node* n, const std::string& info) {
