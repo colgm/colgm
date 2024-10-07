@@ -8,17 +8,16 @@
 
 namespace colgm {
 
-class resolver {
+class type_resolver {
 private:
     error& err;
     sema_context& ctx;
     reporter rp;
 
 public:
-    type resolve_type_def(ast::type_def*);
-
-public:
-    resolver(error& e, sema_context& c): err(e), ctx(c), rp(err) {}
+    type_resolver(error& e, sema_context& c):
+        err(e), ctx(c), rp(err) {}
+    type resolve(ast::type_def*);
 };
 
 }

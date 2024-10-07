@@ -1,6 +1,6 @@
 #include "ast/stmt.h"
 #include "ast/expr.h"
-#include "sema/regist.h"
+#include "sema/regist_pass.h"
 #include "lexer.h"
 #include "parse.h"
 #include "sema/semantic.h"
@@ -85,7 +85,7 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     auto& data = generic_data_map.at(ss.str());
     for(i64 i = 0; i < generic_template.size(); ++i) {
         auto t = node->get_generic_types()->get_types()[i];
-        data.types.insert({generic_template[i], rs.resolve_type_def(t)});
+        data.types.insert({generic_template[i], tr.resolve(t)});
     }
     return true;
 }
@@ -94,7 +94,7 @@ void generic_visitor::dump() const {
     for(const auto& i : generic_data_map) {
         std::cout << i.first << ": <";
         for(const auto& real : i.second.types) {
-            std::cout << real.first << ": " << real.second << ", ";
+            std::cout << real.first << ": " << real.second.full_path_name() << ", ";
         }
         std::cout << ">\n";
     }
@@ -673,11 +673,11 @@ void regist_pass::generate_parameter(param* node, colgm_func& self) {
         );
         return;
     }
-    self.add_parameter(name, rs.resolve_type_def(node->get_type()));
+    self.add_parameter(name, tr.resolve(node->get_type()));
 }
 
 void regist_pass::generate_return_type(type_def* node, colgm_func& self) {
-    self.return_type = rs.resolve_type_def(node);
+    self.return_type = tr.resolve(node);
 }
 
 void regist_pass::regist_impls(ast::root* node) {

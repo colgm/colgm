@@ -2,7 +2,7 @@
 #include "lexer.h"
 #include "parse.h"
 #include "sema/semantic.h"
-#include "sema/regist.h"
+#include "sema/regist_pass.h"
 #include "mir/ast2mir.h"
 
 #include <unordered_map>
@@ -287,7 +287,7 @@ type semantic::resolve_unary_operator(unary_operator* node) {
 
 type semantic::resolve_type_convert(type_convert* node) {
     const auto res = resolve_expression(node->get_source());
-    const auto type_res = rs.resolve_type_def(node->get_target());
+    const auto type_res = tr.resolve(node->get_target());
     if (res.is_error() || type_res.is_error()) {
         return type::error_type();
     }
@@ -382,7 +382,7 @@ type semantic::resolve_array_literal(array_literal* node) {
     if (!size_infer.is_integer()) {
         rp.report(node->get_size(), "array size must be integer.");
     }
-    const auto type_infer = rs.resolve_type_def(node->get_type());
+    const auto type_infer = tr.resolve(node->get_type());
     node->set_resolve_type(type_infer.get_pointer_copy());
     auto result_type = type_infer.get_pointer_copy();
     result_type.is_immutable_array_address = true;
@@ -999,7 +999,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     }
 
     // with type declaration
-    const auto expected_type = rs.resolve_type_def(node->get_type());
+    const auto expected_type = tr.resolve(node->get_type());
     const auto real_type = resolve_expression(node->get_init_value());
     if (expected_type.is_pointer() && real_type.is_pointer()) {
         if (expected_type!=real_type) {

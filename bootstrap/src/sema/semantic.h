@@ -11,7 +11,7 @@
 #include "package/package.h"
 #include "sema/context.h"
 #include "sema/reporter.h"
-#include "sema/resolver.h"
+#include "sema/type_resolver.h"
 
 #include <unordered_map>
 #include <cstring>
@@ -27,7 +27,7 @@ private:
     error& err;
     sema_context ctx;
     reporter rp;
-    resolver rs;
+    type_resolver tr;
     i64 in_loop_level = 0;
     std::string impl_struct_name;
 
@@ -96,7 +96,7 @@ private:
 
 public:
     semantic(error& e):
-        err(e), ctx(), rp(err), rs(err, ctx),
+        err(e), ctx(), rp(err), tr(err, ctx),
         impl_struct_name("") {}
     const error& analyse(root*);
     void dump();

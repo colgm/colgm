@@ -1,11 +1,11 @@
 #include "ast/decl.h"
 #include "ast/expr.h"
 #include "ast/stmt.h"
-#include "sema/resolver.h"
+#include "sema/type_resolver.h"
 
 namespace colgm {
 
-type resolver::resolve_type_def(ast::type_def* node) {
+type type_resolver::resolve(ast::type_def* node) {
     const auto& name = node->get_name()->get_name();
 
     // cannot find type

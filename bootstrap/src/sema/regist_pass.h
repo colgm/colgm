@@ -3,7 +3,7 @@
 #include "report.h"
 #include "sema/context.h"
 #include "sema/reporter.h"
-#include "sema/resolver.h"
+#include "sema/type_resolver.h"
 #include "ast/ast.h"
 #include "ast/visitor.h"
 
@@ -24,7 +24,7 @@ private:
 private:
     sema_context& ctx;
     reporter rp;
-    resolver rs;
+    type_resolver tr;
     std::unordered_map<std::string, generic_data> generic_data_map;
 
 private:
@@ -33,7 +33,8 @@ private:
     bool visit_call_id(ast::call_id*) override;
 
 public:
-    generic_visitor(error& e, sema_context& c): ctx(c), rp(e), rs(e, ctx) {}
+    generic_visitor(error& e, sema_context& c):
+        ctx(c), rp(e), tr(e, ctx) {}
     void visit(ast::root* n) {
         generic_data_map = {};
         n->accept(this);
@@ -46,7 +47,7 @@ private:
     error& err;
     sema_context& ctx;
     reporter rp;
-    resolver rs;
+    type_resolver tr;
     generic_visitor gnv;
 
 private:
@@ -99,7 +100,7 @@ private: // implementations
 
 public:
     regist_pass(error& e, sema_context& c):
-        err(e), ctx(c), rp(e), rs(err, ctx), gnv(err, ctx) {}
+        err(e), ctx(c), rp(e), tr(err, ctx), gnv(err, ctx) {}
     void run(ast::root*);
 };
 
