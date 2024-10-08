@@ -2,8 +2,8 @@
 
 namespace colgm {
 
-bool sema_context::find_symbol(const std::string& name) {
-    for(auto i = scope.rbegin(); i!=scope.rend(); ++i) {
+bool sema_context::find_local(const std::string& name) {
+    for(auto i = local_scope.rbegin(); i != local_scope.rend(); ++i) {
         if (i->count(name)) {
             return true;
         }
@@ -11,8 +11,8 @@ bool sema_context::find_symbol(const std::string& name) {
     return false;
 }
 
-type sema_context::get_symbol(const std::string& name) {
-    for(auto i = scope.rbegin(); i!=scope.rend(); ++i) {
+type sema_context::get_local(const std::string& name) {
+    for(auto i = local_scope.rbegin(); i != local_scope.rend(); ++i) {
         if (i->count(name)) {
             return i->at(name);
         }
@@ -20,8 +20,8 @@ type sema_context::get_symbol(const std::string& name) {
     return type::error_type();
 }
 
-void sema_context::add_symbol(const std::string& name, const type& t) {
-    scope.back().insert({name, t});
+void sema_context::add_local(const std::string& name, const type& t) {
+    local_scope.back().insert({name, t});
 }
 
 void sema_context::dump_generics(const std::vector<std::string>& v) const {

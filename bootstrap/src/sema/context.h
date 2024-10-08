@@ -40,13 +40,13 @@ struct sema_context {
     std::unordered_set<std::string> generics;
 
     // local scope
-    std::vector<std::unordered_map<std::string, type>> scope = {};
+    std::vector<std::unordered_map<std::string, type>> local_scope = {};
 
-    bool find_symbol(const std::string&);
-    void add_symbol(const std::string&, const type&);
-    type get_symbol(const std::string&);
-    void push_new_level() { scope.push_back({}); }
-    void pop_new_level() { scope.pop_back(); }
+    bool find_local(const std::string&);
+    void add_local(const std::string&, const type&);
+    type get_local(const std::string&);
+    void push_level() { local_scope.push_back({}); }
+    void pop_level() { local_scope.pop_back(); }
 
 public:
     void insert(const std::string& name,

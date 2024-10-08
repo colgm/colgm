@@ -391,8 +391,8 @@ type semantic::resolve_array_literal(array_literal* node) {
 
 type semantic::resolve_identifier(identifier* node) {
     const auto& name = node->get_name();
-    if (ctx.find_symbol(name)) {
-        return ctx.get_symbol(name);
+    if (ctx.find_local(name)) {
+        return ctx.get_local(name);
     }
     if (ctx.global_symbol.count(name)) {
         const auto& sym = ctx.global_symbol.at(name);
@@ -576,6 +576,22 @@ type semantic::resolve_call_id(call_id* node) {
             "non global symbol \"" + node->get_id()->get_name() +
             "\" cannot be generic."
         );
+    }
+    if (node->get_generic_types()) {
+        std::vector<type> types;
+        for(auto i : node->get_generic_types()->get_types()) {
+            types.push_back(tr.resolve(i));
+        }
+        std::string name = node->get_id()->get_name();
+        name += "<";
+        for(const auto& i : types) {
+            name += i.full_path_name() + ",";
+        }
+        if (name.back()==',') {
+            name.pop_back();
+        }
+        name += ">";
+        std::cout << "call_id: " << name << "\n";
     }
     return infer;
 }
@@ -978,7 +994,7 @@ type semantic::resolve_expression(expr* node) {
 
 void semantic::resolve_definition(definition* node, const colgm_func& func_self) {
     const auto& name = node->get_name();
-    if (ctx.find_symbol(name)) {
+    if (ctx.find_local(name)) {
         rp.report(node, "redefinition of variable \"" + name + "\".");
         return;
     }
@@ -995,7 +1011,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     if (!node->get_type()) {
         const auto real_type = resolve_expression(node->get_init_value());
         node->set_resolve_type(real_type);
-        ctx.add_symbol(name, real_type);
+        ctx.add_local(name, real_type);
         check_defined_variable_is_void(node, real_type);
         return;
     }
@@ -1020,11 +1036,11 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     // if immutable, make sure the type is correct
     if (real_type.is_constant_type || real_type.is_immutable_array_address) {
         node->set_resolve_type(real_type);
-        ctx.add_symbol(name, real_type);
+        ctx.add_local(name, real_type);
         check_defined_variable_is_void(node, real_type);
     } else {
         node->set_resolve_type(expected_type);
-        ctx.add_symbol(name, expected_type);
+        ctx.add_local(name, expected_type);
         check_defined_variable_is_void(node, expected_type);
     }
 }
@@ -1128,7 +1144,7 @@ void semantic::resolve_while_stmt(while_stmt* node, const colgm_func& func_self)
 }
 
 void semantic::resolve_for_stmt(for_stmt* node, const colgm_func& func_self) {
-    ctx.push_new_level();
+    ctx.push_level();
     if (node->get_init()) {
         resolve_definition(node->get_init(), func_self);
     }
@@ -1151,7 +1167,7 @@ void semantic::resolve_for_stmt(for_stmt* node, const colgm_func& func_self) {
         resolve_code_block(node->get_block(), func_self);
         --in_loop_level;
     }
-    ctx.pop_new_level();
+    ctx.pop_level();
 }
 
 void semantic::resolve_in_stmt_expr(in_stmt_expr* node, const colgm_func& func_self) {
@@ -1222,7 +1238,7 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
 
 void semantic::resolve_code_block(code_block* node, const colgm_func& func_self) {
     // should not be called to resolve function's top code block
-    ctx.push_new_level();
+    ctx.push_level();
     for(auto i : node->get_stmts()) {
         resolve_statement(i, func_self);
         if (i->get_ast_type()==ast_type::ast_ret_stmt ||
@@ -1232,7 +1248,7 @@ void semantic::resolve_code_block(code_block* node, const colgm_func& func_self)
             break;
         }
     }
-    ctx.pop_new_level();
+    ctx.pop_level();
 }
 
 void semantic::resolve_global_func(func_decl* node) {
@@ -1254,9 +1270,9 @@ void semantic::resolve_global_func(func_decl* node) {
         }
         return;
     }
-    ctx.push_new_level();
+    ctx.push_level();
     for(const auto& p : func_self.parameters) {
-        ctx.add_symbol(p.name, p.symbol_type);
+        ctx.add_local(p.name, p.symbol_type);
     }
     for(auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, func_self);
@@ -1268,7 +1284,7 @@ void semantic::resolve_global_func(func_decl* node) {
         }
     }
     report_top_level_block_has_no_return(node->get_code_block(), func_self);
-    ctx.pop_new_level();
+    ctx.pop_level();
 }
 
 void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) {
@@ -1276,13 +1292,12 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
         rp.report(node, "should be implemented here.");
         return;
     }
-    ctx.push_new_level();
-    const auto& method_self =
-        struct_self.method.count(node->get_name())?
-        struct_self.method.at(node->get_name()):
-        struct_self.static_method.at(node->get_name());
+    ctx.push_level();
+    const auto& method_self = struct_self.method.count(node->get_name())
+        ? struct_self.method.at(node->get_name())
+        : struct_self.static_method.at(node->get_name());
     for(const auto& p : method_self.parameters) {
-        ctx.add_symbol(p.name, p.symbol_type);
+        ctx.add_local(p.name, p.symbol_type);
     }
     for(auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, method_self);
@@ -1294,7 +1309,7 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
         }
     }
     report_top_level_block_has_no_return(node->get_code_block(), method_self);
-    ctx.pop_new_level();
+    ctx.pop_level();
 }
 
 void semantic::resolve_impl(impl_struct* node) {

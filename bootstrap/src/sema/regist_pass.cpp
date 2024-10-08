@@ -71,7 +71,7 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
         const auto type = tr.resolve(i);
         ss << type.full_path_name();
         if (i != node->get_generic_types()->get_types().back()) {
-            ss << ", ";
+            ss << ",";
         }
     }
     ss << ">";
