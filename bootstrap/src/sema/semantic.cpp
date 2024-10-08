@@ -584,7 +584,9 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // global function call
     if (prev.is_global_func) {
         const auto& domain = ctx.global.domain.at(prev.loc_file);
-        const auto& func = domain.functions.at(prev.name);
+        const auto& func = domain.functions.count(prev.name)
+            ? domain.functions.at(prev.name)
+            : domain.generic_functions.at(prev.name);
         check_static_call_args(func, node);
         node->set_resolve_type(func.return_type);
         return func.return_type;
