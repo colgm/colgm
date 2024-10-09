@@ -97,7 +97,11 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
 
 void generic_visitor::dump() const {
     for(const auto& i : generic_data_map) {
-        std::cout << i.first << ": " << i.second.loc_file << "\n";
+        const auto t = type {
+            .name = i.first,
+            .loc_file = i.second.loc_file
+        };
+        std::cout << t.full_path_name() << ": " << i.second.loc_file << "\n";
         for(const auto& real : i.second.types) {
             std::cout << "  " << real.first << ": ";
             std::cout << real.second.full_path_name() << " ";
@@ -708,7 +712,7 @@ colgm_func regist_pass::generate_single_global_func(func_decl* node) {
     generate_parameter_list(node->get_params(), func_self);
     generate_return_type(node->get_return_type(), func_self);
     if (node->get_name()=="main" && func_self.return_type.is_void()) {
-        rp.warning(node, "main function should return integer.");
+        rp.warn(node, "main function should return integer.");
     }
     return func_self;
 }
@@ -825,7 +829,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
             rp.report(i->get_name(), "\"self\" must be the first parameter.");
         }
         if (is_self && i->get_type()) {
-            rp.warning(i->get_type(), "\"self\" does not need type.");
+            rp.warn(i->get_type(), "\"self\" does not need type.");
         }
         if (is_self && !i->get_type()) {
             i->set_type(new type_def(i->get_name()->get_location()));
@@ -865,7 +869,9 @@ void regist_pass::run(ast::root* ast_root) {
 
     ctx.global.domain.at(ctx.this_file).enums.clear();
     ctx.global.domain.at(ctx.this_file).structs.clear();
+    ctx.global.domain.at(ctx.this_file).generic_structs.clear();
     ctx.global.domain.at(ctx.this_file).functions.clear();
+    ctx.global.domain.at(ctx.this_file).generic_functions.clear();
 
     regist_enums(ast_root);
     regist_structs(ast_root);
@@ -884,7 +890,6 @@ void regist_pass::run(ast::root* ast_root) {
     }
 
     gnv.visit(ast_root);
-    gnv.dump();
 }
 
 }

@@ -591,7 +591,8 @@ type semantic::resolve_call_id(call_id* node) {
             name.pop_back();
         }
         name += ">";
-        std::cout << "call_id: " << name << "\n";
+        const auto t = type {.name = name, .loc_file = infer.loc_file};
+        rp.warn(node, "call id: " + t.full_path_name());
     }
     return infer;
 }
@@ -1021,7 +1022,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     const auto real_type = resolve_expression(node->get_init_value());
     if (expected_type.is_pointer() && real_type.is_pointer()) {
         if (expected_type!=real_type) {
-            rp.warning(node,
+            rp.warn(node,
                 "expected \"" + expected_type.to_string() +
                 "\", but get \"" + real_type.to_string() + "\"."
             );
@@ -1188,7 +1189,7 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
     const auto infer = resolve_expression(node->get_value());
     if (infer.is_pointer() && func_self.return_type.is_pointer()) {
         if (infer!=func_self.return_type && infer!=type::error_type()) {
-            rp.warning(node,
+            rp.warn(node,
                 "expected return type \"" + func_self.return_type.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."
             );
@@ -1263,7 +1264,7 @@ void semantic::resolve_global_func(func_decl* node) {
     const auto& func_self = domain.functions.at(node->get_name());
     if (!node->get_code_block()) {
         if (!func_self.is_extern) {
-            rp.warning(node,
+            rp.warn(node,
                 "non-extern function \"" + node->get_name() +
                 "\" is not implemented."
             );

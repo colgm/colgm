@@ -20,10 +20,10 @@ public:
     void report(const span& loc, const std::string& info) {
         err.err("semantic", loc, info);
     }
-    void warning(ast::node* n, const std::string& info) {
+    void warn(ast::node* n, const std::string& info) {
         err.warn("semantic", n->get_location(), info);
     }
-    void warning(const span& loc, const std::string& info) {
+    void warn(const span& loc, const std::string& info) {
         err.warn("semantic", loc, info);
     }
     void unimplemented(ast::node* n) {
