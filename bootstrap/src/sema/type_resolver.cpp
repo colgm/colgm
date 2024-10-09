@@ -10,6 +10,7 @@ type type_resolver::resolve(ast::type_def* node) {
 
     // cannot find type
     if (!ctx.global_symbol.count(name) &&
+        !ctx.generic_symbol.count(name) &&
         !ctx.generics.count(name)) {
         rp.report(node->get_name(),
             "unknown type \"" + name + "\"."

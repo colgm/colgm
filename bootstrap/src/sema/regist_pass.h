@@ -57,7 +57,8 @@ private:
     bool check_is_public_enum(ast::identifier*, const colgm_module&);
     void import_global_symbol(ast::node*,
                               const std::string&,
-                              const symbol_info&);
+                              const symbol_info&,
+                              bool);
     bool check_is_specified_enum_member(ast::number_literal*);
 
 private:

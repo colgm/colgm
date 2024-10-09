@@ -109,13 +109,22 @@ void generic_visitor::dump() const {
 
 bool regist_pass::check_is_public_struct(ast::identifier* node,
                                          const colgm_module& domain) {
-    if (!domain.structs.count(node->get_name())) {
+    const auto& name = node->get_name();
+    if (!domain.structs.count(name) &&
+        !domain.generic_structs.count(name)) {
         return false;
     }
-    if (!domain.structs.at(node->get_name()).is_public) {
+    if (domain.structs.count(name) &&
+        !domain.structs.at(name).is_public) {
         rp.report(node,
-            "cannot import private struct \"" +
-            node->get_name() + "\"."
+            "cannot import private struct \"" + name + "\"."
+        );
+        return false;
+    }
+    if (domain.generic_structs.count(name) &&
+        !domain.generic_structs.at(name).is_public) {
+        rp.report(node,
+            "cannot import private struct \"" + name + "\"."
         );
         return false;
     }
@@ -124,13 +133,22 @@ bool regist_pass::check_is_public_struct(ast::identifier* node,
 
 bool regist_pass::check_is_public_func(ast::identifier* node,
                                        const colgm_module& domain) {
-    if (!domain.functions.count(node->get_name())) {
+    const auto& name = node->get_name();
+    if (!domain.functions.count(name) &&
+        !domain.generic_functions.count(name)) {
         return false;
     }
-    if (!domain.functions.at(node->get_name()).is_public) {
+    if (domain.functions.count(name) &&
+        !domain.functions.at(name).is_public) {
         rp.report(node,
-            "cannot import private function \"" +
-            node->get_name() + "\"."
+            "cannot import private function \"" + name + "\"."
+        );
+        return false;
+    }
+    if (domain.generic_functions.count(name) &&
+        !domain.generic_functions.at(name).is_public) {
+        rp.report(node,
+            "cannot import private function \"" + name + "\"."
         );
         return false;
     }
@@ -154,7 +172,8 @@ bool regist_pass::check_is_public_enum(ast::identifier* node,
 
 void regist_pass::import_global_symbol(ast::node* n, 
                                        const std::string& name,
-                                       const symbol_info& sym) {
+                                       const symbol_info& sym,
+                                       bool is_generic) {
     if (ctx.global_symbol.count(name)) {
         const auto& info = ctx.global_symbol.at(name);
         rp.report(n, "\"" + name +
@@ -163,7 +182,15 @@ void regist_pass::import_global_symbol(ast::node* n,
         );
         return;
     }
-    ctx.global_symbol.insert({name, sym});
+    if (ctx.generic_symbol.count(name)) {
+        const auto& info = ctx.generic_symbol.at(name);
+        rp.report(n, "\"" + name +
+            "\" conflicts, another declaration is in \"" +
+            info.loc_file + "\"."
+        );
+        return;
+    }
+    ctx.insert(name, sym, is_generic);
 }
 
 bool regist_pass::check_is_specified_enum_member(ast::number_literal* node) {
@@ -279,38 +306,58 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
     if (node->get_import_symbol().empty()) {
         for(const auto& i : domain.structs) {
             import_global_symbol(node, i.second.name,
-                {sym_kind::struct_kind, file, i.second.is_public}
+                {sym_kind::struct_kind, file, i.second.is_public},
+                false
+            );
+        }
+        for(const auto& i : domain.generic_structs) {
+            import_global_symbol(node, i.second.name,
+                {sym_kind::struct_kind, file, i.second.is_public},
+                true
             );
         }
         for(const auto& i : domain.functions) {
             import_global_symbol(node, i.second.name,
-                {sym_kind::func_kind, file, i.second.is_public}
+                {sym_kind::func_kind, file, i.second.is_public},
+                false
+            );
+        }
+        for(const auto& i : domain.generic_functions) {
+            import_global_symbol(node, i.second.name,
+                {sym_kind::func_kind, file, i.second.is_public},
+                true
             );
         }
         for(const auto& i : domain.enums) {
             import_global_symbol(node, i.second.name,
-                {sym_kind::enum_kind, file, i.second.is_public}
+                {sym_kind::enum_kind, file, i.second.is_public},
+                false
             );
         }
         return;
     }
     // specified import
     for(auto i : node->get_import_symbol()) {
-        if (domain.structs.count(i->get_name())) {
+        if (domain.structs.count(i->get_name()) ||
+            domain.generic_structs.count(i->get_name())) {
             import_global_symbol(i, i->get_name(),
-                {sym_kind::struct_kind, file, check_is_public_struct(i, domain)}
+                {sym_kind::struct_kind, file, check_is_public_struct(i, domain)},
+                domain.generic_structs.count(i->get_name())
             );
             continue;
         }
-        if (domain.functions.count(i->get_name())) {
+        if (domain.functions.count(i->get_name()) ||
+            domain.generic_functions.count(i->get_name())) {
             import_global_symbol(i, i->get_name(),
-                {sym_kind::func_kind, file, check_is_public_func(i, domain)}
+                {sym_kind::func_kind, file, check_is_public_func(i, domain)},
+                domain.generic_functions.count(i->get_name())
             );
             continue;
         }
         if (domain.enums.count(i->get_name())) {
             import_global_symbol(i, i->get_name(),
-                {sym_kind::enum_kind, file, check_is_public_enum(i, domain)}
+                {sym_kind::enum_kind, file, check_is_public_enum(i, domain)},
+                false
             );
             continue;
         }

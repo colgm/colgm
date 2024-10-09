@@ -33,7 +33,7 @@ struct sema_context {
     std::unordered_map<std::string, symbol_info> global_symbol;
 
     // only store generics in current scope
-    std::unordered_set<std::string> generic_symbol;
+    std::unordered_map<std::string, symbol_info> generic_symbol;
 
     // store generics type name
     // for field analysis or generic methods type infer
@@ -54,7 +54,7 @@ public:
                 bool is_generic = false) {
         global_symbol.insert({name, si});
         if (is_generic) {
-            generic_symbol.insert(name);
+            generic_symbol.insert({name, si});
         }
     }
 
