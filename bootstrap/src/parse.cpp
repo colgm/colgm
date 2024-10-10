@@ -9,25 +9,25 @@ void parse::match(tok type) {
     }
     switch(type) {
         case tok::tk_id:
-            err.err("parse",
+            err.err(
                 toks[ptr].loc,
                 "expected identifier but get \"" + toks[ptr].str + "\"."
             );
             break;
         case tok::tk_num:
-            err.err("parse",
+            err.err(
                 toks[ptr].loc,
                 "expected number but get \"" + toks[ptr].str + "\"."
             );
             break;
         case tok::tk_str:
-            err.err("parse",
+            err.err(
                 toks[ptr].loc,
                 "expected string but get \"" + toks[ptr].str + "\"."
             );
             break;
         default:
-            err.err("parse",
+            err.err(
                 toks[ptr].loc,
                 "expected \"" + tokname.at(type) +
                 "\" but get \"" + toks[ptr].str + "\"."
@@ -241,7 +241,7 @@ expr* parse::scalar_gen() {
     } else if (look_ahead(tok::tk_id)) {
         return call_gen();
     }
-    err.err("parse", toks[ptr].loc, "expected scalar here.");
+    err.err(toks[ptr].loc, "expected scalar here.");
     next();
     return new null();
 }
@@ -513,7 +513,7 @@ generic_type_list* parse::generic_type_list_gen() {
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {
-            err.err("parse", toks[ptr-1].loc, "expected ',' here.");
+            err.err(toks[ptr-1].loc, "expected ',' here.");
         }
     }
     match(tok::tk_grt);
@@ -527,7 +527,7 @@ enum_decl* parse::enum_gen(bool flag_is_public, bool flag_is_extern) {
         result->set_public(true);
     }
     if (flag_is_extern) {
-        err.err("parse", toks[ptr].loc, "extern enum is not supported.");
+        err.err(toks[ptr].loc, "extern enum is not supported.");
     }
     match(tok::tk_enum);
     result->set_name(identifier_gen());
@@ -544,7 +544,7 @@ enum_decl* parse::enum_gen(bool flag_is_public, bool flag_is_extern) {
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {
-            err.err("parse", toks[ptr-1].loc, "expected ',' here.");
+            err.err(toks[ptr-1].loc, "expected ',' here.");
         }
     }
     match(tok::tk_rbrace);
@@ -581,7 +581,7 @@ struct_decl* parse::struct_gen(bool flag_is_public, bool flag_is_extern) {
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {
-            err.err("parse", toks[ptr-1].loc, "expected ',' here.");
+            err.err(toks[ptr-1].loc, "expected ',' here.");
         } else {
             break;
         }
@@ -654,10 +654,10 @@ func_decl* parse::function_gen(bool flag_is_public, bool flag_is_extern) {
 
 impl_struct* parse::impl_gen(bool flag_is_public, bool flag_is_extern) {
     if (flag_is_public) {
-        err.err("parse", toks[ptr].loc, "\"pub\" is not used for impl struct.");
+        err.err(toks[ptr].loc, "\"pub\" is not used for impl struct.");
     }
     if (flag_is_extern) {
-        err.err("parse", toks[ptr].loc, "\"extern\" is not used for impl struct.");
+        err.err(toks[ptr].loc, "\"extern\" is not used for impl struct.");
     }
     match(tok::tk_impl);
     auto result = new impl_struct(toks[ptr].loc, toks[ptr].str);
@@ -832,8 +832,7 @@ void parse::add_gen_stmt(code_block* result) {
         case tok::tk_brk: result->add_stmt(break_gen()); break;
         case tok::tk_semi: match(tok::tk_semi); break;
         default:
-            err.err("parse",
-                toks[ptr].loc,
+            err.err(toks[ptr].loc,
                 "unexpected token for statement syntax \"" + toks[ptr].str + "\"."
             );
             match(toks[ptr].type);
@@ -916,14 +915,14 @@ const error& parse::analyse(const std::vector<token>& token_list) {
             if (look_ahead(tok::tk_pub) && !flag_is_public) {
                 flag_is_public = true;
             } else if (look_ahead(tok::tk_pub) && flag_is_public) {
-                err.err("parse", toks[ptr].loc,
+                err.err(toks[ptr].loc,
                     "duplicate modifier \"pub\"."
                 );
             }
             if (look_ahead(tok::tk_extern) && !flag_is_extern) {
                 flag_is_extern = true;
             } else if (look_ahead(tok::tk_extern) && flag_is_extern) {
-                err.err("parse", toks[ptr].loc,
+                err.err(toks[ptr].loc,
                     "duplicate modifier \"extern\"."
                 );
             }
@@ -935,7 +934,7 @@ const error& parse::analyse(const std::vector<token>& token_list) {
             case tok::tk_impl: result->add_decl(impl_gen(flag_is_public, flag_is_extern)); break;
             case tok::tk_enum: result->add_decl(enum_gen(flag_is_public, flag_is_extern)); break;
             default:
-                err.err("parse", toks[ptr].loc,
+                err.err(toks[ptr].loc,
                     "unexpected token \"" + toks[ptr].str + "\"."
                 );
                 match(toks[ptr].type);

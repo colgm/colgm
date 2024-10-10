@@ -69,25 +69,23 @@ void flstream::load(const std::string& f) {
     }
 }
 
-void error::err(const std::string& stage, const std::string& info) {
+void error::err(const std::string& info) {
     ++cnt;
-    std::cerr << red << stage << ": " << white << info << reset << "\n\n";
+    std::cerr << red << "Error: " << white << info << reset << "\n\n";
 }
 
-void error::warn(const std::string& stage, const std::string& info) {
-    std::clog << orange << stage << ": " << white << info << reset << "\n\n";
+void error::warn(const std::string& info) {
+    std::clog << orange << "Warning: " << white << info << reset << "\n\n";
 }
 
-void error::err(const std::string& stage,
-                const span& loc,
-                const std::string& info) {
+void error::err(const span& loc, const std::string& info) {
     // load error occurred file into string lines
     load(loc.file);
 
     ++cnt;
 
     std::cerr
-    << red << stage << ": " << white << info << reset << "\n" << cyan << "  --> "
+    << red << "Error: " << white << info << reset << "\n" << cyan << "  --> "
     << red << loc << reset << "\n";
 
     const usize maxlen = std::to_string(loc.end_line).length();
@@ -155,14 +153,12 @@ void error::err(const std::string& stage,
     std::cerr << "\n\n";
 }
 
-void error::warn(const std::string& stage,
-                 const span& loc,
-                 const std::string& info) {
+void error::warn(const span& loc, const std::string& info) {
     // load error occurred file into string lines
     load(loc.file);
 
     std::cerr
-    << orange << stage << ": " << white << info << reset
+    << orange << "Warning: " << white << info << reset
     << "\n" << cyan << "  --> "
     << orange << loc << reset << "\n";
 

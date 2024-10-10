@@ -620,7 +620,7 @@ void regist_pass::check_struct_self_reference() {
                 const auto& type_name = field.second.symbol_type.name;
                 auto new_path = path + "::" + field.first + " -> " + type_name;
                 if (type_name == st) {
-                    err.err("semantic", structs.at(st).location,
+                    rp.report(structs.at(st).location,
                         "self reference detected: " + new_path + "."
                     );
                 } else if (structs.count(type_name)) {

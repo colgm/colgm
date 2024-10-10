@@ -17,7 +17,7 @@ void type::check_pointer_depth() const {
     auto info = "invalid pointer depth of \"" + name + "\": ";
     info += std::to_string(pointer_depth);
     info += ", type is defined in \"" + loc_file + "\".";
-    error().err("type::check_pointer_depth()", info);
+    error().err("type::check_pointer_depth(): " + info);
     std::exit(-1);
 }
 

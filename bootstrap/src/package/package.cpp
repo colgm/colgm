@@ -95,7 +95,7 @@ std::string package_manager::replace_string(const std::string& src) {
 const error& package_manager::scan(const std::string& directory,
                                    const std::string& entry_file) {
     if (!std::filesystem::is_directory(directory)) {
-        err.err("package",
+        err.err(
             "\"" + directory + "\" does not exist or is not a directory."
         );
         return err;

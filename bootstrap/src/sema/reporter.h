@@ -15,38 +15,34 @@ public:
 
 public:
     void report(ast::node* n, const std::string& info) {
-        err.err("semantic", n->get_location(), info);
+        err.err(n->get_location(), info);
     }
     void report(const span& loc, const std::string& info) {
-        err.err("semantic", loc, info);
+        err.err(loc, info);
     }
     void warn(ast::node* n, const std::string& info) {
-        err.warn("semantic", n->get_location(), info);
+        err.warn(n->get_location(), info);
     }
     void warn(const span& loc, const std::string& info) {
-        err.warn("semantic", loc, info);
+        err.warn(loc, info);
     }
     void unimplemented(ast::node* n) {
-        err.err("semantic",
-            n->get_location(),
+        err.err(n->get_location(),
             "unimplemented, please report a bug."
         );
     }
     void unimplemented(const span& loc) {
-        err.err("semantic",
-            loc,
+        err.err(loc,
             "unimplemented, please report a bug."
         );
     }
     void unreachable(ast::node* n) {
-        err.err("semantic",
-            n->get_location(),
+        err.err(n->get_location(),
             "unreachable, please report a bug."
         );
     }
     void unreachable(const span& loc) {
-        err.err("semantic",
-            loc,
+        err.err(loc,
             "unreachable, please report a bug."
         );
     }

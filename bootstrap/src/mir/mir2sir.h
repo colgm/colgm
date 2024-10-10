@@ -168,8 +168,7 @@ private:
     void unimplemented(mir* node) {
         std::stringstream ss;
         node->dump("", ss);
-        err.err("mir2sir",
-            node->get_location(),
+        err.err(node->get_location(),
             "internal error: unimplemented mir: " + ss.str()
         );
     }
