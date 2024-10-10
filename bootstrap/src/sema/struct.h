@@ -31,6 +31,17 @@ public:
     bool is_extern = false;
 
 public:
+    colgm_struct() = default;
+    colgm_struct(const colgm_struct& s):
+        name(s.name), location(s.location),
+        field(s.field), ordered_field(s.ordered_field),
+        static_method(s.static_method), method(s.method), generic_template(s.generic_template),
+        generic_struct_impl({}), is_public(s.is_public),
+        is_extern(s.is_extern) {
+        for(auto i : s.generic_struct_impl) {
+            generic_struct_impl.push_back(i->clone());
+        }
+    }
     ~colgm_struct();
     usize field_index(const std::string&) const;
 };

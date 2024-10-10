@@ -57,8 +57,9 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     const auto& generic_template = sym.kind == sym_kind::struct_kind
         ? dm.generic_structs.at(type_name).generic_template
         : dm.generic_functions.at(type_name).generic_template;
+    const auto& type_list = node->get_generic_types()->get_types();
 
-    if (node->get_generic_types()->get_types().size() != generic_template.size()) {
+    if (type_list.size() != generic_template.size()) {
         rp.report(node, "generic type count does not match.");
         return true;
     }
@@ -66,7 +67,7 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     // generate real name
     std::stringstream ss;
     ss << type_name << "<";
-    for (auto i : node->get_generic_types()->get_types()) {
+    for (auto i : type_list) {
         const auto& name = i->get_name()->get_name();
         const auto type = tr.resolve(i);
         ss << type.full_path_name();
@@ -86,6 +87,7 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     generic_data_map.insert({ss.str(), {}});
     auto& data = generic_data_map.at(ss.str());
     data.name = type_name;
+    data.generated_name = ss.str();
     data.loc_file = sym.loc_file;
 
     for(i64 i = 0; i < generic_template.size(); ++i) {
@@ -108,6 +110,40 @@ void generic_visitor::dump() const {
             std::cout << real.second.loc_file << "\n";
         }
         std::cout << "\n";
+    }
+}
+
+void generic_visitor::insert_into_symbol_table() {
+    for(const auto& i : generic_data_map) {
+        const auto& data = i.second;
+
+        // insert type
+        const auto t = type {
+            .name = data.generated_name,
+            .loc_file = data.loc_file
+        };
+
+        if (!ctx.global.domain.count(data.loc_file)) {
+            continue;
+        }
+
+        auto& dm = ctx.global.domain.at(data.loc_file);
+        if (dm.generic_structs.count(data.name)) {
+            const auto& generic = dm.generic_structs.at(data.name);
+            dm.structs.insert({
+                data.generated_name,
+                generic
+            });
+            // FIXME: do type replace
+        }
+        if (dm.generic_functions.count(data.name)) {
+            const auto& generic = dm.generic_functions.at(data.name);
+            dm.functions.insert({
+                data.generated_name,
+                generic
+            });
+            // FIXME: do type replace
+        }
     }
 }
 
@@ -890,6 +926,7 @@ void regist_pass::run(ast::root* ast_root) {
     }
 
     gnv.visit(ast_root);
+    gnv.insert_into_symbol_table();
 }
 
 }

@@ -18,6 +18,7 @@ class generic_visitor: public ast::visitor {
 private:
     struct generic_data {
         std::string name;
+        std::string generated_name;
         std::string loc_file;
         std::unordered_map<std::string, type> types;
     };
@@ -41,6 +42,7 @@ public:
         n->accept(this);
     }
     void dump() const;
+    void insert_into_symbol_table();
 };
 
 class regist_pass {
