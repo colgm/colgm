@@ -591,11 +591,6 @@ type semantic::resolve_call_id(call_id* node) {
             name.pop_back();
         }
         name += ">";
-        const auto t = type {
-            .name = name,
-            .loc_file = infer.loc_file
-        };
-        const auto generated_name = t.full_path_name();
         
         if (!ctx.global.domain.count(infer.loc_file)) {
             rp.report(node, "namespace in \"" + infer.loc_file + "\" not found.");
@@ -603,9 +598,9 @@ type semantic::resolve_call_id(call_id* node) {
         }
 
         const auto& dm = ctx.global.domain.at(infer.loc_file);
-        if (dm.structs.count(generated_name) ||
-            dm.functions.count(generated_name)) {
-            infer.name = generated_name;
+        if (dm.structs.count(name) ||
+            dm.functions.count(name)) {
+            infer.name = name;
         }
     }
     return infer;
