@@ -34,6 +34,10 @@ private:
     bool visit_impl_struct(ast::impl_struct*) override;
     bool visit_call_id(ast::call_id*) override;
 
+private:
+    void replace_struct_type(colgm_struct&, const generic_data&);
+    void replace_func_type(colgm_func&, const generic_data&);
+
 public:
     generic_visitor(error& e, sema_context& c):
         ctx(c), rp(e), tr(e, ctx) {}

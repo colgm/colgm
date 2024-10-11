@@ -471,7 +471,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
 
     const auto& domain = ctx.global.domain.at(prev.loc_file);
     if (!domain.structs.count(prev.name)) {
-        rp.report(node, "cannot get field from \"" + prev.to_string() + "\".");
+        rp.report(node, "cannot get field from \"" + prev.full_path_name() + "\".");
         return type::error_type();
     }
 
@@ -785,7 +785,7 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
 
     const auto& domain = ctx.global.domain.at(prev.loc_file);
     if (!domain.structs.count(prev.name)) {
-        rp.report(node, "cannot get field from \"" + prev.to_string() + "\".");
+        rp.report(node, "cannot get field from \"" + prev.full_path_name() + "\".");
         return type::error_type();
     }
 

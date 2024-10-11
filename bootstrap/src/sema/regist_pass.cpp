@@ -97,6 +97,52 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     return true;
 }
 
+void generic_visitor::replace_struct_type(colgm_struct& s,
+                                          const generic_data& data) {
+    for(auto& i : s.field) {
+        const auto& generic_name = i.second.symbol_type.name;
+        if (!data.types.count(generic_name)) {
+            continue;
+        }
+        const auto& real = data.types.at(generic_name);
+        i.second.symbol_type.name = real.name;
+        i.second.symbol_type.loc_file = real.loc_file;
+    }
+
+    // FIXME: failed when type is generic and contains generic type
+    // for example: -> Vec<T>
+    for(auto& i : s.method) {
+        replace_func_type(i.second, data);
+    }
+    for(auto& i : s.static_method) {
+        replace_func_type(i.second, data);
+    }
+    return;
+}
+
+void generic_visitor::replace_func_type(colgm_func& f,
+                                        const generic_data& data) {
+    // replace return type
+    const auto& generic_return_name = f.return_type.name;
+    if (!data.types.count(generic_return_name)) {
+        return;
+    }
+    const auto& real = data.types.at(generic_return_name);
+    f.return_type.name = real.name;
+    f.return_type.loc_file = real.loc_file;
+
+    // replace parameter type
+    for(auto& i : f.parameters) {
+        const auto& generic_name = i.symbol_type.name;
+        if (!data.types.count(generic_name)) {
+            continue;
+        }
+        const auto& real = data.types.at(generic_name);
+        i.symbol_type.name = real.name;
+        i.symbol_type.loc_file = real.loc_file;
+    }
+}
+
 void generic_visitor::dump() const {
     for(const auto& i : generic_data_map) {
         const auto t = type {
@@ -117,32 +163,24 @@ void generic_visitor::insert_into_symbol_table() {
     for(const auto& i : generic_data_map) {
         const auto& data = i.second;
 
-        // insert type
-        const auto t = type {
-            .name = data.generated_name,
-            .loc_file = data.loc_file
-        };
-
         if (!ctx.global.domain.count(data.loc_file)) {
             continue;
         }
 
         auto& dm = ctx.global.domain.at(data.loc_file);
         if (dm.generic_structs.count(data.name)) {
-            const auto& generic = dm.generic_structs.at(data.name);
             dm.structs.insert({
                 data.generated_name,
-                generic
+                dm.generic_structs.at(data.name)
             });
-            // FIXME: do type replace
+            replace_struct_type(dm.structs.at(data.generated_name), i.second);
         }
         if (dm.generic_functions.count(data.name)) {
-            const auto& generic = dm.generic_functions.at(data.name);
             dm.functions.insert({
                 data.generated_name,
-                generic
+                dm.generic_functions.at(data.name)
             });
-            // FIXME: do type replace
+            replace_func_type(dm.functions.at(data.generated_name), i.second);
         }
     }
 }
@@ -745,11 +783,24 @@ colgm_func regist_pass::generate_single_global_func(func_decl* node) {
     auto func_self = colgm_func();
     func_self.name = node->get_name();
     func_self.location = node->get_location();
+
+    // create generic temporary table
+    ctx.generics = {};
+    if (node->get_generic_types()) {
+        for(auto i : node->get_generic_types()->get_types()) {
+            ctx.generics.insert(i->get_name()->get_name());
+        }
+    }
+
     generate_parameter_list(node->get_params(), func_self);
     generate_return_type(node->get_return_type(), func_self);
     if (node->get_name()=="main" && func_self.return_type.is_void()) {
         rp.warn(node, "main function should return integer.");
     }
+
+    // clear generic temporary table
+    ctx.generics = {};
+
     return func_self;
 }
 
