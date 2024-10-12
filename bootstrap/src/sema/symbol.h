@@ -41,6 +41,15 @@ struct type {
     bool is_generic_placeholder = false;
 
     struct_method_info stm_info;
+    std::vector<type>* generics = nullptr;
+
+public:
+    type() = default;
+    ~type() {
+        if (generics) {
+            delete generics;
+        }
+    }
 
 private:
     void check_pointer_depth() const;
@@ -128,8 +137,8 @@ public:
 };
 
 struct symbol {
-    std::string name;
-    type symbol_type;
+    std::string name; // symbol name
+    type symbol_type; // symbol type
 };
 
 }
