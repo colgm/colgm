@@ -34,7 +34,8 @@ execute bootstrapped new compiler:
 lli colgm.ll main.colgm --library .
 ```
 
-LLVM jit interpreter maybe untable on some platforms, if lli crashed, try using `clang` to build `out.ll` to executable:
+LLVM jit interpreter maybe unstable on some platforms,
+if lli crashed, try using `clang` to build `out.ll` to executable:
 
 ```sh
 clang colgm.ll -o colgm
