@@ -81,32 +81,41 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     }
 
     // insert data
-    if (generic_data_map.count(ss.str())) {
+    if (generic_type_map.count(ss.str())) {
         return true;
     }
-    generic_data_map.insert({ss.str(), {}});
-    auto& data = generic_data_map.at(ss.str());
-    data.name = type_name;
-    data.generated_name = ss.str();
-    data.loc_file = sym.loc_file;
+    generic_type_map.insert({ss.str(), {}});
+    auto& rec = generic_type_map.at(ss.str());
+    rec.generic_type.name = type_name;
+    rec.generic_type.loc_file = sym.loc_file;
 
     for(i64 i = 0; i < generic_template.size(); ++i) {
         auto t = node->get_generic_types()->get_types()[i];
-        data.types.insert({generic_template[i], tr.resolve(t)});
+        const auto resolved_type = tr.resolve(t);
+        rec.generic_type.generics.push_back(resolved_type);
+        rec.types.insert({generic_template[i], resolved_type});
     }
     return true;
+}
+
+void generic_visitor::replace_type(type& t, const generic_data& data) {
+    if (data.types.count(t.name)) {
+        const auto& real = data.types.at(t.name);
+        t.name = real.name;
+        t.loc_file = real.loc_file;
+    }
+    if (t.generics.empty()) {
+        return;
+    }
+    for(auto& g : t.generics) {
+        replace_type(g, data);
+    }
 }
 
 void generic_visitor::replace_struct_type(colgm_struct& s,
                                           const generic_data& data) {
     for(auto& i : s.field) {
-        const auto& generic_name = i.second.symbol_type.name;
-        if (!data.types.count(generic_name)) {
-            continue;
-        }
-        const auto& real = data.types.at(generic_name);
-        i.second.symbol_type.name = real.name;
-        i.second.symbol_type.loc_file = real.loc_file;
+        replace_type(i.second.symbol_type, data);
     }
 
     // FIXME: failed when type is generic and contains generic type
@@ -123,45 +132,32 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
 void generic_visitor::replace_func_type(colgm_func& f,
                                         const generic_data& data) {
     // replace return type
-    const auto& generic_return_name = f.return_type.name;
-    if (!data.types.count(generic_return_name)) {
-        return;
-    }
-    const auto& real = data.types.at(generic_return_name);
-    f.return_type.name = real.name;
-    f.return_type.loc_file = real.loc_file;
+    replace_type(f.return_type, data);
 
     // replace parameter type
     for(auto& i : f.parameters) {
-        const auto& generic_name = i.symbol_type.name;
-        if (!data.types.count(generic_name)) {
-            continue;
-        }
-        const auto& real = data.types.at(generic_name);
-        i.symbol_type.name = real.name;
-        i.symbol_type.loc_file = real.loc_file;
+        replace_type(i.symbol_type, data);
     }
 }
 
 void generic_visitor::dump() const {
-    for(const auto& i : generic_data_map) {
-        const auto t = type {
-            .name = i.first,
-            .loc_file = i.second.loc_file
-        };
-        std::cout << t.full_path_name() << ": " << i.second.loc_file << "\n";
-        for(const auto& real : i.second.types) {
-            std::cout << "  " << real.first << ": ";
-            std::cout << real.second.full_path_name() << " ";
-            std::cout << real.second.loc_file << "\n";
+    for(const auto& i : generic_type_map) {
+        std::cout << i.second.generic_type.full_path_name();
+        std::cout << ": " << i.second.generic_type.loc_file << "\n";
+        for(const auto& real : i.second.generic_type.generics) {
+            std::cout << "  ";
+            std::cout << real.full_path_name() << " ";
+            std::cout << real.loc_file << "\n";
         }
         std::cout << "\n";
     }
 }
 
 void generic_visitor::insert_into_symbol_table() {
-    for(const auto& i : generic_data_map) {
-        const auto& data = i.second;
+    for(const auto& i : generic_type_map) {
+        const auto& data = i.second.generic_type;
+        // not full path name
+        const auto generic_name = data.generic_name();
 
         if (!ctx.global.domain.count(data.loc_file)) {
             continue;
@@ -170,17 +166,17 @@ void generic_visitor::insert_into_symbol_table() {
         auto& dm = ctx.global.domain.at(data.loc_file);
         if (dm.generic_structs.count(data.name)) {
             dm.structs.insert({
-                data.generated_name,
+                generic_name,
                 dm.generic_structs.at(data.name)
             });
-            replace_struct_type(dm.structs.at(data.generated_name), i.second);
+            replace_struct_type(dm.structs.at(generic_name), i.second);
         }
         if (dm.generic_functions.count(data.name)) {
             dm.functions.insert({
-                data.generated_name,
+                generic_name,
                 dm.generic_functions.at(data.name)
             });
-            replace_func_type(dm.functions.at(data.generated_name), i.second);
+            replace_func_type(dm.functions.at(generic_name), i.second);
         }
     }
 }

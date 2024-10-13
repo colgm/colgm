@@ -34,9 +34,26 @@ std::string type::full_path_name() const {
     const auto pkg = package_manager::singleton();
     const auto module_name = pkg->get_module_name(loc_file);
     if (module_name.empty()) {
-        return name;
+        return generic_name();
     }
-    return module_name + "::" + name;
+    return module_name + "::" + generic_name();
+}
+
+std::string type::generic_name() const {
+    auto result = name;
+    if (generics.empty()) {
+        return result;
+    }
+    result += "<";
+    for(const auto& g: generics) {
+        result += g.full_path_name();
+        result += ",";
+    }
+    if (result.back()==',') {
+        result.pop_back();
+    }
+    result += ">";
+    return result;
 }
 
 std::ostream& operator<<(std::ostream& out, const type& t) {

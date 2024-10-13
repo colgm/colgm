@@ -3,6 +3,8 @@
 #include "ast/stmt.h"
 #include "sema/type_resolver.h"
 
+#include <vector>
+
 namespace colgm {
 
 type type_resolver::resolve(ast::type_def* node) {
@@ -42,9 +44,18 @@ type type_resolver::resolve(ast::type_def* node) {
         res.is_constant_type = true;
     }
 
-    // if node has generics, set it
+    // if node has generics and we can find it, set it as the place holder
     if (ctx.generics.size() && ctx.generics.count(name)) {
         res.is_generic_placeholder = true;
+    }
+
+    // resolve generics
+    if (node->get_generic_types()) {
+        res.generics = {};
+
+        for (auto& g : node->get_generic_types()->get_types()) {
+            res.generics.push_back(resolve(g));
+        }
     }
     return res;
 }

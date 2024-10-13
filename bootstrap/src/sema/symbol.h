@@ -41,15 +41,7 @@ struct type {
     bool is_generic_placeholder = false;
 
     struct_method_info stm_info;
-    std::vector<type>* generics = nullptr;
-
-public:
-    type() = default;
-    ~type() {
-        if (generics) {
-            delete generics;
-        }
-    }
+    std::vector<type> generics = {};
 
 private:
     void check_pointer_depth() const;
@@ -57,6 +49,13 @@ private:
 public:
     std::string to_string() const;
     std::string full_path_name() const;
+    std::string generic_name() const;
+    // return name for symbol table search
+    // normal type: .name
+    // generic type: .generic_name()
+    std::string name_for_search() const {
+        return generics.size() ? generic_name() : name;
+    }
     bool operator==(const type& another) const {
         return name==another.name &&
                pointer_depth==another.pointer_depth;
