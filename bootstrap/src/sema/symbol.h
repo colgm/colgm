@@ -65,7 +65,7 @@ public:
                pointer_depth!=another.pointer_depth;
     }
     bool eq_no_ptr(const type& another) const {
-        return name==another.name;
+        return generic_name() == another.generic_name();
     }
     friend std::ostream& operator<<(std::ostream&, const type&);
 

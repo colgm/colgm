@@ -40,14 +40,15 @@ void sema_context::dump_generics(const std::vector<std::string>& v) const {
 
 void sema_context::dump_structs() const {
     for(const auto& domain : global.domain) {
-        if (domain.second.structs.empty()) {
+        if (domain.second.structs.empty() &&
+            domain.second.generic_structs.empty()) {
             continue;
         }
-        std::cout << "info of " << domain.first << ":\n";
+        std::cout << "\ninfo of " << domain.first << ":\n";
         for(const auto& i : domain.second.structs) {
             dump_single_struct(i.second);
         }
-        std::cout << "info of " << domain.first << " [generic]:\n";
+        std::cout << "\ninfo of " << domain.first << " [generic]:\n";
         for(const auto& i : domain.second.generic_structs) {
             dump_single_struct(i.second);
         }
@@ -66,11 +67,16 @@ void sema_context::dump_single_struct(const colgm_struct& st) const {
         std::cout << "\n";
     }
     std::cout << "  }\n";
-    if (st.method.empty()) {
+    if (st.method.empty() && st.static_method.empty()) {
         return;
     }
-    std::cout << "  impl " << st.name << " {\n";
+    std::cout << "  impl " << st.name;
+    dump_generics(st.generic_template);
+    std::cout << " {\n";
     for(const auto& method : st.method) {
+        dump_single_function(method.second, "  ");
+    }
+    for(const auto& method : st.static_method) {
         dump_single_function(method.second, "  ");
     }
     std::cout << "  }\n";
@@ -81,7 +87,7 @@ void sema_context::dump_enums() const {
         if (domain.second.enums.empty()) {
             continue;
         }
-        std::cout << "info of " << domain.first << ":\n";
+        std::cout << "\ninfo of " << domain.first << ":\n";
         for(const auto& en : domain.second.enums) {
             std::cout << "  enum " << en.second.name << " {\n";
             for(const auto& i : en.second.ordered_member) {
@@ -95,14 +101,15 @@ void sema_context::dump_enums() const {
 
 void sema_context::dump_functions() const {
     for(const auto& domain : global.domain) {
-        if (domain.second.functions.empty()) {
+        if (domain.second.functions.empty() &&
+            domain.second.generic_functions.empty()) {
             continue;
         }
-        std::cout << "info of " << domain.first << ":\n";
+        std::cout << "\ninfo of " << domain.first << ":\n";
         for(const auto& func : domain.second.functions) {
             dump_single_function(func.second, "");
         }
-        std::cout << "info of " << domain.first << " [generic]:\n";
+        std::cout << "\ninfo of " << domain.first << " [generic]:\n";
         for(const auto& func : domain.second.generic_functions) {
             dump_single_function(func.second, "");
         }

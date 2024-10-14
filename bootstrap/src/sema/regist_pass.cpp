@@ -117,6 +117,9 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     for(auto& i : s.field) {
         replace_type(i.second.symbol_type, data);
     }
+    for(auto& i : s.ordered_field) {
+        replace_type(i.symbol_type, data);
+    }
 
     // FIXME: failed when type is generic and contains generic type
     // for example: -> Vec<T>
@@ -169,6 +172,8 @@ void generic_visitor::insert_into_symbol_table() {
                 generic_name,
                 dm.generic_structs.at(data.name)
             });
+            dm.structs.at(generic_name).name = generic_name;
+            dm.structs.at(generic_name).generic_template.clear();
             replace_struct_type(dm.structs.at(generic_name), i.second);
         }
         if (dm.generic_functions.count(data.name)) {
@@ -176,6 +181,8 @@ void generic_visitor::insert_into_symbol_table() {
                 generic_name,
                 dm.generic_functions.at(data.name)
             });
+            dm.functions.at(generic_name).name = generic_name;
+            dm.functions.at(generic_name).generic_template.clear();
             replace_func_type(dm.functions.at(generic_name), i.second);
         }
     }
@@ -583,6 +590,11 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
         std::unordered_set<std::string> used_generic;
         for(auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
+            if (ctx.global_symbol.count(generic_name)) {
+                rp.report(i, "generic type \"" + generic_name +
+                    "\" conflicts with exist symbol."
+                );
+            }
             if (used_generic.count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
                     "\" conflicts with exist generic type."
@@ -655,6 +667,13 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
             .pointer_depth = 1
         })}
     );
+
+    if (node->get_generic_types()) {
+        auto& g = self.static_method.at("__alloc__").return_type.generics;
+        for(auto i : node->get_generic_types()->get_types()) {
+            g.push_back(tr.resolve(i));
+        }
+    }
 }
 
 void regist_pass::check_struct_self_reference() {
@@ -762,6 +781,11 @@ void regist_pass::regist_single_global_func(ast::func_decl* node) {
         std::unordered_set<std::string> used_generic;
         for(auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
+            if (ctx.global_symbol.count(generic_name)) {
+                rp.report(i, "generic type \"" + generic_name +
+                    "\" conflicts with exist symbol."
+                );
+            }
             if (used_generic.count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
                     "\" conflicts with exist generic type."
@@ -903,6 +927,23 @@ colgm_func regist_pass::generate_method(ast::func_decl* node,
     return func_self;
 }
 
+void regist_pass::generate_self_parameter(ast::param* node,
+                                          const colgm_struct& stct) {
+    auto new_type_def = new type_def(node->get_location());
+    new_type_def->set_name(new identifier(
+        node->get_name()->get_location(),
+        stct.name
+    ));
+    new_type_def->set_generic_types(new generic_type_list(node->get_location()));
+    for(auto& i : stct.generic_template) {
+        auto t = new type_def(node->get_location());
+        t->set_name(new identifier(node->get_location(), i));
+        new_type_def->get_generic_types()->add_type(t);
+    }
+    new_type_def->add_pointer_level();
+    node->set_type(new_type_def);
+}
+
 void regist_pass::generate_method_parameter_list(param_list* node,
                                                  colgm_func& self,
                                                  const colgm_struct& stct) {
@@ -915,12 +956,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
             rp.warn(i->get_type(), "\"self\" does not need type.");
         }
         if (is_self && !i->get_type()) {
-            i->set_type(new type_def(i->get_name()->get_location()));
-            i->get_type()->set_name(new identifier(
-                i->get_name()->get_location(),
-                stct.name
-            ));
-            i->get_type()->add_pointer_level();
+            generate_self_parameter(i, stct);
         }
         generate_parameter(i, self);
     }

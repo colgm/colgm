@@ -23,7 +23,7 @@ void type::check_pointer_depth() const {
 
 std::string type::to_string() const {
     check_pointer_depth();
-    auto result = name;
+    auto result = generic_name();
     for(i64 i = 0; i<pointer_depth; ++i) {
         result += "*";
     }
@@ -58,7 +58,7 @@ std::string type::generic_name() const {
 
 std::ostream& operator<<(std::ostream& out, const type& t) {
     t.check_pointer_depth();
-    out << t.name;
+    out << t.full_path_name();
     for(i64 i = 0; i<t.pointer_depth; ++i) {
         out << "*";
     }

@@ -101,6 +101,7 @@ private: // implementations
     void regist_impls(ast::root*);
     void regist_single_impl(ast::impl_struct*);
     colgm_func generate_method(ast::func_decl*, const colgm_struct&);
+    void generate_self_parameter(ast::param*, const colgm_struct&);
     void generate_method_parameter_list(ast::param_list*,
                                         colgm_func&,
                                         const colgm_struct&);
