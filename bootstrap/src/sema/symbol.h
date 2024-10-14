@@ -71,6 +71,7 @@ public:
 
 public:
     static const type error_type() { return {"<err>", "", 0}; }
+    static const type restrict_type() { return {"<restrict>", "", 0}; }
     static const type u64_type(i64 ptrlvl = 0) { return {"u64", "", ptrlvl}; }
     static const type u32_type(i64 ptrlvl = 0) { return {"u32", "", ptrlvl}; }
     static const type u16_type(i64 ptrlvl = 0) { return {"u16", "", ptrlvl}; }

@@ -936,14 +936,14 @@ type semantic::resolve_assignment(assignment* node) {
                     "bitwise operator cannot be used on \"" +
                     left.to_string() + "\"."
                 );
-                return type::bool_type();
+                return type::restrict_type();
             }
             if (!right.is_integer()) {
                 rp.report(node->get_right(),
                     "bitwise operator cannot be used on \"" +
                     right.to_string() + "\"."
                 );
-                return type::bool_type();
+                return type::restrict_type();
             }
         default: break;
     }
@@ -965,9 +965,9 @@ type semantic::resolve_assignment(assignment* node) {
     if (ctx.search_symbol_kind(left)==sym_kind::enum_kind &&
         node->get_type()!=assignment::kind::eq) {
         rp.report(node, "cannot calculate enum \"" + left.to_string() + "\".");
-        return type::bool_type();
+        return type::restrict_type();
     }
-    return type::bool_type();
+    return type::restrict_type();
 }
 
 type semantic::resolve_expression(expr* node) {
