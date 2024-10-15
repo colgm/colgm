@@ -207,6 +207,12 @@ public:
     bool is_public_func() const { return is_public; }
     void set_extern(bool b) { is_extern = b; }
     bool is_extern_func() const { return is_extern; }
+    void clear_generic_types() {
+        if (generic_types) {
+            delete generic_types;
+            generic_types = nullptr;
+        }
+    }
 };
 
 class impl_struct: public decl {
@@ -228,6 +234,12 @@ public:
     auto get_generic_types() const { return generic_types; }
     void add_method(func_decl* node) { methods.push_back(node); }
     const auto& get_methods() const { return methods; }
+    void clear_generic_types() {
+        if (generic_types) {
+            delete generic_types;
+            generic_types = nullptr;
+        }
+    }
 };
 
 }

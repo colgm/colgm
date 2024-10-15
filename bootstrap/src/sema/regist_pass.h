@@ -14,17 +14,36 @@
 
 namespace colgm {
 
-class generic_visitor: public ast::visitor {
-private:
-    struct generic_data {
-        type generic_type;
-        std::unordered_map<std::string, type> types;
-    };
+struct generic_data {
+    type generic_type;
+    std::unordered_map<std::string, type> types;
+};
 
+class type_replace_pass: public ast::visitor {
+private:
+    sema_context& ctx;
+    generic_data g_data;
+
+private:
+    bool visit_type_def(ast::type_def*) override;
+
+public:
+    type_replace_pass(sema_context& c, const generic_data& gd):
+        ctx(c), g_data(gd) {}
+    void visit_func(ast::func_decl* node) {
+        node->accept(this);
+    }
+    void visit_impl(ast::impl_struct* node) {
+        node->accept(this);
+    }
+};
+
+class generic_visitor: public ast::visitor {
 private:
     sema_context& ctx;
     reporter rp;
     type_resolver tr;
+    ast::root* root;
     std::unordered_map<std::string, generic_data> generic_type_map;
 
 private:
@@ -39,9 +58,10 @@ private:
 
 public:
     generic_visitor(error& e, sema_context& c):
-        ctx(c), rp(e), tr(e, ctx) {}
+        ctx(c), rp(e), tr(e, ctx), root(nullptr) {}
     void visit(ast::root* n) {
         generic_type_map = {};
+        root = n;
         n->accept(this);
     }
     void dump() const;

@@ -128,6 +128,7 @@ public:
     }
 
     const auto& get_name() const { return name; }
+    void reset_name(const std::string& id_name) { name = id_name; }
 };
 
 class nil_literal: public expr {

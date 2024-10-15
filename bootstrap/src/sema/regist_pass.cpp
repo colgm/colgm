@@ -6,12 +6,25 @@
 #include "sema/semantic.h"
 #include "mir/ast2mir.h"
 
+#include "ast/dumper.h"
+
 #include <cstring>
 #include <sstream>
 #include <queue>
 #include <unordered_map>
 
 namespace colgm {
+
+bool type_replace_pass::visit_type_def(type_def* node) {
+    const auto name = node->get_name()->get_name();
+    if (g_data.types.count(name)) {
+        node->get_name()->reset_name(g_data.types.at(name).name);
+    }
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
+    return true;
+}
 
 bool generic_visitor::visit_func_decl(func_decl* node) {
     // do not scan generic function block
@@ -129,6 +142,16 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     for(auto& i : s.static_method) {
         replace_func_type(i.second, data);
     }
+
+    type_replace_pass trp(ctx, data);
+    ast::dumper dp;
+    for(auto i : s.generic_struct_impl) {
+        trp.visit_impl(i);
+        root->add_decl(i);
+        i->clear_generic_types();
+        i->accept(&dp);
+    }
+    s.generic_struct_impl.clear();
     return;
 }
 
@@ -141,6 +164,16 @@ void generic_visitor::replace_func_type(colgm_func& f,
     for(auto& i : f.parameters) {
         replace_type(i.symbol_type, data);
     }
+
+    if (f.generic_func_decl) {
+        type_replace_pass trp(ctx, data);
+        ast::dumper dp;
+        trp.visit_func(f.generic_func_decl);
+        root->add_decl(f.generic_func_decl);
+        f.generic_func_decl->clear_generic_types();
+        f.generic_func_decl->accept(&dp);
+    }
+    f.generic_func_decl = nullptr;
 }
 
 void generic_visitor::dump() const {
