@@ -26,6 +26,17 @@ bool type_replace_pass::visit_type_def(type_def* node) {
     return true;
 }
 
+bool type_replace_pass::visit_call_id(ast::call_id* node) {
+    const auto name = node->get_id()->get_name();
+    if (g_data.types.count(name)) {
+        node->get_id()->set_name(g_data.types.at(name).name);
+    }
+    if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
+    }
+    return true;
+}
+
 bool generic_visitor::visit_func_decl(func_decl* node) {
     // do not scan generic function block
     if (node->get_generic_types()) {
@@ -134,8 +145,6 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
         replace_type(i.symbol_type, data);
     }
 
-    // FIXME: failed when type is generic and contains generic type
-    // for example: -> Vec<T>
     for(auto& i : s.method) {
         replace_func_type(i.second, data);
     }
@@ -148,6 +157,7 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     for(auto i : s.generic_struct_impl) {
         trp.visit_impl(i);
         root->add_decl(i);
+        i->set_struct_name(s.name); // FIXME: hack here
         i->clear_generic_types();
         i->accept(&dp);
     }
@@ -170,6 +180,7 @@ void generic_visitor::replace_func_type(colgm_func& f,
         ast::dumper dp;
         trp.visit_func(f.generic_func_decl);
         root->add_decl(f.generic_func_decl);
+        f.generic_func_decl->set_name(f.name); // FIXME: hack here
         f.generic_func_decl->clear_generic_types();
         f.generic_func_decl->accept(&dp);
     }

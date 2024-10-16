@@ -126,7 +126,7 @@ public:
     identifier* clone() const override {
         return new identifier(location, name);
     }
-
+    void set_name(const std::string& id_name) { name = id_name; }
     const auto& get_name() const { return name; }
     void reset_name(const std::string& id_name) { name = id_name; }
 };

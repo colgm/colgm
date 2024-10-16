@@ -26,6 +26,7 @@ private:
 
 private:
     bool visit_type_def(ast::type_def*) override;
+    bool visit_call_id(ast::call_id*) override;
 
 public:
     type_replace_pass(sema_context& c, const generic_data& gd):

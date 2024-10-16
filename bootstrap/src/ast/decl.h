@@ -229,6 +229,7 @@ public:
     void accept(visitor*) override;
     impl_struct* clone() const override;
 
+    void set_struct_name(const std::string& n) { struct_name = n; }
     const auto& get_struct_name() const { return struct_name; }
     void set_generic_types(generic_type_list* node) { generic_types = node; }
     auto get_generic_types() const { return generic_types; }
