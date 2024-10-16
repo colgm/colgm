@@ -600,7 +600,8 @@ type semantic::resolve_call_id(call_id* node) {
         const auto& dm = ctx.global.domain.at(infer.loc_file);
         if (dm.structs.count(name) ||
             dm.functions.count(name)) {
-            infer.name = name;
+            infer.name = node->get_id()->get_name();
+            infer.generics = types;
         }
     }
     return infer;
@@ -610,9 +611,13 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // global function call
     if (prev.is_global_func) {
         const auto& domain = ctx.global.domain.at(prev.loc_file);
-        const auto& func = domain.functions.count(prev.name)
-            ? domain.functions.at(prev.name)
-            : domain.generic_functions.at(prev.name);
+        if (!domain.functions.count(prev.name_for_search())) {
+            rp.report(node,
+                "cannot find function \"" + prev.name_for_search() + "\"."
+            );
+            return type::error_type();
+        }
+        const auto& func = domain.functions.at(prev.name_for_search());
         check_static_call_args(func, node);
         node->set_resolve_type(func.return_type);
         return func.return_type;
@@ -620,7 +625,13 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // static method call of struct
     if (prev.stm_info.flag_is_static) {
         const auto& domain = ctx.global.domain.at(prev.loc_file);
-        const auto& st = domain.structs.at(prev.name);
+        if (!domain.structs.count(prev.name_for_search())) {
+            rp.report(node,
+                "cannot find struct \"" + prev.name_for_search() + "\"."
+            );
+            return type::error_type();
+        }
+        const auto& st = domain.structs.at(prev.name_for_search());
         const auto& method = st.static_method.at(prev.stm_info.method_name);
         check_static_call_args(method, node);
         node->set_resolve_type(method.return_type);
@@ -629,7 +640,13 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // method call of struct
     if (prev.stm_info.flag_is_normal) {
         const auto& domain = ctx.global.domain.at(prev.loc_file);
-        const auto& st = domain.structs.at(prev.name);
+        if (!domain.structs.count(prev.name_for_search())) {
+            rp.report(node,
+                "cannot find struct \"" + prev.name_for_search() + "\"."
+            );
+            return type::error_type();
+        }
+        const auto& st = domain.structs.at(prev.name_for_search());
         const auto& method = st.method.at(prev.stm_info.method_name);
         check_method_call_args(method, prev, node);
         node->set_resolve_type(method.return_type);
@@ -675,17 +692,21 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
     }
 
     const auto& domain = ctx.global.domain.at(prev.loc_file);
-    if (!domain.structs.count(prev.name)) {
-        rp.report(node, "\"" + prev.name + "\" is not a struct type, cannot initialize.");
+    if (!domain.structs.count(prev.name_for_search())) {
+        rp.report(node,
+            "\"" + prev.name_for_search() +
+            "\" is not a struct type, cannot initialize."
+        );
         return type::error_type();
     }
 
-    const auto& st = domain.structs.at(prev.name);
+    const auto& st = domain.structs.at(prev.name_for_search());
     for(auto i : node->get_pairs()) {
         const auto& field = i->get_field()->get_name();
         if (!st.field.count(field)) {
             rp.report(i,
-                "cannot find field \"" + field + "\" in \"" + prev.name + "\"."
+                "cannot find field \"" + field +
+                "\" in \"" + prev.name_for_search() + "\"."
             );
             continue;
         }

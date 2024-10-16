@@ -153,13 +153,11 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     }
 
     type_replace_pass trp(ctx, data);
-    ast::dumper dp;
     for(auto i : s.generic_struct_impl) {
         trp.visit_impl(i);
         root->add_decl(i);
         i->set_struct_name(s.name); // FIXME: hack here
         i->clear_generic_types();
-        i->accept(&dp);
     }
     s.generic_struct_impl.clear();
     return;
@@ -177,12 +175,10 @@ void generic_visitor::replace_func_type(colgm_func& f,
 
     if (f.generic_func_decl) {
         type_replace_pass trp(ctx, data);
-        ast::dumper dp;
         trp.visit_func(f.generic_func_decl);
         root->add_decl(f.generic_func_decl);
         f.generic_func_decl->set_name(f.name); // FIXME: hack here
         f.generic_func_decl->clear_generic_types();
-        f.generic_func_decl->accept(&dp);
     }
     f.generic_func_decl = nullptr;
 }
