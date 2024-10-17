@@ -11,11 +11,11 @@ namespace colgm {
 class type_resolver {
 private:
     error& err;
-    sema_context& ctx;
+    const sema_context& ctx;
     reporter rp;
 
 public:
-    type_resolver(error& e, sema_context& c):
+    type_resolver(error& e, const sema_context& c):
         err(e), ctx(c), rp(err) {}
     type resolve(ast::type_def*);
 };

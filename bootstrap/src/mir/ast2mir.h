@@ -3,6 +3,7 @@
 #include "colgm.h"
 #include "ast/visitor.h"
 #include "sema/context.h"
+#include "sema/type_resolver.h"
 #include "mir/mir.h"
 #include "report.h"
 
@@ -53,6 +54,7 @@ class ast2mir: public ast::visitor {
 private:
     error& err;
     const sema_context& ctx;
+    type_resolver tr;
 
 private:
     static inline mir_context mctx;
@@ -97,7 +99,7 @@ private:
     type generate_type(ast::type_def*);
 
 public:
-    ast2mir(error& e, const sema_context& c): err(e), ctx(c) {}
+    ast2mir(error& e, const sema_context& c): err(e), ctx(c), tr(e, c) {}
 
 public:
     static void dump(std::ostream&);

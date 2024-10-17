@@ -606,16 +606,7 @@ bool ast2mir::visit_code_block(ast::code_block* node) {
 }
 
 type ast2mir::generate_type(ast::type_def* node) {
-    const auto& name = node->get_name()->get_name();
-    auto loc_file = node->get_file();
-    if (ctx.global_symbol.count(name)) {
-        loc_file = ctx.global_symbol.at(name).loc_file;
-    }
-    return type {
-        .name = name,
-        .loc_file = loc_file,
-        .pointer_depth = node->get_pointer_level()
-    };
+    return tr.resolve(node);
 }
 
 void ast2mir::dump(std::ostream& os) {
