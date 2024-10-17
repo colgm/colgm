@@ -4,6 +4,7 @@
 #include "package/package.h"
 #include "ast/decl.h"
 
+#include <iostream>
 #include <cstdint>
 #include <cstring>
 #include <sstream>
@@ -63,6 +64,18 @@ std::ostream& operator<<(std::ostream& out, const type& t) {
         out << "*";
     }
     return out;
+}
+
+void type::dump(const std::string& end) const {
+    std::cerr << "[" << name << "|";
+    if (!generics.empty()) {
+        std::cerr << "<";
+        for(const auto& g: generics) {
+            g.dump("");
+        }
+        std::cerr << ">";
+    }
+    std::cerr << "]" << end;
 }
 
 }

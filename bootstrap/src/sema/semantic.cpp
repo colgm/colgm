@@ -60,10 +60,11 @@ void semantic::report_top_level_block_has_no_return(code_block* node,
     rp.report(node, "expect at least one return statement.");
 }
 
-type semantic::struct_static_method_infer(const std::string& st_name,
-                                          const std::string& loc_file,
+type semantic::struct_static_method_infer(const type& prev,
                                           const std::string& fn_name) {
-    auto infer = type({st_name, loc_file, 0, true});
+    auto infer = prev;
+    infer.pointer_depth = 0;
+    infer.is_global = true;
     infer.stm_info = {
         .flag_is_static = true,
         .flag_is_normal = false,
@@ -72,10 +73,11 @@ type semantic::struct_static_method_infer(const std::string& st_name,
     return infer;
 }
 
-type semantic::struct_method_infer(const std::string& st_name,
-                                   const std::string& loc_file,
+type semantic::struct_method_infer(const type& prev,
                                    const std::string& fn_name) {
-    auto infer = type({st_name, loc_file, 0, false});
+    auto infer = prev;
+    infer.pointer_depth = 0;
+    infer.is_global = true;
     infer.stm_info = {
         .flag_is_static = false,
         .flag_is_normal = true,
@@ -482,11 +484,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
     }
     if (struct_self.method.count(node->get_name())) {
         check_pub_method(node, node->get_name(), struct_self);
-        const auto res = struct_method_infer(
-            prev.name,
-            prev.loc_file,
-            node->get_name()
-        );
+        const auto res = struct_method_infer(prev, node->get_name());
         node->set_resolve_type(res);
         return res;
     }
@@ -749,11 +747,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         const auto& st = domain.structs.at(prev.name);
         if (st.static_method.count(node->get_name())) {
             check_pub_static_method(node, node->get_name(), st);
-            const auto res = struct_static_method_infer(
-                prev.name,
-                prev.loc_file,
-                node->get_name()
-            );
+            const auto res = struct_static_method_infer(prev, node->get_name());
             node->set_resolve_type(res);
             return res;
         } else {

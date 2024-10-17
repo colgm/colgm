@@ -56,34 +56,37 @@ public:
     std::string name_for_search() const {
         return generics.size() ? generic_name() : name;
     }
-    bool operator==(const type& another) const {
-        return name==another.name &&
-               pointer_depth==another.pointer_depth;
+    bool operator==(const type& rhs) const {
+        return name == rhs.name &&
+               pointer_depth == rhs.pointer_depth &&
+               generics == rhs.generics;
     }
-    bool operator!=(const type& another) const {
-        return name!=another.name ||
-               pointer_depth!=another.pointer_depth;
+    bool operator!=(const type& rhs) const {
+        return name != rhs.name ||
+               pointer_depth != rhs.pointer_depth ||
+               generics != rhs.generics;
     }
-    bool eq_no_ptr(const type& another) const {
-        return generic_name() == another.generic_name();
+    bool eq_no_ptr(const type& rhs) const {
+        return name == rhs.name &&
+               generics == rhs.generics;
     }
     friend std::ostream& operator<<(std::ostream&, const type&);
 
 public:
     static const type error_type() { return {"<err>", "", 0}; }
     static const type restrict_type() { return {"<restrict>", "", 0}; }
-    static const type u64_type(i64 ptrlvl = 0) { return {"u64", "", ptrlvl}; }
-    static const type u32_type(i64 ptrlvl = 0) { return {"u32", "", ptrlvl}; }
-    static const type u16_type(i64 ptrlvl = 0) { return {"u16", "", ptrlvl}; }
-    static const type u8_type(i64 ptrlvl = 0) { return {"u8", "", ptrlvl}; }
-    static const type i64_type(i64 ptrlvl = 0) { return {"i64", "", ptrlvl}; }
-    static const type i32_type(i64 ptrlvl = 0) { return {"i32", "", ptrlvl}; }
-    static const type i16_type(i64 ptrlvl = 0) { return {"i16", "", ptrlvl}; }
-    static const type i8_type(i64 ptrlvl = 0) { return {"i8", "", ptrlvl}; }
-    static const type f64_type(i64 ptrlvl = 0) { return {"f64", "", ptrlvl}; }
-    static const type f32_type(i64 ptrlvl = 0) { return {"f32", "", ptrlvl}; }
-    static const type void_type(i64 ptrlvl = 0) { return {"void", "", ptrlvl}; }
-    static const type bool_type(i64 ptrlvl = 0) { return {"bool", "", ptrlvl}; }
+    static const type u64_type(i64 plvl = 0) { return {"u64", "", plvl}; }
+    static const type u32_type(i64 plvl = 0) { return {"u32", "", plvl}; }
+    static const type u16_type(i64 plvl = 0) { return {"u16", "", plvl}; }
+    static const type u8_type(i64 plvl = 0) { return {"u8", "", plvl}; }
+    static const type i64_type(i64 plvl = 0) { return {"i64", "", plvl}; }
+    static const type i32_type(i64 plvl = 0) { return {"i32", "", plvl}; }
+    static const type i16_type(i64 plvl = 0) { return {"i16", "", plvl}; }
+    static const type i8_type(i64 plvl = 0) { return {"i8", "", plvl}; }
+    static const type f64_type(i64 plvl = 0) { return {"f64", "", plvl}; }
+    static const type f32_type(i64 plvl = 0) { return {"f32", "", plvl}; }
+    static const type void_type(i64 plvl = 0) { return {"void", "", plvl}; }
+    static const type bool_type(i64 plvl = 0) { return {"bool", "", plvl}; }
 
 public:
     bool is_error() const { return name=="<err>"; }
@@ -134,6 +137,7 @@ public:
         --copy.pointer_depth;
         return copy;
     }
+    void dump(const std::string& end = "\n") const;
 };
 
 struct symbol {
