@@ -113,8 +113,7 @@ void execute(const std::string& input_file,
     // parser
     parser.analyse(lexer.result()).chkerr();
     if (cmd&COMPILE_VIEW_AST) {
-        colgm::dumper dump;
-        parser.get_result()->accept(&dump);
+        colgm::ast::dumper::dump(parser.get_result());
     }
 
     // simple semantic

@@ -38,8 +38,7 @@ private:
         return ss.str();
     }
 
-public:
-    dumper(): indent({}) {}
+private:
     bool visit_root(root*) override;
     bool visit_identifier(identifier*) override;
     bool visit_nil_literal(nil_literal*) override;
@@ -83,6 +82,13 @@ public:
     bool visit_continue_stmt(continue_stmt*) override;
     bool visit_break_stmt(break_stmt*) override;
     bool visit_code_block(code_block*) override;
+
+public:
+    dumper(): indent({}) {}
+    static void dump(node* n) {
+        dumper d;
+        n->accept(&d);
+    }
 };
 
 }
