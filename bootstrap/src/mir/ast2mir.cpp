@@ -144,6 +144,9 @@ bool ast2mir::visit_array_literal(ast::array_literal* node) {
 }
 
 bool ast2mir::visit_struct_decl(ast::struct_decl* node) {
+    if (node->get_generic_types()) {
+        return true;
+    }
     auto new_struct = new mir_struct;
     new_struct->name = node->get_name();
     new_struct->location = node->get_location();
@@ -156,6 +159,9 @@ bool ast2mir::visit_struct_decl(ast::struct_decl* node) {
 }
 
 bool ast2mir::visit_func_decl(ast::func_decl* node) {
+    if (node->get_generic_types()) {
+        return true;
+    }
     auto name = node->get_name();
     if (impl_struct_name.length()) {
         const auto tmp = type {
@@ -206,6 +212,9 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
 }
 
 bool ast2mir::visit_impl_struct(ast::impl_struct* node) {
+    if (node->get_generic_types()) {
+        return true;
+    }
     impl_struct_name = node->get_struct_name();
     for(auto i : node->get_methods()) {
         i->accept(this);
@@ -297,11 +306,19 @@ bool ast2mir::visit_call(ast::call* node) {
     auto new_block = new mir_block(node->get_location());
     auto temp = block;
     block = new_block;
-    block->add_content(new mir_call_id(
-        node->get_head()->get_location(),
-        node->get_head()->get_id()->get_name(),
-        node->get_head()->get_resolve()
-    ));
+    if (node->get_head()->get_generic_types()) {
+        block->add_content(new mir_call_id(
+            node->get_head()->get_location(),
+            node->get_head()->get_resolve().full_path_name(),
+            node->get_head()->get_resolve()
+        ));
+    } else {
+        block->add_content(new mir_call_id(
+            node->get_head()->get_location(),
+            node->get_head()->get_id()->get_name(),
+            node->get_head()->get_resolve()
+        ));
+    }
     for(auto i : node->get_chain()) {
         i->accept(this);
     }

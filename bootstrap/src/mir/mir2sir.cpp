@@ -542,7 +542,7 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
     ));
 
     const auto& dm = ctx.global.domain.at(node->get_type().loc_file);
-    const auto& st = dm.structs.at(node->get_type().name);
+    const auto& st = dm.structs.at(node->get_type().name_for_search());
     for(const auto& i : node->get_fields()) {
         const auto target = ssa_gen.create();
         const auto index = st.field_index(i.name);

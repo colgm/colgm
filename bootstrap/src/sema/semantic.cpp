@@ -565,7 +565,6 @@ void semantic::check_method_call_args(const colgm_func& func,
 
 type semantic::resolve_call_id(call_id* node) {
     auto infer = resolve_identifier(node->get_id());
-    node->set_resolve_type(infer);
     if (infer.is_error()) {
         return infer;
     }
@@ -602,6 +601,8 @@ type semantic::resolve_call_id(call_id* node) {
             infer.generics = types;
         }
     }
+
+    node->set_resolve_type(infer);
     return infer;
 }
 

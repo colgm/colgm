@@ -905,28 +905,6 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
     auto& stct = dm.structs.count(node->get_struct_name())
         ? dm.structs.at(node->get_struct_name())
         : dm.generic_structs.at(node->get_struct_name());
-    if (node->get_generic_types()) {
-        if (node->get_generic_types()->get_types().empty()) {
-            rp.report(node, "generic impl must have at least one generic type.");
-            return;
-        }
-        const auto& impl_generic_vec = node->get_generic_types()->get_types();
-        if (stct.generic_template.size() != impl_generic_vec.size()) {
-            rp.report(node, "generic type count does not match.");
-            return;
-        }
-        for(u64 i = 0; i < stct.generic_template.size(); ++i) {
-            const auto& name = impl_generic_vec[i]->get_name()->get_name();
-            if (stct.generic_template[i] != name) {
-                rp.report(impl_generic_vec[i], "generic type \"" + name +
-                    "\" does not match with \"" +
-                    stct.generic_template[i] + "\"."
-                );
-            }
-        }
-        // copy ast of this impl struct for template expansion
-        stct.generic_struct_impl.push_back(node->clone());
-    }
 
     ctx.generics = {};
     for(const auto& i : stct.generic_template) {
@@ -954,6 +932,29 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
         } else {
             stct.static_method.insert({i->get_name(), func});
         }
+    }
+
+    if (node->get_generic_types()) {
+        if (node->get_generic_types()->get_types().empty()) {
+            rp.report(node, "generic impl must have at least one generic type.");
+            return;
+        }
+        const auto& impl_generic_vec = node->get_generic_types()->get_types();
+        if (stct.generic_template.size() != impl_generic_vec.size()) {
+            rp.report(node, "generic type count does not match.");
+            return;
+        }
+        for(u64 i = 0; i < stct.generic_template.size(); ++i) {
+            const auto& name = impl_generic_vec[i]->get_name()->get_name();
+            if (stct.generic_template[i] != name) {
+                rp.report(impl_generic_vec[i], "generic type \"" + name +
+                    "\" does not match with \"" +
+                    stct.generic_template[i] + "\"."
+                );
+            }
+        }
+        // copy ast of this impl struct for template expansion
+        stct.generic_struct_impl.push_back(node->clone());
     }
 }
 
