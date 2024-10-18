@@ -73,13 +73,13 @@ public:
             return sym_kind::error_kind;
         }
         const auto& domain = global.domain.at(t.loc_file);
-        if (domain.enums.count(t.name)) {
+        if (domain.enums.count(t.name_for_search())) {
             return sym_kind::enum_kind;
         }
-        if (domain.structs.count(t.name)) {
+        if (domain.structs.count(t.name_for_search())) {
             return sym_kind::struct_kind;
         }
-        if (domain.functions.count(t.name)) {
+        if (domain.functions.count(t.name_for_search())) {
             return sym_kind::func_kind;
         }
         return sym_kind::error_kind;

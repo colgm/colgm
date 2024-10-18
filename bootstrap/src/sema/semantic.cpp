@@ -491,13 +491,13 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
     if (struct_self.static_method.count(node->get_name())) {
         rp.report(node,
             "method \"" + node->get_name() +
-            "\" in \"" + prev.name + "\" is static."
+            "\" in \"" + prev.name_for_search() + "\" is static."
         );
         return type::error_type();
     }
     rp.report(node,
         "cannot find field \"" + node->get_name() +
-        "\" in \"" + prev.name + "\"."
+        "\" in \"" + prev.name_for_search() + "\"."
     );
     return type::error_type();
 }
@@ -744,8 +744,8 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
     }
 
     const auto& domain = ctx.global.domain.at(prev.loc_file);
-    if (domain.structs.count(prev.name) && prev.is_global) {
-        const auto& st = domain.structs.at(prev.name);
+    if (domain.structs.count(prev.name_for_search()) && prev.is_global) {
+        const auto& st = domain.structs.at(prev.name_for_search());
         if (st.static_method.count(node->get_name())) {
             check_pub_static_method(node, node->get_name(), st);
             const auto res = struct_static_method_infer(prev, node->get_name());
@@ -754,13 +754,13 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         } else {
             rp.report(node,
                 "cannot find static method \"" + node->get_name() +
-                "\" in \"" + prev.name + "\"."
+                "\" in \"" + prev.name_for_search() + "\"."
             );
             return type::error_type();
         }
     }
-    if (domain.enums.count(prev.name) && prev.is_global) {
-        const auto& en = domain.enums.at(prev.name);
+    if (domain.enums.count(prev.name_for_search()) && prev.is_global) {
+        const auto& en = domain.enums.at(prev.name_for_search());
         if (en.members.count(node->get_name())) {
             auto res = prev;
             res.is_global = false;
@@ -769,9 +769,11 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         }
         rp.report(node,
             "cannot find enum member \"" + node->get_name() +
-            "\" in \"" + prev.name + "\"."
+            "\" in \"" + prev.name_for_search() + "\"."
         );
     }
+
+    rp.report(node, "cannot get path from \"" + prev.to_string() + "\".");
     return type::error_type();
 }
 
@@ -812,7 +814,12 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
     }
     if (struct_self.method.count(node->get_name())) {
         check_pub_method(node, node->get_name(), struct_self);
-        auto infer = type({prev.name, prev.loc_file, prev.pointer_depth, false});
+        auto infer = type({
+            prev.name,
+            prev.loc_file,
+            prev.pointer_depth,
+            false
+        });
         infer.stm_info = {
             .flag_is_static = false,
             .flag_is_normal = true,
@@ -824,13 +831,13 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
     if (struct_self.static_method.count(node->get_name())) {
         rp.report(node,
             "method \"" + node->get_name() +
-            "\" in \"" + prev.name + "\" is static."
+            "\" in \"" + prev.name_for_search() + "\" is static."
         );
         return type::error_type();
     }
     rp.report(node,
         "cannot find field \"" + node->get_name() +
-        "\" in \"" + prev.name + "\"."
+        "\" in \"" + prev.name_for_search() + "\"."
     );
     return type::error_type();
 }

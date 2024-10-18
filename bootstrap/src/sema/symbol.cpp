@@ -67,15 +67,15 @@ std::ostream& operator<<(std::ostream& out, const type& t) {
 }
 
 void type::dump(const std::string& end) const {
-    std::cerr << "[" << name << "|";
+    std::cerr << "(" << name;
     if (!generics.empty()) {
-        std::cerr << "<";
+        std::cerr << ":<";
         for(const auto& g: generics) {
             g.dump("");
         }
         std::cerr << ">";
     }
-    std::cerr << "]" << end;
+    std::cerr << ")" << end;
 }
 
 }

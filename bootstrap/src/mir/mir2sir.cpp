@@ -653,7 +653,7 @@ void mir2sir::visit_mir_call_index(mir_call_index* node) {
         type_mapping(prev.resolve_type.get_ref_copy().get_ref_copy()),
         type_mapping(index.resolve_type)
     ));
-    
+
     value_stack.push_back(mir_value_t::variable(
         target,
         node->get_type().get_pointer_copy()
