@@ -133,6 +133,12 @@ public:
     const auto& get_name() const { return name; }
     void set_generic_types(generic_type_list* node) { generic_types = node; }
     auto get_generic_types() const { return generic_types; }
+    void clear_generic_types() { 
+        if (generic_types) {
+            delete generic_types;
+            generic_types = nullptr;
+        }
+    }
     void set_public(bool b) { is_public = b; }
     bool is_public_struct() const { return is_public; }
     void set_extern(bool b) { is_extern = b; }

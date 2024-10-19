@@ -24,6 +24,7 @@ public:
 
 public:
     std::vector<std::string> generic_template;
+    ast::struct_decl* generic_struct_decl = nullptr;
     std::vector<ast::impl_struct*> generic_struct_impl;
 
 public:
@@ -37,8 +38,12 @@ public:
         field(s.field), ordered_field(s.ordered_field),
         static_method(s.static_method), method(s.method),
         generic_template(s.generic_template),
+        generic_struct_decl(nullptr),
         generic_struct_impl({}), is_public(s.is_public),
         is_extern(s.is_extern) {
+        if (s.generic_struct_decl) {
+            generic_struct_decl = s.generic_struct_decl->clone();
+        }
         for(auto i : s.generic_struct_impl) {
             generic_struct_impl.push_back(i->clone());
         }

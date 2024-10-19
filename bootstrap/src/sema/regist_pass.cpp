@@ -153,6 +153,12 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     }
 
     type_replace_pass trp(ctx, data);
+    if (s.generic_struct_decl) {
+        trp.visit_struct(s.generic_struct_decl);
+        root->add_decl(s.generic_struct_decl);
+        s.generic_struct_decl->set_name(s.name); // FIXME: hack here
+        s.generic_struct_decl->clear_generic_types();
+    }
     for(auto i : s.generic_struct_impl) {
         trp.visit_impl(i);
         root->add_decl(i);
@@ -643,6 +649,7 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
             used_generic.insert(generic_name);
             self.generic_template.push_back(generic_name);
         }
+        self.generic_struct_decl = node->clone();
     }
 }
 

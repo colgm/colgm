@@ -75,12 +75,14 @@ void sir_context::dump_struct_size_method(std::ostream& out) const {
         };
         const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
-        out << "define i64 @" << st_name;
-        out << ".__size__() alwaysinline {\n";
+        const auto size_func_name = quoted_name(st_name + ".__size__");
+        out << "define i64 @" << size_func_name;
+        out << "() alwaysinline {\n";
         out << "label.entry:\n";
-        out << "  %0 = getelementptr " << st_real_name;
-        out << ", " << st_real_name << "* null, i64 1\n";
-        out << "  %1 = ptrtoint " << st_real_name << "* %0 to i64\n";
+        out << "  %0 = getelementptr " << quoted_name(st_real_name);
+        out << ", " << quoted_name(st_real_name) << "* null, i64 1\n";
+        out << "  %1 = ptrtoint " << quoted_name(st_real_name) << "* ";
+        out << "%0 to i64\n";
         out << "  ret i64 %1\n";
         out << "}\n";
     }
@@ -94,13 +96,16 @@ void sir_context::dump_struct_alloc_method(std::ostream& out) const {
         };
         const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = "%struct." + st_name;
-        out << "define " << st_real_name << "* @" << st_name;
-        out << ".__alloc__() alwaysinline {\n";
+        const auto alloc_func_name = quoted_name(st_name + ".__alloc__");
+        const auto size_func_name = quoted_name(st_name + ".__size__");
+        out << "define " << quoted_name(st_real_name) << "* ";
+        out << "@" << alloc_func_name;
+        out << "() alwaysinline {\n";
         out << "label.entry:\n";
-        out << "  %0 = call i64 @" << st_name << ".__size__()\n";
+        out << "  %0 = call i64 @" << size_func_name << "()\n";
         out << "  %1 = call i8* @malloc(i64 %0)\n";
-        out << "  %2 = bitcast i8* %1 to " << st_real_name << "*\n";
-        out << "  ret " << st_real_name << "* %2\n";
+        out << "  %2 = bitcast i8* %1 to " << quoted_name(st_real_name) << "*\n";
+        out << "  ret " << quoted_name(st_real_name) << "* %2\n";
         out << "}\n";
     }
 }

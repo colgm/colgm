@@ -3,6 +3,9 @@
 namespace colgm {
 
 colgm_struct::~colgm_struct() {
+    if (generic_struct_decl) {
+        delete generic_struct_decl;
+    }
     for(auto i : generic_struct_impl) {
         delete i;
     }

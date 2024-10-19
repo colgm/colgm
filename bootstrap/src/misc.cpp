@@ -288,14 +288,24 @@ std::string char_to_hex(const char c) {
 }
 
 std::string mangle(const std::string& name) {
+    auto temp = name;
     auto copy = std::string("");
-    for(size_t i = 0; i<name.length(); ++i) {
-        if (name[i]==':' && i+1<name.length() && name[i+1]==':') {
+    auto pos = temp.find_first_of("<");
+    std::string suffix = "";
+    if (pos != std::string::npos) {
+        suffix = temp.substr(pos);
+        temp = temp.substr(0, pos);
+    }
+    for(size_t i = 0; i<temp.length(); ++i) {
+        if (temp[i]==':' && i+1<temp.length() && temp[i+1]==':') {
             copy += ".";
             i++;
             continue;
         }
-        copy += name[i];
+        copy += temp[i];
+    }
+    if (suffix.length()) {
+        copy += suffix;
     }
     return copy;
 }

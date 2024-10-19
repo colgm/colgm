@@ -147,6 +147,9 @@ bool dumper::visit_struct_decl(struct_decl* node) {
     if (node->is_extern_struct()) {
         std::cout << "[extern]";
     }
+    if (node->is_public_struct() || node->is_extern_struct()) {
+        std::cout << " ";
+    }
     std::cout << node->get_name() << format_location(node);
     push_indent();
     if (node->get_generic_types()) {

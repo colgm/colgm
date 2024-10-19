@@ -1,4 +1,5 @@
 #include "mir/ast2mir.h"
+#include "ast/dumper.h"
 
 namespace colgm::mir {
 

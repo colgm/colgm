@@ -37,6 +37,9 @@ public:
     void visit_impl(ast::impl_struct* node) {
         node->accept(this);
     }
+    void visit_struct(ast::struct_decl* node) {
+        node->accept(this);
+    }
 };
 
 class generic_visitor: public ast::visitor {
