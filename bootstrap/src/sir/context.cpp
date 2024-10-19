@@ -28,10 +28,10 @@ void sir_struct::dump(std::ostream& out) const {
 
 void sir_func::dump(std::ostream& out) const {
     out << (block? "define ":"declare ");
-    out << return_type << " " << quoted_name(name) << "(";
+    out << quoted_name(return_type) << " " << quoted_name(name) << "(";
     for(const auto& i : params) {
-        out << i.second << " %" << i.first;
-        if (i.first!=params.back().first) {
+        out << quoted_name(i.second) << " %" << i.first;
+        if (i.first != params.back().first) {
             out << ", ";
         }
     }

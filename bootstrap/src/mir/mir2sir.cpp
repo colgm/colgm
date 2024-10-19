@@ -589,11 +589,11 @@ void mir2sir::push_global_func(const type& t) {
     const auto& dm = ctx.global.domain.at(t.loc_file);
 
     // avoid out of range error
-    if (!dm.functions.count(t.name)) {
+    if (!dm.functions.count(t.name_for_search())) {
         value_stack.push_back(mir_value_t::func_kind(t.name, t));
         return;
     }
-    const auto& fn = dm.functions.at(t.name);
+    const auto& fn = dm.functions.at(t.name_for_search());
 
     // extern function will reserve raw name, others are mangled
     if (fn.is_extern) {
@@ -604,7 +604,8 @@ void mir2sir::push_global_func(const type& t) {
     // do mangling
     const auto tmp = type {
         .name = t.name,
-        .loc_file = fn.location.file
+        .loc_file = fn.location.file,
+        .generics = t.generics
     };
     value_stack.push_back(mir_value_t::func_kind(
         mangle(tmp.full_path_name()),
