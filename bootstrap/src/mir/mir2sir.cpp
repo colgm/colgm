@@ -733,7 +733,7 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
     value_stack.pop_back();
 
     const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
-    const auto& st = dm.structs.at(prev.resolve_type.name);
+    const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
 
     // get method
     if (st.method.count(node->get_name())) {
@@ -789,7 +789,7 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
     value_stack.pop_back();
 
     const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
-    const auto& st = dm.structs.at(prev.resolve_type.name);
+    const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
 
     // get method
     if (st.method.count(node->get_name())) {
