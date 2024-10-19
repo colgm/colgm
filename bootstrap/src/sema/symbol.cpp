@@ -31,13 +31,13 @@ std::string type::to_string() const {
     return result;
 }
 
-std::string type::full_path_name() const {
+std::string type::full_path_name(bool with_generics) const {
     const auto pkg = package_manager::singleton();
     const auto module_name = pkg->get_module_name(loc_file);
     if (module_name.empty()) {
-        return generic_name();
+        return with_generics? generic_name() : name;
     }
-    return module_name + "::" + generic_name();
+    return module_name + "::" + (with_generics? generic_name() : name);
 }
 
 std::string type::generic_name() const {

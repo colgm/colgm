@@ -27,17 +27,29 @@ void mir2sir::generate_type_mapper() {
 
 std::string mir2sir::type_mapping(const type& t) {
     auto copy = t;
+    // basic type mapping
     if (basic_type_mapper.count(copy.name)) {
         copy.name = basic_type_mapper.at(copy.name);
         return copy.to_string();
     }
+
     const auto full_name = t.full_path_name();
+    // if not found, let it crash
     if (!type_mapper.count(full_name)) {
-        return copy.to_string();
+        return "undef." + copy.to_string();
     }
     switch(type_mapper.at(full_name)) {
         case sym_kind::struct_kind:
-            copy.name = "%struct." + mangle(full_name);
+            // here we use full path name without generic info
+            // otherwise for example:
+            // std::vec<data::foo>
+            //
+            // will be wrongly mapped to
+            // %struct.std.vec<data.foo><data::foo>
+            //
+            // but expect to be
+            // %struct.std.vec<data::foo>
+            copy.name = "%struct." + mangle(t.full_path_name(false));
             break;
         case sym_kind::enum_kind: copy = type::i64_type(); break;
         default: break;

@@ -48,7 +48,7 @@ private:
 
 public:
     std::string to_string() const;
-    std::string full_path_name() const;
+    std::string full_path_name(bool with_generics = true) const;
     std::string generic_name() const;
     // return name for symbol table search
     // normal type: .name
