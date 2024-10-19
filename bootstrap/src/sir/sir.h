@@ -44,6 +44,8 @@ enum class sir_kind {
     sir_type_convert
 };
 
+std::string quoted_name(const std::string&);
+
 struct value_t {
 public:
     enum class kind {
@@ -121,16 +123,16 @@ public:
 
 class sir_alloca: public sir {
 private:
-    std::string variable_name;
-    std::string type_name;
+    std::string variable;
+    std::string type;
 
 public:
     sir_alloca(const std::string& v, const std::string& t):
-        sir(sir_kind::sir_alloca), variable_name(v), type_name(t) {}
+        sir(sir_kind::sir_alloca), variable(v), type(t) {}
     ~sir_alloca() override = default;
     void dump(std::ostream&) const override;
-    const auto& get_variable_name() const { return variable_name; }
-    const auto& get_type_name() const { return type_name; }
+    const auto& get_variable_name() const { return variable; }
+    const auto& get_type_name() const { return type; }
 };
 
 class sir_temp_ptr: public sir {
@@ -144,17 +146,17 @@ and %1 is i32*
 private:
     std::string target;
     std::string source;
-    std::string type_name;
+    std::string type;
 
 public:
     sir_temp_ptr(const std::string& tgt,
                  const std::string& src,
                  const std::string type):
         sir(sir_kind::sir_temp_ptr), target(tgt),
-        source(src), type_name(type) {}
+        source(src), type(type) {}
     ~sir_temp_ptr() override = default;
     void dump(std::ostream&) const override;
-    const auto& get_type_name() const { return type_name; }
+    const auto& get_type() const { return type; }
     void set_source(const std::string& src) { source = src; }
 };
 

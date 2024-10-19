@@ -7,8 +7,32 @@
 
 namespace colgm {
 
+std::string quoted_name(const std::string& str) {
+    auto copy = str;
+    auto pos = str.find_first_of('*');
+    if (pos != std::string::npos) {
+        copy = str.substr(0, pos);
+    }
+    if (str.find_first_of("<:>") != std::string::npos) {
+        copy = "\"" + copy + "\"";
+    }
+    if (pos != std::string::npos) {
+        copy += str.substr(pos);
+    }
+
+    if (copy.length() >= 2 &&
+        (copy.substr(0, 2) == "\"%" || copy.substr(0, 2) == "\"@")) {
+        auto c = copy[1];
+        copy = copy.substr(2);
+        copy = "\"" + copy;
+        copy = c + copy;
+    }
+    return copy;
+}
+
 void sir_alloca::dump(std::ostream& out) const {
-    out << "%" << variable_name << " = alloca " << type_name << "\n";
+    out << "%" << variable << " = alloca ";
+    out << quoted_name(type) << "\n";
 }
 
 sir_block::~sir_block() {
@@ -41,13 +65,14 @@ void sir_block::dump(std::ostream& out) const {
 }
 
 void sir_temp_ptr::dump(std::ostream& out) const {
-    out << "%" << target << " = getelementptr " << type_name << ", ";
-    out << type_name << "* %" << source << ", i32 0";
+    out << "%" << target << " = ";
+    out << "getelementptr " << quoted_name(type) << ", ";
+    out << quoted_name(type) << "* %" << source << ", i32 0";
     out << " ; %" << source << " -> %" << target << "\n"; 
 }
 
 void sir_ret::dump(std::ostream& out) const {
-    out << "ret " << type << " " << value << "\n";
+    out << "ret " << quoted_name(type) << " " << value << "\n";
 }
 
 void sir_string::dump(std::ostream& out) const {
@@ -58,30 +83,32 @@ void sir_string::dump(std::ostream& out) const {
 }
 
 void sir_zeroinitializer::dump(std::ostream& out) const {
-    out << "store " << type << " zeroinitializer";
-    out << ", " << type << "* " << destination << "\n";
+    out << "store " << quoted_name(type) << " zeroinitializer";
+    out << ", " << quoted_name(type) << "* " << destination << "\n";
 }
 
 void sir_call_index::dump(std::ostream& out) const {
-    out << destination << " = getelementptr " << type << ", ";
-    out << type << "* " << source << ", ";
-    out << index_type << " " << index << "\n";
+    out << destination << " = getelementptr " << quoted_name(type) << ", ";
+    out << quoted_name(type) << "* " << source << ", ";
+    out << quoted_name(index_type) << " " << index << "\n";
 }
 
 void sir_call_field::dump(std::ostream& out) const {
     out << "%" << destination << " = getelementptr inbounds ";
-    out << struct_name << ", ";
-    out << struct_name << "* %" << source << ", i32 0, i32 " << index << "\n";
+    out << quoted_name(struct_name) << ", ";
+    out << quoted_name(struct_name) << "* %" << source << ", ";
+    out << "i32 0, i32 " << index << "\n";
 }
 
 void sir_call_func::dump(std::ostream& out) const {
     if (destination.value_kind==value_t::kind::variable) {
         out << destination << " = ";
     }
-    out << "call " << return_type << " @" << name << "(";
+    out << "call " << quoted_name(return_type);
+    out << " @" << quoted_name(name) << "(";
     for(usize i = 0; i<args.size(); ++i) {
-        out << args_type[i] << " " << args[i];
-        if (i!=args.size()-1) {
+        out << quoted_name(args_type[i]) << " " << args[i];
+        if (i != args.size()-1) {
             out << ", ";
         }
     }
@@ -91,35 +118,37 @@ void sir_call_func::dump(std::ostream& out) const {
 void sir_neg::dump(std::ostream& out) const {
     out << destination << " = ";
     out << (is_integer? "sub":"fsub");
-    out << " " << type << " ";
+    out << " " << quoted_name(type) << " ";
     out << (is_integer? "0":"0.0");
     out << ", " << source << "\n";
 }
 
 void sir_bnot::dump(std::ostream& out) const {
-    out << destination << " = xor " << type << " " << source << ", -1\n";
+    out << destination << " = xor " << quoted_name(type);
+    out << " " << source << ", -1\n";
 }
 
 void sir_lnot::dump(std::ostream& out) const {
-    out << destination << " = xor " << type << " " << source << ", true\n";
+    out << destination << " = xor " << quoted_name(type);
+    out << " " << source << ", true\n";
 }
 
 void sir_add::dump(std::ostream& out) const {
     out << destination << " = ";
     out << (is_integer? "add":"fadd") << " ";
-    out << type << " " << left << ", " << right << "\n";
+    out << quoted_name(type) << " " << left << ", " << right << "\n";
 }
 
 void sir_sub::dump(std::ostream& out) const {
     out << destination << " = ";
     out << (is_integer? "sub":"fsub") << " ";
-    out << type << " " << left << ", " << right << "\n";
+    out << quoted_name(type) << " " << left << ", " << right << "\n";
 }
 
 void sir_mul::dump(std::ostream& out) const {
     out << destination << " = ";
     out << (is_integer? "mul":"fmul") << " ";
-    out << type << " " << left << ", " << right << "\n";
+    out << quoted_name(type) << " " << left << ", " << right << "\n";
 }
 
 void sir_div::dump(std::ostream& out) const {
@@ -129,7 +158,7 @@ void sir_div::dump(std::ostream& out) const {
     } else {
         out << "fdiv ";
     }
-    out << type << " " << left << ", " << right << "\n";
+    out << quoted_name(type) << " " << left << ", " << right << "\n";
 }
 
 void sir_rem::dump(std::ostream& out) const {
@@ -139,22 +168,22 @@ void sir_rem::dump(std::ostream& out) const {
     } else {
         out << "frem ";
     }
-    out << type << " " << left << ", " << right << "\n";
+    out << quoted_name(type) << " " << left << ", " << right << "\n";
 }
 
 void sir_band::dump(std::ostream& out) const {
     out << destination << " = and ";
-    out << type << " " << left << ", " << right << "\n";
+    out << quoted_name(type) << " " << left << ", " << right << "\n";
 }
 
 void sir_bxor::dump(std::ostream& out) const {
     out << destination << " = xor ";
-    out << type << " " << left << ", " << right << "\n";
+    out << quoted_name(type) << " " << left << ", " << right << "\n";
 }
 
 void sir_bor::dump(std::ostream& out) const {
     out << destination << " = or ";
-    out << type << " " << left << ", " << right << "\n";
+    out << quoted_name(type) << " " << left << ", " << right << "\n";
 }
 
 void sir_cmp::dump(std::ostream& out) const {
@@ -168,7 +197,7 @@ void sir_cmp::dump(std::ostream& out) const {
         case kind::cmp_le: out << head << "le"; break;
         case kind::cmp_lt: out << head << "lt"; break;
     }
-    out << " " << type << " ";
+    out << " " << quoted_name(type) << " ";
     out << left << ", " << right << "\n";
 }
 
@@ -197,13 +226,13 @@ std::string sir_place_holder_label::get_label() const {
 }
 
 void sir_store::dump(std::ostream& out) const {
-    out << "store " << type << " " << source;
-    out << ", " << type << "* " << destination << "\n";
+    out << "store " << quoted_name(type) << " " << source;
+    out << ", " << quoted_name(type) << "* " << destination << "\n";
 }
 
 void sir_load::dump(std::ostream& out) const {
-    out << destination << " = load " << type;
-    out << ", " << type << "* " << source << "\n";
+    out << destination << " = load " << quoted_name(type);
+    out << ", " << quoted_name(type) << "* " << source << "\n";
 }
 
 void sir_br::dump(std::ostream& out) const {
@@ -272,20 +301,20 @@ std::string sir_type_convert::convert_instruction(char source_type_mark,
 void sir_type_convert::dump(std::ostream& out) const {
     if (src_type.back()=='*' && dst_type.back()=='*') {
         out << destination << " = bitcast ";
-        out << src_type << " " << source << " to ";
-        out << dst_type << "\n";
+        out << quoted_name(src_type) << " " << source << " to ";
+        out << quoted_name(dst_type) << "\n";
         return;
     }
     if (src_type.back()!='*' && dst_type.back()=='*') {
         out << destination << " = inttoptr ";
-        out << src_type << " " << source << " to ";
-        out << dst_type << "\n";
+        out << quoted_name(src_type) << " " << source << " to ";
+        out << quoted_name(dst_type) << "\n";
         return;
     }
     if (src_type.back()=='*' && dst_type.back()!='*') {
         out << destination << " = ptrtoint ";
-        out << src_type << " " << source << " to ";
-        out << dst_type << "\n";
+        out << quoted_name(src_type) << " " << source << " to ";
+        out << quoted_name(dst_type) << "\n";
         return;
     }
 
@@ -293,8 +322,8 @@ void sir_type_convert::dump(std::ostream& out) const {
     if ((src_type.front()=='%' && src_type.back()!='*') ||
         (dst_type.front()=='%' && dst_type.back()!='*')) {
         out << destination << " = unknown ";
-        out << src_type << " " << source << " to ";
-        out << dst_type << "\n";
+        out << quoted_name(src_type) << " " << source << " to ";
+        out << quoted_name(dst_type) << "\n";
         return;
     }
 

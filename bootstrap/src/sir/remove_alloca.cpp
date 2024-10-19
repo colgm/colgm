@@ -34,7 +34,7 @@ void remove_alloca::do_remove(sir_block* node) {
             continue;
         }
         auto ptr = reinterpret_cast<sir_temp_ptr*>(i);
-        ptr->set_source(register_map.at(ptr->get_type_name()));
+        ptr->set_source(register_map.at(ptr->get_type()));
     }
 }
 

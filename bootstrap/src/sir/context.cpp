@@ -11,7 +11,7 @@ void sir_struct::dump(std::ostream& out) const {
         .name = name,
         .loc_file = location.file
     };
-    out << "%struct." << mangle(ty.full_path_name());
+    out << "%" << quoted_name("struct." + mangle(ty.full_path_name()));
     if (field_type.empty()) {
         out << " = type {}\n";
         return;
@@ -28,7 +28,7 @@ void sir_struct::dump(std::ostream& out) const {
 
 void sir_func::dump(std::ostream& out) const {
     out << (block? "define ":"declare ");
-    out << return_type << " " << name << "(";
+    out << return_type << " " << quoted_name(name) << "(";
     for(const auto& i : params) {
         out << i.second << " %" << i.first;
         if (i.first!=params.back().first) {
