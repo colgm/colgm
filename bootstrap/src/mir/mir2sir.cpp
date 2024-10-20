@@ -593,6 +593,7 @@ void mir2sir::push_global_func(const type& t) {
         value_stack.push_back(mir_value_t::func_kind(t.name, t));
         return;
     }
+
     const auto& fn = dm.functions.at(t.name_for_search());
 
     // extern function will reserve raw name, others are mangled
@@ -691,7 +692,7 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
 
     std::string target = "";
     sir_call_func* sir_function_call = nullptr;
-    if (node->get_type()!=type::void_type()) {
+    if (node->get_type() != type::void_type()) {
         target = ssa_gen.create();
         sir_function_call = new sir_call_func(
             mangle(prev.content),
@@ -753,7 +754,7 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
         // push self into the stack
         value_stack.push_back(prev);
         value_stack.push_back(mir_value_t::method(
-            prev.resolve_type.full_path_name() + "::" + node->get_name(),
+            prev.resolve_type.full_path_name() + "." + node->get_name(),
             node->get_type()
         ));
         return;
@@ -781,7 +782,7 @@ void mir2sir::visit_mir_get_path(mir_get_path* node) {
     switch(prev.value_kind) {
         case mir_value_t::kind::struct_symbol:
             value_stack.push_back(mir_value_t::func_kind(
-                prev.resolve_type.full_path_name() + "::" + node->get_name(),
+                prev.resolve_type.full_path_name() + "." + node->get_name(),
                 node->get_type()
             ));
             break;
@@ -818,7 +819,7 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
             prev.resolve_type.get_ref_copy()
         ));
         value_stack.push_back(mir_value_t::method(
-            prev.resolve_type.full_path_name() + "::" + node->get_name(),
+            prev.resolve_type.full_path_name() + "." + node->get_name(),
             node->get_type()
         ));
         return;

@@ -825,6 +825,11 @@ void regist_pass::regist_single_global_func(ast::func_decl* node) {
                 "\" must have at least one generic type."
             );
         }
+        if (node->is_extern_func()) {
+            rp.report(node, "extern generic function \"" + name +
+                "\" is not supported."
+            );
+        }
         std::unordered_set<std::string> used_generic;
         for(auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
