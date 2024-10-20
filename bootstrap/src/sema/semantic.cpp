@@ -1349,14 +1349,21 @@ void semantic::resolve_impl(impl_struct* node) {
     if (node->get_generic_types()) {
         return; // do not resolve generic impl
     }
-    const auto& domain = ctx.global.domain.at(ctx.this_file);
+
+    auto loc_file = ctx.this_file;
+    if (ctx.global_symbol.count(node->get_struct_name())) {
+        loc_file = ctx.global_symbol.at(node->get_struct_name()).loc_file;
+    }
+
+    const auto& domain = ctx.global.domain.at(loc_file);
     if (!domain.structs.count(node->get_struct_name())) {
         rp.report(node,
             "cannot implement \"" + node->get_struct_name() +
-            "\", this struct is not defined in this file."
+            "\", this struct is not defined in the same file."
         );
         return;
     }
+
     const auto& struct_self = domain.structs.at(node->get_struct_name());
     impl_struct_name = node->get_struct_name();
     for(auto i : node->get_methods()) {

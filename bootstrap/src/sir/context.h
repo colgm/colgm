@@ -20,6 +20,7 @@ private:
 
 public:
     sir_struct(const std::string& n, const span& loc): name(n), location(loc) {}
+    const auto get_mangled_name() const;
     void dump(std::ostream&) const;
     const auto& get_name() const { return name; }
     const auto& get_location() const { return location; }
@@ -40,6 +41,7 @@ public:
     sir_func(const std::string& n):
         name(n), block(nullptr) {}
     ~sir_func() { delete block; }
+    const auto get_mangled_name() const { return quoted_name(name); }
     void dump(std::ostream&) const;
     const auto& get_name() const { return name; }
 

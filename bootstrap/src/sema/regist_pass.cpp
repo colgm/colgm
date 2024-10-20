@@ -220,6 +220,11 @@ void generic_visitor::insert_into_symbol_table() {
             });
             dm.structs.at(generic_name).name = generic_name;
             dm.structs.at(generic_name).generic_template.clear();
+            ctx.insert(generic_name, symbol_info {
+                .kind = sym_kind::struct_kind,
+                .loc_file = data.loc_file,
+                .is_public = dm.structs.at(generic_name).is_public
+            });
             replace_struct_type(dm.structs.at(generic_name), i.second);
         }
         if (dm.generic_functions.count(data.name)) {
@@ -229,6 +234,11 @@ void generic_visitor::insert_into_symbol_table() {
             });
             dm.functions.at(generic_name).name = generic_name;
             dm.functions.at(generic_name).generic_template.clear();
+            ctx.insert(generic_name, symbol_info {
+                .kind = sym_kind::func_kind,
+                .loc_file = data.loc_file,
+                .is_public = dm.functions.at(generic_name).is_public
+            });
             replace_func_type(dm.functions.at(generic_name), i.second);
         }
     }
