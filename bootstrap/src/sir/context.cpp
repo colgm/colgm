@@ -72,14 +72,7 @@ void sir_context::dump_const_string(std::ostream& out) const {
 }
 
 void sir_context::dump_struct_size_method(std::ostream& out) const {
-    std::unordered_set<std::string> struct_names = {};
     for(const auto& st : struct_decls) {
-        // avoid redefinition
-        if (struct_names.count(st->get_mangled_name())) {
-            continue;
-        }
-        struct_names.insert(st->get_mangled_name());
-
         const auto st_type = type {
             .name = st->get_name(),
             .loc_file = st->get_file()
@@ -100,14 +93,7 @@ void sir_context::dump_struct_size_method(std::ostream& out) const {
 }
 
 void sir_context::dump_struct_alloc_method(std::ostream& out) const {
-    std::unordered_set<std::string> struct_names = {};
     for(const auto& st: struct_decls) {
-        // avoid redefinition
-        if (struct_names.count(st->get_mangled_name())) {
-            continue;
-        }
-        struct_names.insert(st->get_mangled_name());
-
         const auto st_type = type {
             .name = st->get_name(),
             .loc_file = st->get_file()
@@ -130,14 +116,7 @@ void sir_context::dump_struct_alloc_method(std::ostream& out) const {
 
 void sir_context::dump_code(std::ostream& out) {
     // generate declarations of structs
-    std::unordered_set<std::string> struct_names = {};
     for(auto i : struct_decls) {
-        // avoid redefinition
-        const auto name = i->get_mangled_name();
-        if (struct_names.count(name)) {
-            continue;
-        }
-        struct_names.insert(name);
         i->dump(out);
     }
     if (struct_decls.size()) {
@@ -155,13 +134,7 @@ void sir_context::dump_code(std::ostream& out) {
     }
 
     // generate function declarations for normal functions or libc functions
-    std::unordered_set<std::string> func_names = {};
     for(auto i : func_decls) {
-        // avoid redefinition
-        if (func_names.count(i->get_mangled_name())) {
-            continue;
-        }
-        func_names.insert(i->get_mangled_name());
         i->dump(out);
     }
     if (func_decls.size()) {
@@ -169,13 +142,7 @@ void sir_context::dump_code(std::ostream& out) {
     }
 
     // generate implementations of functions
-     std::unordered_set<std::string> impl_names = {};
     for(auto i : func_impls) {
-        // avoid redefinition
-        if (impl_names.count(i->get_mangled_name())) {
-            continue;
-        }
-        impl_names.insert(i->get_mangled_name());
         i->dump(out);
         out << "\n";
     }

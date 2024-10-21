@@ -214,6 +214,10 @@ void generic_visitor::insert_into_symbol_table() {
 
         auto& dm = ctx.global.domain.at(data.loc_file);
         if (dm.generic_structs.count(data.name)) {
+            // no need to load again, otherwise will cause redefine error
+            if (dm.structs.count(generic_name)) {
+                continue;
+            }
             dm.structs.insert({
                 generic_name,
                 dm.generic_structs.at(data.name)
@@ -228,6 +232,10 @@ void generic_visitor::insert_into_symbol_table() {
             replace_struct_type(dm.structs.at(generic_name), i.second);
         }
         if (dm.generic_functions.count(data.name)) {
+            // no need to load again, otherwise will cause redefine error
+            if (dm.functions.count(generic_name)) {
+                continue;
+            }
             dm.functions.insert({
                 generic_name,
                 dm.generic_functions.at(data.name)
