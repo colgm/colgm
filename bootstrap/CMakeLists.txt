@@ -27,6 +27,7 @@ set(COLGM_AST
 set(COLGM_SIR
     ${CMAKE_SOURCE_DIR}/src/sir/context.cpp
     ${CMAKE_SOURCE_DIR}/src/sir/delete_useless_label.cpp
+    ${CMAKE_SOURCE_DIR}/src/sir/detect_redef_extern.cpp
     ${CMAKE_SOURCE_DIR}/src/sir/pass_manager.cpp
     ${CMAKE_SOURCE_DIR}/src/sir/remove_alloca.cpp
     ${CMAKE_SOURCE_DIR}/src/sir/sir.cpp)
