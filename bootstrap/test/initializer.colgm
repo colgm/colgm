@@ -1,8 +1,7 @@
-extern func puts(s: i8*);
+use libc::{ puts, strlen, memcpy };
+
 extern func malloc(size: i64) -> i8*;
 extern func free(ptr: i8*);
-extern func strlen(s: i8*) -> i64;
-extern func memcpy(dest: i8*, src: i8*, n: i64);
 
 func itoa(num: i64, buf: i8*, base: i64) -> i8* {
     if (base < 2 or base > 16) {
@@ -50,12 +49,12 @@ func put_info(test: Test) {
     var info_field_b = "[initializer.colgm] field_b: ";
 
     var buff = [i8; 256];
-    memcpy(buff, info_field_a, strlen(info_field_a));
+    memcpy(buff, info_field_a, strlen(info_field_a) => u64);
     var buff_num_begin = (buff => u64 + strlen(info_field_a) => u64) => i8*;
     itoa(test.field_a, buff_num_begin, 10);
     puts(buff);
 
-    memcpy(buff, info_field_b, strlen(info_field_b));
+    memcpy(buff, info_field_b, strlen(info_field_b) => u64);
     buff_num_begin = (buff => u64 + strlen(info_field_b) => u64) => i8*;
     itoa(test.field_b, buff_num_begin, 10);
     puts(buff);

@@ -19,7 +19,7 @@ void pass_manager::execute(mir_context* mctx) {
 
     for(auto i : work_list) {
         std::clog << "[" << green << "mir" << reset;
-        std::clog << "] run " << i->name() << " pass...\r";
+        std::clog << "] run " << i->name() << " pass...\n";
         if (!i->run(mctx)) {
             break;
         }
