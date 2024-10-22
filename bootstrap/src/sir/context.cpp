@@ -22,8 +22,8 @@ void sir_struct::dump(std::ostream& out) const {
     }
     out << " = type { ";
     for(usize i = 0; i<field_type.size(); ++i) {
-        out << field_type[i];
-        if (i!=field_type.size()-1) {
+        out << quoted_name(field_type[i]);
+        if (i != field_type.size()-1) {
             out << ", ";
         }
     }

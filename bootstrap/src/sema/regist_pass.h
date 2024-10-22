@@ -51,6 +51,7 @@ private:
     std::unordered_map<std::string, generic_data> generic_type_map;
 
 private:
+    bool visit_struct_decl(ast::struct_decl*) override;
     bool visit_func_decl(ast::func_decl*) override;
     bool visit_impl_struct(ast::impl_struct*) override;
     bool visit_call_id(ast::call_id*) override;
