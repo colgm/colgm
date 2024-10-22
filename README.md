@@ -5,7 +5,7 @@
 ## Repo Content
 
 - [bootstrap](./bootstrap/README.md) : available now, features not stable these days, but welcome to try.
-- [src](./src/README.md) : for bootstrapped compiler, not available now (lexer and parser is ready).
+- [src](./src/README.md) : bootstrapped compiler, not available now (lexer and parser is ready).
 
 ## Bootstrap Compiler
 
@@ -46,7 +46,7 @@ clang colgm.ll -o colgm
 Hello world example is available in `bootstrap`:
 
 ```rust
-extern func puts(v: i8*) -> i32;
+use libc::puts;
 
 pub func main() -> i64 {
     puts("hello world!");

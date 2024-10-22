@@ -5,3 +5,44 @@ pub extern func strlen(s: i8*) -> i64;
 pub extern func malloc(s: u64) -> i8*;
 pub extern func free(s: i8*);
 pub extern func memcpy(dest: i8*, src: i8*, n: u64);
+
+pub func itoa(num: i64, buf: i8*, base: i64) -> i8* {
+    if (base < 2 or base > 16) {
+        buf[0] = '\0';
+        return buf;
+    }
+    if (num == 0) {
+        buf[0] = '0';
+        buf[1] = '\0';
+        return buf;
+    }
+
+    var i = 0;
+    if (num < 0) {
+        buf[i] = '-';
+        i += 1;
+        num = -num;
+    }
+    for (; num > 0; i += 1) {
+        var tmp_bit = (num % base) => i8;
+        if (tmp_bit < (10 => i8)) {
+            buf[i] = '0' + tmp_bit;
+        } else {
+            buf[i] = 'a' + tmp_bit - (10 => i8);
+        }
+        num /= base;
+    }
+    buf[i] = '\0';
+
+    var s_begin = 0;
+    var s_end = i;
+    var s_mid = (s_begin + s_end) / 2;
+
+    i = 0;
+    for (; i < s_mid; i += 1) {
+        var tmp = buf[i];
+        buf[i] = buf[s_end - i - 1];
+        buf[s_end - i - 1] = tmp;
+    }
+    return buf;
+}
