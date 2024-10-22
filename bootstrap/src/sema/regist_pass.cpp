@@ -272,7 +272,8 @@ void generic_visitor::dump() const {
     }
 }
 
-void generic_visitor::insert_into_symbol_table() {
+u64 generic_visitor::insert_into_symbol_table() {
+    u64 insert_count = 0;
     for(const auto& i : generic_type_map) {
         const auto& data = i.second.generic_type;
         // not full path name
@@ -288,6 +289,7 @@ void generic_visitor::insert_into_symbol_table() {
             if (dm.structs.count(generic_name)) {
                 continue;
             }
+            ++insert_count;
             dm.structs.insert({
                 generic_name,
                 dm.generic_structs.at(data.name)
@@ -306,6 +308,7 @@ void generic_visitor::insert_into_symbol_table() {
             if (dm.functions.count(generic_name)) {
                 continue;
             }
+            ++insert_count;
             dm.functions.insert({
                 generic_name,
                 dm.generic_functions.at(data.name)
@@ -320,6 +323,7 @@ void generic_visitor::insert_into_symbol_table() {
             replace_func_type(dm.functions.at(generic_name), i.second);
         }
     }
+    return insert_count;
 }
 
 bool regist_pass::check_is_public_struct(ast::identifier* node,
@@ -1149,8 +1153,7 @@ void regist_pass::run(ast::root* ast_root) {
         return;
     }
 
-    gnv.visit(ast_root);
-    gnv.insert_into_symbol_table();
+    gnv.scan_and_insert(ast_root);
 }
 
 }

@@ -61,16 +61,24 @@ private:
     void replace_struct_type(colgm_struct&, const generic_data&);
     void replace_func_type(colgm_func&, const generic_data&);
 
-public:
-    generic_visitor(error& e, sema_context& c):
-        ctx(c), rp(e), tr(e, ctx), root(nullptr) {}
+private:
     void visit(ast::root* n) {
         generic_type_map = {};
         root = n;
         n->accept(this);
     }
+    u64 insert_into_symbol_table();
+
+public:
+    generic_visitor(error& e, sema_context& c):
+        ctx(c), rp(e), tr(e, ctx), root(nullptr) {}
     void dump() const;
-    void insert_into_symbol_table();
+    void scan_and_insert(ast::root* n) {
+        visit(n);
+        while(insert_into_symbol_table()) {
+            visit(n);
+        }
+    }
 };
 
 class regist_pass {
