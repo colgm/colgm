@@ -66,6 +66,8 @@ void generic_visitor::check_generic_type(
     const symbol_info& sym,
     const std::vector<type_def*>& type_list,
     const std::vector<std::string>& generic_template) {
+
+    // check size match
     if (type_list.size() != generic_template.size()) {
         rp.report(node, "generic type count does not match.");
         return;
@@ -75,7 +77,6 @@ void generic_visitor::check_generic_type(
     std::stringstream ss;
     ss << type_name << "<";
     for (auto i : type_list) {
-        const auto& name = i->get_name()->get_name();
         const auto type = tr.resolve(i);
         ss << type.full_path_name();
         if (i != type_list.back()) {
