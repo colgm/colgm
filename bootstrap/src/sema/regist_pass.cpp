@@ -37,6 +37,73 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
     return true;
 }
 
+void generic_visitor::scan_generic_type(type_def* type_node) {
+    const auto& type_name = type_node->get_name()->get_name();
+    if (!ctx.global_symbol.count(type_name)) {
+        rp.report(type_node, "unknown type \"" + type_name + "\".");
+        return;
+    }
+    if (!ctx.generic_symbol.count(type_name)) {
+        rp.report(type_node, "\"" + type_name + "\" is not a generic type.");
+        return;
+    }
+
+    const auto& sym = ctx.global_symbol.at(type_name);
+    const auto& dm = ctx.global.domain.at(sym.loc_file);
+    if (sym.kind != sym_kind::struct_kind) {
+        rp.report(type_node, "\"" + type_name + "\" is not a struct type.");
+        return;
+    }
+
+    const auto& generic_template = dm.generic_structs.at(type_name).generic_template;
+    const auto& type_list = type_node->get_generic_types()->get_types();
+    check_generic_type(type_node, type_name, sym, type_list, generic_template);
+}
+
+void generic_visitor::check_generic_type(
+    node* node,
+    const std::string& type_name,
+    const symbol_info& sym,
+    const std::vector<type_def*>& type_list,
+    const std::vector<std::string>& generic_template) {
+    if (type_list.size() != generic_template.size()) {
+        rp.report(node, "generic type count does not match.");
+        return;
+    }
+
+    // generate real name
+    std::stringstream ss;
+    ss << type_name << "<";
+    for (auto i : type_list) {
+        const auto& name = i->get_name()->get_name();
+        const auto type = tr.resolve(i);
+        ss << type.full_path_name();
+        if (i != type_list.back()) {
+            ss << ",";
+        }
+    }
+    ss << ">";
+    if (rp.has_error()) {
+        return;
+    }
+
+    // insert data
+    if (generic_type_map.count(ss.str())) {
+        return;
+    }
+    generic_type_map.insert({ss.str(), {}});
+    auto& rec = generic_type_map.at(ss.str());
+    rec.generic_type.name = type_name;
+    rec.generic_type.loc_file = sym.loc_file;
+
+    for(i64 i = 0; i < generic_template.size(); ++i) {
+        auto t = type_list[i];
+        const auto resolved_type = tr.resolve(t);
+        rec.generic_type.generics.push_back(resolved_type);
+        rec.types.insert({generic_template[i], resolved_type});
+    }
+}
+
 bool generic_visitor::visit_struct_decl(struct_decl* node) {
     // do not scan generic struct block
     if (node->get_generic_types()) {
@@ -46,63 +113,7 @@ bool generic_visitor::visit_struct_decl(struct_decl* node) {
         if (!i->get_type() || !i->get_type()->get_generic_types()) {
             continue;
         }
-        auto type_node = i->get_type();
-        const auto& type_name = type_node->get_name()->get_name();
-        if (!ctx.global_symbol.count(type_name)) {
-            rp.report(type_node, "unknown type \"" + type_name + "\".");
-            continue;
-        }
-        if (!ctx.generic_symbol.count(type_name)) {
-            rp.report(type_node, "\"" + type_name + "\" is not a generic type.");
-            continue;
-        }
-
-        const auto& sym = ctx.global_symbol.at(type_name);
-        const auto& dm = ctx.global.domain.at(sym.loc_file);
-        if (sym.kind != sym_kind::struct_kind) {
-            rp.report(type_node, "\"" + type_name + "\" is not a struct type.");
-            continue;
-        }
-
-        const auto& generic_template = dm.generic_structs.at(type_name).generic_template;
-        const auto& type_list = type_node->get_generic_types()->get_types();
-
-        if (type_list.size() != generic_template.size()) {
-            rp.report(type_node, "generic type count does not match.");
-            continue;
-        }
-
-        // generate real name
-        std::stringstream ss;
-        ss << type_name << "<";
-        for (auto i : type_list) {
-            const auto& name = i->get_name()->get_name();
-            const auto type = tr.resolve(i);
-            ss << type.full_path_name();
-            if (i != type_node->get_generic_types()->get_types().back()) {
-                ss << ",";
-            }
-        }
-        ss << ">";
-        if (rp.has_error()) {
-            return true;
-        }
-
-        // insert data
-        if (generic_type_map.count(ss.str())) {
-            return true;
-        }
-        generic_type_map.insert({ss.str(), {}});
-        auto& rec = generic_type_map.at(ss.str());
-        rec.generic_type.name = type_name;
-        rec.generic_type.loc_file = sym.loc_file;
-
-        for(i64 i = 0; i < generic_template.size(); ++i) {
-            auto t = type_node->get_generic_types()->get_types()[i];
-            const auto resolved_type = tr.resolve(t);
-            rec.generic_type.generics.push_back(resolved_type);
-            rec.types.insert({generic_template[i], resolved_type});
-        }
+        scan_generic_type(i->get_type());
     }
     return true;
 }
@@ -112,7 +123,13 @@ bool generic_visitor::visit_func_decl(func_decl* node) {
     if (node->get_generic_types()) {
         return true;
     }
-    node->get_params()->accept(this);
+    for(auto i : node->get_params()->get_params()) {
+        i->accept(this);
+        if (!i->get_type() || !i->get_type()->get_generic_types()) {
+            continue;
+        }
+        scan_generic_type(i->get_type());
+    }
     node->get_return_type()->accept(this);
     if (node->get_code_block()) {
         node->get_code_block()->accept(this);
@@ -152,43 +169,7 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
         ? dm.generic_structs.at(type_name).generic_template
         : dm.generic_functions.at(type_name).generic_template;
     const auto& type_list = node->get_generic_types()->get_types();
-
-    if (type_list.size() != generic_template.size()) {
-        rp.report(node, "generic type count does not match.");
-        return true;
-    }
-
-    // generate real name
-    std::stringstream ss;
-    ss << type_name << "<";
-    for (auto i : type_list) {
-        const auto& name = i->get_name()->get_name();
-        const auto type = tr.resolve(i);
-        ss << type.full_path_name();
-        if (i != node->get_generic_types()->get_types().back()) {
-            ss << ",";
-        }
-    }
-    ss << ">";
-    if (rp.has_error()) {
-        return true;
-    }
-
-    // insert data
-    if (generic_type_map.count(ss.str())) {
-        return true;
-    }
-    generic_type_map.insert({ss.str(), {}});
-    auto& rec = generic_type_map.at(ss.str());
-    rec.generic_type.name = type_name;
-    rec.generic_type.loc_file = sym.loc_file;
-
-    for(i64 i = 0; i < generic_template.size(); ++i) {
-        auto t = node->get_generic_types()->get_types()[i];
-        const auto resolved_type = tr.resolve(t);
-        rec.generic_type.generics.push_back(resolved_type);
-        rec.types.insert({generic_template[i], resolved_type});
-    }
+    check_generic_type(node, type_name, sym, type_list, generic_template);
     return true;
 }
 
@@ -1079,11 +1060,15 @@ void regist_pass::generate_self_parameter(ast::param* node,
         node->get_name()->get_location(),
         stct.name
     ));
-    new_type_def->set_generic_types(new generic_type_list(node->get_location()));
-    for(auto& i : stct.generic_template) {
-        auto t = new type_def(node->get_location());
-        t->set_name(new identifier(node->get_location(), i));
-        new_type_def->get_generic_types()->add_type(t);
+    if (stct.generic_template.size()) {
+        new_type_def->set_generic_types(
+            new generic_type_list(node->get_location())
+        );
+        for(auto& i : stct.generic_template) {
+            auto t = new type_def(node->get_location());
+            t->set_name(new identifier(node->get_location(), i));
+            new_type_def->get_generic_types()->add_type(t);
+        }
     }
     new_type_def->add_pointer_level();
     node->set_type(new_type_def);

@@ -51,6 +51,14 @@ private:
     std::unordered_map<std::string, generic_data> generic_type_map;
 
 private:
+    void scan_generic_type(ast::type_def*);
+    void check_generic_type(ast::node*,
+                            const std::string&,
+                            const symbol_info&,
+                            const std::vector<ast::type_def*>&,
+                            const std::vector<std::string>&);
+
+private:
     bool visit_struct_decl(ast::struct_decl*) override;
     bool visit_func_decl(ast::func_decl*) override;
     bool visit_impl_struct(ast::impl_struct*) override;
