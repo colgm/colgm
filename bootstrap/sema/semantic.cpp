@@ -734,7 +734,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         return type::error_type();
     }
 
-    // prev resolved type is a native type
+    // prev resolved type is a primitive type
     if (prev.loc_file.empty()) {
         rp.report(node,
             "cannot get static method \"" + node->get_name() +

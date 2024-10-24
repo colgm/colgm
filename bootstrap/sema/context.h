@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sema/primitive.h"
 #include "sema/symbol.h"
 #include "package/package.h"
 
@@ -34,6 +35,9 @@ struct sema_context {
 
     // only store generics in current scope
     std::unordered_map<std::string, symbol_info> generic_symbol;
+
+    // store primitive types
+    std::unordered_map<std::string, colgm_primitive> primitives;
 
     // store generics type name
     // for field analysis or generic methods type infer
