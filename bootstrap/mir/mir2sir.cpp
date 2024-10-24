@@ -625,6 +625,12 @@ void mir2sir::visit_mir_call_id(mir_call_id* node) {
 
     // get full path
     switch(ctx.search_symbol_kind(node->get_type())) {
+        case sym_kind::basic_kind:
+            value_stack.push_back(mir_value_t::primitive(
+                node->get_type().full_path_name(),
+                node->get_type()
+            ));
+            break;
         case sym_kind::func_kind:
             push_global_func(node->get_type());
             break;
@@ -780,6 +786,7 @@ void mir2sir::visit_mir_get_path(mir_get_path* node) {
     value_stack.pop_back();
 
     switch(prev.value_kind) {
+        case mir_value_t::kind::primitive:
         case mir_value_t::kind::struct_symbol:
             value_stack.push_back(mir_value_t::func_kind(
                 prev.resolve_type.full_path_name() + "." + node->get_name(),

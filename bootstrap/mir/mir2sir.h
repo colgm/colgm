@@ -53,6 +53,7 @@ public:
         nil,
         variable,
         literal,
+        primitive,
         func_symbol,
         method,
         struct_symbol,
@@ -94,6 +95,13 @@ public:
     static auto literal(const std::string& value, const type& ty) {
         return mir_value_t {
             .value_kind = mir_value_t::kind::literal,
+            .content = value,
+            .resolve_type = ty
+        };
+    }
+    static auto primitive(const std::string& value, const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::primitive,
             .content = value,
             .resolve_type = ty
         };

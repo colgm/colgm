@@ -73,6 +73,9 @@ public:
 
 public:
     sym_kind search_symbol_kind(const type& t) const {
+        if (primitives.count(t.name_for_search())) {
+            return sym_kind::basic_kind;
+        }
         if (!global.domain.count(t.loc_file)) {
             return sym_kind::error_kind;
         }

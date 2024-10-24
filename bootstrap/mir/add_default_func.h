@@ -17,6 +17,7 @@ private:
     void add_malloc_decl();
     void add_free_decl();
     void add_main_impl();
+    void add_primitive_size();
 
 public:
     ~add_default_func() override = default;

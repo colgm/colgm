@@ -111,10 +111,11 @@ private:
     colgm_func builtin_struct_size(const span&);
     colgm_func builtin_struct_alloc(const span&, const type&);
 
-private: // basic types
-    // basic types, now support:
+private: // primitive types
+    // primitive types, now support:
     // bool, i8, i16, i32, i64, u8, u16, u32, u64, f32, f64, void
-    void regist_basic_types();
+    void regist_primitive_types();
+    colgm_func generate_primitive_size_method(const char*);
 
 private: // import symbols
     void regist_single_import(ast::use_stmt*);

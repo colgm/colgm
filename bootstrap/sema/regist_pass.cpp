@@ -428,21 +428,43 @@ colgm_func regist_pass::builtin_struct_alloc(const span& loc, const type& ty) {
     return func;
 }
 
-void regist_pass::regist_basic_types() {
-    ctx.global_symbol = {
-        {"i64", {sym_kind::basic_kind, "", true}},
-        {"i32", {sym_kind::basic_kind, "", true}},
-        {"i16", {sym_kind::basic_kind, "", true}},
-        {"i8", {sym_kind::basic_kind, "", true}},
-        {"u64", {sym_kind::basic_kind, "", true}},
-        {"u32", {sym_kind::basic_kind, "", true}},
-        {"u16", {sym_kind::basic_kind, "", true}},
-        {"u8", {sym_kind::basic_kind, "", true}},
-        {"f32", {sym_kind::basic_kind, "", true}},
-        {"f64", {sym_kind::basic_kind, "", true}},
-        {"void", {sym_kind::basic_kind, "", true}},
-        {"bool", {sym_kind::basic_kind, "", true}}
+void regist_pass::regist_primitive_types() {
+    const char* primitives[] = {
+        "i64", "i32", "i16", "i8",
+        "u64", "u32", "u16", "u8",
+        "f32", "f64", "void", "bool"
     };
+
+    // do clear, so this process should be called first
+    ctx.global_symbol.clear();
+
+    // load symbol info
+    for(auto i : primitives) {
+        ctx.global_symbol.insert({i, {sym_kind::basic_kind, "", true}});
+    }
+
+    // load default methods
+    for(auto i : primitives) {
+        if (std::string(i) == "void") {
+            continue;
+        }
+        ctx.primitives.insert({i, colgm_primitive()});
+        auto& cp = ctx.primitives.at(i);
+        cp.name = i;
+        cp.static_methods.insert({
+            "__size__",
+            generate_primitive_size_method(i)
+        });
+    }
+}
+
+colgm_func regist_pass::generate_primitive_size_method(const char* name) {
+    auto func = colgm_func();
+    func.name = "__size__";
+    func.location = span::null();
+    func.return_type = type::u64_type();
+    func.is_public = true;
+    return func;
 }
 
 void regist_pass::regist_single_import(ast::use_stmt* node) {
@@ -1111,7 +1133,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
 }
 
 void regist_pass::run(ast::root* ast_root) {
-    regist_basic_types();
+    regist_primitive_types();
     regist_imported_types(ast_root);
     if (err.geterr()) {
         return;

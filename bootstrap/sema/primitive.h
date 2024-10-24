@@ -10,8 +10,8 @@ namespace colgm {
 
 struct colgm_primitive {
     std::string name;
-    std::unordered_map<std::string, colgm_func> static_method;
-    std::unordered_map<std::string, colgm_func> method;
+    std::unordered_map<std::string, colgm_func> static_methods;
+    std::unordered_map<std::string, colgm_func> methods;
 };
 
 }

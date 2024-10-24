@@ -40,7 +40,8 @@ struct type {
     bool is_constant_type = false;
     bool is_generic_placeholder = false;
 
-    struct_method_info stm_info;
+    struct_method_info stm_info; // struct methods
+    struct_method_info prm_info; // primitive methods
     std::vector<type> generics = {};
 
 private:
