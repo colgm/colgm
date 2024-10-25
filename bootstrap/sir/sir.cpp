@@ -343,8 +343,17 @@ void sir_type_convert::dump(std::ostream& out) const {
     // because like i64 & u64 share the same llvm type `i64`
     if (real_src_type==real_dst_type &&
         (real_src_type[0]=='i' || real_src_type[0]=='u')) {
-        out << destination << " = add " << real_src_type << " ";
-        out << source << ", 0";
+        out << destination << " = bitcast " << real_src_type << " ";
+        out << source << " to " << real_dst_type;
+        out << " ; " << src_type << " -> " << dst_type << "\n";
+        return;
+    }
+    // f32 f64 also
+    if (real_src_type==real_dst_type && real_src_type[0]=='f') {
+        out << destination << " = bitcast ";
+        out << (real_src_type == "f32"? "float":"double") << " ";
+        out << source << " to ";
+        out << (real_dst_type == "f32"? "float":"double");
         out << " ; " << src_type << " -> " << dst_type << "\n";
         return;
     }

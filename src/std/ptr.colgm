@@ -1,0 +1,26 @@
+use std::libc::{ malloc, free };
+
+pub struct safe_ptr<T> {
+    ptr: T*,
+    freed: bool
+}
+
+impl safe_ptr<T> {
+    func create(size: u64) -> safe_ptr<T> {
+        return safe_ptr {
+            ptr: malloc(T::__size__() * size) => T*,
+            freed: false
+        };
+    }
+
+    func destroy(self) {
+        if (self->ptr => i8* == nil) {
+            self->freed = true;
+            return;
+        }
+        if (!self.freed) {
+            free(self.ptr => i8*);
+            self.freed = true;
+        }
+    }
+}

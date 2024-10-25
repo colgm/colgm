@@ -6,7 +6,7 @@
 
 - [bootstrap](./bootstrap/README.md) : available now, features not stable these days, but welcome to try.
 - [src](./src/README.md) : bootstrapped compiler, not available now (lexer and parser is ready).
-- [test](./test): test cases
+- [test](./test): test cases.
 
 ## Bootstrap Compiler
 

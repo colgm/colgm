@@ -293,12 +293,6 @@ type semantic::resolve_type_convert(type_convert* node) {
     if (res.is_error() || type_res.is_error()) {
         return type::error_type();
     }
-    if (res == type_res) {
-        rp.report(node->get_target(),
-            "unnecessary type cast between \"" +
-            res.to_string() + "\" and \"" + type_res.to_string() + "\"."
-        );
-    }
 
     // convert floating point number to pointer is unsafe at all
     if ((res.is_float() && type_res.is_pointer()) ||
