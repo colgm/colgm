@@ -6,78 +6,78 @@ use err::report::*;
 use err::span::span;
 
 pub enum tok_kind {
-    tok_null,       # reserved
-    tok_num,        # number literal
-    tok_str,        # string literal
-    tok_ch,         # character literal
-    tok_id,         # identifier
-    tok_true,       # keyword true
-    tok_false,      # keyword false
-    tok_use,        # keyword use
-    tok_enum,       # keyword enum
-    tok_for,        # keyword for
-    tok_forindex,   # keyword forindex
-    tok_foreach,    # keyword foreach
-    tok_while,      # keyword while
-    tok_var,        # keyword var
-    tok_struct,     # keyword struct
-    tok_pub,        # keyword pub
-    tok_extern,     # keyword extern
-    tok_const,      # keyword const
-    tok_impl,       # keyword impl
-    tok_func,       # keyword func
-    tok_match,      # keyword match
-    tok_break,      # keyword break
-    tok_continue,   # keyword continue
-    tok_return,     # keyword return
-    tok_if,         # keyword if
-    tok_elsif,      # keyword elsif
-    tok_else,       # keyword else
-    tok_nil,        # keyword nil
-    tok_lparen,     # (
-    tok_rparen,     # )
-    tok_lbracket,   # [
-    tok_rbracket,   # ]
-    tok_lbrace,     # {
-    tok_rbrace,     # }
-    tok_semi,       # ;
-    tok_op_and,     # conditional binary operator and/&&
-    tok_op_or,      # conditional binary operator or/||
-    tok_comma,      # ,
-    tok_dot,        # .
-    tok_ellipsis,   # ...
-    tok_quesmark,   # ?
-    tok_colon,      # :
-    tok_coloncolon, # ::
-    tok_add,        # +
-    tok_sub,        # -
-    tok_mul,        # *
-    tok_div,        # /
-    tok_rem,        # %
-    tok_floater,    # bitwise operator not '~'
-    tok_bit_and,    # bitwise operator &
-    tok_bit_or,     # bitwise operator |
-    tok_bit_xor,    # bitwise operator ^
-    tok_op_not,     # conditional binary operator !
-    tok_eq,         # =
-    tok_addeq,      # +=
-    tok_subeq,      # -=
-    tok_muleq,      # *=
-    tok_diveq,      # /=
-    tok_remeq,      # %=
-    tok_floatereq,  # bitwise operator ~=
-    tok_bit_and_eq, # bitwise operator &=
-    tok_bit_or_eq,  # bitwise operator |=
-    tok_bit_xor_eq, # bitwise operator ^=
-    tok_cmp_eq,     # ==
-    tok_neq,        # !=
-    tok_less,       # <
-    tok_leq,        # <=
-    tok_grt,        # >
-    tok_geq,        # >=
-    tok_arrow,      # ->
-    tok_wide_arrow, # =>
-    tok_eof         # <eof> token
+    tok_null,       // reserved
+    tok_num,        // number literal
+    tok_str,        // string literal
+    tok_ch,         // character literal
+    tok_id,         // identifier
+    tok_true,       // keyword true
+    tok_false,      // keyword false
+    tok_use,        // keyword use
+    tok_enum,       // keyword enum
+    tok_for,        // keyword for
+    tok_forindex,   // keyword forindex
+    tok_foreach,    // keyword foreach
+    tok_while,      // keyword while
+    tok_var,        // keyword var
+    tok_struct,     // keyword struct
+    tok_pub,        // keyword pub
+    tok_extern,     // keyword extern
+    tok_const,      // keyword const
+    tok_impl,       // keyword impl
+    tok_func,       // keyword func
+    tok_match,      // keyword match
+    tok_break,      // keyword break
+    tok_continue,   // keyword continue
+    tok_return,     // keyword return
+    tok_if,         // keyword if
+    tok_elsif,      // keyword elsif
+    tok_else,       // keyword else
+    tok_nil,        // keyword nil
+    tok_lparen,     // (
+    tok_rparen,     // )
+    tok_lbracket,   // [
+    tok_rbracket,   // ]
+    tok_lbrace,     // {
+    tok_rbrace,     // }
+    tok_semi,       // ;
+    tok_op_and,     // conditional binary operator and/&&
+    tok_op_or,      // conditional binary operator or/||
+    tok_comma,      // ,
+    tok_dot,        // .
+    tok_ellipsis,   // ...
+    tok_quesmark,   // ?
+    tok_colon,      // :
+    tok_coloncolon, // ::
+    tok_add,        // +
+    tok_sub,        // -
+    tok_mul,        // *
+    tok_div,        // /
+    tok_rem,        // %
+    tok_floater,    // bitwise operator not '~'
+    tok_bit_and,    // bitwise operator &
+    tok_bit_or,     // bitwise operator |
+    tok_bit_xor,    // bitwise operator ^
+    tok_op_not,     // conditional binary operator !
+    tok_eq,         // =
+    tok_addeq,      // +=
+    tok_subeq,      // -=
+    tok_muleq,      // *=
+    tok_diveq,      // /=
+    tok_remeq,      // %=
+    tok_floatereq,  // bitwise operator ~=
+    tok_bit_and_eq, // bitwise operator &=
+    tok_bit_or_eq,  // bitwise operator |=
+    tok_bit_xor_eq, // bitwise operator ^=
+    tok_cmp_eq,     // ==
+    tok_neq,        // !=
+    tok_less,       // <
+    tok_leq,        // <=
+    tok_grt,        // >
+    tok_geq,        // >=
+    tok_arrow,      // ->
+    tok_wide_arrow, // =>
+    tok_eof         // <eof> token
 }
 
 struct token {
@@ -270,6 +270,17 @@ impl lexer {
 }
 
 impl lexer {
+    func is_note(pos: u64, src: str*) -> bool {
+        if (src->get(pos)!='/') {
+            return false;
+        }
+        if (pos + 1 => u64 < src->size &&
+            src->get(pos + 1 => u64)=='/') {
+            return true;
+        }
+        return false;
+    }
+
     func is_identifier_head(c: i8) -> bool {
         return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || (c == '_');
     }
@@ -635,7 +646,7 @@ impl lexer {
             return;
         }
 
-        # get integer part
+        // get integer part
         tmp->append_char(src->get(self->pos));
         self->pos += 1 => u64;
         while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
@@ -643,11 +654,11 @@ impl lexer {
             self->pos += 1 => u64;
         }
 
-        # get float part
+        // get float part
         if (self->pos < src->size && src->get(self->pos) == '.') {
             var lookahead_pos = self->pos + (1 => u64);
 
-            # just return, this dot is not part of number
+            // just return, this dot is not part of number
             if (lookahead_pos >= src->size) {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
@@ -658,7 +669,7 @@ impl lexer {
 
             var lookahead_ch = src->get(lookahead_pos);
 
-            # just return, this dot is not part of number
+            // just return, this dot is not part of number
             if (!lexer::is_digit(lookahead_ch)) {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
@@ -675,10 +686,10 @@ impl lexer {
             }
         }
 
-        # get F-E part
+        // get F-E part
         if (self->pos < src->size &&
             (src->get(self->pos) == 'e' || src->get(self->pos) == 'E')) {
-            # just return
+            // just return
             if (self->pos + (1 => u64) >= src->size) {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
@@ -735,7 +746,7 @@ impl lexer {
 
         var quote_type = src->get(self->pos);
         var tmp = str::new();
-        # skip first quote
+        // skip first quote
         self->pos += 1 => u64;
         self->column += 1;
 
@@ -800,7 +811,7 @@ impl lexer {
             return;
         }
 
-        # skip last quote
+        // skip last quote
         self->pos += 1 => u64;
         self->column += 1;
 
@@ -891,7 +902,9 @@ impl lexer {
         self->line = 0;
         self->column = 0;
         while(self->pos < src->size) {
-            if (lexer::is_identifier_head(src->get(self->pos))) {
+            if (lexer::is_note(self->pos, src)) {
+                self->skip_note(src);
+            } elsif (lexer::is_identifier_head(src->get(self->pos))) {
                 self->generate_identifier(src);
             } elsif (lexer::is_digit(src->get(self->pos))) {
                 self->generate_number(src);
@@ -899,8 +912,8 @@ impl lexer {
                 self->generate_string(src);
             } elsif (lexer::is_arrow(self->pos, src) ||
                      lexer::is_wide_arrow(self->pos, src)) {
-                # need to be put before normal operator scan process
-                # otherwise `=>` will be recognized as `=` `>`
+                // need to be put before normal operator scan process
+                // otherwise `=>` will be recognized as `=` `>`
                 self->generate_arrow(src);
             } elsif (lexer::is_single_char_token(src->get(self->pos))) {
                 self->generate_single_char_token(src);
@@ -912,8 +925,6 @@ impl lexer {
                 self->generate_coloncolon(src);
             } elsif (src->get(self->pos)=='.') {
                 self->generate_ellipsis(src);
-            } elsif (src->get(self->pos)=='#') {
-                self->skip_note(src);
             } else {
                 if (src->get(self->pos)=='\n') {
                     self->line += 1;

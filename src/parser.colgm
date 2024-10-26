@@ -141,11 +141,11 @@ impl parser {
         }
 
         var tmp_ptr = self->index + 1;
-        # check if is end of file token
+        // check if is end of file token
         if (self->toks->get(tmp_ptr).kind == tok_kind::tok_eof) {
             return false;
         }
-        # check if is generic
+        // check if is generic
         while(self->toks->get(tmp_ptr).kind != tok_kind::tok_grt) {
             if (self->toks->get(tmp_ptr).kind == tok_kind::tok_eof) {
                 return false;
@@ -568,7 +568,7 @@ impl parser {
                self->lookahead(tok_kind::tok_leq) ||
                self->lookahead(tok_kind::tok_grt) ||
                self->lookahead(tok_kind::tok_geq)) {
-            # FIXME: directly use `var kind = binary_kind::add;` may cause ir error
+            // FIXME: directly use `var kind = binary_kind::add;` may cause ir error
             var kind = 0 => binary_kind;
             match (self->toks->get(self->index).kind) {
                 tok_kind::tok_cmp_eq => kind = binary_kind::cmpeq;
@@ -641,7 +641,7 @@ impl parser {
         if (res->kind != ast_kind::ast_call) {
             return res;
         }
-        # if is call node, check assignment syntax
+        // if is call node, check assignment syntax
         if (self->lookahead(tok_kind::tok_addeq) ||
             self->lookahead(tok_kind::tok_subeq) ||
             self->lookahead(tok_kind::tok_muleq) ||
@@ -695,7 +695,7 @@ impl parser {
         var res = ast_generic_type_list::new(self->this_tok_loc_copy());
         self->match_token(tok_kind::tok_less);
         while (self->lookahead(tok_kind::tok_id)) {
-            # generic type does not allow pointer or other forms
+            // generic type does not allow pointer or other forms
             var type_node = ast_type_def::new(self->this_tok_loc_copy());
             type_node->name = self->identifier_gen();
             res->types.push(type_node => ast*);

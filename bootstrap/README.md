@@ -22,14 +22,14 @@ Use this command to get usage:
 
 ## Literal
 
-```typescript
+```rust
 func main() -> i32 {
-    var a = 1;              # i64
-    var b = 2.0;            # f64
-    var c = "hello world!"; # i8*
-    var d = 'd';            # i8
-    var e = [i8; 128];      # i8*
-    var f = true;           # bool
+    var a = 1;              // i64
+    var b = 2.0;            // f64
+    var c = "hello world!"; // i8*
+    var d = 'd';            // i8
+    var e = [i8; 128];      // const i8*
+    var f = true;           // bool
     return 0 => i32;
 }
 ```
@@ -219,15 +219,15 @@ impl StructWithGeneric<T> {
 ## Enum Definition
 
 ```rust
-enum EnumName {
-    a,
-    b,
-    c
+enum EnumExample {
+    kind_a,
+    kind_b,
+    kind_c
 }
 
-enum EnumName {
-    a = 0x1,
-    b = 0x2,
-    c = 0x3
+enum EnumSpecified {
+    kind_a = 0x1,
+    kind_b = 0x2,
+    kind_c = 0x3
 }
 ```

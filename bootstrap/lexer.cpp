@@ -66,6 +66,10 @@ bool lexer::is_wide_arrow(char c) {
     return false;
 }
 
+bool lexer::is_note() {
+    return res[ptr]=='/' && ptr+1<res.size() && res[ptr+1]=='/';
+}
+
 void lexer::skip_note() {
     // avoid note, after this process ptr will point to '\n'
     // so next loop line counter+1
@@ -427,7 +431,9 @@ const error& lexer::scan(const std::string& file) {
         if (ptr>=res.size()) {
             break;
         }
-        if (is_id(res[ptr])) {
+        if (is_note()) {
+            skip_note();
+        } else if (is_id(res[ptr])) {
             toks.push_back(id_gen());
         } else if (is_dec(res[ptr])) {
             toks.push_back(num_gen());
@@ -443,8 +449,6 @@ const error& lexer::scan(const std::string& file) {
             toks.push_back(colons());
         } else if (is_calc_opr(res[ptr])) {
             toks.push_back(calc_opr());
-        } else if (res[ptr]=='#') {
-            skip_note();
         } else {
             err_char();
         }

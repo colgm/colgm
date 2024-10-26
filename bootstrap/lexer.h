@@ -187,6 +187,7 @@ private:
     bool is_calc_opr(char);
     bool is_arrow(char);
     bool is_wide_arrow(char);
+    bool is_note();
 
     void skip_note();
     void err_char();
