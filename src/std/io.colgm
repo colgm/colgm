@@ -14,12 +14,14 @@ pub enum flag {
 }
 
 pub func readfile_into_string(filename: i8*, dst: str*) -> i64 {
+    io::stdout().out("remained info size: ")
+                .out_i64(dst->size => i64).out("\n");
     var fd = open(filename, (flag::O_RDONLY => i32) | (flag::O_BINARY => i32));
     if (fd < (0 => i32)) {
         return fd => i64;
     }
 
-    var buff = malloc(1024 => u64);
+    var buff = [i8; 1024];
     var readcount = read(fd, buff, 1023);
 
     for (var index = 0; index < readcount; index += 1) {
@@ -33,8 +35,9 @@ pub func readfile_into_string(filename: i8*, dst: str*) -> i64 {
         }
     }
 
+    io::stdout().out("load into 0x").out_hex(dst->c_str => i64)
+                .out(", size ").out_i64(dst->size => i64).out("\n");
     close(fd);
-    free(buff);
     return 0;
 }
 
@@ -82,8 +85,20 @@ impl io {
             return self[0];
         }
 
-        var buff = [i8; 128];
+        var buff = [i8; 256];
         itoa(info, buff, 10);
+        write(self->fd, buff, strlen(buff));
+        return self[0];
+    }
+
+    pub func out_hex(self, info: i64) -> io {
+        // do nothing if is stdin
+        if (self->fd == 0 => i32) {
+            return self[0];
+        }
+
+        var buff = [i8; 256];
+        itoa(info, buff, 16);
         write(self->fd, buff, strlen(buff));
         return self[0];
     }
@@ -95,6 +110,7 @@ impl io {
     }
 }
 
+// ANSI escape sequence color
 impl io {
     pub func red(self) -> io {
         self->out("\e[91;1m");
