@@ -890,15 +890,27 @@ impl lexer {
         }
     }
 
+    func generate_eof_token(self) {
+        var eof_span = span::new();
+        eof_span->file.copy_const(self->filename.c_str);
+        eof_span->begin_line = self->line;
+        eof_span->begin_column = self->column;
+        eof_span->end_line = self->line;
+        eof_span->end_column = self->column;
+        self->toks->append(
+            tok_kind::tok_eof,
+            str::new()->append_i8_vec("<eof>"),
+            eof_span
+        );
+    }
+
     pub func scan(self, filename: i8*) {
         self->filename.clear();
         self->filename.copy_const(filename);
         self->err->load_file_source(filename);
 
         var src = str::new();
-        io::stdout().out("read into lexer::scan::src\n");
         readfile_into_string(filename, src);
-        io::stdout().out("\n");
 
         self->pos = 0 => u64;
         self->line = 0;
@@ -938,21 +950,11 @@ impl lexer {
             }
         }
 
-        var eof_span = span::new();
-        eof_span->file.copy_const(self->filename.c_str);
-        eof_span->begin_line = self->line;
-        eof_span->begin_column = self->column;
-        eof_span->end_line = self->line;
-        eof_span->end_column = self->column;
-        self->toks->append(
-            tok_kind::tok_eof,
-            str::new()->append_i8_vec("<eof>"),
-            eof_span
-        );
+        self->generate_eof_token();
 
+        // lifetime end for src
         src->delete();
         free(src => i8*);
-        io::stdout().out("delete lexer::scan::src\n");
     }
 
     pub func dump(self) {
