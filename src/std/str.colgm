@@ -21,11 +21,11 @@ impl str {
     }
 
     pub func init(self) {
-        self->c_str = malloc(256 => u64);
+        self->c_str = malloc(16 => u64);
         self->c_str[0] = '\0';
 
         self->size = 0 => u64;
-        self->capacity = 256 => u64;
+        self->capacity = 16 => u64;
     }
 
     pub func copy_instance(self) -> str {
@@ -84,7 +84,34 @@ impl str {
     }
 
     pub func append_char(self, ch: i8) -> str* {
-        if (self->size == self->capacity) {
+        // self->size == self->capacity will cause memory out of bounds error
+        // but only crashes on macOS aarch64
+        // crash happens in this case:
+        //
+        // | str 1 capacity 8 | str 2 capacity 8 |
+        //                   -^- continuous allocated memory block
+        // |  str 1 |  str 2 |
+        // |+++++++0|        |
+        //         ^ size = 7 (real 8), capacity = 8
+        //
+        // if expands when size + 1 == capacity
+        // |  str 1         |  str 2 |
+        // |++++++++0       |        |
+        //          ^ size = 8 (real 9), capacity = 16
+        //
+        // if not
+        // |  str 1 |  str 2 |
+        // |++++++++0        |
+        //          ^ size = 8 (real 9), capacity = 8
+        //          ^ this breaks the memory block of str2
+        //
+        // so after str2 is freed, the memory block head is still broken
+        // and then we use malloc to allocate this memory block again
+        // and free again, the memory block will cause
+        // "free(): invalid pointer"
+        // "malloc: *** error for object 0x.....: pointer being freed was not allocated"
+        // that's wired T^T
+        if (self->size + (1 => u64) == self->capacity) {
             self->expand_capacity();
         }
 
