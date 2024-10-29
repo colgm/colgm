@@ -705,10 +705,34 @@ impl ast_call_path {
     }
 }
 
+pub struct ast_call_id {
+    base: ast,
+    id: ast_identifier*,
+    generic_types: ast_generic_type_list*
+}
+
+impl ast_call_id {
+    pub func new(loc: span*) -> ast_call_id* {
+        var res = ast_call_id::__alloc__();
+        res->base = ast::instance(ast_kind::ast_call_id, loc);
+        res->id = nil => ast_identifier*;
+        res->generic_types = nil => ast_generic_type_list*;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->id => i8* != nil) {
+            self->id->delete();
+        }
+        if (self->generic_types => i8* != nil) {
+            self->generic_types->delete();
+        }
+    }
+}
+
 pub struct ast_call {
     base: ast,
-    head: ast_identifier*,
-    head_generics: ast_generic_type_list*,
+    head: ast_call_id*,
     chain: ptr_vec
 }
 
@@ -716,8 +740,7 @@ impl ast_call {
     pub func new(loc: span*) -> ast_call* {
         var res = ast_call::__alloc__();
         res->base = ast::instance(ast_kind::ast_call, loc);
-        res->head = nil => ast_identifier*;
-        res->head_generics = nil => ast_generic_type_list*;
+        res->head = nil => ast_call_id*;
         res->chain.init();
         return res;
     }
@@ -725,9 +748,6 @@ impl ast_call {
     pub func delete(self) {
         if (self->head => i8* != nil) {
             self->head->delete();
-        }
-        if (self->head_generics => i8* != nil) {
-            self->head_generics->delete();
         }
         self->chain.delete();
     }

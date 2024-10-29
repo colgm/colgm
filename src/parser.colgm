@@ -247,12 +247,19 @@ impl parser {
         return res;
     }
 
+    func call_id_gen(self) -> ast_call_id* {
+        var res = ast_call_id::new(self->this_tok_loc_copy());
+        res->id = self->identifier_gen();
+        if (self->lookahead_generic()) {
+            res->generic_types = self->generic_type_list_gen();
+        }
+        self->update_location(res => ast*);
+        return res;
+    }
+
     func call_gen(self) -> ast_call* {
         var res = ast_call::new(self->this_tok_loc_copy());
-        res->head = self->identifier_gen();
-        if (self->lookahead_generic()) {
-            res->head_generics = self->generic_type_list_gen();
-        }
+        res->head = self->call_id_gen();
         while (self->lookahead(tok_kind::tok_lparen) ||
                self->lookahead(tok_kind::tok_lbracket) ||
                self->lookahead(tok_kind::tok_lbrace) ||

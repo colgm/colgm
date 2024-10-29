@@ -177,6 +177,8 @@ impl ast_dumper {
                 self->dump_initializer(node => ast_initializer*, out);
             ast_kind::ast_call_path =>
                 self->dump_call_path(node => ast_call_path*, out);
+            ast_kind::ast_call_id =>
+                self->dump_call_id(node => ast_call_id*, out);
             ast_kind::ast_call => self->dump_call(node => ast_call*, out);
             ast_kind::ast_assignment =>
                 self->dump_assignment(node => ast_assignment*, out);
@@ -450,19 +452,31 @@ impl ast_dumper {
         node->base.location->dump(out);
     }
 
+    func dump_call_id(self, node: ast_call_id*, out: io) {
+        self->dump_indent(out);
+        out.out("call-id ");
+        out.green().out(node->id->name.c_str).reset().out(" ");
+        node->base.location->dump(out);
+
+        if (node->generic_types => i8* != nil) {
+            self->push_indent();
+            self->set_last();
+            self->dump_generic_type_list(node->generic_types, out);
+            self->pop_indent();
+        }
+    }
+
     func dump_call(self, node: ast_call*, out: io) {
         self->dump_indent(out);
-        out.out("call ");
-        out.green().out(node->head->name.c_str).reset();
-        out.out(" -> ");
+        out.out("call -> ");
         node->base.location->dump(out);
 
         self->push_indent();
-        if (node->head_generics => i8* != nil) {
+        if (node->head => i8* != nil) {
             if (node->chain.size == (0 => u64)) {
                 self->set_last();
             }
-            self->dump_generic_type_list(node->head_generics, out);
+            self->dump_call_id(node->head, out);
         }
         for (var index = 0 => u64; index < node->chain.size; index += 1 => u64) {
             if (index == node->chain.size - (1 => u64)) {
