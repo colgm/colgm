@@ -1,33 +1,51 @@
 use std::str::{ str };
 use std::libc::{ malloc, free };
 
-pub struct pair {
-    key: str,
-    value: i8*
+pub struct pair<T> {
+    key: str*,
+    value: T*
 }
 
-pub struct bucket {
-    pair: pair,
-    next: bucket*
+pub struct bucket<T> {
+    pair: pair<T>,
+    next: bucket<T>*
 }
 
-pub struct hashmap {
+pub struct hashmap<T> {
     size: i64,
-    data: bucket**
+    data: bucket<T>**
 }
 
-impl hashmap {
-    pub func new() -> hashmap* {
-        var res = malloc(hashmap::__size__()) => hashmap*;
+impl hashmap<T> {
+    pub func new() -> hashmap<T>* {
+        var res = malloc(hashmap<T>::__size__()) => hashmap<T>*;
         res->size = 0;
-        res->data = malloc((1024*8) => u64) => bucket**;
+        res->data = malloc((1024 * 8) => u64) => bucket<T>**;
         for (var i = 0; i < 1024; i+=1) {
-            res->data[i] = nil => bucket*;
+            res->data[i] = nil => bucket<T>*;
         }
         return res;
     }
 
     pub func delete(self) {
         free(self->data => i8*);
+    }
+}
+
+impl hashmap<T> {
+    pub func insert(self, key: str*, value: T*) {
+        var hash = 0 => u64;
+        for (var i = 0; i < key->size; i+=1) {
+            hash = hash * 31 + (key[i] => u64);
+        }
+        hash = hash % 1024 => u64;
+        var bucket_list = self->data[hash] => bucket<T>*;
+        while (bucket_list != nil) {
+            if (bucket_list->pair.key == key) {
+                bucket_list->pair.value = value;
+                return;
+            }
+            bucket_list = bucket_list->next;
+        }
     }
 }

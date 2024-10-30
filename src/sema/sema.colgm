@@ -1,12 +1,15 @@
 use err::report::{ report };
 use std::io::{ io };
+use std::libc::{ free };
 use std::str::{ str };
 use package::{ package };
 use ast::ast::*;
+use sema::regist::{ regist_pass };
+use sema::context::*;
 
 pub struct sema {
     err: report*,
-    pkg: package*,
+    rp: regist_pass*,
     root: root*
 }
 
@@ -14,58 +17,21 @@ impl sema {
     pub func new(err: report*, pkg: package*) -> sema* {
         var res = sema::__alloc__();
         res->err = err;
-        res->pkg = pkg;
+        res->rp = regist_pass::new(err, pkg);
         return res;
     }
 
     pub func delete(self) {
         io::stderr().out("[").green().out("sema").reset().out("]");
-        io::stderr().out(" delete sema\n");
-    }
-}
-
-impl sema {
-    func scan_single_import(self, node: ast_use_stmt*) {
-        var expect_name = str::instance();
-        var expect_path = str::instance();
-        expect_path.append_i8_vec(self->pkg->library_path);
-        for (var i = 0 => u64; i < node->module_path.size; i += 1 => u64) {
-            var name = node->module_path.get(i);
-            if (name->kind != ast_kind::ast_identifier) {
-                self->err->error(name->location, "invalid module path");
-                expect_name.delete();
-                expect_path.delete();
-                return;
-            }
-            var real_node = name => ast_identifier*;
-            if (!expect_name.empty()) {
-                expect_name.append_i8_vec("::");
-            }
-            if (!expect_path.empty()) {
-                expect_path.append_char('/');
-            }
-            expect_name.append_i8_vec(real_node->name.c_str);
-            expect_path.append_i8_vec(real_node->name.c_str);
-        }
-        self->pkg->insert(expect_name.copy_instance(), expect_path.copy_instance());
-        expect_name.delete();
-        expect_path.delete();
-    }
-    func scan_imports(self) {
-        for (var i = 0 => u64; i < self->root->imports.size; i += 1 => u64) {
-            var node = self->root->imports.get(i);
-            if (node->kind != ast_kind::ast_use_stmt) {
-                self->err->error(node->location, "invalid import");
-                return;
-            }
-            self->scan_single_import(node => ast_use_stmt*);
-        }
+        io::stderr().out(" delete sema::rp\n");
+        self->rp->delete();
+        free(self->rp => i8*);
     }
 }
 
 impl sema {
     pub func scan(self, root: root*) {
         self->root = root;
-        self->scan_imports();
+        self->rp->run(root);
     }
 }

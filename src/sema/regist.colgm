@@ -1,0 +1,91 @@
+use err::report::{ report };
+use std::io::{ io };
+use std::str::{ str };
+use package::{ package };
+use ast::ast::*;
+use std::fs::{ fs };
+
+pub struct regist_pass {
+    err: report*,
+    pkg: package*,
+    root: root*
+}
+
+impl regist_pass {
+	pub func new(err: report*, pkg: package*) -> regist_pass* {
+		var res = regist_pass::__alloc__();
+        res->err = err;
+        res->pkg = pkg;
+        return res;
+	}
+
+    pub func delete(self) {
+        io::stderr().out("[").green().out("regist_pass").reset().out("]");
+        io::stderr().out(" delete regist_pass\n");
+    }
+}
+
+impl regist_pass {
+    func scan_single_import(self, node: ast_use_stmt*) {
+        var expect_name = str::instance();
+        var expect_path = str::instance();
+
+        // expect path init with given library path
+        expect_path.append_i8_vec(self->pkg->library_path);
+        // generate expect path
+        for (var i = 0 => u64; i < node->module_path.size; i += 1 => u64) {
+            var name = node->module_path.get(i);
+            if (name->kind != ast_kind::ast_identifier) {
+                self->err->error(name->location, "invalid module path");
+                expect_name.delete();
+                expect_path.delete();
+                return;
+            }
+            var real_node = name => ast_identifier*;
+            if (!expect_name.empty()) {
+                expect_name.append_i8_vec("::");
+            }
+            if (!expect_path.empty()) {
+                expect_path.append_char('/');
+            }
+            expect_name.append_i8_vec(real_node->name.c_str);
+            expect_path.append_i8_vec(real_node->name.c_str);
+        }
+        // generate expect path extention
+        expect_path.append_i8_vec(".colgm");
+
+        // check if expect path exists
+        if (!fs::exists(expect_path.c_str)) {
+            var info = str::instance();
+            info.append_i8_vec("module \"");
+            info.append_i8_vec(expect_name.c_str);
+            info.append_i8_vec("\" not found, \"");
+            info.append_i8_vec(expect_path.c_str);
+            info.append_i8_vec("\" does not exist");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+        }
+
+        self->pkg->insert(expect_name.copy_instance(), expect_path.copy_instance());
+        expect_name.delete();
+        expect_path.delete();
+    }
+
+    func scan_imports(self) {
+        for (var i = 0 => u64; i < self->root->imports.size; i += 1 => u64) {
+            var node = self->root->imports.get(i);
+            if (node->kind != ast_kind::ast_use_stmt) {
+                self->err->error(node->location, "invalid import");
+                return;
+            }
+            self->scan_single_import(node => ast_use_stmt*);
+        }
+    }
+}
+
+impl regist_pass {
+    pub func run(self, root: root*) {
+        self->root = root;
+        self->scan_imports();
+    }
+}
