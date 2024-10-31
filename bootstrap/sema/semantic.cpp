@@ -617,14 +617,14 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     }
     // static method call of primitive type
     if (prev.prm_info.flag_is_static) {
-        if (!ctx.primitives.count(prev.name_for_search())) {
+        if (!ctx.global.primitives.count(prev.name_for_search())) {
             rp.report(node,
                 "cannot call static method of primitive type \"" +
                 prev.name_for_search() + "\"."
             );
             return type::error_type();
         }
-        const auto& p = ctx.primitives.at(prev.name_for_search());
+        const auto& p = ctx.global.primitives.at(prev.name_for_search());
         const auto& method = p.static_methods.at(prev.prm_info.method_name);
         check_static_call_args(method, node);
         node->set_resolve_type(method.return_type);
@@ -744,14 +744,14 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
 
     // prev resolved type is a primitive type
     if (prev.loc_file.empty()) {
-        if (!ctx.primitives.count(prev.name_for_search())) {
+        if (!ctx.global.primitives.count(prev.name_for_search())) {
             rp.report(node,
                 "cannot get static method \"" + node->get_name() +
                 "\" from \"" + prev.to_string() + "\"."
             );
             return type::error_type();
         }
-        const auto& p = ctx.primitives.at(prev.name_for_search());
+        const auto& p = ctx.global.primitives.at(prev.name_for_search());
         if (!p.static_methods.count(node->get_name())) {
             rp.report(node,
                 "cannot get static method \"" + node->get_name() +

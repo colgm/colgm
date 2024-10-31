@@ -13,7 +13,13 @@
 namespace colgm {
 
 struct global_symbol_table {
+    // store all string literals
     std::unordered_set<std::string> constant_string;
+
+    // store primitive types
+    std::unordered_map<std::string, colgm_primitive> primitives;
+
+    // store all modules
     std::unordered_map<std::string, colgm_module> domain;
 };
 
@@ -36,9 +42,6 @@ struct sema_context {
     // only store generics in current scope
     std::unordered_map<std::string, symbol_info> generic_symbol;
 
-    // store primitive types
-    std::unordered_map<std::string, colgm_primitive> primitives;
-
     // store generics type name
     // for field analysis or generic methods type infer
     std::unordered_set<std::string> generics;
@@ -46,6 +49,7 @@ struct sema_context {
     // local scope
     std::vector<std::unordered_map<std::string, type>> local_scope = {};
 
+public:
     bool find_local(const std::string&);
     void add_local(const std::string&, const type&);
     type get_local(const std::string&);
@@ -73,7 +77,7 @@ public:
 
 public:
     sym_kind search_symbol_kind(const type& t) const {
-        if (primitives.count(t.name_for_search())) {
+        if (global.primitives.count(t.name_for_search())) {
             return sym_kind::basic_kind;
         }
         if (!global.domain.count(t.loc_file)) {

@@ -448,8 +448,12 @@ void regist_pass::regist_primitive_types() {
         if (std::string(i) == "void") {
             continue;
         }
-        ctx.primitives.insert({i, colgm_primitive()});
-        auto& cp = ctx.primitives.at(i);
+        // avoid duplicate
+        if (ctx.global.primitives.count(i)) {
+            continue;
+        }
+        ctx.global.primitives.insert({i, colgm_primitive()});
+        auto& cp = ctx.global.primitives.at(i);
         cp.name = i;
         cp.static_methods.insert({
             "__size__",
