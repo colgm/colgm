@@ -21,8 +21,27 @@ impl Test<T> {
     }
 }
 
+pub struct EmbedTest<T> {
+    test: Test<T>
+}
+
 // try trigger redefinition
 pub func test_i32() -> Test<i32> {
     puts("[test_lib/data.colgm] redefinition test passed");
     return Test<i32> { test: 42 => i32 };
+}
+
+struct PrivateStruct<T> {
+    field: T
+}
+
+pub struct PublicStruct<T> {
+    field: PrivateStruct<T>
+}
+
+impl PublicStruct<T> {
+    pub func get_field(self) -> T {
+        puts("[test_lib/data.colgm] get_field called");
+        return self->field.field;
+    }
 }

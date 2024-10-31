@@ -784,13 +784,7 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
         }
         auto field_type = symbol {
             .name = i->get_name()->get_name(),
-            .symbol_type = {
-                .name = basic_type_name,
-                .loc_file = ctx.global_symbol.count(basic_type_name)
-                    ? ctx.global_symbol.at(basic_type_name).loc_file
-                    : "",
-                .pointer_depth = type_node->get_pointer_level()
-            }
+            .symbol_type = tr.resolve(type_node)
         };
         if (self.field.count(i->get_name()->get_name())) {
             rp.report(i, "field name already exists");
