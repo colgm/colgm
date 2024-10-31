@@ -33,12 +33,11 @@ struct type {
     std::string name;
     std::string loc_file;
     i64 pointer_depth = 0;
-    bool is_global = false;
-    bool is_global_func = false;
-    bool is_enum = false;
-    bool is_immutable_array_address = false;
-    bool is_constant_type = false;
-    bool is_generic_placeholder = false;
+    bool is_global = false;      // global symbol
+    bool is_global_func = false; // global func
+    bool is_enum = false;        // enum
+    bool is_immutable = false;   // immutable
+    bool is_generic_placeholder = false; // generic placeholder
 
     struct_method_info stm_info; // struct methods
     struct_method_info prm_info; // primitive methods
