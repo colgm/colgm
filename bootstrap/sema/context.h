@@ -23,24 +23,11 @@ struct global_symbol_table {
     std::unordered_map<std::string, colgm_module> domain;
 };
 
-struct symbol_info {
-    sym_kind kind;
-    std::string loc_file;
-    bool is_public = false;
-};
-
 struct sema_context {
     static inline global_symbol_table global;
 
     // store the file name this context belongs to
     std::string this_file;
-
-    // store global symbols used in current scope
-    // both normal and generic symbols are stored
-    std::unordered_map<std::string, symbol_info> global_symbol;
-
-    // only store generics in current scope
-    std::unordered_map<std::string, symbol_info> generic_symbol;
 
     // store generics type name
     // for field analysis or generic methods type infer
@@ -57,12 +44,26 @@ public:
     void pop_level() { local_scope.pop_back(); }
 
 public:
+    auto& global_symbol() {
+        return global.domain.at(this_file).global_symbol;
+    }
+    auto& generic_symbol() {
+        return global.domain.at(this_file).generic_symbol;
+    }
+    const auto& global_symbol() const {
+        return global.domain.at(this_file).global_symbol;
+    }
+    const auto& generic_symbol() const {
+        return global.domain.at(this_file).generic_symbol;
+    }
+
+public:
     void insert(const std::string& name,
                 const symbol_info& si,
                 bool is_generic = false) {
-        global_symbol.insert({name, si});
+        global_symbol().insert({name, si});
         if (is_generic) {
-            generic_symbol.insert({name, si});
+            generic_symbol().insert({name, si});
         }
     }
 

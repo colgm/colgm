@@ -14,6 +14,12 @@
 
 namespace colgm {
 
+struct symbol_info {
+    sym_kind kind;
+    std::string loc_file;
+    bool is_public = false;
+};
+
 struct colgm_module {
     std::string file_name;
     std::unordered_map<std::string, colgm_enum> enums;
@@ -21,6 +27,13 @@ struct colgm_module {
     std::unordered_map<std::string, colgm_func> functions;
     std::unordered_map<std::string, colgm_struct> generic_structs;
     std::unordered_map<std::string, colgm_func> generic_functions;
+
+    // store global symbols used in current scope
+    // both normal and generic symbols are stored
+    std::unordered_map<std::string, symbol_info> global_symbol;
+
+    // only store generics in current scope
+    std::unordered_map<std::string, symbol_info> generic_symbol;
 };
 
 struct colgm_package {

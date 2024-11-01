@@ -39,16 +39,16 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
 
 void generic_visitor::scan_generic_type(type_def* type_node) {
     const auto& type_name = type_node->get_name()->get_name();
-    if (!ctx.global_symbol.count(type_name)) {
+    if (!ctx.global_symbol().count(type_name)) {
         rp.report(type_node, "unknown type \"" + type_name + "\".");
         return;
     }
-    if (!ctx.generic_symbol.count(type_name)) {
+    if (!ctx.generic_symbol().count(type_name)) {
         rp.report(type_node, "\"" + type_name + "\" is not a generic type.");
         return;
     }
 
-    const auto& sym = ctx.global_symbol.at(type_name);
+    const auto& sym = ctx.global_symbol().at(type_name);
     const auto& dm = ctx.global.domain.at(sym.loc_file);
     if (sym.kind != sym_kind::struct_kind) {
         rp.report(type_node, "\"" + type_name + "\" is not a struct type.");
@@ -155,16 +155,16 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     }
 
     const auto& type_name = node->get_id()->get_name();
-    if (!ctx.global_symbol.count(type_name)) {
+    if (!ctx.global_symbol().count(type_name)) {
         rp.report(node, "unknown type \"" + type_name + "\".");
         return true;
     }
-    if (!ctx.generic_symbol.count(type_name)) {
+    if (!ctx.generic_symbol().count(type_name)) {
         rp.report(node, "\"" + type_name + "\" is not a generic type.");
         return true;
     }
 
-    const auto& sym = ctx.global_symbol.at(type_name);
+    const auto& sym = ctx.global_symbol().at(type_name);
     const auto& dm = ctx.global.domain.at(sym.loc_file);
     const auto& generic_template = sym.kind == sym_kind::struct_kind
         ? dm.generic_structs.at(type_name).generic_template
@@ -375,16 +375,16 @@ void regist_pass::import_global_symbol(ast::node* n,
                                        const std::string& name,
                                        const symbol_info& sym,
                                        bool is_generic) {
-    if (ctx.global_symbol.count(name)) {
-        const auto& info = ctx.global_symbol.at(name);
+    if (ctx.global_symbol().count(name)) {
+        const auto& info = ctx.global_symbol().at(name);
         rp.report(n, "\"" + name +
             "\" conflicts, another declaration is in \"" +
             info.loc_file + "\"."
         );
         return;
     }
-    if (ctx.generic_symbol.count(name)) {
-        const auto& info = ctx.generic_symbol.at(name);
+    if (ctx.generic_symbol().count(name)) {
+        const auto& info = ctx.generic_symbol().at(name);
         rp.report(n, "\"" + name +
             "\" conflicts, another declaration is in \"" +
             info.loc_file + "\"."
@@ -436,11 +436,11 @@ void regist_pass::regist_primitive_types() {
     };
 
     // do clear, so this process should be called first
-    ctx.global_symbol.clear();
+    ctx.global_symbol().clear();
 
     // load symbol info
     for(auto i : primitives) {
-        ctx.global_symbol.insert({i, {sym_kind::basic_kind, "", true}});
+        ctx.global_symbol().insert({i, {sym_kind::basic_kind, "", true}});
     }
 
     // load default methods
@@ -612,7 +612,7 @@ void regist_pass::regist_enums(ast::root* node) {
 
 void regist_pass::regist_single_enum(ast::enum_decl* node) {
     const auto& name = node->get_name()->get_name();
-    if (ctx.global_symbol.count(name)) {
+    if (ctx.global_symbol().count(name)) {
         rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
@@ -693,7 +693,7 @@ void regist_pass::regist_structs(ast::root* node) {
 
 void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
     const auto& name = node->get_name();
-    if (ctx.global_symbol.count(name)) {
+    if (ctx.global_symbol().count(name)) {
         rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
@@ -736,7 +736,7 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
         std::unordered_set<std::string> used_generic;
         for(auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
-            if (ctx.global_symbol.count(generic_name)) {
+            if (ctx.global_symbol().count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
                     "\" conflicts with exist symbol."
                 );
@@ -779,7 +779,7 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
         auto type_node = i->get_type();
         auto type_name_node = type_node->get_name();
         const auto& basic_type_name = type_name_node->get_name();
-        if (!ctx.global_symbol.count(basic_type_name) &&
+        if (!ctx.global_symbol().count(basic_type_name) &&
             !ctx.generics.count(basic_type_name)) {
             rp.report(type_name_node,
                 "undefined type \"" + basic_type_name + "\"."
@@ -873,7 +873,7 @@ void regist_pass::regist_global_funcs(ast::root* node) {
 
 void regist_pass::regist_single_global_func(ast::func_decl* node) {
     const auto& name = node->get_name();
-    if (ctx.global_symbol.count(name)) {
+    if (ctx.global_symbol().count(name)) {
         rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
@@ -927,7 +927,7 @@ void regist_pass::regist_single_global_func(ast::func_decl* node) {
         std::unordered_set<std::string> used_generic;
         for(auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
-            if (ctx.global_symbol.count(generic_name)) {
+            if (ctx.global_symbol().count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
                     "\" conflicts with exist symbol."
                 );

@@ -74,8 +74,8 @@ bool ast2mir::visit_type_convert(ast::type_convert* node) {
     block = temp;
 
     auto target_type = generate_type(node->get_target());
-    if (ctx.global_symbol.count(target_type.name) &&
-        ctx.global_symbol.at(target_type.name).kind == sym_kind::enum_kind) {
+    if (ctx.global_symbol().count(target_type.name) &&
+        ctx.global_symbol().at(target_type.name).kind == sym_kind::enum_kind) {
         target_type.is_enum = true;
     }
     block->add_content(new mir_type_convert(

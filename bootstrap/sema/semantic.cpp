@@ -390,8 +390,8 @@ type semantic::resolve_identifier(identifier* node) {
     if (ctx.find_local(name)) {
         return ctx.get_local(name);
     }
-    if (ctx.global_symbol.count(name)) {
-        const auto& sym = ctx.global_symbol.at(name);
+    if (ctx.global_symbol().count(name)) {
+        const auto& sym = ctx.global_symbol().at(name);
         if (!sym.is_public) {
             rp.report(node, "\"" + name + "\" is not imported.");
             return type::error_type();
@@ -1054,7 +1054,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         rp.report(node, "redefinition of variable \"" + name + "\".");
         return;
     }
-    if (ctx.global_symbol.count(name)) {
+    if (ctx.global_symbol().count(name)) {
         rp.report(node, "variable \"" + name + "\" conflicts with global symbol.");
         return;
     }
@@ -1139,10 +1139,10 @@ bool semantic::check_is_enum_literal(expr* node) {
     }
 
     const auto& name = call_node->get_head()->get_id()->get_name();
-    if (!ctx.global_symbol.count(name)) {
+    if (!ctx.global_symbol().count(name)) {
         return false;
     }
-    if (ctx.global_symbol.at(name).kind!=sym_kind::enum_kind) {
+    if (ctx.global_symbol().at(name).kind!=sym_kind::enum_kind) {
         return false;
     }
 
@@ -1374,8 +1374,8 @@ void semantic::resolve_impl(impl_struct* node) {
     }
 
     auto loc_file = ctx.this_file;
-    if (ctx.global_symbol.count(node->get_struct_name())) {
-        loc_file = ctx.global_symbol.at(node->get_struct_name()).loc_file;
+    if (ctx.global_symbol().count(node->get_struct_name())) {
+        loc_file = ctx.global_symbol().at(node->get_struct_name()).loc_file;
     }
 
     const auto& domain = ctx.global.domain.at(loc_file);
