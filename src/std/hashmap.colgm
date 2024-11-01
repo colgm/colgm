@@ -1,5 +1,5 @@
 use std::str::{ str };
-use std::libc::{ malloc, free };
+use std::libc::{ malloc, free, streq };
 
 pub struct pair<T> {
     key: str*,
@@ -35,13 +35,13 @@ impl hashmap<T> {
 impl hashmap<T> {
     pub func insert(self, key: str*, value: T*) {
         var hash = 0 => u64;
-        for (var i = 0; i < key->size; i+=1) {
-            hash = hash * 31 + (key[i] => u64);
+        for (var i = 0 => u64; i < key->size; i += 1 => u64) {
+            hash = hash * (31 => u64) + (key->c_str[i] => u64);
         }
         hash = hash % 1024 => u64;
         var bucket_list = self->data[hash] => bucket<T>*;
-        while (bucket_list != nil) {
-            if (bucket_list->pair.key == key) {
+        while (bucket_list => i8* != nil) {
+            if (streq(bucket_list->pair.key->c_str, key->c_str)) {
                 bucket_list->pair.value = value;
                 return;
             }

@@ -304,18 +304,16 @@ type semantic::resolve_type_convert(type_convert* node) {
         );
     }
 
-    // normal struct to pointer is not allowed
+    // normal struct to any type is not allowed
     if (ctx.search_symbol_kind(res)==sym_kind::struct_kind &&
-        !res.is_pointer() &&
-        type_res.is_pointer()) {
+        !res.is_pointer()) {
         rp.report(node->get_target(),
             "cannot convert \"" + res.to_string() +
             "\" to \"" + type_res.to_string() + "\"."
         );
     }
-    // pointer to normal struct is also not allowed
-    if (res.is_pointer() &&
-        ctx.search_symbol_kind(type_res)==sym_kind::struct_kind &&
+    // any type to normal struct is also not allowed
+    if (ctx.search_symbol_kind(type_res)==sym_kind::struct_kind &&
         !type_res.is_pointer()) {
         rp.report(node->get_target(),
             "cannot convert \"" + res.to_string() +
@@ -844,19 +842,9 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
     }
     if (struct_self.method.count(node->get_name())) {
         check_pub_method(node, node->get_name(), struct_self);
-        auto infer = type({
-            prev.name,
-            prev.loc_file,
-            prev.pointer_depth,
-            false
-        });
-        infer.stm_info = {
-            .flag_is_static = false,
-            .flag_is_normal = true,
-            .method_name = node->get_name()
-        };
-        node->set_resolve_type(infer);
-        return infer;
+        const auto res = struct_method_infer(prev, node->get_name());
+        node->set_resolve_type(res);
+        return res;
     }
     if (struct_self.static_method.count(node->get_name())) {
         rp.report(node,

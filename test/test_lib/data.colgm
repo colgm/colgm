@@ -16,7 +16,7 @@ pub struct Test<T> {
 
 impl Test<T> {
     pub func get_test(self) -> T {
-        puts("[test_lib/data.colgm] get_test called");
+        puts("[test_lib/data.colgm] Test::get_test called");
         return self->test;
     }
 }
@@ -44,7 +44,21 @@ impl PublicStruct<T> {
         return PublicStruct<T> { field: PrivateStruct<T> { field: 42 => T } };
     }
     pub func get_field(self) -> T {
-        puts("[test_lib/data.colgm] get_field called");
+        puts("[test_lib/data.colgm] PublicStruct::get_field called");
         return self->field.field;
+    }
+}
+
+pub struct EmbedPubStct<T> {
+    embed: PublicStruct<T>
+}
+
+impl EmbedPubStct<T> {
+    pub func instance() -> EmbedPubStct<T> {
+        return EmbedPubStct<T> { embed: PublicStruct<T>::instance() };
+    }
+    pub func get_field(self) -> T {
+        puts("[test_lib/data.colgm] EmbedPubStct::get_field called");
+        return self->embed.get_field();
     }
 }
