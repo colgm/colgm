@@ -5,6 +5,7 @@
 #include "sema/regist_pass.h"
 #include "mir/ast2mir.h"
 
+#include <cassert>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -390,8 +391,10 @@ type semantic::resolve_identifier(identifier* node) {
     if (ctx.find_local(name)) {
         return ctx.get_local(name);
     }
-    if (ctx.global_symbol().count(name)) {
-        const auto& sym = ctx.global_symbol().at(name);
+
+    const auto& dm = ctx.get_domain(node->get_file());
+    if (dm.global_symbol.count(name)) {
+        const auto& sym = dm.global_symbol.at(name);
         if (!sym.is_public) {
             rp.report(node, "\"" + name + "\" is not imported.");
             return type::error_type();

@@ -8,6 +8,7 @@
 
 #include "ast/dumper.h"
 
+#include <cassert>
 #include <cstring>
 #include <sstream>
 #include <queue>
@@ -39,23 +40,25 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
 
 void generic_visitor::scan_generic_type(type_def* type_node) {
     const auto& type_name = type_node->get_name()->get_name();
-    if (!ctx.global_symbol().count(type_name)) {
+    const auto& dm = ctx.global.domain.at(type_node->get_file());
+
+    if (!dm.global_symbol.count(type_name)) {
         rp.report(type_node, "unknown type \"" + type_name + "\".");
         return;
     }
-    if (!ctx.generic_symbol().count(type_name)) {
+    if (!dm.generic_symbol.count(type_name)) {
         rp.report(type_node, "\"" + type_name + "\" is not a generic type.");
         return;
     }
 
-    const auto& sym = ctx.global_symbol().at(type_name);
-    const auto& dm = ctx.global.domain.at(sym.loc_file);
+    const auto& sym = dm.global_symbol.at(type_name);
+    const auto& sdm = ctx.global.domain.at(sym.loc_file);
     if (sym.kind != sym_kind::struct_kind) {
         rp.report(type_node, "\"" + type_name + "\" is not a struct type.");
         return;
     }
 
-    const auto& generic_template = dm.generic_structs.at(type_name).generic_template;
+    const auto& generic_template = sdm.generic_structs.at(type_name).generic_template;
     const auto& type_list = type_node->get_generic_types()->get_types();
     check_generic_type(type_node, type_name, sym, type_list, generic_template);
 }
@@ -155,20 +158,21 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     }
 
     const auto& type_name = node->get_id()->get_name();
-    if (!ctx.global_symbol().count(type_name)) {
+    const auto& dm = ctx.global.domain.at(node->get_file());
+    if (!dm.global_symbol.count(type_name)) {
         rp.report(node, "unknown type \"" + type_name + "\".");
         return true;
     }
-    if (!ctx.generic_symbol().count(type_name)) {
+    if (!dm.generic_symbol.count(type_name)) {
         rp.report(node, "\"" + type_name + "\" is not a generic type.");
         return true;
     }
 
-    const auto& sym = ctx.global_symbol().at(type_name);
-    const auto& dm = ctx.global.domain.at(sym.loc_file);
+    const auto& sym = dm.global_symbol.at(type_name);
+    const auto& sdm = ctx.global.domain.at(sym.loc_file);
     const auto& generic_template = sym.kind == sym_kind::struct_kind
-        ? dm.generic_structs.at(type_name).generic_template
-        : dm.generic_functions.at(type_name).generic_template;
+        ? sdm.generic_structs.at(type_name).generic_template
+        : sdm.generic_functions.at(type_name).generic_template;
     const auto& type_list = node->get_generic_types()->get_types();
     check_generic_type(node, type_name, sym, type_list, generic_template);
     return true;

@@ -10,16 +10,14 @@ namespace colgm {
 
 type type_resolver::resolve(ast::type_def* node) {
     const auto& name = node->get_name()->get_name();
-    const auto& loc_file = node->get_file();
-
-    assert(ctx.global.domain.count(loc_file) && "unknown domain");
+    const auto& dm = ctx.global.domain.at(node->get_file());
 
     // cannot find type
-    if (!ctx.global_symbol().count(name) &&
-        !ctx.generic_symbol().count(name) &&
+    if (!dm.global_symbol.count(name) &&
+        !dm.generic_symbol.count(name) &&
         !ctx.generics.count(name)) {
         rp.report(node->get_name(),
-            "unknown type \"" + name + "\"."
+            "undefined type \"" + name + "\"."
         );
         return type::error_type();
     }
@@ -27,8 +25,8 @@ type type_resolver::resolve(ast::type_def* node) {
     // find type but type is not imported as public
     // mainly eccurs when import all symbols from a module
     // report this error, but still resolve the type
-    if (ctx.global_symbol().count(name) &&
-        !ctx.global_symbol().at(name).is_public) {
+    if (dm.global_symbol.count(name) &&
+        !dm.global_symbol.at(name).is_public) {
         rp.report(node->get_name(),
             "private type \"" + name + "\" cannot be used."
         );
@@ -37,8 +35,8 @@ type type_resolver::resolve(ast::type_def* node) {
     // generate resolved type
     auto res = type {
         .name = name,
-        .loc_file = ctx.global_symbol().count(name)
-            ? ctx.global_symbol().at(name).loc_file
+        .loc_file = dm.global_symbol.count(name)
+            ? dm.global_symbol.at(name).loc_file
             : "",
         .pointer_depth = node->get_pointer_level()
     };

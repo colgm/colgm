@@ -4,6 +4,7 @@
 #include "sema/symbol.h"
 #include "package/package.h"
 
+#include <cassert>
 #include <unordered_map>
 #include <unordered_set>
 #include <cstring>
@@ -29,11 +30,12 @@ struct sema_context {
     // store the file name this context belongs to
     std::string this_file;
 
-    // store generics type name
-    // for field analysis or generic methods type infer
+    // temporarily store generics type name,
+    // for field analysis or generic methods type infer.
+    // may clear after type infer.
     std::unordered_set<std::string> generics;
 
-    // local scope
+    // temporary local scope, may clear after block analysis.
     std::vector<std::unordered_map<std::string, type>> local_scope = {};
 
 public:
@@ -55,6 +57,14 @@ public:
     }
     const auto& generic_symbol() const {
         return global.domain.at(this_file).generic_symbol;
+    }
+    auto& get_domain(const std::string& file) {
+        assert(global.domain.count(file) && "unknown domain");
+        return global.domain.at(file);
+    }
+    const auto& get_domain(const std::string& file) const {
+        assert(global.domain.count(file) && "unknown domain");
+        return global.domain.at(file);
     }
 
 public:
