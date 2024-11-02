@@ -34,6 +34,7 @@ class sir_func {
 private:
     std::string name;
     std::vector<std::pair<std::string, std::string>> params;
+    std::vector<std::string> attributes;
     std::string return_type;
     sir_block* block;
 
@@ -50,6 +51,7 @@ public:
     }
     void set_code_block(sir_block* b) { block = b; }
     auto get_code_block() { return block; }
+    void set_attributes(const std::vector<std::string>& a) { attributes = a; }
     void set_return_type(const std::string& rtype) { return_type = rtype; }
 };
 

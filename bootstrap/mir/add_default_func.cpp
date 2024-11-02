@@ -59,6 +59,7 @@ void add_default_func::add_primitive_size() {
 
         auto size_impl = new mir_func;
         size_impl->name = name;
+        size_impl->attributes = { "alwaysinline" };
         size_impl->return_type = type::u64_type();
         size_impl->block = new mir_block(span::null());
         auto return_stmt = new mir_return(span::null(), new mir_block(span::null()));

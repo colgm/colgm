@@ -40,6 +40,9 @@ void sir_func::dump(std::ostream& out) const {
         }
     }
     out << ")";
+    for(const auto& i : attributes) {
+        out << " " << i;
+    }
     if (!block) {
         out << "\n";
         return;

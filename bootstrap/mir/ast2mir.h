@@ -24,6 +24,7 @@ struct mir_func {
     std::string name;
     span location;
     std::vector<std::pair<std::string, type>> params;
+    std::vector<std::string> attributes;
     type return_type;
     mir_block* block;
 
