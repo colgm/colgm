@@ -9,6 +9,7 @@ void add_default_func::add_malloc_decl() {
 
     auto malloc_decl = new mir_func;
     malloc_decl->name = "@malloc";
+    malloc_decl->attributes = { "nounwind" };
     malloc_decl->return_type = type::i8_type(1);
     malloc_decl->params.push_back({"size", type::i64_type()});
     ctx->decls.push_back(malloc_decl);
@@ -21,6 +22,7 @@ void add_default_func::add_free_decl() {
 
     auto free_decl = new mir_func;
     free_decl->name = "@free";
+    free_decl->attributes = { "nounwind" };
     free_decl->return_type = type::void_type();
     free_decl->params.push_back({"ptr", type::i8_type(1)});
     ctx->decls.push_back(free_decl);
