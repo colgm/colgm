@@ -214,13 +214,19 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     if (s.generic_struct_decl) {
         trp.visit_struct(s.generic_struct_decl);
         root->add_decl(s.generic_struct_decl);
-        s.generic_struct_decl->set_name(s.name); // FIXME: hack here
+        // s.name is generated with generic
+        // for example original name is "foo",
+        // but now it should be replaced with "foo<int, bool>"
+        s.generic_struct_decl->set_name(s.name);
         s.generic_struct_decl->clear_generic_types();
     }
     for(auto i : s.generic_struct_impl) {
         trp.visit_impl(i);
         root->add_decl(i);
-        i->set_struct_name(s.name); // FIXME: hack here
+        // s.name is generated with generic
+        // for example original name is "foo",
+        // but now it should be replaced with "foo<int, bool>"
+        i->set_struct_name(s.name);
         i->clear_generic_types();
     }
     s.generic_struct_impl.clear();
@@ -241,7 +247,10 @@ void generic_visitor::replace_func_type(colgm_func& f,
         type_replace_pass trp(ctx, data);
         trp.visit_func(f.generic_func_decl);
         root->add_decl(f.generic_func_decl);
-        f.generic_func_decl->set_name(f.name); // FIXME: hack here
+        // f.name is generated with generic
+        // for example original name is "foo",
+        // but now it should be replaced with "foo<int, bool>"
+        f.generic_func_decl->set_name(f.name);
         f.generic_func_decl->clear_generic_types();
     }
     f.generic_func_decl = nullptr;
