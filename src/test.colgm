@@ -1,7 +1,8 @@
-use std::libc::{ free };
+use std::libc::{ free, itoa };
 use std::list::{ list, primitive_list };
 use std::map::{ hashmap };
 use std::str::{ str };
+use std::io::{ io };
 
 func test_hashmap() {
     var map = hashmap<i64>::new();
@@ -9,11 +10,44 @@ func test_hashmap() {
     free(map => i8*);
 }
 
+func list_dump(list: list<str>*) {
+    var temp = list->head;
+    while (temp => i8* != nil) {
+        io::stdout().out("[").green().out("test").reset().out("] ");
+        io::stdout().out(temp->elem->c_str).endln();
+        temp = temp->next;
+    }
+}
+
+func primitive_list_dump(list: primitive_list<i64>*) {
+    var temp = list->head;
+    while (temp => i8* != nil) {
+        io::stdout().out("[").green().out("test").reset().out("] ");
+        io::stdout().out_i64(temp->elem).endln();
+        temp = temp->next;
+    }
+}
+
 func test_list() {
+    var s = str::new();
+    s->append_i8_vec("test list<str> dump ");
     var str_list = list<str>::new();
     var int_list = primitive_list<i64>::new();
+
+    for(var i = 0; i < 4; i += 1) {
+        var buff = [i8; 1024];
+        itoa(i, buff, 10);
+        s->append_i8_vec(buff);
+        str_list->insert(s);
+        int_list->insert(i);
+    }
+    list_dump(str_list);
+    primitive_list_dump(int_list);
+
+    s->delete();
     str_list->delete();
     int_list->delete();
+    free(s => i8*);
     free(str_list => i8*);
     free(int_list => i8*);
 }
