@@ -2,6 +2,7 @@
 #include "ast/expr.h"
 #include "ast/stmt.h"
 #include "sema/type_resolver.h"
+#include "ast/dumper.h"
 
 #include <cassert>
 #include <vector>
@@ -10,12 +11,15 @@ namespace colgm {
 
 type type_resolver::resolve(ast::type_def* node) {
     const auto& name = node->get_name()->get_name();
-    const auto& dm = ctx.global.domain.at(node->get_file());
+    const auto& dm = node->is_redirected()
+        ? ctx.global.domain.at(node->get_redirect_location())
+        : ctx.global.domain.at(node->get_file());
 
     // cannot find type
     if (!dm.global_symbol.count(name) &&
         !dm.generic_symbol.count(name) &&
         !ctx.generics.count(name)) {
+        ast::dumper::dump(node);
         rp.report(node->get_name(),
             "undefined type \"" + name + "\"."
         );

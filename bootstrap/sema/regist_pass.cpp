@@ -20,6 +20,7 @@ bool type_replace_pass::visit_type_def(type_def* node) {
     const auto name = node->get_name()->get_name();
     if (g_data.types.count(name)) {
         node->get_name()->reset_name(g_data.types.at(name).name);
+        node->set_redirect_location(ctx.this_file);
     }
     if (node->get_generic_types()) {
         node->get_generic_types()->accept(this);
@@ -31,6 +32,7 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
     const auto name = node->get_id()->get_name();
     if (g_data.types.count(name)) {
         node->get_id()->set_name(g_data.types.at(name).name);
+        node->set_redirect_location(ctx.this_file);
     }
     if (node->get_generic_types()) {
         node->get_generic_types()->accept(this);
@@ -781,19 +783,13 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
     // load fields
     for(auto i : node->get_fields()) {
         auto type_node = i->get_type();
-        auto type_name_node = type_node->get_name();
-        const auto& basic_type_name = type_name_node->get_name();
-        if (!ctx.global_symbol().count(basic_type_name) &&
-            !ctx.generics.count(basic_type_name)) {
-            rp.report(type_name_node,
-                "undefined type \"" + basic_type_name + "\"."
-            );
-            continue;
-        }
         auto field_type = symbol {
             .name = i->get_name()->get_name(),
             .symbol_type = tr.resolve(type_node)
         };
+        if (field_type.symbol_type.is_error()) {
+            continue;
+        }
         if (self.field.count(i->get_name()->get_name())) {
             rp.report(i, "field name already exists");
         }

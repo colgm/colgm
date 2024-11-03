@@ -105,12 +105,15 @@ class code_block;
 class node {
 protected:
     ast_type node_type;
-    span location;
+    span location; // original node location
+    std::string redirect_location; // mostly used in copied generic nodes
     type resolve;
 
 public:
     node(ast_type type, const span& loc):
-        node_type(type), location(loc), resolve({"", "", 0}) {}
+        node_type(type), location(loc),
+        redirect_location(""),
+        resolve({"", "", 0}) {}
     virtual ~node() = default;
     virtual void accept(visitor*) = 0;
     virtual node* clone() const {
@@ -118,15 +121,23 @@ public:
         return nullptr;
     };
 
+public:
     const auto& get_location() const { return location; }
+    const auto& get_redirect_location() const { return redirect_location; }
     const auto& get_file() const { return location.file; }
     const auto get_ast_type() const { return node_type; }
     const auto& get_resolve() const { return resolve; }
+
+public:
     void set_resolve_type(const type& rs) { resolve = rs; }
+    void set_redirect_location(const std::string& rl) { redirect_location = rl; }
     void update_location(const span& end) {
         location.end_line = end.end_line;
         location.end_column = end.end_column;
     }
+
+public:
+    bool is_redirected() const { return !redirect_location.empty(); }
 };
 
 class root: public node {
