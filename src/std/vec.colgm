@@ -1,3 +1,88 @@
-struct vec<T> {}
+use std::libc::{ malloc, realloc, free };
 
-struct primitive_vec<T> {}
+pub struct vec<T> {
+    data: T**,
+    size: u64,
+    capacity: u64
+}
+
+pub struct primitive_vec<T> {
+    data: T*,
+    size: u64,
+    capacity: u64
+}
+
+impl vec<T> {
+    pub func new() -> vec<T>* {
+        var res = vec<T>::__alloc__();
+        res->size = 0 => u64;
+        res->capacity = 8 => u64;
+        res->data = malloc(res->capacity * (8 => u64)) => T**;
+        for (var i = 0 => u64; i < res->capacity; i += 1 => u64) {
+            res->data[i] = nil => T*;
+        }
+        return res;
+    }
+
+    pub func delete(self) {
+        for (var i = 0 => u64; i < self->size; i += 1 => u64) {
+            self->data[i]->delete();
+            free(self->data[i] => i8*);
+        }
+        free(self->data => i8*);
+        self->data = nil => T**;
+        self->size = 0 => u64;
+        self->capacity = 0 => u64;
+    }
+
+    func extend_capacity(self) {
+        self->capacity *= 2 => u64;
+        self->data = realloc(self->data => i8*, self->capacity * (8 => u64)) => T**;
+    }
+
+    pub func push(self, item: T*) {
+        if (self->size >= self->capacity) {
+            self->extend_capacity();
+        }
+        self->data[self->size] = item->copy();
+        self->size += 1 => u64;
+    }
+
+    pub func get(self, index: u64) -> T* {
+        return self->data[index];
+    }
+}
+
+impl primitive_vec<T> {
+    pub func new() -> primitive_vec<T>* {
+        var res = primitive_vec<T>::__alloc__();
+        res->size = 0 => u64;
+        res->capacity = 8 => u64;
+        res->data = malloc(res->capacity * T::__size__()) => T*;
+        return res;
+    }
+
+    pub func delete(self) {
+        free(self->data => i8*);
+        self->data = nil => T*;
+        self->size = 0 => u64;
+        self->capacity = 0 => u64;
+    }
+
+    func extend_capacity(self) {
+        self->capacity *= 2 => u64;
+        self->data = realloc(self->data => i8*, self->capacity * T::__size__()) => T*;
+    }
+
+    pub func push(self, item: T) {
+        if (self->size >= self->capacity) {
+            self->extend_capacity();
+        }
+        self->data[self->size] = item;
+        self->size += 1 => u64;
+    }
+
+    pub func get(self, index: u64) -> T {
+        return self->data[index];
+    }
+}

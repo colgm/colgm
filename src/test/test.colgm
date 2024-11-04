@@ -1,5 +1,6 @@
 use std::libc::{ free, itoa };
 use std::list::{ list, primitive_list };
+use std::vec::{ vec, primitive_vec };
 use std::map::{ hashmap };
 use std::str::{ str };
 use std::io::{ io };
@@ -13,7 +14,7 @@ func test_hashmap() {
 func list_dump(list: list<str>*) {
     var temp = list->head;
     while (temp => i8* != nil) {
-        io::stdout().out("[").green().out("test").reset().out("] ");
+        io::stdout().out("[").green().out("test").reset().out("] list: ");
         io::stdout().out(temp->elem->c_str).endln();
         temp = temp->next;
     }
@@ -22,7 +23,7 @@ func list_dump(list: list<str>*) {
 func primitive_list_dump(list: primitive_list<i64>*) {
     var temp = list->head;
     while (temp => i8* != nil) {
-        io::stdout().out("[").green().out("test").reset().out("] ");
+        io::stdout().out("[").green().out("test").reset().out("] vec: ");
         io::stdout().out_i64(temp->elem).endln();
         temp = temp->next;
     }
@@ -30,13 +31,14 @@ func primitive_list_dump(list: primitive_list<i64>*) {
 
 func test_list() {
     var s = str::new();
-    s->append_i8_vec("test list<str> dump ");
     var str_list = list<str>::new();
     var int_list = primitive_list<i64>::new();
 
     for(var i = 0; i < 16; i += 1) {
         var buff = [i8; 1024];
         itoa(i, buff, 10);
+        s->clear();
+        s->append_i8_vec("test list<str> ");
         s->append_i8_vec(buff);
         str_list->insert(s);
         int_list->insert(i);
@@ -52,9 +54,48 @@ func test_list() {
     free(int_list => i8*);
 }
 
+func vec_dump(vec: vec<str>*) {
+    for(var i = 0 => u64; i < vec->size; i += 1 => u64) {
+        io::stdout().out("[").green().out("test").reset().out("] vec: ");
+        io::stdout().out(vec->get(i)->c_str).endln();
+    }
+}
+
+func primitive_vec_dump(vec: primitive_vec<i64>*) {
+    for(var i = 0 => u64; i < vec->size; i += 1 => u64) {
+        io::stdout().out("[").green().out("test").reset().out("] vec: ");
+        io::stdout().out_i64(vec->get(i)).endln();
+    }
+}
+
+func test_vec() {
+    var s = str::new();
+    var str_vec = vec<str>::new();
+    var int_vec = primitive_vec<i64>::new();
+    for(var i = 0; i < 16; i += 1) {
+        var buff = [i8; 1024];
+        itoa(i, buff, 10);
+        s->clear();
+        s->append_i8_vec("test vec<str> ");
+        s->append_i8_vec(buff);
+        str_vec->push(s);
+        int_vec->push(i);
+    }
+    vec_dump(str_vec);
+    primitive_vec_dump(int_vec);
+
+    s->delete();
+    str_vec->delete();
+    int_vec->delete();
+    free(s => i8*);
+    free(str_vec => i8*);
+    free(int_vec => i8*);
+}
+
 func TEST_ALL() {
     test_hashmap();
     test_list();
+    test_vec();
 }
 
 func main() -> i32 {
