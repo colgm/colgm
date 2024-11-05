@@ -110,6 +110,7 @@ private:
 private:
     colgm_func builtin_struct_size(const span&);
     colgm_func builtin_struct_alloc(const span&, const type&);
+    colgm_func builtin_struct_ptr(const span&, const type&);
 
 private: // primitive types
     // primitive types, now support:

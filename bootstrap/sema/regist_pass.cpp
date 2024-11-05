@@ -443,6 +443,16 @@ colgm_func regist_pass::builtin_struct_alloc(const span& loc, const type& ty) {
     return func;
 }
 
+colgm_func regist_pass::builtin_struct_ptr(const span& loc, const type& ty) {
+    auto func = colgm_func();
+    func.name = "__ptr__";
+    func.location = loc;
+    func.parameters.push_back(symbol {.name = "self", .symbol_type = ty});
+    func.return_type = ty;
+    func.is_public = true;
+    return func;
+}
+
 void regist_pass::regist_primitive_types() {
     const char* primitives[] = {
         "i64", "i32", "i16", "i8",
@@ -806,24 +816,34 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
         self.ordered_field.push_back(field_type);
     }
 
-    // add built-in static method size, for malloc usage
-    self.static_method.insert(
-        {"__size__", builtin_struct_size(node->get_location())}
-    );
-    self.static_method.insert(
-        {"__alloc__", builtin_struct_alloc(node->get_location(), {
-            .name = name,
-            .loc_file = node->get_file(),
-            .pointer_depth = 1
-        })}
-    );
-
+    auto struct_self_type = type {
+        .name = name,
+        .loc_file = node->get_file()
+    };
     if (node->get_generic_types()) {
-        auto& g = self.static_method.at("__alloc__").return_type.generics;
+        auto& g = struct_self_type.generics;
         for(auto i : node->get_generic_types()->get_types()) {
             g.push_back(tr.resolve(i));
         }
     }
+
+    // add built-in static methods
+    self.static_method.insert(
+        {"__size__", builtin_struct_size(node->get_location())}
+    );
+    self.static_method.insert(
+        {"__alloc__", builtin_struct_alloc(
+            node->get_location(),
+            struct_self_type.get_pointer_copy()
+        )}
+    );
+    // add built-in methods
+    self.method.insert(
+        {"__ptr__", builtin_struct_ptr(
+            node->get_location(),
+            struct_self_type.get_pointer_copy()
+        )}
+    );
 }
 
 void regist_pass::check_struct_self_reference() {
