@@ -1,4 +1,4 @@
-use std::libc::{ free, itoa };
+use std::libc::{ free, itoa, time, srand, rand };
 use std::list::{ list, primitive_list };
 use std::vec::{ vec, primitive_vec };
 use std::map::{ hashmap };
@@ -6,7 +6,35 @@ use std::str::{ str };
 use std::io::{ io };
 
 func test_hashmap() {
-    var map = hashmap<i64>::new();
+    var map = hashmap<str, str>::new();
+    for(var i = 0; i < 16; i += 1) {
+        var buff = [i8; 1024];
+        itoa(i, buff, 10);
+        var k = str::new();
+        var v = str::new();
+        k->append_i8_vec(buff);
+        v->append_i8_vec("test hashmap<str, str> ");
+        v->append_i8_vec(buff);
+        map->insert(k, v);
+        k->delete();
+        v->delete();
+        free(k => i8*);
+        free(v => i8*);
+    }
+
+    for(var i = 0; i < 16; i += 1) {
+        var buff = [i8; 1024];
+        itoa(i, buff, 10);
+        var k = str::new();
+        k->append_i8_vec(buff);
+        if (map->has(k)) {
+            io::stdout().out("[").green().out("test").reset().out("] hashmap: ");
+            io::stdout().out(map->get(k)->c_str).endln();
+        }
+        k->delete();
+        free(k => i8*);
+    }
+
     map->delete();
     free(map => i8*);
 }
@@ -35,13 +63,14 @@ func test_list() {
     var int_list = primitive_list<i64>::new();
 
     for(var i = 0; i < 16; i += 1) {
+        var num = rand() % (4096 => i32);
         var buff = [i8; 1024];
-        itoa(i, buff, 10);
+        itoa(num => i64, buff, 10);
         s->clear();
         s->append_i8_vec("test list<str> ");
         s->append_i8_vec(buff);
         str_list->insert(s);
-        int_list->insert(i);
+        int_list->insert(num => i64);
     }
     list_dump(str_list);
     primitive_list_dump(int_list);
@@ -73,13 +102,14 @@ func test_vec() {
     var str_vec = vec<str>::new();
     var int_vec = primitive_vec<i64>::new();
     for(var i = 0; i < 16; i += 1) {
+        var num = rand() % (4096 => i32);
         var buff = [i8; 1024];
-        itoa(i, buff, 10);
+        itoa(num => i64, buff, 10);
         s->clear();
         s->append_i8_vec("test vec<str> ");
         s->append_i8_vec(buff);
         str_vec->push(s);
-        int_vec->push(i);
+        int_vec->push(num => i64);
     }
     vec_dump(str_vec);
     primitive_vec_dump(int_vec);
@@ -93,6 +123,7 @@ func test_vec() {
 }
 
 func TEST_ALL() {
+    srand(time(nil => u64*) => u32);
     test_hashmap();
     test_list();
     test_vec();
