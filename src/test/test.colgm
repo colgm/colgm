@@ -6,37 +6,32 @@ use std::str::{ str };
 use std::io::{ io };
 
 func test_hashmap() {
-    var map = hashmap<str, str>::new();
+    var buff = [i8; 1024];
+    var map = hashmap<str, str>::instance();
     for(var i = 0; i < 16; i += 1) {
-        var buff = [i8; 1024];
         itoa(i, buff, 10);
-        var k = str::new();
-        var v = str::new();
-        k->append_i8_vec(buff);
-        v->append_i8_vec("test hashmap<str, str> ");
-        v->append_i8_vec(buff);
-        map->insert(k, v);
-        k->delete();
-        v->delete();
-        free(k => i8*);
-        free(v => i8*);
+        var k = str::instance();
+        var v = str::instance();
+        k.append_i8_vec(buff);
+        v.append_i8_vec("test hashmap<str, str> ");
+        v.append_i8_vec(buff);
+        map.insert(k.__ptr__(), v.__ptr__());
+        k.delete();
+        v.delete();
     }
 
     for(var i = 0; i < 16; i += 1) {
-        var buff = [i8; 1024];
         itoa(i, buff, 10);
-        var k = str::new();
-        k->append_i8_vec(buff);
-        if (map->has(k)) {
+        var k = str::instance();
+        k.append_i8_vec(buff);
+        if (map.has(k.__ptr__())) {
             io::stdout().out("[").green().out("test").reset().out("] hashmap: ");
-            io::stdout().out(map->get(k)->c_str).endln();
+            io::stdout().out(map.get(k.__ptr__())->c_str).endln();
         }
-        k->delete();
-        free(k => i8*);
+        k.delete();
     }
 
-    map->delete();
-    free(map => i8*);
+    map.delete();
 }
 
 func list_dump(list: list<str>*) {
@@ -58,29 +53,26 @@ func primitive_list_dump(list: primitive_list<i64>*) {
 }
 
 func test_list() {
-    var s = str::new();
-    var str_list = list<str>::new();
-    var int_list = primitive_list<i64>::new();
+    var s = str::instance();
+    var str_list = list<str>::instance();
+    var int_list = primitive_list<i64>::instance();
 
     for(var i = 0; i < 16; i += 1) {
         var num = rand() % (4096 => i32);
         var buff = [i8; 1024];
         itoa(num => i64, buff, 10);
-        s->clear();
-        s->append_i8_vec("test list<str> ");
-        s->append_i8_vec(buff);
-        str_list->insert(s);
-        int_list->insert(num => i64);
+        s.clear();
+        s.append_i8_vec("test list<str> ");
+        s.append_i8_vec(buff);
+        str_list.insert(s.__ptr__());
+        int_list.insert(num => i64);
     }
-    list_dump(str_list);
-    primitive_list_dump(int_list);
+    list_dump(str_list.__ptr__());
+    primitive_list_dump(int_list.__ptr__());
 
-    s->delete();
-    str_list->delete();
-    int_list->delete();
-    free(s => i8*);
-    free(str_list => i8*);
-    free(int_list => i8*);
+    s.delete();
+    str_list.delete();
+    int_list.delete();
 }
 
 func vec_dump(vec: vec<str>*) {
@@ -97,36 +89,33 @@ func primitive_vec_dump(vec: primitive_vec<i64>*) {
     }
 }
 
-func test_vec() {
-    var s = str::new();
-    var str_vec = vec<str>::new();
-    var int_vec = primitive_vec<i64>::new();
+func test_vector() {
+    var s = str::instance();
+    var str_vec = vec<str>::instance();
+    var int_vec = primitive_vec<i64>::instance();
     for(var i = 0; i < 16; i += 1) {
         var num = rand() % (4096 => i32);
         var buff = [i8; 1024];
         itoa(num => i64, buff, 10);
-        s->clear();
-        s->append_i8_vec("test vec<str> ");
-        s->append_i8_vec(buff);
-        str_vec->push(s);
-        int_vec->push(num => i64);
+        s.clear();
+        s.append_i8_vec("test vec<str> ");
+        s.append_i8_vec(buff);
+        str_vec.push(s.__ptr__());
+        int_vec.push(num => i64);
     }
-    vec_dump(str_vec);
-    primitive_vec_dump(int_vec);
+    vec_dump(str_vec.__ptr__());
+    primitive_vec_dump(int_vec.__ptr__());
 
-    s->delete();
-    str_vec->delete();
-    int_vec->delete();
-    free(s => i8*);
-    free(str_vec => i8*);
-    free(int_vec => i8*);
+    s.delete();
+    str_vec.delete();
+    int_vec.delete();
 }
 
 func TEST_ALL() {
     srand(time(nil => u64*) => u32);
     test_hashmap();
     test_list();
-    test_vec();
+    test_vector();
 }
 
 func main() -> i32 {
