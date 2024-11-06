@@ -3,71 +3,10 @@ use err::report::{ report };
 use std::io::{ io };
 use std::map::{ hashmap };
 
-struct file_info_t {
-    name: str,
-    path: str,
-    next: file_info_t*
-}
-
-impl file_info_t {
-    pub func new() -> file_info_t* {
-        var res = file_info_t::__alloc__();
-        res->name.init();
-        res->path.init();
-        res->next = nil => file_info_t*;
-        return res;
-    }
-
-    pub func delete(self) {
-        self->name.delete();
-        self->path.delete();
-    }
-}
-
-struct file_list {
-    head: file_info_t*
-}
-
-impl file_list {
-    pub func new() -> file_list* {
-        var res = file_list::__alloc__();
-        res->head = nil => file_info_t*;
-        return res;
-    }
-
-    pub func delete(self) {
-        var cur = self->head;
-        while (cur != nil => file_info_t*) {
-            var next = cur->next;
-            cur->delete();
-            cur = next;
-        }
-    }
-
-    pub func insert(self, name: str, path: str) {
-        var info = file_info_t::__alloc__();
-        info->name = name;
-        info->path = path;
-        info->next = self->head;
-        self->head = info;
-    }
-
-    pub func exist(self, name: str) -> bool {
-        var cur = self->head;
-        while (cur != nil => file_info_t*) {
-            if (cur->name.eq_str(name)) {
-                return true;
-            }
-            cur = cur->next;
-        }
-        return false;
-    }
-}
-
 pub struct package {
     err: report*,
     library_path: i8*,
-    file_mapper: file_list*
+    file_mapper: hashmap<str, str>
 }
 
 impl package {
@@ -75,23 +14,23 @@ impl package {
         var res = package::__alloc__();
         res->err = e;
         res->library_path = nil;
-        res->file_mapper = file_list::new();
+        res->file_mapper = hashmap<str, str>::instance();
         return res;
     }
 
     pub func delete(self) {
         io::stderr().out("[").green().out("package").reset().out("]");
         io::stderr().out(" delete package::file_mapper\n");
-        self->file_mapper->delete();
+        self->file_mapper.delete();
     }
 
-    pub func insert(self, name: str, path: str) {
-        if (self->file_mapper->exist(name)) {
+    pub func insert(self, name: str*, path: str*) {
+        if (self->file_mapper.has(name)) {
             return;
         }
         io::stderr().out("[").green().out("package").reset().out("]");
-        io::stderr().out(" insert { ").out(name.c_str).out(", ");
-        io::stderr().out(path.c_str).out(" } into package::file_mapper\n");
-        self->file_mapper->insert(name, path);
+        io::stderr().out(" insert { ").out(name->c_str).out(", ");
+        io::stderr().out(path->c_str).out(" } into package::file_mapper\n");
+        self->file_mapper.insert(name, path);
     }
 }

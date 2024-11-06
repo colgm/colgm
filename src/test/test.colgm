@@ -8,30 +8,36 @@ use std::io::{ io };
 func test_hashmap() {
     var buff = [i8; 1024];
     var map = hashmap<str, str>::instance();
+    var stored = vec<str>::instance();
+
     for(var i = 0; i < 16; i += 1) {
-        itoa(i, buff, 10);
+        var num = rand() % (4096 => i32);
+        itoa(num => i64, buff, 10);
         var k = str::instance();
         var v = str::instance();
         k.append_i8_vec(buff);
         v.append_i8_vec("test hashmap<str, str> ");
         v.append_i8_vec(buff);
         map.insert(k.__ptr__(), v.__ptr__());
+        stored.push(k.__ptr__());
         k.delete();
         v.delete();
     }
 
     for(var i = 0; i < 16; i += 1) {
-        itoa(i, buff, 10);
-        var k = str::instance();
-        k.append_i8_vec(buff);
-        if (map.has(k.__ptr__())) {
-            io::stdout().out("[").green().out("test").reset().out("] hashmap: ");
-            io::stdout().out(map.get(k.__ptr__())->c_str).endln();
+        var key = stored.get(i => u64);
+        if (map.has(key)) {
+            io::stdout().out("[").green().out("test").reset().out("] hashmap");
+            io::stdout().out(" test ").out_i64(i).out(": ");
+            io::stdout().out(map.get(key)->c_str).endln();
+        } else {
+            io::stdout().out("[").red().out("test").reset().out("] hashmap");
+            io::stdout().out(" test ").out_i64(i).out(": ").out("not found\n");
         }
-        k.delete();
     }
 
     map.delete();
+    stored.delete();
 }
 
 func list_dump(list: list<str>*) {
