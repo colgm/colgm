@@ -1,4 +1,4 @@
-use std::libc::{ streq, strlen, exit };
+use std::libc::{ streq, strlen };
 use err::span::*;
 use cli::*;
 use std::io::{ readfile_into_string, io };
@@ -9,24 +9,23 @@ func compile(option: cli_option) {
     var err = io::stderr();
     if (!fs::exists(option.input_file)) {
         err.red().out("Error: ").reset();
-        err.out("failed to load file <").out(option.input_file)
-           .out(">, check if exists and is readable\n");
+        err.out("failed to load file <").out(option.input_file);
+        err.out(">, check if exists and is readable\n");
         return;
     }
-    // if (option.library_path != nil &&
-    //     !fs::is_dir(option.library_path)) {
+    // if (option.library_path != nil && !fs::is_dir(option.library_path)) {
     //     err.red().out("Error: ").reset();
-    //     err.out("failed to load library path <").out(option.library_path)
-    //        .out(">, check if exists and is directory\n");
+    //     err.out("failed to load library path <").out(option.library_path);
+    //     err.out(">, check if exists and is directory\n");
     //     return;
     // }
 
-    err.out("[").green().out("colgm").reset().out("]")
-       .out(" source file  : ").out(option.input_file).out("\n");
-    err.out("[").green().out("colgm").reset().out("]")
-       .out(" output file  : ").out(option.output_file).out("\n");
-    err.out("[").green().out("colgm").reset().out("]")
-       .out(" library path : ").out(option.library_path).out("\n");
+    err.out("[").green().out("colgm").reset().out("]");
+    err.out(" source file  : ").out(option.input_file).out("\n");
+    err.out("[").green().out("colgm").reset().out("]");
+    err.out(" output file  : ").out(option.output_file).out("\n");
+    err.out("[").green().out("colgm").reset().out("]");
+    err.out(" library path : ").out(option.library_path).out("\n");
 
     var cc = compiler::instance();
     cc.pkg->library_path = option.library_path;
@@ -57,35 +56,6 @@ func compile(option: cli_option) {
     }
 
     cc.delete();
-}
-
-func report_missing_given_info(info: i8*) {
-    io::stderr().red().out("Error:").reset()
-                .out(" missing ").out(info).out("\n\n");
-    exit(-1 => i32);
-}
-
-func report_multiple_given_info(info: i8*) {
-    io::stderr().red().out("Error:").reset()
-                .out(" multiple ").out(info).out(" specified\n\n");
-    exit(-1 => i32);
-}
-
-func report_invalid_given_info(info: i8*, actual: i8*) {
-    io::stderr().red().out("Error:").reset()
-                .out(" invalid ").out(info)
-                .red().out(" <").out(actual).out(">").reset()
-                .out("\n\n");
-    exit(-1 => i32);
-}
-
-func report_invalid_argument(arg: i8*) {
-    io::stderr().red().out("Error:").reset()
-                .out(" invalid argument ")
-                .red().out(arg).reset()
-                .out(", use ").green().out("--help").reset()
-                .out(" for help.\n\n");
-    exit(-1 => i32);
 }
 
 func main(argc: i32, argv: i8**) -> i32 {

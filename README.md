@@ -68,3 +68,4 @@ See simple tutorial in [bootstrap/README.md](./bootstrap/README.md).
 3. develop bootstrapped compiler
 4. conditional compilation
 5. array type like `[i32; 128]`
+6. optional compile syntax feature: `#[feature(...)]`

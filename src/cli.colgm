@@ -1,4 +1,5 @@
 use std::io::{ io };
+use std::libc::{ exit };
 
 pub struct cli_option {
     OPTION_VIEW_TOKEN: bool,
@@ -29,7 +30,7 @@ impl cli_option {
 }
 
 pub func version() -> i8* {
-    return "colgm compiler version 0.2";
+    return "colgm compiler version 0.2 (beta)";
 }
 
 pub func help() {
@@ -53,7 +54,7 @@ pub func help() {
         .endln();
 }
 
-pub func logo(executable_path: i8*) {
+pub func logo(executable: i8*) {
     io::stdout()
         .green().out("                __              \n")
         .green().out("    _________  / /___ _____ ___ \n")
@@ -64,5 +65,34 @@ pub func logo(executable_path: i8*) {
         .reset()
         .out("ver  : ").out(version()).out("\n")
         .out("repo : https://github.com/colgm/colgm\n\n")
-        .out("input <").out(executable_path).out(" -h> to get help.\n\n");
+        .out("input <").out(executable).out(" -h> to get help.\n\n");
+}
+
+pub func report_missing_given_info(info: i8*) {
+    io::stderr().red().out("Error:").reset()
+                .out(" missing ").out(info).out("\n\n");
+    exit(-1 => i32);
+}
+
+pub func report_multiple_given_info(info: i8*) {
+    io::stderr().red().out("Error:").reset()
+                .out(" multiple ").out(info).out(" specified\n\n");
+    exit(-1 => i32);
+}
+
+pub func report_invalid_given_info(info: i8*, actual: i8*) {
+    io::stderr().red().out("Error:").reset()
+                .out(" invalid ").out(info)
+                .red().out(" <").out(actual).out(">").reset()
+                .out("\n\n");
+    exit(-1 => i32);
+}
+
+pub func report_invalid_argument(arg: i8*) {
+    io::stderr().red().out("Error:").reset()
+                .out(" invalid argument ")
+                .red().out(arg).reset()
+                .out(", use ").green().out("--help").reset()
+                .out(" for help.\n\n");
+    exit(-1 => i32);
 }
