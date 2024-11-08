@@ -799,9 +799,10 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
             "cannot find enum member \"" + node->get_name() +
             "\" in \"" + prev.name_for_search() + "\"."
         );
+        return type::error_type();
     }
 
-    rp.report(node, "cannot get path from \"" + prev.to_string() + "\".");
+    rp.report(node, "cannot find path from \"" + prev.to_string() + "\".");
     return type::error_type();
 }
 

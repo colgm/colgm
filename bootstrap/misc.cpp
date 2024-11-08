@@ -103,7 +103,7 @@ const char* get_platform() {
     } else if (is_linux()) {
         return "linux";
     } else if (is_macos()) {
-        return "macOS";
+        return "macos";
     }
     return "unknown platform";
 }
@@ -112,7 +112,7 @@ const char* get_arch() {
     if (is_x86()) {
         return "x86";
     } else if (is_x86_64()) {
-        return "x86-64";
+        return "x86_64";
     } else if (is_amd64()) {
         return "amd64";
     } else if (is_arm()) {

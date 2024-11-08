@@ -77,6 +77,7 @@ pub enum tok_kind {
     tok_geq,        // >=
     tok_arrow,      // ->
     tok_wide_arrow, // =>
+    tok_sharp,      // #
     tok_eof         // <eof> token
 }
 
@@ -263,6 +264,7 @@ impl lexer {
             tok_kind::tok_geq =>        return "[tok_geq       ]";
             tok_kind::tok_arrow =>      return "[tok_arrow     ]";
             tok_kind::tok_wide_arrow => return "[tok_wide_arrow]";
+            tok_kind::tok_sharp =>      return "[tok_sharp     ]";
             tok_kind::tok_eof =>        return "[tok_eof       ]";
         }
         return "[unknown token ]";
@@ -292,7 +294,7 @@ impl lexer {
     func is_single_char_token(c: i8) -> bool {
         return c == '(' || c == ')' || c == '[' || c == ']' ||
                c == '{' || c == '}' || c == ';' || c == ',' ||
-               c == '?';
+               c == '?' || c == '#';
     }
 
     func is_digit(c: i8) -> bool {
@@ -436,6 +438,8 @@ impl lexer {
             self->toks->append(tok_kind::tok_comma, tmp, loc);
         } elsif (ch == '?') {
             self->toks->append(tok_kind::tok_quesmark, tmp, loc);
+        } elsif (ch == '#') {
+            self->toks->append(tok_kind::tok_sharp, tmp, loc);
         }
     }
 

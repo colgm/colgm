@@ -88,6 +88,7 @@ impl parser {
             tok_kind::tok_geq =>        return ">=";
             tok_kind::tok_arrow =>      return "->";
             tok_kind::tok_wide_arrow => return "=>";
+            tok_kind::tok_sharp =>      return "#";
             tok_kind::tok_eof =>        return "<eof>";
         }
         return "<unknown>";
@@ -217,6 +218,25 @@ impl parser {
 }
 
 impl parser {
+    func optional_comment(self) {
+        self->match_token(tok_kind::tok_sharp);
+        self->match_token(tok_kind::tok_lbracket);
+        self->match_token(tok_kind::tok_id);
+        self->match_token(tok_kind::tok_lparen);
+        while (!self->lookahead(tok_kind::tok_rparen)) {
+            self->match_token(tok_kind::tok_id);
+            self->match_token(tok_kind::tok_eq);
+            self->match_token(tok_kind::tok_str);
+            if (self->lookahead(tok_kind::tok_comma)) {
+                self->match_token(tok_kind::tok_comma);
+            } else {
+                break;
+            }
+        }
+        self->match_token(tok_kind::tok_rparen);
+        self->match_token(tok_kind::tok_rbracket);
+    }
+
     func identifier_gen(self) -> ast_identifier* {
         var res = ast_identifier::new(
             self->this_tok_loc_copy(),

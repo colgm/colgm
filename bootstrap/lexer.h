@@ -82,6 +82,7 @@ enum class tok:u32 {
     tk_geq,          // operator >=
     tk_arrow,        // operator ->
     tk_wide_arrow,   // operator =>
+    tk_sharp,        // #
     tk_eof           // <eof> end of token list
 };
 
@@ -173,7 +174,8 @@ private:
         {">"       , tok::tk_grt         },
         {">="      , tok::tk_geq         },
         {"->"      , tok::tk_arrow       },
-        {"=>"      , tok::tk_wide_arrow  }
+        {"=>"      , tok::tk_wide_arrow  },
+        {"#"       , tok::tk_sharp       }
     };
 
     tok get_type(const std::string&);

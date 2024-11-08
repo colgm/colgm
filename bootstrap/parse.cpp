@@ -80,6 +80,25 @@ void parse::update_location(node* n) {
     n->update_location(toks[ptr-1].loc);
 }
 
+void parse::optional_comment() {
+    match(tok::tk_sharp);
+    match(tok::tk_lbracket);
+    match(tok::tk_id);
+    match(tok::tk_lcurve);
+    while (!look_ahead(tok::tk_rcurve)) {
+        match(tok::tk_id);
+        match(tok::tk_eq);
+        match(tok::tk_str);
+        if (look_ahead(tok::tk_comma)) {
+            match(tok::tk_comma);
+        } else {
+            break;
+        }
+    }
+    match(tok::tk_rcurve);
+    match(tok::tk_rbracket);
+}
+
 identifier* parse::identifier_gen() {
     auto result = new identifier(toks[ptr].loc, toks[ptr].str);
     match(tok::tk_id);
@@ -911,6 +930,9 @@ const error& parse::analyse(const std::vector<token>& token_list) {
     while (!look_ahead(tok::tk_eof)) {
         bool flag_is_public = false;
         bool flag_is_extern = false;
+        if (look_ahead(tok::tk_sharp)) {
+            optional_comment();
+        }
         while (look_ahead(tok::tk_pub) || look_ahead(tok::tk_extern)) {
             if (look_ahead(tok::tk_pub) && !flag_is_public) {
                 flag_is_public = true;

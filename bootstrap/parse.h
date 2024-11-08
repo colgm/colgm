@@ -88,7 +88,8 @@ private:
         {tok::tk_grt         , ">"       },
         {tok::tk_geq         , ">="      },
         {tok::tk_arrow       , "->"      },
-        {tok::tk_wide_arrow  , "=>"      }
+        {tok::tk_wide_arrow  , "=>"      },
+        {tok::tk_sharp       , "#"       }
     };
 
 private:
@@ -103,6 +104,7 @@ private:
     void update_location(node*);
 
 private:
+    void optional_comment();
     identifier* identifier_gen();
     call* call_gen();
     call_id* call_id_gen();
