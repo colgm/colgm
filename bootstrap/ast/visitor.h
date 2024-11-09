@@ -12,6 +12,7 @@ public:
     virtual bool visit_node(node*);
     virtual bool visit_root(root*);
     virtual bool visit_decl(decl*);
+    virtual bool visit_condition_comment(condition_comment*);
     virtual bool visit_type_def(type_def*);
     virtual bool visit_generic_type_list(generic_type_list*);
     virtual bool visit_enum_decl(enum_decl*);

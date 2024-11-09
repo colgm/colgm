@@ -71,6 +71,13 @@ bool dumper::visit_array_literal(array_literal* node) {
     return true;
 }
 
+bool dumper::visit_condition_comment(condition_comment* node) {
+    dump_indent();
+    std::cout << "condition_comment " << node->get_condition_name();
+    std::cout << format_location(node);
+    return true;
+}
+
 bool dumper::visit_type_def(type_def* node) {
     dump_indent();
     std::cout << "type " << (node->is_constant()? "[const]":"[mut]");

@@ -22,6 +22,10 @@ bool visitor::visit_decl(decl* node) {
     return true;
 }
 
+bool visitor::visit_condition_comment(condition_comment*) {
+    return true;
+}
+
 bool visitor::visit_type_def(type_def* node) {
     node->get_name()->accept(this);
     if (node->get_generic_types()) {

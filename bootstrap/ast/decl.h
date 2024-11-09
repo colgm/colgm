@@ -20,6 +20,27 @@ public:
     };
 };
 
+class condition_comment: public decl {
+public:
+    std::string condition_name;
+    std::unordered_map<std::string, std::string> comments;
+
+public:
+    condition_comment(const span& loc, const std::string& n):
+        decl(ast_type::ast_condition_comment, loc), condition_name(n) {}
+    
+    ~condition_comment() override = default;
+    void accept(visitor*) override;
+    condition_comment* clone() const override;
+
+    void add_comment(const std::string& key, const std::string& value) {
+       comments[key] = value;
+    }
+
+    const auto& get_condition_name() const { return condition_name; }
+    const auto& get_comments() const { return comments; }
+};
+
 class type_def: public decl {
 private:
     identifier* name;

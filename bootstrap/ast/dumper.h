@@ -51,6 +51,7 @@ private:
     bool visit_char_literal(char_literal*) override;
     bool visit_bool_literal(bool_literal*) override;
     bool visit_array_literal(array_literal*) override;
+    bool visit_condition_comment(condition_comment*) override;
     bool visit_type_def(type_def*) override;
     bool visit_generic_type_list(generic_type_list*) override;
     bool visit_enum_decl(enum_decl*) override;

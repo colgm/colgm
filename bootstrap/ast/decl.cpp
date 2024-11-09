@@ -7,6 +7,18 @@ void decl::accept(visitor* v) {
     v->visit_decl(this);
 }
 
+void condition_comment::accept(visitor* v) {
+    v->visit_condition_comment(this);
+}
+
+condition_comment* condition_comment::clone() const {
+    auto ret = new condition_comment(location, condition_name);
+    for(const auto& i : comments) {
+        ret->add_comment(i.first, i.second);
+    }
+    return ret;
+}
+
 generic_type_list::~generic_type_list() {
     for(auto i : types) {
         delete i;
