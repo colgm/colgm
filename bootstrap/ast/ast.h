@@ -153,6 +153,7 @@ public:
     void accept(visitor*) override;
     root* clone() const override;
 
+    void reset_decls(const std::vector<decl*>& decls) { declarations = decls; }
     void add_decl(decl* node) { declarations.push_back(node); }
     void add_use_stmt(use_stmt* node) { imports.push_back(node); }
     const auto& get_decls() const { return declarations; }

@@ -22,7 +22,10 @@ bool visitor::visit_decl(decl* node) {
     return true;
 }
 
-bool visitor::visit_condition_comment(condition_comment*) {
+bool visitor::visit_condition_comment(condition_comment* node) {
+    if (node->get_enabled_decl()) {
+        node->get_enabled_decl()->accept(this);
+    }
     return true;
 }
 

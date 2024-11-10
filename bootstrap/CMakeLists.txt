@@ -20,6 +20,7 @@ endif()
 set(COLGM_AST
     ${CMAKE_SOURCE_DIR}/ast/ast.cpp
     ${CMAKE_SOURCE_DIR}/ast/decl.cpp
+    ${CMAKE_SOURCE_DIR}/ast/delete_disabled_node.cpp
     ${CMAKE_SOURCE_DIR}/ast/dumper.cpp
     ${CMAKE_SOURCE_DIR}/ast/expr.cpp
     ${CMAKE_SOURCE_DIR}/ast/stmt.cpp

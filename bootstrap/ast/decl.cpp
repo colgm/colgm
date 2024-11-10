@@ -16,6 +16,9 @@ condition_comment* condition_comment::clone() const {
     for(const auto& i : comments) {
         ret->add_comment(i.first, i.second);
     }
+    if (enabled_decl) {
+        ret->enabled_decl = enabled_decl->clone();
+    }
     return ret;
 }
 

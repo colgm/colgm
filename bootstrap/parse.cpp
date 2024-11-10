@@ -1,4 +1,5 @@
 #include "parse.h"
+#include "ast/delete_disabled_node.h"
 
 namespace colgm {
 
@@ -937,8 +938,9 @@ const error& parse::analyse(const std::vector<token>& token_list) {
     while (!look_ahead(tok::tk_eof)) {
         bool flag_is_public = false;
         bool flag_is_extern = false;
+        condition_comment* cond_comment = nullptr;
         if (look_ahead(tok::tk_sharp)) {
-            result->add_decl(optional_comment());
+            cond_comment = optional_comment();
         }
         while (look_ahead(tok::tk_pub) || look_ahead(tok::tk_extern)) {
             if (look_ahead(tok::tk_pub) && !flag_is_public) {
@@ -957,20 +959,36 @@ const error& parse::analyse(const std::vector<token>& token_list) {
             }
             match(toks[ptr].type);
         }
+
+        decl* new_decl = nullptr;
         switch(toks[ptr].type) {
-            case tok::tk_func: result->add_decl(function_gen(flag_is_public, flag_is_extern)); break;
-            case tok::tk_stct: result->add_decl(struct_gen(flag_is_public, flag_is_extern)); break;
-            case tok::tk_impl: result->add_decl(impl_gen(flag_is_public, flag_is_extern)); break;
-            case tok::tk_enum: result->add_decl(enum_gen(flag_is_public, flag_is_extern)); break;
+            case tok::tk_func: new_decl = function_gen(flag_is_public, flag_is_extern); break;
+            case tok::tk_stct: new_decl = struct_gen(flag_is_public, flag_is_extern); break;
+            case tok::tk_impl: new_decl = impl_gen(flag_is_public, flag_is_extern); break;
+            case tok::tk_enum: new_decl = enum_gen(flag_is_public, flag_is_extern); break;
             default:
                 err.err(toks[ptr].loc,
                     "unexpected token \"" + toks[ptr].str + "\"."
                 );
                 match(toks[ptr].type);
                 break;
-        }    
+        }
+
+        // if conditional comment is not used, add the decl to the root
+        if (!cond_comment && new_decl) {
+            result->add_decl(new_decl);
+        }
+        // if conditional comment is used, add the decl to the comment node
+        if (cond_comment) {
+            cond_comment->set_enabled_decl(new_decl);
+            result->add_decl(cond_comment);
+        }
     }
     update_location(result);
+
+    // delete disabled nodes marked by the conditional comments syntax
+    delete_disabled_node ddn;
+    ddn.scan(result);
     return err;
 }
 

@@ -24,21 +24,25 @@ class condition_comment: public decl {
 public:
     std::string condition_name;
     std::unordered_map<std::string, std::string> comments;
+    decl* enabled_decl;
 
 public:
     condition_comment(const span& loc, const std::string& n):
-        decl(ast_type::ast_condition_comment, loc), condition_name(n) {}
+        decl(ast_type::ast_condition_comment, loc),
+        condition_name(n), enabled_decl(nullptr) {}
     
-    ~condition_comment() override = default;
+    ~condition_comment() override { delete enabled_decl; }
     void accept(visitor*) override;
     condition_comment* clone() const override;
 
     void add_comment(const std::string& key, const std::string& value) {
        comments[key] = value;
     }
+    void set_enabled_decl(decl* node) { enabled_decl = node; }
 
     const auto& get_condition_name() const { return condition_name; }
     const auto& get_comments() const { return comments; }
+    auto get_enabled_decl() const { return enabled_decl; }
 };
 
 class type_def: public decl {
