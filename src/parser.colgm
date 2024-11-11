@@ -218,9 +218,14 @@ impl parser {
 }
 
 impl parser {
-    func optional_comment(self) {
+    func conditional_compilation(self) -> ast_cond_compile* {
+        var begin_loc = self->this_tok_loc();
         self->match_token(tok_kind::tok_sharp);
         self->match_token(tok_kind::tok_lbracket);
+        var res = ast_cond_compile::new(
+            begin_loc->copy(),
+            self->toks->get(self->index).content
+        );
         self->match_token(tok_kind::tok_id);
         self->match_token(tok_kind::tok_lparen);
         while (!self->lookahead(tok_kind::tok_rparen)) {
@@ -235,6 +240,8 @@ impl parser {
         }
         self->match_token(tok_kind::tok_rparen);
         self->match_token(tok_kind::tok_rbracket);
+        self->update_location(res => ast*);
+        return res;
     }
 
     func identifier_gen(self) -> ast_identifier* {
@@ -1173,6 +1180,10 @@ impl parser {
             var flag_is_extern = false;
             var pub_loc = nil => span*;
             var extern_loc = nil => span*;
+            var cond_comp: ast_cond_compile* = nil => ast_cond_compile*;
+            if (self->lookahead(tok_kind::tok_sharp)) {
+                cond_comp = self->conditional_compilation();
+            }
             while (self->lookahead(tok_kind::tok_pub) || self->lookahead(tok_kind::tok_extern)) {
                 if (self->lookahead(tok_kind::tok_pub) && !flag_is_public) {
                     flag_is_public = true;
@@ -1188,13 +1199,14 @@ impl parser {
                 }
                 self->next();
             }
+
+            var decl_node: ast* = nil => ast*;
             match (self->toks->get(self->index).kind) {
                 tok_kind::tok_struct => {
                     var tmp = self->struct_decl_gen();
                     tmp->is_public = flag_is_public;
                     tmp->is_extern = flag_is_extern;
-                    self->root->decls.push(tmp => ast*);
-                    continue;
+                    decl_node = tmp => ast*;
                 }
                 tok_kind::tok_enum => {
                     var tmp = self->enum_decl_gen();
@@ -1202,15 +1214,13 @@ impl parser {
                     if (flag_is_extern) {
                         self->err->error(extern_loc, "extern enum not supported.");
                     }
-                    self->root->decls.push(tmp => ast*);
-                    continue;
+                    decl_node = tmp => ast*;
                 }
                 tok_kind::tok_func => {
                     var tmp = self->function_decl_gen();
                     tmp->is_public = flag_is_public;
                     tmp->is_extern = flag_is_extern;
-                    self->root->decls.push(tmp => ast*);
-                    continue;
+                    decl_node = tmp => ast*;
                 }
                 tok_kind::tok_impl => {
                     if (flag_is_public) {
@@ -1219,9 +1229,24 @@ impl parser {
                     if (flag_is_extern) {
                         self->err->error(extern_loc, "cannot use 'extern' with 'impl'.");
                     }
-                    self->root->decls.push(self->impl_gen() => ast*);
-                    continue;
+                    decl_node = self->impl_gen() => ast*;
                 }
+            }
+            // embed decl node into cond_comp node
+            if (cond_comp => i8* != nil && decl_node => i8* != nil) {
+                cond_comp->enabled_decl = decl_node;
+                self->root->decls.push(cond_comp => ast*);
+                continue;
+            }
+            // error occurred, cond_comp node accepts nothing, delete it
+            if (cond_comp => i8* != nil && decl_node => i8* == nil) {
+                cond_comp->delete();
+                free(cond_comp => i8*);
+            }
+            // cond_comp not used, insert directly
+            if (decl_node => i8* != nil) {
+                self->root->decls.push(decl_node => ast*);
+                continue;
             }
             self->next();
         }
