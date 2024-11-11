@@ -14,15 +14,24 @@ bool delete_disabled_node::check_enable_if(cond_compile* cc) {
             return false;
         }
     }
-    if (!cc->get_comments().count("target_os") ||
-        !cc->get_comments().count("arch")) {
-        return false;
+
+    if (cc->get_comments().count("target_os") &&
+        cc->get_comments().count("arch")) {
+        const auto& target_os = cc->get_comments().at("target_os");
+        const auto& arch = cc->get_comments().at("arch");
+        return target_os == get_platform() && arch == get_arch();
     }
-    const auto& target_os = cc->get_comments().at("target_os");
-    const auto& arch = cc->get_comments().at("arch");
-    if (target_os == get_platform() && arch == get_arch()) {
-        return true;
+
+    if (cc->get_comments().count("target_os")) {
+        const auto& target_os = cc->get_comments().at("target_os");
+        return target_os == get_platform();
     }
+
+    if (cc->get_comments().count("arch")) {
+        const auto& arch = cc->get_comments().at("arch");
+        return arch == get_arch();
+    }
+
     return false;
 }
 

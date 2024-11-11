@@ -26,6 +26,7 @@ pub enum ast_kind {
     ast_call_id,
     ast_call,
     ast_assignment,
+    ast_cond_compile,
     ast_type_def,
     ast_generic_type_list,
     ast_enum_member,
@@ -177,6 +178,10 @@ impl ast {
             }
             ast_kind::ast_assignment => {
                 var tmp = self => ast_assignment*;
+                tmp->delete();
+            }
+            ast_kind::ast_cond_compile => {
+                var tmp = self => ast_cond_compile*;
                 tmp->delete();
             }
             ast_kind::ast_type_def => {
@@ -780,6 +785,29 @@ impl ast_assignment {
 }
 
 // declarations
+
+pub struct ast_cond_compile {
+    base: ast,
+    cond_name: str,
+    enabled_decl: ast*
+}
+
+impl ast_cond_compile {
+    pub func new(loc: span*, cond_name: str*) -> ast_cond_compile* {
+        var res = ast_cond_compile::__alloc__();
+        res->base = ast::instance(ast_kind::ast_cond_compile, loc);
+        res->cond_name = cond_name->copy_instance();
+        res->enabled_decl = nil => ast*;
+        return res;
+    }
+
+    pub func delete(self) {
+        self->cond_name.delete();
+        if (self->enabled_decl => i8* != nil) {
+            self->enabled_decl->delete();
+        }
+    }
+}
 
 pub struct ast_type_def {
     base: ast,

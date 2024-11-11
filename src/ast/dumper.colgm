@@ -182,6 +182,8 @@ impl ast_dumper {
             ast_kind::ast_call => self->dump_call(node => ast_call*, out);
             ast_kind::ast_assignment =>
                 self->dump_assignment(node => ast_assignment*, out);
+            ast_kind::ast_cond_compile =>
+                self->dump_cond_compile(node => ast_cond_compile*, out);
             ast_kind::ast_type_def =>
                 self->dump_type_def(node => ast_type_def*, out);
             ast_kind::ast_generic_type_list =>
@@ -508,6 +510,20 @@ impl ast_dumper {
         self->dump_call(node->left, out);
         self->set_last();
         self->dump(node->right, out);
+        self->pop_indent();
+    }
+
+    func dump_cond_compile(self, node: ast_cond_compile*, out: io) {
+        self->dump_indent(out);
+        out.out("cond-compile ");
+        out.out(node->cond_name.c_str).out(" -> ");
+        node->base.location->dump(out);
+
+        self->push_indent();
+        if (node->enabled_decl => i8* != nil) {
+            self->set_last();
+            self->dump(node->enabled_decl, out);
+        }
         self->pop_indent();
     }
 

@@ -63,8 +63,9 @@ pub func logo(executable: i8*) {
         .green().out("  \\___/\\____/_/\\__, /_/ /_/ /_/ \n")
         .green().out("              /____/            \n\n")
         .reset()
-        .out("ver  : ").out(version()).out("\n")
-        .out("repo : https://github.com/colgm/colgm\n\n")
+        .out("version  : ").out(version()).out("\n")
+        .out("platform : ").out(get_platform()).out(" ").out(get_arch()).out("\n")
+        .out("repo     : https://github.com/colgm/colgm\n\n")
         .out("input <").out(executable).out(" -h> to get help.\n\n");
 }
 
@@ -95,4 +96,29 @@ pub func report_invalid_argument(arg: i8*) {
                 .out(", use ").green().out("--help").reset()
                 .out(" for help.\n\n");
     exit(-1 => i32);
+}
+
+#[enable_if(target_os = "macos")]
+pub func get_platform() -> i8* {
+    return "macos";
+}
+
+#[enable_if(target_os = "linux")]
+pub func get_platform() -> i8* {
+    return "linux";
+}
+
+#[enable_if(target_os = "windows")]
+pub func get_platform() -> i8* {
+    return "windows";
+}
+
+#[enable_if(arch = "x86_64")]
+pub func get_arch() -> i8* {
+    return "x86_64";
+}
+
+#[enable_if(arch = "aarch64")]
+pub func get_arch() -> i8* {
+    return "aarch64";
 }
