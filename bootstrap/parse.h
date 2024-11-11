@@ -104,7 +104,7 @@ private:
     void update_location(node*);
 
 private:
-    condition_comment* optional_comment();
+    cond_compile* conditional_compile();
     identifier* identifier_gen();
     call* call_gen();
     call_id* call_id_gen();

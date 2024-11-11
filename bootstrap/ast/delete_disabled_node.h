@@ -7,7 +7,7 @@ namespace colgm::ast {
 
 class delete_disabled_node {
 private:
-    bool check_enable_if(condition_comment*);
+    bool check_enable_if(cond_compile*);
 
 public:
     void scan(root*);

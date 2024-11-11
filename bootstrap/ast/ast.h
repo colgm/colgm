@@ -31,7 +31,7 @@ enum class ast_type {
     ast_call_path,
     ast_call,
     ast_assignment,
-    ast_condition_comment,
+    ast_cond_compile,
     ast_type_def,
     ast_generic_type_list,
     ast_enum_decl,
@@ -73,7 +73,7 @@ class null;
 class unary_operator;
 class binary_operator;
 class type_convert;
-class condition_comment;
+class cond_compile;
 class identifier;
 class number_literal;
 class string_literal;

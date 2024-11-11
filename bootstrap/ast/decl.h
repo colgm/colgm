@@ -20,20 +20,20 @@ public:
     };
 };
 
-class condition_comment: public decl {
+class cond_compile: public decl {
 public:
     std::string condition_name;
     std::unordered_map<std::string, std::string> comments;
     decl* enabled_decl;
 
 public:
-    condition_comment(const span& loc, const std::string& n):
-        decl(ast_type::ast_condition_comment, loc),
+    cond_compile(const span& loc, const std::string& n):
+        decl(ast_type::ast_cond_compile, loc),
         condition_name(n), enabled_decl(nullptr) {}
     
-    ~condition_comment() override { delete enabled_decl; }
+    ~cond_compile() override { delete enabled_decl; }
     void accept(visitor*) override;
-    condition_comment* clone() const override;
+    cond_compile* clone() const override;
 
     void add_comment(const std::string& key, const std::string& value) {
        comments[key] = value;

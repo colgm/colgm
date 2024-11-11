@@ -71,9 +71,9 @@ bool dumper::visit_array_literal(array_literal* node) {
     return true;
 }
 
-bool dumper::visit_condition_comment(condition_comment* node) {
+bool dumper::visit_cond_compile(cond_compile* node) {
     dump_indent();
-    std::cout << "condition_comment " << node->get_condition_name();
+    std::cout << "conditional_compile " << node->get_condition_name();
     std::cout << format_location(node);
     push_indent();
     std::vector<std::pair<std::string, std::string>> keys;

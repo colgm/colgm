@@ -7,12 +7,12 @@ void decl::accept(visitor* v) {
     v->visit_decl(this);
 }
 
-void condition_comment::accept(visitor* v) {
-    v->visit_condition_comment(this);
+void cond_compile::accept(visitor* v) {
+    v->visit_cond_compile(this);
 }
 
-condition_comment* condition_comment::clone() const {
-    auto ret = new condition_comment(location, condition_name);
+cond_compile* cond_compile::clone() const {
+    auto ret = new cond_compile(location, condition_name);
     for(const auto& i : comments) {
         ret->add_comment(i.first, i.second);
     }

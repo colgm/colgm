@@ -81,11 +81,11 @@ void parse::update_location(node* n) {
     n->update_location(toks[ptr-1].loc);
 }
 
-condition_comment* parse::optional_comment() {
+cond_compile* parse::conditional_compile() {
     auto begin_loc = toks[ptr].loc;
     match(tok::tk_sharp);
     match(tok::tk_lbracket);
-    auto result = new condition_comment(begin_loc, toks[ptr].str);
+    auto result = new cond_compile(begin_loc, toks[ptr].str);
     match(tok::tk_id);
     match(tok::tk_lcurve);
     while (!look_ahead(tok::tk_rcurve)) {
@@ -938,9 +938,9 @@ const error& parse::analyse(const std::vector<token>& token_list) {
     while (!look_ahead(tok::tk_eof)) {
         bool flag_is_public = false;
         bool flag_is_extern = false;
-        condition_comment* cond_comment = nullptr;
+        cond_compile* cond_comp = nullptr;
         if (look_ahead(tok::tk_sharp)) {
-            cond_comment = optional_comment();
+            cond_comp = conditional_compile();
         }
         while (look_ahead(tok::tk_pub) || look_ahead(tok::tk_extern)) {
             if (look_ahead(tok::tk_pub) && !flag_is_public) {
@@ -974,14 +974,14 @@ const error& parse::analyse(const std::vector<token>& token_list) {
                 break;
         }
 
-        // if conditional comment is not used, add the decl to the root
-        if (!cond_comment && new_decl) {
+        // if conditional compilation is not used, add the decl to the root
+        if (!cond_comp && new_decl) {
             result->add_decl(new_decl);
         }
-        // if conditional comment is used, add the decl to the comment node
-        if (cond_comment) {
-            cond_comment->set_enabled_decl(new_decl);
-            result->add_decl(cond_comment);
+        // if conditional compilation is used, add the decl to the comment node
+        if (cond_comp) {
+            cond_comp->set_enabled_decl(new_decl);
+            result->add_decl(cond_comp);
         }
     }
     update_location(result);
