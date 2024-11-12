@@ -133,3 +133,67 @@ impl hashmap<K, V> {
         self->size += 1 => u64;
     }
 }
+
+pub struct hashmap_iter<K, V> {
+    map: hashmap<K, V>*,
+    bucket_index: u64,
+    bucket_list: bucket<K, V>*
+}
+
+impl hashmap_iter<K, V> {
+    func instance(map: hashmap<K, V>*) -> hashmap_iter<K, V> {
+        var res = hashmap_iter<K, V> {
+            map: map,
+            bucket_index: 0 => u64,
+            bucket_list: nil => bucket<K, V>*
+        };
+        for (var i = 0 => u64; i < map->data_capacity; i += 1 => u64) {
+            var bucket_list = map->data[i];
+            if (bucket_list => i8* != nil) {
+                res.bucket_index = i;
+                res.bucket_list = bucket_list;
+                break;
+            }
+        }
+        return res;
+    }
+
+    pub func next(self) -> hashmap_iter<K, V> {
+        var res = hashmap_iter<K, V> {
+            map: self->map,
+            bucket_index: self->bucket_index,
+            bucket_list: nil => bucket<K, V>*
+        };
+        if (self->bucket_list->next => i8* != nil) {
+            res.bucket_list = self->bucket_list->next;
+            return res;
+        }
+        for (var i = self->bucket_index + 1 => u64; i < self->map->data_capacity; i += 1 => u64) {
+            var bucket_list = self->map->data[i];
+            if (bucket_list => i8* != nil) {
+                res.bucket_index = i;
+                res.bucket_list = bucket_list;
+                return res;
+            }
+        }
+        return res;
+    }
+
+    pub func is_end(self) -> bool {
+        return self->bucket_list => i8* == nil;
+    }
+
+    pub func key(self) -> K* {
+        return self->bucket_list->pair.key;
+    }
+
+    pub func value(self) -> V* {
+        return self->bucket_list->pair.value;
+    }
+}
+
+impl hashmap<K, V> {
+    pub func iter(self) -> hashmap_iter<K, V> {
+        return hashmap_iter<K, V>::instance(self);
+    }
+}

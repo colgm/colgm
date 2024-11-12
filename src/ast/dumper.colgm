@@ -520,6 +520,15 @@ impl ast_dumper {
         node->base.location->dump(out);
 
         self->push_indent();
+        var count = 0 => u64;
+        for(var i = node->conds.iter(); !i.is_end(); i = i.next()) {
+            if (count == node->conds.size - (1 => u64) &&
+                node->enabled_decl => i8* == nil) {
+                self->set_last();
+            }
+            self->dump_indent(out);
+            out.out(i.key()->c_str).out(": ").out(i.value()->c_str).out("\n");
+        }
         if (node->enabled_decl => i8* != nil) {
             self->set_last();
             self->dump(node->enabled_decl, out);

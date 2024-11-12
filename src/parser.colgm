@@ -229,15 +229,19 @@ impl parser {
         self->match_token(tok_kind::tok_id);
         self->match_token(tok_kind::tok_lparen);
         while (!self->lookahead(tok_kind::tok_rparen)) {
+            var key = self->toks->get(self->index).content;
             self->match_token(tok_kind::tok_id);
             self->match_token(tok_kind::tok_eq);
+            var value = self->toks->get(self->index).content;
             self->match_token(tok_kind::tok_str);
+            res->add_condition(key, value);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
                 break;
             }
         }
+        
         self->match_token(tok_kind::tok_rparen);
         self->match_token(tok_kind::tok_rbracket);
         self->update_location(res => ast*);
