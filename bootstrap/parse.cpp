@@ -94,7 +94,7 @@ cond_compile* parse::conditional_compile() {
         match(tok::tk_eq);
         auto value = toks[ptr].str;
         match(tok::tk_str);
-        result->add_comment(key, value);
+        result->add_condition(key, value);
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else {

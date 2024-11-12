@@ -13,8 +13,8 @@ void cond_compile::accept(visitor* v) {
 
 cond_compile* cond_compile::clone() const {
     auto ret = new cond_compile(location, condition_name);
-    for(const auto& i : comments) {
-        ret->add_comment(i.first, i.second);
+    for(const auto& i : conds) {
+        ret->add_condition(i.first, i.second);
     }
     if (enabled_decl) {
         ret->enabled_decl = enabled_decl->clone();

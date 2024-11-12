@@ -23,7 +23,7 @@ public:
 class cond_compile: public decl {
 public:
     std::string condition_name;
-    std::unordered_map<std::string, std::string> comments;
+    std::unordered_map<std::string, std::string> conds;
     decl* enabled_decl;
 
 public:
@@ -35,13 +35,13 @@ public:
     void accept(visitor*) override;
     cond_compile* clone() const override;
 
-    void add_comment(const std::string& key, const std::string& value) {
-       comments[key] = value;
+    void add_condition(const std::string& key, const std::string& value) {
+       conds[key] = value;
     }
     void set_enabled_decl(decl* node) { enabled_decl = node; }
 
     const auto& get_condition_name() const { return condition_name; }
-    const auto& get_comments() const { return comments; }
+    const auto& get_conds() const { return conds; }
     auto get_enabled_decl() const { return enabled_decl; }
 };
 

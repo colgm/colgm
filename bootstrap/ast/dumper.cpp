@@ -77,7 +77,7 @@ bool dumper::visit_cond_compile(cond_compile* node) {
     std::cout << format_location(node);
     push_indent();
     std::vector<std::pair<std::string, std::string>> keys;
-    for(const auto& i : node->get_comments()) {
+    for(const auto& i : node->get_conds()) {
         keys.push_back(i);
     }
     for(const auto& i : keys) {

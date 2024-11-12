@@ -10,29 +10,31 @@ func test_hashmap() {
     var map = hashmap<str, str>::instance();
     var stored = vec<str>::instance();
 
-    for(var i = 0; i < 16; i += 1) {
+    for(var i = 0; i < 32; i += 1) {
         var num = rand() % (4096 => i32);
         itoa(num => i64, buff, 10);
         var k = str::instance();
         var v = str::instance();
         k.append_i8_vec(buff);
-        v.append_i8_vec("test hashmap<str, str> ");
-        v.append_i8_vec(buff);
+        v.append_i8_vec("[test hashmap<str, str> ");
+        v.append_i8_vec(buff)->append_i8_vec("]");
         map.insert(k.__ptr__(), v.__ptr__());
         stored.push(k.__ptr__());
         k.delete();
         v.delete();
     }
 
-    for(var i = 0; i < 16; i += 1) {
+    for(var i = 0; i < 32; i += 1) {
         var key = stored.get(i => u64);
         if (map.has(key)) {
-            io::stdout().out("[").green().out("test").reset().out("] hashmap");
-            io::stdout().out(" test ").out_i64(i).out(": ");
+            io::stdout().out("[").green().out("test").reset().out("] hashmap ");
+            io::stdout().out_i64(i).out(": key ");
+            io::stdout().out(key->c_str).out(" found -> ");
             io::stdout().out(map.get(key)->c_str).endln();
         } else {
-            io::stdout().out("[").red().out("test").reset().out("] hashmap");
-            io::stdout().out(" test ").out_i64(i).out(": ").out("not found\n");
+            io::stdout().out("[").red().out("test").reset().out("] hashmap ");
+            io::stdout().out_i64(i).out(": ");
+            io::stdout().out(key->c_str).out(" not found\n");
         }
     }
 
@@ -63,7 +65,7 @@ func test_list() {
     var str_list = list<str>::instance();
     var int_list = primitive_list<i64>::instance();
 
-    for(var i = 0; i < 16; i += 1) {
+    for(var i = 0; i < 32; i += 1) {
         var num = rand() % (4096 => i32);
         var buff = [i8; 1024];
         itoa(num => i64, buff, 10);
@@ -99,7 +101,7 @@ func test_vector() {
     var s = str::instance();
     var str_vec = vec<str>::instance();
     var int_vec = primitive_vec<i64>::instance();
-    for(var i = 0; i < 16; i += 1) {
+    for(var i = 0; i < 32; i += 1) {
         var num = rand() % (4096 => i32);
         var buff = [i8; 1024];
         itoa(num => i64, buff, 10);

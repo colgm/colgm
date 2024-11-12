@@ -9,26 +9,26 @@ bool delete_disabled_node::check_enable_if(cond_compile* cc) {
     if (cc->get_condition_name() != "enable_if") {
         return false;
     }
-    for(const auto& i : cc->get_comments()) {
+    for(const auto& i : cc->get_conds()) {
         if (i.first != "target_os" && i.first != "arch") {
             return false;
         }
     }
 
-    if (cc->get_comments().count("target_os") &&
-        cc->get_comments().count("arch")) {
-        const auto& target_os = cc->get_comments().at("target_os");
-        const auto& arch = cc->get_comments().at("arch");
+    if (cc->get_conds().count("target_os") &&
+        cc->get_conds().count("arch")) {
+        const auto& target_os = cc->get_conds().at("target_os");
+        const auto& arch = cc->get_conds().at("arch");
         return target_os == get_platform() && arch == get_arch();
     }
 
-    if (cc->get_comments().count("target_os")) {
-        const auto& target_os = cc->get_comments().at("target_os");
+    if (cc->get_conds().count("target_os")) {
+        const auto& target_os = cc->get_conds().at("target_os");
         return target_os == get_platform();
     }
 
-    if (cc->get_comments().count("arch")) {
-        const auto& arch = cc->get_comments().at("arch");
+    if (cc->get_conds().count("arch")) {
+        const auto& arch = cc->get_conds().at("arch");
         return arch == get_arch();
     }
 
