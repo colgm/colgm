@@ -18,10 +18,39 @@ pub struct list<T> {
     size: u64
 }
 
+pub struct list_iter<T> {
+    list: list<T>*,
+    current: node<T>*
+}
+
 pub struct primitive_list<T> {
     head: primitive_node<T>*,
     tail: primitive_node<T>*,
     size: u64
+}
+
+impl list_iter<T> {
+    func instance(list: list<T>*) -> list_iter<T> {
+        return list_iter<T> {
+            list: list,
+            current: list->head
+        };
+    }
+
+    pub func is_end(self) -> bool {
+        return self->current => i8* == nil;
+    }
+
+    pub func elem(self) -> T* {
+        return self->current->elem;
+    }
+
+    pub func next(self) -> list_iter<T> {
+        return list_iter<T> {
+            list: self->list,
+            current: self->current->next
+        };
+    }
 }
 
 impl list<T> {
@@ -69,6 +98,10 @@ impl list<T> {
         self->tail = new_node;
         self->size += 1 => u64;
         return;
+    }
+
+    pub func iter(self) -> list_iter<T> {
+        return list_iter<T>::instance(self);
     }
 }
 

@@ -2,15 +2,46 @@ use std::libc::{ free, itoa, time, srand, rand };
 use std::list::{ list, primitive_list };
 use std::vec::{ vec, primitive_vec };
 use std::map::{ hashmap };
+use std::set::{ hashset };
 use std::str::{ str };
 use std::io::{ io };
+
+func test_set() {
+    var buff = [i8; 1024];
+    var set = hashset<str>::instance();
+    for (var i = 0; i < 32; i += 1) {
+        itoa(i, buff, 10);
+        var n = str::instance();
+        n.append_i8_vec(buff);
+        set.insert(n.__ptr__());
+        n.delete();
+    }
+
+    var fuck = set.iter();
+    if (fuck.is_end()) {
+        io::stdout().out("fuck\n");
+    }
+
+    for (var i = set.iter(); !i.is_end(); i = i.next()) {
+        var n = i.elem();
+        if (set.has(n)) {
+            io::stdout().out("[").green().out("test").reset().out("] hashset: ");
+            io::stdout().out(n->c_str).out(" found\n");
+        } else {
+            io::stdout().out("[").red().out("test").reset().out("] hashset: ");
+            io::stdout().out(n->c_str).out(" not found\n");
+        }
+    }
+
+    set.delete();
+}
 
 func test_hashmap() {
     var buff = [i8; 1024];
     var map = hashmap<str, str>::instance();
     var stored = vec<str>::instance();
 
-    for(var i = 0; i < 32; i += 1) {
+    for (var i = 0; i < 32; i += 1) {
         var num = rand() % (4096 => i32);
         itoa(num => i64, buff, 10);
         var k = str::instance();
@@ -24,7 +55,7 @@ func test_hashmap() {
         v.delete();
     }
 
-    for(var i = 0; i < 32; i += 1) {
+    for (var i = 0; i < 32; i += 1) {
         var key = stored.get(i => u64);
         if (map.has(key)) {
             io::stdout().out("[").green().out("test").reset().out("] hashmap ");
@@ -38,7 +69,7 @@ func test_hashmap() {
         }
     }
 
-    for(var i = map.iter(); !i.is_end(); i = i.next()) {
+    for (var i = map.iter(); !i.is_end(); i = i.next()) {
         io::stdout().out("[").green().out("test").reset();
         io::stdout().out("] hashmap::iter ");
         io::stdout().out(i.key()->c_str).out(" -> ").out(i.value()->c_str);
@@ -50,11 +81,9 @@ func test_hashmap() {
 }
 
 func list_dump(list: list<str>*) {
-    var temp = list->head;
-    while (temp => i8* != nil) {
+    for (var i = list->iter(); !i.is_end(); i = i.next()) {
         io::stdout().out("[").green().out("test").reset().out("] list: ");
-        io::stdout().out(temp->elem->c_str).endln();
-        temp = temp->next;
+        io::stdout().out(i.elem()->c_str).endln();
     }
 }
 
@@ -72,7 +101,7 @@ func test_list() {
     var str_list = list<str>::instance();
     var int_list = primitive_list<i64>::instance();
 
-    for(var i = 0; i < 32; i += 1) {
+    for (var i = 0; i < 32; i += 1) {
         var num = rand() % (4096 => i32);
         var buff = [i8; 1024];
         itoa(num => i64, buff, 10);
@@ -91,14 +120,14 @@ func test_list() {
 }
 
 func vec_dump(vec: vec<str>*) {
-    for(var i = 0 => u64; i < vec->size; i += 1 => u64) {
+    for (var i = 0 => u64; i < vec->size; i += 1 => u64) {
         io::stdout().out("[").green().out("test").reset().out("] vec: ");
         io::stdout().out(vec->get(i)->c_str).endln();
     }
 }
 
 func primitive_vec_dump(vec: primitive_vec<i64>*) {
-    for(var i = 0 => u64; i < vec->size; i += 1 => u64) {
+    for (var i = 0 => u64; i < vec->size; i += 1 => u64) {
         io::stdout().out("[").green().out("test").reset().out("] vec: ");
         io::stdout().out_i64(vec->get(i)).endln();
     }
@@ -108,7 +137,7 @@ func test_vector() {
     var s = str::instance();
     var str_vec = vec<str>::instance();
     var int_vec = primitive_vec<i64>::instance();
-    for(var i = 0; i < 32; i += 1) {
+    for (var i = 0; i < 32; i += 1) {
         var num = rand() % (4096 => i32);
         var buff = [i8; 1024];
         itoa(num => i64, buff, 10);
@@ -131,6 +160,7 @@ func TEST_ALL() {
     test_hashmap();
     test_list();
     test_vector();
+    test_set();
 }
 
 func main() -> i32 {

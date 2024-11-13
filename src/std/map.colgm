@@ -68,6 +68,8 @@ impl hashmap<K, V> {
             }
         }
         free(self->data => i8*);
+        self->size = 0 => u64;
+        self->data_capacity = 0 => u64;
         self->data = nil => bucket<K, V>**;
     }
 }
@@ -98,7 +100,7 @@ impl hashmap<K, V> {
     }
 
     pub func insert(self, key: K*, value: V*) {
-        var hash = key->hash() % (1024 => u64);
+        var hash = key->hash() % self->data_capacity;
         var bucket_list = self->data[hash];
         while (bucket_list => i8* != nil) {
             // do replacement
