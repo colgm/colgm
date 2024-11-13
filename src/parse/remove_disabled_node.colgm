@@ -1,0 +1,84 @@
+use ast::ast::{ ast_kind, ptr_vec, ast, root, ast_cond_compile };
+use std::str::{ str };
+use std::io::{ io };
+use misc::{ get_platform, get_arch };
+
+pub func check_enable_if(acc: ast_cond_compile*) -> bool {
+    if (!acc->cond_name.eq_const("enable_if")) {
+        return false;
+    }
+
+    var key_target_os = str::instance();
+    var key_arch = str::instance();
+    key_target_os.append_i8_vec("target_os");
+    key_arch.append_i8_vec("arch");
+
+    for (var i = acc->conds.iter(); !i.is_end(); i = i.next()) {
+        if (!i.key()->eq(key_target_os.__ptr__()) &&
+            !i.key()->eq(key_arch.__ptr__())) {
+            return false;
+        }
+    }
+
+    if (acc->conds.has(key_target_os.__ptr__()) &&
+        acc->conds.has(key_arch.__ptr__())) {
+        var target_os = acc->conds.get(key_target_os.__ptr__());
+        var arch = acc->conds.get(key_arch.__ptr__());
+        key_target_os.delete();
+        key_arch.delete();
+        return target_os->eq_const(get_platform()) &&
+               arch->eq_const(get_arch());
+    }
+
+    if (acc->conds.has(key_target_os.__ptr__())) {
+        var target_os = acc->conds.get(key_target_os.__ptr__());
+        key_target_os.delete();
+        key_arch.delete();
+        return target_os->eq_const(get_platform());
+    }
+
+    if (acc->conds.has(key_arch.__ptr__())) {
+        var arch = acc->conds.get(key_arch.__ptr__());
+        key_target_os.delete();
+        key_arch.delete();
+        return arch->eq_const(get_arch());
+    }
+    return false;
+}
+
+pub func remove_disabled_node(node: root*) {
+    var remove_count = 0;
+    var new_vec = ptr_vec::instance();
+    var size = node->decls.size;
+    for (var i = 0 => u64; i < size; i += 1 => u64) {
+        var d = node->decls.get(i);
+        if (d->kind != ast_kind::ast_cond_compile) {
+            new_vec.push(d);
+            continue;
+        }
+        if (check_enable_if(d => ast_cond_compile*)) {
+            var acc = d => ast_cond_compile*;
+            new_vec.push(acc->enabled_decl);
+            acc->enabled_decl = nil => ast*;
+            acc->delete();
+        } else {
+            remove_count += 1;
+            d->delete();
+        }
+    }
+
+    var old_vec = node->decls;
+    for (var i = 0 => u64; i < size; i += 1 => u64) {
+        old_vec.data[i] = nil => ast*;
+    }
+    old_vec.delete();
+
+    node->decls = new_vec;
+
+    if (remove_count > 0) {
+        io::stdout().out("[").green().out("ast").reset().out("]");
+        io::stdout().out(" run remove disabled node pass: ");
+        io::stdout().out_i64(remove_count).out(" node(s) removed\n");
+    }
+    return;
+}

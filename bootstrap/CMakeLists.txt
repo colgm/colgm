@@ -71,4 +71,10 @@ target_include_directories(colgm-object PRIVATE ${CMAKE_SOURCE_DIR})
 
 # build colgm
 add_executable(colgm ${CMAKE_SOURCE_DIR}/main.cpp)
-target_link_libraries(colgm colgm-object colgm-ast colgm-sir colgm-mir colgm-package colgm-sema)
+target_link_libraries(colgm
+    colgm-object
+    colgm-ast
+    colgm-sir
+    colgm-mir
+    colgm-package
+    colgm-sema)

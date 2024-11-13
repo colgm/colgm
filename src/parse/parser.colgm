@@ -6,6 +6,7 @@ use lexer::{ lexer, vec_token, tok_kind };
 use std::libc::{ free, streq };
 use std::io::{ io };
 use std::str::{ str };
+use parse::remove_disabled_node::{ remove_disabled_node };
 
 pub struct parser {
     err: report*,
@@ -1255,6 +1256,8 @@ impl parser {
             self->next();
         }
         self->update_location(self->root => ast*);
+
+        remove_disabled_node(self->root);
     }
 }
 
