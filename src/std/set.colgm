@@ -48,8 +48,8 @@ impl hashset<T> {
 impl hashset<T> {
     pub func has(self, item: T*) -> bool {
         var hash = item->hash() % self->data_capacity;
-        var bucket = self->data[hash];
-        var tmp = bucket.head;
+        var bucket = self->data[hash].__ptr__();
+        var tmp = bucket->head;
         while (tmp => i8* != nil) {
             if (tmp->elem->eq(item)) {
                 return true;
@@ -61,15 +61,17 @@ impl hashset<T> {
 
     pub func insert(self, item: T*) {
         var hash = item->hash() % self->data_capacity;
-        var bucket = self->data[hash];
-        var tmp = bucket.head;
+        // must use pointer/reference, otherwise changes will not
+        // be reflected in the hashset
+        var bucket = self->data[hash].__ptr__();
+        var tmp = bucket->head;
         while (tmp => i8* != nil) {
             if (tmp->elem->eq(item)) {
                 return;
             }
             tmp = tmp->next;
         }
-        bucket.insert(item);
+        bucket->insert(item);
         self->size += 1 => u64;
     }
 }

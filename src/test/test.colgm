@@ -9,7 +9,7 @@ use std::io::{ io };
 func test_set() {
     var buff = [i8; 1024];
     var set = hashset<str>::instance();
-    for (var i = 0; i < 32; i += 1) {
+    for (var i = 0; i < 128; i += 1) {
         itoa(i, buff, 10);
         var n = str::instance();
         n.append_i8_vec(buff);
@@ -17,16 +17,12 @@ func test_set() {
         n.delete();
     }
 
-    var fuck = set.iter();
-    if (fuck.is_end()) {
-        io::stdout().out("fuck\n");
-    }
-
     for (var i = set.iter(); !i.is_end(); i = i.next()) {
         var n = i.elem();
         if (set.has(n)) {
             io::stdout().out("[").green().out("test").reset().out("] hashset: ");
-            io::stdout().out(n->c_str).out(" found\n");
+            io::stdout().out(n->c_str).out(" found in bucket ");
+            io::stdout().out_i64(i.bucket_index => i64).endln();
         } else {
             io::stdout().out("[").red().out("test").reset().out("] hashset: ");
             io::stdout().out(n->c_str).out(" not found\n");
@@ -73,7 +69,7 @@ func test_hashmap() {
         io::stdout().out("[").green().out("test").reset();
         io::stdout().out("] hashmap::iter ");
         io::stdout().out(i.key()->c_str).out(" -> ").out(i.value()->c_str);
-        io::stdout().out("\n");
+        io::stdout().out(" in bucket ").out_i64(i.bucket_index => i64).out("\n");
     }
 
     map.delete();
@@ -90,7 +86,7 @@ func list_dump(list: list<str>*) {
 func primitive_list_dump(list: primitive_list<i64>*) {
     var temp = list->head;
     while (temp => i8* != nil) {
-        io::stdout().out("[").green().out("test").reset().out("] vec: ");
+        io::stdout().out("[").green().out("test").reset().out("] list: ");
         io::stdout().out_i64(temp->elem).endln();
         temp = temp->next;
     }
