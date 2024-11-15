@@ -30,6 +30,7 @@ set(COLGM_SIR
     ${CMAKE_SOURCE_DIR}/sir/delete_useless_label.cpp
     ${CMAKE_SOURCE_DIR}/sir/detect_redef_extern.cpp
     ${CMAKE_SOURCE_DIR}/sir/pass_manager.cpp
+    ${CMAKE_SOURCE_DIR}/sir/primitive_size_opt.cpp
     ${CMAKE_SOURCE_DIR}/sir/remove_alloca.cpp
     ${CMAKE_SOURCE_DIR}/sir/sir.cpp)
 set(COLGM_MIR

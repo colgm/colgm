@@ -279,6 +279,8 @@ public:
         sir(sir_kind::sir_call_func), name(n),
         return_type(rt), destination(dst) {}
     ~sir_call_func() override = default;
+    const auto& get_name() const { return name; }
+    const auto& get_destination() const { return destination; }
     void add_arg_type(const std::string& t) { args_type.push_back(t); }
     void add_arg(const value_t& a) { args.push_back(a); }
     void dump(std::ostream&) const override;
