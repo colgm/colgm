@@ -67,3 +67,4 @@ See simple tutorial in [bootstrap/README.md](./bootstrap/README.md).
 2. llvm debug info, may not support in bootstrap compiler
 3. develop bootstrapped compiler
 4. array type like `[i32; 128]`
+5. support generic type like `A<i32*>` or `A<B<C, D>>` [WIP]

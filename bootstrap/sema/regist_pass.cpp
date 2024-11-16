@@ -185,6 +185,8 @@ void generic_visitor::replace_type(type& t, const generic_data& data) {
         const auto& real = data.types.at(t.name);
         t.name = real.name;
         t.loc_file = real.loc_file;
+        // FIXME: cause incorrect error report
+        // t.pointer_depth = real.pointer_depth;
     }
     if (t.generics.empty()) {
         return;

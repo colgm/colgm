@@ -15,6 +15,25 @@ namespace colgm {
 
 using namespace ast;
 
+class generic_list_look_ahead {
+private:
+    usize ptr;
+    const token* toks;
+
+private:
+    bool look_ahead(tok t) { return t == toks[ptr].type; }
+    void next() {
+        if (toks[ptr].type!=tok::tk_eof) {
+            ++ptr;
+        }
+    }
+    bool look_ahead_type_def();
+
+public:
+    generic_list_look_ahead(const token* t, usize p): ptr(p), toks(t) {}
+    bool check();
+};
+
 class parse {
 private:
     usize ptr;
@@ -99,9 +118,13 @@ private:
             ++ptr;
         }
     }
-    bool look_ahead(tok);
-    bool look_ahead_generic();
-    void update_location(node*);
+    bool look_ahead(tok t) { return t == toks[ptr].type; }
+    bool look_ahead_generic() {
+        return generic_list_look_ahead(toks, ptr).check();
+    }
+    void update_location(node* n) {
+        n->update_location(toks[ptr - 1].loc);
+    }
 
 private:
     cond_compile* conditional_compile();

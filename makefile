@@ -12,6 +12,7 @@ test: $(COLGMCC) test/*
 	@ $(COLGMCC) test/bitwise.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/branch.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/cmpnot.colgm $(TEST_LIB) && lli out.ll
+	-@ $(COLGMCC) test/complext_generics.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/continue_break.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/enum_test.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/for_test.colgm $(TEST_LIB) && lli out.ll

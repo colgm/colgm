@@ -3,6 +3,50 @@
 
 namespace colgm {
 
+bool generic_list_look_ahead::look_ahead_type_def() {
+    if (look_ahead(tok::tk_const)) {
+        next();
+    }
+    if (look_ahead(tok::tk_id)) {
+        next();
+    } else {
+        return false;
+    }
+    if (look_ahead(tok::tk_less) && !check()) {
+        return false;
+    }
+    while (look_ahead(tok::tk_mult)) {
+        next();
+    }
+    return true;
+}
+
+bool generic_list_look_ahead::check() {
+    if (!look_ahead(tok::tk_less)) {
+        return false;
+    } else {
+        next();
+    }
+    while (!look_ahead(tok::tk_grt)) {
+        if (look_ahead(tok::tk_eof)) {
+            return false;
+        }
+        if (!look_ahead_type_def()) {
+            return false;
+        }
+        if (!look_ahead(tok::tk_comma) && !look_ahead(tok::tk_grt)) {
+            return false;
+        }
+        if (look_ahead(tok::tk_comma)) {
+            next();
+        }
+    }
+    if (look_ahead(tok::tk_grt)) {
+        next();
+    }
+    return true;
+}
+
 void parse::match(tok type) {
     if (type==toks[ptr].type) {
         next();
@@ -39,46 +83,6 @@ void parse::match(tok type) {
     // so do not do too many things
     next();
     return;
-}
-
-bool parse::look_ahead(tok type) {
-    return type==toks[ptr].type;
-}
-
-bool parse::look_ahead_generic() {
-    if (toks[ptr].type!=tok::tk_less) {
-        return false;
-    }
-    auto tmp_ptr = ptr + 1;
-    // check if is end of file token
-    if (toks[tmp_ptr].type==tok::tk_eof) {
-        return false;
-    }
-    // check if is generic
-    while(toks[tmp_ptr].type!=tok::tk_grt) {
-        if (toks[tmp_ptr].type==tok::tk_eof) {
-            return false;
-        }
-        if (toks[tmp_ptr].type!=tok::tk_id) {
-            return false;
-        }
-        tmp_ptr++;
-        if (toks[tmp_ptr].type==tok::tk_eof) {
-            return false;
-        }
-        if (toks[tmp_ptr].type!=tok::tk_comma &&
-            toks[tmp_ptr].type!=tok::tk_grt) {
-            return false;
-        }
-        if (toks[tmp_ptr].type==tok::tk_comma) {
-            tmp_ptr++;
-        }
-    }
-    return true;
-}
-
-void parse::update_location(node* n) {
-    n->update_location(toks[ptr-1].loc);
 }
 
 cond_compile* parse::conditional_compile() {
@@ -533,10 +537,7 @@ generic_type_list* parse::generic_type_list_gen() {
     auto result = new generic_type_list(toks[ptr].loc);
     match(tok::tk_less);
     while(look_ahead(tok::tk_id)) {
-        // generic type does not allow pointer or other forms
-        auto type_node = new type_def(toks[ptr].loc);
-        type_node->set_name(identifier_gen());
-        result->add_type(type_node);
+        result->add_type(type_def_gen());
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {
