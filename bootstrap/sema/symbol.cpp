@@ -48,6 +48,9 @@ std::string type::generic_name() const {
     result += "<";
     for(const auto& g: generics) {
         result += g.full_path_name();
+        for(auto i = 0; i<g.pointer_depth; ++i) {
+            result += "*";
+        }
         result += ",";
     }
     if (result.back()==',') {

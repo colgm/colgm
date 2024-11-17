@@ -117,10 +117,11 @@ void execute(const std::string& input_file,
     }
 
     // simple semantic
-    sema.analyse(parser.get_result()).chkerr();
+    const auto& r = sema.analyse(parser.get_result());
     if (cmd&COMPILE_VIEW_SEMA) {
         sema.dump();
     }
+    r.chkerr();
 
     // generate mir code
     ast2mir.generate(parser.get_result()).chkerr();

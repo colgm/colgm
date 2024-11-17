@@ -185,8 +185,11 @@ void generic_visitor::replace_type(type& t, const generic_data& data) {
         const auto& real = data.types.at(t.name);
         t.name = real.name;
         t.loc_file = real.loc_file;
-        // FIXME: cause incorrect error report
-        // t.pointer_depth = real.pointer_depth;
+        t.generics = real.generics;
+        // should add to t.pointer_depth, for example: func foo(a: T*) {}
+        // we should replace T with bar, expected result is: bar*
+        // if we do not add pointer_depth, the result will be bar
+        t.pointer_depth += real.pointer_depth;
     }
     if (t.generics.empty()) {
         return;

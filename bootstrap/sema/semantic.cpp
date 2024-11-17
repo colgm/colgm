@@ -577,7 +577,11 @@ type semantic::resolve_call_id(call_id* node) {
         std::string name = node->get_id()->get_name();
         name += "<";
         for(const auto& i : types) {
-            name += i.full_path_name() + ",";
+            name += i.full_path_name();
+            for(auto j = 0; j < i.pointer_depth; ++j) {
+                name += "*";
+            }
+            name += ",";
         }
         if (name.back()==',') {
             name.pop_back();
@@ -590,10 +594,11 @@ type semantic::resolve_call_id(call_id* node) {
         }
 
         const auto& dm = ctx.global.domain.at(infer.loc_file);
-        if (dm.structs.count(name) ||
-            dm.functions.count(name)) {
+        if (dm.structs.count(name) || dm.functions.count(name)) {
             infer.name = node->get_id()->get_name();
             infer.generics = types;
+        } else {
+            rp.report(node, "error resolving generic symbol \"" + name + "\".");
         }
     }
 
