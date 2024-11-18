@@ -53,6 +53,18 @@ void sir_func::dump(std::ostream& out) const {
     out << "}\n";
 }
 
+void sir_context::dump_target_tripple(std::ostream& out) const {
+    const auto platform = std::string(get_platform());
+    const auto arch = std::string(get_arch());
+
+    if (platform == "linux" && arch == "x86_64") {
+        out << "target triple = \"x86_64-pc-linux-gnu\"\n";
+    }
+    if (platform == "macos" && arch == "aarch64") {
+        out << "target triple = \"arm64-apple-macosx14.0.0\"\n";
+    }
+}
+
 void sir_context::dump_const_string(std::ostream& out) const {
     // make sure constant strings are in order
     std::vector<std::string> ordered_const_string;
@@ -136,6 +148,9 @@ void sir_context::dump_struct_ptr_method(std::ostream& out) const {
 }
 
 void sir_context::dump_code(std::ostream& out) {
+    // generate target triple
+    dump_target_tripple(out);
+
     // generate declarations of structs
     for(auto i : struct_decls) {
         i->dump(out);

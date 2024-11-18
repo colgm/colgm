@@ -65,6 +65,7 @@ private:
     bool passes_already_executed = false;
 
 private:
+    void dump_target_tripple(std::ostream&) const;
     void dump_const_string(std::ostream&) const;
     void dump_struct_size_method(std::ostream&) const;
     void dump_struct_alloc_method(std::ostream&) const;
