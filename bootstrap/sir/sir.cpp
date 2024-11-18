@@ -8,18 +8,29 @@
 namespace colgm {
 
 std::string quoted_name(const std::string& str) {
+    // make str copy
     auto copy = str;
-    auto pos = str.find_first_of('*');
-    if (pos != std::string::npos) {
+
+    // find tail * sequence's beginning
+    auto pos = str.size();
+    while (pos > 0 && str[pos - 1] == '*') {
+        pos--;
+    }
+    if (pos && pos != std::string::npos) {
         copy = str.substr(0, pos);
     }
+
+    // if find any special characters, quote the name
     if (str.find_first_of("<:>") != std::string::npos) {
         copy = "\"" + copy + "\"";
     }
+
+    // add tail * sequence back
     if (pos != std::string::npos) {
         copy += str.substr(pos);
     }
 
+    // move % and @ to the beginning
     if (copy.length() >= 2 &&
         (copy.substr(0, 2) == "\"%" || copy.substr(0, 2) == "\"@")) {
         auto c = copy[1];

@@ -36,7 +36,7 @@ std::string mir2sir::type_mapping(const type& t) {
     const auto full_name = t.full_path_name();
     // if not found, let it crash
     if (!type_mapper.count(full_name)) {
-        return "undef." + copy.to_string();
+        return "undef." + full_name;
     }
     switch(type_mapper.at(full_name)) {
         case sym_kind::struct_kind:
