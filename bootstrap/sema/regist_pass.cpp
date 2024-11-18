@@ -19,8 +19,18 @@ namespace colgm {
 bool type_replace_pass::visit_type_def(type_def* node) {
     const auto name = node->get_name()->get_name();
     if (g_data.types.count(name)) {
+        // FIXME: if embedded generics like A<T<K>>, this will be wrong
         node->get_name()->reset_name(g_data.types.at(name).name);
         node->set_redirect_location(ctx.this_file);
+
+        if (!g_data.types.at(name).generics.empty() &&
+            node->get_generic_types()) {
+            err.err(node->get_location(),
+                "replace type \"" + g_data.types.at(name).full_path_name() +
+                "\" is already a generic type, "
+                "but more generic types are specified in this node."
+            );
+        }
     }
     if (node->get_generic_types()) {
         node->get_generic_types()->accept(this);
@@ -31,8 +41,18 @@ bool type_replace_pass::visit_type_def(type_def* node) {
 bool type_replace_pass::visit_call_id(ast::call_id* node) {
     const auto name = node->get_id()->get_name();
     if (g_data.types.count(name)) {
+        // FIXME: if embedded generics like A<T<K>>, this will be wrong
         node->get_id()->set_name(g_data.types.at(name).name);
         node->set_redirect_location(ctx.this_file);
+
+        if (!g_data.types.at(name).generics.empty() &&
+            node->get_generic_types()) {
+            err.err(node->get_location(),
+                "replace type \"" + g_data.types.at(name).full_path_name() +
+                "\" is already a generic type, "
+                "but more generic types are specified in this node."
+            );
+        }
     }
     if (node->get_generic_types()) {
         node->get_generic_types()->accept(this);
@@ -215,7 +235,7 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
         replace_func_type(i.second, data);
     }
 
-    type_replace_pass trp(ctx, data);
+    type_replace_pass trp(err, ctx, data);
     if (s.generic_struct_decl) {
         trp.visit_struct(s.generic_struct_decl);
         root->add_decl(s.generic_struct_decl);
@@ -249,7 +269,7 @@ void generic_visitor::replace_func_type(colgm_func& f,
     }
 
     if (f.generic_func_decl) {
-        type_replace_pass trp(ctx, data);
+        type_replace_pass trp(err, ctx, data);
         trp.visit_func(f.generic_func_decl);
         root->add_decl(f.generic_func_decl);
         // f.name is generated with generic

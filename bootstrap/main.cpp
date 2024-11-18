@@ -104,7 +104,7 @@ void execute(const std::string& input_file,
 
     // lexer scans file to get tokens
     lexer.scan(input_file).chkerr();
-    if (cmd&COMPILE_VIEW_TOKEN) {
+    if (cmd & COMPILE_VIEW_TOKEN) {
         for(const auto& token : lexer.result()) {
             std::cout << token.loc << ": " << token.str << "\n";
         }
@@ -112,13 +112,14 @@ void execute(const std::string& input_file,
 
     // parser
     parser.analyse(lexer.result()).chkerr();
-    if (cmd&COMPILE_VIEW_AST) {
+    if (cmd & COMPILE_VIEW_AST) {
         colgm::ast::dumper::dump(parser.get_result());
     }
 
     // simple semantic
     const auto& r = sema.analyse(parser.get_result());
-    if (cmd&COMPILE_VIEW_SEMA) {
+    // still dump semantic symbol whatever happened
+    if (cmd & COMPILE_VIEW_SEMA) {
         sema.dump();
     }
     r.chkerr();
@@ -126,14 +127,14 @@ void execute(const std::string& input_file,
     // generate mir code
     ast2mir.generate(parser.get_result()).chkerr();
     mpm.execute(colgm::mir::ast2mir::get_context());
-    if (cmd&COMPILE_VIEW_MIR) {
+    if (cmd & COMPILE_VIEW_MIR) {
         colgm::mir::ast2mir::dump(std::cout);
     }
 
     // generate sir code
     mir2sir.generate(*ast2mir.get_context()).chkerr();
     spm.execute(&mir2sir.get_mutable_sir_context());
-    if (cmd&COMPILE_VIEW_SIR) {
+    if (cmd & COMPILE_VIEW_SIR) {
         mir2sir.get_mutable_sir_context().dump_code(std::cout);
     }
 

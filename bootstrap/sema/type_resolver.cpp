@@ -2,7 +2,6 @@
 #include "ast/expr.h"
 #include "ast/stmt.h"
 #include "sema/type_resolver.h"
-#include "ast/dumper.h"
 
 #include <cassert>
 #include <vector>
@@ -19,7 +18,6 @@ type type_resolver::resolve(ast::type_def* node) {
     if (!dm.global_symbol.count(name) &&
         !dm.generic_symbol.count(name) &&
         !ctx.generics.count(name)) {
-        ast::dumper::dump(node);
         rp.report(node->get_name(),
             "undefined type \"" + name + "\"."
         );

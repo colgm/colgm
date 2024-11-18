@@ -21,6 +21,7 @@ struct generic_data {
 
 class type_replace_pass: public ast::visitor {
 private:
+    error& err;
     sema_context& ctx;
     generic_data g_data;
 
@@ -29,8 +30,8 @@ private:
     bool visit_call_id(ast::call_id*) override;
 
 public:
-    type_replace_pass(sema_context& c, const generic_data& gd):
-        ctx(c), g_data(gd) {}
+    type_replace_pass(error& e, sema_context& c, const generic_data& gd):
+        err(e), ctx(c), g_data(gd) {}
     void visit_func(ast::func_decl* node) {
         node->accept(this);
     }
@@ -44,6 +45,7 @@ public:
 
 class generic_visitor: public ast::visitor {
 private:
+    error& err;
     sema_context& ctx;
     reporter rp;
     type_resolver tr;
@@ -79,7 +81,7 @@ private:
 
 public:
     generic_visitor(error& e, sema_context& c):
-        ctx(c), rp(e), tr(e, ctx), root(nullptr) {}
+        err(e), ctx(c), rp(e), tr(e, ctx), root(nullptr) {}
     void dump() const;
     void scan_and_insert(ast::root* n) {
         visit(n);

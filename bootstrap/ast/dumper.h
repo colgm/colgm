@@ -35,7 +35,8 @@ private:
     std::string format_location(node* n) {
         std::stringstream ss;
         ss << " -> " << n->get_location();
-        if (n->is_redirected()) {
+        if (n->is_redirected() &&
+            n->get_redirect_location() != n->get_location().file) {
             ss << " <redirect " << n->get_redirect_location() << ">";
         }
         ss << "\n";
