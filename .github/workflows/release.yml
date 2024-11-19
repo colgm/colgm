@@ -1,0 +1,135 @@
+name: Bootstrap
+
+on:
+  schedule:
+   - cron: "0 16 * * *"
+  workflow_dispatch:
+
+jobs:
+  mac-aarch64-build-bootstrap:
+    runs-on: macos-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: update tag
+      run: |
+        git fetch --tags origin
+        git tag -f macOS_nightly
+        git push -f origin macOS_nightly
+    - name: fetch llvm-dev
+      run: |
+          brew update
+          brew install llvm@17
+          export PATH="/opt/homebrew/opt/llvm@17/bin:$PATH"
+          lli --version
+    - name: build
+      run: |
+          mkdir build
+          cd build
+          cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release
+          make -j8
+    - name: verify
+      run: |
+          export PATH="/opt/homebrew/opt/llvm@17/bin:$PATH"
+          make test
+    - name: colgm-build
+      run: |
+          export PATH="/opt/homebrew/opt/llvm@17/bin:$PATH"
+          make colgm.ll
+          /opt/homebrew/opt/llvm@17/bin/clang colgm.ll -o colgm
+          /opt/homebrew/opt/llvm@17/bin/clang test.ll -o colgm_test
+          ./colgm
+          ./colgm --library src src/main.colgm --ast
+          ./colgm --library src src/lex/lexer.colgm --ast
+          ./colgm --library src src/std/sys.colgm --ast
+    - name: std-test
+      run: |
+          ./colgm_test
+    - name: package
+      run: |
+          zip colgm-mac-nightly.zip build/colgm
+          zip colgm-mac-nightly.zip colgm
+          zip colgm-mac-nightly.zip colgm.ll
+          zip -r colgm-mac-nightly.zip bootstrap
+          zip -r colgm-mac-nightly.zip doc
+          zip -r colgm-mac-nightly.zip src
+    - name: release
+      uses: softprops/action-gh-release@v2.0.5
+      with:
+        name: macOS nightly build
+        tag_name: macOS_nightly
+        prerelease: true
+        draft: false
+        files: |
+          colgm-mac-nightly.zip
+    
+  linux-x86_64-build-bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: update tag
+      run: |
+        git fetch --tags origin
+        git tag -f linux_nightly
+        git push -f origin linux_nightly
+    - name: fetch llvm-dev
+      run: |
+          sudo apt-get update
+          sudo apt-get install llvm-14-runtime llvm-14-dev clang-14
+          export PATH="/usr/lib/llvm-14/bin:$PATH"
+          lli --version
+    - name: build
+      run: |
+          mkdir build
+          cd build
+          cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release
+          make -j8
+    - name: verify
+      run: |
+          export PATH="/usr/lib/llvm-14/bin:$PATH"
+          make test
+    - name: colgm-build
+      run: |
+          export PATH="/usr/lib/llvm-14/bin:$PATH"
+          make colgm.ll
+          /usr/bin/clang-14 colgm.ll -o colgm
+          /usr/bin/clang-14 test.ll -o colgm_test
+          ./colgm
+          ./colgm --library src src/main.colgm --ast
+          ./colgm --library src src/lex/lexer.colgm --ast
+          ./colgm --library src src/std/sys.colgm --ast
+    - name: std-test
+      run: |
+          ./colgm_test
+    - name: package
+      run: |
+          zip colgm-linux-x86_64-nightly.zip build/colgm
+          zip colgm-linux-x86_64-nightly.zip colgm
+          zip colgm-linux-x86_64-nightly.zip colgm.ll
+          zip -r colgm-linux-x86_64-nightly.zip bootstrap
+          zip -r colgm-linux-x86_64-nightly.zip doc
+          zip -r colgm-linux-x86_64-nightly.zip src
+    - name: release
+      uses: softprops/action-gh-release@v2.0.5
+      with:
+        name: linux nightly build
+        tag_name: linux_nightly
+        prerelease: true
+        draft: false
+        files: |
+          colgm-linux-x86_64-nightly.zip
+  
+  windows-x86_64-build-bootstrap:
+    runs-on: windows-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: fetch llvm-dev
+      run: |
+          choco install -y llvm
+          clang --version
+    - name: build
+      run: |
+          mkdir build
+          cd build
