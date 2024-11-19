@@ -390,7 +390,9 @@ type semantic::resolve_identifier(identifier* node) {
         return ctx.get_local(name);
     }
 
-    const auto& dm = ctx.get_domain(node->get_file());
+    const auto& dm = node->is_redirected()
+        ? ctx.get_domain(node->get_redirect_location())
+        : ctx.get_domain(node->get_file());
     if (dm.global_symbol.count(name)) {
         const auto& sym = dm.global_symbol.at(name);
         if (!sym.is_public) {

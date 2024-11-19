@@ -6,8 +6,6 @@
 #include "sema/semantic.h"
 #include "mir/ast2mir.h"
 
-#include "ast/dumper.h"
-
 #include <cassert>
 #include <cstring>
 #include <sstream>
@@ -16,12 +14,39 @@
 
 namespace colgm {
 
+ast::type_def* type_replace_pass::generate_generic_type(const type& t,
+                                                        const span& loc) {
+    auto new_def = new type_def(loc);
+    new_def->set_name(new identifier(loc, t.name));
+    new_def->get_name()->set_redirect_location(ctx.this_file);
+    new_def->set_redirect_location(ctx.this_file);
+    if (t.is_immutable) {
+        new_def->set_constant();
+    }
+    for(i64 i = 0; i < t.pointer_depth; ++i) {
+        new_def->add_pointer_level();
+    }
+    if (!t.generics.empty()) {
+        new_def->set_generic_types(new generic_type_list(loc));
+        for(const auto& i : t.generics) {
+            new_def->get_generic_types()->add_type(
+                generate_generic_type(i, loc)
+            );
+        }
+    }
+    return new_def;
+}
+
 bool type_replace_pass::visit_type_def(type_def* node) {
     const auto name = node->get_name()->get_name();
     if (g_data.types.count(name)) {
-        // FIXME: if embedded generics like A<T<K>>, this will be wrong
         node->get_name()->reset_name(g_data.types.at(name).name);
+        node->get_name()->set_redirect_location(ctx.this_file);
         node->set_redirect_location(ctx.this_file);
+
+        for (i64 i = 0; i < g_data.types.at(name).pointer_depth; ++i) {
+            node->add_pointer_level();
+        }
 
         if (!g_data.types.at(name).generics.empty() &&
             node->get_generic_types()) {
@@ -30,6 +55,15 @@ bool type_replace_pass::visit_type_def(type_def* node) {
                 "\" is already a generic type, "
                 "but more generic types are specified in this node."
             );
+        }
+        if (!g_data.types.at(name).generics.empty() &&
+            !node->get_generic_types()) {
+            node->set_generic_types(new generic_type_list(node->get_location()));
+            for(const auto& i : g_data.types.at(name).generics) {
+                node->get_generic_types()->add_type(
+                    generate_generic_type(i, node->get_location())
+                );
+            }
         }
     }
     if (node->get_generic_types()) {
@@ -41,9 +75,16 @@ bool type_replace_pass::visit_type_def(type_def* node) {
 bool type_replace_pass::visit_call_id(ast::call_id* node) {
     const auto name = node->get_id()->get_name();
     if (g_data.types.count(name)) {
-        // FIXME: if embedded generics like A<T<K>>, this will be wrong
         node->get_id()->set_name(g_data.types.at(name).name);
+        node->get_id()->set_redirect_location(ctx.this_file);
         node->set_redirect_location(ctx.this_file);
+
+        if (g_data.types.at(name).pointer_depth) {
+            err.err(node->get_location(),
+                "replace type \"" + g_data.types.at(name).full_path_name() +
+                "\" is a pointer type, which is not allowed here."
+            );
+        }
 
         if (!g_data.types.at(name).generics.empty() &&
             node->get_generic_types()) {
@@ -52,6 +93,15 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
                 "\" is already a generic type, "
                 "but more generic types are specified in this node."
             );
+        }
+        if (!g_data.types.at(name).generics.empty() &&
+            !node->get_generic_types()) {
+            node->set_generic_types(new generic_type_list(node->get_location()));
+            for(const auto& i : g_data.types.at(name).generics) {
+                node->get_generic_types()->add_type(
+                    generate_generic_type(i, node->get_location())
+                );
+            }
         }
     }
     if (node->get_generic_types()) {
@@ -62,7 +112,9 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
 
 void generic_visitor::scan_generic_type(type_def* type_node) {
     const auto& type_name = type_node->get_name()->get_name();
-    const auto& dm = ctx.global.domain.at(type_node->get_file());
+    const auto& dm = type_node->is_redirected()
+        ? ctx.global.domain.at(type_node->get_redirect_location())
+        : ctx.global.domain.at(type_node->get_file());
 
     if (!dm.global_symbol.count(type_name)) {
         rp.report(type_node, "unknown type \"" + type_name + "\".");
@@ -180,7 +232,9 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     }
 
     const auto& type_name = node->get_id()->get_name();
-    const auto& dm = ctx.global.domain.at(node->get_file());
+    const auto& dm = node->is_redirected()
+        ? ctx.global.domain.at(node->get_redirect_location())
+        : ctx.global.domain.at(node->get_file());
     if (!dm.global_symbol.count(type_name)) {
         rp.report(node, "unknown type \"" + type_name + "\".");
         return true;

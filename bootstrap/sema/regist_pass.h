@@ -26,6 +26,9 @@ private:
     generic_data g_data;
 
 private:
+    ast::type_def* generate_generic_type(const type&, const span&);
+
+private:
     bool visit_type_def(ast::type_def*) override;
     bool visit_call_id(ast::call_id*) override;
 
