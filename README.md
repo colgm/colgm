@@ -1,6 +1,7 @@
 # <img src="doc/colgm.svg" height="45px"/> Colgm Compiler Project
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
+[![nightly-build](https://github.com/colgm/colgm/actions/workflows/release.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/release.yml)
 
 ## Repo Content
 
@@ -9,6 +10,12 @@
 - [test](./test): test cases.
 
 ## Bootstrap Compiler
+
+- [macos-aarch64-nightly-build](https://github.com/colgm/colgm/releases/tag/macOS_nightly)
+
+- [linux-x86_64-nightly-build](https://github.com/colgm/colgm/releases/tag/linux_nightly)
+
+- [windows-x86_64-nightly-build [WIP]](https://github.com/colgm/colgm/releases/tag/windows_nightly)
 
 Bootstrap compiler locates at `{repo_path}/bootstrap`, written by C++(`-std=c++17`):
 
@@ -67,4 +74,3 @@ See simple tutorial in [bootstrap/README.md](./bootstrap/README.md).
 2. llvm debug info, may not support in bootstrap compiler
 3. develop bootstrapped compiler
 4. array type like `[i32; 128]`
-5. support generic type like `A<i32*>` or `A<B<C, D>>` [WIP]

@@ -47,12 +47,12 @@ jobs:
           ./colgm_test
     - name: package
       run: |
-          zip colgm-mac-nightly.zip build/colgm
-          zip colgm-mac-nightly.zip colgm
-          zip colgm-mac-nightly.zip colgm.ll
-          zip -r colgm-mac-nightly.zip bootstrap
-          zip -r colgm-mac-nightly.zip doc
-          zip -r colgm-mac-nightly.zip src
+          zip colgm-macos-aarch64-nightly.zip build/colgm
+          zip colgm-macos-aarch64-nightly.zip colgm
+          zip colgm-macos-aarch64-nightly.zip colgm.ll
+          zip -r colgm-macos-aarch64-nightly.zip bootstrap
+          zip -r colgm-macos-aarch64-nightly.zip doc
+          zip -r colgm-macos-aarch64-nightly.zip src
     - name: release
       uses: softprops/action-gh-release@v2.0.5
       with:
@@ -61,7 +61,7 @@ jobs:
         prerelease: true
         draft: false
         files: |
-          colgm-mac-nightly.zip
+          colgm-macos-aarch64-nightly.zip
     
   linux-x86_64-build-bootstrap:
     runs-on: ubuntu-latest
@@ -70,9 +70,9 @@ jobs:
       uses: actions/checkout@v4
     - name: update tag
       run: |
-        git fetch --tags origin
-        git tag -f linux_nightly
-        git push -f origin linux_nightly
+          git fetch --tags origin
+          git tag -f linux_nightly
+          git push -f origin linux_nightly
     - name: fetch llvm-dev
       run: |
           sudo apt-get update
@@ -125,11 +125,41 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v4
+    - name: update tag
+      run: |
+          git fetch --tags origin
+          git tag -f windows_nightly
+          git push -f origin windows_nightly
     - name: fetch llvm-dev
       run: |
           choco install -y llvm
+          choco install -y zip
           clang --version
     - name: build
       run: |
           mkdir build
           cd build
+    - name: verify
+      run: |
+          ls
+    - name: colgm-build
+      run: |
+          ls
+    - name: std-test
+      run: |
+          ls
+    - name: package
+      run: |
+          zip -r colgm-windows-x86_64-nightly.zip bootstrap
+          zip -r colgm-windows-x86_64-nightly.zip doc
+          zip -r colgm-windows-x86_64-nightly.zip src
+    - name: release
+      uses: softprops/action-gh-release@v2.0.5
+      with:
+        name: windows nightly build
+        tag_name: windows_nightly
+        prerelease: true
+        draft: false
+        files: |
+          colgm-windows-x86_64-nightly.zip
+    

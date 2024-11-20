@@ -50,10 +50,10 @@ bool type_replace_pass::visit_type_def(type_def* node) {
 
         if (!g_data.types.at(name).generics.empty() &&
             node->get_generic_types()) {
-            err.err(node->get_location(),
+            err.err(node->get_name()->get_location(),
                 "replace type \"" + g_data.types.at(name).full_path_name() +
-                "\" is already a generic type, "
-                "but more generic types are specified in this node."
+                "\" is already a generic type, not allowed to replace \"" +
+                name + "\"."
             );
         }
         if (!g_data.types.at(name).generics.empty() &&
@@ -80,7 +80,7 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
         node->set_redirect_location(ctx.this_file);
 
         if (g_data.types.at(name).pointer_depth) {
-            err.err(node->get_location(),
+            err.err(node->get_id()->get_location(),
                 "replace type \"" + g_data.types.at(name).full_path_name() +
                 "\" is a pointer type, which is not allowed here."
             );
@@ -88,10 +88,10 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
 
         if (!g_data.types.at(name).generics.empty() &&
             node->get_generic_types()) {
-            err.err(node->get_location(),
+            err.err(node->get_id()->get_location(),
                 "replace type \"" + g_data.types.at(name).full_path_name() +
-                "\" is already a generic type, "
-                "but more generic types are specified in this node."
+                "\" is already a generic type, not allowed to replace \"" +
+                name + "\"."
             );
         }
         if (!g_data.types.at(name).generics.empty() &&
@@ -121,7 +121,9 @@ void generic_visitor::scan_generic_type(type_def* type_node) {
         return;
     }
     if (!dm.generic_symbol.count(type_name)) {
-        rp.report(type_node, "\"" + type_name + "\" is not a generic type.");
+        rp.report(type_node->get_name(),
+            "\"" + type_name + "\" is not a generic type."
+        );
         return;
     }
 
@@ -240,7 +242,9 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
         return true;
     }
     if (!dm.generic_symbol.count(type_name)) {
-        rp.report(node, "\"" + type_name + "\" is not a generic type.");
+        rp.report(node->get_id(),
+            "\"" + type_name + "\" is not a generic type."
+        );
         return true;
     }
 
