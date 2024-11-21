@@ -3,80 +3,25 @@ use std::str::{ str };
 use std::io::{ readfile_into_string, io };
 use std::libc::{ malloc, realloc, free, itoa, strlen };
 use std::fs::{ fs };
-
-struct file_lines {
-    source: str*,
-    size: i64,
-    capacity: i64
-}
-
-impl file_lines {
-    pub func init(self) {
-        self->source = malloc((128 => u64)*str::__size__()) => str*;
-        self->size = 0;
-        self->capacity = 128;
-
-        for (var index = 0; index < self->capacity; index += 1) {
-            self->source[index].init();
-        }
-    }
-
-    pub func delete(self) {
-        for (var index = 0; index < self->size; index += 1) {
-            self->source[index].delete();
-        }
-        free(self->source => i8*);
-    }
-
-    func clear(self) {
-        for (var index = 0; index < self->size; index += 1) {
-            self->source[index].clear();
-        }
-        self->size = 0;
-    }
-
-    func expand_capacity(self) {
-        self->capacity *= 2;
-        self->source = realloc(
-            self->source => i8*,
-            (self->capacity => u64)*str::__size__()
-        ) => str*;
-        for (var index = self->size; index < self->capacity; index += 1) {
-            self->source[index].init();
-        }
-    }
-
-    pub func push(self, line: str*) {
-        if (self->size == self->capacity) {
-            self->expand_capacity();
-        }
-
-        self->source[self->size].append_str(line);
-        self->size += 1;
-    }
-}
+use std::vec::{ vec };
 
 pub struct report {
     filename: str,
-    source: file_lines,
+    source: vec<str>,
     error_count: i64
 }
 
 impl report {
     pub func new() -> report* {
         var res = report::__alloc__();
-        res->filename.init();
-        res->source.init();
+        res->filename = str::instance();
+        res->source = vec<str>::instance();
         res->error_count = 0;
         return res;
     }
 
     pub func delete(self) {
-        io::stderr().out("[").green().out("report").reset()
-                    .out("] delete report::filename\n");
         self->filename.delete();
-        io::stderr().out("[").green().out("report").reset()
-                    .out("] delete report::source\n");
         self->source.delete();
     }
 }
@@ -94,27 +39,25 @@ impl report {
         self->filename.clear();
         self->filename.append_i8_vec(filename);
 
-        var source = str::new();
-        readfile_into_string(filename, source);
+        var source = str::instance();
+        readfile_into_string(filename, source.__ptr__());
 
-        var tmp = str::new();
-        for (var pos = 0 => u64; pos < source->size; pos += 1 => u64) {
-            if (source->get(pos)=='\n') {
-                self->source.push(tmp);
-                tmp->clear();
+        var tmp = str::instance();
+        for (var pos = 0 => u64; pos < source.size; pos += 1 => u64) {
+            if (source.get(pos)=='\n') {
+                self->source.push(tmp.__ptr__());
+                tmp.clear();
                 continue;
             }
-            tmp->append_char(source->get(pos));
+            tmp.append_char(source.get(pos));
         }
-        if (tmp->size > (0 => u64)) {
-            self->source.push(tmp);
-            tmp->clear();
+        if (tmp.size > (0 => u64)) {
+            self->source.push(tmp.__ptr__());
+            tmp.clear();
         }
 
-        source->delete();
-        free(source => i8*);
-        tmp->delete();
-        free(tmp => i8*);
+        source.delete();
+        tmp.delete();
     }
 }
 
@@ -140,14 +83,13 @@ impl report {
     }
 
     func to_str(num: i64, padding: i64) -> str* {
-        var tmp = malloc(256 => u64);
+        var tmp = [i8; 256];
         itoa(num, tmp, 10);
         var res = str::new();
         for (var index = strlen(tmp); index < padding; index += 1) {
             res->append_char(' ');
         }
         res->append_i8_vec(tmp);
-        free(tmp);
         return res;
     }
 
@@ -158,12 +100,12 @@ impl report {
 
         io::stderr().cyan().out(pad_str->c_str).out(" | ").reset().endln();
 
-        while(index <= location->end_line && index < self->source.size) {
-            var tmp_str_const = self->source.source[index].c_str;
-            var len = strlen(tmp_str_const);
+        while(index <= location->end_line && (index => u64) < self->source.size) {
+            var this_line = self->source.get(index => u64)->c_str;
+            var len = self->source.get(index => u64)->size => i64;
             var pad_num = report::to_str(index + 1, max_line_number_length);
             io::stderr().cyan().out(pad_num->c_str).out(" | ")
-                        .reset().out(tmp_str_const).endln();
+                        .reset().out(this_line).endln();
 
             var underline = str::new();
             if (index == location->begin_line) {
@@ -172,16 +114,16 @@ impl report {
                         i == location->end_column) {
                         break;
                     }
-                    if (i < location->begin_column && tmp_str_const[i]!='\t') {
+                    if (i < location->begin_column && this_line[i]!='\t') {
                         underline->append_char(' ');
                     }
-                    if (i < location->begin_column && tmp_str_const[i]=='\t') {
+                    if (i < location->begin_column && this_line[i]=='\t') {
                         underline->append_char('\t');
                     }
-                    if (i >= location->begin_column && tmp_str_const[i]!='\t') {
+                    if (i >= location->begin_column && this_line[i]!='\t') {
                         underline->append_char('^');
                     }
-                    if (i >= location->begin_column && tmp_str_const[i]=='\t') {
+                    if (i >= location->begin_column && this_line[i]=='\t') {
                         underline->append_i8_vec("^^^^");
                     }
                 }
@@ -192,24 +134,24 @@ impl report {
                         i < location->begin_column) {
                         continue;
                     }
-                    if (i < location->end_column && tmp_str_const[i]!='\t') {
+                    if (i < location->end_column && this_line[i]!='\t') {
                         underline->append_char('^');
                     }
-                    if (i < location->end_column && tmp_str_const[i]=='\t') {
+                    if (i < location->end_column && this_line[i]=='\t') {
                         underline->append_i8_vec("^^^^");
                     }
-                    if (i >= location->end_column && tmp_str_const[i]!='\t') {
+                    if (i >= location->end_column && this_line[i]!='\t') {
                         underline->append_char(' ');
                     }
-                    if (i >= location->end_column && tmp_str_const[i]=='\t') {
+                    if (i >= location->end_column && this_line[i]=='\t') {
                         underline->append_char('\t');
                     }
                 }
             } else {
                 for (var i = 0; i < len; i += 1) {
-                    if (tmp_str_const[i]=='\t') {
+                    if (this_line[i]=='\t') {
                         underline->append_i8_vec("^^^^");
-                    } elsif (tmp_str_const[i]!='\r' && tmp_str_const[i]!='\n') {
+                    } elsif (this_line[i]!='\r' && this_line[i]!='\n') {
                         underline->append_char('^');
                     }
                 }

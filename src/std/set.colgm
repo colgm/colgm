@@ -5,18 +5,18 @@ use std::io::{ io };
 
 pub struct hashset<T> {
     size: u64,
-    data_capacity: u64,
-    data: list<T>*
+    bucket_capacity: u64,
+    bucket: list<T>*
 }
 
 impl hashset<T> {
     pub func new() -> hashset<T>* {
         var res = hashset<T>::__alloc__();
         res->size = 0 => u64;
-        res->data_capacity = 1024 => u64;
-        res->data = malloc(res->data_capacity * list<T>::__size__()) => list<T>*;
-        for (var i = 0 => u64; i < res->data_capacity; i += 1 => u64) {
-            res->data[i] = list<T>::instance();
+        res->bucket_capacity = 1024 => u64;
+        res->bucket = malloc(res->bucket_capacity * list<T>::__size__()) => list<T>*;
+        for (var i = 0 => u64; i < res->bucket_capacity; i += 1 => u64) {
+            res->bucket[i] = list<T>::instance();
         }
         return res;
     }
@@ -24,31 +24,31 @@ impl hashset<T> {
     pub func instance() -> hashset<T> {
         var res = hashset<T> {
             size: 0 => u64,
-            data_capacity: 1024 => u64,
-            data: nil => list<T>*
+            bucket_capacity: 1024 => u64,
+            bucket: nil => list<T>*
         };
-        res.data = malloc(res.data_capacity * list<T>::__size__()) => list<T>*;
-        for (var i = 0 => u64; i < res.data_capacity; i += 1 => u64) {
-            res.data[i] = list<T>::instance();
+        res.bucket = malloc(res.bucket_capacity * list<T>::__size__()) => list<T>*;
+        for (var i = 0 => u64; i < res.bucket_capacity; i += 1 => u64) {
+            res.bucket[i] = list<T>::instance();
         }
         return res;
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->data_capacity; i += 1 => u64) {
-            self->data[i].delete();
+        for (var i = 0 => u64; i < self->bucket_capacity; i += 1 => u64) {
+            self->bucket[i].delete();
         }
-        free(self->data => i8*);
+        free(self->bucket => i8*);
         self->size = 0 => u64;
-        self->data_capacity = 0 => u64;
-        self->data = nil => list<T>*;
+        self->bucket_capacity = 0 => u64;
+        self->bucket = nil => list<T>*;
     }
 }
 
 impl hashset<T> {
     pub func has(self, item: T*) -> bool {
-        var hash = item->hash() % self->data_capacity;
-        var bucket = self->data[hash].__ptr__();
+        var hash = item->hash() % self->bucket_capacity;
+        var bucket = self->bucket[hash].__ptr__();
         var tmp = bucket->head;
         while (tmp => i8* != nil) {
             if (tmp->elem->eq(item)) {
@@ -60,10 +60,10 @@ impl hashset<T> {
     }
 
     pub func insert(self, item: T*) {
-        var hash = item->hash() % self->data_capacity;
+        var hash = item->hash() % self->bucket_capacity;
         // must use pointer/reference, otherwise changes will not
         // be reflected in the hashset
-        var bucket = self->data[hash].__ptr__();
+        var bucket = self->bucket[hash].__ptr__();
         var tmp = bucket->head;
         while (tmp => i8* != nil) {
             if (tmp->elem->eq(item)) {
@@ -79,53 +79,53 @@ impl hashset<T> {
 pub struct hashset_iter<T> {
     set: hashset<T>*,
     bucket_index: u64,
-    bucket_list_iter: list_iter<T>
+    bucket_iter: list_iter<T>
 }
 
 impl hashset_iter<T> {
     func instance(set: hashset<T>*) -> hashset_iter<T> {
         var index = 0 => u64;
-        var iter = set->data[0].iter();
+        var iter = set->bucket[0].iter();
         while (iter.is_end()) {
             index += 1 => u64;
-            if (index >= set->data_capacity) {
+            if (index >= set->bucket_capacity) {
                 break;
             }
-            iter = set->data[index].iter();
+            iter = set->bucket[index].iter();
         }
         return hashset_iter<T> {
             set: set,
             bucket_index: index,
-            bucket_list_iter: iter
+            bucket_iter: iter
         };
     }
 
     pub func is_end(self) -> bool {
-        return self->bucket_index >= self->set->data_capacity &&
-               self->bucket_list_iter.is_end();
+        return self->bucket_index >= self->set->bucket_capacity &&
+               self->bucket_iter.is_end();
     }
 
     pub func elem(self) -> T* {
-        return self->bucket_list_iter.elem();
+        return self->bucket_iter.elem();
     }
 
     pub func next(self) -> hashset_iter<T> {
-        if (!self->bucket_list_iter.is_end()) {
-            self->bucket_list_iter = self->bucket_list_iter.next();
+        if (!self->bucket_iter.is_end()) {
+            self->bucket_iter = self->bucket_iter.next();
         }
 
-        while (self->bucket_list_iter.is_end()) {
+        while (self->bucket_iter.is_end()) {
             self->bucket_index += 1 => u64;
-            if (self->bucket_index >= self->set->data_capacity) {
+            if (self->bucket_index >= self->set->bucket_capacity) {
                 break;
             }
-            self->bucket_list_iter = self->set->data[self->bucket_index].iter();
+            self->bucket_iter = self->set->bucket[self->bucket_index].iter();
         }
 
         return hashset_iter<T> {
             set: self->set,
             bucket_index: self->bucket_index,
-            bucket_list_iter: self->bucket_list_iter,
+            bucket_iter: self->bucket_iter,
         };
     }
 }

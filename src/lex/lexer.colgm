@@ -2,8 +2,8 @@ use std::str::str;
 use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ readfile_into_string, io };
 use std::fs::{ fs };
-use err::report::*;
-use err::span::span;
+use err::report::{ report };
+use err::span::{ span };
 
 pub enum tok_kind {
     tok_null,       // reserved
@@ -180,11 +180,7 @@ impl lexer {
     }
 
     pub func delete(self) {
-        io::stderr().out("[").green().out("lexer").reset().out("]")
-                    .out(" delete lexer::filename\n");
         self->filename.delete();
-        io::stderr().out("[").green().out("lexer").reset().out("]")
-                    .out(" delete lexer::toks\n");
         self->toks->delete();
         free(self->toks => i8*);
     }
