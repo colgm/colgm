@@ -1,6 +1,6 @@
 use std::str::{ str };
 use std::libc::{ malloc, free, streq };
-use std::list::{ list };
+use std::list::{ list, list_iter };
 
 pub struct pair<K, V> {
     key: K*,
@@ -14,124 +14,98 @@ impl pair<K, V> {
         free(self->key => i8*);
         free(self->value => i8*);
     }
-}
 
-pub struct bucket<K, V> {
-    pair: pair<K, V>,
-    next: bucket<K, V>*
-}
-
-impl bucket<K, V> {
-    pub func delete(self) {
-        self->pair.delete();
+    pub func copy(self) -> pair<K, V>* {
+        var res = pair<K, V>::__alloc__();
+        res->key = self->key->copy();
+        res->value = self->value->copy();
+        return res;
     }
 }
 
 pub struct hashmap<K, V> {
     size: u64,
     data_capacity: u64,
-    data: bucket<K, V>**
+    data: list<pair<K, V>>*
 }
 
 impl hashmap<K, V> {
     pub func new() -> hashmap<K, V>* {
         var res = hashmap<K, V>::__alloc__();
-        res->size = 0 => u64;
-        res->data_capacity = 1024 => u64;
-        res->data = malloc(res->data_capacity * (8 => u64)) => bucket<K, V>**;
-        for (var i = 0 => u64; i < res->data_capacity; i += 1 => u64) {
-            res->data[i] = nil => bucket<K, V>*;
-        }
+        res->init();
         return res;
     }
 
     pub func instance() -> hashmap<K, V> {
-        var res = hashmap<K, V> {
-            size: 0 => u64,
-            data_capacity: 1024 => u64,
-            data: malloc((1024 * 8) => u64) => bucket<K, V>**
-        };
-        for (var i = 0 => u64; i < res.data_capacity; i += 1 => u64) {
-            res.data[i] = nil => bucket<K, V>*;
-        }
+        var res = hashmap<K, V> {};
+        res.init();
         return res;
+    }
+
+    func init(self) {
+        self->size = 0 => u64;
+        self->data_capacity = 1024 => u64;
+        self->data = malloc(self->data_capacity
+                            * list<pair<K, V>>::__size__())
+                            => list<pair<K, V>>*;
+        for (var i = 0 => u64; i < self->data_capacity; i += 1 => u64) {
+            self->data[i] = list<pair<K, V>>::instance();
+        }
     }
 
     pub func delete(self) {
         for (var i = 0 => u64; i < self->data_capacity; i += 1 => u64) {
-            var bucket_list = self->data[i];
-            while (bucket_list => i8* != nil) {
-                var next = bucket_list->next;
-                bucket_list->delete();
-                free(bucket_list => i8*);
-                bucket_list = next;
-            }
+            self->data[i].delete();
         }
         free(self->data => i8*);
         self->size = 0 => u64;
         self->data_capacity = 0 => u64;
-        self->data = nil => bucket<K, V>**;
+        self->data = nil => list<pair<K, V>>*;
     }
 }
 
 impl hashmap<K, V> {
     pub func has(self, key: K*) -> bool {
         var hash = key->hash() % (1024 => u64);
-        var bucket_list = self->data[hash];
-        while (bucket_list => i8* != nil) {
-            if (bucket_list->pair.key->eq(key)) {
+        var bucket = self->data[hash].__ptr__();
+        for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
+            if (i.elem()->key->eq(key)) {
                 return true;
             }
-            bucket_list = bucket_list->next;
         }
         return false;
     }
 
     pub func get(self, key: K*) -> V* {
         var hash = key->hash() % (1024 => u64);
-        var bucket_list = self->data[hash];
-        while (bucket_list => i8* != nil) {
-            if (bucket_list->pair.key->eq(key)) {
-                return bucket_list->pair.value;
+        var bucket = self->data[hash].__ptr__();
+        for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
+            if (i.elem()->key->eq(key)) {
+                return i.elem()->value;
             }
-            bucket_list = bucket_list->next;
-       }
+        }
        return nil => V*;
     }
 
     pub func insert(self, key: K*, value: V*) {
         var hash = key->hash() % self->data_capacity;
-        var bucket_list = self->data[hash];
-        while (bucket_list => i8* != nil) {
-            // do replacement
-            if (bucket_list->pair.key->eq(key)) {
-                bucket_list->pair.value->delete();
-                free(bucket_list->pair.value => i8*);
-                bucket_list->pair.value = value->copy();
+        var bucket = self->data[hash].__ptr__();
+        for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
+            if (i.elem()->key->eq(key)) {
+                var tmp = i.elem();
+                tmp->value->delete();
+                free(tmp->value => i8*);
+                tmp->value = value->copy();
                 return;
             }
-            bucket_list = bucket_list->next;
         }
-
-        if (self->data[hash] => i8* == nil) {
-            self->data[hash] = bucket<K, V>::__alloc__();
-            bucket_list = self->data[hash];
-            bucket_list->pair.key = key->copy();
-            bucket_list->pair.value = value->copy();
-            bucket_list->next = nil => bucket<K, V>*;
-            self->size += 1 => u64;
-            return;
-        }
-
-        bucket_list = self->data[hash];
-        while (bucket_list->next => i8* != nil) {
-            bucket_list = bucket_list->next;
-        }
-        bucket_list->next = bucket<K, V>::__alloc__();
-        bucket_list = bucket_list->next;
-        bucket_list->pair.key = key->copy();
-        bucket_list->pair.value = value->copy();
-        bucket_list->next = nil => bucket<K, V>*;
+        
+        var tmp_pair = pair<K, V> {
+            key: key,
+            value: value
+        };
+        // do copy in insert method
+        bucket->insert(tmp_pair.__ptr__());
         self->size += 1 => u64;
     }
 }
@@ -139,7 +113,7 @@ impl hashmap<K, V> {
 pub struct hashmap_iter<K, V> {
     map: hashmap<K, V>*,
     bucket_index: u64,
-    bucket_list: bucket<K, V>*
+    bucket_list_iter: list_iter<pair<K, V>>
 }
 
 impl hashmap_iter<K, V> {
@@ -147,50 +121,49 @@ impl hashmap_iter<K, V> {
         var res = hashmap_iter<K, V> {
             map: map,
             bucket_index: 0 => u64,
-            bucket_list: nil => bucket<K, V>*
+            bucket_list_iter: map->data[0].iter()
         };
-        for (var i = 0 => u64; i < map->data_capacity; i += 1 => u64) {
-            var bucket_list = map->data[i];
-            if (bucket_list => i8* != nil) {
-                res.bucket_index = i;
-                res.bucket_list = bucket_list;
-                break;
+        while (res.bucket_list_iter.is_end()) {
+            res.bucket_index += 1 => u64;
+            if (res.bucket_index >= map->data_capacity) {
+                return res;
             }
+            res.bucket_list_iter = map->data[res.bucket_index].iter();
         }
         return res;
     }
 
     pub func next(self) -> hashmap_iter<K, V> {
-        var res = hashmap_iter<K, V> {
+        if (!self->bucket_list_iter.is_end()) {
+            self->bucket_list_iter = self->bucket_list_iter.next();
+        }
+
+        while (self->bucket_list_iter.is_end()) {
+            self->bucket_index += 1 => u64;
+            if (self->bucket_index >= self->map->data_capacity) {
+                break;
+            }
+            self->bucket_list_iter = self->map->data[self->bucket_index].iter();
+        }
+
+        return hashmap_iter<K, V> {
             map: self->map,
             bucket_index: self->bucket_index,
-            bucket_list: nil => bucket<K, V>*
+            bucket_list_iter: self->bucket_list_iter,
         };
-        if (self->bucket_list->next => i8* != nil) {
-            res.bucket_list = self->bucket_list->next;
-            return res;
-        }
-        for (var i = self->bucket_index + 1 => u64; i < self->map->data_capacity; i += 1 => u64) {
-            var bucket_list = self->map->data[i];
-            if (bucket_list => i8* != nil) {
-                res.bucket_index = i;
-                res.bucket_list = bucket_list;
-                return res;
-            }
-        }
-        return res;
     }
 
     pub func is_end(self) -> bool {
-        return self->bucket_list => i8* == nil;
+        return self->bucket_index >= self->map->data_capacity &&
+               self->bucket_list_iter.is_end();
     }
 
     pub func key(self) -> K* {
-        return self->bucket_list->pair.key;
+        return self->bucket_list_iter.elem()->key;
     }
 
     pub func value(self) -> V* {
-        return self->bucket_list->pair.value;
+        return self->bucket_list_iter.elem()->value;
     }
 }
 

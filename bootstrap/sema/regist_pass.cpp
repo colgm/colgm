@@ -18,8 +18,8 @@ ast::type_def* type_replace_pass::generate_generic_type(const type& t,
                                                         const span& loc) {
     auto new_def = new type_def(loc);
     new_def->set_name(new identifier(loc, t.name));
-    new_def->get_name()->set_redirect_location(ctx.this_file);
-    new_def->set_redirect_location(ctx.this_file);
+    new_def->get_name()->set_redirect_location(t.loc_file);
+    new_def->set_redirect_location(t.loc_file);
     if (t.is_immutable) {
         new_def->set_constant();
     }
@@ -40,26 +40,27 @@ ast::type_def* type_replace_pass::generate_generic_type(const type& t,
 bool type_replace_pass::visit_type_def(type_def* node) {
     const auto name = node->get_name()->get_name();
     if (g_data.types.count(name)) {
-        node->get_name()->reset_name(g_data.types.at(name).name);
-        node->get_name()->set_redirect_location(ctx.this_file);
-        node->set_redirect_location(ctx.this_file);
+        const auto& select_type = g_data.types.at(name);
+        node->get_name()->reset_name(select_type.name);
+        node->get_name()->set_redirect_location(select_type.loc_file);
+        node->set_redirect_location(select_type.loc_file);
 
-        for (i64 i = 0; i < g_data.types.at(name).pointer_depth; ++i) {
+        for (i64 i = 0; i < select_type.pointer_depth; ++i) {
             node->add_pointer_level();
         }
 
-        if (!g_data.types.at(name).generics.empty() &&
+        if (!select_type.generics.empty() &&
             node->get_generic_types()) {
             err.err(node->get_name()->get_location(),
-                "replace type \"" + g_data.types.at(name).full_path_name() +
+                "replace type \"" + select_type.full_path_name() +
                 "\" is already a generic type, not allowed to replace \"" +
                 name + "\"."
             );
         }
-        if (!g_data.types.at(name).generics.empty() &&
+        if (!select_type.generics.empty() &&
             !node->get_generic_types()) {
             node->set_generic_types(new generic_type_list(node->get_location()));
-            for(const auto& i : g_data.types.at(name).generics) {
+            for(const auto& i : select_type.generics) {
                 node->get_generic_types()->add_type(
                     generate_generic_type(i, node->get_location())
                 );
@@ -75,29 +76,30 @@ bool type_replace_pass::visit_type_def(type_def* node) {
 bool type_replace_pass::visit_call_id(ast::call_id* node) {
     const auto name = node->get_id()->get_name();
     if (g_data.types.count(name)) {
-        node->get_id()->set_name(g_data.types.at(name).name);
-        node->get_id()->set_redirect_location(ctx.this_file);
-        node->set_redirect_location(ctx.this_file);
+        const auto& select_type = g_data.types.at(name);
+        node->get_id()->set_name(select_type.name);
+        node->get_id()->set_redirect_location(select_type.loc_file);
+        node->set_redirect_location(select_type.loc_file);
 
-        if (g_data.types.at(name).pointer_depth) {
+        if (select_type.pointer_depth) {
             err.err(node->get_id()->get_location(),
-                "replace type \"" + g_data.types.at(name).full_path_name() +
+                "replace type \"" + select_type.full_path_name() +
                 "\" is a pointer type, which is not allowed here."
             );
         }
 
-        if (!g_data.types.at(name).generics.empty() &&
+        if (!select_type.generics.empty() &&
             node->get_generic_types()) {
             err.err(node->get_id()->get_location(),
-                "replace type \"" + g_data.types.at(name).full_path_name() +
+                "replace type \"" + select_type.full_path_name() +
                 "\" is already a generic type, not allowed to replace \"" +
                 name + "\"."
             );
         }
-        if (!g_data.types.at(name).generics.empty() &&
+        if (!select_type.generics.empty() &&
             !node->get_generic_types()) {
             node->set_generic_types(new generic_type_list(node->get_location()));
-            for(const auto& i : g_data.types.at(name).generics) {
+            for(const auto& i : select_type.generics) {
                 node->get_generic_types()->add_type(
                     generate_generic_type(i, node->get_location())
                 );

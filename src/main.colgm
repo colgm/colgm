@@ -13,6 +13,12 @@ func compile(option: cli_option) {
         err.out(">, check if exists and is readable\n");
         return;
     }
+    if (fs::is_dir(option.input_file)) {
+        err.red().out("Error: ").reset();
+        err.out("failed to load file <").out(option.input_file);
+        err.out(">, this is a directory\n");
+        return;
+    }
     if (option.library_path != nil && !fs::is_dir(option.library_path)) {
         err.red().out("Error: ").reset();
         err.out("failed to load library path <").out(option.library_path);
