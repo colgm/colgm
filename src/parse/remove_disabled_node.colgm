@@ -1,7 +1,10 @@
-use ast::ast::{ ast_kind, ptr_vec, ast, root, ast_cond_compile };
+use ast::ast::{ ast_kind, ast, root, ast_cond_compile };
 use std::str::{ str };
 use std::io::{ io };
 use util::misc::{ get_platform, get_arch };
+use std::vec::{ primitive_vec };
+use std::ptr::{ ptr };
+use std::libc::{ free };
 
 pub func check_enable_if(acc: ast_cond_compile*) -> bool {
     if (!acc->cond_name.eq_const("enable_if")) {
@@ -48,30 +51,32 @@ pub func check_enable_if(acc: ast_cond_compile*) -> bool {
 
 pub func remove_disabled_node(node: root*) {
     var remove_count = 0;
-    var new_vec = ptr_vec::instance();
-    var size = node->decls.size;
-    for (var i = 0 => u64; i < size; i += 1 => u64) {
-        var d = node->decls.get(i);
+    var new_vec = primitive_vec<ptr<ast>>::instance();
+
+    for (var i = 0 => u64; i < node->decls.size; i += 1 => u64) {
+        var d = node->decls.get(i).get();
         if (d->kind != ast_kind::ast_cond_compile) {
-            new_vec.push(d);
+            new_vec.push(ptr<ast>::wrap(d));
             continue;
         }
+
         if (check_enable_if(d => ast_cond_compile*)) {
             var acc = d => ast_cond_compile*;
-            new_vec.push(acc->enabled_decl);
+            new_vec.push(ptr<ast>::wrap(acc->enabled_decl));
+
             acc->enabled_decl = nil => ast*;
             acc->delete();
+            free(acc => i8*);
         } else {
             remove_count += 1;
+
             d->delete();
+            free(d => i8*);
         }
     }
 
     // should clear first, because ptr_vec delete will free each data[i]
     var old_vec = node->decls;
-    for (var i = 0 => u64; i < size; i += 1 => u64) {
-        old_vec.data[i] = nil => ast*;
-    }
     old_vec.delete();
 
     node->decls = new_vec;

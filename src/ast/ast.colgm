@@ -3,6 +3,8 @@ use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ io };
 use std::str::{ str };
 use std::map::{ hashmap };
+use std::vec::{ primitive_vec };
+use std::ptr::{ ptr, ptr_size };
 
 pub enum ast_kind {
     ast_null,
@@ -292,10 +294,9 @@ impl ptr_vec {
         return res;
     }
     pub func init(self) {
-        var ptr_size = 8 => u64; // now we only support 64bit
         self->size = 0 => u64;
         self->capacity = 256 => u64;
-        self->data = malloc(self->capacity * ptr_size) => ast**;
+        self->data = malloc(self->capacity * ptr_size()) => ast**;
     }
 
     pub func delete(self) {
@@ -316,11 +317,10 @@ impl ptr_vec {
     }
 
     func expand(self) {
-        var ptr_size = 8 => u64;
         self->capacity *= 2 => u64;
         self->data = realloc(
             self->data => i8*,
-            self->capacity * ptr_size
+            self->capacity * ptr_size()
         ) => ast**;
     }
 
@@ -366,21 +366,31 @@ impl ast_null {
 
 pub struct root {
     base: ast,
-    imports: ptr_vec,
-    decls: ptr_vec
+    imports: primitive_vec<ptr<ast>>,
+    decls: primitive_vec<ptr<ast>>
 }
 
 impl root {
     pub func new(loc: span*) -> root* {
         var res = root::__alloc__();
         res->base = ast::instance(ast_kind::ast_root, loc);
-        res->imports.init();
-        res->decls.init();
+        res->imports = primitive_vec<ptr<ast>>::instance();
+        res->decls = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
+        for (var i = 0 => u64; i < self->imports.size; i += 1 => u64) {
+            var raw_ptr = self->imports.get(i).get();
+            raw_ptr->delete();
+            free(raw_ptr => i8*);
+        }
         self->imports.delete();
+        for (var i = 0 => u64; i < self->decls.size; i += 1 => u64) {
+            var raw_ptr = self->decls.get(i).get();
+            raw_ptr->delete();
+            free(raw_ptr => i8*);
+        }
         self->decls.delete();
     }
 }

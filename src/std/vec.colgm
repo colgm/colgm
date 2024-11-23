@@ -1,5 +1,6 @@
 use std::libc::{ malloc, realloc, free };
 use err::panic::{ panic };
+use std::ptr::{ ptr_size };
 
 pub struct vec<T> {
     data: T**,
@@ -17,8 +18,8 @@ impl vec<T> {
     pub func new() -> vec<T>* {
         var res = vec<T>::__alloc__();
         res->size = 0 => u64;
-        res->capacity = 8 => u64;
-        res->data = malloc(res->capacity * (8 => u64)) => T**;
+        res->capacity = 4 => u64;
+        res->data = malloc(res->capacity * ptr_size()) => T**;
         for (var i = 0 => u64; i < res->capacity; i += 1 => u64) {
             res->data[i] = nil => T*;
         }
@@ -28,10 +29,10 @@ impl vec<T> {
     pub func instance() -> vec<T> {
         var res = vec<T> {
             size: 0 => u64,
-            capacity: 8 => u64,
+            capacity: 4 => u64,
             data: nil => T**
         };
-        res.data = malloc(res.capacity * (8 => u64)) => T**;
+        res.data = malloc(res.capacity * ptr_size()) => T**;
         for (var i = 0 => u64; i < res.capacity; i += 1 => u64) {
             res.data[i] = nil => T*;
         }
@@ -51,7 +52,10 @@ impl vec<T> {
 
     func extend_capacity(self) {
         self->capacity *= 2 => u64;
-        self->data = realloc(self->data => i8*, self->capacity * (8 => u64)) => T**;
+        self->data = realloc(
+            self->data => i8*,
+            self->capacity * ptr_size()
+        ) => T**;
     }
 
     pub func push(self, item: T*) {
@@ -74,7 +78,7 @@ impl primitive_vec<T> {
     pub func new() -> primitive_vec<T>* {
         var res = primitive_vec<T>::__alloc__();
         res->size = 0 => u64;
-        res->capacity = 8 => u64;
+        res->capacity = 4 => u64;
         res->data = malloc(res->capacity * T::__size__()) => T*;
         return res;
     }
@@ -82,7 +86,7 @@ impl primitive_vec<T> {
     pub func instance() -> primitive_vec<T> {
         var res = primitive_vec<T> {
             size: 0 => u64,
-            capacity: 8 => u64,
+            capacity: 4 => u64,
             data: nil => T*
         };
         res.data = malloc(res.capacity * T::__size__()) => T*;
