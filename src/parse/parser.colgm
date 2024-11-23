@@ -2,15 +2,16 @@ use ast::ast::*;
 use ast::dumper::{ ast_dumper };
 use err::report::*;
 use err::span::{ span };
-use lex::lexer::{ lexer, vec_token, tok_kind };
+use lex::lexer::{ lexer, token, tok_kind };
 use std::libc::{ free, streq };
 use std::io::{ io };
 use std::str::{ str };
+use std::vec::{ vec };
 use parse::remove_disabled_node::{ remove_disabled_node };
 
 pub struct parser {
     err: report*,
-    toks: vec_token*,
+    toks: vec<token>*,
     root: root*,
     index: i64
 }
@@ -100,7 +101,7 @@ impl parser {
     pub func new(e: report*, l: lexer*) -> parser* {
         var res = parser::__alloc__();
         res->err = e;
-        res->toks = l->toks;
+        res->toks = l->toks.__ptr__();
         res->root = nil => root*;
         res->index = 0;
         return res;
@@ -116,54 +117,63 @@ impl parser {
         free(self->root => i8*);
     }
 
+    func get_tok(self, index: i64) -> token* {
+        return self->toks->get(index => u64);
+    }
+
+    func this_tok(self) -> token* {
+        return self->toks->get(self->index => u64);
+    }
+
     func this_tok_loc_copy(self) -> span* {
-        return self->toks->get(self->index).location->copy();
+        return self->this_tok()->location->copy();
     }
 
     func this_tok_loc(self) -> span* {
-        return self->toks->get(self->index).location;
+        return self->this_tok()->location;
     }
 
     func update_location(self, node: ast*) {
         if (self->index <= 0) {
             return;
         }
-        var last_loc = self->toks->get(self->index - 1).location;
+        io::stdout().out_i64(self->index -1).endln();
+        var last_loc = self->get_tok(self->index - 1)->location;
         node->location->end_line = last_loc->end_line;
         node->location->end_column = last_loc->end_column;
     }
 
     func lookahead(self, kind: tok_kind) -> bool {
-        return self->toks->get(self->index).kind == kind;
+        return self->this_tok()->kind == kind;
     }
 
     func lookahead_generic(self) -> bool {
-        if (self->toks->get(self->index).kind != tok_kind::tok_less) {
+        if (self->this_tok()->kind != tok_kind::tok_less) {
             return false;
         }
 
         var tmp_ptr = self->index + 1;
         // check if is end of file token
-        if (self->toks->get(tmp_ptr).kind == tok_kind::tok_eof) {
+        if (self->get_tok(tmp_ptr)->kind == tok_kind::tok_eof) {
             return false;
         }
         // check if is generic
-        while(self->toks->get(tmp_ptr).kind != tok_kind::tok_grt) {
-            if (self->toks->get(tmp_ptr).kind == tok_kind::tok_eof) {
+        while(self->get_tok(tmp_ptr)->kind != tok_kind::tok_grt) {
+            if (self->get_tok(tmp_ptr)->kind == tok_kind::tok_eof) {
                 return false;
             }
-            if (self->toks->get(tmp_ptr).kind != tok_kind::tok_id) {
+            if (self->get_tok(tmp_ptr)->kind != tok_kind::tok_id) {
                 return false;
             }
             tmp_ptr += 1;
-            if (self->toks->get(tmp_ptr).kind == tok_kind::tok_eof) {
+            if (self->get_tok(tmp_ptr)->kind == tok_kind::tok_eof) {
                 return false;
             }
-            if (self->toks->get(tmp_ptr).kind != tok_kind::tok_comma &&
-                self->toks->get(tmp_ptr).kind != tok_kind::tok_grt) {
+            if (self->get_tok(tmp_ptr)->kind != tok_kind::tok_comma &&
+                self->get_tok(tmp_ptr)->kind != tok_kind::tok_grt) {
                 return false;
             }
-            if (self->toks->get(tmp_ptr).kind == tok_kind::tok_comma) {
+            if (self->get_tok(tmp_ptr)->kind == tok_kind::tok_comma) {
                 tmp_ptr += 1;
             }
         }
@@ -171,19 +181,19 @@ impl parser {
     }
 
     func next(self) {
-        if (self->toks->get(self->index).kind == tok_kind::tok_eof) {
+        if (self->this_tok()->kind == tok_kind::tok_eof) {
             return;
         }
         self->index += 1;
     }
 
     func match_token(self, kind: tok_kind) {
-        var tp = self->toks->get(self->index).kind;
+        var tp = self->this_tok()->kind;
         if (tp == kind) {
             self->next();
             return;
         }
-        var loc = self->toks->get(self->index).location;
+        var loc = self->this_tok()->location;
         match (kind) {
             tok_kind::tok_id => {
                 self->err->error(loc, "expected identifier here.");
@@ -204,15 +214,15 @@ impl parser {
 
         var message = str::instance();
         message.append_i8_vec("get \"")
-               ->append_str(self->toks->get(self->index).content)
+               ->append_str(self->this_tok()->content)
                ->append_i8_vec("\" here, but expect \"")
                ->append_i8_vec(parser::tok_kind_to_content(kind))
                ->append_i8_vec("\".");
         self->err->error(loc, message.c_str);
         message.delete();
 
-        while (self->toks->get(self->index).kind != tok_kind::tok_eof &&
-               self->toks->get(self->index).kind != kind) {
+        while (self->this_tok()->kind != tok_kind::tok_eof &&
+               self->this_tok()->kind != kind) {
             self->next();
         }
     }
@@ -225,15 +235,15 @@ impl parser {
         self->match_token(tok_kind::tok_lbracket);
         var res = ast_cond_compile::new(
             begin_loc->copy(),
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_id);
         self->match_token(tok_kind::tok_lparen);
         while (!self->lookahead(tok_kind::tok_rparen)) {
-            var key = self->toks->get(self->index).content;
+            var key = self->this_tok()->content;
             self->match_token(tok_kind::tok_id);
             self->match_token(tok_kind::tok_eq);
-            var value = self->toks->get(self->index).content;
+            var value = self->this_tok()->content;
             self->match_token(tok_kind::tok_str);
             res->add_condition(key, value);
             if (self->lookahead(tok_kind::tok_comma)) {
@@ -252,7 +262,7 @@ impl parser {
     func identifier_gen(self) -> ast_identifier* {
         var res = ast_identifier::new(
             self->this_tok_loc_copy(),
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_id);
         return res;
@@ -298,7 +308,7 @@ impl parser {
                self->lookahead(tok_kind::tok_dot) ||
                self->lookahead(tok_kind::tok_arrow) ||
                self->lookahead(tok_kind::tok_coloncolon)) {
-            match (self->toks->get(self->index).kind) {
+            match (self->this_tok()->kind) {
                 tok_kind::tok_lparen => {
                     self->match_token(tok_kind::tok_lparen);
                     var call_func = ast_call_func_args::new(self->this_tok_loc_copy());
@@ -329,7 +339,7 @@ impl parser {
                     self->match_token(tok_kind::tok_dot);
                     var get_field = ast_get_field::new(
                         self->this_tok_loc_copy(),
-                        self->toks->get(self->index).content
+                        self->this_tok()->content
                     );
                     self->match_token(tok_kind::tok_id);
                     res->chain.push(get_field => ast*);
@@ -338,7 +348,7 @@ impl parser {
                     self->match_token(tok_kind::tok_arrow);
                     var ptr_get_field = ast_ptr_get_field::new(
                         self->this_tok_loc_copy(),
-                        self->toks->get(self->index).content
+                        self->this_tok()->content
                     );
                     self->match_token(tok_kind::tok_id);
                     res->chain.push(ptr_get_field => ast*);
@@ -347,7 +357,7 @@ impl parser {
                     self->match_token(tok_kind::tok_coloncolon);
                     var call_path = ast_call_path::new(
                         self->this_tok_loc_copy(),
-                        self->toks->get(self->index).content
+                        self->this_tok()->content
                     );
                     self->match_token(tok_kind::tok_id);
                     res->chain.push(call_path => ast*);
@@ -367,7 +377,7 @@ impl parser {
     func number_literal_gen(self) -> ast_number_literal* {
         var res = ast_number_literal::new(
             self->this_tok_loc_copy(),
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_num);
         return res;
@@ -376,7 +386,7 @@ impl parser {
     func string_literal_gen(self) -> ast_string_literal* {
         var res = ast_string_literal::new(
             self->this_tok_loc_copy(),
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_str);
         return res;
@@ -385,7 +395,7 @@ impl parser {
     func char_gen(self) -> ast_char_literal* {
         var res = ast_char_literal::new(
             self->this_tok_loc_copy(),
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_ch);
         return res;
@@ -393,13 +403,13 @@ impl parser {
 
     func bool_gen(self) -> ast_bool_literal* {
         var res = nil => ast_bool_literal*;
-        if (streq(self->toks->get(self->index).content->c_str, "true")) {
+        if (streq(self->this_tok()->content->c_str, "true")) {
             res = ast_bool_literal::new(
                 self->this_tok_loc_copy(),
                 true
             );
             self->match_token(tok_kind::tok_true);
-        } else if (streq(self->toks->get(self->index).content->c_str, "false")) {
+        } else if (streq(self->this_tok()->content->c_str, "false")) {
             res = ast_bool_literal::new(
                 self->this_tok_loc_copy(),
                 false
@@ -407,7 +417,7 @@ impl parser {
             self->match_token(tok_kind::tok_false);
         } else {
             self->err->error(
-                self->toks->get(self->index).location,
+                self->this_tok()->location,
                 "expected \"true\" or \"false\" here."
             );
         }
@@ -454,7 +464,7 @@ impl parser {
         }
 
         self->err->error(
-            self->toks->get(self->index).location,
+            self->this_tok()->location,
             "expected scalar here."
         );
         return ast_null::new() => ast*;
@@ -503,13 +513,13 @@ impl parser {
                self->lookahead(tok_kind::tok_div) ||
                self->lookahead(tok_kind::tok_rem)) {
             var kind = binary_kind::mul;
-            match(self->toks->get(self->index).kind) {
+            match(self->this_tok()->kind) {
                 tok_kind::tok_mul => kind = binary_kind::mul;
                 tok_kind::tok_div => kind = binary_kind::div;
                 tok_kind::tok_rem => kind = binary_kind::rem;
             }
             var binary = ast_binary_operator::new(begin_loc->copy(), kind);
-            self->match_token(self->toks->get(self->index).kind);
+            self->match_token(self->this_tok()->kind);
             binary->left = res;
             binary->right = self->type_convert_gen();
             res = binary => ast*;
@@ -524,7 +534,7 @@ impl parser {
         while (self->lookahead(tok_kind::tok_add) ||
                self->lookahead(tok_kind::tok_sub)) {
             var binary = nil => ast_binary_operator*;
-            match(self->toks->get(self->index).kind) {
+            match(self->this_tok()->kind) {
                 tok_kind::tok_add => {
                     binary = ast_binary_operator::new(
                         begin_loc->copy(),
@@ -538,7 +548,7 @@ impl parser {
                     );
                 }
             }
-            self->match_token(self->toks->get(self->index).kind);
+            self->match_token(self->this_tok()->kind);
             binary->left = res;
             binary->right = self->multive_gen();
             res = binary => ast*;
@@ -608,7 +618,7 @@ impl parser {
                self->lookahead(tok_kind::tok_grt) ||
                self->lookahead(tok_kind::tok_geq)) {
             var kind = binary_kind::add;
-            match (self->toks->get(self->index).kind) {
+            match (self->this_tok()->kind) {
                 tok_kind::tok_cmp_eq => kind = binary_kind::cmpeq;
                 tok_kind::tok_neq => kind = binary_kind::cmpne;
                 tok_kind::tok_less => kind = binary_kind::less;
@@ -617,7 +627,7 @@ impl parser {
                 tok_kind::tok_geq => kind = binary_kind::geq;
             }
             var binary = ast_binary_operator::new(begin_loc->copy(), kind);
-            self->match_token(self->toks->get(self->index).kind);
+            self->match_token(self->this_tok()->kind);
             binary->left = res;
             binary->right = self->bitwise_or_gen();
             res = binary => ast*;
@@ -691,7 +701,7 @@ impl parser {
             self->lookahead(tok_kind::tok_eq)) {
             var assignment = ast_assignment::new(begin_loc->copy());
             assignment->left = res => ast_call*;
-            match (self->toks->get(self->index).kind) {
+            match (self->this_tok()->kind) {
                 tok_kind::tok_addeq => assignment->kind = assignment_kind::addeq;
                 tok_kind::tok_subeq => assignment->kind = assignment_kind::subeq;
                 tok_kind::tok_muleq => assignment->kind = assignment_kind::muleq;
@@ -702,7 +712,7 @@ impl parser {
                 tok_kind::tok_bit_or_eq => assignment->kind = assignment_kind::oreq;
                 tok_kind::tok_eq => assignment->kind = assignment_kind::eq;
             }
-            self->match_token(self->toks->get(self->index).kind);
+            self->match_token(self->this_tok()->kind);
             assignment->right = self->calculation_gen();
             self->update_location(assignment => ast*);
             return assignment => ast*;
@@ -762,7 +772,7 @@ impl parser {
         self->match_token(tok_kind::tok_struct);
         var res = ast_struct_decl::new(
             begin_loc,
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_id);
         if (self->lookahead_generic()) {
@@ -798,7 +808,7 @@ impl parser {
         self->match_token(tok_kind::tok_enum);
         var res = ast_enum_decl::new(
             begin_loc,
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_id);
         self->match_token(tok_kind::tok_lbrace);
@@ -882,7 +892,7 @@ impl parser {
         self->match_token(tok_kind::tok_func);
         var res = ast_func_decl::new(
             begin_loc,
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_id);
         if (self->lookahead_generic()) {
@@ -908,7 +918,7 @@ impl parser {
         self->match_token(tok_kind::tok_impl);
         var res = ast_impl::new(
             begin_loc,
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_id);
         if (self->lookahead_generic()) {
@@ -951,7 +961,7 @@ impl parser {
 
 impl parser {
     func stmt_gen(self) -> ast* {
-        match (self->toks->get(self->index).kind) {
+        match (self->this_tok()->kind) {
             tok_kind::tok_var => return self->definition_gen() => ast*;
             tok_kind::tok_lparen => return self->in_stmt_expr_gen() => ast*;
             tok_kind::tok_nil => return self->in_stmt_expr_gen() => ast*;
@@ -972,7 +982,7 @@ impl parser {
         }
 
         self->err->error(
-            self->toks->get(self->index).location,
+            self->this_tok()->location,
             "expected statement here."
         );
         self->next();
@@ -984,7 +994,7 @@ impl parser {
         self->match_token(tok_kind::tok_var);
         var res = ast_definition::new(
             begin_loc,
-            self->toks->get(self->index).content
+            self->this_tok()->content
         );
         self->match_token(tok_kind::tok_id);
         if (self->lookahead(tok_kind::tok_colon)) {
@@ -1206,7 +1216,7 @@ impl parser {
             }
 
             var decl_node: ast* = nil => ast*;
-            match (self->toks->get(self->index).kind) {
+            match (self->this_tok()->kind) {
                 tok_kind::tok_struct => {
                     var tmp = self->struct_decl_gen();
                     tmp->is_public = flag_is_public;

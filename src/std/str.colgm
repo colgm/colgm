@@ -1,4 +1,5 @@
 use std::libc::{ malloc, realloc, free, memcpy, strlen, streq, exit, write };
+use err::panic::{ panic };
 
 pub struct str {
     c_str: i8*,
@@ -155,9 +156,7 @@ impl str {
 impl str {
     pub func get(self, index: u64) -> i8 {
         if (index >= self->size) {
-            var report_info = "std::str::get: index out of range\n\n";
-            write(2 => i32, report_info, strlen(report_info));
-            exit(-1 => i32);
+            panic("std::str::get: index out of range\n");
         }
         return self->c_str[index];
     }

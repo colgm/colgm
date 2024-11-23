@@ -454,7 +454,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
     if (prev.is_pointer()) {
         rp.report(node,
             "cannot use \".\" to get field from pointer \"" +
-            prev.to_string() + "\". maybe you mean \"->\"?"
+            prev.to_string() + "\". maybe \"->\"?"
         );
         return type::error_type();
     }
@@ -1154,6 +1154,11 @@ bool semantic::check_is_enum_literal(expr* node) {
 void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self) {
     const auto infer = resolve_expression(node->get_value());
     node->get_value()->set_resolve_type(infer);
+    // check error type
+    if (infer.is_error()) {
+        return;
+    }
+
     if (ctx.search_symbol_kind(infer)!=sym_kind::enum_kind) {
         rp.report(node->get_value(), "match value should be enum type.");
         return;

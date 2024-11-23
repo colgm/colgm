@@ -1,4 +1,5 @@
-use std::str::str;
+use std::str::{ str };
+use std::vec::{ vec };
 use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ readfile_into_string, io };
 use std::fs::{ fs };
@@ -81,7 +82,7 @@ pub enum tok_kind {
     tok_eof         // <eof> token
 }
 
-struct token {
+pub struct token {
     kind: tok_kind,
     content: str*,
     location: span*
@@ -96,6 +97,14 @@ impl token {
         return res;
     }
 
+    pub func copy(self) -> token* {
+        var res = token::__alloc__();
+        res->kind = self->kind;
+        res->content = self->content->copy();
+        res->location = self->location->copy();
+        return res;
+    }
+
     pub func delete(self) {
         self->content->delete();
         free(self->content => i8*);
@@ -104,63 +113,9 @@ impl token {
     }
 }
 
-pub struct vec_token {
-    data: token*,
-    size: u64,
-    capacity: u64
-}
-
-impl vec_token {
-    pub func new() -> vec_token* {
-        var res = vec_token::__alloc__();
-        var size_of_token = token::__size__();
-        res->data = malloc((2048 => u64) * size_of_token) => token*;
-        res->size = 0 => u64;
-        res->capacity = 2048 => u64;
-        return res;
-    }
-
-    pub func delete(self) {
-        var index = 0 => u64;
-        while(index < self->size) {
-            self->data[index].delete();
-            index += 1 => u64;
-        }
-        free(self->data => i8*);
-    }
-
-    func expand_capacity(self) {
-        self->capacity *= 2 => u64;
-        self->data = realloc(
-            self->data => i8*,
-            self->capacity * token::__size__()
-        ) => token*;
-    }
-
-    pub func append(self, kind: tok_kind, content: str*, loc: span*) {
-        if (self->size == self->capacity) {
-            self->expand_capacity();
-        }
-
-        self->data[self->size].kind = kind;
-        self->data[self->size].content = content;
-        self->data[self->size].location = loc;
-        self->size += 1 => u64;
-    }
-
-    pub func get(self, index: i64) -> token {
-        if (index < 0 || (index => u64) >= self->size) {
-            io::stderr().out("index out of bounds: ")
-                        .out_i64(index).out("\n");
-            exit((-1) => i32);
-        }
-        return self->data[index];
-    }
-}
-
 pub struct lexer {
     err: report*,
-    toks: vec_token*,
+    toks: vec<token>,
     pos: u64,
     filename: str,
     line: i64,
@@ -171,7 +126,7 @@ impl lexer {
     pub func new(e: report*) -> lexer* {
         var res = lexer::__alloc__();
         res->err = e;
-        res->toks = vec_token::new();
+        res->toks = vec<token>::instance();
         res->pos = 0 => u64;
         res->filename.init();
         res->line = 0;
@@ -181,8 +136,17 @@ impl lexer {
 
     pub func delete(self) {
         self->filename.delete();
-        self->toks->delete();
-        free(self->toks => i8*);
+        self->toks.delete();
+    }
+
+    pub func push_token(self, kind: tok_kind, content: str*, loc: span*) {
+        var res = token {
+            kind: kind,
+            content: content,
+            location: loc
+        };
+
+        self->toks.push(res.__ptr__());
     }
 }
 
@@ -417,25 +381,25 @@ impl lexer {
         loc->end_column = self->column;
 
         if (ch == '(') {
-            self->toks->append(tok_kind::tok_lparen, tmp, loc);
+            self->push_token(tok_kind::tok_lparen, tmp, loc);
         } elsif (ch == ')') {
-            self->toks->append(tok_kind::tok_rparen, tmp, loc);
+            self->push_token(tok_kind::tok_rparen, tmp, loc);
         } elsif (ch == '[') {
-            self->toks->append(tok_kind::tok_lbracket, tmp, loc);
+            self->push_token(tok_kind::tok_lbracket, tmp, loc);
         } elsif (ch == ']') {
-            self->toks->append(tok_kind::tok_rbracket, tmp, loc);
+            self->push_token(tok_kind::tok_rbracket, tmp, loc);
         } elsif (ch == '{') {
-            self->toks->append(tok_kind::tok_lbrace, tmp, loc);
+            self->push_token(tok_kind::tok_lbrace, tmp, loc);
         } elsif (ch == '}') {
-            self->toks->append(tok_kind::tok_rbrace, tmp, loc);
+            self->push_token(tok_kind::tok_rbrace, tmp, loc);
         } elsif (ch == ';') {
-            self->toks->append(tok_kind::tok_semi, tmp, loc);
+            self->push_token(tok_kind::tok_semi, tmp, loc);
         } elsif (ch == ',') {
-            self->toks->append(tok_kind::tok_comma, tmp, loc);
+            self->push_token(tok_kind::tok_comma, tmp, loc);
         } elsif (ch == '?') {
-            self->toks->append(tok_kind::tok_quesmark, tmp, loc);
+            self->push_token(tok_kind::tok_quesmark, tmp, loc);
         } elsif (ch == '#') {
-            self->toks->append(tok_kind::tok_sharp, tmp, loc);
+            self->push_token(tok_kind::tok_sharp, tmp, loc);
         }
     }
 
@@ -458,49 +422,49 @@ impl lexer {
         loc->end_column = self->column;
 
         if (tmp->eq_const("+")) {
-            self->toks->append(tok_kind::tok_add, tmp, loc);
+            self->push_token(tok_kind::tok_add, tmp, loc);
         } elsif (tmp->eq_const("+=")) {
-            self->toks->append(tok_kind::tok_addeq, tmp, loc);
+            self->push_token(tok_kind::tok_addeq, tmp, loc);
         } elsif (tmp->eq_const("-")) {
-            self->toks->append(tok_kind::tok_sub, tmp, loc);
+            self->push_token(tok_kind::tok_sub, tmp, loc);
         } elsif (tmp->eq_const("-=")) {
-            self->toks->append(tok_kind::tok_subeq, tmp, loc);
+            self->push_token(tok_kind::tok_subeq, tmp, loc);
         } elsif (tmp->eq_const("*")) {
-            self->toks->append(tok_kind::tok_mul, tmp, loc);
+            self->push_token(tok_kind::tok_mul, tmp, loc);
         } elsif (tmp->eq_const("*=")) {
-            self->toks->append(tok_kind::tok_muleq, tmp, loc);
+            self->push_token(tok_kind::tok_muleq, tmp, loc);
         } elsif (tmp->eq_const("/")) {
-            self->toks->append(tok_kind::tok_div, tmp, loc);
+            self->push_token(tok_kind::tok_div, tmp, loc);
         } elsif (tmp->eq_const("/=")) {
-            self->toks->append(tok_kind::tok_diveq, tmp, loc);
+            self->push_token(tok_kind::tok_diveq, tmp, loc);
         } elsif (tmp->eq_const("%")) {
-            self->toks->append(tok_kind::tok_rem, tmp, loc);
+            self->push_token(tok_kind::tok_rem, tmp, loc);
         } elsif (tmp->eq_const("%=")) {
-            self->toks->append(tok_kind::tok_remeq, tmp, loc);
+            self->push_token(tok_kind::tok_remeq, tmp, loc);
         } elsif (tmp->eq_const("~")) {
-            self->toks->append(tok_kind::tok_floater, tmp, loc);
+            self->push_token(tok_kind::tok_floater, tmp, loc);
         } elsif (tmp->eq_const("~=")) {
-            self->toks->append(tok_kind::tok_floatereq, tmp, loc);
+            self->push_token(tok_kind::tok_floatereq, tmp, loc);
         } elsif (tmp->eq_const("^")) {
-            self->toks->append(tok_kind::tok_bit_xor, tmp, loc);
+            self->push_token(tok_kind::tok_bit_xor, tmp, loc);
         } elsif (tmp->eq_const("^=")) {
-            self->toks->append(tok_kind::tok_bit_xor_eq, tmp, loc);
+            self->push_token(tok_kind::tok_bit_xor_eq, tmp, loc);
         } elsif (tmp->eq_const("=")) {
-            self->toks->append(tok_kind::tok_eq, tmp, loc);
+            self->push_token(tok_kind::tok_eq, tmp, loc);
         } elsif (tmp->eq_const("==")) {
-            self->toks->append(tok_kind::tok_cmp_eq, tmp, loc);
+            self->push_token(tok_kind::tok_cmp_eq, tmp, loc);
         } elsif (tmp->eq_const("<")) {
-            self->toks->append(tok_kind::tok_less, tmp, loc);
+            self->push_token(tok_kind::tok_less, tmp, loc);
         } elsif (tmp->eq_const("<=")) {
-            self->toks->append(tok_kind::tok_leq, tmp, loc);
+            self->push_token(tok_kind::tok_leq, tmp, loc);
         } elsif (tmp->eq_const(">")) {
-            self->toks->append(tok_kind::tok_grt, tmp, loc);
+            self->push_token(tok_kind::tok_grt, tmp, loc);
         } elsif (tmp->eq_const(">=")) {
-            self->toks->append(tok_kind::tok_geq, tmp, loc);
+            self->push_token(tok_kind::tok_geq, tmp, loc);
         } elsif (tmp->eq_const("!")) {
-            self->toks->append(tok_kind::tok_op_not, tmp, loc);
+            self->push_token(tok_kind::tok_op_not, tmp, loc);
         } elsif (tmp->eq_const("!=")) {
-            self->toks->append(tok_kind::tok_neq, tmp, loc);
+            self->push_token(tok_kind::tok_neq, tmp, loc);
         }
     }
 
@@ -533,17 +497,17 @@ impl lexer {
         loc->end_column = self->column;
 
         if (tmp->eq_const("&")) {
-            self->toks->append(tok_kind::tok_bit_and, tmp, loc);
+            self->push_token(tok_kind::tok_bit_and, tmp, loc);
         } elsif (tmp->eq_const("&=")) {
-            self->toks->append(tok_kind::tok_bit_and_eq, tmp, loc);
+            self->push_token(tok_kind::tok_bit_and_eq, tmp, loc);
         } elsif (tmp->eq_const("&&")) {
-            self->toks->append(tok_kind::tok_op_and, tmp, loc);
+            self->push_token(tok_kind::tok_op_and, tmp, loc);
         } elsif (tmp->eq_const("|")) {
-            self->toks->append(tok_kind::tok_bit_or, tmp, loc);
+            self->push_token(tok_kind::tok_bit_or, tmp, loc);
         } elsif (tmp->eq_const("|=")) {
-            self->toks->append(tok_kind::tok_bit_or_eq, tmp, loc);
+            self->push_token(tok_kind::tok_bit_or_eq, tmp, loc);
         } elsif (tmp->eq_const("||")) {
-            self->toks->append(tok_kind::tok_op_or, tmp, loc);
+            self->push_token(tok_kind::tok_op_or, tmp, loc);
         }
     }
 
@@ -564,9 +528,9 @@ impl lexer {
         loc->end_column = self->column;
 
         if (tmp->get(0 => u64)=='-') {
-            self->toks->append(tok_kind::tok_arrow, tmp, loc);
+            self->push_token(tok_kind::tok_arrow, tmp, loc);
         } else {
-            self->toks->append(tok_kind::tok_wide_arrow, tmp, loc);
+            self->push_token(tok_kind::tok_wide_arrow, tmp, loc);
         }
     }
 
@@ -587,7 +551,7 @@ impl lexer {
         loc->end_line = self->line;
         loc->end_column = self->column;
 
-        self->toks->append(lexer::check_id_kind(tmp), tmp, loc);
+        self->push_token(lexer::check_id_kind(tmp), tmp, loc);
     }
 
     func generate_number(self, src: str*) {
@@ -610,7 +574,7 @@ impl lexer {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
                 loc->end_column = self->column;
-                self->toks->append(tok_kind::tok_num, tmp, loc);
+                self->push_token(tok_kind::tok_num, tmp, loc);
             } else {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
@@ -634,7 +598,7 @@ impl lexer {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
                 loc->end_column = self->column;
-                self->toks->append(tok_kind::tok_num, tmp, loc);
+                self->push_token(tok_kind::tok_num, tmp, loc);
             } else {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
@@ -663,7 +627,7 @@ impl lexer {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
                 loc->end_column = self->column;
-                self->toks->append(tok_kind::tok_num, tmp, loc);
+                self->push_token(tok_kind::tok_num, tmp, loc);
                 return;
             }
 
@@ -674,7 +638,7 @@ impl lexer {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
                 loc->end_column = self->column;
-                self->toks->append(tok_kind::tok_num, tmp, loc);
+                self->push_token(tok_kind::tok_num, tmp, loc);
                 return;
             }
 
@@ -694,7 +658,7 @@ impl lexer {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
                 loc->end_column = self->column;
-                self->toks->append(tok_kind::tok_num, tmp, loc);
+                self->push_token(tok_kind::tok_num, tmp, loc);
                 return;
             }
 
@@ -710,7 +674,7 @@ impl lexer {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
                 loc->end_column = self->column;
-                self->toks->append(tok_kind::tok_num, tmp, loc);
+                self->push_token(tok_kind::tok_num, tmp, loc);
                 return;
             }
 
@@ -727,7 +691,7 @@ impl lexer {
                 self->column += tmp->size => i64;
                 loc->end_line = self->line;
                 loc->end_column = self->column;
-                self->toks->append(tok_kind::tok_num, tmp, loc);
+                self->push_token(tok_kind::tok_num, tmp, loc);
                 return;
             }
         }
@@ -735,7 +699,7 @@ impl lexer {
         self->column += tmp->size => i64;
         loc->end_line = self->line;
         loc->end_column = self->column;
-        self->toks->append(tok_kind::tok_num, tmp, loc);
+        self->push_token(tok_kind::tok_num, tmp, loc);
     }
 
     func generate_string(self, src: str*) {
@@ -819,12 +783,12 @@ impl lexer {
         loc->end_column = self->column;
 
         if (quote_type == '"') {
-            self->toks->append(tok_kind::tok_str, tmp, loc);
+            self->push_token(tok_kind::tok_str, tmp, loc);
         } else {
             if (tmp->size != 1 => u64) {
                 self->err->error(loc, "should only contain one character.");
             }
-            self->toks->append(tok_kind::tok_ch, tmp, loc);
+            self->push_token(tok_kind::tok_ch, tmp, loc);
         }
     }
 
@@ -846,11 +810,11 @@ impl lexer {
             loc->end_line = self->line;
             loc->end_column = self->column;
 
-            self->toks->append(tok_kind::tok_coloncolon, tmp, loc);
+            self->push_token(tok_kind::tok_coloncolon, tmp, loc);
         } else {
             loc->end_line = self->line;
             loc->end_column = self->column;
-            self->toks->append(tok_kind::tok_colon, tmp, loc);
+            self->push_token(tok_kind::tok_colon, tmp, loc);
         }
     }
 
@@ -874,12 +838,12 @@ impl lexer {
             loc->end_line = self->line;
             loc->end_column = self->column;
 
-            self->toks->append(tok_kind::tok_ellipsis, tmp, loc);
+            self->push_token(tok_kind::tok_ellipsis, tmp, loc);
         } else {
             loc->end_line = self->line;
             loc->end_column = self->column;
 
-            self->toks->append(tok_kind::tok_dot, tmp, loc);
+            self->push_token(tok_kind::tok_dot, tmp, loc);
         }
     }
 
@@ -897,7 +861,7 @@ impl lexer {
         eof_span->begin_column = self->column;
         eof_span->end_line = self->line;
         eof_span->end_column = self->column;
-        self->toks->append(
+        self->push_token(
             tok_kind::tok_eof,
             str::new()->append_i8_vec("<eof>"),
             eof_span
@@ -959,9 +923,9 @@ impl lexer {
 
     pub func dump(self) {
         var index = 0 => u64;
-        while(index < self->toks->size) {
-            var loc = self->toks->data[index].location;
-            io::stderr().out(lexer::tok_kind_to_str(self->toks->data[index].kind))
+        while(index < self->toks.size) {
+            var loc = self->toks.get(index)->location;
+            io::stderr().out(lexer::tok_kind_to_str(self->toks.get(index)->kind))
                         .out(" [").out(loc->file.c_str)
                         .out(":").out_i64(loc->begin_line + 1)
                         .out(":").out_i64(loc->begin_column + 1)
@@ -969,7 +933,7 @@ impl lexer {
                         .out(":").out_i64(loc->end_line + 1)
                         .out(":").out_i64(loc->end_column + 1)
                         .out("] \"")
-                        .out(self->toks->data[index].content->c_str)
+                        .out(self->toks.get(index)->content->c_str)
                         .out("\"")
                         .endln();
             index += 1 => u64;
