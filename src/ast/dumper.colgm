@@ -55,16 +55,16 @@ impl ast_dumper {
             match (state) {
                 indent_state::indent_none => {}
                 indent_state::indent_middle => {
-                    self->indent.pop();
-                    self->indent.pop();
-                    self->indent.pop();
+                    self->indent.pop_back();
+                    self->indent.pop_back();
+                    self->indent.pop_back();
                     self->indent.append_i8_vec("|  ");
                 }
                 indent_state::indent_bar => {}
                 indent_state::indent_end => {
-                    self->indent.pop();
-                    self->indent.pop();
-                    self->indent.pop();
+                    self->indent.pop_back();
+                    self->indent.pop_back();
+                    self->indent.pop_back();
                     self->indent.append_i8_vec("   ");
                 }
             }
@@ -73,24 +73,24 @@ impl ast_dumper {
     }
 
     func set_last(self) {
-        self->indent.pop();
-        self->indent.pop();
-        self->indent.pop();
+        self->indent.pop_back();
+        self->indent.pop_back();
+        self->indent.pop_back();
         self->indent.append_i8_vec("+--");
     }
 
     func pop_indent(self) {
-        self->indent.pop();
-        self->indent.pop();
-        self->indent.pop();
+        self->indent.pop_back();
+        self->indent.pop_back();
+        self->indent.pop_back();
     }
 
     func dump_indent(self, out: io) {
         if (self->indent.size => i64 > 0 &&
             self->indent_back() == indent_state::indent_bar) {
-            self->indent.pop();
-            self->indent.pop();
-            self->indent.pop();
+            self->indent.pop_back();
+            self->indent.pop_back();
+            self->indent.pop_back();
             self->indent.append_i8_vec("|--");
         }
         out.out(self->indent.c_str);

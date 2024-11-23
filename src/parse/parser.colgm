@@ -111,8 +111,6 @@ impl parser {
         if (self->root == (nil => root*)) {
             return;
         }
-        io::stderr().out("[").green().out("parse").reset().out("]")
-                    .out(" delete parse::root\n");
         self->root->delete();
         free(self->root => i8*);
     }
@@ -137,7 +135,12 @@ impl parser {
         if (self->index <= 0) {
             return;
         }
-        io::stdout().out_i64(self->index -1).endln();
+
+        // do not update location if node does not have location info
+        if (node->location => i8* == nil) {
+            return;
+        }
+
         var last_loc = self->get_tok(self->index - 1)->location;
         node->location->end_line = last_loc->end_line;
         node->location->end_column = last_loc->end_column;

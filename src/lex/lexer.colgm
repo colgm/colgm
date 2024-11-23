@@ -145,7 +145,7 @@ impl lexer {
             content: content,
             location: loc
         };
-
+        // do token::copy, content and loc are all copied
         self->toks.push(res.__ptr__());
     }
 }
@@ -365,256 +365,293 @@ impl lexer {
 
 impl lexer {
     func generate_single_char_token(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
-        var tmp = str::new();
+        var tmp = str::instance();
         var ch = src->get(self->pos);
-        tmp->append_char(ch);
+        tmp.append_char(ch);
 
         self->pos += 1 => u64;
         self->column += 1;
 
-        loc->end_line = self->line;
-        loc->end_column = self->column;
+        loc.end_line = self->line;
+        loc.end_column = self->column;
 
         if (ch == '(') {
-            self->push_token(tok_kind::tok_lparen, tmp, loc);
+            self->push_token(tok_kind::tok_lparen, tmp.__ptr__(), loc.__ptr__());
         } elsif (ch == ')') {
-            self->push_token(tok_kind::tok_rparen, tmp, loc);
+            self->push_token(tok_kind::tok_rparen, tmp.__ptr__(), loc.__ptr__());
         } elsif (ch == '[') {
-            self->push_token(tok_kind::tok_lbracket, tmp, loc);
+            self->push_token(tok_kind::tok_lbracket, tmp.__ptr__(), loc.__ptr__());
         } elsif (ch == ']') {
-            self->push_token(tok_kind::tok_rbracket, tmp, loc);
+            self->push_token(tok_kind::tok_rbracket, tmp.__ptr__(), loc.__ptr__());
         } elsif (ch == '{') {
-            self->push_token(tok_kind::tok_lbrace, tmp, loc);
+            self->push_token(tok_kind::tok_lbrace, tmp.__ptr__(), loc.__ptr__());
         } elsif (ch == '}') {
-            self->push_token(tok_kind::tok_rbrace, tmp, loc);
+            self->push_token(tok_kind::tok_rbrace, tmp.__ptr__(), loc.__ptr__());
         } elsif (ch == ';') {
-            self->push_token(tok_kind::tok_semi, tmp, loc);
+            self->push_token(tok_kind::tok_semi, tmp.__ptr__(), loc.__ptr__());
         } elsif (ch == ',') {
-            self->push_token(tok_kind::tok_comma, tmp, loc);
+            self->push_token(tok_kind::tok_comma, tmp.__ptr__(), loc.__ptr__());
         } elsif (ch == '?') {
-            self->push_token(tok_kind::tok_quesmark, tmp, loc);
+            self->push_token(tok_kind::tok_quesmark, tmp.__ptr__(), loc.__ptr__());
         } elsif (ch == '#') {
-            self->push_token(tok_kind::tok_sharp, tmp, loc);
+            self->push_token(tok_kind::tok_sharp, tmp.__ptr__(), loc.__ptr__());
         }
+
+        loc.delete();
+        tmp.delete();
     }
 
     func generate_maybe_need_eq_oprs(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
-        var tmp = str::new();
-        tmp->append_char(src->get(self->pos));
+        var tmp = str::instance();
+        tmp.append_char(src->get(self->pos));
         self->pos += 1 => u64;
         if (self->pos < src->size && src->get(self->pos) == '=') {
-            tmp->append_char(src->get(self->pos));
+            tmp.append_char(src->get(self->pos));
             self->pos += 1 => u64;
         }
 
-        self->column += tmp->size => i64;
-        loc->end_line = self->line;
-        loc->end_column = self->column;
+        self->column += tmp.size => i64;
+        loc.end_line = self->line;
+        loc.end_column = self->column;
 
-        if (tmp->eq_const("+")) {
-            self->push_token(tok_kind::tok_add, tmp, loc);
-        } elsif (tmp->eq_const("+=")) {
-            self->push_token(tok_kind::tok_addeq, tmp, loc);
-        } elsif (tmp->eq_const("-")) {
-            self->push_token(tok_kind::tok_sub, tmp, loc);
-        } elsif (tmp->eq_const("-=")) {
-            self->push_token(tok_kind::tok_subeq, tmp, loc);
-        } elsif (tmp->eq_const("*")) {
-            self->push_token(tok_kind::tok_mul, tmp, loc);
-        } elsif (tmp->eq_const("*=")) {
-            self->push_token(tok_kind::tok_muleq, tmp, loc);
-        } elsif (tmp->eq_const("/")) {
-            self->push_token(tok_kind::tok_div, tmp, loc);
-        } elsif (tmp->eq_const("/=")) {
-            self->push_token(tok_kind::tok_diveq, tmp, loc);
-        } elsif (tmp->eq_const("%")) {
-            self->push_token(tok_kind::tok_rem, tmp, loc);
-        } elsif (tmp->eq_const("%=")) {
-            self->push_token(tok_kind::tok_remeq, tmp, loc);
-        } elsif (tmp->eq_const("~")) {
-            self->push_token(tok_kind::tok_floater, tmp, loc);
-        } elsif (tmp->eq_const("~=")) {
-            self->push_token(tok_kind::tok_floatereq, tmp, loc);
-        } elsif (tmp->eq_const("^")) {
-            self->push_token(tok_kind::tok_bit_xor, tmp, loc);
-        } elsif (tmp->eq_const("^=")) {
-            self->push_token(tok_kind::tok_bit_xor_eq, tmp, loc);
-        } elsif (tmp->eq_const("=")) {
-            self->push_token(tok_kind::tok_eq, tmp, loc);
-        } elsif (tmp->eq_const("==")) {
-            self->push_token(tok_kind::tok_cmp_eq, tmp, loc);
-        } elsif (tmp->eq_const("<")) {
-            self->push_token(tok_kind::tok_less, tmp, loc);
-        } elsif (tmp->eq_const("<=")) {
-            self->push_token(tok_kind::tok_leq, tmp, loc);
-        } elsif (tmp->eq_const(">")) {
-            self->push_token(tok_kind::tok_grt, tmp, loc);
-        } elsif (tmp->eq_const(">=")) {
-            self->push_token(tok_kind::tok_geq, tmp, loc);
-        } elsif (tmp->eq_const("!")) {
-            self->push_token(tok_kind::tok_op_not, tmp, loc);
-        } elsif (tmp->eq_const("!=")) {
-            self->push_token(tok_kind::tok_neq, tmp, loc);
+        if (tmp.eq_const("+")) {
+            self->push_token(tok_kind::tok_add, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("+=")) {
+            self->push_token(tok_kind::tok_addeq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("-")) {
+            self->push_token(tok_kind::tok_sub, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("-=")) {
+            self->push_token(tok_kind::tok_subeq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("*")) {
+            self->push_token(tok_kind::tok_mul, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("*=")) {
+            self->push_token(tok_kind::tok_muleq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("/")) {
+            self->push_token(tok_kind::tok_div, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("/=")) {
+            self->push_token(tok_kind::tok_diveq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("%")) {
+            self->push_token(tok_kind::tok_rem, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("%=")) {
+            self->push_token(tok_kind::tok_remeq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("~")) {
+            self->push_token(tok_kind::tok_floater, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("~=")) {
+            self->push_token(tok_kind::tok_floatereq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("^")) {
+            self->push_token(tok_kind::tok_bit_xor, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("^=")) {
+            self->push_token(tok_kind::tok_bit_xor_eq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("=")) {
+            self->push_token(tok_kind::tok_eq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("==")) {
+            self->push_token(tok_kind::tok_cmp_eq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("<")) {
+            self->push_token(tok_kind::tok_less, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("<=")) {
+            self->push_token(tok_kind::tok_leq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const(">")) {
+            self->push_token(tok_kind::tok_grt, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const(">=")) {
+            self->push_token(tok_kind::tok_geq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("!")) {
+            self->push_token(tok_kind::tok_op_not, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("!=")) {
+            self->push_token(tok_kind::tok_neq, tmp.__ptr__(), loc.__ptr__());
         }
+
+        loc.delete();
+        tmp.delete();
     }
 
     func generate_lookahead_other(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
-        var tmp = str::new();
+        var tmp = str::instance();
         var ch = src->get(self->pos);
-        tmp->append_char(ch);
+        tmp.append_char(ch);
         self->pos += 1 => u64;
         if (ch == '&' && self->pos < src->size) {
             if (src->get(self->pos) == '&' ||
                 src->get(self->pos) == '=') {
-                tmp->append_char(src->get(self->pos));
+                tmp.append_char(src->get(self->pos));
                 self->pos += 1 => u64;
             }
         } elsif (ch == '|' && self->pos < src->size) {
             if (src->get(self->pos) == '|' ||
                 src->get(self->pos) == '=') {
-                tmp->append_char(src->get(self->pos));
+                tmp.append_char(src->get(self->pos));
                 self->pos += 1 => u64;
             }
         }
 
-        self->column += tmp->size => i64;
-        loc->end_line = self->line;
-        loc->end_column = self->column;
+        self->column += tmp.size => i64;
+        loc.end_line = self->line;
+        loc.end_column = self->column;
 
-        if (tmp->eq_const("&")) {
-            self->push_token(tok_kind::tok_bit_and, tmp, loc);
-        } elsif (tmp->eq_const("&=")) {
-            self->push_token(tok_kind::tok_bit_and_eq, tmp, loc);
-        } elsif (tmp->eq_const("&&")) {
-            self->push_token(tok_kind::tok_op_and, tmp, loc);
-        } elsif (tmp->eq_const("|")) {
-            self->push_token(tok_kind::tok_bit_or, tmp, loc);
-        } elsif (tmp->eq_const("|=")) {
-            self->push_token(tok_kind::tok_bit_or_eq, tmp, loc);
-        } elsif (tmp->eq_const("||")) {
-            self->push_token(tok_kind::tok_op_or, tmp, loc);
+        if (tmp.eq_const("&")) {
+            self->push_token(tok_kind::tok_bit_and, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("&=")) {
+            self->push_token(tok_kind::tok_bit_and_eq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("&&")) {
+            self->push_token(tok_kind::tok_op_and, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("|")) {
+            self->push_token(tok_kind::tok_bit_or, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("|=")) {
+            self->push_token(tok_kind::tok_bit_or_eq, tmp.__ptr__(), loc.__ptr__());
+        } elsif (tmp.eq_const("||")) {
+            self->push_token(tok_kind::tok_op_or, tmp.__ptr__(), loc.__ptr__());
         }
+
+        loc.delete();
+        tmp.delete();
     }
 
     func generate_arrow(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
-        var tmp = str::new();
-        tmp->append_char(src->get(self->pos));
+        var tmp = str::instance();
+        tmp.append_char(src->get(self->pos));
         self->pos += 1 => u64;
-        tmp->append_char(src->get(self->pos));
+        tmp.append_char(src->get(self->pos));
         self->pos += 1 => u64;
 
         self->column += 2;
-        loc->end_line = self->line;
-        loc->end_column = self->column;
+        loc.end_line = self->line;
+        loc.end_column = self->column;
 
-        if (tmp->get(0 => u64)=='-') {
-            self->push_token(tok_kind::tok_arrow, tmp, loc);
+        if (tmp.get(0 => u64)=='-') {
+            self->push_token(
+                tok_kind::tok_arrow,
+                tmp.__ptr__(),
+                loc.__ptr__()
+            );
         } else {
-            self->push_token(tok_kind::tok_wide_arrow, tmp, loc);
+            self->push_token(
+                tok_kind::tok_wide_arrow,
+                tmp.__ptr__(),
+                loc.__ptr__()
+            );
         }
+
+        loc.delete();
+        tmp.delete();
     }
 
     func generate_identifier(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
-        var tmp = str::new();
+        var tmp = str::instance();
         while(self->pos < src->size &&
               lexer::is_identifier_body(src->get(self->pos))) {
-            tmp->append_char(src->get(self->pos));
+            tmp.append_char(src->get(self->pos));
             self->pos += 1 => u64;
         }
 
-        self->column += tmp->size => i64;
-        loc->end_line = self->line;
-        loc->end_column = self->column;
+        self->column += tmp.size => i64;
+        loc.end_line = self->line;
+        loc.end_column = self->column;
 
-        self->push_token(lexer::check_id_kind(tmp), tmp, loc);
+        self->push_token(
+            lexer::check_id_kind(tmp.__ptr__()),
+            tmp.__ptr__(),
+            loc.__ptr__()
+        );
+
+        loc.delete();
+        tmp.delete();
     }
 
     func generate_number(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
-        var tmp = str::new();
+        var tmp = str::instance();
         if (src->get(self->pos)=='0' &&
             self->pos + (1 => u64) < src->size &&
             src->get(self->pos + (1 => u64)) == 'x') {
-            tmp->append_i8_vec("0x");
+            tmp.append_i8_vec("0x");
             self->pos += 2 => u64;
             while(self->pos < src->size && lexer::is_hex(src->get(self->pos))) {
-                tmp->append_char(src->get(self->pos));
+                tmp.append_char(src->get(self->pos));
                 self->pos += 1 => u64;
             }
-            if (tmp->size > 2 => u64) {
-                self->column += tmp->size => i64;
-                loc->end_line = self->line;
-                loc->end_column = self->column;
-                self->push_token(tok_kind::tok_num, tmp, loc);
+            if (tmp.size > 2 => u64) {
+                self->column += tmp.size => i64;
+                loc.end_line = self->line;
+                loc.end_column = self->column;
+                self->push_token(
+                    tok_kind::tok_num,
+                    tmp.__ptr__(),
+                    loc.__ptr__()
+                );
             } else {
-                self->column += tmp->size => i64;
-                loc->end_line = self->line;
-                loc->end_column = self->column;
-                self->err->error(loc, "invalid hex number.");
-                loc->delete();
-                free(loc => i8*);
+                self->column += tmp.size => i64;
+                loc.end_line = self->line;
+                loc.end_column = self->column;
+                self->err->error(loc.__ptr__(), "invalid hex number.");
             }
+
+            loc.delete();
+            tmp.delete();
             return;
         }
         if (src->get(self->pos)=='0' &&
             self->pos + (1 => u64) < src->size &&
             src->get(self->pos + (1 => u64)) == 'o') {
-            tmp->append_i8_vec("0o");
+            tmp.append_i8_vec("0o");
             self->pos += 2 => u64;
             while(self->pos < src->size && lexer::is_oct(src->get(self->pos))) {
-                tmp->append_char(src->get(self->pos));
+                tmp.append_char(src->get(self->pos));
                 self->pos += 1 => u64;
             }
-            if (tmp->size > 2 => u64) {
-                self->column += tmp->size => i64;
-                loc->end_line = self->line;
-                loc->end_column = self->column;
-                self->push_token(tok_kind::tok_num, tmp, loc);
+            if (tmp.size > 2 => u64) {
+                self->column += tmp.size => i64;
+                loc.end_line = self->line;
+                loc.end_column = self->column;
+                self->push_token(
+                    tok_kind::tok_num,
+                    tmp.__ptr__(),
+                    loc.__ptr__()
+                );
             } else {
-                self->column += tmp->size => i64;
-                loc->end_line = self->line;
-                loc->end_column = self->column;
-                self->err->error(loc, "invalid oct number.");
-                loc->delete();
-                free(loc => i8*);
+                self->column += tmp.size => i64;
+                loc.end_line = self->line;
+                loc.end_column = self->column;
+                self->err->error(loc.__ptr__(), "invalid oct number.");
             }
+
+            loc.delete();
+            tmp.delete();
             return;
         }
 
         // get integer part
-        tmp->append_char(src->get(self->pos));
+        tmp.append_char(src->get(self->pos));
         self->pos += 1 => u64;
         while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
-            tmp->append_char(src->get(self->pos));
+            tmp.append_char(src->get(self->pos));
             self->pos += 1 => u64;
         }
 
@@ -624,10 +661,17 @@ impl lexer {
 
             // just return, this dot is not part of number
             if (lookahead_pos >= src->size) {
-                self->column += tmp->size => i64;
-                loc->end_line = self->line;
-                loc->end_column = self->column;
-                self->push_token(tok_kind::tok_num, tmp, loc);
+                self->column += tmp.size => i64;
+                loc.end_line = self->line;
+                loc.end_column = self->column;
+                self->push_token(
+                    tok_kind::tok_num,
+                    tmp.__ptr__(),
+                    loc.__ptr__()
+                );
+
+                loc.delete();
+                tmp.delete();
                 return;
             }
 
@@ -635,17 +679,24 @@ impl lexer {
 
             // just return, this dot is not part of number
             if (!lexer::is_digit(lookahead_ch)) {
-                self->column += tmp->size => i64;
-                loc->end_line = self->line;
-                loc->end_column = self->column;
-                self->push_token(tok_kind::tok_num, tmp, loc);
+                self->column += tmp.size => i64;
+                loc.end_line = self->line;
+                loc.end_column = self->column;
+                self->push_token(
+                    tok_kind::tok_num,
+                    tmp.__ptr__(),
+                    loc.__ptr__()
+                );
+
+                loc.delete();
+                tmp.delete();
                 return;
             }
 
-            tmp->append_char('.');
+            tmp.append_char('.');
             self->pos += 1 => u64;
             while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
-                tmp->append_char(src->get(self->pos));
+                tmp.append_char(src->get(self->pos));
                 self->pos += 1 => u64;
             }
         }
@@ -655,51 +706,79 @@ impl lexer {
             (src->get(self->pos) == 'e' || src->get(self->pos) == 'E')) {
             // just return
             if (self->pos + (1 => u64) >= src->size) {
-                self->column += tmp->size => i64;
-                loc->end_line = self->line;
-                loc->end_column = self->column;
-                self->push_token(tok_kind::tok_num, tmp, loc);
+                self->column += tmp.size => i64;
+                loc.end_line = self->line;
+                loc.end_column = self->column;
+                self->push_token(
+                    tok_kind::tok_num,
+                    tmp.__ptr__(),
+                    loc.__ptr__()
+                );
+
+                loc.delete();
+                tmp.delete();
                 return;
             }
 
             var lookahead_pos = self->pos + (1 => u64);
 
             if (lexer::is_digit(src->get(lookahead_pos))) {
-                tmp->append_char(src->get(self->pos));
+                tmp.append_char(src->get(self->pos));
                 self->pos += 1 => u64;
                 while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
-                    tmp->append_char(src->get(self->pos));
+                    tmp.append_char(src->get(self->pos));
                     self->pos += 1 => u64;
                 }
-                self->column += tmp->size => i64;
-                loc->end_line = self->line;
-                loc->end_column = self->column;
-                self->push_token(tok_kind::tok_num, tmp, loc);
+                self->column += tmp.size => i64;
+                loc.end_line = self->line;
+                loc.end_column = self->column;
+                self->push_token(
+                    tok_kind::tok_num,
+                    tmp.__ptr__(),
+                    loc.__ptr__()
+                );
+
+                loc.delete();
+                tmp.delete();
                 return;
             }
 
             if ((src->get(lookahead_pos)=='-' || src->get(lookahead_pos)=='+') &&
                 lookahead_pos + (1 => u64) < src->size &&
                 lexer::is_digit(src->get(lookahead_pos + (1 => u64)))) {
-                tmp->append_char(src->get(self->pos));
-                tmp->append_char(src->get(self->pos + (1 => u64)));
+                tmp.append_char(src->get(self->pos));
+                tmp.append_char(src->get(self->pos + (1 => u64)));
                 self->pos += 2 => u64;
                 while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
-                    tmp->append_char(src->get(self->pos));
+                    tmp.append_char(src->get(self->pos));
                     self->pos += 1 => u64;
                 }
-                self->column += tmp->size => i64;
-                loc->end_line = self->line;
-                loc->end_column = self->column;
-                self->push_token(tok_kind::tok_num, tmp, loc);
+                self->column += tmp.size => i64;
+                loc.end_line = self->line;
+                loc.end_column = self->column;
+                self->push_token(
+                    tok_kind::tok_num,
+                    tmp.__ptr__(),
+                    loc.__ptr__()
+                );
+
+                loc.delete();
+                tmp.delete();
                 return;
             }
         }
 
-        self->column += tmp->size => i64;
-        loc->end_line = self->line;
-        loc->end_column = self->column;
-        self->push_token(tok_kind::tok_num, tmp, loc);
+        self->column += tmp.size => i64;
+        loc.end_line = self->line;
+        loc.end_column = self->column;
+        self->push_token(
+            tok_kind::tok_num,
+            tmp.__ptr__(),
+            loc.__ptr__()
+        );
+
+        loc.delete();
+        tmp.delete();
     }
 
     func generate_string(self, src: str*) {
@@ -793,58 +872,80 @@ impl lexer {
     }
 
     func generate_coloncolon(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
-        var tmp = str::new();
-        tmp->append_char(':');
+        var tmp = str::instance();
+        tmp.append_char(':');
         self->pos += 1 => u64;
         self->column += 1;
 
         if (self->pos < src->size && src->get(self->pos) == ':') {
-            tmp->append_char(':');
+            tmp.append_char(':');
             self->pos += 1 => u64;
             self->column += 1;
-            loc->end_line = self->line;
-            loc->end_column = self->column;
+            loc.end_line = self->line;
+            loc.end_column = self->column;
 
-            self->push_token(tok_kind::tok_coloncolon, tmp, loc);
+            self->push_token(
+                tok_kind::tok_coloncolon,
+                tmp.__ptr__(),
+                loc.__ptr__()
+            );
         } else {
-            loc->end_line = self->line;
-            loc->end_column = self->column;
-            self->push_token(tok_kind::tok_colon, tmp, loc);
+            loc.end_line = self->line;
+            loc.end_column = self->column;
+            self->push_token(
+                tok_kind::tok_colon,
+                tmp.__ptr__(),
+                loc.__ptr__()
+            );
         }
+
+        loc.delete();
+        tmp.delete();
     }
 
     func generate_ellipsis(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
-        var tmp = str::new();
-        tmp->append_char('.');
+        var tmp = str::instance();
+        tmp.append_char('.');
         self->pos += 1 => u64;
         self->column += 1;
 
         if (self->pos + (1 => u64) < src->size &&
             src->get(self->pos) == '.' &&
             src->get(self->pos + (1 => u64)) == '.') {
-            tmp->append_char('.')->append_char('.');
+            tmp.append_char('.')->append_char('.');
             self->pos += 2 => u64;
             self->column += 2;
-            loc->end_line = self->line;
-            loc->end_column = self->column;
+            loc.end_line = self->line;
+            loc.end_column = self->column;
 
-            self->push_token(tok_kind::tok_ellipsis, tmp, loc);
+            self->push_token(
+                tok_kind::tok_ellipsis,
+                tmp.__ptr__(),
+                loc.__ptr__()
+            );
         } else {
-            loc->end_line = self->line;
-            loc->end_column = self->column;
+            loc.end_line = self->line;
+            loc.end_column = self->column;
 
-            self->push_token(tok_kind::tok_dot, tmp, loc);
+            self->push_token(
+                tok_kind::tok_dot,
+                tmp.__ptr__(),
+                loc.__ptr__()
+            );
         }
+
+        loc.delete();
+        tmp.delete();
     }
 
     func skip_note(self, src: str*) {
@@ -855,17 +956,23 @@ impl lexer {
     }
 
     func generate_eof_token(self) {
-        var eof_span = span::new();
-        eof_span->file.copy_const(self->filename.c_str);
-        eof_span->begin_line = self->line;
-        eof_span->begin_column = self->column;
-        eof_span->end_line = self->line;
-        eof_span->end_column = self->column;
+        var eof_span = span::instance();
+        eof_span.file.copy_const(self->filename.c_str);
+        eof_span.begin_line = self->line;
+        eof_span.begin_column = self->column;
+        eof_span.end_line = self->line;
+        eof_span.end_column = self->column;
+
+        var eof_content = str::instance();
+        eof_content.append_i8_vec("<eof>");
         self->push_token(
             tok_kind::tok_eof,
-            str::new()->append_i8_vec("<eof>"),
-            eof_span
+            eof_content.__ptr__(),
+            eof_span.__ptr__()
         );
+
+        eof_span.delete();
+        eof_content.delete();
     }
 
     pub func scan(self, filename: i8*) {

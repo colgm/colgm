@@ -61,7 +61,7 @@ void sir_context::dump_target_tripple(std::ostream& out) const {
         out << "target triple = \"x86_64-pc-linux-gnu\"\n";
     }
     if (platform == "macos" && arch == "aarch64") {
-        out << "target triple = \"arm64-apple-macosx14.0.0\"\n";
+        out << "target triple = \"arm64-apple-macosx12.0.0\"\n";
     }
 }
 
