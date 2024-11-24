@@ -5,7 +5,7 @@ use std::map::{ hashmap };
 
 pub struct package {
     err: report*,
-    library_path: i8*,
+    library_path: str,
     file_mapper: hashmap<str, str>
 }
 
@@ -13,12 +13,13 @@ impl package {
     pub func new(e: report*) -> package* {
         var res = package::__alloc__();
         res->err = e;
-        res->library_path = nil;
+        res->library_path = str::instance();
         res->file_mapper = hashmap<str, str>::instance();
         return res;
     }
 
     pub func delete(self) {
+        self->library_path.delete();
         self->file_mapper.delete();
     }
 

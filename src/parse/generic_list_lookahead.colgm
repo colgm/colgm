@@ -1,0 +1,66 @@
+use lex::lexer::{ tok_kind, token };
+use std::vec::{ vec };
+
+pub struct generic_list_lookahead {
+    index: i64,
+    toks: vec<token>*
+}
+
+impl generic_list_lookahead {
+    func lookahead(self, t: tok_kind) -> bool {
+        return self->toks->get(self->index => u64)->kind == t;
+    }
+
+    func next(self) {
+        if (!self->lookahead(tok_kind::tok_eof)) {
+            self->index += 1;
+        }
+    }
+}
+
+impl generic_list_lookahead {
+    func lookahead_type_def(self) -> bool {
+        if (self->lookahead(tok_kind::tok_const)) {
+            self->next();
+        }
+        if (self->lookahead(tok_kind::tok_id)) {
+            self->next();
+        } else {
+            return false;
+        }
+        if (self->lookahead(tok_kind::tok_less) && !self->check()) {
+            return false;
+        }
+        while (self->lookahead(tok_kind::tok_mul)) {
+            self->next();
+        }
+        return true;
+    }
+
+    pub func check(self) -> bool {
+        if (!self->lookahead(tok_kind::tok_less)) {
+            return false;
+        } else {
+            self->next();
+        }
+        while (!self->lookahead(tok_kind::tok_grt)) {
+            if (self->lookahead(tok_kind::tok_eof)) {
+                return false;
+            }
+            if (!self->lookahead_type_def()) {
+                return false;
+            }
+            if (!self->lookahead(tok_kind::tok_comma) &&
+                !self->lookahead(tok_kind::tok_grt)) {
+                return false;
+            }
+            if (self->lookahead(tok_kind::tok_comma)) {
+                self->next();
+            }
+        }
+        if (self->lookahead(tok_kind::tok_grt)) {
+            self->next();
+        }
+        return true;
+    }
+}

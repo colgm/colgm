@@ -28,14 +28,14 @@ impl regist_pass {
         var expect_path = str::instance();
 
         // expect path init with given library path
-        expect_path.append_i8_vec(self->pkg->library_path);
+        expect_path.append_i8_vec(self->pkg->library_path.c_str);
         while (expect_path.ends_with('/')) {
             expect_path.pop_back();
         }
 
         // generate expect path
         for (var i = 0 => u64; i < node->module_path.size; i += 1 => u64) {
-            var name = node->module_path.get(i);
+            var name = node->module_path.get(i).get();
             if (name->kind != ast_kind::ast_identifier) {
                 self->err->error(name->location, "invalid module path");
                 expect_name.delete();

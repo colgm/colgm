@@ -617,18 +617,21 @@ impl ast_call_index {
 
 pub struct ast_call_func_args {
     base: ast,
-    args: ptr_vec
+    args: primitive_vec<ptr<ast>>
 }
 
 impl ast_call_func_args {
     pub func new(loc: span*) -> ast_call_func_args* {
         var res = ast_call_func_args::__alloc__();
         res->base = ast::instance(ast_kind::ast_call_func_args, loc);
-        res->args.init();
+        res->args = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
+        for (var i = 0 => u64; i < self->args.size; i += 1 => u64) {
+            self->args.get(i).get()->delete();
+        }
         self->args.delete();
     }
 }
@@ -696,18 +699,21 @@ impl ast_init_pair {
 
 pub struct ast_initializer {
     base: ast,
-    pairs: ptr_vec
+    pairs: primitive_vec<ptr<ast>>
 }
 
 impl ast_initializer {
     pub func new(loc: span*) -> ast_initializer* {
         var res = ast_initializer::__alloc__();
         res->base = ast::instance(ast_kind::ast_initializer, loc);
-        res->pairs.init();
+        res->pairs = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
+        for (var i = 0 => u64; i < self->pairs.size; i += 1 => u64) {
+            self->pairs.get(i).get()->delete();
+        }
         self->pairs.delete();
     }
 }
@@ -758,7 +764,7 @@ impl ast_call_id {
 pub struct ast_call {
     base: ast,
     head: ast_call_id*,
-    chain: ptr_vec
+    chain: primitive_vec<ptr<ast>>
 }
 
 impl ast_call {
@@ -766,13 +772,16 @@ impl ast_call {
         var res = ast_call::__alloc__();
         res->base = ast::instance(ast_kind::ast_call, loc);
         res->head = nil => ast_call_id*;
-        res->chain.init();
+        res->chain = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
         if (self->head => i8* != nil) {
             self->head->delete();
+        }
+        for (var i = 0 => u64; i < self->chain.size; i += 1 => u64) {
+            self->chain.get(i).get()->delete();
         }
         self->chain.delete();
     }
@@ -867,18 +876,21 @@ impl ast_type_def {
 
 pub struct ast_generic_type_list {
     base: ast,
-    types: ptr_vec
+    types: primitive_vec<ptr<ast>>
 }
 
 impl ast_generic_type_list {
     pub func new(loc: span*) -> ast_generic_type_list* {
         var res = ast_generic_type_list::__alloc__();
         res->base = ast::instance(ast_kind::ast_generic_type_list, loc);
-        res->types.init();
+        res->types = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
+        for (var i = 0 => u64; i < self->types.size; i += 1 => u64) {
+            self->types.get(i).get()->delete();
+        }
         self->types.delete();
     }
 }
@@ -910,7 +922,7 @@ impl ast_enum_member {
 
 pub struct ast_enum_decl {
     base: ast,
-    members: ptr_vec,
+    members: primitive_vec<ptr<ast>>,
     name: str,
     is_public: bool
 }
@@ -919,15 +931,18 @@ impl ast_enum_decl {
     pub func new(loc: span*, name: str*) -> ast_enum_decl* {
         var res = ast_enum_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_enum_decl, loc);
-        res->members.init();
+        res->members = primitive_vec<ptr<ast>>::instance();
         res->name = name->copy_instance();
         res->is_public = false;
         return res;
     }
 
     pub func delete(self) {
-       self->members.delete();
-       self->name.delete();
+        for (var i = 0 => u64; i < self->members.size; i += 1 => u64) {
+            self->members.get(i).get()->delete();
+        }
+        self->members.delete();
+        self->name.delete();
     }
 }
 
@@ -958,7 +973,7 @@ impl ast_struct_field {
 
 pub struct ast_struct_decl {
     base: ast,
-    fields: ptr_vec,
+    fields: primitive_vec<ptr<ast>>,
     name: str,
     generic_types: ast_generic_type_list*,
     is_public: bool,
@@ -969,7 +984,7 @@ impl ast_struct_decl {
     pub func new(loc: span*, name: str*) -> ast_struct_decl* {
         var res = ast_struct_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_struct_decl, loc);
-        res->fields.init();
+        res->fields = primitive_vec<ptr<ast>>::instance();
         res->name = name->copy_instance();
         res->generic_types = nil => ast_generic_type_list*;
         res->is_public = false;
@@ -978,6 +993,9 @@ impl ast_struct_decl {
     }
 
     pub func delete(self) {
+        for (var i = 0 => u64; i < self->fields.size; i += 1 => u64) {
+            self->fields.get(i).get()->delete();
+        }
         self->fields.delete();
         self->name.delete();
         if (self->generic_types => i8* != nil) {
@@ -1013,18 +1031,21 @@ impl ast_param {
 
 pub struct ast_param_list {
     base: ast,
-    params: ptr_vec
+    params: primitive_vec<ptr<ast>>
 }
 
 impl ast_param_list {
     pub func new(loc: span*) -> ast_param_list* {
         var res = ast_param_list::__alloc__();
         res->base = ast::instance(ast_kind::ast_param_list, loc);
-        res->params.init();
+        res->params = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
+        for (var i = 0 => u64; i < self->params.size; i += 1 => u64) {
+            self->params.get(i).get()->delete();
+        }
         self->params.delete();
    }
 }
@@ -1075,7 +1096,7 @@ pub struct ast_impl {
     base: ast,
     name: str,
     generic_types: ast_generic_type_list*,
-    methods: ptr_vec
+    methods: primitive_vec<ptr<ast>>
 }
 
 impl ast_impl {
@@ -1084,7 +1105,7 @@ impl ast_impl {
         res->base = ast::instance(ast_kind::ast_impl, loc);
         res->name = name->copy_instance();
         res->generic_types = nil => ast_generic_type_list*;
-        res->methods.init();
+        res->methods = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
@@ -1092,6 +1113,9 @@ impl ast_impl {
         self->name.delete();
         if (self->generic_types => i8* != nil) {
             self->generic_types->delete();
+        }
+        for (var i = 0 => u64; i < self->methods.size; i += 1 => u64) {
+            self->methods.get(i).get()->delete();
         }
         self->methods.delete();
     }
@@ -1101,21 +1125,27 @@ impl ast_impl {
 
 pub struct ast_use_stmt {
     base: ast,
-    module_path: ptr_vec,
-    import_symbol: ptr_vec
+    module_path: primitive_vec<ptr<ast>>,
+    import_symbol: primitive_vec<ptr<ast>>
 }
 
 impl ast_use_stmt {
     pub func new(loc: span*) -> ast_use_stmt* {
         var res = ast_use_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_use_stmt, loc);
-        res->module_path.init();
-        res->import_symbol.init();
+        res->module_path = primitive_vec<ptr<ast>>::instance();
+        res->import_symbol = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
+        for (var i = 0 => u64; i < self->module_path.size; i += 1 => u64) {
+            self->module_path.get(i).get()->delete();
+        }
         self->module_path.delete();
+        for (var i = 0 => u64; i < self->import_symbol.size; i += 1 => u64) {
+            self->import_symbol.get(i).get()->delete();
+        }
         self->import_symbol.delete();
     }
 }
@@ -1150,18 +1180,21 @@ impl ast_definition {
 
 pub struct ast_cond_stmt {
     base: ast,
-    stmts: ptr_vec
+    stmts: primitive_vec<ptr<ast>>
 }
 
 impl ast_cond_stmt {
     pub func new(loc: span*) -> ast_cond_stmt* {
         var res = ast_cond_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_cond_stmt, loc);
-        res->stmts.init();
+        res->stmts = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
+        for (var i = 0 => u64; i < self->stmts.size; i += 1 => u64) {
+            self->stmts.get(i).get()->delete();
+        }
         self->stmts.delete();
     }
 }
@@ -1219,7 +1252,7 @@ impl ast_match_case {
 pub struct ast_match_stmt {
     base: ast,
     value: ast*,
-    cases: ptr_vec
+    cases: primitive_vec<ptr<ast>>
 }
 
 impl ast_match_stmt {
@@ -1227,12 +1260,15 @@ impl ast_match_stmt {
         var res = ast_match_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_match_stmt, loc);
         res->value = nil => ast*;
-        res->cases.init();
+        res->cases = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
         self->value->delete();
+        for (var i = 0 => u64; i < self->cases.size; i += 1 => u64) {
+            self->cases.get(i).get()->delete();
+        }
         self->cases.delete();
     }
 }
@@ -1359,18 +1395,21 @@ impl ast_break_stmt {
 
 pub struct ast_code_block {
     base: ast,
-    stmts: ptr_vec
+    stmts: primitive_vec<ptr<ast>>
 }
 
 impl ast_code_block {
     pub func new(loc: span*) -> ast_code_block* {
         var res = ast_code_block::__alloc__();
         res->base = ast::instance(ast_kind::ast_code_block, loc);
-        res->stmts.init();
+        res->stmts = primitive_vec<ptr<ast>>::instance();
         return res;
     }
 
     pub func delete(self) {
+        for (var i = 0 => u64; i < self->stmts.size; i += 1 => u64) {
+            self->stmts.get(i).get()->delete();
+        }
         self->stmts.delete();
     }
 }
