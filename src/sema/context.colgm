@@ -1,22 +1,80 @@
 use std::map::{ hashmap };
 use std::set::{ hashset };
 use std::str::{ str };
+use err::panic::{ panic };
 
-pub struct colgm_primitive {}
+pub struct colgm_func {
+    name: str
+}
 
-impl colgm_primitive {
-    pub func delete(self) {}
-    pub func copy(self) -> colgm_primitive* {
-        return nil => colgm_primitive*;
+impl colgm_func {
+    pub func delete(self) {
+        self->name.delete();
+    }
+    pub func copy(self) -> colgm_func* {
+        return nil => colgm_func*;
     }
 }
 
-pub struct colgm_module {}
+pub struct colgm_primitive {
+    name: str,
+    static_method: hashmap<str, colgm_func>,
+    method: hashmap<str, colgm_func>
+}
+
+impl colgm_primitive {
+    pub func instance() -> colgm_primitive {
+        return colgm_primitive {
+            name: str::instance(),
+            static_method: hashmap<str, colgm_func>::instance(),
+            method: hashmap<str, colgm_func>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->static_method.delete();
+        self->method.delete();
+    }
+
+    pub func copy(self) -> colgm_primitive* {
+        var res = colgm_primitive::__alloc__();
+        res->name = self->name.copy_instance();
+        res->static_method = hashmap<str, colgm_func>::instance();
+        for (var i = res->static_method.iter(); !i.is_end(); i = i.next()) {
+            var key = i.key();
+            var val = i.value();
+            res->static_method.insert(key, val);
+        }
+        res->method = hashmap<str, colgm_func>::instance();
+        for (var i = res->method.iter(); !i.is_end(); i = i.next()) {
+            var key = i.key();
+            var val = i.value();
+            res->method.insert(key, val);
+        }
+        return res;
+    }
+}
+
+pub struct colgm_module {
+    file_name: str
+}
 
 impl colgm_module {
-    pub func delete(self) {}
+    pub func instance() -> colgm_module {
+        return colgm_module {
+            file_name: str::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->file_name.delete();
+    }
+
     pub func copy(self) -> colgm_module* {
-        return nil => colgm_module*;
+        var res = colgm_module::__alloc__();
+        res->file_name = self->file_name.copy_instance();
+        return res;
     }
 }
 
@@ -26,8 +84,64 @@ pub struct global_symbol_table {
     domain: hashmap<str, colgm_module>
 }
 
+impl global_symbol_table {
+    pub func new() -> global_symbol_table* {
+        var res = global_symbol_table::__alloc__();
+        res->constant_string = hashset<str>::instance();
+        res->primitives = hashmap<str, colgm_primitive>::instance();
+        res->domain = hashmap<str, colgm_module>::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->constant_string.delete();
+        self->primitives.delete();
+        self->domain.delete();
+    }
+
+    pub func create_domain_if_not_exist(self, name: str*) {
+        if (self->domain.has(name)) {
+            return;
+        }
+
+        var res = colgm_module::instance();
+        self->domain.insert(name, res.__ptr__());
+        res.delete();
+    }
+}
+
 pub struct sema_context {
     global: global_symbol_table*,
     this_file: str,
     generics: hashset<str>
+}
+
+impl sema_context {
+    pub func instance(g: global_symbol_table*) -> sema_context {
+        return sema_context {
+            global: g,
+            this_file: str::instance(),
+            generics: hashset<str>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->this_file.delete();
+        self->generics.delete();
+    }
+}
+
+impl sema_context {
+    pub func create_domain(self, name: str*) {
+        self->global->create_domain_if_not_exist(name);
+    }
+
+    pub func get_domain(self, name: str*) -> colgm_module* {
+        if (self->global->domain.has(name)) {
+            return self->global->domain.get(name);
+        }
+
+        panic("Domain not found.");
+        return nil => colgm_module*;
+    }
 }

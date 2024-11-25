@@ -4,22 +4,32 @@ use std::str::{ str };
 use package::{ package };
 use ast::ast::*;
 use std::fs::{ fs };
+use sema::context::{ colgm_primitive, sema_context };
 
 pub struct regist_pass {
+    this_file: str,
     err: report*,
     pkg: package*,
-    root: root*
+    root: root*,
+    ctx: sema_context*
 }
 
 impl regist_pass {
-	pub func new(err: report*, pkg: package*) -> regist_pass* {
+	pub func new(err: report*,
+                 pkg: package*,
+                 ctx: sema_context*) -> regist_pass* {
 		var res = regist_pass::__alloc__();
+        res->this_file = str::instance();
         res->err = err;
         res->pkg = pkg;
+        res->root = nil => root*;
+        res->ctx = ctx;
         return res;
 	}
 
-    pub func delete(self) {}
+    pub func delete(self) {
+        self->this_file.delete();
+    }
 }
 
 impl regist_pass {
@@ -85,7 +95,84 @@ impl regist_pass {
 }
 
 impl regist_pass {
-    func regist_primitives(self) {}
+    func regist_primitives(self) {
+        var gt = self->ctx->global;
+        if (gt->primitives.size != 0 => u64) {
+            return;
+        }
+
+        var prim_name = str::instance();
+        var empty_prim = colgm_primitive::instance();
+
+        prim_name.append_i8_vec("i64");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("i32");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("i16");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("i8");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("u64");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("u32");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("u16");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("u8");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("f64");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("f32");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.append_i8_vec("bool");
+        empty_prim.name.append_i8_vec(prim_name.c_str);
+        gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+        prim_name.clear();
+        empty_prim.name.clear();
+
+        prim_name.delete();
+        empty_prim.delete();
+    }
 }
 
 impl regist_pass {
@@ -101,6 +188,37 @@ impl regist_pass {
 impl regist_pass {
     pub func run(self, root: root*) {
         self->root = root;
+
+        self->this_file.clear();
+        self->this_file.append_i8_vec(root->base.location->file.c_str);
+        self->ctx->create_domain(self->this_file.__ptr__());
+
+        self->regist_primitives();
+        for (var i = self->ctx->global->primitives.iter();
+             !i.is_end();
+             i = i.next()) {
+            io::stderr().out("[").green().out("sema").reset().out("]");
+            io::stderr().out(" insert primitive ").out(i.key()->c_str).out("\n");
+        }
         self->scan_imports();
+        if (self->err->error_count > 0) {
+            return;
+        }
+
+        self->scan_enums();
+        self->scan_structs();
+        if (self->err->error_count > 0) {
+            return;
+        }
+
+        self->scan_global_funcs();
+        if (self->err->error_count > 0) {
+            return;
+        }
+
+        self->scan_impls();
+        if (self->err->error_count > 0) {
+            return;
+        }
     }
 }

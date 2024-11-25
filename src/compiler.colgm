@@ -3,6 +3,7 @@ use lex::lexer::{ lexer };
 use parse::parser::{ parser };
 use package::{ package };
 use sema::sema::{ sema };
+use sema::context::{ global_symbol_table, sema_context };
 use err::report::{ report };
 
 pub struct compiler {
@@ -10,6 +11,7 @@ pub struct compiler {
     pkg: package*,
     lex: lexer*,
     par: parser*,
+    gt: global_symbol_table*,
     sema: sema*
 }
 
@@ -19,12 +21,14 @@ impl compiler {
         var pkg = package::new(rep);
         var lex = lexer::new(rep);
         var par = parser::new(rep, lex);
-        var semantic = sema::new(rep, pkg);
+        var gt = global_symbol_table::new();
+        var semantic = sema::new(rep, pkg, gt);
         return compiler {
             rep: rep,
             pkg: pkg,
             lex: lex,
             par: par,
+            gt: gt,
             sema: semantic
         };
     }
@@ -45,6 +49,10 @@ impl compiler {
         if (self->par => i8* != nil) {
             self->par->delete();
             free(self->par => i8*);
+        }
+        if (self->gt => i8* != nil) {
+            self->gt->delete();
+            free(self->gt => i8*);
         }
         if (self->sema => i8* != nil) {
             self->sema->delete();

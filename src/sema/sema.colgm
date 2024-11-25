@@ -10,20 +10,25 @@ use sema::context::*;
 pub struct sema {
     err: report*,
     rp: regist_pass*,
-    root: root*
+    root: root*,
+    ctx: sema_context
 }
 
 impl sema {
-    pub func new(err: report*, pkg: package*) -> sema* {
+    pub func new(err: report*,
+                 pkg: package*,
+                 gt: global_symbol_table*) -> sema* {
         var res = sema::__alloc__();
         res->err = err;
-        res->rp = regist_pass::new(err, pkg);
+        res->ctx = sema_context::instance(gt);
+        res->rp = regist_pass::new(err, pkg, res->ctx.__ptr__());
         return res;
     }
 
     pub func delete(self) {
         self->rp->delete();
         free(self->rp => i8*);
+        self->ctx.delete();
     }
 }
 
