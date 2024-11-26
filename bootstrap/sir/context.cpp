@@ -129,24 +129,6 @@ void sir_context::dump_struct_alloc_method(std::ostream& out) const {
     }
 }
 
-void sir_context::dump_struct_ptr_method(std::ostream& out) const {
-    for(const auto& st: struct_decls) {
-        const auto st_type = type {
-            .name = st->get_name(),
-            .loc_file = st->get_file()
-        };
-        const auto st_name = mangle(st_type.full_path_name());
-        const auto st_real_name = "%struct." + st_name;
-        const auto alloc_func_name = quoted_name(st_name + ".__ptr__");
-        out << "define " << quoted_name(st_real_name) << "* ";
-        out << "@" << alloc_func_name << "(" << quoted_name(st_real_name);
-        out << "* %self) alwaysinline {\n";
-        out << "label.entry:\n";
-        out << "  ret " << quoted_name(st_real_name) << "* %self\n";
-        out << "}\n";
-    }
-}
-
 void sir_context::dump_code(std::ostream& out) {
     // generate target triple
     dump_target_tripple(out);
@@ -165,7 +147,6 @@ void sir_context::dump_code(std::ostream& out) {
     // generate builtin methods for structs
     dump_struct_size_method(out);
     dump_struct_alloc_method(out);
-    dump_struct_ptr_method(out);
     if (struct_decls.size()) {
         out << "\n";
     }

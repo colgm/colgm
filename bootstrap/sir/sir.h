@@ -147,13 +147,15 @@ private:
     std::string target;
     std::string source;
     std::string type;
+    std::string comment; // for tail comment
 
 public:
     sir_temp_ptr(const std::string& tgt,
                  const std::string& src,
-                 const std::string type):
+                 const std::string& type,
+                 const std::string& cmt = ""):
         sir(sir_kind::sir_temp_ptr), target(tgt),
-        source(src), type(type) {}
+        source(src), type(type), comment(cmt) {}
     ~sir_temp_ptr() override = default;
     void dump(std::ostream&) const override;
     const auto& get_type() const { return type; }
@@ -281,6 +283,9 @@ public:
     ~sir_call_func() override = default;
     const auto& get_name() const { return name; }
     const auto& get_destination() const { return destination; }
+    const auto& get_return_type() const { return return_type; }
+    const auto& get_args_type() const { return args_type; }
+    const auto& get_args() const { return args; }
     void add_arg_type(const std::string& t) { args_type.push_back(t); }
     void add_arg(const value_t& a) { args.push_back(a); }
     void dump(std::ostream&) const override;

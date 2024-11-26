@@ -79,7 +79,11 @@ void sir_temp_ptr::dump(std::ostream& out) const {
     out << "%" << target << " = ";
     out << "getelementptr " << quoted_name(type) << ", ";
     out << quoted_name(type) << "* %" << source << ", i32 0";
-    out << " ; %" << source << " -> %" << target << "\n"; 
+    if (comment.empty()) {
+        out << " ; %" << source << " -> %" << target << "\n";
+    } else {
+        out << " ; " << comment << "\n";
+    }
 }
 
 void sir_ret::dump(std::ostream& out) const {
@@ -87,10 +91,9 @@ void sir_ret::dump(std::ostream& out) const {
 }
 
 void sir_string::dump(std::ostream& out) const {
-    out << target << " = getelementptr ";
-    out << "[" << length << " x i8], ";
+    out << target << " = bitcast ";
     out << "[" << length << " x i8]* @const.str." << index;
-    out << ", i64 0, i64 0\n";
+    out << " to i8*\n";
 }
 
 void sir_zeroinitializer::dump(std::ostream& out) const {
