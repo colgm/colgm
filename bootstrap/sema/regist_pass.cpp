@@ -712,7 +712,7 @@ void regist_pass::regist_imported_types(ast::root* node) {
 
 void regist_pass::regist_enums(ast::root* node) {
     for(auto i : node->get_decls()) {
-        if (i->get_ast_type()!=ast_type::ast_enum_decl) {
+        if (!i->is(ast_type::ast_enum_decl)) {
             continue;
         }
         auto enum_decl_node = reinterpret_cast<ast::enum_decl*>(i);
@@ -783,7 +783,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
 void regist_pass::regist_structs(ast::root* node) {
     // regist symbol into symbol table first
     for(auto i : node->get_decls()) {
-        if (i->get_ast_type()!=ast_type::ast_struct_decl) {
+        if (!i->is(ast_type::ast_struct_decl)) {
             continue;
         }
         auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);
@@ -791,7 +791,7 @@ void regist_pass::regist_structs(ast::root* node) {
     }
     // load field into struct
     for(auto i : node->get_decls()) {
-        if (i->get_ast_type()!=ast_type::ast_struct_decl) {
+        if (!i->is(ast_type::ast_struct_decl)) {
             continue;
         }
         auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);

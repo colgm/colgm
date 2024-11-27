@@ -30,7 +30,7 @@ func main() -> i32 {
     var d = 'd';            // i8
     var e = [i8; 128];      // const i8*
     var f = true;           // bool
-    return 0 => i32;
+    return 0;
 }
 ```
 
@@ -169,7 +169,9 @@ A bit like rust, using `=>` instead of `as`:
 
 ```rust
 func main() -> i32 {
-    return 0 => i32;
+    var res1 = 0 => i32;
+    var res2: i32 = 0; // same as above
+    return res1 + res2;
 }
 ```
 

@@ -20,9 +20,9 @@ void semantic::report_unreachable_statements(code_block* node) {
         if (flag_block_ended) {
             unreachable_statements.push_back(i);
         }
-        if (i->get_ast_type()==ast_type::ast_ret_stmt ||
-            i->get_ast_type()==ast_type::ast_continue_stmt ||
-            i->get_ast_type()==ast_type::ast_break_stmt) {
+        if (i->is(ast_type::ast_ret_stmt) ||
+            i->is(ast_type::ast_continue_stmt) ||
+            i->is(ast_type::ast_break_stmt)) {
             flag_block_ended = true;
         }
     }
@@ -42,7 +42,7 @@ void semantic::report_top_level_block_has_no_return(code_block* node,
                                                     const colgm_func& func) {
     bool flag_has_return = false;
     for(auto i : node->get_stmts()) {
-        if (i->get_ast_type()==ast_type::ast_ret_stmt) {
+        if (i->is(ast_type::ast_ret_stmt)) {
             flag_has_return = true;
             break;
         }
@@ -61,6 +61,26 @@ void semantic::report_top_level_block_has_no_return(code_block* node,
     rp.report(node, "expect at least one return statement.");
 }
 
+bool semantic::check_number_literal_can_be_converted(node* n,
+                                                     const type& expect) {
+    if (!n->is(ast_type::ast_number_literal)) {
+        return false;
+    }
+    if (expect.is_pointer()) {
+        return false;
+    }
+    const auto& n_type = n->get_resolve();
+    if (n_type.is_pointer()) {
+        return false;
+    }
+    if (expect.is_integer() && n_type.is_integer()) {
+        return true;
+    }
+    if (expect.is_float() && n_type.is_float()) {
+        return true;
+    }
+    return false;
+}
 type semantic::struct_static_method_infer(const type& prev,
                                           const std::string& fn_name) {
     auto infer = prev;
@@ -113,11 +133,16 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
     if (left.is_error() || right.is_error()) {
         return type::bool_type();
     }
-    if (left!=right) {
-        rp.report(node,
-            "get \"" + left.to_string() +
-            "\" and \"" + right.to_string() + "\"."
-        );
+    if (left != right) {
+        if (check_number_literal_can_be_converted(node->get_left(), right) ||
+            check_number_literal_can_be_converted(node->get_right(), left)) {
+            node->get_right()->set_resolve_type(right);
+        } else {
+            rp.report(node,
+                "get \"" + left.to_string() +
+                "\" and \"" + right.to_string() + "\"."
+            );
+        }
         node->set_resolve_type(type::bool_type());
         return type::bool_type();
     }
@@ -140,7 +165,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
         node->set_resolve_type(type::bool_type());
         return type::bool_type();
     }
-    if (left.is_pointer() && left.pointer_depth!=right.pointer_depth) {
+    if (left.is_pointer() && left.pointer_depth != right.pointer_depth) {
         rp.report(node,
             "cannot compare \"" + left.to_string() +
             "\" and \"" + right.to_string() + "\"."
@@ -157,11 +182,16 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
     const auto right = resolve_expression(node->get_right());
 
     // left hand side value should be the same as right hand side value
-    if (left!=right) {
-        rp.report(node,
-            "get \"" + left.to_string() +
-            "\" and \"" + right.to_string() + "\"."
-        );
+    if (left != right) {
+        if (check_number_literal_can_be_converted(node->get_left(), right) ||
+            check_number_literal_can_be_converted(node->get_right(), left)) {
+            node->get_right()->set_resolve_type(right);
+        } else {
+            rp.report(node,
+                "get \"" + left.to_string() +
+                "\" and \"" + right.to_string() + "\"."
+            );
+        }
     }
 
     // cannot calculate enum
@@ -188,11 +218,16 @@ type semantic::resolve_bitwise_operator(binary_operator* node) {
         );
         return right;
     }
-    if (left!=right) {
-        rp.report(node,
-            "get \"" + left.to_string() +
-            "\" and \"" + right.to_string() + "\"."
-        );
+    if (left != right) {
+        if (check_number_literal_can_be_converted(node->get_left(), right) ||
+            check_number_literal_can_be_converted(node->get_right(), left)) {
+            node->get_right()->set_resolve_type(right);
+        } else {
+            rp.report(node,
+                "get \"" + left.to_string() +
+                "\" and \"" + right.to_string() + "\"."
+            );
+        }
     }
     return left;
 }
@@ -512,13 +547,17 @@ void semantic::check_static_call_args(const colgm_func& func,
     size_t index = 0;
     for(auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
-        const auto param = func.parameters[index].symbol_type;
+        const auto& param = func.parameters[index].symbol_type;
         // do not report if infer is error, because it must be reported before
-        if (infer!=param && !infer.is_error()) {
-            rp.report(i,
-                "expect \"" + param.to_string() +
-                "\" but get \"" + infer.to_string() + "\"."
-            );
+        if (infer != param && !infer.is_error()) {
+            if (check_number_literal_can_be_converted(i, param)) {
+                i->set_resolve_type(param);
+            } else {
+                rp.report(i,
+                    "expect \"" + param.to_string() +
+                    "\" but get \"" + infer.to_string() + "\"."
+                );
+            }
         }
         ++index;
     }
@@ -548,13 +587,17 @@ void semantic::check_method_call_args(const colgm_func& func,
     size_t index = 1;
     for(auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
-        const auto param = func.parameters[index].symbol_type;
+        const auto& param = func.parameters[index].symbol_type;
         // do not report if infer is error, because it must be reported before
-        if (infer!=param && !infer.is_error()) {
-            rp.report(i,
-                "expect \"" + param.to_string() +
-                "\" but get \"" + infer.to_string() + "\"."
-            );
+        if (infer != param && !infer.is_error()) {
+            if (check_number_literal_can_be_converted(i, param)) {
+                i->set_resolve_type(param);
+            } else {
+                rp.report(i,
+                    "expect \"" + param.to_string() +
+                    "\" but get \"" + infer.to_string() + "\"."
+                );
+            }
         }
         ++index;
     }
@@ -728,13 +771,18 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
 
         const auto infer = resolve_expression(i->get_value());
         i->get_value()->set_resolve_type(infer);
+        const auto& expect = st.field.at(field).symbol_type;
 
-        if (infer != st.field.at(field).symbol_type) {
-            rp.report(i,
-                "expect \"" + st.field.at(field).symbol_type.to_string() +
-                "\" but get \"" + infer.to_string() + "\"."
-            );
-            continue;
+        if (infer != expect) {
+            if (check_number_literal_can_be_converted(i->get_value(), expect)) {
+                i->get_value()->set_resolve_type(expect);
+            } else {
+                rp.report(i,
+                    "expect \"" + expect.to_string() +
+                    "\" but get \"" + infer.to_string() + "\"."
+                );
+                continue;
+            }
         }
     }
 
@@ -939,14 +987,14 @@ type semantic::resolve_call(call* node) {
 }
 
 bool semantic::check_valid_left_value(expr* node) {
-    if (node->get_ast_type()!=ast_type::ast_call) {
+    if (!node->is(ast_type::ast_call)) {
         return false;
     }
     const auto mem_get_node = reinterpret_cast<call*>(node);
     for(auto i : mem_get_node->get_chain()) {
-        if (i->get_ast_type()==ast_type::ast_call_path ||
-            i->get_ast_type()==ast_type::ast_call_func_args ||
-            i->get_ast_type()==ast_type::ast_initializer) {
+        if (i->is(ast_type::ast_call_path) ||
+            i->is(ast_type::ast_call_func_args) ||
+            i->is(ast_type::ast_initializer)) {
             return false;
         }
     }
@@ -999,11 +1047,15 @@ type semantic::resolve_assignment(assignment* node) {
                 "\" and \"" + right.to_string() + "\"."
             );
         }
-    } else if (left!=right) {
-        rp.report(node,
-            "get \"" + left.to_string() +
-            "\" and \"" + right.to_string() + "\"."
-        );
+    } else if (left != right) {
+        if (check_number_literal_can_be_converted(node->get_right(), left)) {
+            node->get_right()->set_resolve_type(left);
+        } else {
+            rp.report(node,
+                "get \"" + right.to_string() +
+                "\" but expect \"" + left.to_string() + "\"."
+            );
+        }
     }
 
     // only = is allowed to be applied on enums
@@ -1081,11 +1133,16 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
                 "\", but get \"" + real_type.to_string() + "\"."
             );
         }
-    } else if (expected_type!=real_type) {
-        rp.report(node->get_type(),
-            "expected \"" + expected_type.to_string() +
-            "\", but get \"" + real_type.to_string() + "\"."
-        );
+    } else if (expected_type != real_type) {
+        if (check_number_literal_can_be_converted(
+            node->get_init_value(), expected_type)) {
+            node->get_init_value()->set_resolve_type(expected_type);
+        } else {
+            rp.report(node->get_type(),
+                "expected \"" + expected_type.to_string() +
+                "\", but get \"" + real_type.to_string() + "\"."
+            );
+        }
     }
 
     // if immutable, make sure the type is correct
@@ -1129,7 +1186,7 @@ void semantic::resolve_cond_stmt(cond_stmt* node, const colgm_func& func_self) {
 }
 
 bool semantic::check_is_enum_literal(expr* node) {
-    if (node->get_ast_type()!=ast_type::ast_call) {
+    if (!node->is(ast_type::ast_call)) {
         return false;
     }
     auto call_node = reinterpret_cast<call*>(node);
@@ -1145,7 +1202,7 @@ bool semantic::check_is_enum_literal(expr* node) {
         return false;
     }
 
-    if (call_node->get_chain()[0]->get_ast_type()!=ast_type::ast_call_path) {
+    if (!call_node->get_chain()[0]->is(ast_type::ast_call_path)) {
         return false;
     }
     return true;
@@ -1254,10 +1311,16 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
             );
         }
     } else if (infer!=func_self.return_type && infer!=type::error_type()) {
-        rp.report(node,
-            "expected return type \"" + func_self.return_type.to_string() +
-            "\" but get \"" + infer.to_string() + "\"."
-        );
+        if (check_number_literal_can_be_converted(
+            node->get_value(), func_self.return_type)) {
+            node->get_value()->set_resolve_type(func_self.return_type);
+        } else {
+            rp.report(node,
+                "expected return type \"" +
+                func_self.return_type.to_string() +
+                "\" but get \"" + infer.to_string() + "\"."
+            );
+        }
     }
 }
 
@@ -1301,9 +1364,9 @@ void semantic::resolve_code_block(code_block* node, const colgm_func& func_self)
     ctx.push_level();
     for(auto i : node->get_stmts()) {
         resolve_statement(i, func_self);
-        if (i->get_ast_type()==ast_type::ast_ret_stmt ||
-            i->get_ast_type()==ast_type::ast_continue_stmt ||
-            i->get_ast_type()==ast_type::ast_break_stmt) {
+        if (i->is(ast_type::ast_ret_stmt) ||
+            i->is(ast_type::ast_continue_stmt) ||
+            i->is(ast_type::ast_break_stmt)) {
             report_unreachable_statements(node);
             break;
         }
@@ -1336,9 +1399,9 @@ void semantic::resolve_global_func(func_decl* node) {
     }
     for(auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, func_self);
-        if (i->get_ast_type()==ast_type::ast_ret_stmt ||
-            i->get_ast_type()==ast_type::ast_continue_stmt ||
-            i->get_ast_type()==ast_type::ast_break_stmt) {
+        if (i->is(ast_type::ast_ret_stmt) ||
+            i->is(ast_type::ast_continue_stmt) ||
+            i->is(ast_type::ast_break_stmt)) {
             report_unreachable_statements(node->get_code_block());
             break;
         }
@@ -1361,9 +1424,9 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
     }
     for(auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, method_self);
-        if (i->get_ast_type()==ast_type::ast_ret_stmt ||
-            i->get_ast_type()==ast_type::ast_continue_stmt ||
-            i->get_ast_type()==ast_type::ast_break_stmt) {
+        if (i->is(ast_type::ast_ret_stmt) ||
+            i->is(ast_type::ast_continue_stmt) ||
+            i->is(ast_type::ast_break_stmt)) {
             report_unreachable_statements(node->get_code_block());
             break;
         }
@@ -1401,10 +1464,10 @@ void semantic::resolve_impl(impl_struct* node) {
 
 void semantic::resolve_function_block(root* ast_root) {
     for(auto i : ast_root->get_decls()) {
-        if (i->get_ast_type()==ast_type::ast_impl) {
+        if (i->is(ast_type::ast_impl)) {
             resolve_impl(reinterpret_cast<impl_struct*>(i));
         }
-        if (i->get_ast_type()==ast_type::ast_func_decl) {
+        if (i->is(ast_type::ast_func_decl)) {
             resolve_global_func(reinterpret_cast<func_decl*>(i));
         }
     }

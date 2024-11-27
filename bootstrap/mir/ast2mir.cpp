@@ -200,9 +200,9 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
     block = func->block = new mir_block(node->get_code_block()->get_location());
     for(auto i : node->get_code_block()->get_stmts()) {
         i->accept(this);
-        if (i->get_ast_type()==ast::ast_type::ast_ret_stmt ||
-            i->get_ast_type()==ast::ast_type::ast_break_stmt ||
-            i->get_ast_type()==ast::ast_type::ast_continue_stmt) {
+        if (i->is(ast::ast_type::ast_ret_stmt) ||
+            i->is(ast::ast_type::ast_break_stmt) ||
+            i->is(ast::ast_type::ast_continue_stmt)) {
             break;
         }
     }
@@ -612,9 +612,9 @@ bool ast2mir::visit_code_block(ast::code_block* node) {
     block = new_block;
     for(auto i : node->get_stmts()) {
         i->accept(this);
-        if (i->get_ast_type()==ast::ast_type::ast_ret_stmt ||
-            i->get_ast_type()==ast::ast_type::ast_break_stmt ||
-            i->get_ast_type()==ast::ast_type::ast_continue_stmt) {
+        if (i->is(ast::ast_type::ast_ret_stmt) ||
+            i->is(ast::ast_type::ast_break_stmt) ||
+            i->is(ast::ast_type::ast_continue_stmt)) {
             break;
         }
     }

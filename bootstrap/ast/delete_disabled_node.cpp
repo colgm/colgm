@@ -40,7 +40,7 @@ void delete_disabled_node::scan(root* node) {
     u64 remove_count = 0;
     std::vector<decl*> new_root_decls;
     for(auto i : node->get_decls()) {
-        if (i->get_ast_type() != ast_type::ast_cond_compile) {
+        if (!i->is(ast_type::ast_cond_compile)) {
             new_root_decls.push_back(i);
             continue;
         }

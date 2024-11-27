@@ -475,7 +475,7 @@ expr* parse::calculation_gen() {
     if (!result) {
         return result;
     }
-    if (result->get_ast_type()!=ast_type::ast_call) {
+    if (!result->is(ast_type::ast_call)) {
         return result;
     }
     // if is call node, check assignment syntax

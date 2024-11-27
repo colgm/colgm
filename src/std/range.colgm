@@ -1,0 +1,39 @@
+pub struct range_iter {
+    _begin: i64,
+    _end: i64,
+    _step: i64,
+    _current: i64
+}
+
+impl range_iter {
+    pub func instance(begin: i64, end: i64, step: i64) -> range_iter {
+        return range_iter {
+            _begin: begin,
+            _end: end,
+            _step: step,
+            _current: begin
+        };
+    }
+
+    pub func is_end(self) -> bool {
+        return self->_current >= self->_end;
+    }
+
+    pub func next(self) -> i64 {
+        var result = range_iter::instance(self->_begin, self->_end, self->_step);
+        result._current += self->_begin + self->_step;
+        return result;
+    }
+
+    pub func get(self) -> i64 {
+        return self->_current;
+    }
+}
+
+pub func range(begin: i64, end: i64) -> range_iter {
+    return range_iter::instance(begin, end, 1);
+}
+
+pub func range_step(begin: i64, end: i64, step: i64) -> range_iter {
+    return range_iter::instance(begin, end, step);
+}

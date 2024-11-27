@@ -36,6 +36,9 @@ private:
     void report_top_level_block_has_no_return(code_block*, const colgm_func&);
 
 private:
+    bool check_number_literal_can_be_converted(node*, const type&);
+
+private:
     type struct_static_method_infer(const type&, const std::string&);
     type struct_method_infer(const type&, const std::string&);
 

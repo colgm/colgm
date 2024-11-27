@@ -31,7 +31,7 @@ enum class ast_type {
     ast_call_path,
     ast_call,
     ast_assignment,
-    ast_cond_compile,
+    ast_cond_compile, // conditional compilation node
     ast_type_def,
     ast_generic_type_list,
     ast_enum_decl,
@@ -124,6 +124,7 @@ public:
     };
 
 public:
+    bool is(ast_type at) const { return node_type == at; }
     const auto& get_location() const { return location; }
     const auto& get_redirect_location() const { return redirect_location; }
     const auto& get_file() const { return location.file; }
