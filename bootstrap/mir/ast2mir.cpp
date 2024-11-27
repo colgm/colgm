@@ -179,7 +179,6 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
         };
         name = mangle(tmp.full_path_name());
     }
-    name = "@" + name;
 
     auto func = new mir_func();
     func->name = name;

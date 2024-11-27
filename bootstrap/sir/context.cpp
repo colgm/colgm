@@ -32,7 +32,7 @@ void sir_struct::dump(std::ostream& out) const {
 
 void sir_func::dump(std::ostream& out) const {
     out << (block? "define ":"declare ");
-    out << quoted_name(return_type) << " " << get_mangled_name() << "(";
+    out << quoted_name(return_type) << " @" << get_mangled_name() << "(";
     for(const auto& i : params) {
         out << quoted_name(i.second) << " %" << i.first;
         if (i.first != params.back().first) {
