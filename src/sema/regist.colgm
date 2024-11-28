@@ -35,10 +35,9 @@ impl regist_pass {
 impl regist_pass {
     func scan_single_import(self, node: ast_use_stmt*) {
         var expect_name = str::instance();
-        var expect_path = str::instance();
+        var expect_path = str::from(self->pkg->library_path.c_str);
 
         // expect path init with given library path
-        expect_path.append_i8_vec(self->pkg->library_path.c_str);
         while (expect_path.ends_with('/')) {
             expect_path.pop_back();
         }
@@ -114,19 +113,15 @@ impl regist_pass {
         prim_table[9] = "f32";
         prim_table[10] = "bool";
 
-        var prim_name = str::instance();
-        var empty_prim = colgm_primitive::instance();
-
         for (var i = 0; i < 11; i += 1) {
-            prim_name.append_i8_vec(prim_table[i]);
-            empty_prim.name.append_i8_vec(prim_name.c_str);
-            gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
-            prim_name.clear();
-            empty_prim.name.clear();
-        }
+            var prim_name = str::from(prim_table[i]);
+            var empty_prim = colgm_primitive::instance();
+            empty_prim.name.append_i8_vec(prim_table[i]);
 
-        prim_name.delete();
-        empty_prim.delete();
+            gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+            prim_name.delete();
+            empty_prim.delete();
+        }
     }
 }
 
