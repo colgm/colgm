@@ -22,11 +22,11 @@ impl str {
     }
 
     pub func init(self) {
-        self->c_str = malloc(16 => u64);
+        self->c_str = malloc(16);
         self->c_str[0] = '\0';
 
-        self->size = 0 => u64;
-        self->capacity = 16 => u64;
+        self->size = 0;
+        self->capacity = 16;
     }
 
     pub func copy(self) -> str* {
@@ -52,19 +52,19 @@ impl str {
         free(self->c_str);
         
         self->c_str = nil;
-        self->size = 0 => u64;
-        self->capacity = 0 => u64;
+        self->size = 0;
+        self->capacity = 0;
     }
 }
 
 impl str {
     pub func empty(self) -> bool {
-        return self->size == (0 => u64);
+        return self->size == 0;
     }
 
     pub func clear(self) {
         self->c_str[0] = '\0';
-        self->size = 0 => u64;
+        self->size = 0;
     }
 }
 
@@ -75,9 +75,9 @@ impl str {
         // re-allocate memory
         if (len >= self->size) {
             free(self->c_str);
-            self->c_str = malloc(len + (1 => u64));
-            self->size = len + 1 => u64;
-            self->capacity = len + 1 => u64;
+            self->c_str = malloc(len + 1);
+            self->size = len + 1;
+            self->capacity = len + 1;
         }
 
         memcpy(self->c_str, src, len);
@@ -86,7 +86,7 @@ impl str {
     }
 
     func expand_capacity(self) {
-        self->capacity *= 2 => u64;
+        self->capacity *= 2;
         self->c_str = realloc(self->c_str, self->capacity);
     }
 
@@ -119,13 +119,13 @@ impl str {
         // "malloc: *** error for object 0x.....: pointer being freed was not allocated"
         //
         // that's wired T^T
-        if (self->size + (1 => u64) == self->capacity) {
+        if (self->size + 1 == self->capacity) {
             self->expand_capacity();
         }
 
         self->c_str[self->size] = ch;
-        self->c_str[self->size + (1 => u64)] = '\0';
-        self->size += 1 => u64;
+        self->c_str[self->size + 1] = '\0';
+        self->size += 1;
         return self;
     }
 
@@ -146,21 +146,21 @@ impl str {
     }
 
     pub func pop_back(self) {
-        if (self->size > 0 => u64) {
-            self->size -= 1 => u64;
+        if (self->size > 0) {
+            self->size -= 1;
             self->c_str[self->size] = '\0';
         }
     }
 
     pub func back(self) -> i8 {
-        if (self->size == 0 => u64) {
+        if (self->size == 0) {
             panic("std::str::back: empty string");
         }
-        return self->c_str[self->size - (1 => u64)];
+        return self->c_str[self->size - 1];
     }
 
     pub func ends_with(self, ch: i8) -> bool {
-        if (self->size == 0 => u64) {
+        if (self->size == 0) {
             return false;
         }
         return self->back() == ch;
@@ -190,9 +190,9 @@ impl str {
 
 impl str {
     pub func hash(self) -> u64 {
-        var hash = 5381 => u64;
-        for (var i = 0 => u64; i < self->size; i += 1 => u64) {
-            hash *= 31 => u64;
+        var hash: u64 = 5381;
+        for (var i: u64 = 0; i < self->size; i += 1) {
+            hash *= 31;
             hash += self->c_str[i] => u64;
         }
         return hash;

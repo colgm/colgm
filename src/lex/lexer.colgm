@@ -127,7 +127,7 @@ impl lexer {
         var res = lexer::__alloc__();
         res->err = e;
         res->toks = vec<token>::instance();
-        res->pos = 0 => u64;
+        res->pos = 0;
         res->filename.init();
         res->line = 0;
         res->column = 0;
@@ -236,8 +236,8 @@ impl lexer {
         if (src->get(pos)!='/') {
             return false;
         }
-        if (pos + 1 => u64 < src->size &&
-            src->get(pos + 1 => u64)=='/') {
+        if (pos + 1 < src->size &&
+            src->get(pos + 1)=='/') {
             return true;
         }
         return false;
@@ -285,8 +285,7 @@ impl lexer {
         if (src->get(pos)!='-') {
             return false;
         }
-        if (pos + 1 => u64 < src->size &&
-            src->get(pos + 1 => u64)=='>') {
+        if (pos + 1 < src->size && src->get(pos + 1)=='>') {
             return true;
         }
         return false;
@@ -296,8 +295,7 @@ impl lexer {
         if (src->get(pos)!='=') {
             return false;
         }
-        if (pos + 1 => u64 < src->size &&
-            src->get(pos + 1 => u64)=='>') {
+        if (pos + 1 < src->size && src->get(pos + 1)=='>') {
             return true;
         }
         return false;
@@ -374,7 +372,7 @@ impl lexer {
         var ch = src->get(self->pos);
         tmp.append_char(ch);
 
-        self->pos += 1 => u64;
+        self->pos += 1;
         self->column += 1;
 
         loc.end_line = self->line;
@@ -414,10 +412,10 @@ impl lexer {
 
         var tmp = str::instance();
         tmp.append_char(src->get(self->pos));
-        self->pos += 1 => u64;
+        self->pos += 1;
         if (self->pos < src->size && src->get(self->pos) == '=') {
             tmp.append_char(src->get(self->pos));
-            self->pos += 1 => u64;
+            self->pos += 1;
         }
 
         self->column += tmp.size => i64;
@@ -483,18 +481,16 @@ impl lexer {
         var tmp = str::instance();
         var ch = src->get(self->pos);
         tmp.append_char(ch);
-        self->pos += 1 => u64;
+        self->pos += 1;
         if (ch == '&' && self->pos < src->size) {
-            if (src->get(self->pos) == '&' ||
-                src->get(self->pos) == '=') {
+            if (src->get(self->pos) == '&' || src->get(self->pos) == '=') {
                 tmp.append_char(src->get(self->pos));
-                self->pos += 1 => u64;
+                self->pos += 1;
             }
         } elsif (ch == '|' && self->pos < src->size) {
-            if (src->get(self->pos) == '|' ||
-                src->get(self->pos) == '=') {
+            if (src->get(self->pos) == '|' || src->get(self->pos) == '=') {
                 tmp.append_char(src->get(self->pos));
-                self->pos += 1 => u64;
+                self->pos += 1;
             }
         }
 
@@ -528,15 +524,15 @@ impl lexer {
 
         var tmp = str::instance();
         tmp.append_char(src->get(self->pos));
-        self->pos += 1 => u64;
+        self->pos += 1;
         tmp.append_char(src->get(self->pos));
-        self->pos += 1 => u64;
+        self->pos += 1;
 
         self->column += 2;
         loc.end_line = self->line;
         loc.end_column = self->column;
 
-        if (tmp.get(0 => u64)=='-') {
+        if (tmp.get(0)=='-') {
             self->push_token(
                 tok_kind::tok_arrow,
                 tmp.__ptr__(),
@@ -564,7 +560,7 @@ impl lexer {
         while(self->pos < src->size &&
               lexer::is_identifier_body(src->get(self->pos))) {
             tmp.append_char(src->get(self->pos));
-            self->pos += 1 => u64;
+            self->pos += 1;
         }
 
         self->column += tmp.size => i64;
@@ -589,15 +585,15 @@ impl lexer {
 
         var tmp = str::instance();
         if (src->get(self->pos)=='0' &&
-            self->pos + (1 => u64) < src->size &&
-            src->get(self->pos + (1 => u64)) == 'x') {
+            self->pos + (1) < src->size &&
+            src->get(self->pos + (1)) == 'x') {
             tmp.append_i8_vec("0x");
-            self->pos += 2 => u64;
+            self->pos += 2;
             while(self->pos < src->size && lexer::is_hex(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
-                self->pos += 1 => u64;
+                self->pos += 1;
             }
-            if (tmp.size > 2 => u64) {
+            if (tmp.size > 2) {
                 self->column += tmp.size => i64;
                 loc.end_line = self->line;
                 loc.end_column = self->column;
@@ -618,15 +614,15 @@ impl lexer {
             return;
         }
         if (src->get(self->pos)=='0' &&
-            self->pos + (1 => u64) < src->size &&
-            src->get(self->pos + (1 => u64)) == 'o') {
+            self->pos + 1 < src->size &&
+            src->get(self->pos + 1) == 'o') {
             tmp.append_i8_vec("0o");
-            self->pos += 2 => u64;
+            self->pos += 2;
             while(self->pos < src->size && lexer::is_oct(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
-                self->pos += 1 => u64;
+                self->pos += 1;
             }
-            if (tmp.size > 2 => u64) {
+            if (tmp.size > 2) {
                 self->column += tmp.size => i64;
                 loc.end_line = self->line;
                 loc.end_column = self->column;
@@ -649,15 +645,15 @@ impl lexer {
 
         // get integer part
         tmp.append_char(src->get(self->pos));
-        self->pos += 1 => u64;
+        self->pos += 1;
         while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
             tmp.append_char(src->get(self->pos));
-            self->pos += 1 => u64;
+            self->pos += 1;
         }
 
         // get float part
         if (self->pos < src->size && src->get(self->pos) == '.') {
-            var lookahead_pos = self->pos + (1 => u64);
+            var lookahead_pos = self->pos + 1;
 
             // just return, this dot is not part of number
             if (lookahead_pos >= src->size) {
@@ -694,10 +690,10 @@ impl lexer {
             }
 
             tmp.append_char('.');
-            self->pos += 1 => u64;
+            self->pos += 1;
             while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
-                self->pos += 1 => u64;
+                self->pos += 1;
             }
         }
 
@@ -705,7 +701,7 @@ impl lexer {
         if (self->pos < src->size &&
             (src->get(self->pos) == 'e' || src->get(self->pos) == 'E')) {
             // just return
-            if (self->pos + (1 => u64) >= src->size) {
+            if (self->pos + 1 >= src->size) {
                 self->column += tmp.size => i64;
                 loc.end_line = self->line;
                 loc.end_column = self->column;
@@ -720,14 +716,14 @@ impl lexer {
                 return;
             }
 
-            var lookahead_pos = self->pos + (1 => u64);
+            var lookahead_pos = self->pos + 1;
 
             if (lexer::is_digit(src->get(lookahead_pos))) {
                 tmp.append_char(src->get(self->pos));
-                self->pos += 1 => u64;
+                self->pos += 1;
                 while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
                     tmp.append_char(src->get(self->pos));
-                    self->pos += 1 => u64;
+                    self->pos += 1;
                 }
                 self->column += tmp.size => i64;
                 loc.end_line = self->line;
@@ -744,14 +740,14 @@ impl lexer {
             }
 
             if ((src->get(lookahead_pos)=='-' || src->get(lookahead_pos)=='+') &&
-                lookahead_pos + (1 => u64) < src->size &&
-                lexer::is_digit(src->get(lookahead_pos + (1 => u64)))) {
+                lookahead_pos + 1 < src->size &&
+                lexer::is_digit(src->get(lookahead_pos + 1))) {
                 tmp.append_char(src->get(self->pos));
-                tmp.append_char(src->get(self->pos + (1 => u64)));
-                self->pos += 2 => u64;
+                tmp.append_char(src->get(self->pos + 1));
+                self->pos += 2;
                 while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
                     tmp.append_char(src->get(self->pos));
-                    self->pos += 1 => u64;
+                    self->pos += 1;
                 }
                 self->column += tmp.size => i64;
                 loc.end_line = self->line;
@@ -790,7 +786,7 @@ impl lexer {
         var quote_type = src->get(self->pos);
         var tmp = str::new();
         // skip first quote
-        self->pos += 1 => u64;
+        self->pos += 1;
         self->column += 1;
 
         while(self->pos < src->size && src->get(self->pos) != quote_type) {
@@ -802,8 +798,8 @@ impl lexer {
                 self->column += 1;
             }
 
-            if (this_ch=='\\' && self->pos + (1 => u64) < src->size) {
-                self->pos += 1 => u64;
+            if (this_ch=='\\' && self->pos + 1 < src->size) {
+                self->pos += 1;
                 var next_ch = src->get(self->pos);
                 if (next_ch=='0') {
                     tmp->append_char('\0');
@@ -843,7 +839,7 @@ impl lexer {
             } else {
                 tmp->append_char(this_ch);
             }
-            self->pos += 1 => u64;
+            self->pos += 1;
         }
         if (self->pos >= src->size) {
             loc->end_line = self->line;
@@ -855,7 +851,7 @@ impl lexer {
         }
 
         // skip last quote
-        self->pos += 1 => u64;
+        self->pos += 1;
         self->column += 1;
 
         loc->end_line = self->line;
@@ -864,7 +860,7 @@ impl lexer {
         if (quote_type == '"') {
             self->push_token(tok_kind::tok_str, tmp, loc);
         } else {
-            if (tmp->size != 1 => u64) {
+            if (tmp->size != 1) {
                 self->err->error(loc, "should only contain one character.");
             }
             self->push_token(tok_kind::tok_ch, tmp, loc);
@@ -879,12 +875,12 @@ impl lexer {
 
         var tmp = str::instance();
         tmp.append_char(':');
-        self->pos += 1 => u64;
+        self->pos += 1;
         self->column += 1;
 
         if (self->pos < src->size && src->get(self->pos) == ':') {
             tmp.append_char(':');
-            self->pos += 1 => u64;
+            self->pos += 1;
             self->column += 1;
             loc.end_line = self->line;
             loc.end_column = self->column;
@@ -916,14 +912,14 @@ impl lexer {
 
         var tmp = str::instance();
         tmp.append_char('.');
-        self->pos += 1 => u64;
+        self->pos += 1;
         self->column += 1;
 
-        if (self->pos + (1 => u64) < src->size &&
+        if (self->pos + 1 < src->size &&
             src->get(self->pos) == '.' &&
-            src->get(self->pos + (1 => u64)) == '.') {
+            src->get(self->pos + 1) == '.') {
             tmp.append_char('.')->append_char('.');
-            self->pos += 2 => u64;
+            self->pos += 2;
             self->column += 2;
             loc.end_line = self->line;
             loc.end_column = self->column;
@@ -950,7 +946,7 @@ impl lexer {
 
     func skip_note(self, src: str*) {
         while(self->pos < src->size && src->get(self->pos) != '\n') {
-            self->pos += 1 => u64;
+            self->pos += 1;
             self->column += 1;
         }
     }
@@ -983,7 +979,7 @@ impl lexer {
         var src = str::new();
         readfile_into_string(filename, src);
 
-        self->pos = 0 => u64;
+        self->pos = 0;
         self->line = 0;
         self->column = 0;
         while(self->pos < src->size) {
@@ -1017,7 +1013,7 @@ impl lexer {
                 } else {
                     self->column += 1;
                 }
-                self->pos += 1 => u64;
+                self->pos += 1;
             }
         }
 
@@ -1029,7 +1025,7 @@ impl lexer {
     }
 
     pub func dump(self) {
-        var index = 0 => u64;
+        var index: u64 = 0;
         while(index < self->toks.size) {
             var loc = self->toks.get(index)->location;
             io::stderr().out(lexer::tok_kind_to_str(self->toks.get(index)->kind))
@@ -1043,7 +1039,7 @@ impl lexer {
                         .out(self->toks.get(index)->content->c_str)
                         .out("\"")
                         .endln();
-            index += 1 => u64;
+            index += 1;
         }
     }
 }

@@ -43,30 +43,30 @@ impl hashmap<K, V> {
     }
 
     func init(self) {
-        self->size = 0 => u64;
-        self->bucket_capacity = 1024 => u64;
+        self->size = 0;
+        self->bucket_capacity = 1024;
         self->bucket = malloc(self->bucket_capacity
                               * list<pair<K, V>>::__size__())
                               => list<pair<K, V>>*;
-        for (var i = 0 => u64; i < self->bucket_capacity; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->bucket_capacity; i += 1) {
             self->bucket[i] = list<pair<K, V>>::instance();
         }
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->bucket_capacity; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->bucket_capacity; i += 1) {
             self->bucket[i].delete();
         }
         free(self->bucket => i8*);
-        self->size = 0 => u64;
-        self->bucket_capacity = 0 => u64;
+        self->size = 0;
+        self->bucket_capacity = 0;
         self->bucket = nil => list<pair<K, V>>*;
     }
 }
 
 impl hashmap<K, V> {
     pub func has(self, key: K*) -> bool {
-        var hash = key->hash() % (1024 => u64);
+        var hash = key->hash() % 1024;
         var bucket = self->bucket[hash].__ptr__();
         for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
             if (i.elem()->key->eq(key)) {
@@ -77,7 +77,7 @@ impl hashmap<K, V> {
     }
 
     pub func get(self, key: K*) -> V* {
-        var hash = key->hash() % (1024 => u64);
+        var hash = key->hash() % 1024;
         var bucket = self->bucket[hash].__ptr__();
         for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
             if (i.elem()->key->eq(key)) {
@@ -106,7 +106,7 @@ impl hashmap<K, V> {
         };
         // do copy in insert method
         bucket->insert(tmp_pair.__ptr__());
-        self->size += 1 => u64;
+        self->size += 1;
     }
 }
 
@@ -120,11 +120,11 @@ impl hashmap_iter<K, V> {
     func instance(map: hashmap<K, V>*) -> hashmap_iter<K, V> {
         var res = hashmap_iter<K, V> {
             map: map,
-            bucket_index: 0 => u64,
+            bucket_index: 0,
             bucket_iter: map->bucket[0].iter()
         };
         while (res.bucket_iter.is_end()) {
-            res.bucket_index += 1 => u64;
+            res.bucket_index += 1;
             if (res.bucket_index >= map->bucket_capacity) {
                 return res;
             }
@@ -139,7 +139,7 @@ impl hashmap_iter<K, V> {
         }
 
         while (self->bucket_iter.is_end()) {
-            self->bucket_index += 1 => u64;
+            self->bucket_index += 1;
             if (self->bucket_index >= self->map->bucket_capacity) {
                 break;
             }

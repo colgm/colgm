@@ -17,10 +17,10 @@ pub struct primitive_vec<T> {
 impl vec<T> {
     pub func new() -> vec<T>* {
         var res = vec<T>::__alloc__();
-        res->size = 0 => u64;
-        res->capacity = 4 => u64;
+        res->size = 0;
+        res->capacity = 4;
         res->data = malloc(res->capacity * ptr_size()) => T**;
-        for (var i = 0 => u64; i < res->capacity; i += 1 => u64) {
+        for (var i: u64 = 0; i < res->capacity; i += 1) {
             res->data[i] = nil => T*;
         }
         return res;
@@ -28,30 +28,30 @@ impl vec<T> {
 
     pub func instance() -> vec<T> {
         var res = vec<T> {
-            size: 0 => u64,
-            capacity: 4 => u64,
+            size: 0,
+            capacity: 4,
             data: nil => T**
         };
         res.data = malloc(res.capacity * ptr_size()) => T**;
-        for (var i = 0 => u64; i < res.capacity; i += 1 => u64) {
+        for (var i: u64 = 0; i < res.capacity; i += 1) {
             res.data[i] = nil => T*;
         }
         return res;
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->size; i += 1) {
             self->data[i]->delete();
             free(self->data[i] => i8*);
         }
         free(self->data => i8*);
         self->data = nil => T**;
-        self->size = 0 => u64;
-        self->capacity = 0 => u64;
+        self->size = 0;
+        self->capacity = 0;
     }
 
     func extend_capacity(self) {
-        self->capacity *= 2 => u64;
+        self->capacity *= 2;
         self->data = realloc(
             self->data => i8*,
             self->capacity * ptr_size()
@@ -63,7 +63,7 @@ impl vec<T> {
             self->extend_capacity();
         }
         self->data[self->size] = item->copy();
-        self->size += 1 => u64;
+        self->size += 1;
     }
 
     pub func get(self, index: u64) -> T* {
@@ -77,16 +77,16 @@ impl vec<T> {
 impl primitive_vec<T> {
     pub func new() -> primitive_vec<T>* {
         var res = primitive_vec<T>::__alloc__();
-        res->size = 0 => u64;
-        res->capacity = 4 => u64;
+        res->size = 0;
+        res->capacity = 4;
         res->data = malloc(res->capacity * T::__size__()) => T*;
         return res;
     }
 
     pub func instance() -> primitive_vec<T> {
         var res = primitive_vec<T> {
-            size: 0 => u64,
-            capacity: 4 => u64,
+            size: 0,
+            capacity: 4,
             data: nil => T*
         };
         res.data = malloc(res.capacity * T::__size__()) => T*;
@@ -96,12 +96,12 @@ impl primitive_vec<T> {
     pub func delete(self) {
         free(self->data => i8*);
         self->data = nil => T*;
-        self->size = 0 => u64;
-        self->capacity = 0 => u64;
+        self->size = 0;
+        self->capacity = 0;
     }
 
     func extend_capacity(self) {
-        self->capacity *= 2 => u64;
+        self->capacity *= 2;
         self->data = realloc(self->data => i8*, self->capacity * T::__size__()) => T*;
     }
 
@@ -110,7 +110,7 @@ impl primitive_vec<T> {
             self->extend_capacity();
         }
         self->data[self->size] = item;
-        self->size += 1 => u64;
+        self->size += 1;
     }
 
     pub func get(self, index: u64) -> T {
@@ -118,16 +118,16 @@ impl primitive_vec<T> {
     }
 
     pub func back(self) -> T {
-        if (self->size == 0 => u64) {
+        if (self->size == 0) {
             panic("std::primitive_vec::back: empty vector");
         }
-        return self->data[self->size - 1 => u64];
+        return self->data[self->size - 1];
     }
 
     pub func pop_back(self) {
-        if (self->size == 0 => u64) {
+        if (self->size == 0) {
             panic("std::primitive_vec::pop_back: empty vector");
         }
-        self->size -= 1 => u64;
+        self->size -= 1;
     }
 }

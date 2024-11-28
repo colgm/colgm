@@ -12,10 +12,10 @@ pub struct hashset<T> {
 impl hashset<T> {
     pub func new() -> hashset<T>* {
         var res = hashset<T>::__alloc__();
-        res->size = 0 => u64;
-        res->bucket_capacity = 1024 => u64;
+        res->size = 0;
+        res->bucket_capacity = 1024;
         res->bucket = malloc(res->bucket_capacity * list<T>::__size__()) => list<T>*;
-        for (var i = 0 => u64; i < res->bucket_capacity; i += 1 => u64) {
+        for (var i: u64 = 0; i < res->bucket_capacity; i += 1) {
             res->bucket[i] = list<T>::instance();
         }
         return res;
@@ -23,24 +23,24 @@ impl hashset<T> {
 
     pub func instance() -> hashset<T> {
         var res = hashset<T> {
-            size: 0 => u64,
-            bucket_capacity: 1024 => u64,
+            size: 0,
+            bucket_capacity: 1024,
             bucket: nil => list<T>*
         };
         res.bucket = malloc(res.bucket_capacity * list<T>::__size__()) => list<T>*;
-        for (var i = 0 => u64; i < res.bucket_capacity; i += 1 => u64) {
+        for (var i: u64 = 0; i < res.bucket_capacity; i += 1) {
             res.bucket[i] = list<T>::instance();
         }
         return res;
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->bucket_capacity; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->bucket_capacity; i += 1) {
             self->bucket[i].delete();
         }
         free(self->bucket => i8*);
-        self->size = 0 => u64;
-        self->bucket_capacity = 0 => u64;
+        self->size = 0;
+        self->bucket_capacity = 0;
         self->bucket = nil => list<T>*;
     }
 }
@@ -72,7 +72,7 @@ impl hashset<T> {
             tmp = tmp->next;
         }
         bucket->insert(item);
-        self->size += 1 => u64;
+        self->size += 1;
     }
 }
 
@@ -84,10 +84,10 @@ pub struct hashset_iter<T> {
 
 impl hashset_iter<T> {
     func instance(set: hashset<T>*) -> hashset_iter<T> {
-        var index = 0 => u64;
+        var index: u64 = 0;
         var iter = set->bucket[0].iter();
         while (iter.is_end()) {
-            index += 1 => u64;
+            index += 1;
             if (index >= set->bucket_capacity) {
                 break;
             }
@@ -115,7 +115,7 @@ impl hashset_iter<T> {
         }
 
         while (self->bucket_iter.is_end()) {
-            self->bucket_index += 1 => u64;
+            self->bucket_index += 1;
             if (self->bucket_index >= self->set->bucket_capacity) {
                 break;
             }

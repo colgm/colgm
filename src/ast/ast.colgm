@@ -287,15 +287,15 @@ impl ptr_vec {
     pub func instance() -> ptr_vec {
         var res = ptr_vec {
             data: nil => ast**,
-            size: 0 => u64,
-            capacity: 0 => u64
+            size: 0,
+            capacity: 0
         };
         res.init();
         return res;
     }
     pub func init(self) {
-        self->size = 0 => u64;
-        self->capacity = 256 => u64;
+        self->size = 0;
+        self->capacity = 256;
         self->data = malloc(self->capacity * ptr_size()) => ast**;
     }
 
@@ -303,7 +303,7 @@ impl ptr_vec {
         if (self->data => i8* == nil) {
             return;
         }
-        for (var i = 0 => u64; i < self->size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->size; i += 1) {
             if (self->data[i] => i8* == nil) {
                 continue;
             }
@@ -311,13 +311,13 @@ impl ptr_vec {
             free(self->data[i] => i8*);
         }
         free(self->data => i8*);
-        self->size = 0 => u64;
-        self->capacity = 0 => u64;
+        self->size = 0;
+        self->capacity = 0;
         self->data = nil => ast**;
     }
 
     func expand(self) {
-        self->capacity *= 2 => u64;
+        self->capacity *= 2;
         self->data = realloc(
             self->data => i8*,
             self->capacity * ptr_size()
@@ -329,21 +329,21 @@ impl ptr_vec {
             self->expand();
         }
         self->data[self->size] = item;
-        self->size += 1 => u64;
+        self->size += 1;
     }
 
     pub func back(self) -> ast* {
-        if (self->size == 0 => u64) {
+        if (self->size == 0) {
             return nil => ast*;
         }
-        return self->data[self->size - 1 => u64];
+        return self->data[self->size - 1];
     }
 
     pub func pop(self) {
-        if (self->size == 0 => u64) {
+        if (self->size == 0) {
             return;
         }
-        self->size -= 1 => u64;
+        self->size -= 1;
     }
 
     pub func get(self, index: u64) -> ast* {
@@ -380,13 +380,13 @@ impl root {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->imports.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->imports.size; i += 1) {
             var raw_ptr = self->imports.get(i).get();
             raw_ptr->delete();
             free(raw_ptr => i8*);
         }
         self->imports.delete();
-        for (var i = 0 => u64; i < self->decls.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->decls.size; i += 1) {
             var raw_ptr = self->decls.get(i).get();
             raw_ptr->delete();
             free(raw_ptr => i8*);
@@ -629,7 +629,7 @@ impl ast_call_func_args {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->args.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->args.size; i += 1) {
             self->args.get(i).get()->delete();
         }
         self->args.delete();
@@ -711,7 +711,7 @@ impl ast_initializer {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->pairs.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->pairs.size; i += 1) {
             self->pairs.get(i).get()->delete();
         }
         self->pairs.delete();
@@ -780,7 +780,7 @@ impl ast_call {
         if (self->head => i8* != nil) {
             self->head->delete();
         }
-        for (var i = 0 => u64; i < self->chain.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->chain.size; i += 1) {
             self->chain.get(i).get()->delete();
         }
         self->chain.delete();
@@ -888,7 +888,7 @@ impl ast_generic_type_list {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->types.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->types.size; i += 1) {
             self->types.get(i).get()->delete();
         }
         self->types.delete();
@@ -938,7 +938,7 @@ impl ast_enum_decl {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->members.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->members.size; i += 1) {
             self->members.get(i).get()->delete();
         }
         self->members.delete();
@@ -993,7 +993,7 @@ impl ast_struct_decl {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->fields.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->fields.size; i += 1) {
             self->fields.get(i).get()->delete();
         }
         self->fields.delete();
@@ -1043,7 +1043,7 @@ impl ast_param_list {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->params.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->params.size; i += 1) {
             self->params.get(i).get()->delete();
         }
         self->params.delete();
@@ -1114,7 +1114,7 @@ impl ast_impl {
         if (self->generic_types => i8* != nil) {
             self->generic_types->delete();
         }
-        for (var i = 0 => u64; i < self->methods.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->methods.size; i += 1) {
             self->methods.get(i).get()->delete();
         }
         self->methods.delete();
@@ -1139,11 +1139,11 @@ impl ast_use_stmt {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->module_path.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->module_path.size; i += 1) {
             self->module_path.get(i).get()->delete();
         }
         self->module_path.delete();
-        for (var i = 0 => u64; i < self->import_symbol.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->import_symbol.size; i += 1) {
             self->import_symbol.get(i).get()->delete();
         }
         self->import_symbol.delete();
@@ -1192,7 +1192,7 @@ impl ast_cond_stmt {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->stmts.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->stmts.size; i += 1) {
             self->stmts.get(i).get()->delete();
         }
         self->stmts.delete();
@@ -1266,7 +1266,7 @@ impl ast_match_stmt {
 
     pub func delete(self) {
         self->value->delete();
-        for (var i = 0 => u64; i < self->cases.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->cases.size; i += 1) {
             self->cases.get(i).get()->delete();
         }
         self->cases.delete();
@@ -1407,7 +1407,7 @@ impl ast_code_block {
     }
 
     pub func delete(self) {
-        for (var i = 0 => u64; i < self->stmts.size; i += 1 => u64) {
+        for (var i: u64 = 0; i < self->stmts.size; i += 1) {
             self->stmts.get(i).get()->delete();
         }
         self->stmts.delete();
