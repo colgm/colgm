@@ -1,6 +1,7 @@
 # <img src="../doc/colgm.svg" height="45px"/> Colgm Bootstrap Compiler
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
+[![nightly-build](https://github.com/colgm/colgm/actions/workflows/release.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/release.yml)
 
 This directory stores the source file of colgm bootstrap compiler.
 
@@ -73,9 +74,9 @@ Logical operators for `and`/`or` all have two types:
 
 Colgm allows two kinds of definition.
 
-```typescript
-var variable_name: type = expression; # with type
-var variable_name = expression; # without type
+```rust
+var variable_name: type = expression; // with type
+var variable_name = expression; // without type
 ```
 
 ## Assignment
@@ -95,7 +96,7 @@ a &= b;
 
 ## Control Flow
 
-### While
+### While Loop
 
 while loop is directly translated to `mir_loop` in colgm mir.
 
@@ -130,7 +131,7 @@ match (variable) {
 }
 ```
 
-### For
+### For Loop
 
 ```rust
 for (var i = 0; i < 10; i += 1)  {}
@@ -141,7 +142,7 @@ while (i < 10) {
 }
 ```
 
-### Foreach/ForIndex [WIP]
+### Foreach/ForIndex Loop [WIP]
 
 ```rust
 foreach (var i; container) {}
@@ -183,6 +184,7 @@ struct StructName {
     field2: i64
 }
 
+// using generics
 struct StructWithGeneric<T> {
     __size: i64,
     __data: T*
@@ -213,6 +215,7 @@ impl StructName {
     }
 }
 
+// impl generics
 impl StructWithGeneric<T> {
     ...
 }

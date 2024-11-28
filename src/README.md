@@ -1,4 +1,7 @@
-# <img src="../doc/colgm.svg" height="50px"/> Colgm Compiler
+# <img src="../doc/colgm.svg" height="50px"/> Self-Host Colgm Compiler
+
+[![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
+[![nightly-build](https://github.com/colgm/colgm/actions/workflows/release.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/release.yml)
 
 Work in progress. Lexer and parser are done.
 
@@ -14,13 +17,13 @@ And `out.ll` is generated, try `lli` or `clang`.
 
 ## Run
 
-for `lli`(maybe crash on macOS, don't know why):
+for `lli`:
 
 ```bash
 lli out.ll main.colgm -l -a
 ```
 
-for `clang`:
+for `clang` (suggested):
 
 ```bash
 clang out.ll -o colgm

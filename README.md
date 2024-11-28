@@ -5,8 +5,8 @@
 
 ## Repo Content
 
-- [bootstrap](./bootstrap/README.md) : available now, features not stable these days, but welcome to try.
-- [src](./src/README.md) : bootstrapped compiler, not available now (lexer and parser is ready).
+- [bootstrap](./bootstrap/README.md) : available now, features not stable, but welcome to try.
+- [src](./src/README.md) : self-host compiler(lexer and parser is ready).
 - [test](./test): test cases.
 
 ## Bootstrap Compiler
@@ -43,7 +43,7 @@ lli colgm.ll main.colgm --library .
 ```
 
 LLVM jit interpreter maybe unstable on some platforms,
-if lli crashed, try using `clang` to build `out.ll` to executable:
+if `lli` crashed, try using `clang` to build to executable:
 
 ```sh
 clang colgm.ll -o colgm
@@ -56,7 +56,7 @@ Hello world example is available in `bootstrap`:
 ```rust
 use libc::puts;
 
-pub func main() -> i64 {
+pub func main() -> i32 {
     puts("hello world!");
     return 0;
 }

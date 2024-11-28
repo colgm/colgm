@@ -61,8 +61,8 @@ void semantic::report_top_level_block_has_no_return(code_block* node,
     rp.report(node, "expect at least one return statement.");
 }
 
-bool semantic::check_number_literal_can_be_converted(node* n,
-                                                     const type& expect) {
+bool semantic::number_literal_can_be_converted(node* n,
+                                               const type& expect) {
     if (!n->is(ast_type::ast_number_literal)) {
         return false;
     }
@@ -74,13 +74,42 @@ bool semantic::check_number_literal_can_be_converted(node* n,
         return false;
     }
     if (expect.is_integer() && n_type.is_integer()) {
+        n->set_resolve_type(expect);
         return true;
     }
     if (expect.is_float() && n_type.is_float()) {
+        n->set_resolve_type(expect);
         return true;
     }
     return false;
 }
+
+bool semantic::unary_number_can_be_converted(node* n,
+                                             const type& expect) {
+    if (!n->is(ast_type::ast_unary_operator)) {
+        return false;
+    }
+    auto UO = static_cast<unary_operator*>(n);
+    if (UO->get_opr() != unary_operator::kind::neg) {
+        return false;
+    }
+    if (number_literal_can_be_converted(UO->get_value(), expect)) {
+        n->set_resolve_type(expect);
+        return true;
+    }
+    return false;
+}
+
+bool semantic::check_can_be_converted(node* n, const type& expect) {
+    if (number_literal_can_be_converted(n, expect)) {
+        return true;
+    }
+    if (unary_number_can_be_converted(n, expect)) {
+        return true;
+    }
+    return false;
+}
+
 type semantic::struct_static_method_infer(const type& prev,
                                           const std::string& fn_name) {
     auto infer = prev;
@@ -134,10 +163,8 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
         return type::bool_type();
     }
     if (left != right) {
-        if (check_number_literal_can_be_converted(node->get_left(), right) ||
-            check_number_literal_can_be_converted(node->get_right(), left)) {
-            node->get_right()->set_resolve_type(right);
-        } else {
+        if (!check_can_be_converted(node->get_right(), left) &&
+            !check_can_be_converted(node->get_left(), right)) {
             rp.report(node,
                 "get \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
@@ -183,10 +210,8 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
 
     // left hand side value should be the same as right hand side value
     if (left != right) {
-        if (check_number_literal_can_be_converted(node->get_left(), right) ||
-            check_number_literal_can_be_converted(node->get_right(), left)) {
-            node->get_right()->set_resolve_type(right);
-        } else {
+        if (!check_can_be_converted(node->get_right(), left) &&
+            !check_can_be_converted(node->get_left(), right)) {
             rp.report(node,
                 "get \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
@@ -219,10 +244,8 @@ type semantic::resolve_bitwise_operator(binary_operator* node) {
         return right;
     }
     if (left != right) {
-        if (check_number_literal_can_be_converted(node->get_left(), right) ||
-            check_number_literal_can_be_converted(node->get_right(), left)) {
-            node->get_right()->set_resolve_type(right);
-        } else {
+        if (!check_can_be_converted(node->get_right(), left) &&
+            !check_can_be_converted(node->get_left(), right)) {
             rp.report(node,
                 "get \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
@@ -550,9 +573,7 @@ void semantic::check_static_call_args(const colgm_func& func,
         const auto& param = func.parameters[index].symbol_type;
         // do not report if infer is error, because it must be reported before
         if (infer != param && !infer.is_error()) {
-            if (check_number_literal_can_be_converted(i, param)) {
-                i->set_resolve_type(param);
-            } else {
+            if (!check_can_be_converted(i, param)) {
                 rp.report(i,
                     "expect \"" + param.to_string() +
                     "\" but get \"" + infer.to_string() + "\"."
@@ -590,9 +611,7 @@ void semantic::check_method_call_args(const colgm_func& func,
         const auto& param = func.parameters[index].symbol_type;
         // do not report if infer is error, because it must be reported before
         if (infer != param && !infer.is_error()) {
-            if (check_number_literal_can_be_converted(i, param)) {
-                i->set_resolve_type(param);
-            } else {
+            if (!check_can_be_converted(i, param)) {
                 rp.report(i,
                     "expect \"" + param.to_string() +
                     "\" but get \"" + infer.to_string() + "\"."
@@ -774,9 +793,7 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
         const auto& expect = st.field.at(field).symbol_type;
 
         if (infer != expect) {
-            if (check_number_literal_can_be_converted(i->get_value(), expect)) {
-                i->get_value()->set_resolve_type(expect);
-            } else {
+            if (!check_can_be_converted(i->get_value(), expect)) {
                 rp.report(i,
                     "expect \"" + expect.to_string() +
                     "\" but get \"" + infer.to_string() + "\"."
@@ -1048,9 +1065,7 @@ type semantic::resolve_assignment(assignment* node) {
             );
         }
     } else if (left != right) {
-        if (check_number_literal_can_be_converted(node->get_right(), left)) {
-            node->get_right()->set_resolve_type(left);
-        } else {
+        if (!check_can_be_converted(node->get_right(), left)) {
             rp.report(node,
                 "get \"" + right.to_string() +
                 "\" but expect \"" + left.to_string() + "\"."
@@ -1134,10 +1149,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
             );
         }
     } else if (expected_type != real_type) {
-        if (check_number_literal_can_be_converted(
-            node->get_init_value(), expected_type)) {
-            node->get_init_value()->set_resolve_type(expected_type);
-        } else {
+        if (!check_can_be_converted(node->get_init_value(), expected_type)) {
             rp.report(node->get_type(),
                 "expected \"" + expected_type.to_string() +
                 "\", but get \"" + real_type.to_string() + "\"."
@@ -1311,10 +1323,7 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
             );
         }
     } else if (infer!=func_self.return_type && infer!=type::error_type()) {
-        if (check_number_literal_can_be_converted(
-            node->get_value(), func_self.return_type)) {
-            node->get_value()->set_resolve_type(func_self.return_type);
-        } else {
+        if (!check_can_be_converted(node->get_value(), func_self.return_type)) {
             rp.report(node,
                 "expected return type \"" +
                 func_self.return_type.to_string() +
