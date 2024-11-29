@@ -38,7 +38,7 @@ impl list_iter<T> {
     }
 
     pub func is_end(self) -> bool {
-        return self->current => i8* == nil;
+        return self->current == nil;
     }
 
     pub func elem(self) -> T* {
@@ -56,40 +56,40 @@ impl list_iter<T> {
 impl list<T> {
     pub func new() -> list<T>* {
         var res = list<T>::__alloc__();
-        res->head = nil => node<T>*;
-        res->tail = nil => node<T>*;
+        res->head = nil;
+        res->tail = nil;
         res->size = 0;
         return res;
     }
 
     pub func instance() -> list<T> {
         return list<T> {
-            head: nil => node<T>*,
-            tail: nil => node<T>*,
+            head: nil,
+            tail: nil,
             size: 0
         };
     }
 
     pub func delete(self) {
         var curr = self->head;
-        while (curr != nil => node<T>*) {
+        while (curr != nil) {
             var next = curr->next;
             curr->elem->delete();
             free(curr => i8*);
             curr = next;
         }
-        self->head = nil => node<T>*;
-        self->tail = nil => node<T>*;
+        self->head = nil;
+        self->tail = nil;
         self->size = 0;
     }
 
     pub func insert(self, elem: T*) {
         var new_node = node<T>::__alloc__();
         new_node->elem = elem->copy();
-        new_node->next = nil => node<T>*;
+        new_node->next = nil;
         new_node->prev = self->tail;
 
-        if (self->tail != nil => node<T>*) {
+        if (self->tail != nil) {
             self->tail->next = new_node;
         } else {
             self->head = new_node;
@@ -108,39 +108,39 @@ impl list<T> {
 impl primitive_list<T> {
     pub func new() -> primitive_list<T>* {
         var res = primitive_list<T>::__alloc__();
-        res->head = nil => primitive_node<T>*;
-        res->tail = nil => primitive_node<T>*;
+        res->head = nil;
+        res->tail = nil;
         res->size = 0;
         return res;
     }
 
     pub func instance() -> primitive_list<T> {
         return primitive_list<T> {
-            head: nil => primitive_node<T>*,
-            tail: nil => primitive_node<T>*,
+            head: nil,
+            tail: nil,
             size: 0
         };
     }
 
     pub func delete(self) {
         var curr = self->head;
-        while (curr != nil => primitive_node<T>*) {
+        while (curr != nil) {
             var next = curr->next;
             free(curr => i8*);
             curr = next;
         }
-        self->head = nil => primitive_node<T>*;
-        self->tail = nil => primitive_node<T>*;
+        self->head = nil;
+        self->tail = nil;
         self->size = 0;
     }
 
     pub func insert(self, elem: T) {
         var new_node = primitive_node<T>::__alloc__();
         new_node->elem = elem;
-        new_node->next = nil => primitive_node<T>*;
+        new_node->next = nil;
         new_node->prev = self->tail;
 
-        if (self->tail != nil => primitive_node<T>*) {
+        if (self->tail != nil) {
             self->tail->next = new_node;
         } else {
             self->head = new_node;

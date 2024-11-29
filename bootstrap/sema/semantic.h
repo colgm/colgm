@@ -38,6 +38,7 @@ private:
 private:
     bool number_literal_can_be_converted(node*, const type&);
     bool unary_number_can_be_converted(node*, const type&);
+    bool nil_can_be_converted(node*, const type&);
     bool check_can_be_converted(node*, const type&);
 
 private:

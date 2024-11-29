@@ -100,11 +100,25 @@ bool semantic::unary_number_can_be_converted(node* n,
     return false;
 }
 
+bool semantic::nil_can_be_converted(node* n, const type& expect) {
+    if (!n->is(ast_type::ast_nil_literal)) {
+        return false;
+    }
+    if (!expect.is_pointer()) {
+        return false;
+    }
+    n->set_resolve_type(expect);
+    return true;
+}
+
 bool semantic::check_can_be_converted(node* n, const type& expect) {
     if (number_literal_can_be_converted(n, expect)) {
         return true;
     }
     if (unary_number_can_be_converted(n, expect)) {
+        return true;
+    }
+    if (nil_can_be_converted(n, expect)) {
         return true;
     }
     return false;
@@ -1058,7 +1072,7 @@ type semantic::resolve_assignment(assignment* node) {
         default: break;
     }
     if (left.is_pointer() && right.is_pointer()) {
-        if (left!=right) {
+        if (left != right && !check_can_be_converted(node->get_right(), left)) {
             rp.report(node,
                 "cannot calculate \"" + left.to_string() +
                 "\" and \"" + right.to_string() + "\"."
@@ -1142,7 +1156,8 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     const auto expected_type = tr.resolve(node->get_type());
     const auto real_type = resolve_expression(node->get_init_value());
     if (expected_type.is_pointer() && real_type.is_pointer()) {
-        if (expected_type!=real_type) {
+        if (expected_type != real_type &&
+            !check_can_be_converted(node->get_init_value(), expected_type)) {
             rp.warn(node,
                 "expected \"" + expected_type.to_string() +
                 "\", but get \"" + real_type.to_string() + "\"."
@@ -1316,7 +1331,8 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
     }
     const auto infer = resolve_expression(node->get_value());
     if (infer.is_pointer() && func_self.return_type.is_pointer()) {
-        if (infer!=func_self.return_type && infer!=type::error_type()) {
+        if (infer != func_self.return_type && infer != type::error_type() &&
+            !check_can_be_converted(node->get_value(), func_self.return_type)) {
             rp.warn(node,
                 "expected return type \"" + func_self.return_type.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."

@@ -53,7 +53,7 @@ pub func remove_disabled_node(node: root*) {
 
     for (var i: u64 = 0; i < node->decls.size; i += 1) {
         var d = node->decls.get(i).get();
-        if (d->kind != ast_kind::ast_cond_compile) {
+        if (!d->is(ast_kind::ast_cond_compile)) {
             new_vec.push(ptr<ast>::wrap(d));
             continue;
         }
@@ -62,7 +62,7 @@ pub func remove_disabled_node(node: root*) {
             var acc = d => ast_cond_compile*;
             new_vec.push(ptr<ast>::wrap(acc->enabled_decl));
 
-            acc->enabled_decl = nil => ast*;
+            acc->enabled_decl = nil;
             acc->delete();
             free(acc => i8*);
         } else {

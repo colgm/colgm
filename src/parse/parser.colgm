@@ -104,13 +104,13 @@ impl parser {
         var res = parser::__alloc__();
         res->err = e;
         res->toks = l->toks.__ptr__();
-        res->root = nil => root*;
+        res->root = nil;
         res->index = 0;
         return res;
     }
 
     pub func delete(self) {
-        if (self->root == (nil => root*)) {
+        if (self->root == (nil)) {
             return;
         }
         self->root->delete();
@@ -139,7 +139,7 @@ impl parser {
         }
 
         // do not update location if node does not have location info
-        if (node->location => i8* == nil) {
+        if (node->location == nil) {
             return;
         }
 
@@ -392,7 +392,7 @@ impl parser {
     }
 
     func bool_gen(self) -> ast_bool_literal* {
-        var res = nil => ast_bool_literal*;
+        var res: ast_bool_literal* = nil;
         if (streq(self->this_tok()->content->c_str, "true")) {
             res = ast_bool_literal::new(
                 self->this_tok_loc_copy(),
@@ -523,7 +523,7 @@ impl parser {
         var res = self->multive_gen();
         while (self->lookahead(tok_kind::tok_add) ||
                self->lookahead(tok_kind::tok_sub)) {
-            var binary = nil => ast_binary_operator*;
+            var binary: ast_binary_operator* = nil;
             match(self->this_tok()->kind) {
                 tok_kind::tok_add => {
                     binary = ast_binary_operator::new(
@@ -676,7 +676,7 @@ impl parser {
     func calculation_gen(self) -> ast* {
         var begin_loc = self->this_tok_loc();
         var res = self->or_expression_gen();
-        if (res->kind != ast_kind::ast_call) {
+        if (!res->is(ast_kind::ast_call)) {
             return res;
         }
         // if is call node, check assignment syntax
@@ -1122,11 +1122,11 @@ impl parser {
         self->match_token(tok_kind::tok_pub);
         if (self->lookahead(tok_kind::tok_extern)) {
             var res = self->extern_decl_gen();
-            if (res->kind == ast_kind::ast_func_decl) {
+            if (res->is(ast_kind::ast_func_decl)) {
                 var tmp = res => ast_func_decl*;
                 tmp->is_public = true;
                 return tmp => ast*;
-            } elsif (res->kind == ast_kind::ast_struct_decl) {
+            } elsif (res->is(ast_kind::ast_struct_decl)) {
                 var tmp = res => ast_struct_decl*;
                 tmp->is_public = true;
                 return tmp => ast*;
@@ -1183,9 +1183,9 @@ impl parser {
         while (!self->lookahead(tok_kind::tok_eof)) {
             var flag_is_public = false;
             var flag_is_extern = false;
-            var pub_loc = nil => span*;
-            var extern_loc = nil => span*;
-            var cond_comp: ast_cond_compile* = nil => ast_cond_compile*;
+            var pub_loc: span* = nil;
+            var extern_loc: span* = nil;
+            var cond_comp: ast_cond_compile* = nil;
             if (self->lookahead(tok_kind::tok_sharp)) {
                 cond_comp = self->conditional_compilation();
             }
@@ -1205,7 +1205,7 @@ impl parser {
                 self->next();
             }
 
-            var decl_node: ast* = nil => ast*;
+            var decl_node: ast* = nil;
             match (self->this_tok()->kind) {
                 tok_kind::tok_struct => {
                     var tmp = self->struct_decl_gen();
@@ -1238,18 +1238,18 @@ impl parser {
                 }
             }
             // embed decl node into cond_comp node
-            if (cond_comp => i8* != nil && decl_node => i8* != nil) {
+            if (cond_comp != nil && decl_node != nil) {
                 cond_comp->enabled_decl = decl_node;
                 self->root->decls.push(ptr<ast>::wrap(cond_comp => ast*));
                 continue;
             }
             // error occurred, cond_comp node accepts nothing, delete it
-            if (cond_comp => i8* != nil && decl_node => i8* == nil) {
+            if (cond_comp != nil && decl_node == nil) {
                 cond_comp->delete();
                 free(cond_comp => i8*);
             }
             // cond_comp not used, insert directly
-            if (decl_node => i8* != nil) {
+            if (decl_node != nil) {
                 self->root->decls.push(ptr<ast>::wrap(decl_node => ast*));
                 continue;
             }

@@ -22,7 +22,7 @@ impl regist_pass {
         res->this_file = str::instance();
         res->err = err;
         res->pkg = pkg;
-        res->root = nil => root*;
+        res->root = nil;
         res->ctx = ctx;
         return res;
 	}
@@ -45,7 +45,7 @@ impl regist_pass {
         // generate expect path
         for (var i: u64 = 0; i < node->module_path.size; i += 1) {
             var name = node->module_path.get(i).get();
-            if (name->kind != ast_kind::ast_identifier) {
+            if (!name->is(ast_kind::ast_identifier)) {
                 self->err->error(name->location, "invalid module path");
                 expect_name.delete();
                 expect_path.delete();
@@ -84,7 +84,7 @@ impl regist_pass {
     func scan_imports(self) {
         for (var i: u64 = 0; i < self->root->imports.size; i += 1) {
             var node = self->root->imports.get(i).get();
-            if (node->kind != ast_kind::ast_use_stmt) {
+            if (!node->is(ast_kind::ast_use_stmt)) {
                 self->err->error(node->location, "invalid import");
                 return;
             }

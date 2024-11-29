@@ -176,6 +176,51 @@ func main() -> i32 {
 }
 ```
 
+### Automatic Type Cast
+
+Number literals and `nil` will be casted to the target type automatically.
+
+```rust
+func main() -> i32 {
+    var a: i32 = 1;      // i64(1)    => i32
+    var b: i64* = nil;   // i8*(nil)  => i64*
+    if (a < 10) {        // i64(10)   => i32
+        return 1;        // i64(1)    => i32
+    } else if (a != 1) { // i64(1)    => i32
+        return -1;       // i64(-1)   => i32
+    }                    //
+    var c = 'a';         //
+    c += 1;              // i64(1)    => i8
+                         //
+    var d = 1.0;         // f64
+    var e: f32 = 2.71;   // f64(2.71) => f32
+                         //
+    return 0;            // i64       => i32
+}
+```
+
+Also available when initializing a struct or calling a function:
+
+```rust
+struct Example {
+    a: u64,
+    next: Example*
+}
+
+pub func test(arg: u32) -> u8 {
+    return arg => u8;
+}
+
+func main() -> i32 {
+    var s = Example {
+        a: 1,     // i64(1)  => u64
+        next: nil // i8*(nil) => Example*
+    };            //
+    test(42);     // i64(42) => u32
+    return 0;     // i64(0)  => i32
+}
+```
+
 ## Struct Definition
 
 ```rust
