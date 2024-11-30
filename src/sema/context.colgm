@@ -3,58 +3,8 @@ use std::set::{ hashset };
 use std::str::{ str };
 use err::panic::{ panic };
 
-pub struct colgm_func {
-    name: str
-}
-
-impl colgm_func {
-    pub func delete(self) {
-        self->name.delete();
-    }
-    pub func copy(self) -> colgm_func* {
-        return nil;
-    }
-}
-
-pub struct colgm_primitive {
-    name: str,
-    static_method: hashmap<str, colgm_func>,
-    method: hashmap<str, colgm_func>
-}
-
-impl colgm_primitive {
-    pub func instance() -> colgm_primitive {
-        return colgm_primitive {
-            name: str::instance(),
-            static_method: hashmap<str, colgm_func>::instance(),
-            method: hashmap<str, colgm_func>::instance()
-        };
-    }
-
-    pub func delete(self) {
-        self->name.delete();
-        self->static_method.delete();
-        self->method.delete();
-    }
-
-    pub func copy(self) -> colgm_primitive* {
-        var res = colgm_primitive::__alloc__();
-        res->name = self->name.copy_instance();
-        res->static_method = hashmap<str, colgm_func>::instance();
-        for (var i = res->static_method.iter(); !i.is_end(); i = i.next()) {
-            var key = i.key();
-            var val = i.value();
-            res->static_method.insert(key, val);
-        }
-        res->method = hashmap<str, colgm_func>::instance();
-        for (var i = res->method.iter(); !i.is_end(); i = i.next()) {
-            var key = i.key();
-            var val = i.value();
-            res->method.insert(key, val);
-        }
-        return res;
-    }
-}
+use sema::function::{ colgm_func };
+use sema::primitive::{ colgm_primitive };
 
 pub struct colgm_module {
     file_name: str

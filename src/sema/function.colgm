@@ -1,0 +1,46 @@
+use std::str::{ str };
+use std::vec::{ vec };
+use std::map::{ hashmap };
+use err::span::{ span };
+
+use sema::type::{ type };
+
+pub struct colgm_func {
+    name: str,
+    location: span,
+    return_type: type,
+    param_name: vec<str>,
+    param_type: vec<type>,
+    unordered_params: hashmap<str, type>
+}
+
+impl colgm_func {
+    pub func delete(self) {
+        self->name.delete();
+        self->location.delete();
+        self->return_type.delete();
+        self->param_name.delete();
+        self->param_type.delete();
+        self->unordered_params.delete();
+    }
+
+    pub func copy(self) -> colgm_func* {
+        var res = colgm_func::__alloc__();
+        res->name = self->name.copy_instance();
+        res->location = self->location.copy_instance();
+        res->return_type = self->return_type.copy_instance();
+        res->param_name = vec<str>::instance();
+        for (var i: u64 = 0; i < self->param_name.size; i += 1) {
+            res->param_name.push(self->param_name.get(i));
+        }
+        res->param_type = vec<type>::instance();
+        for (var i: u64 = 0; i < self->param_type.size; i += 1) {
+            res->param_type.push(self->param_type.get(i));
+        }
+        res->unordered_params = hashmap<str, type>::instance();
+        for (var i = self->unordered_params.iter(); !i.is_end(); i = i.next()) {
+            res->unordered_params.insert(i.key(), i.value());
+        }
+        return res;
+    }
+}

@@ -1,0 +1,97 @@
+use std::str::{ str };
+use std::vec::{ vec };
+
+pub struct method_info {
+    flag_is_static: bool,
+    flag_is_normal: bool,
+    method_name: str
+}
+
+impl method_info {
+    pub func instance() -> method_info {
+        var res = method_info {
+            flag_is_static: false,
+            flag_is_normal: false,
+            method_name: str::from("")
+        };
+        return res;
+    }
+
+    pub func copy_instance(self) -> method_info {
+        var res = method_info {
+            flag_is_static: self->flag_is_static,
+            flag_is_normal: self->flag_is_normal,
+            method_name: self->method_name.copy_instance()
+        };
+        return res;
+    }
+
+    pub func delete(self) {
+        self->method_name.delete();
+    }
+}
+
+pub struct type {
+    name: str,
+    loc_file: str,
+    pointer_depth: i64,
+    is_global_sym: bool,          // global symbol
+    is_global_func: bool,         // global function
+    is_enum: bool,                // enum
+    is_immutable: bool,           // immutable
+    is_generic_placeholder: bool, // generic placeholder
+
+    stm_info: method_info,        // struct methods
+    prm_info: method_info,        // primitive type methods(intrinsic)
+
+    generics: vec<type>
+}
+
+impl type {
+    pub func delete(self) {
+        self->name.delete();
+        self->stm_info.delete();
+        self->prm_info.delete();
+        self->generics.delete();
+    }
+
+    pub func copy(self) -> type* {
+        var res = type::__alloc__();
+        res->name = self->name.copy_instance();
+        res->loc_file = self->loc_file.copy_instance();
+        res->pointer_depth = self->pointer_depth;
+        res->is_global_sym = self->is_global_sym;
+        res->is_global_func = self->is_global_func;
+        res->is_enum = self->is_enum;
+        res->is_immutable = self->is_immutable;
+        res->is_generic_placeholder = self->is_generic_placeholder;
+        res->stm_info = self->stm_info.copy_instance();
+        res->prm_info = self->prm_info.copy_instance();
+
+        res->generics = vec<type>::instance();
+        for (var i: u64 = 0; i < self->generics.size; i += 1) {
+            res->generics.push(self->generics.get(i));
+        }
+        return res;
+    }
+
+    pub func copy_instance(self) -> type {
+        var res = type {
+            name: self->name.copy_instance(),
+            loc_file: self->loc_file.copy_instance(),
+            pointer_depth: self->pointer_depth,
+            is_global_sym: self->is_global_sym,
+            is_global_func: self->is_global_func,
+            is_enum: self->is_enum,
+            is_immutable: self->is_immutable,
+            is_generic_placeholder: self->is_generic_placeholder,
+            stm_info: self->stm_info.copy_instance(),
+            prm_info: self->prm_info.copy_instance(),
+            generics: vec<type>::instance()
+        };
+        for (var i: u64 = 0; i < self->generics.size; i += 1) {
+            res.generics.push(self->generics.get(i));
+        }
+        return res;
+    }
+}
