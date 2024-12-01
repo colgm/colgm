@@ -1,4 +1,5 @@
 use err::span::{ span };
+use err::panic::{ panic };
 use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ io };
 use std::str::{ str };
@@ -116,164 +117,209 @@ impl ast {
             ast_kind::ast_root => {
                 var tmp = self => root*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_unary_operator => {
                 var tmp = self => ast_unary_operator*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_binary_operator => {
                 var tmp = self => ast_binary_operator*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_type_convert => {
                 var tmp = self => ast_type_convert*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_identifier => {
                 var tmp = self => ast_identifier*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_nil_literal => return;
             ast_kind::ast_number_literal => {
                 var tmp = self => ast_number_literal*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_string_literal => {
                 var tmp = self => ast_string_literal*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_char_literal => {
                 var tmp = self => ast_char_literal*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_bool_literal => return;
             ast_kind::ast_array_literal => {
                 var tmp = self => ast_array_literal*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_call_index => {
                 var tmp = self => ast_call_index*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_call_func_args => {
                 var tmp = self => ast_call_func_args*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_get_field => {
                 var tmp = self => ast_get_field*;
                 tmp->delete();
+                return;
+            }
+            ast_kind::ast_ptr_get_field => {
+                var tmp = self => ast_ptr_get_field*;
+                tmp->delete();
+                return;
             }
             ast_kind::ast_init_pair => {
                 var tmp = self => ast_init_pair*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_initializer => {
                 var tmp = self => ast_initializer*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_call_path => {
                 var tmp = self => ast_call_path*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_call => {
                 var tmp = self => ast_call*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_assignment => {
                 var tmp = self => ast_assignment*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_cond_compile => {
                 var tmp = self => ast_cond_compile*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_type_def => {
                 var tmp = self => ast_type_def*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_generic_type_list => {
                 var tmp = self => ast_generic_type_list*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_enum_member => {
                 var tmp = self => ast_enum_member*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_enum_decl => {
                 var tmp = self => ast_enum_decl*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_struct_field => {
                 var tmp = self =>ast_struct_field*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_struct_decl => {
                 var tmp = self => ast_struct_decl*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_param => {
                 var tmp = self => ast_param*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_param_list => {
                 var tmp = self => ast_param_list*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_func_decl => {
                 var tmp = self => ast_func_decl*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_impl => {
                 var tmp = self => ast_impl*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_use_stmt => {
                 var tmp = self => ast_use_stmt*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_definition => {
                 var tmp = self => ast_definition*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_cond_stmt => {
                 var tmp = self => ast_cond_stmt*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_if_stmt => {
                 var tmp = self => ast_if_stmt*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_match_case => {
                 var tmp = self => ast_match_case*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_match_stmt => {
                 var tmp = self => ast_match_stmt*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_while_stmt => {
                 var tmp = self => ast_while_stmt*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_for_stmt => {
                 var tmp = self => ast_for_stmt*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_in_stmt_expr => {
                 var tmp = self => ast_in_stmt_expr*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_ret_stmt => {
                 var tmp = self => ast_ret_stmt*;
                 tmp->delete();
+                return;
             }
             ast_kind::ast_continue_stmt => return;
             ast_kind::ast_break_stmt => return;
             ast_kind::ast_code_block => {
                 var tmp = self => ast_code_block*;
                 tmp->delete();
+                return;
             }
         }
+        panic("ast::delete: unknown ast kind");
     }
 }
 
@@ -281,82 +327,192 @@ impl ast {
     pub func is(self, kind: ast_kind) -> bool {
         return self->kind == kind;
     }
-}
 
-pub struct ptr_vec {
-    data: ast**,
-    size: u64,
-    capacity: u64
-}
-
-impl ptr_vec {
-    pub func instance() -> ptr_vec {
-        var res = ptr_vec {
-            data: nil,
-            size: 0,
-            capacity: 0
-        };
-        res.init();
-        return res;
-    }
-    pub func init(self) {
-        self->size = 0;
-        self->capacity = 256;
-        self->data = malloc(self->capacity * ptr_size()) => ast**;
-    }
-
-    pub func delete(self) {
-        if (self->data == nil) {
-            return;
-        }
-        for (var i: u64 = 0; i < self->size; i += 1) {
-            if (self->data[i] == nil) {
-                continue;
+    pub func copy(self) -> ast* {
+        match (self->kind) {
+            ast_kind::ast_null => {
+                var tmp = self => ast_null*;
+                return tmp->copy() => ast*;
             }
-            self->data[i]->delete();
-            free(self->data[i] => i8*);
+            ast_kind::ast_root => {
+                var tmp = self => root*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_unary_operator => {
+                var tmp = self => ast_unary_operator*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_binary_operator => {
+                var tmp = self => ast_binary_operator*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_type_convert => {
+                var tmp = self => ast_type_convert*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_identifier => {
+                var tmp = self => ast_identifier*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_nil_literal => {
+                var tmp = self => ast_nil_literal*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_number_literal => {
+                var tmp = self => ast_number_literal*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_string_literal => {
+                var tmp = self => ast_string_literal*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_char_literal => {
+                var tmp = self => ast_char_literal*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_bool_literal => {
+                var tmp = self => ast_bool_literal*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_array_literal => {
+                var tmp = self => ast_array_literal*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_call_index => {
+                var tmp = self => ast_call_index*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_call_func_args => {
+                var tmp = self => ast_call_func_args*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_get_field => {
+                var tmp = self => ast_get_field*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_ptr_get_field => {
+                var tmp = self => ast_ptr_get_field*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_init_pair => {
+                var tmp = self => ast_init_pair*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_initializer => {
+                var tmp = self => ast_initializer*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_call_path => {
+                var tmp = self => ast_call_path*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_call => {
+                var tmp = self => ast_call*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_assignment => {
+                var tmp = self => ast_assignment*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_cond_compile => {
+                var tmp = self => ast_cond_compile*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_type_def => {
+                var tmp = self => ast_type_def*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_generic_type_list => {
+                var tmp = self => ast_generic_type_list*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_enum_member => {
+                var tmp = self => ast_enum_member*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_enum_decl => {
+                var tmp = self => ast_enum_decl*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_struct_field => {
+                var tmp = self =>ast_struct_field*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_struct_decl => {
+                var tmp = self => ast_struct_decl*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_param => {
+                var tmp = self => ast_param*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_param_list => {
+                var tmp = self => ast_param_list*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_func_decl => {
+                var tmp = self => ast_func_decl*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_impl => {
+                var tmp = self => ast_impl*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_use_stmt => {
+                var tmp = self => ast_use_stmt*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_definition => {
+                var tmp = self => ast_definition*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_cond_stmt => {
+                var tmp = self => ast_cond_stmt*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_if_stmt => {
+                var tmp = self => ast_if_stmt*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_match_case => {
+                var tmp = self => ast_match_case*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_match_stmt => {
+                var tmp = self => ast_match_stmt*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_while_stmt => {
+                var tmp = self => ast_while_stmt*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_for_stmt => {
+                var tmp = self => ast_for_stmt*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_in_stmt_expr => {
+                var tmp = self => ast_in_stmt_expr*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_ret_stmt => {
+                var tmp = self => ast_ret_stmt*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_continue_stmt => {
+                var tmp = self => ast_continue_stmt*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_break_stmt => {
+                var tmp = self => ast_break_stmt*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_code_block => {
+                var tmp = self => ast_code_block*;
+                return tmp->copy() => ast*;
+            }
         }
-        free(self->data => i8*);
-        self->size = 0;
-        self->capacity = 0;
-        self->data = nil;
-    }
-
-    func expand(self) {
-        self->capacity *= 2;
-        self->data = realloc(
-            self->data => i8*,
-            self->capacity * ptr_size()
-        ) => ast**;
-    }
-
-    pub func push(self, item: ast*) {
-        if (self->size == self->capacity) {
-            self->expand();
-        }
-        self->data[self->size] = item;
-        self->size += 1;
-    }
-
-    pub func back(self) -> ast* {
-        if (self->size == 0) {
-            return nil;
-        }
-        return self->data[self->size - 1];
-    }
-
-    pub func pop(self) {
-        if (self->size == 0) {
-            return;
-        }
-        self->size -= 1;
-    }
-
-    pub func get(self, index: u64) -> ast* {
-        if (self->size <= index) {
-            return nil;
-        }
-        return self->data[index];
+        panic("ast::copy: unknown ast kind");
+        return nil;
     }
 }
 
@@ -367,6 +523,10 @@ impl ast_null {
         var res = ast_null::__alloc__();
         res->base = ast::instance(ast_kind::ast_null, nil);
         return res;
+    }
+
+    pub func copy(self) -> ast_null* {
+        return ast_null::new();
     }
 }
 
@@ -385,17 +545,32 @@ impl root {
         return res;
     }
 
+    pub func copy(self) -> root* {
+        var res = root::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_root,
+            self->base.location->copy()
+        );
+        res->imports = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->imports.size; i += 1) {
+            res->imports.push(ptr<ast>::wrap(self->imports.get(i).get()->copy()));
+        }
+        res->decls = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->decls.size; i += 1) {
+            res->decls.push(ptr<ast>::wrap(self->decls.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->imports.size; i += 1) {
-            var raw_ptr = self->imports.get(i).get();
-            raw_ptr->delete();
-            free(raw_ptr => i8*);
+            self->imports.get(i).get()->delete();
+            free(self->imports.get(i).get() => i8*);
         }
         self->imports.delete();
         for (var i: u64 = 0; i < self->decls.size; i += 1) {
-            var raw_ptr = self->decls.get(i).get();
-            raw_ptr->delete();
-            free(raw_ptr => i8*);
+            self->decls.get(i).get()->delete();
+            free(self->decls.get(i).get() => i8*);
         }
         self->decls.delete();
     }
@@ -415,6 +590,21 @@ impl ast_unary_operator {
         res->base = ast::instance(ast_kind::ast_unary_operator, loc);
         res->kind = kind;
         res->value = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_unary_operator* {
+        var res = ast_unary_operator::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_unary_operator,
+            self->base.location->copy()
+        );
+        res->kind = self->kind;
+        if (self->value != nil) {
+            res->value = self->value->copy();
+        } else {
+            res->value = nil;
+        }
         return res;
     }
 
@@ -439,6 +629,26 @@ impl ast_binary_operator {
         res->kind = kind;
         res->left = nil;
         res->right = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_binary_operator* {
+        var res = ast_binary_operator::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_binary_operator,
+            self->base.location->copy()
+        );
+        res->kind = self->kind;
+        if (self->left != nil) {
+            res->left = self->left->copy();
+        } else {
+            res->left = nil;
+        }
+        if (self->right != nil) {
+            res->right = self->right->copy();
+        } else {
+            res->right = nil;
+        }
         return res;
     }
 
@@ -467,6 +677,25 @@ impl ast_type_convert {
         return res;
     }
 
+    pub func copy(self) -> ast_type_convert* {
+        var res = ast_type_convert::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_type_convert,
+            self->base.location->copy()
+        );
+        if (self->from != nil) {
+            res->from = self->from->copy();
+        } else {
+            res->from = nil;
+        }
+        if (self->to != nil) {
+            res->to = self->to->copy();
+        } else {
+            res->to = nil;
+        }
+        return res;
+    }
+
     pub func delete(self) {
         if (self->from != nil) {
             self->from->delete();
@@ -490,6 +719,16 @@ impl ast_identifier {
         return res;
     }
 
+    pub func copy(self) -> ast_identifier* {
+        var res = ast_identifier::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_identifier,
+            self->base.location->copy()
+        );
+        res->name = self->name.copy_instance();
+        return res;
+    }
+
     pub func delete(self) {
         self->name.delete();
     }
@@ -505,6 +744,10 @@ impl ast_nil_literal {
         res->base = ast::instance(ast_kind::ast_nil_literal, loc);
         return res;
     }
+
+    pub func copy(self) -> ast_nil_literal* {
+        return ast_nil_literal::new(self->base.location->copy());
+    }
 }
 
 pub struct ast_number_literal {
@@ -517,6 +760,16 @@ impl ast_number_literal {
         var res = ast_number_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_number_literal, loc);
         res->literal = literal->copy_instance();
+        return res;
+    }
+
+    pub func copy(self) -> ast_number_literal* {
+        var res = ast_number_literal::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_number_literal,
+            self->base.location->copy()
+        );
+        res->literal = self->literal.copy_instance();
         return res;
     }
 
@@ -538,6 +791,16 @@ impl ast_string_literal {
         return res;
     }
 
+    pub func copy(self) -> ast_string_literal* {
+        var res = ast_string_literal::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_string_literal,
+            self->base.location->copy()
+        );
+        res->literal = self->literal.copy_instance();
+        return res;
+    }
+
     pub func delete(self) {
         self->literal.delete();
     }
@@ -553,6 +816,16 @@ impl ast_char_literal {
         var res = ast_char_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_char_literal, loc);
         res->literal = literal->copy_instance();
+        return res;
+    }
+
+    pub func copy(self) -> ast_char_literal* {
+        var res = ast_char_literal::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_char_literal,
+            self->base.location->copy()
+        );
+        res->literal = self->literal.copy_instance();
         return res;
     }
 
@@ -573,6 +846,10 @@ impl ast_bool_literal {
         res->flag = flag;
         return res;
     }
+
+    pub func copy(self) -> ast_bool_literal* {
+        return ast_bool_literal::new(self->base.location->copy(), self->flag);
+    }
 }
 
 pub struct ast_array_literal {
@@ -587,6 +864,25 @@ impl ast_array_literal {
         res->base = ast::instance(ast_kind::ast_array_literal, loc);
         res->size = nil;
         res->type = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_array_literal* {
+        var res = ast_array_literal::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_array_literal,
+            self->base.location->copy()
+        );
+        if (self->size != nil) {
+            res->size = self->size->copy();
+        } else {
+            res->size = nil;
+        }
+        if (self->type != nil) {
+            res->type = self->type->copy();
+        } else {
+            res->type = nil;
+        }
         return res;
     }
 
@@ -614,6 +910,20 @@ impl ast_call_index {
         return res;
     }
 
+    pub func copy(self) -> ast_call_index* {
+        var res = ast_call_index::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_call_index,
+            self->base.location->copy()
+        );
+        if (self->index != nil) {
+            res->index = self->index->copy();
+        } else {
+            res->index = nil;
+        }
+        return res;
+    }
+
     pub func delete(self) {
         if (self->index != nil) {
             self->index->delete();
@@ -634,9 +944,23 @@ impl ast_call_func_args {
         return res;
     }
 
+    pub func copy(self) -> ast_call_func_args* {
+        var res = ast_call_func_args::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_call_func_args,
+            self->base.location->copy()
+        );
+        res->args = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->args.size; i += 1) {
+            res->args.push(ptr<ast>::wrap(self->args.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->args.size; i += 1) {
             self->args.get(i).get()->delete();
+            free(self->args.get(i).get() => i8*);
         }
         self->args.delete();
     }
@@ -652,6 +976,16 @@ impl ast_get_field {
         var res = ast_get_field::__alloc__();
         res->base = ast::instance(ast_kind::ast_get_field, loc);
         res->name = name->copy_instance();
+        return res;
+    }
+
+    pub func copy(self) -> ast_get_field* {
+        var res = ast_get_field::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_get_field,
+            self->base.location->copy()
+        );
+        res->name = self->name.copy_instance();
         return res;
     }
 
@@ -673,6 +1007,16 @@ impl ast_ptr_get_field {
         return res;
     }
 
+    pub func copy(self) -> ast_ptr_get_field* {
+        var res = ast_ptr_get_field::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_ptr_get_field,
+            self->base.location->copy()
+        );
+        res->name = self->name.copy_instance();
+        return res;
+    }
+
     pub func delete(self) {
         self->name.delete();
     }
@@ -690,6 +1034,25 @@ impl ast_init_pair {
         res->base = ast::instance(ast_kind::ast_init_pair, loc);
         res->field = nil;
         res->value = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_init_pair* {
+        var res = ast_init_pair::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_init_pair,
+            self->base.location->copy()
+        );
+        if (self->field != nil) {
+            res->field = self->field->copy();
+        } else {
+            res->field = nil;
+        }
+        if (self->value != nil) {
+            res->value = self->value->copy();
+        } else {
+            res->value = nil;
+        }
         return res;
     }
 
@@ -716,9 +1079,23 @@ impl ast_initializer {
         return res;
     }
 
+    pub func copy(self) -> ast_initializer* {
+        var res = ast_initializer::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_initializer,
+            self->base.location->copy()
+        );
+        res->pairs = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->pairs.size; i += 1) {
+            res->pairs.push(ptr<ast>::wrap(self->pairs.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->pairs.size; i += 1) {
             self->pairs.get(i).get()->delete();
+            free(self->pairs.get(i).get() => i8*);
         }
         self->pairs.delete();
     }
@@ -734,6 +1111,16 @@ impl ast_call_path {
         var res = ast_call_path::__alloc__();
         res->base = ast::instance(ast_kind::ast_call_path, loc);
         res->name = name->copy_instance();
+        return res;
+    }
+
+    pub func copy(self) -> ast_call_path* {
+        var res = ast_call_path::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_call_path,
+            self->base.location->copy()
+        );
+        res->name = self->name.copy_instance();
         return res;
     }
 
@@ -754,6 +1141,25 @@ impl ast_call_id {
         res->base = ast::instance(ast_kind::ast_call_id, loc);
         res->id = nil;
         res->generic_types = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_call_id* {
+        var res = ast_call_id::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_call_id,
+            self->base.location->copy()
+        );
+        if (self->id != nil) {
+            res->id = self->id->copy();
+        } else {
+            res->id = nil;
+        }
+        if (self->generic_types != nil) {
+            res->generic_types = self->generic_types->copy();
+        } else {
+            res->generic_types = nil;
+        }
         return res;
     }
 
@@ -782,12 +1188,31 @@ impl ast_call {
         return res;
     }
 
+    pub func copy(self) -> ast_call* {
+        var res = ast_call::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_call,
+            self->base.location->copy()
+        );
+        if (self->head != nil) {
+            res->head = self->head->copy();
+        } else {
+            res->head = nil;
+        }
+        res->chain = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->chain.size; i += 1) {
+            res->chain.push(ptr<ast>::wrap(self->chain.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         if (self->head != nil) {
             self->head->delete();
         }
         for (var i: u64 = 0; i < self->chain.size; i += 1) {
             self->chain.get(i).get()->delete();
+            free(self->chain.get(i).get() => i8*);
         }
         self->chain.delete();
     }
@@ -806,6 +1231,26 @@ impl ast_assignment {
         res->base = ast::instance(ast_kind::ast_assignment, loc);
         res->left = nil;
         res->right = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_assignment* {
+        var res = ast_assignment::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_assignment,
+            self->base.location->copy()
+        );
+        res->kind = self->kind;
+        if (self->left != nil) {
+            res->left = self->left->copy();
+        } else {
+            res->left= nil;
+        }
+        if (self->right != nil) {
+            res->right = self->right->copy();
+        } else {
+            res->right = nil;
+        }
         return res;
     }
 
@@ -835,6 +1280,22 @@ impl ast_cond_compile {
         res->cond_name = cond_name->copy_instance();
         res->conds = hashmap<str, str>::instance();
         res->enabled_decl = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_cond_compile* {
+        var res = ast_cond_compile::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_cond_compile,
+            self->base.location->copy()
+        );
+        res->cond_name = self->cond_name.copy_instance();
+        res->conds = self->conds.copy_instance();
+        if (self->enabled_decl != nil) {
+            res->enabled_decl = self->enabled_decl->copy();
+        } else {
+            res->enabled_decl = nil;
+        }
         return res;
     }
 
@@ -870,6 +1331,27 @@ impl ast_type_def {
         return res;
     }
 
+    pub func copy(self) -> ast_type_def* {
+        var res = ast_type_def::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_type_def,
+            self->base.location->copy()
+        );
+        if (self->name != nil) {
+            res->name = self->name->copy();
+        } else {
+            res->name = nil;
+        }
+        if (self->generic_types != nil) {
+            res->generic_types = self->generic_types->copy();
+        } else {
+            res->generic_types = nil;
+        }
+        res->pointer_depth = self->pointer_depth;
+        res->is_const = self->is_const;
+        return res;
+    }
+
     pub func delete(self) {
         if (self->name != nil) {
             self->name->delete();
@@ -893,9 +1375,23 @@ impl ast_generic_type_list {
         return res;
     }
 
+    pub func copy(self) -> ast_generic_type_list* {
+        var res = ast_generic_type_list::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_generic_type_list,
+            self->base.location->copy()
+        );
+        res->types = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->types.size; i += 1) {
+            res->types.push(ptr<ast>::wrap(self->types.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->types.size; i += 1) {
             self->types.get(i).get()->delete();
+            free(self->types.get(i).get() => i8*);
         }
         self->types.delete();
     }
@@ -913,6 +1409,25 @@ impl ast_enum_member {
         res->base = ast::instance(ast_kind::ast_enum_member, loc);
         res->name = nil;
         res->value = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_enum_member* {
+        var res = ast_enum_member::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_enum_member,
+            self->base.location->copy()
+        );
+        if (self->name != nil) {
+            res->name = self->name->copy();
+        } else {
+            res->name = nil;
+        }
+        if (self->value != nil) {
+            res->value = self->value->copy();
+        } else {
+            res->value = nil;
+        }
         return res;
     }
 
@@ -943,9 +1458,25 @@ impl ast_enum_decl {
         return res;
     }
 
+    pub func copy(self) -> ast_enum_decl* {
+        var res = ast_enum_decl::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_enum_decl,
+            self->base.location->copy()
+        );
+        res->members = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->members.size; i += 1) {
+            res->members.push(ptr<ast>::wrap(self->members.get(i).get()->copy()));
+        }
+        res->name = self->name.copy_instance();
+        res->is_public = self->is_public;
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->members.size; i += 1) {
             self->members.get(i).get()->delete();
+            free(self->members.get(i).get() => i8*);
         }
         self->members.delete();
         self->name.delete();
@@ -964,6 +1495,25 @@ impl ast_struct_field {
         res->base = ast::instance(ast_kind::ast_struct_field, loc);
         res->name = nil;
         res->type = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_struct_field* {
+        var res = ast_struct_field::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_struct_field,
+            self->base.location->copy()
+        );
+        if (self->name != nil) {
+            res->name = self->name->copy();
+        } else {
+            res->name = nil;
+        }
+        if (self->type != nil) {
+            res->type = self->type->copy();
+        } else {
+            res->type = nil;
+        }
         return res;
     }
 
@@ -998,9 +1548,31 @@ impl ast_struct_decl {
         return res;
     }
 
+    pub func copy(self) -> ast_struct_decl* {
+        var res = ast_struct_decl::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_struct_decl,
+            self->base.location->copy()
+        );
+        res->fields = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->fields.size; i += 1) {
+            res->fields.push(ptr<ast>::wrap(self->fields.get(i).get()->copy()));
+        }
+        res->name = self->name.copy_instance();
+        if (self->generic_types != nil) {
+            res->generic_types = self->generic_types->copy();
+        } else {
+            res->generic_types = nil;
+        }
+        res->is_public = self->is_public;
+        res->is_extern = self->is_extern;
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->fields.size; i += 1) {
             self->fields.get(i).get()->delete();
+            free(self->fields.get(i).get() => i8*);
         }
         self->fields.delete();
         self->name.delete();
@@ -1022,6 +1594,25 @@ impl ast_param {
         res->base = ast::instance(ast_kind::ast_param, loc);
         res->name = nil;
         res->type = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_param* {
+        var res = ast_param::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_param,
+            self->base.location->copy()
+        );
+        if (self->name != nil) {
+            res->name = self->name->copy();
+        } else {
+            res->name = nil;
+        }
+        if (self->type != nil) {
+            res->type = self->type->copy();
+        } else {
+            res->type = nil;
+        }
         return res;
     }
 
@@ -1048,9 +1639,23 @@ impl ast_param_list {
         return res;
     }
 
+    pub func copy(self) -> ast_param_list* {
+        var res = ast_param_list::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_param_list,
+            self->base.location->copy()
+        );
+        res->params = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->params.size; i += 1) {
+            res->params.push(ptr<ast>::wrap(self->params.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->params.size; i += 1) {
             self->params.get(i).get()->delete();
+            free(self->params.get(i).get() => i8*);
         }
         self->params.delete();
    }
@@ -1078,6 +1683,38 @@ impl ast_func_decl {
         res->body = nil;
         res->is_public = false;
         res->is_extern = false;
+        return res;
+    }
+
+    pub func copy(self) -> ast_func_decl* {
+        var res = ast_func_decl::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_func_decl,
+            self->base.location->copy()
+        );
+        res->name = self->name.copy_instance();
+        if (self->generic_types != nil) {
+            res->generic_types = self->generic_types->copy();
+        } else {
+            res->generic_types = nil;
+        }
+        if (self->params != nil) {
+            res->params = self->params->copy();
+        } else {
+            res->params = nil;
+        }
+        if (self->return_type != nil) {
+            res->return_type = self->return_type->copy();
+        } else {
+            res->return_type = nil;
+        }
+        if (self->body != nil) {
+            res->body = self->body->copy();
+        } else {
+            res->body = nil;
+        }
+        res->is_public = self->is_public;
+        res->is_extern = self->is_extern;
         return res;
     }
 
@@ -1115,6 +1752,25 @@ impl ast_impl {
         return res;
     }
 
+    pub func copy(self) -> ast_impl* {
+        var res = ast_impl::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_impl,
+            self->base.location->copy()
+        );
+        res->name = self->name.copy_instance();
+        if (self->generic_types != nil) {
+            res->generic_types = self->generic_types->copy();
+        } else {
+            res->generic_types = nil;
+        }
+        res->methods = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->methods.size; i += 1) {
+            res->methods.push(ptr<ast>::wrap(self->methods.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         self->name.delete();
         if (self->generic_types != nil) {
@@ -1122,6 +1778,7 @@ impl ast_impl {
         }
         for (var i: u64 = 0; i < self->methods.size; i += 1) {
             self->methods.get(i).get()->delete();
+            free(self->methods.get(i).get() => i8*);
         }
         self->methods.delete();
     }
@@ -1144,13 +1801,32 @@ impl ast_use_stmt {
         return res;
     }
 
+    pub func copy(self) -> ast_use_stmt* {
+        var res = ast_use_stmt::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_use_stmt,
+            self->base.location->copy()
+        );
+        res->module_path = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->module_path.size; i += 1) {
+            res->module_path.push(ptr<ast>::wrap(self->module_path.get(i).get()->copy()));
+        }
+        res->import_symbol = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->import_symbol.size; i += 1) {
+            res->import_symbol.push(ptr<ast>::wrap(self->import_symbol.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->module_path.size; i += 1) {
             self->module_path.get(i).get()->delete();
+            free(self->module_path.get(i).get() => i8*);
         }
         self->module_path.delete();
         for (var i: u64 = 0; i < self->import_symbol.size; i += 1) {
             self->import_symbol.get(i).get()->delete();
+            free(self->import_symbol.get(i).get() => i8*);
         }
         self->import_symbol.delete();
     }
@@ -1170,6 +1846,26 @@ impl ast_definition {
         res->name = name->copy_instance();
         res->type = nil;
         res->value = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_definition* {
+        var res = ast_definition::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_definition,
+            self->base.location->copy()
+        );
+        res->name = self->name.copy_instance();
+        if (self->type != nil) {
+            res->type = self->type->copy();
+        } else {
+            res->type = nil;
+        }
+        if (self->value != nil) {
+            res->value = self->value->copy();
+        } else {
+            res->value = nil;
+        }
         return res;
     }
 
@@ -1197,9 +1893,23 @@ impl ast_cond_stmt {
         return res;
     }
 
+    pub func copy(self) -> ast_cond_stmt* {
+        var res = ast_cond_stmt::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_cond_stmt,
+            self->base.location->copy()
+        );
+        res->stmts = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->stmts.size; i += 1) {
+            res->stmts.push(ptr<ast>::wrap(self->stmts.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->stmts.size; i += 1) {
             self->stmts.get(i).get()->delete();
+            free(self->stmts.get(i).get() => i8*);
         }
         self->stmts.delete();
     }
@@ -1217,6 +1927,25 @@ impl ast_if_stmt {
         res->base = ast::instance(ast_kind::ast_if_stmt, loc);
         res->condition = nil;
         res->body = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_if_stmt* {
+        var res = ast_if_stmt::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_if_stmt,
+            self->base.location->copy()
+        );
+        if (self->condition != nil) {
+            res->condition = self->condition->copy();
+        } else {
+            res->condition = nil;
+        }
+        if (self->body != nil) {
+            res->body = self->body->copy();
+        } else {
+            res->body = nil;
+        }
         return res;
     }
 
@@ -1245,6 +1974,25 @@ impl ast_match_case {
         return res;
     }
 
+    pub func copy(self) -> ast_match_case* {
+        var res = ast_match_case::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_match_case,
+            self->base.location->copy()
+        );
+        if (self->pattern != nil) {
+            res->pattern = self->pattern->copy();
+        } else {
+            res->pattern = nil;
+        }
+        if (self->body != nil) {
+            res->body = self->body->copy();
+        } else {
+            res->body = nil;
+        }
+        return res;
+    }
+
     pub func delete(self) {
         if (self->pattern != nil) {
             self->pattern->delete();
@@ -1270,10 +2018,29 @@ impl ast_match_stmt {
         return res;
     }
 
+    pub func copy(self) -> ast_match_stmt* {
+        var res = ast_match_stmt::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_match_stmt,
+            self->base.location->copy()
+        );
+        if (self->value != nil) {
+            res->value = self->value->copy();
+        } else {
+            res->value = nil;
+        }
+        res->cases = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->cases.size; i += 1) {
+            res->cases.push(ptr<ast>::wrap(self->cases.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         self->value->delete();
         for (var i: u64 = 0; i < self->cases.size; i += 1) {
             self->cases.get(i).get()->delete();
+            free(self->cases.get(i).get() => i8*);
         }
         self->cases.delete();
     }
@@ -1291,6 +2058,25 @@ impl ast_while_stmt {
         res->base = ast::instance(ast_kind::ast_while_stmt, loc);
         res->condition = nil;
         res->body = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_while_stmt* {
+        var res = ast_while_stmt::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_while_stmt,
+            self->base.location->copy()
+        );
+        if (self->condition != nil) {
+            res->condition = self->condition->copy();
+        } else {
+            res->condition = nil;
+        }
+        if (self->body != nil) {
+            res->body = self->body->copy();
+        } else {
+            res->body = nil;
+        }
         return res;
     }
 
@@ -1323,6 +2109,35 @@ impl ast_for_stmt {
         return res;
     }
 
+    pub func copy(self) -> ast_for_stmt* {
+        var res = ast_for_stmt::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_for_stmt,
+            self->base.location->copy()
+        );
+        if (self->init != nil) {
+            res->init = self->init->copy();
+        } else {
+            res->init = nil;
+        }
+        if (self->condition != nil) {
+            res->condition = self->condition->copy();
+        } else {
+            res->condition = nil;
+        }
+        if (self->update != nil) {
+            res->update = self->update->copy();
+        } else {
+            res->update = nil;
+        }
+        if (self->body != nil) {
+            res->body = self->body->copy();
+        } else {
+            res->body = nil;
+        }
+        return res;
+    }
+
     pub func delete(self) {
         if (self->init != nil) {
             self->init->delete();
@@ -1352,6 +2167,20 @@ impl ast_in_stmt_expr {
         return res;
     }
 
+    pub func copy(self) -> ast_in_stmt_expr* {
+        var res = ast_in_stmt_expr::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_in_stmt_expr,
+            self->base.location->copy()
+        );
+        if (self->value != nil) {
+            res->value = self->value->copy();
+        } else {
+            res->value = nil;
+        }
+        return res;
+    }
+
     pub func delete(self) {
         if (self->value != nil) {
             self->value->delete();
@@ -1372,6 +2201,20 @@ impl ast_ret_stmt {
         return res;
     }
 
+    pub func copy(self) -> ast_ret_stmt* {
+        var res = ast_ret_stmt::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_ret_stmt,
+            self->base.location->copy()
+        );
+        if (self->value != nil) {
+            res->value = self->value->copy();
+        } else {
+            res->value = nil;
+        }
+        return res;
+    }
+
     pub func delete(self) {
         if (self->value != nil) {
             self->value->delete();
@@ -1387,6 +2230,15 @@ impl ast_continue_stmt {
         res->base = ast::instance(ast_kind::ast_continue_stmt, loc);
         return res;
     }
+
+    pub func copy(self) -> ast_continue_stmt* {
+        var res = ast_continue_stmt::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_continue_stmt,
+            self->base.location->copy()
+        );
+        return res;
+    }
 }
 
 pub struct ast_break_stmt { base: ast }
@@ -1395,6 +2247,15 @@ impl ast_break_stmt {
     pub func new(loc: span*) -> ast_break_stmt* {
         var res = ast_break_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_break_stmt, loc);
+        return res;
+    }
+
+    pub func copy(self) -> ast_break_stmt* {
+        var res = ast_break_stmt::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_break_stmt,
+            self->base.location->copy()
+        );
         return res;
     }
 }
@@ -1412,9 +2273,23 @@ impl ast_code_block {
         return res;
     }
 
+    pub func copy(self) -> ast_code_block* {
+        var res = ast_code_block::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_code_block,
+            self->base.location->copy()
+        );
+        res->stmts = primitive_vec<ptr<ast>>::instance();
+        for (var i: u64 = 0; i < self->stmts.size; i += 1) {
+            res->stmts.push(ptr<ast>::wrap(self->stmts.get(i).get()->copy()));
+        }
+        return res;
+    }
+
     pub func delete(self) {
         for (var i: u64 = 0; i < self->stmts.size; i += 1) {
             self->stmts.get(i).get()->delete();
+            free(self->stmts.get(i).get() => i8*);
         }
         self->stmts.delete();
     }

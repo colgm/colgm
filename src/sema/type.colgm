@@ -67,16 +67,12 @@ impl type {
         res->is_generic_placeholder = self->is_generic_placeholder;
         res->stm_info = self->stm_info.copy_instance();
         res->prm_info = self->prm_info.copy_instance();
-
-        res->generics = vec<type>::instance();
-        for (var i: u64 = 0; i < self->generics.size; i += 1) {
-            res->generics.push(self->generics.get(i));
-        }
+        res->generics = self->generics.copy_instance();
         return res;
     }
 
     pub func copy_instance(self) -> type {
-        var res = type {
+        return type {
             name: self->name.copy_instance(),
             loc_file: self->loc_file.copy_instance(),
             pointer_depth: self->pointer_depth,
@@ -87,11 +83,7 @@ impl type {
             is_generic_placeholder: self->is_generic_placeholder,
             stm_info: self->stm_info.copy_instance(),
             prm_info: self->prm_info.copy_instance(),
-            generics: vec<type>::instance()
+            generics: self->generics.copy_instance()
         };
-        for (var i: u64 = 0; i < self->generics.size; i += 1) {
-            res.generics.push(self->generics.get(i));
-        }
-        return res;
     }
 }

@@ -1023,9 +1023,12 @@ bool semantic::check_valid_left_value(expr* node) {
     }
     const auto mem_get_node = reinterpret_cast<call*>(node);
     for(auto i : mem_get_node->get_chain()) {
-        if (i->is(ast_type::ast_call_path) ||
-            i->is(ast_type::ast_call_func_args) ||
-            i->is(ast_type::ast_initializer)) {
+        if (i->is(ast_type::ast_initializer)) {
+            return false;
+        }
+        if ((i->is(ast_type::ast_call_path) ||
+            i->is(ast_type::ast_call_func_args)) &&
+            i == mem_get_node->get_chain().back()) {
             return false;
         }
     }
