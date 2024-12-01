@@ -1,0 +1,48 @@
+use std::str::{ str };
+use std::map::{ hashmap };
+
+use sema::function::{ colgm_func };
+use sema::structure::{ colgm_struct };
+use sema::enumerate::{ colgm_enum };
+
+pub struct colgm_module {
+    file_name: str,
+    enums: hashmap<str, colgm_enum>,
+    structs: hashmap<str, colgm_struct>,
+    functions: hashmap<str, colgm_func>,
+    generic_structs: hashmap<str, colgm_struct>,
+    generic_functions: hashmap<str, colgm_func>
+}
+
+impl colgm_module {
+    pub func instance() -> colgm_module {
+        return colgm_module {
+            file_name: str::instance(),
+            enums: hashmap<str, colgm_enum>::instance(),
+            structs: hashmap<str, colgm_struct>::instance(),
+            functions: hashmap<str, colgm_func>::instance(),
+            generic_structs: hashmap<str, colgm_struct>::instance(),
+            generic_functions: hashmap<str, colgm_func>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->file_name.delete();
+        self->enums.delete();
+        self->structs.delete();
+        self->functions.delete();
+        self->generic_structs.delete();
+        self->generic_functions.delete();
+    }
+
+    pub func copy(self) -> colgm_module* {
+        var res = colgm_module::__alloc__();
+        res->file_name = self->file_name.copy_instance();
+        res->enums = self->enums.copy_instance();
+        res->structs = self->structs.copy_instance();
+        res->functions = self->functions.copy_instance();
+        res->generic_structs = self->generic_structs.copy_instance();
+        res->generic_functions = self->generic_functions.copy_instance();
+        return res;
+    }
+}
