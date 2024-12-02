@@ -9,6 +9,7 @@
 #include "sir/pass_manager.h"
 #include "package/package.h"
 
+#include <vector>
 #include <unordered_map>
 #include <thread>
 #include <cstdlib>
@@ -36,6 +37,8 @@ std::ostream& help(std::ostream& out) {
     << "         --sir            | view sir.\n"
     << "         --library <path> | add library path.\n"
     << "         --dump-lib       | view libraries.\n"
+    << "         --arch           | specify target arch.\n"
+    << "         --platform       | specify target platform.\n"
     << "file:\n"
     << "   <filename>             | input file.\n"
     << "\n";
@@ -152,9 +155,9 @@ i32 main(i32 argc, const char* argv[]) {
     // run directly or show help
     if (argc==2) {
         std::string s(argv[1]);
-        if (s=="-h" || s=="--help") {
+        if (s == "-h" || s == "--help") {
             std::clog << help;
-        } else if (s=="-v" || s=="--version") {
+        } else if (s == "-v" || s == "--version") {
             std::clog << version;
         } else if (s[0]!='-') {
             execute(s, "out.ll");
@@ -180,29 +183,48 @@ i32 main(i32 argc, const char* argv[]) {
     std::string input_file = "";
     std::string output_file = "out.ll";
     std::string library_path = "";
-    for(i32 i = 1; i<argc; ++i) {
-        if (argv[i]==std::string("-h") || argv[i]==std::string("--help")) {
+
+    std::vector<std::string> args;
+    for (i32 i = 0; i < argc; ++i) {
+        args.push_back(argv[i]);
+    }
+
+    for(i32 i = 1; i < argc; ++i) {
+        if (args[i] == "-h" || args[i] == "--help") {
             std::clog << help;
             break;
-        } else if (cmdlst.count(argv[i])) {
-            cmd |= cmdlst.at(argv[i]);
-        } else if (argv[i]==std::string("--library")) {
-            if (i+1 < argc) {
-                library_path = argv[i+1];
+        } else if (cmdlst.count(args[i])) {
+            cmd |= cmdlst.at(args[i]);
+        } else if (args[i] == "--library") {
+            if (i + 1 < argc) {
+                library_path = args[i + 1];
                 ++i;
             } else {
                 err();
             }
-        } else if (argv[i]==std::string("-o") ||
-                   argv[i]==std::string("--output")) {
-            if (i+1 < argc) {
-                output_file = argv[i+1];
+        } else if (args[i] == "-o" || args[i] == "--output") {
+            if (i + 1 < argc) {
+                output_file = args[i + 1];
+                ++i;
+            } else {
+                err();
+            }
+        } else if (args[i] == "--arch") {
+            if (i + 1 < argc) {
+                colgm::target_info::singleton()->set_arch(args[i + 1]);
+                ++i;
+            } else {
+                err();
+            }
+        } else if (args[i] == "--platform") {
+            if (i + 1 < argc) {
+                colgm::target_info::singleton()->set_platform(args[i + 1]);
                 ++i;
             } else {
                 err();
             }
         } else if (!input_file.length()) {
-            input_file = argv[i];
+            input_file = args[i];
         } else {
             err();
         }

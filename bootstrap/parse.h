@@ -175,7 +175,7 @@ private:
     break_stmt* break_gen();
 
 public:
-    parse(error& e): ptr(0), err(e), result(nullptr) {}
+    parse(error& e): ptr(0), err(e), result(nullptr), toks(nullptr) {}
     const error& analyse(const std::vector<token>&);
     auto get_result() { return result; }
 };

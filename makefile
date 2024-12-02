@@ -17,6 +17,7 @@ test: $(COLGMCC) test/*
 	@ $(COLGMCC) test/enum_test.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/for_test.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/func.colgm $(TEST_LIB) && lli out.ll
+	@ $(COLGMCC) test/generic.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/hello.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/initializer.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/local.colgm $(TEST_LIB) && lli out.ll
@@ -27,7 +28,7 @@ test: $(COLGMCC) test/*
 	@ $(COLGMCC) test/to_str.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/type_convert.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/void_return.colgm $(TEST_LIB) && lli out.ll
-	@ $(COLGMCC) test/generic.colgm $(TEST_LIB) && lli out.ll
+	@ $(COLGMCC) test/warn_on_left_call.colgm $(TEST_LIB) && lli out.ll
 	@ rm out.ll
 
 .PHONY: clean

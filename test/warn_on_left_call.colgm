@@ -1,0 +1,25 @@
+use io::*;
+
+struct A {
+    elem: i64,
+    a: A*
+}
+
+impl A {
+    pub func get_next_inst(self) -> A {
+        return self->a[0];
+    }
+}
+
+func main() -> i32 {
+    var a = A { elem: 1, a: nil };
+    var b = A { elem: 2, a: a.__ptr__() };
+    var c = A { elem: 3, a: b.__ptr__() };
+    b.get_next_inst().elem = 0;
+    io::stdout().out("[warn_on_left_call.colgm] should be 1: ")
+                .out_i64(a.elem).endln();
+    c.get_next_inst().a->elem = 114514;
+    io::stdout().out("[warn_on_left_call.colgm] should be 114514: ")
+                .out_i64(a.elem).endln();
+    return 0;
+}

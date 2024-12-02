@@ -23,6 +23,23 @@ using f64 = double;
 
 namespace colgm {
 
+class target_info {
+private:
+    std::string arch = "";
+    std::string platform = "";
+
+public:
+    static auto* singleton() {
+        static target_info t;
+        return &t;
+    }
+
+    void set_arch(const std::string& a) { arch = a; }
+    void set_platform(const std::string& p) { platform = p; }
+    const std::string& get_arch() const { return arch; }
+    const std::string& get_platform() const { return platform; }
+};
+
 bool is_windows();
 bool is_linux();
 bool is_macos();

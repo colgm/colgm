@@ -99,7 +99,7 @@ private:
 public:
     semantic(error& e):
         err(e), ctx(), rp(err), tr(err, ctx),
-        impl_struct_name("") {}
+        in_loop_level(0), impl_struct_name("") {}
     const error& analyse(root*);
     void dump();
     const auto& get_context() const { return ctx; }

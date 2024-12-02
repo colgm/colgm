@@ -98,6 +98,9 @@ bool is_superh() {
 }
 
 const char* get_platform() {
+    if (!target_info::singleton()->get_platform().empty()) {
+        return target_info::singleton()->get_platform().c_str();
+    }
     if (is_windows()) {
         return "windows";
     } else if (is_linux()) {
@@ -109,6 +112,9 @@ const char* get_platform() {
 }
 
 const char* get_arch() {
+    if (!target_info::singleton()->get_arch().empty()) {
+        return target_info::singleton()->get_arch().c_str();
+    }
     if (is_x86()) {
         return "x86";
     } else if (is_x86_64()) {

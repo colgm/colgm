@@ -1,5 +1,4 @@
 #include "ast/delete_disabled_node.h"
-#include "colgm.h"
 #include "report.h"
 
 #include <vector>
@@ -19,18 +18,18 @@ bool delete_disabled_node::check_enable_if(cond_compile* cc) {
     if (cc->get_conds().count("target_os") &&
         cc->get_conds().count("arch")) {
         const auto& target_os = cc->get_conds().at("target_os");
-        const auto& arch = cc->get_conds().at("arch");
-        return target_os == get_platform() && arch == get_arch();
+        const auto& target_arch = cc->get_conds().at("arch");
+        return target_os == platform && target_arch == arch;
     }
 
     if (cc->get_conds().count("target_os")) {
         const auto& target_os = cc->get_conds().at("target_os");
-        return target_os == get_platform();
+        return target_os == platform;
     }
 
     if (cc->get_conds().count("arch")) {
-        const auto& arch = cc->get_conds().at("arch");
-        return arch == get_arch();
+        const auto& target_arch = cc->get_conds().at("arch");
+        return target_arch == arch;
     }
 
     return false;

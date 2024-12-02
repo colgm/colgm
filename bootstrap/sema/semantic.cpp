@@ -1019,18 +1019,38 @@ type semantic::resolve_call(call* node) {
 
 bool semantic::check_valid_left_value(expr* node) {
     if (!node->is(ast_type::ast_call)) {
+        rp.report(node, "bad left value: should be a call.");
         return false;
     }
     const auto mem_get_node = reinterpret_cast<call*>(node);
     for(auto i : mem_get_node->get_chain()) {
         if (i->is(ast_type::ast_initializer)) {
+            rp.report(i, "bad left value: should not contain initializer.");
             return false;
         }
         if ((i->is(ast_type::ast_call_path) ||
             i->is(ast_type::ast_call_func_args)) &&
             i == mem_get_node->get_chain().back()) {
+            rp.report(i, "bad left value: should not end with function call.");
             return false;
         }
+    }
+
+    expr* seg = nullptr;
+    bool maybe_invalid_assignment = false;
+    for(auto i : mem_get_node->get_chain()) {
+        if (i->is(ast_type::ast_call_func_args) &&
+            !i->get_resolve().is_pointer()) {
+            seg = i;
+            maybe_invalid_assignment = true;
+        } else if (i->is(ast_type::ast_ptr_get_field)) {
+            maybe_invalid_assignment = false;
+        }
+    }
+    if (maybe_invalid_assignment && seg) {
+        rp.warn(seg, "function returning non-pointer type,"
+                     " will do copy on return,"
+                     " may cause invalid assignment.");
     }
     return true;
 }
@@ -1044,11 +1064,12 @@ void semantic::check_mutable_left_value(expr* node, const type& lt) {
 }
 
 type semantic::resolve_assignment(assignment* node) {
+    const auto left = resolve_expression(node->get_left());
+    // check left value is valid for assignment
     if (!check_valid_left_value(node->get_left())) {
-        rp.report(node->get_left(), "bad left value.");
         return type::error_type();
     }
-    const auto left = resolve_expression(node->get_left());
+    // check left value is mutable
     check_mutable_left_value(node->get_left(), left);
     const auto right = resolve_expression(node->get_right());
     if (left.is_error() || right.is_error()) {
