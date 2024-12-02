@@ -5,27 +5,27 @@
 
 Work in progress. Lexer and parser are done.
 
-## Build
+## Build Bootstrap Compiler
 
 First you need bootstrap compiler, then use this command:
 
 ```bash
-[path of the compiler] main.colgm --library .
+[path of the compiler] main.colgm --library . -o colgm.ll
 ```
 
-And `out.ll` is generated, try `lli` or `clang`.
+And `colgm.ll` is generated, try `lli` or `clang`.
 
-## Run
+## Build Itself (Self-Host Compiler)
 
-for `lli`:
+for `lli` (LLVM JIT compiler):
 
 ```bash
-lli out.ll main.colgm -l -a
+lli colgm.ll main.colgm --library . -o out.ll
 ```
 
 for `clang` (suggested):
 
 ```bash
-clang out.ll -o colgm
-./colgm main.colgm -l -a
+clang colgm.ll -o colgm
+./colgm main.colgm --library . -o out.ll
 ```

@@ -5,8 +5,10 @@ use package::{ package };
 use sema::sema::{ sema };
 use sema::context::{ global_symbol_table, sema_context };
 use err::report::{ report };
+use util::cli::{ cli_option };
 
 pub struct compiler {
+    copt: cli_option*,
     rep: report*,
     pkg: package*,
     lex: lexer*,
@@ -16,14 +18,15 @@ pub struct compiler {
 }
 
 impl compiler {
-    pub func instance() -> compiler {
+    pub func instance(co: cli_option*) -> compiler {
         var rep = report::new();
         var pkg = package::new(rep);
         var lex = lexer::new(rep);
-        var par = parser::new(rep, lex);
+        var par = parser::new(rep, lex, co);
         var gt = global_symbol_table::new();
         var semantic = sema::new(rep, pkg, gt);
         return compiler {
+            copt: co,
             rep: rep,
             pkg: pkg,
             lex: lex,

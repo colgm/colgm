@@ -8,11 +8,13 @@ use std::io::{ io };
 use std::str::{ str };
 use std::vec::{ vec };
 use std::ptr::{ ptr };
+use util::cli::{ cli_option };
 use parse::generic_list_lookahead::{ generic_list_lookahead };
 use parse::remove_disabled_node::{ remove_disabled_node };
 
 pub struct parser {
     err: report*,
+    co: cli_option*,
     toks: vec<token>*,
     root: root*,
     index: u64
@@ -100,9 +102,10 @@ impl parser {
 }
 
 impl parser {
-    pub func new(e: report*, l: lexer*) -> parser* {
+    pub func new(e: report*, l: lexer*, co: cli_option*) -> parser* {
         var res = parser::__alloc__();
         res->err = e;
+        res->co = co;
         res->toks = l->toks.__ptr__();
         res->root = nil;
         res->index = 0;
@@ -1257,7 +1260,7 @@ impl parser {
         }
         self->update_location(self->root => ast*);
 
-        remove_disabled_node(self->root);
+        remove_disabled_node(self->root, self->co);
     }
 }
 

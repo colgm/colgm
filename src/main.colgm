@@ -26,7 +26,7 @@ func compile(option: cli_option) {
         return;
     }
 
-    var cc = compiler::instance();
+    var cc = compiler::instance(option.__ptr__());
     cc.pkg->library_path.clear();
     cc.pkg->library_path.append_i8_vec(option.library_path);
 
@@ -54,6 +54,9 @@ func compile(option: cli_option) {
         cc.delete();
         return;
     }
+    if (option.OPTION_VIEW_SEMA) {
+        cc.sema->dump();
+    }
 
     cc.delete();
 }
@@ -75,7 +78,13 @@ func main(argc: i32, argv: i8**) -> i32 {
 
     var option = cli_option::instance();
     for(var i: i32 = 1; i < argc; i += 1) {
-        if (streq(argv[i], "-l") || streq(argv[i], "--lex")) {
+        if (streq(argv[i], "-h") || streq(argv[i], "--help")) {
+            help();
+            return 0;
+        } elsif (streq(argv[i], "-v") || streq(argv[i], "--version")) {
+            print_version();
+            return 0;
+        } elsif (streq(argv[i], "-l") || streq(argv[i], "--lex")) {
             option.OPTION_VIEW_TOKEN = true;
         } elsif (streq(argv[i], "-a") || streq(argv[i], "--ast")) {
             option.OPTION_VIEW_AST = true;
@@ -89,7 +98,7 @@ func main(argc: i32, argv: i8**) -> i32 {
                 report_multiple_given_info("library path");
             }
             option.library_path = argv[i + 1];
-            if (strlen(option.library_path)==0 || option.library_path[0]=='-') {
+            if (strlen(option.library_path) == 0 || option.library_path[0] == '-') {
                 report_invalid_given_info("library path", option.library_path);
             }
             i += 1;
@@ -101,8 +110,32 @@ func main(argc: i32, argv: i8**) -> i32 {
                 report_multiple_given_info("output file");
             }
             option.output_file = argv[i + 1];
-            if (strlen(option.output_file)==0 || option.output_file[0]=='-') {
+            if (strlen(option.output_file) == 0 || option.output_file[0] == '-') {
                 report_invalid_given_info("output file", option.output_file);
+            }
+            i += 1;
+        } elsif (streq(argv[i], "--arch")) {
+            if (i + 1 >= argc) {
+                report_missing_given_info("arch");
+            }
+            if (option.arch != nil) {
+                report_multiple_given_info("arch");
+            }
+            option.arch = argv[i + 1];
+            if (strlen(option.arch) == 0 || option.arch[0] == '-') {
+                report_invalid_given_info("arch", option.arch);
+            }
+            i += 1;
+        } elsif (streq(argv[i], "--platform")) {
+            if (i + 1 >= argc) {
+                report_missing_given_info("platform");
+            }
+            if (option.platform != nil) {
+                report_multiple_given_info("platform");
+            }
+            option.platform = argv[i + 1];
+            if (strlen(option.platform) == 0 || option.platform[0] == '-') {
+                report_invalid_given_info("platform", option.platform);
             }
             i += 1;
         } elsif (streq(argv[i], "--dump-lib")) {
