@@ -1,5 +1,5 @@
 use err::span::{ span };
-use err::panic::{ panic };
+use err::panic::{ panic, unreachable };
 use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ io };
 use std::str::{ str };
@@ -113,213 +113,177 @@ impl ast {
         }
 
         match (self->kind) {
-            ast_kind::ast_null => return;
+            ast_kind::ast_null => {}
             ast_kind::ast_root => {
                 var tmp = self => root*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_unary_operator => {
                 var tmp = self => ast_unary_operator*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_binary_operator => {
                 var tmp = self => ast_binary_operator*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_type_convert => {
                 var tmp = self => ast_type_convert*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_identifier => {
                 var tmp = self => ast_identifier*;
                 tmp->delete();
-                return;
             }
-            ast_kind::ast_nil_literal => return;
+            ast_kind::ast_nil_literal => {}
             ast_kind::ast_number_literal => {
                 var tmp = self => ast_number_literal*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_string_literal => {
                 var tmp = self => ast_string_literal*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_char_literal => {
                 var tmp = self => ast_char_literal*;
                 tmp->delete();
-                return;
             }
-            ast_kind::ast_bool_literal => return;
+            ast_kind::ast_bool_literal => {}
             ast_kind::ast_array_literal => {
                 var tmp = self => ast_array_literal*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_call_index => {
                 var tmp = self => ast_call_index*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_call_func_args => {
                 var tmp = self => ast_call_func_args*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_get_field => {
                 var tmp = self => ast_get_field*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_ptr_get_field => {
                 var tmp = self => ast_ptr_get_field*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_init_pair => {
                 var tmp = self => ast_init_pair*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_initializer => {
                 var tmp = self => ast_initializer*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_call_path => {
                 var tmp = self => ast_call_path*;
                 tmp->delete();
-                return;
+            }
+            ast_kind::ast_call_id => {
+                var tmp = self => ast_call_id*;
+                tmp->delete();
             }
             ast_kind::ast_call => {
                 var tmp = self => ast_call*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_assignment => {
                 var tmp = self => ast_assignment*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_cond_compile => {
                 var tmp = self => ast_cond_compile*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_type_def => {
                 var tmp = self => ast_type_def*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_generic_type_list => {
                 var tmp = self => ast_generic_type_list*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_enum_member => {
                 var tmp = self => ast_enum_member*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_enum_decl => {
                 var tmp = self => ast_enum_decl*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_struct_field => {
                 var tmp = self =>ast_struct_field*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_struct_decl => {
                 var tmp = self => ast_struct_decl*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_param => {
                 var tmp = self => ast_param*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_param_list => {
                 var tmp = self => ast_param_list*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_func_decl => {
                 var tmp = self => ast_func_decl*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_impl => {
                 var tmp = self => ast_impl*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_use_stmt => {
                 var tmp = self => ast_use_stmt*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_definition => {
                 var tmp = self => ast_definition*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_cond_stmt => {
                 var tmp = self => ast_cond_stmt*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_if_stmt => {
                 var tmp = self => ast_if_stmt*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_match_case => {
                 var tmp = self => ast_match_case*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_match_stmt => {
                 var tmp = self => ast_match_stmt*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_while_stmt => {
                 var tmp = self => ast_while_stmt*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_for_stmt => {
                 var tmp = self => ast_for_stmt*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_in_stmt_expr => {
                 var tmp = self => ast_in_stmt_expr*;
                 tmp->delete();
-                return;
             }
             ast_kind::ast_ret_stmt => {
                 var tmp = self => ast_ret_stmt*;
                 tmp->delete();
-                return;
             }
-            ast_kind::ast_continue_stmt => return;
-            ast_kind::ast_break_stmt => return;
+            ast_kind::ast_continue_stmt => {}
+            ast_kind::ast_break_stmt => {}
             ast_kind::ast_code_block => {
                 var tmp = self => ast_code_block*;
                 tmp->delete();
-                return;
             }
+            _ => { panic("ast::delete: unknown ast kind"); }
         }
-        panic("ast::delete: unknown ast kind");
     }
 }
 
@@ -404,6 +368,10 @@ impl ast {
             }
             ast_kind::ast_call_path => {
                 var tmp = self => ast_call_path*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_call_id => {
+                var tmp = self => ast_call_id*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_call => {
@@ -510,8 +478,9 @@ impl ast {
                 var tmp = self => ast_code_block*;
                 return tmp->copy() => ast*;
             }
+            _ => { panic("ast::copy: unknown ast kind"); }
         }
-        panic("ast::copy: unknown ast kind");
+        unreachable();
         return nil;
     }
 }

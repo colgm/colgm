@@ -437,8 +437,16 @@ bool ast2mir::visit_match_stmt(ast::match_stmt* node) {
     ));
 
     auto cond = new mir_branch(node->get_location());
+    ast::match_case* default_case = nullptr;
     for(auto i : node->get_cases()) {
+        if (i->get_value()->get_resolve().is_default_match()) {
+            default_case = i;
+            continue;
+        }
         cond->add(generate_match_case(i, name));
+    }
+    if (default_case) {
+        cond->add(generate_match_default(default_case));
     }
     block->add_content(cond);
     return true;
@@ -466,6 +474,7 @@ mir_if* ast2mir::generate_match_case(ast::match_case* node,
     block = right_block;
     node->get_value()->accept(this);
 
+    // condition is (match._xxx == value)
     auto cond_block = new mir_block(node->get_location());
     cond_block->add_content(new mir_binary(
         node->get_location(),
@@ -485,6 +494,21 @@ mir_if* ast2mir::generate_match_case(ast::match_case* node,
     return new mir_if(
         node->get_location(),
         cond_block,
+        body_block
+    );
+}
+
+mir_if* ast2mir::generate_match_default(ast::match_case* node) {
+    auto temp = block;
+    auto body_block = new mir_block(node->get_block()->get_location());
+    block = body_block;
+    for(auto i : node->get_block()->get_stmts()) {
+        i->accept(this);
+    }
+    block = temp;
+    return new mir_if(
+        node->get_location(),
+        nullptr,
         body_block
     );
 }

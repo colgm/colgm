@@ -75,6 +75,7 @@ public:
 public:
     static const type error_type() { return {"<err>", "", 0}; }
     static const type restrict_type() { return {"<restrict>", "", 0}; }
+    static const type default_match_type() { return {"<match default>", "", 0}; }
     static const type u64_type(i64 plvl = 0) { return {"u64", "", plvl}; }
     static const type u32_type(i64 plvl = 0) { return {"u32", "", plvl}; }
     static const type u16_type(i64 plvl = 0) { return {"u16", "", plvl}; }
@@ -90,6 +91,8 @@ public:
 
 public:
     bool is_error() const { return name=="<err>"; }
+    bool is_restrict() const { return name=="<restrict>"; }
+    bool is_default_match() const { return name=="<match default>"; }
     bool is_unsigned() const {
         const auto& t = *this;
         return t==type::u8_type(t.pointer_depth) ||

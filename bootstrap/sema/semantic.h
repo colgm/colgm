@@ -82,7 +82,9 @@ private:
     void resolve_definition(definition*, const colgm_func&);
     void check_defined_variable_is_void(definition*, const type&);
     void resolve_if_stmt(if_stmt*, const colgm_func&);
+    bool check_is_match_default(expr*);
     bool check_is_enum_literal(expr*);
+    size_t get_enum_literal_value(expr*, const type&);
     void resolve_cond_stmt(cond_stmt*, const colgm_func&);
     void resolve_match_stmt(match_stmt*, const colgm_func&);
     void resolve_while_stmt(while_stmt*, const colgm_func&);

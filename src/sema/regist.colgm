@@ -1,9 +1,13 @@
 use err::report::{ report };
 use std::io::{ io };
 use std::str::{ str };
-use package::{ package };
+use std::libc::{ free };
+use package::{ package, package_parse_status };
 use ast::ast::*;
 use std::fs::{ fs };
+use lex::lexer::{ lexer };
+use parse::parser::{ parser };
+use util::cli::{ cli_option };
 
 use sema::context::{ sema_context };
 use sema::primitive::{ colgm_primitive };
@@ -13,19 +17,22 @@ pub struct regist_pass {
     err: report*,
     pkg: package*,
     root: root*,
-    ctx: sema_context*
+    ctx: sema_context*,
+    co: cli_option*
 }
 
 impl regist_pass {
 	pub func new(err: report*,
                  pkg: package*,
-                 ctx: sema_context*) -> regist_pass* {
+                 ctx: sema_context*,
+                 co: cli_option*) -> regist_pass* {
 		var res = regist_pass::__alloc__();
         res->this_file = str::instance();
         res->err = err;
         res->pkg = pkg;
         res->root = nil;
         res->ctx = ctx;
+        res->co = co;
         return res;
 	}
 
@@ -79,6 +86,39 @@ impl regist_pass {
         }
 
         self->pkg->insert(expect_name.__ptr__(), expect_path.__ptr__());
+
+        if (self->pkg->get_status(expect_name.__ptr__()) ==
+            package_parse_status::not_used) {
+            var info = self->pkg->get_package_info(expect_name.__ptr__());
+            info->status = package_parse_status::analysing;
+            // TODO
+            var lex = lexer::new(self->err);
+            var par = parser::new(self->err, lex, self->co);
+
+            lex->scan(expect_path.c_str);
+            if (self->err->error_count > 0) {
+                return;
+            }
+            if (self->co->OPTION_VIEW_TOKEN) {
+                lex->dump();
+            }
+
+            par->parse();
+            if (self->err->error_count > 0) {
+                return;
+            }
+            if (self->co->OPTION_VIEW_AST) {
+                par->dump();
+            }
+
+            lex->delete();
+            par->delete();
+            free(lex => i8*);
+            free(par => i8*);
+
+            info->status = package_parse_status::analysed;
+        }
+
         expect_name.delete();
         expect_path.delete();
     }

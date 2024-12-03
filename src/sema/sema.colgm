@@ -7,21 +7,26 @@ use ast::ast::*;
 use sema::regist::{ regist_pass };
 use sema::context::*;
 
+use util::cli::{ cli_option };
+
 pub struct sema {
     err: report*,
     rp: regist_pass*,
     root: root*,
-    ctx: sema_context
+    ctx: sema_context,
+    co: cli_option*
 }
 
 impl sema {
     pub func new(err: report*,
                  pkg: package*,
-                 gt: global_symbol_table*) -> sema* {
+                 gt: global_symbol_table*,
+                 co: cli_option*) -> sema* {
         var res = sema::__alloc__();
         res->err = err;
         res->ctx = sema_context::instance(gt);
-        res->rp = regist_pass::new(err, pkg, res->ctx.__ptr__());
+        res->rp = regist_pass::new(err, pkg, res->ctx.__ptr__(), co);
+        res->co = co;
         return res;
     }
 

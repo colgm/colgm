@@ -2,6 +2,7 @@ use ast::ast::*;
 use ast::dumper::{ ast_dumper };
 use err::report::*;
 use err::span::{ span };
+use err::panic::{ unreachable };
 use lex::lexer::{ lexer, token, tok_kind };
 use std::libc::{ free, streq };
 use std::io::{ io };
@@ -193,6 +194,7 @@ impl parser {
                 self->next();
                 return;
             }
+            _ => {}
         }
 
         var message = str::instance();
@@ -355,6 +357,7 @@ impl parser {
                     self->match_token(tok_kind::tok_id);
                     res->chain.push(ptr<ast>::wrap(call_path => ast*));
                 }
+                _ => { unreachable(); }
             }
         }
         self->update_location(res => ast*);
@@ -510,6 +513,7 @@ impl parser {
                 tok_kind::tok_mul => kind = binary_kind::mul;
                 tok_kind::tok_div => kind = binary_kind::div;
                 tok_kind::tok_rem => kind = binary_kind::rem;
+                _ => { unreachable(); }
             }
             var binary = ast_binary_operator::new(begin_loc->copy(), kind);
             self->match_token(self->this_tok()->kind);
@@ -540,6 +544,7 @@ impl parser {
                         binary_kind::sub
                     );
                 }
+                _ => {}
             }
             self->match_token(self->this_tok()->kind);
             binary->left = res;
@@ -618,6 +623,7 @@ impl parser {
                 tok_kind::tok_leq => kind = binary_kind::leq;
                 tok_kind::tok_grt => kind = binary_kind::grt;
                 tok_kind::tok_geq => kind = binary_kind::geq;
+                _ => {}
             }
             var binary = ast_binary_operator::new(begin_loc->copy(), kind);
             self->match_token(self->this_tok()->kind);
@@ -704,6 +710,7 @@ impl parser {
                 tok_kind::tok_bit_xor_eq => assignment->kind = assignment_kind::xoreq;
                 tok_kind::tok_bit_or_eq => assignment->kind = assignment_kind::oreq;
                 tok_kind::tok_eq => assignment->kind = assignment_kind::eq;
+                _ => {}
             }
             self->match_token(self->this_tok()->kind);
             assignment->right = self->calculation_gen();
@@ -970,6 +977,7 @@ impl parser {
                 self->match_token(tok_kind::tok_semi);
                 return ast_null::new() => ast*;
             }
+            _ => {}
         }
 
         self->err->error(
@@ -1210,6 +1218,7 @@ impl parser {
 
             var decl_node: ast* = nil;
             match (self->this_tok()->kind) {
+                _ => {}
                 tok_kind::tok_struct => {
                     var tmp = self->struct_decl_gen();
                     tmp->is_public = flag_is_public;

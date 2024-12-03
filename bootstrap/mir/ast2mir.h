@@ -89,6 +89,7 @@ private:
     mir_if* generate_if_stmt(ast::if_stmt*);
     bool visit_match_stmt(ast::match_stmt*) override;
     mir_if* generate_match_case(ast::match_case*, const std::string&);
+    mir_if* generate_match_default(ast::match_case*);
     bool visit_while_stmt(ast::while_stmt*) override;
     bool visit_for_stmt(ast::for_stmt*) override;
     bool visit_ret_stmt(ast::ret_stmt*) override;

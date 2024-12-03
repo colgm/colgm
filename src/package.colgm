@@ -1,12 +1,38 @@
 use std::str::{ str };
 use err::report::{ report };
+use err::panic::{ panic };
 use std::io::{ io };
 use std::map::{ hashmap };
+
+pub enum package_parse_status {
+    not_used,
+    not_exist,
+    analysed,
+    analysing
+}
+
+pub struct package_info {
+    path: str,
+    status: package_parse_status
+}
+
+impl package_info {
+    pub func delete(self) {
+        self->path.delete();
+    }
+
+    pub func copy(self) -> package_info* {
+        var res = package_info::__alloc__();
+        res->path = self->path.copy_instance();
+        res->status = self->status;
+        return res;
+    }
+}
 
 pub struct package {
     err: report*,
     library_path: str,
-    file_mapper: hashmap<str, str>
+    file_mapper: hashmap<str, package_info>
 }
 
 impl package {
@@ -14,7 +40,7 @@ impl package {
         var res = package::__alloc__();
         res->err = e;
         res->library_path = str::instance();
-        res->file_mapper = hashmap<str, str>::instance();
+        res->file_mapper = hashmap<str, package_info>::instance();
         return res;
     }
 
@@ -30,6 +56,25 @@ impl package {
         io::stderr().out("[").green().out("package").reset().out("]");
         io::stderr().out(" insert { ").out(name->c_str).out(", ");
         io::stderr().out(path->c_str).out(" }\n");
-        self->file_mapper.insert(name, path);
+        var info = package_info {
+            path: path->copy_instance(),
+            status: package_parse_status::not_used
+        };
+        self->file_mapper.insert(name, info.__ptr__());
+        info.delete();
+    }
+
+    pub func get_status(self, name: str*) -> package_parse_status {
+        if (!self->file_mapper.has(name)) {
+            return package_parse_status::not_exist;
+        }
+        return self->file_mapper.get(name)->status;
+    }
+
+    pub func get_package_info(self, name: str*) -> package_info* {
+        if (!self->file_mapper.has(name)) {
+            panic("package info not found");
+        }
+        return self->file_mapper.get(name);
     }
 }

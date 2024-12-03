@@ -1236,12 +1236,25 @@ void semantic::resolve_cond_stmt(cond_stmt* node, const colgm_func& func_self) {
     }
 }
 
+bool semantic::check_is_match_default(expr* node) {
+    if (!node->is(ast_type::ast_call)) {
+        return false;
+    }
+    auto call_node = reinterpret_cast<call*>(node);
+    if (call_node->get_chain().size() != 0) {
+        return false;
+    }
+
+    const auto& name = call_node->get_head()->get_id()->get_name();
+    return name == "_";
+}
+
 bool semantic::check_is_enum_literal(expr* node) {
     if (!node->is(ast_type::ast_call)) {
         return false;
     }
     auto call_node = reinterpret_cast<call*>(node);
-    if (call_node->get_chain().size()!=1) {
+    if (call_node->get_chain().size() != 1) {
         return false;
     }
 
@@ -1249,7 +1262,7 @@ bool semantic::check_is_enum_literal(expr* node) {
     if (!ctx.global_symbol().count(name)) {
         return false;
     }
-    if (ctx.global_symbol().at(name).kind!=sym_kind::enum_kind) {
+    if (ctx.global_symbol().at(name).kind != sym_kind::enum_kind) {
         return false;
     }
 
@@ -1257,6 +1270,29 @@ bool semantic::check_is_enum_literal(expr* node) {
         return false;
     }
     return true;
+}
+
+size_t semantic::get_enum_literal_value(expr* node, const type& infer) {
+    const auto call_node = reinterpret_cast<call*>(node);
+    const auto name_node = call_node->get_head()->get_id();
+    const auto& name = name_node->get_name();
+
+    if (!ctx.global.domain.count(infer.loc_file)) {
+        return SIZE_MAX;
+    }
+
+    const auto& dm = ctx.global.domain.at(infer.loc_file);
+    if (!dm.enums.count(name)) {
+        return SIZE_MAX;
+    }
+    
+    const auto& em = dm.enums.at(name);
+    const auto path_node = reinterpret_cast<call_path*>(call_node->get_chain()[0]);
+    const auto& ename = path_node->get_name();
+    if (!em.members.count(ename)) {
+        return SIZE_MAX;
+    }
+    return em.members.at(ename);
 }
 
 void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self) {
@@ -1267,7 +1303,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
         return;
     }
 
-    if (ctx.search_symbol_kind(infer)!=sym_kind::enum_kind) {
+    if (ctx.search_symbol_kind(infer) != sym_kind::enum_kind) {
         rp.report(node->get_value(), "match value should be enum type.");
         return;
     }
@@ -1275,11 +1311,20 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
         rp.report(node, "expect at least one case.");
         return;
     }
+
+    bool default_found = false;
+    std::unordered_set<size_t> used_values;
     for(auto i : node->get_cases()) {
+        if (check_is_match_default(i->get_value())) {
+            i->get_value()->set_resolve_type(type::default_match_type());
+            default_found = true;
+            resolve_code_block(i->get_block(), func_self);
+            continue;
+        }
         const auto case_node = i->get_value();
         const auto case_infer = resolve_expression(case_node);
         case_node->set_resolve_type(case_infer);
-        if (case_infer!=infer) {
+        if (case_infer != infer) {
             rp.report(case_node,
                 "case value should be \"" + infer.to_string() +
                 "\" type but get \"" + case_infer.to_string() + "\"."
@@ -1290,9 +1335,52 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
         if (!check_is_enum_literal(case_node)) {
             rp.report(case_node, "case value should be enum literal.");
             continue;
+        } else {
+            const auto value = get_enum_literal_value(case_node, infer);
+            if (value != SIZE_MAX) {
+                used_values.insert(value);
+            }
         }
 
         resolve_code_block(i->get_block(), func_self);
+    }
+
+    if (default_found) {
+        return;
+    }
+
+    // check unused values if default is not used
+    if (!ctx.global.domain.count(infer.loc_file)) {
+        return;
+    }
+    const auto& dm = ctx.global.domain.at(infer.loc_file);
+    if (!dm.enums.count(infer.name)) {
+        return;
+    }
+    const auto& em = dm.enums.at(infer.name);
+    auto generated_warning = std::string("");
+    auto unused_counter = 0;
+
+    for (auto& i : em.members) {
+        if (used_values.count(i.second)) {
+            continue;
+        }
+        if (generated_warning.length()) {
+            generated_warning += ", ";
+        }
+        unused_counter++;
+        if (unused_counter >= 5) {
+            generated_warning += "...";
+            break;
+        }
+        generated_warning += i.first;
+    }
+
+    if (generated_warning.length()) {
+        rp.warn(node, "match statement with enum \"" + infer.to_string() +
+            "\" has unused member" + (unused_counter > 1? "s":"") +
+            ": " + generated_warning + "."
+        );
     }
 }
 
