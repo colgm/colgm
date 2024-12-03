@@ -86,5 +86,3 @@ Learn more about [Self-host compiler](./src/README.md)
     - syntax like `var a: [i32; 128] = [1, 2, 3];`
     - syntax like `var a: [i8*; 128] = ["foo", "bar", tmp];`
 5. switch statement should be mapped to `switch` in llvm
-6. `default` for match statement
-    - syntax like `_ => { ... }`
