@@ -1,5 +1,7 @@
 use std::libc::{ free };
 
+use err::panic::{ panic };
+
 struct node<T> {
     elem: T*,
     next: node<T>*,
@@ -56,6 +58,9 @@ impl list_iter<T> {
 impl list<T> {
     pub func new() -> list<T>* {
         var res = list<T>::__alloc__();
+        if (res == nil) {
+            panic("list<T>::new: failed to allocate memory");
+        }
         res->head = nil;
         res->tail = nil;
         res->size = 0;
@@ -85,6 +90,9 @@ impl list<T> {
 
     pub func insert(self, elem: T*) {
         var new_node = node<T>::__alloc__();
+        if (new_node == nil) {
+            panic("list<T>::insert: failed to allocate memory");
+        }
         new_node->elem = elem->copy();
         new_node->next = nil;
         new_node->prev = self->tail;
@@ -108,6 +116,9 @@ impl list<T> {
 impl primitive_list<T> {
     pub func new() -> primitive_list<T>* {
         var res = primitive_list<T>::__alloc__();
+        if (res == nil) {
+            panic("primitive_list<T>::new: failed to allocate memory");
+        }
         res->head = nil;
         res->tail = nil;
         res->size = 0;
@@ -136,6 +147,9 @@ impl primitive_list<T> {
 
     pub func insert(self, elem: T) {
         var new_node = primitive_node<T>::__alloc__();
+        if (new_node == nil) {
+            panic("primitive_list<T>::insert: failed to allocate memory");
+        }
         new_node->elem = elem;
         new_node->next = nil;
         new_node->prev = self->tail;

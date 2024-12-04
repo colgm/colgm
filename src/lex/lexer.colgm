@@ -3,8 +3,10 @@ use std::vec::{ vec };
 use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ readfile_into_string, io };
 use std::fs::{ fs };
+
 use err::report::{ report };
 use err::span::{ span };
+use err::panic::{ panic };
 
 pub enum tok_kind {
     tok_null,       // reserved
@@ -91,6 +93,9 @@ pub struct token {
 impl token {
     pub func new(kind: tok_kind, content: str*, loc: span*) -> token* {
         var res = token::__alloc__();
+        if (res == nil) {
+            panic("token::new: failed to allocate memory");
+        }
         res->kind = kind;
         res->content = content;
         res->location = loc;
@@ -99,6 +104,9 @@ impl token {
 
     pub func copy(self) -> token* {
         var res = token::__alloc__();
+        if (res == nil) {
+            panic("token::copy: failed to allocate memory");
+        }
         res->kind = self->kind;
         res->content = self->content->copy();
         res->location = self->location->copy();
@@ -125,6 +133,9 @@ pub struct lexer {
 impl lexer {
     pub func new(e: report*) -> lexer* {
         var res = lexer::__alloc__();
+        if (res == nil) {
+            panic("lexer::new: failed to allocate memory");
+        }
         res->err = e;
         res->toks = vec<token>::instance();
         res->pos = 0;

@@ -3,6 +3,8 @@ use std::libc::{ malloc, free, streq };
 use std::list::{ list, list_iter };
 use std::io::{ io };
 
+use err::panic::{ panic };
+
 pub struct hashset<T> {
     size: u64,
     bucket_capacity: u64,
@@ -12,6 +14,9 @@ pub struct hashset<T> {
 impl hashset<T> {
     pub func new() -> hashset<T>* {
         var res = hashset<T>::__alloc__();
+        if (res == nil) {
+            panic("hashset<T>::new: failed to allocate memory");
+        }
         res->size = 0;
         res->bucket_capacity = 1024;
         res->bucket = malloc(res->bucket_capacity * list<T>::__size__()) => list<T>*;

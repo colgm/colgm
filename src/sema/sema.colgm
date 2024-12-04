@@ -1,43 +1,40 @@
 use err::report::{ report };
+
 use std::io::{ io };
 use std::libc::{ free };
 use std::str::{ str };
+
 use package::{ package };
+
 use ast::ast::*;
-use sema::regist::{ regist_pass };
-use sema::context::*;
+
+use sema::context::{ sema_context };
 
 use util::cli::{ cli_option };
 
 pub struct sema {
     err: report*,
-    rp: regist_pass*,
     root: root*,
-    ctx: sema_context,
+    ctx: sema_context*,
     co: cli_option*
 }
 
 impl sema {
     pub func new(err: report*,
                  pkg: package*,
-                 gt: global_symbol_table*,
+                 ctx: sema_context*,
                  co: cli_option*) -> sema* {
         var res = sema::__alloc__();
         res->err = err;
-        res->ctx = sema_context::instance(gt);
-        res->rp = regist_pass::new(err, pkg, res->ctx.__ptr__(), co);
+        res->ctx = ctx;
         res->co = co;
         return res;
     }
 
-    pub func delete(self) {
-        self->rp->delete();
-        free(self->rp => i8*);
-        self->ctx.delete();
-    }
+    pub func delete(self) {}
 
     pub func dump(self) {
-        var gt = self->ctx.global;
+        var gt = self->ctx->global;
         if (gt->primitives.size > 0) {
             io::stdout().out("primitives:\n");
             for (var i = gt->primitives.iter();!i.is_end(); i = i.next()) {
@@ -50,6 +47,5 @@ impl sema {
 impl sema {
     pub func scan(self, root: root*) {
         self->root = root;
-        self->rp->run(root);
     }
 }

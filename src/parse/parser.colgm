@@ -1,15 +1,20 @@
 use ast::ast::*;
 use ast::dumper::{ ast_dumper };
+
 use err::report::*;
 use err::span::{ span };
-use err::panic::{ unreachable };
+use err::panic::{ panic, unreachable };
+
 use lex::lexer::{ lexer, token, tok_kind };
+
 use std::libc::{ free, streq };
 use std::io::{ io };
 use std::str::{ str };
 use std::vec::{ vec };
 use std::ptr::{ ptr };
+
 use util::cli::{ cli_option };
+
 use parse::generic_list_lookahead::{ generic_list_lookahead };
 use parse::remove_disabled_node::{ remove_disabled_node };
 
@@ -105,6 +110,9 @@ impl parser {
 impl parser {
     pub func new(e: report*, l: lexer*, co: cli_option*) -> parser* {
         var res = parser::__alloc__();
+        if (res == nil) {
+            panic("parser::new: failed to allocate memory");
+        }
         res->err = e;
         res->co = co;
         res->toks = l->toks.__ptr__();

@@ -17,6 +17,9 @@ pub struct primitive_vec<T> {
 impl vec<T> {
     pub func new() -> vec<T>* {
         var res = vec<T>::__alloc__();
+        if (res == nil) {
+            panic("vec<T>::new: failed to allocate memory");
+        }
         res->size = 0;
         res->capacity = 4;
         res->data = malloc(res->capacity * ptr_size()) => T**;
@@ -93,6 +96,9 @@ impl vec<T> {
 impl primitive_vec<T> {
     pub func new() -> primitive_vec<T>* {
         var res = primitive_vec<T>::__alloc__();
+        if (res == nil) {
+            panic("primitive_vec<T>::new: failed to allocate memory");
+        }
         res->size = 0;
         res->capacity = 4;
         res->data = malloc(res->capacity * T::__size__()) => T*;

@@ -10,6 +10,9 @@ pub struct str {
 impl str {
     pub func new() -> str* {
         var res = str::__alloc__();
+        if (res == nil) {
+            panic("str::new: failed to allocate memory");
+        }
         res->c_str = nil;
         res->init();
         return res;
@@ -160,7 +163,7 @@ impl str {
 
     pub func back(self) -> i8 {
         if (self->size == 0) {
-            panic("std::str::back: empty string");
+            panic("str::back: empty string");
         }
         return self->c_str[self->size - 1];
     }
@@ -176,7 +179,7 @@ impl str {
 impl str {
     pub func get(self, index: u64) -> i8 {
         if (index >= self->size) {
-            panic("std::str::get: index out of range");
+            panic("str::get: index out of range");
         }
         return self->c_str[index];
     }

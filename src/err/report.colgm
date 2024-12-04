@@ -1,4 +1,6 @@
 use err::span::*;
+use err::panic::{ panic };
+
 use std::str::{ str };
 use std::io::{ readfile_into_string, io };
 use std::libc::{ malloc, realloc, free, itoa, strlen };
@@ -14,6 +16,9 @@ pub struct report {
 impl report {
     pub func new() -> report* {
         var res = report::__alloc__();
+        if (res == nil) {
+            panic("report::new: failed to allocate memory");
+        }
         res->filename = str::instance();
         res->source = vec<str>::instance();
         res->error_count = 0;

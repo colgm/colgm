@@ -11,6 +11,7 @@ use util::cli::{ cli_option };
 
 use sema::context::{ sema_context };
 use sema::primitive::{ colgm_primitive };
+use sema::sema::{ sema };
 
 pub struct regist_pass {
     this_file: str,
@@ -94,6 +95,11 @@ impl regist_pass {
             // TODO
             var lex = lexer::new(self->err);
             var par = parser::new(self->err, lex, self->co);
+            var regpass = regist_pass::new(self->err,
+                                           self->pkg,
+                                           self->ctx,
+                                           self->co);
+            var semantic = sema::new(self->err, self->pkg, self->ctx, self->co);
 
             lex->scan(expect_path.c_str);
             if (self->err->error_count > 0) {
@@ -111,10 +117,27 @@ impl regist_pass {
                 par->dump();
             }
 
+            regpass->run(par->root);
+            if (self->err->error_count > 0) {
+                return;
+            }
+
+            semantic->scan(par->root);
+            if (self->err->error_count > 0) {
+                return;
+            }
+            if (self->co->OPTION_VIEW_SEMA) {
+                semantic->dump();
+            }
+
             lex->delete();
             par->delete();
+            regpass->delete();
+            semantic->delete();
             free(lex => i8*);
             free(par => i8*);
+            free(regpass => i8*);
+            free(semantic => i8*);
 
             info->status = package_parse_status::analysed;
         }

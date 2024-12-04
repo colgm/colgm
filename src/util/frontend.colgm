@@ -1,0 +1,43 @@
+use std::libc::{ free };
+use lex::lexer::{ lexer };
+use parse::parser::{ parser };
+use package::{ package };
+use err::report::{ report };
+use err::panic::{ panic };
+use util::cli::{ cli_option };
+
+pub struct frontend {
+    copt: cli_option*,
+    err: report*,
+    pkg: package*,
+    lex: lexer*,
+    par: parser*
+}
+
+impl frontend {
+    pub func instance(co: cli_option*) -> frontend {
+        var err = report::new();
+        var pkg = package::new(err);
+        var lex = lexer::new(err);
+        var par = parser::new(err, lex, co);
+
+        return frontend {
+            copt: co,
+            err: err,
+            pkg: pkg,
+            lex: lex,
+            par: par
+        };
+    }
+
+    pub func delete(self) {
+        self->err->delete();
+        free(self->err => i8*);
+        self->pkg->delete();
+        free(self->pkg => i8*);
+        self->lex->delete();
+        free(self->lex => i8*);
+        self->par->delete();
+        free(self->par => i8*);
+    }
+}

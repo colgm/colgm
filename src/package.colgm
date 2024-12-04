@@ -1,8 +1,9 @@
 use std::str::{ str };
-use err::report::{ report };
-use err::panic::{ panic };
 use std::io::{ io };
 use std::map::{ hashmap };
+
+use err::report::{ report };
+use err::panic::{ panic };
 
 pub enum package_parse_status {
     not_used,
@@ -38,6 +39,9 @@ pub struct package {
 impl package {
     pub func new(e: report*) -> package* {
         var res = package::__alloc__();
+        if (res == nil) {
+            panic("package::new: failed to allocate memory");
+        }
         res->err = e;
         res->library_path = str::instance();
         res->file_mapper = hashmap<str, package_info>::instance();
