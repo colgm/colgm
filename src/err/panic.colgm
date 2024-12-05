@@ -1,10 +1,34 @@
-use std::libc::{ write, exit, strlen };
+use std::libc::{ write, exit, strlen, free, itoa,
+                 backtrace, backtrace_symbols };
+
+func print_backtrace() {
+    var stack_info_buffer = [i8*; 1024];
+    var stack_trace_size = backtrace(stack_info_buffer, 1024);
+    var stack_trace_strings = backtrace_symbols(stack_info_buffer,
+                                                stack_trace_size);
+    var number_buffer = [i8; 128];
+    itoa(stack_trace_size => i64, number_buffer, 10);
+    write(2, "stack trace", strlen("stack trace"));
+    write(2, " with ", strlen(" with "));
+    write(2, number_buffer, strlen(number_buffer));
+    write(2, " frames:\n", strlen(" frames:\n"));
+
+    for (var i: i32 = 0; i < stack_trace_size; i += 1) {
+        write(2, "  ", 2);
+        write(2, stack_trace_strings[i], strlen(stack_trace_strings[i]));
+        write(2, "\n", 1);
+    }
+
+    free(stack_trace_strings => i8*);
+}
 
 pub func panic(info: i8*) {
     var panic_head = "colgm panic: ";
     write(2, panic_head, strlen(panic_head));
     write(2, info, strlen(info));
     write(2, "\n", 1);
+
+    print_backtrace();
     exit(-1);
 }
 
