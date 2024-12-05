@@ -1,5 +1,7 @@
 use std::str::{ str };
 use std::vec::{ vec };
+use std::io::{ io };
+use err::panic::{ panic };
 
 pub struct method_info {
     flag_is_static: bool,
@@ -84,6 +86,61 @@ impl type {
             stm_info: self->stm_info.copy_instance(),
             prm_info: self->prm_info.copy_instance(),
             generics: self->generics.copy_instance()
+        };
+    }
+}
+
+impl type {
+    pub func check_pointer_depth(self) {
+        if (self->pointer_depth >= 0) {
+            return;
+        }
+        io::stderr().out("invalid pointer depth: ")
+                   .out_i64(self->pointer_depth);
+        panic("type::check_pointer_depth(): invalid pointer depth");
+    }
+}
+
+impl type {
+    pub func error_type() -> type {
+        return type {
+            name: str::from("<error>"),
+            loc_file: str::from(""),
+            pointer_depth: -1,
+            is_global_sym: false,
+            is_global_func: false,
+            is_enum: false,
+            is_immutable: false,
+            is_generic_placeholder: false,
+            stm_info: method_info::instance(),
+            prm_info: method_info::instance(),
+            generics: vec<type>::instance()
+        };
+    }
+}
+
+pub struct symbol {
+    name: str,
+    sym_type: type
+}
+
+impl symbol {
+    pub func delete(self) {
+        self->name.delete();
+        self->sym_type.delete();
+    }
+
+    pub func copy(self) -> symbol* {
+        var res = symbol::__alloc__();
+        res->name = self->name.copy_instance();
+        res->sym_type = self->sym_type.copy_instance();
+        return res;
+    }
+
+    pub func copy_instance(self) -> symbol {
+        return symbol {
+            name: self->name.copy_instance(),
+            sym_type: self->sym_type.copy_instance()
         };
     }
 }

@@ -18,7 +18,10 @@ pub struct colgm_func {
     unordered_params: hashmap<str, type>,
 
     generic_template: vec<str>,
-    generic_func_decl: ast_func_decl*
+    generic_func_decl: ast_func_decl*,
+
+    is_public: bool,
+    is_extern: bool
 }
 
 impl colgm_func {
@@ -48,7 +51,11 @@ impl colgm_func {
         res->generic_template = self->generic_template.copy_instance();
         if (self->generic_func_decl != nil) {
             res->generic_func_decl = self->generic_func_decl->copy();
+        } else {
+            res->generic_func_decl = nil;
         }
+        res->is_public = self->is_public;
+        res->is_extern = self->is_extern;
         return res;
     }
 }

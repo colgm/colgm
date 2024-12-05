@@ -5,13 +5,51 @@ use sema::function::{ colgm_func };
 use sema::structure::{ colgm_struct };
 use sema::enumerate::{ colgm_enum };
 
+pub enum sym_kind {
+    error_kind,
+    basic_kind,
+    enum_kind,
+    struct_kind,
+    func_kind,
+    package_kind,
+    module_kind
+}
+
+pub struct symbol_info {
+    kind: sym_kind,
+    loc_file: str,
+    is_public: bool
+}
+
+impl symbol_info {
+    pub func delete(self) {
+        self->kind = sym_kind::error_kind;
+        self->loc_file.delete();
+    }
+
+    pub func copy(self) -> symbol_info* {
+        var res = symbol_info::__alloc__();
+        res->kind = self->kind;
+        res->loc_file = self->loc_file.copy_instance();
+        res->is_public = self->is_public;
+        return res;
+    }
+}
+
 pub struct colgm_module {
     file_name: str,
     enums: hashmap<str, colgm_enum>,
     structs: hashmap<str, colgm_struct>,
     functions: hashmap<str, colgm_func>,
     generic_structs: hashmap<str, colgm_struct>,
-    generic_functions: hashmap<str, colgm_func>
+    generic_functions: hashmap<str, colgm_func>,
+
+    // store global symbols used in current scope
+    // both normal and generic symbols are stored
+    global_symbol: hashmap<str, symbol_info>,
+
+    // only store generics in current scope
+    generic_symbol: hashmap<str, symbol_info>
 }
 
 impl colgm_module {
@@ -22,7 +60,9 @@ impl colgm_module {
             structs: hashmap<str, colgm_struct>::instance(),
             functions: hashmap<str, colgm_func>::instance(),
             generic_structs: hashmap<str, colgm_struct>::instance(),
-            generic_functions: hashmap<str, colgm_func>::instance()
+            generic_functions: hashmap<str, colgm_func>::instance(),
+            global_symbol: hashmap<str, symbol_info>::instance(),
+            generic_symbol: hashmap<str, symbol_info>::instance()
         };
     }
 
@@ -33,6 +73,8 @@ impl colgm_module {
         self->functions.delete();
         self->generic_structs.delete();
         self->generic_functions.delete();
+        self->global_symbol.delete();
+        self->generic_symbol.delete();
     }
 
     pub func copy(self) -> colgm_module* {
@@ -43,6 +85,8 @@ impl colgm_module {
         res->functions = self->functions.copy_instance();
         res->generic_structs = self->generic_structs.copy_instance();
         res->generic_functions = self->generic_functions.copy_instance();
+        res->global_symbol = self->global_symbol.copy_instance();
+        res->generic_symbol = self->generic_symbol.copy_instance();
         return res;
     }
 }

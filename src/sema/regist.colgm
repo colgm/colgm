@@ -1,10 +1,14 @@
 use err::report::{ report };
+use err::panic::{ panic };
+
 use std::io::{ io };
 use std::str::{ str };
 use std::libc::{ free };
+use std::fs::{ fs };
+
 use package::{ package, package_parse_status };
 use ast::ast::*;
-use std::fs::{ fs };
+
 use lex::lexer::{ lexer };
 use parse::parser::{ parser };
 use util::cli::{ cli_option };
@@ -28,6 +32,9 @@ impl regist_pass {
                  ctx: sema_context*,
                  co: cli_option*) -> regist_pass* {
 		var res = regist_pass::__alloc__();
+        if (res == nil) {
+            panic("regist_pass::new: failed to allocate memory");
+        }
         res->this_file = str::instance();
         res->err = err;
         res->pkg = pkg;

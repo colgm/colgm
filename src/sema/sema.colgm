@@ -1,4 +1,5 @@
 use err::report::{ report };
+use err::panic::{ panic };
 
 use std::io::{ io };
 use std::libc::{ free };
@@ -7,7 +8,6 @@ use std::str::{ str };
 use package::{ package };
 
 use ast::ast::*;
-use err::panic::*;
 
 use sema::context::{ sema_context };
 
@@ -26,6 +26,9 @@ impl sema {
                  ctx: sema_context*,
                  co: cli_option*) -> sema* {
         var res = sema::__alloc__();
+        if (res == nil) {
+            panic("sema::new: failed to allocate memory");
+        }
         res->err = err;
         res->ctx = ctx;
         res->co = co;

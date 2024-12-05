@@ -16,6 +16,9 @@ pub struct global_symbol_table {
 impl global_symbol_table {
     pub func new() -> global_symbol_table* {
         var res = global_symbol_table::__alloc__();
+        if (res == nil) {
+            panic("global_symbol_table::new: failed to allocate memory");
+        }
         res->constant_string = hashset<str>::instance();
         res->primitives = hashmap<str, colgm_primitive>::instance();
         res->domain = hashmap<str, colgm_module>::instance();
