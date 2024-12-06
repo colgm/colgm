@@ -6,6 +6,7 @@
 #include "mir/visitor.h"
 #include "mir/ast2mir.h"
 #include "sir/sir.h"
+#include "sir/debug_info.h"
 #include "sir/context.h"
 
 #include <unordered_map>
@@ -172,6 +173,8 @@ private:
     std::vector<std::vector<sir_br*>> break_inst;
     std::vector<std::vector<sir_br*>> branch_jump_out;
 
+    u64 DI_counter;
+
 private:
     void unimplemented(mir* node) {
         std::stringstream ss;
@@ -220,6 +223,11 @@ private:
     void visit_mir_continue(mir_continue*) override;
     void visit_mir_loop(mir_loop*) override;
     void visit_mir_return(mir_return*) override;
+
+public:
+    void generate_llvm_ident();
+    void generate_llvm_module_flags();
+    void generate_DIFile();
 
 public:
     mir2sir(const sema_context& c):

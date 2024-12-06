@@ -157,13 +157,20 @@ void sir_context::dump_code(std::ostream& out) {
     }
 
     // generate implementations of functions
-    for(auto i : func_impls) {
+    for (auto i : func_impls) {
         i->dump(out);
         out << "\n";
     }
 
-    out << "!llvm.ident = !{!0}\n";
-    out << "!0 = !{!\"colgm compiler version " << __colgm_ver__ << "\"}\n";
+    for (auto i : named_metadata) {
+        i->dump(out);
+        out << "\n";
+    }
+
+    for (auto i : debug_info) {
+        i->dump(out);
+        out << "\n";
+    }
 }
 
 }

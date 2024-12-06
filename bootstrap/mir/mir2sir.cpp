@@ -1208,6 +1208,76 @@ void mir2sir::visit_mir_return(mir_return* node) {
     ));
 }
 
+void mir2sir::generate_llvm_ident() {
+    auto ident = new DI_named_metadata("llvm.ident");
+    ictx.named_metadata.push_back(ident);
+
+    auto version_list = new DI_list(DI_counter);
+    version_list->add(new DI_string(
+        "colgm compiler version " __colgm_ver__
+    ));
+    ident->add(new DI_ref_index(DI_counter));
+    ictx.debug_info.push_back(version_list);
+
+    ++DI_counter;
+}
+
+void mir2sir::generate_llvm_module_flags() {
+    auto module_flags = new DI_named_metadata("llvm.module.flags");
+    ictx.named_metadata.push_back(module_flags);
+
+    auto dwarf_version = new DI_list(DI_counter);
+    dwarf_version->add(new DI_i32(7));
+    dwarf_version->add(new DI_string("DWARF Version"));
+    dwarf_version->add(new DI_i32(4));
+    ictx.debug_info.push_back(dwarf_version);
+    module_flags->add(new DI_ref_index(DI_counter));
+    ++DI_counter;
+
+    auto debug_info_version = new DI_list(DI_counter);
+    debug_info_version->add(new DI_i32(2));
+    debug_info_version->add(new DI_string("Debug Info Version"));
+    debug_info_version->add(new DI_i32(3));
+    ictx.debug_info.push_back(debug_info_version);
+    module_flags->add(new DI_ref_index(DI_counter));
+    ++DI_counter;
+
+    auto wchar_size = new DI_list(DI_counter);
+    wchar_size->add(new DI_i32(1));
+    wchar_size->add(new DI_string("wchar_size"));
+    wchar_size->add(new DI_i32(4));
+    ictx.debug_info.push_back(wchar_size);
+    module_flags->add(new DI_ref_index(DI_counter));
+    ++DI_counter;
+
+    auto uwtable = new DI_list(DI_counter);
+    uwtable->add(new DI_i32(7));
+    uwtable->add(new DI_string("uwtable"));
+    uwtable->add(new DI_i32(1));
+    ictx.debug_info.push_back(uwtable);
+    module_flags->add(new DI_ref_index(DI_counter));
+    ++DI_counter;
+
+    auto frame_pointer = new DI_list(DI_counter);
+    frame_pointer->add(new DI_i32(7));
+    frame_pointer->add(new DI_string("frame-pointer"));
+    frame_pointer->add(new DI_i32(2));
+    ictx.debug_info.push_back(frame_pointer);
+    module_flags->add(new DI_ref_index(DI_counter));
+    ++DI_counter;
+}
+
+void mir2sir::generate_DIFile() {
+    for (const auto& i : ctx.global.domain) {
+        const auto& filename = i.first;
+        const auto directory = std::string("");
+        ictx.debug_info.push_back(
+            new DI_file(DI_counter, filename, directory)
+        );
+        ++DI_counter;
+    }
+}
+
 const error& mir2sir::generate(const mir_context& mctx) {
     generate_type_mapper();
     for(const auto& i : mctx.const_strings) {
@@ -1217,6 +1287,10 @@ const error& mir2sir::generate(const mir_context& mctx) {
     emit_func_decl(mctx);
     emit_func_impl(mctx);
 
+    DI_counter = 0;
+    generate_llvm_ident();
+    generate_llvm_module_flags();
+    generate_DIFile();
     return err;
 }
 

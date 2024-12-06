@@ -3,6 +3,7 @@
 #include "colgm.h"
 #include "sema/symbol.h"
 #include "sir/sir.h"
+#include "sir/debug_info.h"
 
 #include <iostream>
 #include <vector>
@@ -60,9 +61,8 @@ struct sir_context {
     std::vector<sir_func*> func_decls;
     std::vector<sir_func*> func_impls;
     std::unordered_map<std::string, u64> const_strings;
-
-private:
-    bool passes_already_executed = false;
+    std::vector<DI_named_metadata*> named_metadata;
+    std::vector<DI_node*> debug_info;
 
 private:
     void dump_target_tripple(std::ostream&) const;
@@ -79,6 +79,12 @@ public:
             delete i;
         }
         for(auto i : func_impls) {
+            delete i;
+        }
+        for(auto i : named_metadata) {
+            delete i;
+        }
+        for(auto i : debug_info) {
             delete i;
         }
     }
