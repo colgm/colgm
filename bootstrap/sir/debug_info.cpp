@@ -52,4 +52,49 @@ void DI_file::dump(std::ostream& out) const {
     out << "\", directory: \"" << directory << "\")";
 }
 
+void DI_compile_unit::dump(std::ostream& out) const {
+    dump_index(out);
+    out << "distinct !DICompileUnit(";
+    out << "language: DW_LANG_C99, ";
+    out << "file: !" << file_index << ", ";
+    out << "producer: \"" << producer << "\", ";
+    out << "isOptimized: false)";
+}
+
+void DI_basic_type::dump(std::ostream& out) const {
+    dump_index(out);
+    out << "!DIBasicType(name: \"" << name << "\", ";
+    out << "size: " << size_in_bits;
+    out << ", encoding: " << encoding << ")";
+}
+
+void DI_structure_type::dump(std::ostream& out) const {
+    dump_index(out);
+    out << "!DICompositeType(tag: DW_TAG_structure_type, ";
+    out << "name: \"" << name << "\", ";
+    out << "file: !" << file_index << ", ";
+    out << "line: " << line << ", ";
+    out << "identifier: \"" << identifier << "\")";
+}
+
+void DI_enum_type::dump(std::ostream& out) const {
+    dump_index(out);
+    out << "!DICompositeType(tag: DW_TAG_enumeration_type, ";
+    out << "name: \"" << name << "\", ";
+    out << "file: !" << file_index << ", ";
+    out << "line: " << line << ", ";
+    out << "baseType: !" << base_type_index << ", ";
+    out << "size: 64, flags: DIFlagEnumClass, ";
+    if (elements_index != DI_node::DI_ERROR_INDEX) {
+        out << "elements: !" << elements_index << ", ";
+    }
+    out << "identifier: \"" << identifier << "\")";
+}
+
+void DI_enumerator::dump(std::ostream& out) const {
+    dump_index(out);
+    out << "!DIEnumerator(name: \"" << name << "\", ";
+    out << "value: " << value << ")";
+}
+
 }

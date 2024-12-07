@@ -227,7 +227,11 @@ private:
 public:
     void generate_llvm_ident();
     void generate_llvm_module_flags();
+    void generate_llvm_dbg_cu();
     void generate_DIFile();
+    void generate_basic_type();
+    void generate_DI_enum_type(const mir_context&);
+    void generate_DI_structure_type(const mir_context&);
 
 public:
     mir2sir(const sema_context& c):

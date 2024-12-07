@@ -105,6 +105,9 @@ public:
     const error& analyse(root*);
     void dump();
     const auto& get_context() const { return ctx; }
+    void set_main_input_file(const std::string& input_file) {
+        ctx.global.input_file = input_file;
+    }
 };
 
 }

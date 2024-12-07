@@ -14,6 +14,9 @@
 namespace colgm {
 
 struct global_symbol_table {
+    // main input file
+    std::string input_file;
+
     // store all string literals
     std::unordered_set<std::string> constant_string;
 

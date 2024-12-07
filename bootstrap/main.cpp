@@ -98,6 +98,7 @@ void execute(const std::string& input_file,
     colgm::lexer lexer(err);
     colgm::parse parser(err);
     colgm::semantic sema(err);
+    sema.set_main_input_file(input_file);
     colgm::mir::ast2mir ast2mir(err, sema.get_context());
 
     // ast -> mir -> sir generator pass

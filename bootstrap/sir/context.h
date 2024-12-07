@@ -57,12 +57,17 @@ public:
 };
 
 struct sir_context {
+public:
     std::vector<sir_struct*> struct_decls;
     std::vector<sir_func*> func_decls;
     std::vector<sir_func*> func_impls;
     std::unordered_map<std::string, u64> const_strings;
+
+public:
     std::vector<DI_named_metadata*> named_metadata;
     std::vector<DI_node*> debug_info;
+    std::unordered_map<std::string, u64> DI_file_map;
+    std::unordered_map<std::string, u64> DI_basic_type_map;
 
 private:
     void dump_target_tripple(std::ostream&) const;

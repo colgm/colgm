@@ -16,7 +16,12 @@ enum class DI_kind {
     DI_list,
     DI_i32,
     DI_string,
-    DI_file
+    DI_file,
+    DI_compile_unit,
+    DI_basic_type,
+    DI_structure_type,
+    DI_enum_type,
+    DI_enumerator
 };
 
 class DI_node {
@@ -120,6 +125,82 @@ public:
         DI_node(DI_kind::DI_file, i),
         filename(f), directory(d) {}
     ~DI_file() = default;
+    void dump(std::ostream&) const override;
+};
+
+class DI_compile_unit: public DI_node {
+private:
+    std::string producer;
+    u64 file_index;
+
+public:
+    DI_compile_unit(u64 i, const std::string& p, u64 fi):
+        DI_node(DI_kind::DI_compile_unit, i), producer(p), file_index(fi) {}
+    ~DI_compile_unit() = default;
+    void dump(std::ostream&) const override;
+};
+
+class DI_basic_type: public DI_node {
+private:
+    std::string name;
+    u64 size_in_bits;
+    std::string encoding;
+
+public:
+    DI_basic_type(u64 i, const std::string& n, u64 s, const std::string& e):
+        DI_node(DI_kind::DI_basic_type, i),
+        name(n), size_in_bits(s), encoding(e) {}
+    ~DI_basic_type() = default;
+   void dump(std::ostream&) const override;
+};
+
+class DI_structure_type: public DI_node {
+private:
+    std::string name;
+    std::string identifier;
+    u64 file_index;
+    u64 line;
+
+public:
+    DI_structure_type(u64 i, const std::string& n,
+                      const std::string& id,
+                      u64 fi, u64 l):
+        DI_node(DI_kind::DI_structure_type, i),
+        name(n), identifier(id), file_index(fi), line(l) {}
+    ~DI_structure_type() = default;
+    void dump(std::ostream&) const override;
+};
+
+class DI_enum_type: public DI_node {
+private:
+    std::string name;
+    std::string identifier;
+    u64 file_index;
+    u64 line;
+    u64 base_type_index;
+    u64 elements_index;
+
+public:
+    DI_enum_type(u64 i, const std::string& n,
+                 const std::string& id,
+                 u64 fi, u64 l, u64 bti):
+        DI_node(DI_kind::DI_enum_type, i),
+        name(n), identifier(id), file_index(fi), line(l),
+        base_type_index(bti), elements_index(DI_node::DI_ERROR_INDEX) {}
+    ~DI_enum_type() = default;
+    void dump(std::ostream&) const override;
+    void set_elements_index(u64 ei) { elements_index = ei; }
+};
+
+class DI_enumerator: public DI_node {
+private:
+    std::string name;
+    i32 value;
+
+public:
+    DI_enumerator(u64 i, const std::string& n, i32 v):
+        DI_node(DI_kind::DI_enumerator, i), name(n), value(v) {}
+    ~DI_enumerator() = default;
     void dump(std::ostream&) const override;
 };
 

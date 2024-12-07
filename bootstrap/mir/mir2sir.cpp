@@ -1267,13 +1267,121 @@ void mir2sir::generate_llvm_module_flags() {
     ++DI_counter;
 }
 
+void mir2sir::generate_llvm_dbg_cu() {
+    auto llvm_dbg_cu = new DI_named_metadata("llvm.dbg.cu");
+    ictx.named_metadata.push_back(llvm_dbg_cu);
+
+    auto main_input_file_index = ictx.DI_file_map.at(ctx.global.input_file);
+    auto cu = new DI_compile_unit(
+        DI_counter,
+        "colgm compiler version " __colgm_ver__,
+        main_input_file_index
+    );
+    llvm_dbg_cu->add(new DI_ref_index(DI_counter));
+    ictx.debug_info.push_back(cu);
+    ++DI_counter;
+}
+
 void mir2sir::generate_DIFile() {
+    ictx.DI_file_map.clear();
     for (const auto& i : ctx.global.domain) {
         const auto& filename = i.first;
         const auto directory = std::string("");
         ictx.debug_info.push_back(
             new DI_file(DI_counter, filename, directory)
         );
+        ictx.DI_file_map.insert({filename, DI_counter});
+        ++DI_counter;
+    }
+}
+
+void mir2sir::generate_basic_type() {
+    ictx.DI_basic_type_map.clear();
+    struct {
+        std::string name;
+        u64 size_in_bits;
+        std::string encoding;
+    } type_table[] = {
+        {"i8", 8, "DW_ATE_signed"},
+        {"i16", 16, "DW_ATE_signed"},
+        {"i32", 32, "DW_ATE_signed"},
+        {"i64", 64, "DW_ATE_signed"},
+        {"u8", 8, "DW_ATE_unsigned"},
+        {"u16", 16, "DW_ATE_unsigned"},
+        {"u32", 32, "DW_ATE_unsigned"},
+        {"u64", 64, "DW_ATE_unsigned"},
+        {"f32", 32, "DW_ATE_float"},
+        {"f64", 64, "DW_ATE_float"},
+        {"bool", 1, "DW_ATE_boolean"}
+    };
+    for (auto& i : type_table) {
+        ictx.debug_info.push_back(
+            new DI_basic_type(
+                DI_counter,
+                i.name,
+                i.size_in_bits,
+                i.encoding
+            )
+        );
+        ictx.DI_basic_type_map.insert({i.name, DI_counter});
+        ++DI_counter;
+    }
+}
+
+void mir2sir::generate_DI_enum_type(const mir_context&) {
+    for (auto& d : ctx.global.domain) {
+        for (auto& e : d.second.enums) {
+            const auto ty = type {
+                .name = e.second.name,
+                .loc_file = e.second.location.file
+            };
+            const auto id = mangle(ty.full_path_name());
+            auto tmp = new DI_enum_type(
+                DI_counter,
+                e.second.name,
+                id,
+                ictx.DI_file_map.at(e.second.location.file),
+                e.second.location.begin_line,
+                ictx.DI_basic_type_map.at("i64")
+            );
+            ictx.debug_info.push_back(tmp);
+            ++DI_counter;
+
+            auto enumerator_list = new DI_list(DI_counter);
+            ictx.debug_info.push_back(enumerator_list);
+            tmp->set_elements_index(DI_counter);
+            ++DI_counter;
+
+            for (auto& et : e.second.ordered_member) {
+                ictx.debug_info.push_back(
+                    new DI_enumerator(
+                        DI_counter,
+                        et,
+                        e.second.members.at(et)
+                    )
+                );
+                enumerator_list->add(new DI_ref_index(DI_counter));
+                ++DI_counter;
+            }
+        }
+    }
+}
+
+void mir2sir::generate_DI_structure_type(const mir_context& mctx) {
+    for (auto i : mctx.structs) {
+        const auto ty = type {
+            .name = i->name,
+            .loc_file = i->location.file
+        };
+        const auto id = "struct." + mangle(ty.full_path_name());
+        auto tmp = new DI_structure_type(
+            DI_counter,
+            i->name,
+            id,
+            ictx.DI_file_map.at(i->location.file),
+            i->location.begin_line
+        );
+        ictx.debug_info.push_back(tmp);
         ++DI_counter;
     }
 }
@@ -1291,6 +1399,10 @@ const error& mir2sir::generate(const mir_context& mctx) {
     generate_llvm_ident();
     generate_llvm_module_flags();
     generate_DIFile();
+    generate_llvm_dbg_cu();
+    generate_basic_type();
+    generate_DI_enum_type(mctx);
+    generate_DI_structure_type(mctx);
     return err;
 }
 
