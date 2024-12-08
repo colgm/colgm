@@ -303,6 +303,32 @@ void mir_branch::accept(visitor* v) {
     v->visit_mir_branch(this);
 }
 
+void mir_switch_case::dump(const std::string& indent, std::ostream& os) {
+    os << indent << to_hex(this) << " switch-case " << value << " (\n";
+    content->dump(indent + " ", os);
+    os << indent << ")\n";
+}
+
+void mir_switch_case::accept(visitor* v) {
+    v->visit_mir_switch_case(this);
+}
+
+void mir_switch::dump(const std::string& indent, std::ostream& os) {
+    os << indent << to_hex(this) << " switch (\n";
+    condition->dump(indent + " ", os);
+    for(auto i : cases) {
+        i->dump(indent + " ", os);
+    }
+    if (default_case) {
+        default_case->dump(indent + " ", os);
+    }
+    os << indent << ")\n";
+}
+
+void mir_switch::accept(visitor* v) {
+    v->visit_mir_switch(this);
+}
+
 void mir_break::dump(const std::string& indent, std::ostream& os) {
     os << indent << to_hex(this) << " break\n";
 }

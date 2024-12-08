@@ -277,6 +277,32 @@ std::string sir_br_cond::get_label_false() const {
     return ss.str();
 }
 
+std::string sir_switch::get_default_label() const {
+    std::stringstream ss;
+    ss << "label." << std::hex << label_default << std::dec;
+    return ss.str();
+}
+
+std::vector<std::string> sir_switch::get_case_labels() const {
+    std::vector<std::string> labels;
+    for(auto& c : label_cases) {
+        std::stringstream ss;
+        ss << "label." << std::hex << c.second << std::dec;
+        labels.push_back(ss.str());
+    }
+    return labels;
+}
+
+void sir_switch::dump(std::ostream& out) const {
+    out << "switch i64 " << source << ", ";
+    out << "label %" << get_default_label() << " [\n";
+    for(auto& c : label_cases) {
+        out << "    i64 " << c.first << ", ";
+        out << "label %label." << std::hex << c.second << std::dec << "\n";
+    }
+    out << "  ]\n";
+}
+
 std::string sir_type_convert::convert_instruction(char source_type_mark,
                                                   int source_bit_size,
                                                   char dest_type_mark,

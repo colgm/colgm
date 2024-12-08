@@ -61,6 +61,22 @@ void visitor::visit_mir_branch(mir_branch* node) {
     }
 }
 
+void visitor::visit_mir_switch_case(mir_switch_case* node) {
+    node->get_content()->accept(this);
+}
+
+void visitor::visit_mir_switch(mir_switch* node) {
+    if (node->get_condition()) {
+        node->get_condition()->accept(this);
+    }
+    for(auto i : node->get_cases()) {
+        i->accept(this);
+    }
+    if (node->get_default_case()) {
+        node->get_default_case()->accept(this);
+    }
+}
+
 void visitor::visit_mir_loop(mir_loop* node) {
     node->get_condition()->accept(this);
     node->get_content()->accept(this);

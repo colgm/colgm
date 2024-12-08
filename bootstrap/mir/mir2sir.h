@@ -219,6 +219,8 @@ private:
     void visit_mir_assign(mir_assign*) override;
     void visit_mir_if(mir_if*) override;
     void visit_mir_branch(mir_branch*) override;
+    void visit_mir_switch_case(mir_switch_case*) override;
+    void visit_mir_switch(mir_switch*) override;
     void visit_mir_break(mir_break*) override;
     void visit_mir_continue(mir_continue*) override;
     void visit_mir_loop(mir_loop*) override;

@@ -33,6 +33,8 @@ enum class kind {
     mir_assign,
     mir_if,
     mir_branch,
+    mir_switch_case,
+    mir_switch,
     mir_break,
     mir_continue,
     mir_loop,
@@ -522,6 +524,53 @@ public:
 public:
     void add(mir_if* b) { branch.push_back(b); }
     const auto& get_branch() const { return branch; }
+};
+
+class mir_switch_case: public mir {
+private:
+    i64 value;
+    mir_block* content;
+
+public:
+    mir_switch_case(const span& loc, i64 v, mir_block* ct):
+        mir(kind::mir_switch_case, loc), value(v), content(ct) {}
+    ~mir_switch_case() override {
+        delete content;
+    }
+    void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    auto get_value() const { return value; }
+    auto get_content() const { return content; }
+};
+
+class mir_switch: public mir {
+private:
+    mir_block* condition;
+    std::vector<mir_switch_case*> cases;
+    mir_block* default_case;
+
+public:
+    mir_switch(const span& loc):
+        mir(kind::mir_switch, loc), condition(nullptr), default_case(nullptr) {}
+    ~mir_switch() override {
+        delete condition;
+        for(auto i : cases) {
+            delete i;
+        }
+        delete default_case;
+    }
+    void dump(const std::string&, std::ostream&) override;
+    void accept(visitor*) override;
+
+public:
+    void add(mir_switch_case* b) { cases.push_back(b); }
+    void set_condition(mir_block* c) { condition = c; }
+    void set_default_case(mir_block* c) { default_case = c; }
+    auto get_condition() const { return condition; }
+    const auto& get_cases() const { return cases; }
+    auto get_default_case() const { return default_case; }
 };
 
 class mir_break: public mir {

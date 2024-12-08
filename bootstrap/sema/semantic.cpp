@@ -35,7 +35,12 @@ void semantic::report_unreachable_statements(code_block* node) {
         unreachable_location.end_column = location.end_column;
         unreachable_location.end_line = location.end_line;
     }
-    rp.report(unreachable_location, "unreachable statement(s).");
+    rp.report(
+        unreachable_location,
+        unreachable_statements.size() > 1
+        ? "unreachable statements."
+        : "unreachable statement."
+    );
 }
 
 void semantic::report_top_level_block_has_no_return(code_block* node,

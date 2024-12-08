@@ -28,6 +28,8 @@ public:
     virtual void visit_mir_assign(mir_assign*);
     virtual void visit_mir_if(mir_if*);
     virtual void visit_mir_branch(mir_branch*);
+    virtual void visit_mir_switch_case(mir_switch_case*);
+    virtual void visit_mir_switch(mir_switch*);
     virtual void visit_mir_break(mir_break*) {}
     virtual void visit_mir_continue(mir_continue*) {}
     virtual void visit_mir_loop(mir_loop*);

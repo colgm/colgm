@@ -51,7 +51,10 @@ std::string mir2sir::type_mapping(const type& t) {
             // %struct.std.vec<data::foo>
             copy.name = "%struct." + mangle(t.full_path_name(false));
             break;
-        case sym_kind::enum_kind: copy = type::i64_type(); break;
+        case sym_kind::enum_kind:
+            // should copy pointer depth too
+            copy = type::i64_type(copy.pointer_depth);
+            break;
         default: break;
     }
     return copy.to_string();
@@ -1116,6 +1119,68 @@ void mir2sir::visit_mir_branch(mir_branch* node) {
     branch_jump_out.pop_back();
 
     block->add_stmt(new sir_label(block->stmt_size(), "branch.end"));
+}
+
+void mir2sir::visit_mir_switch_case(mir_switch_case* node) {
+    node->get_content()->accept(this);
+}
+
+void mir2sir::visit_mir_switch(mir_switch* node) {
+    node->get_condition()->accept(this);
+
+    std::vector<sir_br*> jmp_exits;
+
+    const auto value = value_stack.back();
+    value_stack.pop_back();
+    auto switch_inst = new sir_switch(value.to_value_t());
+    block->add_stmt(switch_inst);
+    for (auto i : node->get_cases()) {
+        auto case_label = block->stmt_size();
+        auto label = new sir_label(
+            case_label,
+            "switch.case " + std::to_string(i->get_value())
+        );
+        block->add_stmt(label);
+        switch_inst->add_case(i->get_value(), case_label);
+        i->accept(this);
+
+        // if block ends with ret instruction, do not generate
+        // switch jump exit instruction
+        if (block->back_is_ret_stmt()) {
+            continue;
+        }
+        auto jmp_exit = new sir_br(0);
+        block->add_stmt(jmp_exit);
+        jmp_exits.push_back(jmp_exit);
+    }
+
+    auto default_label = block->stmt_size();
+    auto label = new sir_label(
+        default_label,
+        "switch.default"
+    );
+    block->add_stmt(label);
+    switch_inst->set_default_label(default_label);
+    if (node->get_default_case()) {
+        node->get_default_case()->accept(this);
+
+        // if block ends with ret instruction, do not generate
+        // switch jump exit instruction
+        if (!block->back_is_ret_stmt()) {
+            auto jmp_exit = new sir_br(0);
+            block->add_stmt(jmp_exit);
+            jmp_exits.push_back(jmp_exit);
+        }
+        auto exit_label = block->stmt_size();
+        block->add_stmt(new sir_label(exit_label, "switch.end"));
+        for (auto i : jmp_exits) {
+            i->set_label(exit_label);
+        }
+    } else {
+        for (auto i : jmp_exits) {
+            i->set_label(default_label);
+        }
+    }
 }
 
 void mir2sir::visit_mir_break(mir_break* node) {

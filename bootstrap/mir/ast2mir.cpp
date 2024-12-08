@@ -421,84 +421,63 @@ mir_if* ast2mir::generate_if_stmt(ast::if_stmt* node) {
 }
 
 bool ast2mir::visit_match_stmt(ast::match_stmt* node) {
-    auto new_block = new mir_block(node->get_value()->get_location());
+    auto cond_block = new mir_block(node->get_location());
     auto temp = block;
-    block = new_block;
+    block = cond_block;
     node->get_value()->accept(this);
     block = temp;
 
-    const auto name = "match." + std::to_string(reinterpret_cast<u64>(node->get_value()));
+    auto switch_block = new mir_switch(node->get_location());
+    switch_block->set_condition(cond_block);
 
-    block->add_content(new mir_define(
-        node->get_value()->get_location(),
-        name,
-        new_block,
-        node->get_value()->get_resolve()
-    ));
-
-    auto cond = new mir_branch(node->get_location());
     ast::match_case* default_case = nullptr;
     for(auto i : node->get_cases()) {
         if (i->get_value()->get_resolve().is_default_match()) {
             default_case = i;
             continue;
         }
-        cond->add(generate_match_case(i, name));
+        switch_block->add(generate_match_case(i));
     }
     if (default_case) {
-        cond->add(generate_match_default(default_case));
+        switch_block->set_default_case(generate_default(default_case));
     }
-    block->add_content(cond);
+
+    block->add_content(switch_block);
     return true;
 }
 
-mir_if* ast2mir::generate_match_case(ast::match_case* node,
-                                     const std::string& tmp_variable) {
+mir_switch_case* ast2mir::generate_match_case(ast::match_case* node) {
     auto temp = block;
 
-    // generate match._xxx mir code
-    auto left_call_block = new mir_block(node->get_value()->get_location());
-    left_call_block->add_content(new mir_call_id(
-        node->get_value()->get_location(),
-        tmp_variable,
-        node->get_value()->get_resolve()
-    ));
-    auto left_block = new mir_block(node->get_value()->get_location());
-    left_block->add_content(new mir_call(
-        node->get_value()->get_location(),
-        node->get_value()->get_resolve(),
-        left_call_block
-    ));
+    const auto& enum_ty = node->get_value()->get_resolve();
+    if (!node->get_value()->is(ast::ast_type::ast_call)) {
+        err.err(node->get_location(), "enum value must be call node.");
+        return nullptr;
+    }
 
-    auto right_block = new mir_block(node->get_value()->get_location());
-    block = right_block;
-    node->get_value()->accept(this);
+    const auto& dm = ctx.global.domain.at(enum_ty.loc_file);
+    const auto& em = dm.enums.at(enum_ty.name);
 
-    // condition is (match._xxx == value)
-    auto cond_block = new mir_block(node->get_location());
-    cond_block->add_content(new mir_binary(
-        node->get_location(),
-        mir_binary::opr_kind::cmpeq,
-        type::bool_type(),
-        left_block,
-        right_block
-    ));
+    auto value_node = reinterpret_cast<ast::call*>(node->get_value());
+    auto path_node = reinterpret_cast<ast::call_path*>(value_node->get_chain()[0]);
+    const auto& em_name = path_node->get_name();
 
+    const auto index = em.members.at(em_name);
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
     for(auto i : node->get_block()->get_stmts()) {
         i->accept(this);
     }
-
     block = temp;
-    return new mir_if(
+
+    return new mir_switch_case(
         node->get_location(),
-        cond_block,
+        index,
         body_block
     );
 }
 
-mir_if* ast2mir::generate_match_default(ast::match_case* node) {
+mir_block* ast2mir::generate_default(ast::match_case* node) {
     auto temp = block;
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
@@ -506,11 +485,7 @@ mir_if* ast2mir::generate_match_default(ast::match_case* node) {
         i->accept(this);
     }
     block = temp;
-    return new mir_if(
-        node->get_location(),
-        nullptr,
-        body_block
-    );
+    return body_block;
 }
 
 bool ast2mir::visit_while_stmt(ast::while_stmt* node) {

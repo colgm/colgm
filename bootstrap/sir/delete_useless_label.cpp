@@ -27,6 +27,13 @@ void delete_useless_label::delete_label(sir_block* cb) {
                 add_count(used_label, left);
                 add_count(used_label, right);
             } break;
+            case sir_kind::sir_switch: {
+                auto label = i->to<sir_switch>()->get_default_label();
+                add_count(used_label, label);
+                for (const auto& j : i->to<sir_switch>()->get_case_labels()) {
+                    add_count(used_label, j);
+                }
+            } break;
             default: break;
         }
     }

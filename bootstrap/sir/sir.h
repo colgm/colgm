@@ -41,6 +41,7 @@ enum class sir_kind {
     sir_load,
     sir_br,
     sir_br_cond,
+    sir_switch,
     sir_type_convert
 };
 
@@ -629,6 +630,30 @@ public:
     void set_false_label(u64 dst_false) {
         label_false = dst_false;
     }
+};
+
+class sir_switch: public sir {
+private:
+    value_t source;
+    usize label_default;
+    std::vector<std::pair<i64, usize>> label_cases;
+
+public:
+    sir_switch(const value_t& src):
+        sir(sir_kind::sir_switch), source(src) {}
+    ~sir_switch() override = default;
+    void dump(std::ostream&) const override;
+
+public:
+    void add_case(i64 value, usize label) {
+        label_cases.push_back({value, label});
+    }
+    void set_default_label(usize dst_default) {
+        label_default = dst_default;
+    }
+    std::string get_default_label() const;
+    const auto& get_cases() const { return label_cases; }
+    std::vector<std::string> get_case_labels() const;
 };
 
 class sir_type_convert: public sir {
