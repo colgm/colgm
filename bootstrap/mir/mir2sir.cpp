@@ -1451,6 +1451,38 @@ void mir2sir::generate_DI_structure_type(const mir_context& mctx) {
     }
 }
 
+void mir2sir::generate_DI_subprogram(const mir_context& mctx) {
+    for (auto& i : mctx.decls) {
+        // auto added libc func like free, malloc may not have location
+        if (!ictx.DI_file_map.count(i->location.file)) {
+            continue;
+        }
+        auto tmp = new DI_subprogram(
+            DI_counter,
+            i->name,
+            ictx.DI_file_map.at(i->location.file),
+            i->location.begin_line
+        );
+        ictx.debug_info.push_back(tmp);
+        ++DI_counter;
+    }
+    for (auto& i : mctx.impls) {
+        const auto ty = type {
+            .name = i->name,
+            .loc_file = i->location.file
+        };
+        const auto id = mangle(ty.full_path_name());
+        auto tmp = new DI_subprogram(
+            DI_counter,
+            id,
+            ictx.DI_file_map.at(i->location.file),
+            i->location.begin_line
+        );
+        ictx.debug_info.push_back(tmp);
+        ++DI_counter;
+    }
+}
+
 const error& mir2sir::generate(const mir_context& mctx) {
     generate_type_mapper();
     for(const auto& i : mctx.const_strings) {
@@ -1468,6 +1500,7 @@ const error& mir2sir::generate(const mir_context& mctx) {
     generate_basic_type();
     generate_DI_enum_type(mctx);
     generate_DI_structure_type(mctx);
+    generate_DI_subprogram(mctx);
     return err;
 }
 

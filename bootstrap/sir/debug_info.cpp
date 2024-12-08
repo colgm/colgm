@@ -58,6 +58,9 @@ void DI_compile_unit::dump(std::ostream& out) const {
     out << "language: DW_LANG_C99, ";
     out << "file: !" << file_index << ", ";
     out << "producer: \"" << producer << "\", ";
+    if (imports_index != DI_node::DI_ERROR_INDEX) {
+        out << "imports: !" << imports_index << ", ";
+    }
     out << "isOptimized: false)";
 }
 
@@ -95,6 +98,13 @@ void DI_enumerator::dump(std::ostream& out) const {
     dump_index(out);
     out << "!DIEnumerator(name: \"" << name << "\", ";
     out << "value: " << value << ")";
+}
+
+void DI_subprogram::dump(std::ostream& out) const {
+    dump_index(out);
+    out << "distinct !DISubprogram(name: \"" << name << "\", ";
+    out << "file: !" << file_index << ", ";
+    out << "line: " << line << ")";
 }
 
 }

@@ -234,6 +234,7 @@ public:
     void generate_basic_type();
     void generate_DI_enum_type(const mir_context&);
     void generate_DI_structure_type(const mir_context&);
+    void generate_DI_subprogram(const mir_context&);
 
 public:
     mir2sir(const sema_context& c):

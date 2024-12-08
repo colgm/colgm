@@ -57,7 +57,6 @@ pub func check_enable_if(acc: ast_cond_compile*, co: cli_option*) -> bool {
 }
 
 pub func remove_disabled_node(node: root*, co: cli_option*) {
-    var remove_count = 0;
     var new_vec = primitive_vec<ptr<ast>>::instance();
 
     for (var i: u64 = 0; i < node->decls.size; i += 1) {
@@ -75,8 +74,6 @@ pub func remove_disabled_node(node: root*, co: cli_option*) {
             acc->delete();
             free(acc => i8*);
         } else {
-            remove_count += 1;
-
             d->delete();
             free(d => i8*);
         }
@@ -87,11 +84,5 @@ pub func remove_disabled_node(node: root*, co: cli_option*) {
     old_vec.delete();
 
     node->decls = new_vec;
-
-    if (remove_count > 0) {
-        io::stdout().out("[").green().out("ast").reset().out("]");
-        io::stdout().out(" run remove disabled node pass: ");
-        io::stdout().out_i64(remove_count).out(" node(s) removed\n");
-    }
     return;
 }
