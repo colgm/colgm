@@ -20,6 +20,7 @@ const u32 COMPILE_VIEW_LIB = 1<<2;
 const u32 COMPILE_VIEW_SEMA = 1<<3;
 const u32 COMPILE_VIEW_SIR = 1<<4;
 const u32 COMPILE_VIEW_MIR = 1<<5;
+const u32 COMPILE_VIEW_PASS = 1<<6;
 
 std::ostream& help(std::ostream& out) {
     out
@@ -37,6 +38,7 @@ std::ostream& help(std::ostream& out) {
     << "         --sir            | view sir.\n"
     << "         --library <path> | add library path.\n"
     << "         --dump-lib       | view libraries.\n"
+    << "         --pass-info      | view pass info.\n"
     << "         --arch           | specify target arch.\n"
     << "         --platform       | specify target platform.\n"
     << "file:\n"
@@ -130,14 +132,14 @@ void execute(const std::string& input_file,
 
     // generate mir code
     ast2mir.generate(parser.get_result()).chkerr();
-    mpm.execute(colgm::mir::ast2mir::get_context());
+    mpm.execute(colgm::mir::ast2mir::get_context(), cmd & COMPILE_VIEW_PASS);
     if (cmd & COMPILE_VIEW_MIR) {
         colgm::mir::ast2mir::dump(std::cout);
     }
 
     // generate sir code
     mir2sir.generate(*ast2mir.get_context()).chkerr();
-    spm.execute(&mir2sir.get_mutable_sir_context());
+    spm.execute(&mir2sir.get_mutable_sir_context(), cmd & COMPILE_VIEW_PASS);
     if (cmd & COMPILE_VIEW_SIR) {
         mir2sir.get_mutable_sir_context().dump_code(std::cout);
     }
@@ -178,7 +180,8 @@ i32 main(i32 argc, const char* argv[]) {
         {"-s", COMPILE_VIEW_SEMA},
         {"--mir", COMPILE_VIEW_MIR},
         {"--sir", COMPILE_VIEW_SIR},
-        {"--dump-lib", COMPILE_VIEW_LIB}
+        {"--dump-lib", COMPILE_VIEW_LIB},
+        {"--pass-info", COMPILE_VIEW_PASS},
     };
     u32 cmd = 0;
     std::string input_file = "";

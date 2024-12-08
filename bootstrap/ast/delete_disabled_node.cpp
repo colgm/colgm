@@ -36,7 +36,6 @@ bool delete_disabled_node::check_enable_if(cond_compile* cc) {
 }
 
 void delete_disabled_node::scan(root* node) {
-    u64 remove_count = 0;
     std::vector<decl*> new_root_decls;
     for(auto i : node->get_decls()) {
         if (!i->is(ast_type::ast_cond_compile)) {
@@ -50,16 +49,10 @@ void delete_disabled_node::scan(root* node) {
             cc->set_enabled_decl(nullptr);
             delete cc;
         } else {
-            remove_count++;
             delete cc;
         }
     }
     node->reset_decls(new_root_decls);
-    if (remove_count) {
-        std::clog << "[" << green << "ast" << reset;
-        std::clog << "] run delete disabled node pass: ";
-        std::clog << remove_count << " node(s) removed\n";
-    }
 }
 
 }

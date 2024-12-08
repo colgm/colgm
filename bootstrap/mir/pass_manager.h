@@ -23,7 +23,7 @@ private:
 
 public:
     ~pass_manager();
-    void execute(mir_context*);
+    void execute(mir_context*, bool);
 };
 
 }

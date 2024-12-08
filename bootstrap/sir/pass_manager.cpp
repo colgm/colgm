@@ -14,21 +14,25 @@ sir_pass_manager::~sir_pass_manager() {
     }
 }
 
-void sir_pass_manager::execute(sir_context* sctx) {
+void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
     passes.push_back(new delete_useless_label);
     passes.push_back(new remove_alloca);
     passes.push_back(new detect_redef_extern);
     passes.push_back(new primitive_size_opt);
     passes.push_back(new replace_struct_ptr_call);
     for(auto i : passes) {
-        std::clog << "[" << green << "sir" << reset;
-        std::clog << "] run " << i->name() << " pass...\n";
+        if (verbose) {
+            std::clog << "[" << green << "sir" << reset;
+            std::clog << "] run " << i->name() << " pass...\n";
+        }
         if (!i->run(sctx)) {
             break;
         }
-        std::clog << "[" << green << "sir" << reset;
-        std::clog << "] run " << i->name() << " pass: ";
-        std::clog << i->info() << "\n";
+        if (verbose) {
+            std::clog << "[" << green << "sir" << reset;
+            std::clog << "] run " << i->name() << " pass: ";
+            std::clog << i->info() << "\n";
+        }
     }
 }
 
