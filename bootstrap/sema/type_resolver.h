@@ -14,6 +14,9 @@ private:
     const sema_context& ctx;
     reporter rp;
 
+private:
+    bool is_generic(const type&);
+
 public:
     type_resolver(error& e, const sema_context& c):
         err(e), ctx(c), rp(err) {}

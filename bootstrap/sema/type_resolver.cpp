@@ -8,6 +8,18 @@
 
 namespace colgm {
 
+bool type_resolver::is_generic(const type& t) {
+    if (t.is_generic_placeholder) {
+        return true;
+    }
+    for (auto& g : t.generics) {
+        if (is_generic(g)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 type type_resolver::resolve(ast::type_def* node) {
     const auto& name = node->get_name()->get_name();
     const auto& dm = node->is_redirected()
@@ -60,6 +72,10 @@ type type_resolver::resolve(ast::type_def* node) {
         for (auto& g : node->get_generic_types()->get_types()) {
             res.generics.push_back(resolve(g));
         }
+    }
+
+    if (!is_generic(res)) {
+        ctx.global.all_used_types[res.full_path_name_with_pointer()] = res;
     }
     return res;
 }

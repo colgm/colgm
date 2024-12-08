@@ -29,10 +29,12 @@ pub func streq(left: i8*, right: i8*) -> bool {
 }
 
 pub func itoa(num: i64, buf: i8*, base: i64) -> i8* {
+    // invalid base
     if (base < 2 or base > 16) {
         buf[0] = '\0';
         return buf;
     }
+    // zero
     if (num == 0) {
         buf[0] = '0';
         buf[1] = '\0';
@@ -40,9 +42,9 @@ pub func itoa(num: i64, buf: i8*, base: i64) -> i8* {
     }
 
     var i = 0;
+    var flag_is_negative = false;
     if (num < 0) {
-        buf[i] = '-';
-        i += 1;
+        flag_is_negative = true;
         num = -num;
     }
     for (; num > 0; i += 1) {
@@ -65,6 +67,14 @@ pub func itoa(num: i64, buf: i8*, base: i64) -> i8* {
         var tmp = buf[i];
         buf[i] = buf[s_end - i - 1];
         buf[s_end - i - 1] = tmp;
+    }
+
+    if (flag_is_negative) {
+        i = s_end + 1;
+        for (; i > 0; i -= 1) {
+            buf[i] = buf[i - 1];
+        }
+        buf[0] = '-';
     }
     return buf;
 }

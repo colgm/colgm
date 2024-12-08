@@ -9,18 +9,18 @@ pub enum TestEnum {
     eee
 }
 
-func switch_return(v: TestEnum) -> TestEnum {
+func match_with_return(v: TestEnum) -> TestEnum {
     match (v) {
         TestEnum::aaa => { return TestEnum::bbb; }
         TestEnum::bbb => { return TestEnum::ccc; }
         TestEnum::ccc => { return TestEnum::ddd; }
-        _ => { return TestEnum::eee;}
+        _ => { return TestEnum::eee; }
     }
     puts("[match.colgm] unreachable code");
     return TestEnum::aaa;
 }
 
-func main() -> i32 {
+func match_with_default() {
     var value = [TestEnum; 16];
     value[0] = TestEnum::aaa;
     value[1] = TestEnum::bbb;
@@ -34,9 +34,11 @@ func main() -> i32 {
             TestEnum::ccc => { puts("[match.colgm] TestEnum::ccc"); }
             _ => { puts("[match.colgm] default case"); }
         }
-        switch_return(value[i]);
+        match_with_return(value[i]);
     }
+}
 
+func match_without_default() {
     match (TestEnum::eee) {
         TestEnum::aaa => { puts("[match.colgm] TestEnum::aaa"); }
         TestEnum::bbb => { puts("[match.colgm] TestEnum::bbb"); }
@@ -44,5 +46,11 @@ func main() -> i32 {
         TestEnum::ddd => { puts("[match.colgm] TestEnum::ddd"); }
         TestEnum::eee => { puts("[match.colgm] TestEnum::eee"); }
     }
+}
+
+func main() -> i32 {
+    match_with_default();
+    match_with_return(TestEnum::ddd);
+    match_without_default();
     return 0;
 }
