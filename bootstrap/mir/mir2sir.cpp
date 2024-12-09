@@ -95,6 +95,14 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
             func->add_param(j.first + ".param", type_mapping(j.second));
             locals.elem.back().insert({j.first, j.first});
         }
+        // if having debug info, set it
+        if (dwarf_status.impl_debug_info.count(i->name)) {
+            auto scope = dwarf_status.impl_debug_info.at(i->name);
+            func->set_debug_info_index(scope);
+            dwarf_status.scope_index = scope;
+        } else {
+            dwarf_status.scope_index = DI_node::DI_ERROR_INDEX;
+        }
 
         // generate code block
         func->set_code_block(new sir_block);
@@ -718,6 +726,19 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
         );
     }
 
+    // generate DWARF info
+    {
+        auto DI_loc = new DI_location(
+            dwarf_status.DI_counter,
+            node->get_location().begin_line,
+            node->get_location().begin_column,
+            dwarf_status.scope_index
+        );
+        sir_function_call->set_debug_info_index(dwarf_status.DI_counter);
+        ictx.debug_info.push_back(DI_loc);
+        ++dwarf_status.DI_counter;
+    }
+
     // load args
     for(const auto& i : args) {
         sir_function_call->add_arg(i.to_value_t());
@@ -1277,59 +1298,59 @@ void mir2sir::generate_llvm_ident() {
     auto ident = new DI_named_metadata("llvm.ident");
     ictx.named_metadata.push_back(ident);
 
-    auto version_list = new DI_list(DI_counter);
+    auto version_list = new DI_list(dwarf_status.DI_counter);
     version_list->add(new DI_string(
         "colgm compiler version " __colgm_ver__
     ));
-    ident->add(new DI_ref_index(DI_counter));
+    ident->add(new DI_ref_index(dwarf_status.DI_counter));
     ictx.debug_info.push_back(version_list);
 
-    ++DI_counter;
+    ++dwarf_status.DI_counter;
 }
 
 void mir2sir::generate_llvm_module_flags() {
     auto module_flags = new DI_named_metadata("llvm.module.flags");
     ictx.named_metadata.push_back(module_flags);
 
-    auto dwarf_version = new DI_list(DI_counter);
+    auto dwarf_version = new DI_list(dwarf_status.DI_counter);
     dwarf_version->add(new DI_i32(7));
     dwarf_version->add(new DI_string("DWARF Version"));
     dwarf_version->add(new DI_i32(4));
     ictx.debug_info.push_back(dwarf_version);
-    module_flags->add(new DI_ref_index(DI_counter));
-    ++DI_counter;
+    module_flags->add(new DI_ref_index(dwarf_status.DI_counter));
+    ++dwarf_status.DI_counter;
 
-    auto debug_info_version = new DI_list(DI_counter);
+    auto debug_info_version = new DI_list(dwarf_status.DI_counter);
     debug_info_version->add(new DI_i32(2));
     debug_info_version->add(new DI_string("Debug Info Version"));
     debug_info_version->add(new DI_i32(3));
     ictx.debug_info.push_back(debug_info_version);
-    module_flags->add(new DI_ref_index(DI_counter));
-    ++DI_counter;
+    module_flags->add(new DI_ref_index(dwarf_status.DI_counter));
+    ++dwarf_status.DI_counter;
 
-    auto wchar_size = new DI_list(DI_counter);
+    auto wchar_size = new DI_list(dwarf_status.DI_counter);
     wchar_size->add(new DI_i32(1));
     wchar_size->add(new DI_string("wchar_size"));
     wchar_size->add(new DI_i32(4));
     ictx.debug_info.push_back(wchar_size);
-    module_flags->add(new DI_ref_index(DI_counter));
-    ++DI_counter;
+    module_flags->add(new DI_ref_index(dwarf_status.DI_counter));
+    ++dwarf_status.DI_counter;
 
-    auto uwtable = new DI_list(DI_counter);
+    auto uwtable = new DI_list(dwarf_status.DI_counter);
     uwtable->add(new DI_i32(7));
     uwtable->add(new DI_string("uwtable"));
     uwtable->add(new DI_i32(1));
     ictx.debug_info.push_back(uwtable);
-    module_flags->add(new DI_ref_index(DI_counter));
-    ++DI_counter;
+    module_flags->add(new DI_ref_index(dwarf_status.DI_counter));
+    ++dwarf_status.DI_counter;
 
-    auto frame_pointer = new DI_list(DI_counter);
+    auto frame_pointer = new DI_list(dwarf_status.DI_counter);
     frame_pointer->add(new DI_i32(7));
     frame_pointer->add(new DI_string("frame-pointer"));
     frame_pointer->add(new DI_i32(2));
     ictx.debug_info.push_back(frame_pointer);
-    module_flags->add(new DI_ref_index(DI_counter));
-    ++DI_counter;
+    module_flags->add(new DI_ref_index(dwarf_status.DI_counter));
+    ++dwarf_status.DI_counter;
 }
 
 void mir2sir::generate_llvm_dbg_cu() {
@@ -1337,14 +1358,15 @@ void mir2sir::generate_llvm_dbg_cu() {
     ictx.named_metadata.push_back(llvm_dbg_cu);
 
     auto main_input_file_index = ictx.DI_file_map.at(ctx.global.input_file);
+    dwarf_status.compile_unit_index = dwarf_status.DI_counter;
     auto cu = new DI_compile_unit(
-        DI_counter,
+        dwarf_status.DI_counter,
         "colgm compiler version " __colgm_ver__,
         main_input_file_index
     );
-    llvm_dbg_cu->add(new DI_ref_index(DI_counter));
+    llvm_dbg_cu->add(new DI_ref_index(dwarf_status.DI_counter));
     ictx.debug_info.push_back(cu);
-    ++DI_counter;
+    ++dwarf_status.DI_counter;
 }
 
 void mir2sir::generate_DIFile() {
@@ -1353,10 +1375,10 @@ void mir2sir::generate_DIFile() {
         const auto& filename = i.first;
         const auto directory = std::string("");
         ictx.debug_info.push_back(
-            new DI_file(DI_counter, filename, directory)
+            new DI_file(dwarf_status.DI_counter, filename, directory)
         );
-        ictx.DI_file_map.insert({filename, DI_counter});
-        ++DI_counter;
+        ictx.DI_file_map.insert({filename, dwarf_status.DI_counter});
+        ++dwarf_status.DI_counter;
     }
 }
 
@@ -1382,14 +1404,14 @@ void mir2sir::generate_basic_type() {
     for (auto& i : type_table) {
         ictx.debug_info.push_back(
             new DI_basic_type(
-                DI_counter,
+                dwarf_status.DI_counter,
                 i.name,
                 i.size_in_bits,
                 i.encoding
             )
         );
-        ictx.DI_basic_type_map.insert({i.name, DI_counter});
-        ++DI_counter;
+        ictx.DI_basic_type_map.insert({i.name, dwarf_status.DI_counter});
+        ++dwarf_status.DI_counter;
     }
 }
 
@@ -1402,7 +1424,7 @@ void mir2sir::generate_DI_enum_type(const mir_context&) {
             };
             const auto id = mangle(ty.full_path_name());
             auto tmp = new DI_enum_type(
-                DI_counter,
+                dwarf_status.DI_counter,
                 e.second.name,
                 id,
                 ictx.DI_file_map.at(e.second.location.file),
@@ -1410,23 +1432,23 @@ void mir2sir::generate_DI_enum_type(const mir_context&) {
                 ictx.DI_basic_type_map.at("i64")
             );
             ictx.debug_info.push_back(tmp);
-            ++DI_counter;
+            ++dwarf_status.DI_counter;
 
-            auto enumerator_list = new DI_list(DI_counter);
+            auto enumerator_list = new DI_list(dwarf_status.DI_counter);
             ictx.debug_info.push_back(enumerator_list);
-            tmp->set_elements_index(DI_counter);
-            ++DI_counter;
+            tmp->set_elements_index(dwarf_status.DI_counter);
+            ++dwarf_status.DI_counter;
 
             for (auto& et : e.second.ordered_member) {
                 ictx.debug_info.push_back(
                     new DI_enumerator(
-                        DI_counter,
+                        dwarf_status.DI_counter,
                         et,
                         e.second.members.at(et)
                     )
                 );
-                enumerator_list->add(new DI_ref_index(DI_counter));
-                ++DI_counter;
+                enumerator_list->add(new DI_ref_index(dwarf_status.DI_counter));
+                ++dwarf_status.DI_counter;
             }
         }
     }
@@ -1440,14 +1462,14 @@ void mir2sir::generate_DI_structure_type(const mir_context& mctx) {
         };
         const auto id = "struct." + mangle(ty.full_path_name());
         auto tmp = new DI_structure_type(
-            DI_counter,
+            dwarf_status.DI_counter,
             i->name,
             id,
             ictx.DI_file_map.at(i->location.file),
             i->location.begin_line
         );
         ictx.debug_info.push_back(tmp);
-        ++DI_counter;
+        ++dwarf_status.DI_counter;
     }
 }
 
@@ -1458,41 +1480,35 @@ void mir2sir::generate_DI_subprogram(const mir_context& mctx) {
             continue;
         }
         auto tmp = new DI_subprogram(
-            DI_counter,
+            dwarf_status.DI_counter,
             i->name,
             ictx.DI_file_map.at(i->location.file),
-            i->location.begin_line
+            i->location.begin_line,
+            dwarf_status.compile_unit_index
         );
         ictx.debug_info.push_back(tmp);
-        ++DI_counter;
+        ++dwarf_status.DI_counter;
     }
     for (auto& i : mctx.impls) {
-        const auto ty = type {
-            .name = i->name,
-            .loc_file = i->location.file
-        };
-        const auto id = mangle(ty.full_path_name());
         auto tmp = new DI_subprogram(
-            DI_counter,
-            id,
+            dwarf_status.DI_counter,
+            i->name,
             ictx.DI_file_map.at(i->location.file),
-            i->location.begin_line
+            i->location.begin_line,
+            dwarf_status.compile_unit_index
+        );
+        dwarf_status.impl_debug_info.insert(
+            {i->name, dwarf_status.DI_counter}
         );
         ictx.debug_info.push_back(tmp);
-        ++DI_counter;
+        ++dwarf_status.DI_counter;
     }
 }
 
-const error& mir2sir::generate(const mir_context& mctx) {
-    generate_type_mapper();
-    for(const auto& i : mctx.const_strings) {
-        ictx.const_strings.insert(i);
-    }
-    emit_struct(mctx);
-    emit_func_decl(mctx);
-    emit_func_impl(mctx);
-
-    DI_counter = 0;
+void mir2sir::generate_DWARF(const mir_context& mctx) {
+    dwarf_status.DI_counter = 0;
+    dwarf_status.compile_unit_index = DI_node::DI_ERROR_INDEX;
+    dwarf_status.impl_debug_info.clear();
     generate_llvm_ident();
     generate_llvm_module_flags();
     generate_DIFile();
@@ -1501,6 +1517,18 @@ const error& mir2sir::generate(const mir_context& mctx) {
     generate_DI_enum_type(mctx);
     generate_DI_structure_type(mctx);
     generate_DI_subprogram(mctx);
+}
+
+const error& mir2sir::generate(const mir_context& mctx) {
+    generate_DWARF(mctx);
+
+    generate_type_mapper();
+    for(const auto& i : mctx.const_strings) {
+        ictx.const_strings.insert(i);
+    }
+    emit_struct(mctx);
+    emit_func_decl(mctx);
+    emit_func_impl(mctx);
     return err;
 }
 

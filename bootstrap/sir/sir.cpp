@@ -92,7 +92,7 @@ void sir_ret::dump(std::ostream& out) const {
 
 void sir_string::dump(std::ostream& out) const {
     out << target << " = bitcast ";
-    out << "[" << length << " x i8]* @const.str." << index;
+    out << "[" << length << " x i8]* @.str." << index;
     out << " to i8*\n";
 }
 
@@ -126,7 +126,11 @@ void sir_call_func::dump(std::ostream& out) const {
             out << ", ";
         }
     }
-    out << ")\n";
+    out << ")";
+    if (debug_info_index != DI_node::DI_ERROR_INDEX) {
+        out << ", !dbg !" << debug_info_index;
+    }
+    out << "\n";
 }
 
 void sir_neg::dump(std::ostream& out) const {

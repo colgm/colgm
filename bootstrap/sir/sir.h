@@ -1,6 +1,7 @@
 #pragma once
 
 #include "colgm.h"
+#include "sir/debug_info.h"
 
 #include <cstdint>
 #include <cstring>
@@ -274,13 +275,15 @@ private:
     value_t destination;
     std::vector<std::string> args_type;
     std::vector<value_t> args;
+    u64 debug_info_index;
 
 public:
     sir_call_func(const std::string& n,
                   const std::string& rt,
                   const value_t& dst):
         sir(sir_kind::sir_call_func), name(n),
-        return_type(rt), destination(dst) {}
+        return_type(rt), destination(dst),
+        debug_info_index(DI_node::DI_ERROR_INDEX) {}
     ~sir_call_func() override = default;
     const auto& get_name() const { return name; }
     const auto& get_destination() const { return destination; }
@@ -289,6 +292,7 @@ public:
     const auto& get_args() const { return args; }
     void add_arg_type(const std::string& t) { args_type.push_back(t); }
     void add_arg(const value_t& a) { args.push_back(a); }
+    void set_debug_info_index(u64 i) { debug_info_index = i; }
     void dump(std::ostream&) const override;
 };
 

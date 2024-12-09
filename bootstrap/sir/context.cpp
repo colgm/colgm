@@ -43,6 +43,9 @@ void sir_func::dump(std::ostream& out) const {
     for(const auto& i : attributes) {
         out << " " << i;
     }
+    if (debug_info_index != DI_node::DI_ERROR_INDEX) {
+        out << " !dbg !" << debug_info_index;
+    }
     if (!block) {
         out << "\n";
         return;
@@ -74,7 +77,7 @@ void sir_context::dump_const_string(std::ostream& out) const {
     }
 
     for(usize i = 0; i<ordered_const_string.size(); ++i) {
-        out << "@const.str." << i;
+        out << "@.str." << i;
         out << " = private unnamed_addr constant [";
         out << ordered_const_string[i].length() + 1 << " x i8] c\"";
         out << llvm_raw_string(ordered_const_string[i]);
@@ -164,6 +167,10 @@ void sir_context::dump_code(std::ostream& out) {
 
     for (auto i : named_metadata) {
         i->dump(out);
+        out << "\n";
+    }
+
+    if (named_metadata.size() && debug_info.size()) {
         out << "\n";
     }
 

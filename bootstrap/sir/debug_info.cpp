@@ -104,7 +104,15 @@ void DI_subprogram::dump(std::ostream& out) const {
     dump_index(out);
     out << "distinct !DISubprogram(name: \"" << name << "\", ";
     out << "file: !" << file_index << ", ";
-    out << "line: " << line << ")";
+    out << "line: " << line << ", ";
+    out << "unit: !" << compile_unit_index << ")";
+}
+
+void DI_location::dump(std::ostream& out) const {
+    dump_index(out);
+    out << "!DILocation(line: " << line << ", ";
+    out << "column: " << column << ", ";
+    out << "scope: !" << scope_index << ")";
 }
 
 }

@@ -22,7 +22,8 @@ enum class DI_kind {
     DI_structure_type,
     DI_enum_type,
     DI_enumerator,
-    DI_subprogram
+    DI_subprogram,
+    DI_location
 };
 
 class DI_node {
@@ -213,12 +214,28 @@ private:
     std::string name;
     u64 file_index;
     u64 line;
+    u64 compile_unit_index;
 
 public:
-    DI_subprogram(u64 i, const std::string& n, u64 fi, u64 l):
+    DI_subprogram(u64 i, const std::string& n, u64 fi, u64 l, u64 cui):
         DI_node(DI_kind::DI_subprogram, i),
-        name(n), file_index(fi), line(l) {}
+        name(n), file_index(fi), line(l),
+        compile_unit_index(cui) {}
     ~DI_subprogram() = default;
+    void dump(std::ostream&) const override;
+};
+
+class DI_location: public DI_node {
+private:
+    u64 line;
+    u64 column;
+    u64 scope_index;
+
+public:
+    DI_location(u64 i, u64 l, u64 c, u64 si):
+        DI_node(DI_kind::DI_location, i),
+        line(l), column(c), scope_index(si) {}
+    ~DI_location() = default;
     void dump(std::ostream&) const override;
 };
 

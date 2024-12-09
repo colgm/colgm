@@ -36,13 +36,15 @@ private:
     std::string name;
     std::vector<std::pair<std::string, std::string>> params;
     std::vector<std::string> attributes;
+    u64 debug_info_index;
     std::string return_type;
     sir_block* block;
 
 public:
     sir_func(const std::string& n):
-        name(n), block(nullptr) {}
+        name(n), debug_info_index(DI_node::DI_ERROR_INDEX), block(nullptr) {}
     ~sir_func() { delete block; }
+    void set_debug_info_index(u64 i) { debug_info_index = i; }
     const auto get_mangled_name() const { return quoted_name(name); }
     void dump(std::ostream&) const;
     const auto& get_name() const { return name; }

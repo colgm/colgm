@@ -137,6 +137,13 @@ public:
     }
 };
 
+struct DWARF_status {
+    u64 DI_counter;
+    u64 compile_unit_index;
+    u64 scope_index;
+    std::unordered_map<std::string, u64> impl_debug_info;
+};
+
 class mir2sir: public visitor {
 private:
     const sema_context& ctx;
@@ -173,7 +180,7 @@ private:
     std::vector<std::vector<sir_br*>> break_inst;
     std::vector<std::vector<sir_br*>> branch_jump_out;
 
-    u64 DI_counter;
+    DWARF_status dwarf_status;
 
 private:
     void unimplemented(mir* node) {
@@ -235,6 +242,7 @@ public:
     void generate_DI_enum_type(const mir_context&);
     void generate_DI_structure_type(const mir_context&);
     void generate_DI_subprogram(const mir_context&);
+    void generate_DWARF(const mir_context&);
 
 public:
     mir2sir(const sema_context& c):
