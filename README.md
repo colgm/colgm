@@ -67,6 +67,12 @@ if `lli` crashed, try using `clang` to build to executable
 clang colgm.ll -o colgm
 ```
 
+If want to make `panic` print stack trace with function name, remember to use `-rdynamic`:
+
+```sh
+clang -rdynamic colgm.ll -o colgm
+```
+
 ## Self-Host Compiler
 
 Learn more about [Self-host compiler](./src/README.md)
