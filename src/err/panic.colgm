@@ -1,13 +1,15 @@
-use std::libc::{ write, exit, strlen, free, itoa,
-                 backtrace, backtrace_symbols };
+use std::libc::{ write, exit, strlen, free, itoa };
+use std::execinfo::{ backtrace, backtrace_symbols };
 
-func print_backtrace() {
+pub func print_backtrace() {
     var stack_info_buffer = [i8*; 1024];
     var stack_trace_size = backtrace(stack_info_buffer, 1024);
     var stack_trace_strings = backtrace_symbols(stack_info_buffer,
                                                 stack_trace_size);
+    // convert stack_trace_size to string
     var number_buffer = [i8; 128];
     itoa(stack_trace_size => i64, number_buffer, 10);
+
     write(2, "stack trace", strlen("stack trace"));
     write(2, " with ", strlen(" with "));
     write(2, number_buffer, strlen(number_buffer));
@@ -19,6 +21,7 @@ func print_backtrace() {
         write(2, "\n", 1);
     }
 
+    // free memory allocated by backtrace_symbols
     free(stack_trace_strings => i8*);
 }
 
@@ -34,4 +37,19 @@ pub func panic(info: i8*) {
 
 pub func unreachable() {
     panic("unreachable");
+}
+
+pub func unimplemented() {
+    panic("unimplemented");
+}
+
+pub func assert(condition: bool, info: i8*) {
+    if (condition) {
+        return;
+    }
+    if (info == nil) {
+        panic("assertion failed");
+        return;
+    }
+    panic(info);
 }

@@ -5,7 +5,7 @@ use err::panic::{ panic };
 
 use sema::function::{ colgm_func };
 use sema::primitive::{ colgm_primitive };
-use sema::module::{ colgm_module };
+use sema::module::{ symbol_info, colgm_module };
 
 pub struct global_symbol_table {
     constant_string: hashset<str>,
@@ -49,6 +49,28 @@ pub struct sema_context {
 }
 
 impl sema_context {
+    pub func global_symbol(self) -> hashmap<str, symbol_info>* {
+        if (!self->global->domain.has(self->this_file.__ptr__())) {
+            panic("sema_context::global_symbol: domain does not exist");
+        }
+        return self->global->domain
+                   .get(self->this_file.__ptr__())
+                   ->global_symbol
+                   .__ptr__();
+    }
+
+    pub func generic_symbol(self) -> hashmap<str, symbol_info>* {
+        if (!self->global->domain.has(self->this_file.__ptr__())) {
+            panic("sema_context::generic_symbol: domain does not exist");
+        }
+        return self->global->domain
+                   .get(self->this_file.__ptr__())
+                   ->generic_symbol
+                   .__ptr__();
+    }
+}
+
+impl sema_context {
     pub func instance(g: global_symbol_table*) -> sema_context {
         return sema_context {
             global: g,
@@ -64,7 +86,7 @@ impl sema_context {
 }
 
 impl sema_context {
-    pub func create_domain(self, name: str*) {
+    pub func create_domain_if_not_exist(self, name: str*) {
         self->global->create_domain_if_not_exist(name);
     }
 
@@ -73,7 +95,7 @@ impl sema_context {
             return self->global->domain.get(name);
         }
 
-        panic("Domain not found.");
+        panic("sema_context::get_domain: domain not found");
         return nil;
     }
 }

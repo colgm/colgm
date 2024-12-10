@@ -1,12 +1,12 @@
 use err::report::{ report };
-use err::panic::{ panic };
+use err::panic::{ panic, assert };
 
 use std::io::{ io };
 use std::str::{ str };
 use std::libc::{ free };
 use std::fs::{ fs };
 
-use package::{ package, package_parse_status };
+use package::{ package, package_status };
 use ast::ast::*;
 
 use lex::lexer::{ lexer };
@@ -96,9 +96,9 @@ impl regist_pass {
         self->pkg->insert(expect_name.__ptr__(), expect_path.__ptr__());
 
         if (self->pkg->get_status(expect_name.__ptr__()) ==
-            package_parse_status::not_used) {
+            package_status::not_used) {
             var info = self->pkg->get_package_info(expect_name.__ptr__());
-            info->status = package_parse_status::analysing;
+            info->status = package_status::analysing;
             // TODO
             var lex = lexer::new(self->err);
             var par = parser::new(self->err, lex, self->co);
@@ -146,7 +146,7 @@ impl regist_pass {
             free(regpass => i8*);
             free(semantic => i8*);
 
-            info->status = package_parse_status::analysed;
+            info->status = package_status::analysed;
         }
 
         expect_name.delete();
@@ -198,22 +198,88 @@ impl regist_pass {
 }
 
 impl regist_pass {
-    func scan_enums(self) {}
+    func regist_single_enum(self, node: ast_enum_decl*) {
+        var name = node->name.__ptr__();
+        if (self->ctx->global_symbol()->has(name)) {
+            var info = str::instance();
+            info.append_i8_vec("\"");
+            info.append_str(name);
+            info.append_i8_vec("\" conflicts with exist symbol");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+    }
 
-    func scan_global_funcs(self) {}
+    func scan_enums(self) {
+        for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
+            var node = self->root->decls.get(i).get();
+            if (!node->is(ast_kind::ast_enum_decl)) {
+                continue;
+            }
+            var enum_node = node => ast_enum_decl*;
+            self->regist_single_enum(enum_node);
+        }
+    }
+}
 
-    func scan_structs(self) {}
+impl regist_pass {
+    func regist_single_global_func(self, node: ast_func_decl*) {}
 
-    func scan_impls(self) {}
+    func scan_global_funcs(self) {
+        for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
+            var node = self->root->decls.get(i).get();
+            if (!node->is(ast_kind::ast_func_decl)) {
+                continue;
+            }
+            var func_node = node => ast_func_decl*;
+            self->regist_single_global_func(func_node);
+        }
+    }
+}
+
+impl regist_pass {
+    func regist_single_struct(self, node: ast_struct_decl*) {}
+
+    func scan_structs(self) {
+        for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
+            var node = self->root->decls.get(i).get();
+            if (!node->is(ast_kind::ast_struct_decl)) {
+                continue;
+            }
+            var struct_node = node => ast_struct_decl*;
+            self->regist_single_struct(struct_node);
+        }
+    }
+}
+
+impl regist_pass {
+    func regist_single_impl(self, node: ast_impl*) {}
+
+    func scan_impls(self) {
+        for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
+            var node = self->root->decls.get(i).get();
+            if (!node->is(ast_kind::ast_impl)) {
+                continue;
+            }
+            var impl_node = node => ast_impl*;
+            self->regist_single_impl(impl_node);
+        }
+    }
 }
 
 impl regist_pass {
     pub func run(self, root: root*) {
+        // root should not be nil
+        assert(root != nil, "root is nil");
         self->root = root;
 
+        // clear this file's name and reset to the current ast file
         self->this_file.clear();
         self->this_file.append_i8_vec(root->base.location->file.c_str);
-        self->ctx->create_domain(self->this_file.__ptr__());
+        self->ctx->this_file.clear();
+        self->ctx->this_file.append_i8_vec(root->base.location->file.c_str);
+        self->ctx->create_domain_if_not_exist(self->this_file.__ptr__());
 
         self->regist_primitives();
         self->scan_imports();

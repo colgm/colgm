@@ -30,6 +30,24 @@ void sir_struct::dump(std::ostream& out) const {
     out << " }\n";
 }
 
+void sir_func::dump_attributes(std::ostream& out) const {
+    bool contain_frame_pointer_attr = false;
+    for(const auto& i : attributes) {
+        out << " " << i;
+        if (i.find("frame-pointer") != std::string::npos) {
+            contain_frame_pointer_attr = true;
+        }
+    }
+    // add frame pointer attribute for macos
+    // then backtrace can get symbol of functions
+    // but on linux, option `-rdynamic` should be given to ld
+    // otherwise this attribute does not work
+    if (block && !contain_frame_pointer_attr &&
+        std::string(get_platform()) == "macos") {
+        out << " \"frame-pointer\"=\"non-leaf\"";
+    }
+}
+
 void sir_func::dump(std::ostream& out) const {
     out << (block? "define ":"declare ");
     out << quoted_name(return_type) << " @" << get_mangled_name() << "(";
@@ -40,9 +58,9 @@ void sir_func::dump(std::ostream& out) const {
         }
     }
     out << ")";
-    for(const auto& i : attributes) {
-        out << " " << i;
-    }
+
+    dump_attributes(out);
+
     if (debug_info_index != DI_node::DI_ERROR_INDEX) {
         out << " !dbg !" << debug_info_index;
     }

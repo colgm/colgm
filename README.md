@@ -73,6 +73,9 @@ If want to make `panic` print stack trace with function name, remember to use `-
 clang -rdynamic colgm.ll -o colgm
 ```
 
+On macOS this option is not necessary because attribute
+`frame-pointer=non-leaf` is added after function definition.
+
 ## Self-Host Compiler
 
 Learn more about [Self-host compiler](./src/README.md)

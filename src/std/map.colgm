@@ -4,6 +4,8 @@ use std::list::{ list, list_iter };
 
 use err::panic::{ panic };
 
+use std::io::{ io };
+
 pub struct pair<K, V> {
     key: K*,
     value: V*
@@ -90,7 +92,7 @@ impl hashmap<K, V> {
 
 impl hashmap<K, V> {
     pub func has(self, key: K*) -> bool {
-        var hash = key->hash() % 1024;
+        var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
         for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
             if (i.elem()->key->eq(key)) {
@@ -101,7 +103,7 @@ impl hashmap<K, V> {
     }
 
     pub func get(self, key: K*) -> V* {
-        var hash = key->hash() % 1024;
+        var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
         for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
             if (i.elem()->key->eq(key)) {

@@ -5,7 +5,7 @@ use std::map::{ hashmap };
 use err::report::{ report };
 use err::panic::{ panic };
 
-pub enum package_parse_status {
+pub enum package_status {
     not_used,
     not_exist,
     analysed,
@@ -14,7 +14,7 @@ pub enum package_parse_status {
 
 pub struct package_info {
     path: str,
-    status: package_parse_status
+    status: package_status
 }
 
 impl package_info {
@@ -57,20 +57,18 @@ impl package {
         if (self->file_mapper.has(name)) {
             return;
         }
-        io::stderr().out("[").green().out("package").reset().out("]");
-        io::stderr().out(" insert { ").out(name->c_str).out(", ");
-        io::stderr().out(path->c_str).out(" }\n");
+
         var info = package_info {
             path: path->copy_instance(),
-            status: package_parse_status::not_used
+            status: package_status::not_used
         };
         self->file_mapper.insert(name, info.__ptr__());
         info.delete();
     }
 
-    pub func get_status(self, name: str*) -> package_parse_status {
+    pub func get_status(self, name: str*) -> package_status {
         if (!self->file_mapper.has(name)) {
-            return package_parse_status::not_exist;
+            return package_status::not_exist;
         }
         return self->file_mapper.get(name)->status;
     }

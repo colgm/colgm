@@ -40,6 +40,9 @@ private:
     std::string return_type;
     sir_block* block;
 
+private:
+    void dump_attributes(std::ostream&) const;
+
 public:
     sir_func(const std::string& n):
         name(n), debug_info_index(DI_node::DI_ERROR_INDEX), block(nullptr) {}

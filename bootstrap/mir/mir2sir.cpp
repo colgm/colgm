@@ -1314,7 +1314,7 @@ void mir2sir::generate_llvm_module_flags() {
 
     auto dwarf_version = new DI_list(dwarf_status.DI_counter);
     dwarf_version->add(new DI_i32(7));
-    dwarf_version->add(new DI_string("DWARF Version"));
+    dwarf_version->add(new DI_string("Dwarf Version"));
     dwarf_version->add(new DI_i32(4));
     ictx.debug_info.push_back(dwarf_version);
     module_flags->add(new DI_ref_index(dwarf_status.DI_counter));
