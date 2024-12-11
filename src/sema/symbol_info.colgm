@@ -1,0 +1,44 @@
+use std::str::{ str };
+
+use err::panic::{ panic };
+
+pub enum symbol_kind {
+    error_kind,
+    basic_kind,
+    enum_kind,
+    struct_kind,
+    func_kind,
+    package_kind,
+    module_kind
+}
+
+pub struct symbol_info {
+    kind: symbol_kind,
+    loc_file: str,
+    is_public: bool
+}
+
+impl symbol_info {
+    pub func new() -> symbol_info* {
+        var res = symbol_info::__alloc__();
+        if (res == nil) {
+            panic("symbol_info::new: failed to allocate memory");
+        }
+        res->kind = symbol_kind::error_kind;
+        res->loc_file = str::from("");
+        res->is_public = false;
+        return res;
+    }
+
+    pub func delete(self) {
+        self->loc_file.delete();
+    }
+
+    pub func copy(self) -> symbol_info* {
+        var res = symbol_info::__alloc__();
+        res->kind = self->kind;
+        res->loc_file = self->loc_file.copy_instance();
+        res->is_public = self->is_public;
+        return res;
+    }
+}

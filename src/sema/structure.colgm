@@ -5,6 +5,7 @@ use std::map::{ hashmap };
 use std::ptr::{ ptr };
 
 use err::span::{ span };
+use err::panic::{ panic };
 use ast::ast::{ ast, ast_struct_decl, ast_impl };
 
 use sema::type::{ symbol };
@@ -27,6 +28,25 @@ pub struct colgm_struct {
 }
 
 impl colgm_struct {
+    pub func new(name: str*, loc: span*) -> colgm_struct* {
+        var res = colgm_struct::__alloc__();
+        if (res == nil) {
+            panic("colgm_struct::new: failed to allocate memory");
+        }
+        res->name = name->copy_instance();
+        res->location = loc->copy_instance();
+        res->fields = hashmap<str, symbol>::instance();
+        res->ordered_fields = vec<symbol>::instance();
+        res->static_methods = hashmap<str, colgm_func>::instance();
+        res->methods = hashmap<str, colgm_func>::instance();
+        res->generic_template = vec<str>::instance();
+        res->generic_struct_decl = nil;
+        res->generic_struct_impl = primitive_vec<ptr<ast_impl>>::instance();
+        res->is_public = false;
+        res->is_extern = false;
+        return res;
+    }
+
     pub func delete(self) {
         self->name.delete();
         self->location.delete();

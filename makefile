@@ -1,7 +1,12 @@
 COLGMCC = ./build/colgm
 
+.PHONY: all
+all: colgm.ll test.ll
+
 colgm.ll: $(COLGMCC) src/**/*.colgm src/*.colgm
 	$(COLGMCC) --library src src/main.colgm -o colgm.ll
+
+test.ll: $(COLGMCC) src/std/*.colgm src/test/*.colgm
 	$(COLGMCC) --library src src/test/test.colgm -o test.ll
 
 TEST_LIB = --library test/test_lib
