@@ -1,11 +1,15 @@
 use std::str::{ str };
-use err::span::{ span };
 use std::vec::{ vec };
+use std::map::{ hashmap };
+use std::ptr::{ basic };
+
+use err::span::{ span };
 
 pub struct colgm_enum {
     name: str,
     location: span,
     ordered_member: vec<str>,
+    members: hashmap<str, basic<u64>>,
     // mark whether the enum is public or not
     is_public: bool
 }
@@ -16,6 +20,7 @@ impl colgm_enum {
         res->name = name->copy_instance();
         res->location = loc->copy_instance();
         res->ordered_member = vec<str>::instance();
+        res->members = hashmap<str, basic<u64>>::instance();
         res->is_public = false;
         return res;
     }
@@ -24,6 +29,7 @@ impl colgm_enum {
         self->name.delete();
         self->location.delete();
         self->ordered_member.delete();
+        self->members.delete();
     }
 
     pub func copy(self) -> colgm_enum* {
@@ -31,6 +37,7 @@ impl colgm_enum {
         res->name = self->name.copy_instance();
         res->location = self->location.copy_instance();
         res->ordered_member = self->ordered_member.copy_instance();
+        res->members = self->members.copy_instance();
         res->is_public = self->is_public;
         return res;
     }

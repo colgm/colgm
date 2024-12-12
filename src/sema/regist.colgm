@@ -5,6 +5,8 @@ use std::io::{ io };
 use std::str::{ str };
 use std::libc::{ free };
 use std::fs::{ fs };
+use std::vec::{ primitive_vec };
+use std::ptr::{ ptr, basic };
 
 use package::{ package, package_status };
 use ast::ast::*;
@@ -206,6 +208,27 @@ impl regist_pass {
 }
 
 impl regist_pass {
+    func generate_enum_member(self, e: colgm_enum*, v: primitive_vec<ptr<ast>>*) {
+        for (var i: u64 = 0; i < v->size; i += 1) {
+            var n = v->get(i).get();
+            if (!n->is(ast_kind::ast_enum_member)) {
+                self->err->error(n->location,
+                    "invalid ast node, expect enum member"
+                );
+                return;
+            }
+            var n_ast = n => ast_enum_member*;
+            var member_name = n_ast->name->name.__ptr__();
+            if (n_ast->value != nil) {
+                // TODO
+            } else {
+                var value = basic<u64>::wrap(i);
+                e->ordered_member.push(member_name);
+                e->members.insert(member_name, value.__ptr__());
+            }
+        }
+    }
+
     func regist_single_enum(self, node: ast_enum_decl*) {
         var name = node->name.__ptr__();
         if (self->ctx->global_symbol()->has(name)) {
@@ -222,7 +245,8 @@ impl regist_pass {
         if (node->is_public) {
             enum_info->is_public = true;
         }
-        // TODO: load enum members
+        self->generate_enum_member(enum_info, node->members.__ptr__());
+
         var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
         dm->enums.insert(name, enum_info);
         enum_info->delete();

@@ -1,3 +1,4 @@
+use err::panic::{ panic };
 
 pub struct ptr<T> {
     data: T*
@@ -9,6 +10,32 @@ impl ptr<T> {
     }
 
     pub func get(self) -> T* {
+        return self->data;
+    }
+}
+
+// basic can only used with primitive types
+pub struct basic<T> {
+    data: T
+}
+
+impl basic<T> {
+    pub func delete(self) {}
+
+    pub func copy(self) -> basic<T>* {
+        var res = basic<T>::__alloc__();
+        if (res == nil) {
+            panic("basic<T>::copy: failed to allocate memory");
+        }
+        res->data = self->data;
+        return res;
+    }
+
+    pub func wrap(v: T) -> basic<T> {
+        return basic<T>{ data: v };
+    }
+
+    pub func get(self) -> T {
         return self->data;
     }
 }
