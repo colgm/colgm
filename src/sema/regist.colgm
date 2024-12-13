@@ -7,6 +7,7 @@ use std::libc::{ free };
 use std::fs::{ fs };
 use std::vec::{ primitive_vec };
 use std::ptr::{ ptr, basic };
+use std::math::{ isinf, isnan, floor };
 
 use package::{ package, package_status };
 use ast::ast::*;
@@ -14,6 +15,7 @@ use ast::ast::*;
 use lex::lexer::{ lexer };
 use parse::parser::{ parser };
 use util::cli::{ cli_option };
+use util::to_num::{ str_to_num };
 
 use sema::symbol_info::{ symbol_kind, symbol_info };
 use sema::enumerate::{ colgm_enum };
@@ -208,7 +210,26 @@ impl regist_pass {
 }
 
 impl regist_pass {
-    func generate_enum_member(self, e: colgm_enum*, v: primitive_vec<ptr<ast>>*) {
+    func check_is_valid_enum_value(self, node: ast_number_literal*) -> bool {
+        var literal = node->literal.__ptr__();
+        if (literal->find('.') != str::npos() ||
+            literal->find('e') != str::npos()) {
+            return false;
+        }
+        var num: f64 = str_to_num(literal->c_str);
+        if (isinf(num) || isnan(num)) {
+            return false;
+        }
+        if (num - floor(num) != 0.0) {
+            return false;
+        }
+        return true;
+    }
+
+    func generate_enum_member(self, e: colgm_enum*, node: ast_enum_decl*) {
+        var has_specified_value = false;
+        var has_non_specified_value = false;
+        var v = node->members.__ptr__();
         for (var i: u64 = 0; i < v->size; i += 1) {
             var n = v->get(i).get();
             if (!n->is(ast_kind::ast_enum_member)) {
@@ -218,14 +239,32 @@ impl regist_pass {
                 return;
             }
             var n_ast = n => ast_enum_member*;
+            if (n_ast->value != nil) {
+                has_specified_value = true;
+            } else {
+                has_non_specified_value = true;
+            }
+        }
+
+        // specified value is required for all members now
+        if (has_specified_value && has_non_specified_value) {
+            self->err->error(node->base.location,
+                "should use specified number for all members"
+            );
+            return;
+        }
+        
+        for (var i: u64 = 0; i < v->size; i += 1) {
+            var n_ast = v->get(i).get() => ast_enum_member*;
+            var value = basic<u64>::wrap(i);
             var member_name = n_ast->name->name.__ptr__();
             if (n_ast->value != nil) {
-                // TODO
-            } else {
-                var value = basic<u64>::wrap(i);
-                e->ordered_member.push(member_name);
-                e->members.insert(member_name, value.__ptr__());
+                var nl = n_ast->value => ast_number_literal*;
+                var res = str_to_num(nl->literal.c_str);
+                value = basic<u64>::wrap(res => u64);
             }
+            e->ordered_member.push(member_name);
+            e->members.insert(member_name, value.__ptr__());
         }
     }
 
@@ -245,7 +284,7 @@ impl regist_pass {
         if (node->is_public) {
             enum_info->is_public = true;
         }
-        self->generate_enum_member(enum_info, node->members.__ptr__());
+        self->generate_enum_member(enum_info, node);
 
         var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
         dm->enums.insert(name, enum_info);

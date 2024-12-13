@@ -1,0 +1,133 @@
+use std::math::{ nan, pow };
+use std::libc::{ strlen };
+
+pub func hex_to_f64(s: i8*) -> f64 {
+    var res: f64 = 0.0;
+    var len = strlen(s);
+    for (var i = 0; i < len; i += 1) {
+        if ('0' <= s[i] && s[i] <= '9') {
+            res = res * 16.0 + (s[i] - '0') => f64;
+        } else if ('a' <= s[i] && s[i] <= 'f') {
+            res = res * 16.0 + (s[i] - 'a' + 10) => f64;
+        } else if ('A' <= s[i] && s[i] <= 'F') {
+            res = res * 16.0 + (s[i] - 'A' + 10) => f64;
+        } else {
+            return nan("");
+        }
+    }
+    return res;
+}
+
+pub func oct_to_f64(s: i8*) -> f64 {
+    var res: f64 = 0.0;
+    var len = strlen(s);
+    for (var i = 0; i < len; i += 1) {
+        if ('0' <= s[i] && s[i] <= '7') {
+            res = res * 8.0 + (s[i] - '0') => f64;
+        } else {
+            return nan("");
+        }
+    }
+    return res;
+}
+
+pub func dec_to_f64(s: i8*) -> f64 {
+    var negative_exponent = false;
+    var res: f64 = 0.0;
+    var len = strlen(s);
+    var i = 0;
+    while (s[i] != 0 and '0' <= s[i] && s[i] <= '9') {
+        res = res * 10.0 + (s[i] - '0') => f64;
+        i += 1;
+    }
+    if (s[i] == 0) {
+        return res;
+    }
+
+    if (s[i] == '.') {
+        i += 1;
+        // number like 123. is not valid
+        if (s[i] == 0) {
+            return nan("");
+        }
+        var num_decimal: f64 = 0.1;
+        while (s[i] != 0 and '0' <= s[i] && s[i] <= '9') {
+            res += num_decimal * ((s[i] - '0') => f64);
+            num_decimal *= 0.1;
+            i += 1;
+        }
+        if (s[i] == 0) {
+            return res;
+        }
+    }
+
+    // number like 123x is not valid
+    if (s[i] != 'e' && s[i] != 'E') {
+        return nan("");
+    }
+
+    i += 1;
+    // number like 123e is not valid
+    if (s[i] == 0) {
+        return nan("");
+    }
+
+    if (s[i] == '-' || s[i] == '+') {
+        negative_exponent = (s[i] == '-');
+        i += 1;
+    }
+    // number like 123e- is not valid
+    if (s[i] == 0) {
+        return nan("");
+    }
+
+    var num_pow: f64 = 0.0;
+    while (s[i] != 0 and '0' <= s[i] && s[i] <= '9') {
+        num_pow = num_pow * 10.0 + (s[i] - '0') => f64;
+        i += 1;
+    }
+    // number like 123e123x is not valid
+    if (s[i] != 0) {
+        return nan("");
+    }
+
+    if (negative_exponent) {
+        res *= pow(10.0, 1.0 - num_pow) * 0.1;
+    } else {
+        res *= pow(num_pow - 1.0, 10.0) * 10.0;
+    }
+    return res;
+}
+
+pub func str_to_num(s: i8*) -> f64 {
+    var flag_is_negative = false;
+    var res: f64 = 0.0;
+
+    if (s[0] == '-' || s[0] == '+') {
+        flag_is_negative = (s[0] == '-');
+        s = ((s => u64) + 1) => i8*;
+    }
+    if (s[0] == 0) {
+        return nan("");
+    }
+
+    // here we know s[0] must not be zero,
+    // so s[1] could be zero or other,
+    // means this memory can be visited
+    if (s[0] == '0' && s[1] == 'x') {
+        res = hex_to_f64(((s => u64) + 2) => i8*);
+    } else if (s[0] == '0' && s[1] == 'o') {
+        res = oct_to_f64(((s => u64) + 2) => i8*);
+    } else {
+        res = dec_to_f64(s);
+    }
+
+    if (flag_is_negative) {
+        return -res;
+    } else {
+        return res;
+    }
+
+    // unreachable
+    return nan("");
+}
