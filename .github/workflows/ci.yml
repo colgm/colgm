@@ -4,11 +4,15 @@ on:
   push:
     branches: [ main ]
     paths:
+      - .github/workflows/ci.yml
+      - .github/workflows/release.yml
       - bootstrap/**
       - src/**
   pull_request:
     branches: [ main ]
     paths:
+      - .github/workflows/ci.yml
+      - .github/workflows/release.yml
       - bootstrap/**
       - src/**
   workflow_dispatch:
@@ -80,8 +84,8 @@ jobs:
       run: |
           export PATH="/usr/lib/llvm-14/bin:$PATH"
           make colgm.ll
-          /usr/bin/clang-14 -rdynamic colgm.ll -o colgm
-          /usr/bin/clang-14 -rdynamic test.ll -o colgm_test
+          /usr/bin/clang-14 -rdynamic colgm.ll -o colgm -lm
+          /usr/bin/clang-14 -rdynamic test.ll -o colgm_test -lm
           ./colgm
           ./colgm --library src src/main.colgm --ast
     - name: std-test
