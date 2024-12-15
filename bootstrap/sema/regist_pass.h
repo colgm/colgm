@@ -110,7 +110,9 @@ private:
                               const std::string&,
                               const symbol_info&,
                               bool);
-    bool check_is_specified_enum_member(ast::number_literal*);
+    // specify enum member with number, but number should not be float,
+    // so we need to check if this is float
+    bool check_is_valid_enum_member(ast::number_literal*);
 
 private:
     colgm_func builtin_struct_size(const span&);

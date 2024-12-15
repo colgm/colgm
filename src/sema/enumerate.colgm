@@ -2,6 +2,7 @@ use std::str::{ str };
 use std::vec::{ vec };
 use std::map::{ hashmap };
 use std::ptr::{ basic };
+use std::io::{ io };
 
 use err::span::{ span };
 
@@ -40,5 +41,21 @@ impl colgm_enum {
         res->members = self->members.copy_instance();
         res->is_public = self->is_public;
         return res;
+    }
+}
+
+impl colgm_enum {
+    pub func dump(self, out: io) {
+        out.out("  enum ").out(self->name.c_str);
+        if (self->ordered_member.size == 0) {
+            out.out("\n");
+            return;
+        }
+        out.out(":\n");
+        for (var i: u64 = 0; i < self->ordered_member.size; i += 1) {
+            out.out("    ").out(self->ordered_member.get(i)->c_str).out(": ");
+            var v = self->members.get(self->ordered_member.get(i));
+            out.out_i64(v->data => i64).out("\n");
+        }
     }
 }

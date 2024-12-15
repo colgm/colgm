@@ -1,6 +1,7 @@
 use std::map::{ hashmap };
 use std::set::{ hashset };
 use std::str::{ str };
+use std::io::{ io };
 use err::panic::{ panic };
 
 use sema::function::{ colgm_func };
@@ -83,6 +84,27 @@ impl sema_context {
     pub func delete(self) {
         self->this_file.delete();
         self->generics.delete();
+    }
+
+    pub func dump(self, out: io) {
+        var gt = self->global;
+        if (gt->primitives.size > 0) {
+            out.out("primitives:\n");
+        }
+        for (var i = gt->primitives.iter();!i.is_end(); i = i.next()) {
+            out.out("  ");
+            i.value()->dump(out);
+        }
+
+        for (var i = gt->domain.iter(); !i.is_end(); i = i.next()) {
+            i.value()->dump(out);
+        }
+    }
+
+    pub func log_dump(self) {
+        var logger = io::colgm_report();
+        self->dump(logger);
+        logger.close();
     }
 }
 

@@ -19,6 +19,7 @@ use util::to_num::{ str_to_num };
 
 use sema::symbol_info::{ symbol_kind, symbol_info };
 use sema::enumerate::{ colgm_enum };
+use sema::structure::{ colgm_struct };
 use sema::context::{ sema_context };
 use sema::primitive::{ colgm_primitive };
 use sema::type::{ type, symbol };
@@ -72,31 +73,26 @@ impl regist_pass {
 
         lex->scan(path->c_str);
         if (self->err->error_count > 0) {
+            self->ctx->log_dump();
             return;
-        }
-        if (self->co->OPTION_VIEW_TOKEN) {
-            lex->dump();
         }
 
         par->parse();
         if (self->err->error_count > 0) {
+            self->ctx->log_dump();
             return;
-        }
-        if (self->co->OPTION_VIEW_AST) {
-            par->dump();
         }
 
         rp->run(par->root);
         if (self->err->error_count > 0) {
+            self->ctx->log_dump();
             return;
         }
 
         semantic->scan(par->root);
         if (self->err->error_count > 0) {
+            self->ctx->log_dump();
             return;
-        }
-        if (self->co->OPTION_VIEW_SEMA) {
-            semantic->dump();
         }
 
         lex->delete();
@@ -227,6 +223,10 @@ impl regist_pass {
     }
 
     func generate_enum_member(self, e: colgm_enum*, node: ast_enum_decl*) {
+        if (node->is_public) {
+            e->is_public = true;
+        }
+
         var has_specified_value = false;
         var has_non_specified_value = false;
         var v = node->members.__ptr__();
@@ -270,9 +270,10 @@ impl regist_pass {
 
     func regist_single_enum(self, node: ast_enum_decl*) {
         var name = node->name.__ptr__();
-        if (self->ctx->global_symbol()->has(name)) {
+        if (self->ctx->global_symbol()->has(name) ||
+            self->ctx->generic_symbol()->has(name)) {
             var info = str::instance();
-            info.append_i8_vec("\"");
+            info.append_i8_vec("enum \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist symbol");
             self->err->error(node->base.location, info.c_str);
@@ -280,12 +281,10 @@ impl regist_pass {
             return;
         }
 
+        // allocate enum info
         var enum_info = colgm_enum::new(name, node->base.location);
-        if (node->is_public) {
-            enum_info->is_public = true;
-        }
         self->generate_enum_member(enum_info, node);
-
+        // insert to domain
         var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
         dm->enums.insert(name, enum_info);
         enum_info->delete();
@@ -314,7 +313,8 @@ impl regist_pass {
 impl regist_pass {
     func regist_single_global_func(self, node: ast_func_decl*) {
         var name = node->name.__ptr__();
-        if (self->ctx->global_symbol()->has(name)) {
+        if (self->ctx->global_symbol()->has(name) ||
+            self->ctx->generic_symbol()->has(name)) {
             var info = str::instance();
             info.append_i8_vec("\"");
             info.append_str(name);
@@ -345,11 +345,12 @@ impl regist_pass {
 impl regist_pass {
     func regist_single_struct(self, node: ast_struct_decl*) {
         var name = node->name.__ptr__();
-        if (self->ctx->global_symbol()->has(name)) {
+        if (!self->ctx->global_symbol()->has(name) &&
+            !self->ctx->generic_symbol()->has(name)) {
             var info = str::instance();
-            info.append_i8_vec("\"");
+            info.append_i8_vec("cannot find symbol \"");
             info.append_str(name);
-            info.append_i8_vec("\" conflicts with exist symbol");
+            info.append_i8_vec("\"");
             self->err->error(node->base.location, info.c_str);
             info.delete();
             return;
@@ -361,7 +362,59 @@ impl regist_pass {
         }
     }
 
+    func regist_single_struct_symbol(self, node: ast_struct_decl*) {
+        var name = node->name.__ptr__();
+        if (self->ctx->global_symbol()->has(name) ||
+            self->ctx->generic_symbol()->has(name)) {
+            var info = str::instance();
+            info.append_i8_vec("struct \"");
+            info.append_str(name);
+            info.append_i8_vec("\" conflicts with exist symbol");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        // allocate struct info
+        var struct_info = colgm_struct::new(name, node->base.location);
+        if (node->is_extern) {
+            struct_info->is_extern = true;
+        }
+        if (node->is_public) {
+            struct_info->is_public = true;
+        }
+        // insert to domain
+        var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
+        if (node->generic_types != nil) {
+            dm->generic_structs.insert(name, struct_info);
+        } else {
+            dm->structs.insert(name, struct_info);
+        }
+        struct_info->delete();
+        free(struct_info => i8*);
+
+        var sym_info = symbol_info::new();
+        sym_info->kind = symbol_kind::struct_kind;
+        sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+        if (node->generic_types != nil) {
+            self->ctx->generic_symbol()->insert(name, sym_info);
+        } else {
+            self->ctx->global_symbol()->insert(name, sym_info);
+        }
+        sym_info->delete();
+        free(sym_info => i8*);
+    }
+
     func scan_structs(self) {
+        for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
+            var node = self->root->decls.get(i).get();
+            if (!node->is(ast_kind::ast_struct_decl)) {
+                continue;
+            }
+            var struct_node = node => ast_struct_decl*;
+            self->regist_single_struct_symbol(struct_node);
+        }
+
         for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
             var node = self->root->decls.get(i).get();
             if (!node->is(ast_kind::ast_struct_decl)) {
@@ -408,26 +461,33 @@ impl regist_pass {
         self->ctx->this_file.clear();
         self->ctx->this_file.append_i8_vec(root->base.location->file.c_str);
         self->ctx->create_domain_if_not_exist(self->this_file.__ptr__());
+        var this_dm = self->ctx->get_domain(self->this_file.__ptr__());
+        this_dm->file_name.clear();
+        this_dm->file_name.append_i8_vec(root->base.location->file.c_str);
 
         self->regist_primitives();
         self->scan_imports();
         if (self->err->error_count > 0) {
+            self->ctx->log_dump();
             return;
         }
 
         self->scan_enums();
         self->scan_structs();
         if (self->err->error_count > 0) {
+            self->ctx->log_dump();
             return;
         }
 
         self->scan_global_funcs();
         if (self->err->error_count > 0) {
+            self->ctx->log_dump();
             return;
         }
 
         self->scan_impls();
         if (self->err->error_count > 0) {
+            self->ctx->log_dump();
             return;
         }
     }

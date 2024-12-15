@@ -68,20 +68,35 @@ void semantic::report_top_level_block_has_no_return(code_block* node,
 
 bool semantic::number_literal_can_be_converted(node* n,
                                                const type& expect) {
+    // if is not number literal, just return false
     if (!n->is(ast_type::ast_number_literal)) {
         return false;
     }
-    if (expect.is_pointer()) {
-        return false;
-    }
+
+    // check if number literal is pointer type
+    // in most cases it should not be pointer type
     const auto& n_type = n->get_resolve();
     if (n_type.is_pointer()) {
         return false;
     }
+
+    // if expect a pointer type,
+    if (expect.is_pointer()) {
+        // allow integer to convert to pointer may cause confusion
+        // because if user used C before, in this example:
+        //   <i64*> s += 1
+        // in fact this is equal to:
+        //   <i8*> s += 8
+        // to avoid this confusion, we should not allow this conversion
+        return false;
+    }
+
+    // use same integer type as expected
     if (expect.is_integer() && n_type.is_integer()) {
         n->set_resolve_type(expect);
         return true;
     }
+    // use same float type as expected
     if (expect.is_float() && n_type.is_float()) {
         n->set_resolve_type(expect);
         return true;
@@ -870,6 +885,12 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
             const auto res = struct_static_method_infer(prev, node->get_name());
             node->set_resolve_type(res);
             return res;
+        } else if (st.method.count(node->get_name())) {
+            rp.report(node,
+                "\"" + node->get_name() +
+                "\" in \"" + prev.name_for_search() + "\" is not static method."
+            );
+            return type::error_type();
         } else {
             rp.report(node,
                 "cannot find static method \"" + node->get_name() +

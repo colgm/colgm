@@ -494,7 +494,7 @@ void regist_pass::import_global_symbol(ast::node* n,
     ctx.insert(name, sym, is_generic);
 }
 
-bool regist_pass::check_is_specified_enum_member(ast::number_literal* node) {
+bool regist_pass::check_is_valid_enum_member(ast::number_literal* node) {
     const auto& num_str = node->get_number();
     if (num_str.find('.') != std::string::npos ||
         num_str.find('e') != std::string::npos) {
@@ -759,8 +759,8 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
         if (!i.value) {
             continue;
         }
-        if (!check_is_specified_enum_member(i.value)) {
-            rp.report(i.value, "enum member cannot be specified with float number.");
+        if (!check_is_valid_enum_member(i.value)) {
+            rp.report(i.value, "enum member cannot be specified with float.");
             return;
         }
     }

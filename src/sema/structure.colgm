@@ -3,6 +3,7 @@ use std::libc::{ free };
 use std::vec::{ vec, primitive_vec };
 use std::map::{ hashmap };
 use std::ptr::{ ptr };
+use std::io::{ io };
 
 use err::span::{ span };
 use err::panic::{ panic };
@@ -94,5 +95,18 @@ impl colgm_struct {
         res->is_public = self->is_public;
         res->is_extern = self->is_extern;
         return res;
+    }
+}
+
+impl colgm_struct {
+    pub func dump(self, out: io) {
+        out.out("  struct ").out(self->name.c_str);
+        if (self->ordered_fields.size == 0 &&
+            self->static_methods.size == 0 &&
+            self->methods.size == 0) {
+            out.out("\n");
+            return;
+        }
+        out.out(":\n");
     }
 }
