@@ -1371,6 +1371,15 @@ void mir2sir::generate_llvm_dbg_cu() {
 
 void mir2sir::generate_DIFile() {
     ictx.DI_file_map.clear();
+
+    // empty file name maybe used for auto-generated functions
+    std::string empty_file_name = "";
+    ictx.debug_info.push_back(
+        new DI_file(dwarf_status.DI_counter, empty_file_name, empty_file_name)
+    );
+    ictx.DI_file_map.insert({empty_file_name, dwarf_status.DI_counter});
+    ++dwarf_status.DI_counter;
+
     for (const auto& i : ctx.global.domain) {
         const auto& filename = i.first;
         const auto directory = std::string("");

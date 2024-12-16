@@ -388,8 +388,8 @@ type semantic::resolve_type_convert(type_convert* node) {
     }
 
     // convert floating point number to pointer is unsafe at all
-    if ((res.is_float() && type_res.is_pointer()) ||
-        (res.is_pointer() && type_res.is_float())) {
+    if ((res.is_float() && !res.is_pointer() && type_res.is_pointer()) ||
+        (res.is_pointer() && type_res.is_float() && !type_res.is_pointer())) {
         rp.report(node->get_target(),
             "cannot cast floating point number to pointer: \"" +
             res.to_string() + "\" => \"" + type_res.to_string() + "\"."

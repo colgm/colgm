@@ -102,20 +102,39 @@ impl type {
 }
 
 impl type {
+    func default_init(self) {
+        self->name = str::from("");
+        self->loc_file = str::from("");
+        self->pointer_depth = 0;
+        self->is_global_sym = false;
+        self->is_global_func = false;
+        self->is_enum = false;
+        self->is_immutable = false;
+        self->is_generic_placeholder = false;
+        self->stm_info = method_info::instance();
+        self->prm_info = method_info::instance();
+        self->generics = vec<type>::instance();
+    }
+
+    pub func instance() -> type {
+        var res = type {};
+        res.default_init();
+        return res;
+    }
+
     pub func error_type() -> type {
-        return type {
-            name: str::from("<error>"),
-            loc_file: str::from(""),
-            pointer_depth: -1,
-            is_global_sym: false,
-            is_global_func: false,
-            is_enum: false,
-            is_immutable: false,
-            is_generic_placeholder: false,
-            stm_info: method_info::instance(),
-            prm_info: method_info::instance(),
-            generics: vec<type>::instance()
-        };
+        var res = type::instance();
+        res.name.append_i8_vec("<error>");
+        return res;
+    }
+}
+
+impl type {
+    pub func dump(self, out: io) {
+        out.out(self->name.c_str);
+        for (var i = 0; i < self->pointer_depth; i += 1) {
+            out.out("*");
+        }
     }
 }
 

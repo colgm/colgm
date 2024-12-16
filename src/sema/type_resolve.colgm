@@ -1,0 +1,30 @@
+use err::report::{ report };
+use ast::ast::{ ast_type_def };
+
+use sema::context::{ sema_context };
+use sema::type::{ type };
+
+pub struct type_resolve {
+    err: report*,
+    ctx: sema_context*
+}
+
+impl type_resolve {
+    pub func instance(e: report*, c: sema_context*) -> type_resolve {
+        return type_resolve { err: e, ctx: c };
+    }
+
+    pub func resolve(self, node: ast_type_def*) -> type {
+        // TODO: resolve type
+        var name = node->name->name.__ptr__();
+        if (self->ctx->global_symbol()->has(name)) {
+            var t = type::instance();
+            t.name.append_str(name);
+            t.pointer_depth = node->pointer_depth;
+            t.is_immutable = node->is_const;
+            return t;
+        }
+
+        return type::error_type();
+    }
+}

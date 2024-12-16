@@ -96,34 +96,34 @@ public:
     bool is_default_match() const { return name=="<match default>"; }
     bool is_unsigned() const {
         const auto& t = *this;
-        return t==type::u8_type(t.pointer_depth) ||
-               t==type::u16_type(t.pointer_depth) ||
-               t==type::u32_type(t.pointer_depth) ||
-               t==type::u64_type(t.pointer_depth) ||
+        return t == type::u8_type(t.pointer_depth) ||
+               t == type::u16_type(t.pointer_depth) ||
+               t == type::u32_type(t.pointer_depth) ||
+               t == type::u64_type(t.pointer_depth) ||
                t.pointer_depth > 0;
     }
     bool is_integer() const {
         const auto& t = *this;
-        return t==type::i8_type(t.pointer_depth) ||
-               t==type::u8_type(t.pointer_depth) ||
-               t==type::i16_type(t.pointer_depth) ||
-               t==type::u16_type(t.pointer_depth) ||
-               t==type::i32_type(t.pointer_depth) ||
-               t==type::u32_type(t.pointer_depth) ||
-               t==type::i64_type(t.pointer_depth) ||
-               t==type::u64_type(t.pointer_depth) ||
+        return t == type::i8_type(t.pointer_depth) ||
+               t == type::u8_type(t.pointer_depth) ||
+               t == type::i16_type(t.pointer_depth) ||
+               t == type::u16_type(t.pointer_depth) ||
+               t == type::i32_type(t.pointer_depth) ||
+               t == type::u32_type(t.pointer_depth) ||
+               t == type::i64_type(t.pointer_depth) ||
+               t == type::u64_type(t.pointer_depth) ||
                (this->is_enum && !t.pointer_depth);
     }
     bool is_float() const {
         const auto& t = *this;
-        return t==type::f32_type(t.pointer_depth) ||
-               t==type::f64_type(t.pointer_depth);
+        return t == type::f32_type(t.pointer_depth) ||
+               t == type::f64_type(t.pointer_depth);
     }
     bool is_boolean() const {
-        return *this==type::bool_type(this->pointer_depth);
+        return *this == type::bool_type(pointer_depth);
     }
-    bool is_void() const { return *this==type::void_type(0); }
-    bool is_pointer() const { return pointer_depth>0; }
+    bool is_void() const { return *this == type::void_type(0); }
+    bool is_pointer() const { return pointer_depth > 0; }
     bool is_function() const {
         return stm_info.flag_is_normal ||
                stm_info.flag_is_static ||
