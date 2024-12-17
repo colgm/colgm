@@ -20,6 +20,7 @@ use util::to_num::{ str_to_num };
 use sema::symbol_info::{ symbol_kind, symbol_info };
 use sema::enumerate::{ colgm_enum };
 use sema::structure::{ colgm_struct };
+use sema::module::{ colgm_module };
 use sema::context::{ sema_context };
 use sema::primitive::{ colgm_primitive };
 use sema::type::{ type, symbol };
@@ -61,13 +62,146 @@ impl regist_pass {
 }
 
 impl regist_pass {
+    func import_all(self, node: ast_use_stmt*, dm: colgm_module*) {
+        for (var i = dm->enums.iter(); !i.is_end(); i = i.next()) {
+            if (!i.value()->is_public) {
+                continue;
+            }
+            var name = i.value()->name.__ptr__();
+            var sym_info = symbol_info::new();
+            sym_info->kind = symbol_kind::enum_kind;
+            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            self->ctx->global_symbol()->insert(name, sym_info);
+            sym_info->delete();
+            free(sym_info => i8*);
+        }
+        for (var i = dm->structs.iter(); !i.is_end(); i = i.next()) {
+            if (!i.value()->is_public) {
+                continue;
+            }
+            var name = i.value()->name.__ptr__();
+            var sym_info = symbol_info::new();
+            sym_info->kind = symbol_kind::struct_kind;
+            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            self->ctx->global_symbol()->insert(name, sym_info);
+            sym_info->delete();
+            free(sym_info => i8*);
+        }
+        for (var i = dm->functions.iter(); !i.is_end(); i = i.next()) {
+            if (!i.value()->is_public) {
+                continue;
+            }
+            var name = i.value()->name.__ptr__();
+            var sym_info = symbol_info::new();
+            sym_info->kind = symbol_kind::func_kind;
+            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            self->ctx->global_symbol()->insert(name, sym_info);
+            sym_info->delete();
+            free(sym_info => i8*);
+        }
+        for (var i = dm->generic_structs.iter(); !i.is_end(); i = i.next()) {
+            if (!i.value()->is_public) {
+                continue;
+            }
+            var name = i.value()->name.__ptr__();
+            var sym_info = symbol_info::new();
+            sym_info->kind = symbol_kind::struct_kind;
+            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            self->ctx->generic_symbol()->insert(name, sym_info);
+            sym_info->delete();
+            free(sym_info => i8*);
+        }
+        for (var i = dm->generic_functions.iter(); !i.is_end(); i = i.next()) {
+            if (!i.value()->is_public) {
+                continue;
+            }
+            var name = i.value()->name.__ptr__();
+            var sym_info = symbol_info::new();
+            sym_info->kind = symbol_kind::func_kind;
+            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            self->ctx->generic_symbol()->insert(name, sym_info);
+            sym_info->delete();
+            free(sym_info => i8*);
+        }
+    }
+
+    func import_specified(self, node: ast_use_stmt*, dm: colgm_module*, path: str*) {
+        for (var i: u64 = 0; i < node->import_symbol.size; i += 1) {
+            var name_node = node->import_symbol.get(i).get() => ast_identifier*;
+            var name = name_node->name.__ptr__();
+
+            var is_public = false;
+            if (dm->enums.has(name)) {
+                is_public = dm->enums.get(name)->is_public;
+            } else if (dm->structs.has(name)) {
+                is_public = dm->structs.get(name)->is_public;
+            } else if (dm->functions.has(name)) {
+                is_public = dm->functions.get(name)->is_public;
+            } else if (dm->generic_structs.has(name)) {
+                is_public = dm->generic_structs.get(name)->is_public;
+            } else if (dm->generic_functions.has(name)) {
+                is_public = dm->generic_functions.get(name)->is_public;
+            } else {
+                // do not report now
+                // var info = str::instance();
+                // info.append_i8_vec("cannot find symbol \"");
+                // info.append_str(name);
+                // info.append_i8_vec("\" in module \"");
+                // info.append_str(path);
+                // info.append_i8_vec("\"");
+                // self->err->error(name_node->base.location, info.c_str);
+                // info.delete();
+                continue;
+            }
+
+            if (!is_public) {
+                var info = str::instance();
+                info.append_i8_vec("cannot import private symbol \"");
+                info.append_str(name);
+                info.append_i8_vec("\"");
+                self->err->error(name_node->base.location, info.c_str);
+                info.delete();
+                continue;
+            }
+
+            var sym_info = symbol_info::new();
+            if (dm->enums.has(name)) {
+                sym_info->kind = symbol_kind::enum_kind;
+                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                self->ctx->global_symbol()->insert(name, sym_info);
+            } else if (dm->structs.has(name)) {
+                sym_info->kind = symbol_kind::struct_kind;
+                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                self->ctx->global_symbol()->insert(name, sym_info);
+            } else if (dm->functions.has(name)) {
+                sym_info->kind = symbol_kind::func_kind;
+                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                self->ctx->global_symbol()->insert(name, sym_info);
+            } else if (dm->generic_structs.has(name)) {
+                sym_info->kind = symbol_kind::struct_kind;
+                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                self->ctx->generic_symbol()->insert(name, sym_info);
+            } else if (dm->generic_functions.has(name)) {
+                sym_info->kind = symbol_kind::func_kind;
+                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                self->ctx->generic_symbol()->insert(name, sym_info);
+            }
+            sym_info->delete();
+            free(sym_info => i8*);
+        }
+    }
+
     func import_from_module(self, path: str*, node: ast_use_stmt*) {
         if (!self->ctx->global->domain.has(path)) {
             self->err->error(node->base.location, "module not found");
             return;
         }
         var dm = self->ctx->global->domain.get(path);
-        // TODO
+        if (node->import_symbol.size == 0) {
+            self->import_all(node, dm);
+        } else {
+            self->import_specified(node, dm, path);
+        }
     }
 
     func compile_module(self, name: str*, path: str*) {
@@ -117,6 +251,10 @@ impl regist_pass {
         free(semantic => i8*);
 
         info->status = package_status::analysed;
+
+        // ctx's this file maybe over-written, set it back
+        self->ctx->this_file.clear();
+        self->ctx->this_file.append_i8_vec(self->this_file.c_str);
     }
 
     func scan_single_import(self, node: ast_use_stmt*) {
@@ -399,8 +537,8 @@ impl regist_pass {
             return;
         }
 
-        // TODO
         if (node->generic_types != nil) {
+            // TODO
             return;
         }
 

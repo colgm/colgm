@@ -3,7 +3,7 @@ use ast::ast::{ ast_type_def };
 
 use sema::context::{ sema_context };
 use sema::type::{ type };
-
+use std::io::{ io };
 pub struct type_resolve {
     err: report*,
     ctx: sema_context*
@@ -17,7 +17,26 @@ impl type_resolve {
     pub func resolve(self, node: ast_type_def*) -> type {
         // TODO: resolve type
         var name = node->name->name.__ptr__();
-        if (self->ctx->global_symbol()->has(name)) {
+        var file = node->base.location->file.__ptr__();
+
+        var G = self->ctx->global;
+
+        if (!G->domain.has(file)) {
+            self->err->error(node->base.location, "cannot find module");
+            return type::error_type();
+        }
+
+        var dm = G->domain.get(file);
+        if (dm->global_symbol.has(name)) {
+            var t = type::instance();
+            t.name.append_str(name);
+            t.pointer_depth = node->pointer_depth;
+            t.is_immutable = node->is_const;
+            return t;
+        }
+
+        if (dm->generic_symbol.has(name)) {
+            // TODO
             var t = type::instance();
             t.name.append_str(name);
             t.pointer_depth = node->pointer_depth;
