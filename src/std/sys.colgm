@@ -39,30 +39,6 @@ pub struct stat_info {
     st_qspare_1: i64
 }
 
-#[enable_if(target_os = "macos", arch = "x86_64")]
-pub struct stat_info {
-    st_dev: i32,
-    st_mode: u16,
-    st_nlink: u16,
-    st_ino: u64,
-    st_uid: u32,
-    st_gid: u32,
-    st_rdev: i32,
-    st_atime: timespec,
-    st_mtime: timespec,
-    st_ctime: timespec,
-    st_birthtime: timespec,
-    st_size: i64,
-    st_blocks: i64,
-    st_blksize: i32,
-    st_flags: u32,
-    st_gen: u32,
-    st_lspare: i32,
-    // reserved
-    st_qspare_0: i64,
-    st_qspare_1: i64
-}
-
 #[enable_if(target_os = "linux", arch = "x86_64")]
 pub struct stat_info {
     st_dev: u64,
@@ -83,4 +59,26 @@ pub struct stat_info {
     __glibc_reserved_0: i64,
     __glibc_reserved_1: i64,
     __glibc_reserved_2: i64
+}
+
+#[enable_if(target_os = "linux", arch = "aarch64")]
+pub struct stat_info {
+    st_dev: u64,
+    st_ino: u64,
+    st_mode: u32,
+    st_nlink: u32,
+    st_uid: u32,
+    st_gid: u32,
+    st_rdev: u64,
+    __pad1: u64,
+    st_size: i64,
+    st_blksize: i32,
+    __pad2: i32,
+    st_blocks: i64,
+    st_atim: timespec,
+    st_mtim: timespec,
+    st_ctim: timespec,
+    // reserved
+    __glibc_reserved_0: i32,
+    __glibc_reserved_1: i32
 }
