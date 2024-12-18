@@ -64,61 +64,51 @@ impl regist_pass {
 impl regist_pass {
     func import_all(self, node: ast_use_stmt*, dm: colgm_module*) {
         for (var i = dm->enums.iter(); !i.is_end(); i = i.next()) {
-            if (!i.value()->is_public) {
-                continue;
-            }
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::enum_kind;
             sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->is_public = i.value()->is_public;
             self->ctx->global_symbol()->insert(name, sym_info);
             sym_info->delete();
             free(sym_info => i8*);
         }
         for (var i = dm->structs.iter(); !i.is_end(); i = i.next()) {
-            if (!i.value()->is_public) {
-                continue;
-            }
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::struct_kind;
             sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->is_public = i.value()->is_public;
             self->ctx->global_symbol()->insert(name, sym_info);
             sym_info->delete();
             free(sym_info => i8*);
         }
         for (var i = dm->functions.iter(); !i.is_end(); i = i.next()) {
-            if (!i.value()->is_public) {
-                continue;
-            }
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::func_kind;
             sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->is_public = i.value()->is_public;
             self->ctx->global_symbol()->insert(name, sym_info);
             sym_info->delete();
             free(sym_info => i8*);
         }
         for (var i = dm->generic_structs.iter(); !i.is_end(); i = i.next()) {
-            if (!i.value()->is_public) {
-                continue;
-            }
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::struct_kind;
             sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->is_public = i.value()->is_public;
             self->ctx->generic_symbol()->insert(name, sym_info);
             sym_info->delete();
             free(sym_info => i8*);
         }
         for (var i = dm->generic_functions.iter(); !i.is_end(); i = i.next()) {
-            if (!i.value()->is_public) {
-                continue;
-            }
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::func_kind;
             sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->is_public = i.value()->is_public;
             self->ctx->generic_symbol()->insert(name, sym_info);
             sym_info->delete();
             free(sym_info => i8*);
@@ -165,6 +155,7 @@ impl regist_pass {
             }
 
             var sym_info = symbol_info::new();
+            sym_info->is_public = true;
             if (dm->enums.has(name)) {
                 sym_info->kind = symbol_kind::enum_kind;
                 sym_info->loc_file.append_str(node->base.location->file.__ptr__());
@@ -346,6 +337,7 @@ impl regist_pass {
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::basic_kind;
             sym_info->loc_file.append_i8_vec("");
+            sym_info->is_public = true; // must be public
             self->ctx->global_symbol()->insert(name.__ptr__(), sym_info);
 
             name.delete();
@@ -474,6 +466,7 @@ impl regist_pass {
         var sym_info = symbol_info::new();
         sym_info->kind = symbol_kind::enum_kind;
         sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+        sym_info->is_public = true; // true for selves' domain
         self->ctx->global_symbol()->insert(name, sym_info);
         sym_info->delete();
         free(sym_info => i8*);
@@ -609,6 +602,7 @@ impl regist_pass {
         var sym_info = symbol_info::new();
         sym_info->kind = symbol_kind::struct_kind;
         sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+        sym_info->is_public = true; // true for selves's domain
         if (node->generic_types != nil) {
             self->ctx->generic_symbol()->insert(name, sym_info);
         } else {

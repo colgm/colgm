@@ -3,7 +3,11 @@ use ast::ast::{ ast_type_def };
 
 use sema::context::{ sema_context };
 use sema::type::{ type };
+use sema::symbol_info::{ symbol_kind };
+
 use std::io::{ io };
+use std::str::{ str };
+
 pub struct type_resolve {
     err: report*,
     ctx: sema_context*
@@ -25,25 +29,45 @@ impl type_resolve {
             self->err->error(node->base.location, "cannot find module");
             return type::error_type();
         }
+        var DM = G->domain.get(file);
 
-        var dm = G->domain.get(file);
-        if (dm->global_symbol.has(name)) {
-            var t = type::instance();
-            t.name.append_str(name);
-            t.pointer_depth = node->pointer_depth;
-            t.is_immutable = node->is_const;
-            return t;
+        // cannot find type
+        if (!DM->global_symbol.has(name) &&
+            !DM->generic_symbol.has(name)) {
+            var info = str::from("undefined type \"");
+            info.append_str(name)->append_i8_vec("\"");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return type::error_type();
         }
 
-        if (dm->generic_symbol.has(name)) {
-            // TODO
-            var t = type::instance();
-            t.name.append_str(name);
-            t.pointer_depth = node->pointer_depth;
-            t.is_immutable = node->is_const;
-            return t;
+        // find type but type is not imported as public
+        // mainly occurs when import all symbols from a module
+        if (DM->global_symbol.has(name) &&
+            !DM->global_symbol.get(name)->is_public) {
+            var info = str::from("private type \"");
+            info.append_str(name)->append_i8_vec("\" cannot be used");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return type::error_type();
         }
 
-        return type::error_type();
+        // function cannot be used as type
+        if (DM->global_symbol.has(name) &&
+            DM->global_symbol.get(name)->kind == symbol_kind::func_kind) {
+            var info =  str::from("\"");
+            info.append_str(name)
+                ->append_i8_vec("\" is a function, ")
+                ->append_i8_vec("cannot be used as a type.");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return type::error_type();
+        }
+
+        var t = type::instance();
+        t.name.append_str(name);
+        t.pointer_depth = node->pointer_depth;
+        t.is_immutable = node->is_const;
+        return t;
     }
 }

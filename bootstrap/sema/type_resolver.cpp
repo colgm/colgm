@@ -37,12 +37,19 @@ type type_resolver::resolve(ast::type_def* node) {
     }
 
     // find type but type is not imported as public
-    // mainly eccurs when import all symbols from a module
-    // report this error, but still resolve the type
+    // mainly occurs when import all symbols from a module
     if (dm.global_symbol.count(name) &&
         !dm.global_symbol.at(name).is_public) {
         rp.report(node->get_name(),
             "private type \"" + name + "\" cannot be used."
+        );
+    }
+
+    // function cannot be used as type
+    if (dm.global_symbol.count(name) &&
+        dm.global_symbol.at(name).kind == sym_kind::func_kind) {
+        rp.report(node->get_name(),
+            "\"" + name + "\" is a function, cannot be used as a type."
         );
     }
 
