@@ -904,6 +904,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         if (en.members.count(node->get_name())) {
             auto res = prev;
             res.is_global = false;
+            res.is_enum = true;
             node->set_resolve_type(res);
             return res;
         }

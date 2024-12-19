@@ -2,20 +2,43 @@ use std::libc::{ open, read, write, close, malloc, free, strlen, itoa };
 use std::str::str;
 use err::panic::{ panic };
 
+#[enable_if(target_os="macos")]
 pub enum flag {
-    O_RDONLY = 0x0000,
-    O_WRONLY = 0x0001,
-    O_RDWR = 0x0002,
-    O_APPEND = 0x0008,
-    O_CREAT = 0x0100,
-    O_TRUNC = 0x0200,
-    O_EXCL = 0x0400,
+    O_RDONLY = 0x0,
+    O_WRONLY = 0x1,
+    O_RDWR = 0x2,
+    O_APPEND = 0x8,
+    O_CREAT = 0x200,
+    O_TRUNC = 0x400,
+    O_EXCL = 0x800
+}
+
+#[enable_if(target_os="linux")]
+pub enum flag {
+    O_RDONLY = 0x0,
+    O_WRONLY = 0x1,
+    O_RDWR = 0x2,
+    O_CREAT = 0x40,
+    O_EXCL = 0x80,
+    O_TRUNC = 0x200,
+    O_APPEND = 0x400
+}
+
+#[enable_if(target_os="windows")] // windows mingw-w64
+pub enum flag {
+    O_RDONLY = 0x0,
+    O_WRONLY = 0x1,
+    O_RDWR = 0x2,
+    O_CREAT = 0x100,
+    O_EXCL = 0x400,
+    O_TRUNC = 0x200,
+    O_APPEND = 0x8,
     O_TEXT = 0x4000,
-    O_BINARY= 0x8000
+    O_BINARY = 0x8000
 }
 
 pub func readfile_into_string(filename: i8*, dst: str*) -> i64 {
-    var fd = open(filename, (flag::O_RDONLY => i32) | (flag::O_BINARY => i32));
+    var fd = open(filename, flag::O_RDONLY => i32, 0);
     if (fd < 0) {
         return fd => i64;
     }
@@ -141,17 +164,17 @@ impl io {
 }
 
 impl io {
-    pub func logger(file: i8*) -> io {
-        var fd = open(file,
-            (flag::O_CREAT => i32) |
-            (flag::O_APPEND => i32) |
-            (flag::O_WRONLY => i32) |
-            (flag::O_BINARY => i32)
-        );
+    func open_append_write_file(file: i8*) -> i32 {
+        var flags = flag::O_WRONLY | flag::O_APPEND | flag::O_CREAT;
+        var fd = open(file, flags => i32, 0o666); // rw-rw-rw-
         if (fd < 0) {
-            panic("io::logger: failed to open log file");
+            panic("io: failed to open the file in append mode");
         }
-        return io { fd: fd };
+        return fd;
+    }
+
+    func logger(file: i8*) -> io {
+        return io { fd: io::open_append_write_file(file) };
     }
 
     pub func colgm_report() -> io {
