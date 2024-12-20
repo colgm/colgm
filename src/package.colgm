@@ -33,7 +33,9 @@ impl package_info {
 pub struct package {
     err: report*,
     library_path: str,
-    file_mapper: hashmap<str, package_info>
+    file_mapper: hashmap<str, package_info>,
+    file_to_module: hashmap<str, str>,
+    module_to_file: hashmap<str, str>
 }
 
 impl package {
@@ -45,24 +47,30 @@ impl package {
         res->err = e;
         res->library_path = str::instance();
         res->file_mapper = hashmap<str, package_info>::instance();
+        res->file_to_module = hashmap<str, str>::instance();
+        res->module_to_file = hashmap<str, str>::instance();
         return res;
     }
 
     pub func delete(self) {
         self->library_path.delete();
         self->file_mapper.delete();
+        self->file_to_module.delete();
+        self->module_to_file.delete();
     }
 
-    pub func insert(self, name: str*, path: str*) {
-        if (self->file_mapper.has(name)) {
+    pub func insert(self, module_name: str*, file_path: str*) {
+        if (self->file_mapper.has(module_name)) {
             return;
         }
 
         var info = package_info {
-            path: path->copy_instance(),
+            path: file_path->copy_instance(),
             status: package_status::not_used
         };
-        self->file_mapper.insert(name, info.__ptr__());
+        self->file_mapper.insert(module_name, info.__ptr__());
+        self->file_to_module.insert(file_path, module_name);
+        self->module_to_file.insert(module_name, file_path);
         info.delete();
     }
 
@@ -78,5 +86,19 @@ impl package {
             panic("package info not found");
         }
         return self->file_mapper.get(name);
+    }
+
+    pub func get_file_path(self, module_name: str*) -> str* {
+        if (!self->module_to_file.has(module_name)) {
+            panic("file path not found");
+        }
+        return self->module_to_file.get(module_name);
+    }
+
+    pub func get_module_name(self, file_path: str*) -> str* {
+        if (!self->file_to_module.has(file_path)) {
+            panic("module name not found");
+        }
+        return self->file_to_module.get(file_path);
     }
 }
