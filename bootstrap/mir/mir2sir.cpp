@@ -571,7 +571,7 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
     for(const auto& i : node->get_fields()) {
         const auto target = ssa_gen.create();
         const auto index = st.field_index(i.name);
-        block->add_stmt(new sir_call_field(
+        block->add_stmt(new sir_get_field(
             target,
             temp_var,
             type_mapping(node->get_type()),
@@ -679,7 +679,7 @@ void mir2sir::visit_mir_call_index(mir_call_index* node) {
     ));
 
     auto target = ssa_gen.create();
-    block->add_stmt(new sir_call_index(
+    block->add_stmt(new sir_get_index(
         value_t::variable(temp_var),
         value_t::variable(target),
         index.to_value_t(),
@@ -710,16 +710,16 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
     }
 
     std::string target = "";
-    sir_call_func* sir_function_call = nullptr;
+    sir_call* sir_function_call = nullptr;
     if (node->get_type() != type::void_type()) {
         target = ssa_gen.create();
-        sir_function_call = new sir_call_func(
+        sir_function_call = new sir_call(
             mangle(prev.content),
             type_mapping(node->get_type()),
             value_t::variable(target)
         );
     } else {
-        sir_function_call = new sir_call_func(
+        sir_function_call = new sir_call(
             mangle(prev.content),
             type_mapping(node->get_type()),
             value_t::null()
@@ -794,7 +794,7 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
 
     const auto target = ssa_gen.create();
     const auto index = st.field_index(node->get_name());
-    block->add_stmt(new sir_call_field(
+    block->add_stmt(new sir_get_field(
         target,
         prev.content,
         type_mapping(prev.resolve_type.get_ref_copy()),
@@ -866,7 +866,7 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
         prev.to_value_t(),
         value_t::variable(temp_0)
     ));
-    block->add_stmt(new sir_call_field(
+    block->add_stmt(new sir_get_field(
         temp_1,
         temp_0,
         type_mapping(prev.resolve_type.get_ref_copy().get_ref_copy()),

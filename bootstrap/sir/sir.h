@@ -21,9 +21,9 @@ enum class sir_kind {
     sir_ret,
     sir_str,
     sir_zeroinitializer,
-    sir_call_index,
-    sir_call_field,
-    sir_call_func,
+    sir_get_index,
+    sir_get_field,
+    sir_call,
     sir_neg,
     sir_bnot,
     sir_lnot,
@@ -229,7 +229,7 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_call_index: public sir {
+class sir_get_index: public sir {
 private:
     value_t source;
     value_t destination;
@@ -238,18 +238,18 @@ private:
     std::string index_type;
 
 public:
-    sir_call_index(const value_t& src,
-                   const value_t& dst,
-                   const value_t& idx,
-                   const std::string& t,
-                   const std::string& it):
-        sir(sir_kind::sir_call_index), source(src),
+    sir_get_index(const value_t& src,
+                  const value_t& dst,
+                  const value_t& idx,
+                  const std::string& t,
+                  const std::string& it):
+        sir(sir_kind::sir_get_index), source(src),
         destination(dst), index(idx), type(t), index_type(it) {}
-    ~sir_call_index() override = default;
+    ~sir_get_index() override = default;
     void dump(std::ostream&) const override;
 };
 
-class sir_call_field: public sir {
+class sir_get_field: public sir {
 private:
     std::string destination;
     std::string source;
@@ -257,18 +257,18 @@ private:
     usize index;
 
 public:
-    sir_call_field(const std::string& dst,
-                   const std::string& src,
-                   const std::string& sn,
-                   usize i):
-        sir(sir_kind::sir_call_field),
+    sir_get_field(const std::string& dst,
+                  const std::string& src,
+                  const std::string& sn,
+                  usize i):
+        sir(sir_kind::sir_get_field),
         destination(dst), source(src),
         struct_name(sn), index(i) {}
-    ~sir_call_field() override = default;
+    ~sir_get_field() override = default;
     void dump(std::ostream&) const override;
 };
 
-class sir_call_func: public sir {
+class sir_call: public sir {
 private:
     std::string name;
     std::string return_type;
@@ -278,13 +278,13 @@ private:
     u64 debug_info_index;
 
 public:
-    sir_call_func(const std::string& n,
-                  const std::string& rt,
-                  const value_t& dst):
-        sir(sir_kind::sir_call_func), name(n),
+    sir_call(const std::string& n,
+             const std::string& rt,
+             const value_t& dst):
+        sir(sir_kind::sir_call), name(n),
         return_type(rt), destination(dst),
         debug_info_index(DI_node::DI_ERROR_INDEX) {}
-    ~sir_call_func() override = default;
+    ~sir_call() override = default;
     const auto& get_name() const { return name; }
     const auto& get_destination() const { return destination; }
     const auto& get_return_type() const { return return_type; }

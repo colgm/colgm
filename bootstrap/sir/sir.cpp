@@ -101,20 +101,20 @@ void sir_zeroinitializer::dump(std::ostream& out) const {
     out << ", " << quoted_name(type) << "* " << destination << "\n";
 }
 
-void sir_call_index::dump(std::ostream& out) const {
+void sir_get_index::dump(std::ostream& out) const {
     out << destination << " = getelementptr " << quoted_name(type) << ", ";
     out << quoted_name(type) << "* " << source << ", ";
     out << quoted_name(index_type) << " " << index << "\n";
 }
 
-void sir_call_field::dump(std::ostream& out) const {
+void sir_get_field::dump(std::ostream& out) const {
     out << "%" << destination << " = getelementptr inbounds ";
     out << quoted_name(struct_name) << ", ";
     out << quoted_name(struct_name) << "* %" << source << ", ";
     out << "i32 0, i32 " << index << "\n";
 }
 
-void sir_call_func::dump(std::ostream& out) const {
+void sir_call::dump(std::ostream& out) const {
     if (destination.value_kind==value_t::kind::variable) {
         out << destination << " = ";
     }

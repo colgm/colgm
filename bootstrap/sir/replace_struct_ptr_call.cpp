@@ -7,11 +7,11 @@ namespace colgm {
 void replace_struct_ptr_call::do_remove(sir_block* b) {
     std::vector<sir*> new_stmts = {};
     for(auto i : b->get_stmts()) {
-        if (i->get_ir_type() != sir_kind::sir_call_func) {
+        if (i->get_ir_type() != sir_kind::sir_call) {
             new_stmts.push_back(i);
             continue;
         }
-        auto p = static_cast<sir_call_func*>(i);
+        auto p = static_cast<sir_call*>(i);
         if (p->get_name().find(".__ptr__") != std::string::npos &&
             p->get_args().size() == 1 &&
             p->get_return_type().length() &&
