@@ -20,6 +20,7 @@ use util::to_num::{ str_to_num };
 use sema::symbol_info::{ symbol_kind, symbol_info };
 use sema::enumerate::{ colgm_enum };
 use sema::structure::{ colgm_struct };
+use sema::function::{ colgm_func };
 use sema::module::{ colgm_module };
 use sema::context::{ sema_context };
 use sema::primitive::{ colgm_primitive };
@@ -485,6 +486,49 @@ impl regist_pass {
 }
 
 impl regist_pass {
+    func generate_function_params(self, f: colgm_func*, node: ast_func_decl*) {
+        if (node->is_public) {
+            f->is_public = true;
+        }
+        if (node->is_extern) {
+            f->is_extern = true;
+        }
+
+        var v = node->params->params.__ptr__();
+        for (var i: u64 = 0; i < v->size; i += 1) {
+            var n = v->get(i).get();
+            if (!n->is(ast_kind::ast_param)) {
+                self->err->error(n->location,
+                    "invalid ast node, expect param"
+                );
+                continue;
+            }
+            var n_ast = n => ast_param*;
+            var param_name = n_ast->name->name.__ptr__();
+            if (f->unordered_params.has(param_name)) {
+                var info = str::instance();
+                info.append_i8_vec("param \"");
+                info.append_str(param_name);
+                info.append_i8_vec("\" conflicts with exist param");
+                self->err->error(n->location, info.c_str);
+                info.delete();
+                continue;
+            }
+
+            if (n_ast->type == nil) {
+                var param_type = type::error_type();
+                f->param_name.push(param_name);
+                f->param_type.push(param_type.__ptr__());
+                f->unordered_params.insert(param_name, param_type.__ptr__());
+            } else {
+                var param_type = self->tr.resolve(n_ast->type);
+                f->param_name.push(param_name);
+                f->param_type.push(param_type.__ptr__());
+                f->unordered_params.insert(param_name, param_type.__ptr__());
+            }
+        }
+    }
+
     func regist_single_global_func(self, node: ast_func_decl*) {
         var name = node->name.__ptr__();
         if (self->ctx->global_symbol()->has(name) ||
@@ -502,6 +546,42 @@ impl regist_pass {
         if (node->generic_types != nil) {
             return;
         }
+
+        // allocate func info
+        var func_info: colgm_func* = nil;
+        if (node->return_type == nil) {
+            var ret_type = type::void_type();
+            func_info = colgm_func::new(
+                name,
+                node->base.location,
+                ret_type.__ptr__()
+            );
+            ret_type.delete();
+        } else {
+            var ret_type = self->tr.resolve(node->return_type);
+            func_info = colgm_func::new(
+                name,
+                node->base.location,
+                ret_type.__ptr__()
+            );
+            ret_type.delete();
+        }
+
+        self->generate_function_params(func_info, node);
+
+        // insert to domain
+        var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
+        dm->functions.insert(name, func_info);
+        func_info->delete();
+        free(func_info => i8*);
+
+        var sym_info = symbol_info::new();
+        sym_info->kind = symbol_kind::func_kind;
+        sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+        sym_info->is_public = true; // true for selves' domain
+        self->ctx->global_symbol()->insert(name, sym_info);
+        sym_info->delete();
+        free(sym_info => i8*);
     }
 
     func scan_global_funcs(self) {

@@ -24,6 +24,22 @@ pub struct colgm_func {
 }
 
 impl colgm_func {
+    pub func new(name: str*, loc: span*, ret_type: type*) -> colgm_func* {
+        var res = colgm_func::__alloc__();
+        res->name = name->copy_instance();
+        res->location = loc->copy_instance();
+        res->return_type = ret_type->copy_instance();
+        res->param_name = vec<str>::instance();
+        res->param_type = vec<type>::instance();
+        res->unordered_params = hashmap<str, type>::instance();
+        res->generic_template = vec<str>::instance();
+        res->generic_func_decl = nil;
+
+        res->is_public = false;
+        res->is_extern = false;
+        return res;
+    }
+
     pub func delete(self) {
         self->name.delete();
         self->location.delete();
@@ -60,5 +76,19 @@ impl colgm_func {
 }
 
 impl colgm_func {
-    pub func dump(self, out: io) {}
+    pub func dump(self, out: io) {
+        out.out("  function ").out(self->name.c_str);
+        out.out("(");
+        for (var i: u64 = 0; i < self->param_name.size; i += 1) {
+            var n = self->param_name.get(i);
+            out.out(n->c_str).out(": ");
+            self->param_type.get(i)->dump(out);
+            if (i != self->param_name.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out(") -> ");
+        self->return_type.dump(out);
+        out.out("\n");
+    }
 }
