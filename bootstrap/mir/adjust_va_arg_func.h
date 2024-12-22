@@ -8,20 +8,17 @@
 
 namespace colgm::mir {
 
-class add_default_func: public pass {
+class adjust_va_arg_func: public pass {
 private:
-    mir_context* ctx = nullptr;
     std::unordered_map<std::string, mir_func*> used_funcs;
 
 private:
-    void add_malloc_decl();
-    void add_free_decl();
-    void add_main_impl();
+    void adjust_posix_open();
 
 public:
-    ~add_default_func() override = default;
+    ~adjust_va_arg_func() override = default;
     std::string name() override {
-        return "add default function";
+        return "adjust va_arg func";
     }
     bool run(mir_context*) override;
 };

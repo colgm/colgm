@@ -38,6 +38,7 @@ set(COLGM_SIR
     ${CMAKE_SOURCE_DIR}/sir/sir.cpp)
 set(COLGM_MIR
     ${CMAKE_SOURCE_DIR}/mir/add_default_func.cpp
+    ${CMAKE_SOURCE_DIR}/mir/adjust_va_arg_func.cpp
     ${CMAKE_SOURCE_DIR}/mir/ast2mir.cpp
     ${CMAKE_SOURCE_DIR}/mir/mir.cpp
     ${CMAKE_SOURCE_DIR}/mir/mir2sir.cpp
