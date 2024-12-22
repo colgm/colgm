@@ -65,8 +65,7 @@ void sir_block::dump(std::ostream& out) const {
         i->dump(out);
     }
     for(auto i : stmts) {
-        if (i->get_ir_type()!=sir_kind::sir_label &&
-            i->get_ir_type()!=sir_kind::sir_place_holder_label) {
+        if (i->get_ir_type()!=sir_kind::sir_label) {
             out << "  ";
         } else {
             out << "\n";
@@ -230,16 +229,6 @@ void sir_label::dump(std::ostream& out) const {
 std::string sir_label::get_label() const {
     std::stringstream ss;
     ss << "label." << std::hex << label_count << std::dec;
-    return ss.str();
-}
-
-void sir_place_holder_label::dump(std::ostream& out) const {
-    out << get_label() << ":\n";
-}
-
-std::string sir_place_holder_label::get_label() const {
-    std::stringstream ss;
-    ss << "label.place_holder." << std::hex << label_count << std::dec;
     return ss.str();
 }
 

@@ -22,7 +22,7 @@ public:
     }
     std::string info() override {
         std::stringstream ss;
-        ss << "removed " << removed_count << " instruction";
+        ss << "merged " << removed_count << " instruction";
         if (removed_count > 1) {
             ss << "s";
         }

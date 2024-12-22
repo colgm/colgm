@@ -37,7 +37,6 @@ enum class sir_kind {
     sir_bor,
     sir_cmp,
     sir_label,
-    sir_place_holder_label,
     sir_store,
     sir_load,
     sir_br,
@@ -553,18 +552,6 @@ public:
     sir_label(usize count, const std::string& cm = ""):
         sir(sir_kind::sir_label), label_count(count), comment(cm) {}
     ~sir_label() override = default;
-    void dump(std::ostream&) const override;
-    std::string get_label() const;
-};
-
-class sir_place_holder_label: public sir {
-private:
-    usize label_count;
-
-public:
-    sir_place_holder_label(usize count):
-        sir(sir_kind::sir_place_holder_label), label_count(count) {}
-    ~sir_place_holder_label() override = default;
     void dump(std::ostream&) const override;
     std::string get_label() const;
 };

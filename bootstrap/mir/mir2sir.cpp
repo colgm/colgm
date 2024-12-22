@@ -1111,7 +1111,7 @@ void mir2sir::visit_mir_if(mir_if* node) {
     // for block ends with ret instruction, another basic block is needed
     // because ret instruction is the terminator instruction
     if (block->back_is_ret_stmt()) {
-        block->add_stmt(new sir_place_holder_label(block->stmt_size()));
+        block->add_stmt(new sir_label(block->stmt_size(), "block.end.ret"));
     }
 
     auto jump_out = new sir_br(0);
@@ -1208,14 +1208,14 @@ void mir2sir::visit_mir_break(mir_break* node) {
     auto break_br = new sir_br(0);
     break_inst.back().push_back(break_br);
     block->add_stmt(break_br);
-    block->add_stmt(new sir_place_holder_label(block->stmt_size()));
+    block->add_stmt(new sir_label(block->stmt_size(), "break.end"));
 }
 
 void mir2sir::visit_mir_continue(mir_continue* node) {
     auto continue_br = new sir_br(0);
     continue_inst.back().push_back(continue_br);
     block->add_stmt(continue_br);
-    block->add_stmt(new sir_place_holder_label(block->stmt_size()));
+    block->add_stmt(new sir_label(block->stmt_size(), "continue.end"));
 }
 
 void mir2sir::visit_mir_loop(mir_loop* node) {

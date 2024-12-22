@@ -39,25 +39,22 @@ void delete_useless_label::delete_label(sir_block* cb) {
     }
 
     std::unordered_set<sir*> useless_inst;
-    for(usize i = 0; i<cb->stmt_size(); ++i) {
+    for(usize i = 0; i < cb->stmt_size(); ++i) {
         if (i + 1 >= cb->stmt_size()) {
             continue;
         }
         auto this_node = cb->get_stmts()[i];
-        auto next_node = cb->get_stmts()[i+1];
-        if (this_node->get_ir_type()!=sir_kind::sir_br) {
+        auto next_node = cb->get_stmts()[i + 1];
+        if (this_node->get_ir_type() != sir_kind::sir_br) {
             continue;
         }
-        if (next_node->get_ir_type()!=sir_kind::sir_label &&
-            next_node->get_ir_type()!=sir_kind::sir_place_holder_label) {
+        if (next_node->get_ir_type() != sir_kind::sir_label) {
             continue;
         }
 
         const auto br_label = this_node->to<sir_br>()->get_label();
-        const auto real_label = next_node->get_ir_type()==sir_kind::sir_label ?
-                            next_node->to<sir_label>()->get_label() :
-                            next_node->to<sir_place_holder_label>()->get_label();
-        if (br_label==real_label && used_label.at(br_label)==1) {
+        const auto real_label = next_node->to<sir_label>()->get_label();
+        if (br_label == real_label && used_label.at(br_label) == 1) {
             useless_inst.insert(this_node);
             useless_inst.insert(next_node);
         }
