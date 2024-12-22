@@ -118,6 +118,15 @@ void sir_call::dump(std::ostream& out) const {
         out << destination << " = ";
     }
     out << "call " << quoted_name(return_type);
+
+    if (with_va_args) {
+        out << "(";
+        for(usize i = 0; i < with_va_args_real_param_size; ++i) {
+            out << quoted_name(args_type[i]) << ", ";
+        }
+        out << "...)";
+    }
+
     out << " @" << quoted_name(name) << "(";
     for(usize i = 0; i<args.size(); ++i) {
         out << quoted_name(args_type[i]) << " " << args[i];

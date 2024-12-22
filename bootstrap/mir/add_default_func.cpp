@@ -46,18 +46,30 @@ void add_default_func::add_main_impl() {
     ctx->impls.push_back(default_main);
 }
 
+void add_default_func::adjust_posix_open() {
+    if (!used_funcs.count("open")) {
+        return;
+    }
+
+    auto open_func = used_funcs.at("open");
+    while (open_func->params.size() > 2) {
+        open_func->params.pop_back();
+    }
+    open_func->with_va_args = true;
+}
+
 bool add_default_func::run(mir_context* c) {
     ctx = c;
     for(auto i : ctx->decls) {
-        used_funcs.insert(i->name);
+        used_funcs.insert({i->name, i});
     }
     for(auto i : ctx->impls) {
-        used_funcs.insert(i->name);
+        used_funcs.insert({i->name, i});
     }
 
     add_malloc_decl();
     add_free_decl();
-
+    adjust_posix_open();
     add_main_impl();
     return true;
 }

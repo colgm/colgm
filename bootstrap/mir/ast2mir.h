@@ -24,11 +24,12 @@ struct mir_func {
     std::string name;
     span location;
     std::vector<std::pair<std::string, type>> params;
+    bool with_va_args;
     std::vector<std::string> attributes;
     type return_type;
     mir_block* block;
 
-    mir_func(): block(nullptr) {}
+    mir_func(): with_va_args(false), block(nullptr) {}
     ~mir_func() { delete block; }
 };
 

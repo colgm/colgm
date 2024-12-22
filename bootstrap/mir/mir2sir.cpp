@@ -78,6 +78,7 @@ void mir2sir::emit_func_decl(const mir_context& mctx) {
         for(const auto& j : i->params) {
             func->add_param(j.first + ".param", type_mapping(j.second));
         }
+        func->set_with_va_args(i->with_va_args);
         ictx.func_decls.push_back(func);
     }
 }
@@ -95,6 +96,7 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
             func->add_param(j.first + ".param", type_mapping(j.second));
             locals.elem.back().insert({j.first, j.first});
         }
+        func->set_with_va_args(i->with_va_args);
         // if having debug info, set it
         if (dwarf_status.impl_debug_info.count(i->name)) {
             auto scope = dwarf_status.impl_debug_info.at(i->name);

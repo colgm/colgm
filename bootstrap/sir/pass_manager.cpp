@@ -1,4 +1,5 @@
 #include "sir/pass_manager.h"
+#include "sir/adjust_va_arg_func.h"
 #include "sir/delete_useless_label.h"
 #include "sir/remove_alloca.h"
 #include "sir/detect_redef_extern.h"
@@ -15,6 +16,7 @@ sir_pass_manager::~sir_pass_manager() {
 }
 
 void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
+    passes.push_back(new adjust_va_arg_func);
     passes.push_back(new delete_useless_label);
     passes.push_back(new remove_alloca);
     passes.push_back(new detect_redef_extern);

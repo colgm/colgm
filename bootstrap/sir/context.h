@@ -35,6 +35,7 @@ class sir_func {
 private:
     std::string name;
     std::vector<std::pair<std::string, std::string>> params;
+    bool with_va_args;
     std::vector<std::string> attributes;
     u64 debug_info_index;
     std::string return_type;
@@ -45,7 +46,8 @@ private:
 
 public:
     sir_func(const std::string& n):
-        name(n), debug_info_index(DI_node::DI_ERROR_INDEX), block(nullptr) {}
+        name(n), with_va_args(false),
+        debug_info_index(DI_node::DI_ERROR_INDEX), block(nullptr) {}
     ~sir_func() { delete block; }
     void set_debug_info_index(u64 i) { debug_info_index = i; }
     const auto get_mangled_name() const { return quoted_name(name); }
@@ -57,6 +59,7 @@ public:
     }
     void set_code_block(sir_block* b) { block = b; }
     auto get_code_block() { return block; }
+    void set_with_va_args(bool b) { with_va_args = b; }
     void set_attributes(const std::vector<std::string>& a) { attributes = a; }
     void set_return_type(const std::string& rtype) { return_type = rtype; }
 };

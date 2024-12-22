@@ -274,6 +274,8 @@ private:
     value_t destination;
     std::vector<std::string> args_type;
     std::vector<value_t> args;
+    bool with_va_args;
+    u64 with_va_args_real_param_size;
     u64 debug_info_index;
 
 public:
@@ -282,6 +284,7 @@ public:
              const value_t& dst):
         sir(sir_kind::sir_call), name(n),
         return_type(rt), destination(dst),
+        with_va_args(false), with_va_args_real_param_size(0),
         debug_info_index(DI_node::DI_ERROR_INDEX) {}
     ~sir_call() override = default;
     const auto& get_name() const { return name; }
@@ -291,6 +294,10 @@ public:
     const auto& get_args() const { return args; }
     void add_arg_type(const std::string& t) { args_type.push_back(t); }
     void add_arg(const value_t& a) { args.push_back(a); }
+    void set_with_va_args(bool b) { with_va_args = b; }
+    void set_with_va_args_real_param_size(u64 s) {
+        with_va_args_real_param_size = s;
+    }
     void set_debug_info_index(u64 i) { debug_info_index = i; }
     void dump(std::ostream&) const override;
 };

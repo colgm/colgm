@@ -57,6 +57,9 @@ void sir_func::dump(std::ostream& out) const {
             out << ", ";
         }
     }
+    if (with_va_args) {
+        out << ", ...";
+    }
     out << ")";
 
     dump_attributes(out);
