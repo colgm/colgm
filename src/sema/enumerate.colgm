@@ -46,16 +46,22 @@ impl colgm_enum {
 
 impl colgm_enum {
     pub func dump(self, out: io) {
-        out.out("  enum ").out(self->name.c_str);
+        out.out("  ");
+        if (self->is_public) {
+            out.green().out("pub ").reset();
+        }
+        out.cyan().out("enum ").reset();
+        out.white().out(self->name.c_str).reset();
         if (self->ordered_member.size == 0) {
-            out.out("\n");
+            out.out(" {}\n");
             return;
         }
-        out.out(":\n");
+        out.out(" {\n");
         for (var i: u64 = 0; i < self->ordered_member.size; i += 1) {
             out.out("    ").out(self->ordered_member.get(i)->c_str).out(": ");
             var v = self->members.get(self->ordered_member.get(i));
-            out.out_i64(v->data => i64).out("\n");
+            out.orange().out_i64(v->data => i64).reset().out("\n");
         }
+        out.out("  }\n");
     }
 }

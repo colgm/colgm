@@ -714,6 +714,118 @@ impl regist_pass {
 }
 
 impl regist_pass {
+    func is_method(self, node: ast_func_decl*) -> bool {
+        var pms = node->params->params.__ptr__();
+        if (pms->size == 0) {
+            return false;
+        }
+
+        var first_param = pms->get(0).get();
+        if (!first_param->is(ast_kind::ast_param)) {
+            return false;
+        }
+        var first_param_node = first_param => ast_param*;
+        if (first_param_node->name->name.eq_const("self")) {
+            return true;
+        }
+        return false;
+    }
+
+    func check_field_not_exist(self,
+                               struct_info: colgm_struct*,
+                               name: str*) -> bool {
+        if (struct_info->fields.has(name)) {
+            return false;
+        }
+        if (struct_info->static_methods.has(name)) {
+            return false;
+        }
+        if (struct_info->methods.has(name)) {
+            return false;
+        }
+        return true;
+    }
+
+    func generate_impl_method(self,
+                              struct_info: colgm_struct*,
+                              node: ast_func_decl*) {
+        var name = node->name.__ptr__();
+        if (!self->check_field_not_exist(struct_info, name)) {
+            var info = str::instance();
+            info.append_i8_vec("field \"");
+            info.append_str(name);
+            info.append_i8_vec("\" conflicts with exist field or method");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        // allocate func info
+        var func_info: colgm_func* = nil;
+        if (node->return_type == nil) {
+            var ret_type = type::void_type();
+            func_info = colgm_func::new(
+                name,
+                node->base.location,
+                ret_type.__ptr__()
+            );
+            ret_type.delete();
+        } else {
+            var ret_type = self->tr.resolve(node->return_type);
+            func_info = colgm_func::new(
+                name,
+                node->base.location,
+                ret_type.__ptr__()
+            );
+            ret_type.delete();
+        }
+
+        self->generate_function_params(func_info, node);
+        struct_info->methods.insert(name, func_info);
+        func_info->delete();
+        free(func_info => i8*);
+    }
+
+    func generate_impl_static_method(self,
+                              struct_info: colgm_struct*,
+                              node: ast_func_decl*) {
+        var name = node->name.__ptr__();
+        if (!self->check_field_not_exist(struct_info, name)) {
+            var info = str::instance();
+            info.append_i8_vec("field \"");
+            info.append_str(name);
+            info.append_i8_vec("\" conflicts with exist field or method");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        // allocate func info
+        var func_info: colgm_func* = nil;
+        if (node->return_type == nil) {
+            var ret_type = type::void_type();
+            func_info = colgm_func::new(
+                name,
+                node->base.location,
+                ret_type.__ptr__()
+            );
+            ret_type.delete();
+        } else {
+            var ret_type = self->tr.resolve(node->return_type);
+            func_info = colgm_func::new(
+                name,
+                node->base.location,
+                ret_type.__ptr__()
+            );
+            ret_type.delete();
+        }
+
+        self->generate_function_params(func_info, node);
+        struct_info->static_methods.insert(name, func_info);
+        func_info->delete();
+        free(func_info => i8*);
+    }
+
     func regist_single_impl(self, node: ast_impl*) {
         if (node->generic_types != nil) {
             return;
@@ -721,7 +833,30 @@ impl regist_pass {
 
         var name = node->name.__ptr__();
         var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
-        // TODO
+        if (!dm->structs.has(name)) {
+            var info = str::instance();
+            info.append_i8_vec("cannot find struct \"");
+            info.append_str(name);
+            info.append_i8_vec("\"");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        var struct_info = dm->structs.get(name);
+        for (var i: u64 = 0; i < node->methods.size; i += 1) {
+            var mthd = node->methods.get(i).get();
+            if (!mthd->is(ast_kind::ast_func_decl)) {
+                continue;
+            }
+
+            var mthd_node = mthd => ast_func_decl*;
+            if (self->is_method(mthd_node)) {
+                self->generate_impl_method(struct_info, mthd_node);
+            } else {
+                self->generate_impl_static_method(struct_info, mthd_node);
+            }
+        }
     }
 
     func scan_impls(self) {

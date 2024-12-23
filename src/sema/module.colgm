@@ -71,12 +71,12 @@ impl colgm_module {
                self->generic_functions.size > 0;
     }
     pub func dump(self, out: io) {
+        out.cyan().out("domain ").reset().out(self->file_name.c_str);
         if (!self->has_symbol()) {
-            out.out("domain ").out(self->file_name.c_str)
-               .out(" contains 0 symbol\n");
+            out.out(" contains 0 symbol\n");
             return;
         }
-        out.out("domain ").out(self->file_name.c_str).out(":\n");
+        out.out(":\n");
         if (self->enums.size > 0) {
             for (var i = self->enums.iter(); !i.is_end(); i = i.next()) {
                 i.value()->dump(out);
@@ -97,13 +97,13 @@ impl colgm_module {
 
         if (self->functions.size > 0) {
             for (var i = self->functions.iter(); !i.is_end(); i = i.next()) {
-                i.value()->dump(out);
+                i.value()->dump(out, "");
             }
         }
 
         if (self->generic_functions.size > 0) {
             for (var i = self->generic_functions.iter(); !i.is_end(); i = i.next()) {
-                i.value()->dump(out);
+                i.value()->dump(out, "");
             }
         }
     }

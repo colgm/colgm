@@ -100,19 +100,34 @@ impl colgm_struct {
 
 impl colgm_struct {
     pub func dump(self, out: io) {
-        out.out("  struct ").out(self->name.c_str);
+        out.out("  ");
+        if (self->is_extern) {
+            out.green().out("extern ").reset();
+        }
+        if (self->is_public) {
+            out.green().out("pub ").reset();
+        }
+        out.cyan().out("struct ").reset();
+        out.white().out(self->name.c_str).reset();
         if (self->ordered_fields.size == 0 &&
             self->static_methods.size == 0 &&
             self->methods.size == 0) {
-            out.out("\n");
+            out.out(" {}\n");
             return;
         }
-        out.out(":\n");
+        out.out(" {\n");
         for (var i: u64 = 0; i < self->ordered_fields.size; i += 1) {
             var field = self->ordered_fields.get(i);
             out.out("    ").out(field->name.c_str).out(": ");
             field->sym_type.dump(out);
             out.out("\n");
         }
+        for (var i = self->methods.iter(); !i.is_end(); i = i.next()) {
+            i.value()->dump(out, "  ");
+        }
+        for (var i = self->static_methods.iter(); !i.is_end(); i = i.next()) {
+            i.value()->dump(out, "  ");
+        }
+        out.out("  }\n");
     }
 }
