@@ -486,7 +486,10 @@ impl regist_pass {
 }
 
 impl regist_pass {
-    func generate_function_params(self, f: colgm_func*, node: ast_func_decl*) {
+    func generate_function_params(self,
+                                  f: colgm_func*,
+                                  node: ast_func_decl*,
+                                  is_global_func: bool) {
         if (node->is_public) {
             f->is_public = true;
         }
@@ -505,6 +508,21 @@ impl regist_pass {
             }
             var n_ast = n => ast_param*;
             var param_name = n_ast->name->name.__ptr__();
+
+            // check self param
+            if (param_name->eq_const("self") && i != 0) {
+                self->err->error(n->location,
+                    "\"self\" must be the first param"
+                );
+                continue;
+            }
+            if (param_name->eq_const("self") && i == 0 && is_global_func) {
+                self->err->error(n->location,
+                    "global function cannot use \"self\" as parameter"
+                );
+                continue;
+            }
+
             if (f->unordered_params.has(param_name)) {
                 var info = str::instance();
                 info.append_i8_vec("param \"");
@@ -567,7 +585,7 @@ impl regist_pass {
             ret_type.delete();
         }
 
-        self->generate_function_params(func_info, node);
+        self->generate_function_params(func_info, node, true);
 
         // insert to domain
         var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
@@ -746,7 +764,23 @@ impl regist_pass {
         return true;
     }
 
+    func generate_self_type_node(self, struct_name: str*, node: ast_func_decl*) {
+        var pms = node->params->params.__ptr__();
+        var first_param = pms->get(0).get() => ast_param*;
+        if (first_param->type != nil) {
+            panic("unreachable");
+            return;
+        }
+
+        var tn = ast_type_def::new(first_param->base.location->copy());
+        tn->name = ast_identifier::new(first_param->base.location->copy(),
+                                       struct_name);
+        tn->pointer_depth = 1;
+        first_param->type = tn;
+    }
+
     func generate_impl_method(self,
+                              struct_name: str*,
                               struct_info: colgm_struct*,
                               node: ast_func_decl*) {
         var name = node->name.__ptr__();
@@ -780,7 +814,8 @@ impl regist_pass {
             ret_type.delete();
         }
 
-        self->generate_function_params(func_info, node);
+        self->generate_self_type_node(struct_name, node);
+        self->generate_function_params(func_info, node, false);
         struct_info->methods.insert(name, func_info);
         func_info->delete();
         free(func_info => i8*);
@@ -820,7 +855,7 @@ impl regist_pass {
             ret_type.delete();
         }
 
-        self->generate_function_params(func_info, node);
+        self->generate_function_params(func_info, node, false);
         struct_info->static_methods.insert(name, func_info);
         func_info->delete();
         free(func_info => i8*);
@@ -852,7 +887,7 @@ impl regist_pass {
 
             var mthd_node = mthd => ast_func_decl*;
             if (self->is_method(mthd_node)) {
-                self->generate_impl_method(struct_info, mthd_node);
+                self->generate_impl_method(name, struct_info, mthd_node);
             } else {
                 self->generate_impl_static_method(struct_info, mthd_node);
             }
