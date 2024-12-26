@@ -162,9 +162,10 @@ token lexer::id_gen() {
         }
     }
     tok type = get_type(str);
-    return {
+    return token {
         {begin_line, begin_column, line, column, filename},
-        (type!=tok::tk_null)? type:tok::tk_id, str
+        (type!=tok::tk_null)? type : tok::tk_id,
+        str
     };
 }
 
@@ -186,12 +187,13 @@ token lexer::num_gen() {
                 "invalid number `"+str+"`"
             );
         }
-        return {
+        return token {
             {begin_line, begin_column, line, column, filename},
             tok::tk_num,
             str
         };
-    } else if (ptr+1<res.size() && res[ptr]=='0' && res[ptr+1]=='o') { // generate oct number
+    } else if (ptr+1<res.size() && res[ptr]=='0' && res[ptr+1]=='o') {
+        // generate oct number
         std::string str = "0o";
         ptr += 2;
         while(ptr<res.size() && is_oct(res[ptr])) {
@@ -209,7 +211,7 @@ token lexer::num_gen() {
                 "invalid number `"+str+"`"
             );
         }
-        return {
+        return token {
             {begin_line, begin_column, line, column, filename},
             tok::tk_num,
             str
@@ -231,9 +233,9 @@ token lexer::num_gen() {
             column += str.length();
             err.err(
                 {begin_line, begin_column, line, column, filename},
-                "invalid number `"+str+"`"
+                "invalid number `" + str + "`"
             );
-            return {
+            return token {
                 {begin_line, begin_column, line, column, filename},
                 tok::tk_num,
                 "0"
@@ -253,9 +255,9 @@ token lexer::num_gen() {
             column += str.length();
             err.err(
                 {begin_line, begin_column, line, column, filename},
-                "invalid number `"+str+"`"
+                "invalid number `" + str + "`"
             );
-            return {
+            return token {
                 {begin_line, begin_column, line, column, filename},
                 tok::tk_num,
                 "0"
@@ -263,7 +265,7 @@ token lexer::num_gen() {
         }
     }
     column += str.length();
-    return {
+    return token {
         {begin_line, begin_column, line, column, filename},
         tok::tk_num,
         str
@@ -315,7 +317,7 @@ token lexer::str_gen() {
             {begin_line, begin_column, line, column, filename},
             "get EOF when generating string"
         );
-        return {
+        return token {
             {begin_line, begin_column, line, column, filename},
             tok::tk_str,
             str
@@ -332,13 +334,13 @@ token lexer::str_gen() {
     }
     // ascii character
     if (begin=='\'' && str.length()==1) {
-        return {
+        return token {
             {begin_line, begin_column, line, column, filename},
             tok::tk_ch,
             str
         };
     }
-    return {
+    return token {
         {begin_line, begin_column, line, column, filename},
         tok::tk_str,
         str
@@ -351,7 +353,7 @@ token lexer::arrow_gen() {
     std::string str = (res[ptr]=='-'? "->":"=>");
     ptr += str.length();
     column += str.length();
-    return {
+    return token {
         {begin_line, begin_column, line, column, filename},
         get_type(str),
         str
@@ -371,7 +373,11 @@ token lexer::single_opr() {
         );
     }
     ++ptr;
-    return {{begin_line, begin_column, line, column, filename}, type, str};
+    return token {
+        {begin_line, begin_column, line, column, filename},
+        type,
+        str
+    };
 }
 
 token lexer::dots() {
@@ -383,7 +389,11 @@ token lexer::dots() {
     }
     ptr += str.length();
     column += str.length();
-    return {{begin_line, begin_column, line, column, filename}, get_type(str), str};
+    return token {
+        {begin_line, begin_column, line, column, filename},
+        get_type(str),
+        str
+    };
 }
 
 token lexer::colons() {
@@ -395,7 +405,11 @@ token lexer::colons() {
     }
     ptr += str.length();
     column += str.length();
-    return {{begin_line, begin_column, line, column, filename}, get_type(str), str};
+    return token {
+        {begin_line, begin_column, line, column, filename},
+        get_type(str),
+        str
+    };
 }
 
 token lexer::calc_opr() {
@@ -409,7 +423,11 @@ token lexer::calc_opr() {
         str += res[ptr++]; // generate _=
     }
     column += str.length();
-    return {{begin_line, begin_column, line, column, filename}, get_type(str), str};
+    return token {
+        {begin_line, begin_column, line, column, filename},
+        get_type(str),
+        str
+    };
 }
 
 const error& lexer::scan(const std::string& file) {
@@ -459,10 +477,10 @@ const error& lexer::scan(const std::string& file) {
     }
     if (toks.size()) {
         // eof token's location is the last token's location
-        toks.push_back({toks.back().loc, tok::tk_eof, "<eof>"});
+        toks.push_back(token {toks.back().loc, tok::tk_eof, "<eof>"});
     } else {
         // if token sequence is empty, generate a default location
-        toks.push_back({
+        toks.push_back(token {
             {line, column, line, column, filename},
             tok::tk_eof,
             "<eof>"

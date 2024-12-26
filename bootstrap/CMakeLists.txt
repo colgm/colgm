@@ -5,12 +5,17 @@ project(colgm VERSION 10.1)
 message("CMAKE_HOST_SYSTEM_NAME: ${CMAKE_HOST_SYSTEM_NAME}")
 
 # -std=c++17 -Wshadow -Wall
-set(CMAKE_CXX_STANDARD 17)
+if (MSVC)
+    set(CMAKE_CXX_STANDARD 20)
+else()
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wuninitialized")
 
 # set compile option
-add_compile_options(-fPIC)
+if (NOT MSVC)
+    add_compile_options(-fPIC)
+endif()
 add_compile_options(-I ${CMAKE_SOURCE_DIR})
 if (APPLE)
     add_compile_options(-mmacosx-version-min=10.15)

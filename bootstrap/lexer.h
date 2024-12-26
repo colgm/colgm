@@ -92,6 +92,8 @@ struct token {
     std::string str; // content
     token() = default;
     token(const token&) = default;
+    token(const span& loc, tok type, const std::string& str):
+        loc(loc), type(type), str(str) {}
 };
 
 class lexer {
