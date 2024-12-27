@@ -630,15 +630,51 @@ impl regist_pass {
         }
 
         if (node->generic_types != nil) {
-            // TODO
-            return;
+            self->ctx->generics.clear();
+            var gtv = node->generic_types->types.__ptr__();
+            for (var i: u64 = 0; i < gtv->size; i += 1) {
+                var gt = gtv->get(i).get();
+                if (!gt->is(ast_kind::ast_type_def)) {
+                    self->err->error(gt->location,
+                        "invalid ast node, expect type def"
+                    );
+                    continue;
+                }
+                var n_td = gt => ast_type_def*;
+                self->ctx->generics.insert(n_td->name->name.__ptr__());
+            }
         }
 
         var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
-        if (!dm->structs.has(name)) {
+        if (node->generic_types == nil && !dm->structs.has(name)) {
             return;
         }
-        var struct_info = dm->structs.get(name);
+        if (node->generic_types != nil && !dm->generic_structs.has(name)) {
+            return;
+        }
+        var struct_info: colgm_struct* = nil;
+        if (node->generic_types == nil) {
+            struct_info = dm->structs.get(name);
+        } else {
+            struct_info = dm->generic_structs.get(name);
+            var gtv = node->generic_types->types.__ptr__();
+            for (var i: u64 = 0; i < gtv->size; i += 1) {
+                var gt = gtv->get(i).get();
+                if (!gt->is(ast_kind::ast_type_def)) {
+                    self->err->error(gt->location,
+                        "invalid ast node, expect type def"
+                    );
+                    continue;
+                }
+                var n_td = gt => ast_type_def*;
+                struct_info->generic_template.push(n_td->name->name.__ptr__());
+            }
+        }
+
+        if (node->generic_types != nil) {
+            // TODO
+            return;
+        }
 
         for (var i: u64 = 0; i < node->fields.size; i += 1) {
             var fld = node->fields.get(i).get() ;
