@@ -989,7 +989,7 @@ const error& parse::analyse(const std::vector<token>& token_list) {
 
     // delete disabled nodes marked by the conditional comments syntax
     delete_disabled_node ddn;
-    ddn.scan(result);
+    ddn.scan(err, result);
     return err;
 }
 

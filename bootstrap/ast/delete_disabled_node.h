@@ -3,6 +3,7 @@
 #include "colgm.h"
 #include "ast/ast.h"
 #include "ast/decl.h"
+#include "report.h"
 
 #include <cstring>
 #include <sstream>
@@ -15,11 +16,11 @@ private:
     std::string platform;
 
 private:
-    bool check_enable_if(cond_compile*);
+    bool check_enable_if(error&, cond_compile*);
 
 public:
     delete_disabled_node(): arch(get_arch()), platform(get_platform()) {}
-    void scan(root*);
+    void scan(error&, root*);
 };
 
 }
