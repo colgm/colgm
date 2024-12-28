@@ -118,7 +118,7 @@ impl regist_pass {
 
     func import_specified(self, node: ast_use_stmt*, dm: colgm_module*, path: str*) {
         for (var i: u64 = 0; i < node->import_symbol.size; i += 1) {
-            var name_node = node->import_symbol.get(i).get() => ast_identifier*;
+            var name_node = node->import_symbol.get(i).unwrap() => ast_identifier*;
             var name = name_node->name.__ptr__();
 
             var is_public = false;
@@ -268,7 +268,7 @@ impl regist_pass {
 
         // generate expect path
         for (var i: u64 = 0; i < node->module_path.size; i += 1) {
-            var name = node->module_path.get(i).get();
+            var name = node->module_path.get(i).unwrap();
             if (!name->is(ast_kind::ast_identifier)) {
                 self->err->error(name->location, "invalid module path");
                 expect_name.delete();
@@ -319,7 +319,7 @@ impl regist_pass {
 
     func scan_imports(self) {
         for (var i: u64 = 0; i < self->root->imports.size; i += 1) {
-            var node = self->root->imports.get(i).get();
+            var node = self->root->imports.get(i).unwrap();
             if (!node->is(ast_kind::ast_use_stmt)) {
                 self->err->error(node->location, "invalid import");
                 return;
@@ -417,7 +417,7 @@ impl regist_pass {
         var has_non_specified_value = false;
         var v = node->members.__ptr__();
         for (var i: u64 = 0; i < v->size; i += 1) {
-            var n = v->get(i).get();
+            var n = v->get(i).unwrap();
             if (!n->is(ast_kind::ast_enum_member)) {
                 self->err->error(n->location,
                     "invalid ast node, expect enum member"
@@ -441,7 +441,7 @@ impl regist_pass {
         }
         
         for (var i: u64 = 0; i < v->size; i += 1) {
-            var n_ast = v->get(i).get() => ast_enum_member*;
+            var n_ast = v->get(i).unwrap() => ast_enum_member*;
             var value = basic<u64>::wrap(i);
             var member_name = n_ast->name->name.__ptr__();
             if (n_ast->value != nil) {
@@ -487,7 +487,7 @@ impl regist_pass {
 
     func scan_enums(self) {
         for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
-            var node = self->root->decls.get(i).get();
+            var node = self->root->decls.get(i).unwrap();
             if (!node->is(ast_kind::ast_enum_decl)) {
                 continue;
             }
@@ -511,7 +511,7 @@ impl regist_pass {
 
         var v = node->params->params.__ptr__();
         for (var i: u64 = 0; i < v->size; i += 1) {
-            var n = v->get(i).get();
+            var n = v->get(i).unwrap();
             if (!n->is(ast_kind::ast_param)) {
                 self->err->error(n->location,
                     "invalid ast node, expect param"
@@ -577,7 +577,7 @@ impl regist_pass {
             self->ctx->generics.clear();
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).get();
+                var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location,
                         "invalid ast node, expect type def"
@@ -612,7 +612,7 @@ impl regist_pass {
         if (node->generic_types != nil) {
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).get();
+                var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location,
                         "invalid ast node, expect type def"
@@ -650,7 +650,7 @@ impl regist_pass {
 
     func scan_global_funcs(self) {
         for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
-            var node = self->root->decls.get(i).get();
+            var node = self->root->decls.get(i).unwrap();
             if (!node->is(ast_kind::ast_func_decl)) {
                 continue;
             }
@@ -678,7 +678,7 @@ impl regist_pass {
             self->ctx->generics.clear();
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).get();
+                var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location,
                         "invalid ast node, expect type def"
@@ -704,7 +704,7 @@ impl regist_pass {
             struct_info = dm->generic_structs.get(name);
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).get();
+                var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location,
                         "invalid ast node, expect type def"
@@ -718,7 +718,7 @@ impl regist_pass {
         }
 
         for (var i: u64 = 0; i < node->fields.size; i += 1) {
-            var fld = node->fields.get(i).get() ;
+            var fld = node->fields.get(i).unwrap() ;
             if (!fld->is(ast_kind::ast_struct_field)) {
                 continue;
             }
@@ -792,7 +792,7 @@ impl regist_pass {
 
     func scan_structs(self) {
         for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
-            var node = self->root->decls.get(i).get();
+            var node = self->root->decls.get(i).unwrap();
             if (!node->is(ast_kind::ast_struct_decl)) {
                 continue;
             }
@@ -801,7 +801,7 @@ impl regist_pass {
         }
 
         for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
-            var node = self->root->decls.get(i).get();
+            var node = self->root->decls.get(i).unwrap();
             if (!node->is(ast_kind::ast_struct_decl)) {
                 continue;
             }
@@ -818,7 +818,7 @@ impl regist_pass {
             return false;
         }
 
-        var first_param = pms->get(0).get();
+        var first_param = pms->get(0).unwrap();
         if (!first_param->is(ast_kind::ast_param)) {
             return false;
         }
@@ -844,23 +844,36 @@ impl regist_pass {
         return true;
     }
 
-    func generate_self_type_node(self, struct_name: str*, node: ast_func_decl*) {
+    func generate_self_type_node(self,
+                                 struct_info: colgm_struct*,
+                                 node: ast_func_decl*) {
         var pms = node->params->params.__ptr__();
-        var first_param = pms->get(0).get() => ast_param*;
+        var first_param = pms->get(0).unwrap() => ast_param*;
         if (first_param->type != nil) {
             panic("unreachable");
             return;
         }
 
-        var tn = ast_type_def::new(first_param->base.location->copy());
-        tn->name = ast_identifier::new(first_param->base.location->copy(),
-                                       struct_name);
+        var loc = first_param->base.location;
+        var tn = ast_type_def::new(loc->copy());
+        tn->name = ast_identifier::new(loc->copy(),
+                                       struct_info->name.__ptr__());
         tn->pointer_depth = 1;
+        // copy generic template
+        var GT = struct_info->generic_template.__ptr__();
+        if (GT->size > 0) {
+            tn->generic_types = ast_generic_type_list::new(loc->copy());
+            for (var i: u64 = 0; i < GT->size; i += 1) {
+                var g = GT->get(i);
+                var tmp = ast_type_def::new(loc->copy());
+                tmp->name = ast_identifier::new(loc->copy(), g);
+                tn->generic_types->types.push(ptr<ast>::wrap(tmp => ast*));
+            }
+        }
         first_param->type = tn;
     }
 
     func generate_impl_method(self,
-                              struct_name: str*,
                               struct_info: colgm_struct*,
                               node: ast_func_decl*) {
         var name = node->name.__ptr__();
@@ -894,7 +907,7 @@ impl regist_pass {
             ret_type.delete();
         }
 
-        self->generate_self_type_node(struct_name, node);
+        self->generate_self_type_node(struct_info, node);
         self->generate_function_params(func_info, node, false);
         struct_info->methods.insert(name, func_info);
         func_info->delete();
@@ -946,7 +959,7 @@ impl regist_pass {
             self->ctx->generics.clear();
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).get();
+                var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location,
                         "invalid ast node, expect type def"
@@ -978,14 +991,14 @@ impl regist_pass {
         }
 
         for (var i: u64 = 0; i < node->methods.size; i += 1) {
-            var mthd = node->methods.get(i).get();
+            var mthd = node->methods.get(i).unwrap();
             if (!mthd->is(ast_kind::ast_func_decl)) {
                 continue;
             }
 
             var mthd_node = mthd => ast_func_decl*;
             if (self->is_method(mthd_node)) {
-                self->generate_impl_method(name, struct_info, mthd_node);
+                self->generate_impl_method(struct_info, mthd_node);
             } else {
                 self->generate_impl_static_method(struct_info, mthd_node);
             }
@@ -996,7 +1009,7 @@ impl regist_pass {
 
     func scan_impls(self) {
         for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
-            var node = self->root->decls.get(i).get();
+            var node = self->root->decls.get(i).unwrap();
             if (!node->is(ast_kind::ast_impl)) {
                 continue;
             }

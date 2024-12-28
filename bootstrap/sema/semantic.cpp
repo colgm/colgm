@@ -173,6 +173,9 @@ type semantic::struct_method_infer(const type& prev,
 type semantic::resolve_logical_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
+    if (left.is_error() || right.is_error()) {
+        return type::bool_type();
+    }
     if (left.is_boolean() && right.is_boolean()) {
         return type::bool_type();
     }
@@ -350,6 +353,10 @@ type semantic::resolve_unary_bnot(unary_operator* node) {
 
 type semantic::resolve_unary_lnot(unary_operator* node) {
     const auto value = resolve_expression(node->get_value());
+    // do not report if get error type, because the related error is reported before
+    if (value.is_error()) {
+        return type::bool_type();
+    }
     if (!value.is_boolean()) {
         rp.report(node->get_value(),
             "logical operator cannot be used on \"" + value.to_string() + "\"."
@@ -825,7 +832,10 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
         const auto infer = resolve_expression(i->get_value());
         i->get_value()->set_resolve_type(infer);
         const auto& expect = st.field.at(field).symbol_type;
-
+        // error type means the related error is reported before
+        if (infer.is_error()) {
+            continue;
+        }
         if (infer != expect) {
             if (!check_can_be_converted(i->get_value(), expect)) {
                 rp.report(i,
