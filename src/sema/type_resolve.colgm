@@ -1,5 +1,5 @@
 use err::report::{ report };
-use ast::ast::{ ast_type_def };
+use ast::ast::{ ast_kind, ast_type_def };
 
 use sema::context::{ sema_context };
 use sema::type::{ type };
@@ -29,10 +29,12 @@ impl type_resolve {
             return type::error_type();
         }
         var DM = G->domain.get(file);
+        var GN = self->ctx->generics.__ptr__();
 
         // cannot find type
         if (!DM->global_symbol.has(name) &&
-            !DM->generic_symbol.has(name)) {
+            !DM->generic_symbol.has(name) &&
+            !GN->has(name)) {
             var info = str::from("undefined type \"");
             info.append_str(name)->append_i8_vec("\"");
             self->err->error(node->base.location, info.c_str);
@@ -67,6 +69,25 @@ impl type_resolve {
         t.name.append_str(name);
         t.pointer_depth = node->pointer_depth;
         t.is_immutable = node->is_const;
+        if (GN->has(name)) {
+            t.is_generic_placeholder = true;
+        }
+        if (node->generic_types != nil) {
+            var gtv = node->generic_types->types.__ptr__();
+            for (var i: u64 = 0; i < gtv->size; i += 1) {
+                var gt = gtv->get(i).get();
+                if (!gt->is(ast_kind::ast_type_def)) {
+                    self->err->error(gt->location,
+                        "invalid ast node, expect type def"
+                    );
+                    continue;
+                }
+                var n_td = gt => ast_type_def*;
+                var gt_res = self->resolve(n_td);
+                t.generics.push(gt_res.__ptr__());
+                gt_res.delete();
+            }
+        }
         return t;
     }
 }

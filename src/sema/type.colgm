@@ -138,6 +138,17 @@ impl type {
 impl type {
     pub func dump(self, out: io) {
         out.light_orange().out(self->name.c_str);
+        if (self->generics.size > 0) {
+            out.out("<");
+            for (var i: u64 = 0; i < self->generics.size; i += 1) {
+                var t = self->generics.get(i);
+                t->dump(out);
+                if (i != self->generics.size - 1) {
+                    out.out(",");
+                }
+            }
+            out.out(">");
+        }
         for (var i = 0; i < self->pointer_depth; i += 1) {
             out.out("*");
         }
