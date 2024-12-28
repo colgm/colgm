@@ -1,5 +1,5 @@
-use std::libc::{ open, read, write, close, malloc, free, strlen, itoa };
-use std::str::str;
+use std::libc::{ open, read, write, close, strlen, itoa };
+use std::str::{ str };
 use err::panic::{ panic };
 
 #[enable_if(target_os="macos")]
@@ -62,20 +62,26 @@ pub func readfile_into_string(filename: i8*, dst: str*) -> i64 {
 }
 
 pub struct io {
-    fd: i32
+    fd: i32,
+    color_out: bool
 }
 
 impl io {
     pub func stdin() -> io {
-        return io { fd: 0 };
+        return io { fd: 0, color_out: false };
     }
 
     pub func stdout() -> io {
-        return io { fd: 1 };
+        return io { fd: 1, color_out: true };
     }
 
     pub func stderr() -> io {
-        return io { fd: 2 };
+        return io { fd: 2, color_out: true };
+    }
+
+    pub func disable_color(self) -> io {
+        self->color_out = false;
+        return self[0];
     }
 
     pub func out(self, info: i8*) -> io {
@@ -133,36 +139,57 @@ impl io {
 // ANSI escape sequence color
 impl io {
     pub func red(self) -> io {
+        if (!self->color_out) {
+            return self[0];
+        }
         self->out("\e[91;1m");
         return self[0];
     }
 
     pub func green(self) -> io {
+        if (!self->color_out) {
+            return self[0];
+        }
         self->out("\e[92;1m");
         return self[0];
     }
 
     pub func cyan(self) -> io {
+        if (!self->color_out) {
+            return self[0];
+        }
         self->out("\e[36;1m");
         return self[0];
     }
 
     pub func orange(self) -> io {
+        if (!self->color_out) {
+            return self[0];
+        }
         self->out("\e[93;1m");
         return self[0];
     }
 
     pub func light_orange(self) -> io {
+        if (!self->color_out) {
+            return self[0];
+        }
         self->out("\e[93m");
         return self[0];
     }
 
     pub func white(self) -> io {
+        if (!self->color_out) {
+            return self[0];
+        }
         self->out("\e[0m\e[1m");
         return self[0];
     }
 
     pub func reset(self) -> io {
+        if (!self->color_out) {
+            return self[0];
+        }
         self->out("\e[0m");
         return self[0];
     }
@@ -179,7 +206,7 @@ impl io {
     }
 
     func logger(file: i8*) -> io {
-        return io { fd: io::open_append_write_file(file) };
+        return io { fd: io::open_append_write_file(file), color_out: false };
     }
 
     pub func colgm_report() -> io {

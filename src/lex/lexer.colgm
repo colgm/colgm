@@ -1035,21 +1035,21 @@ impl lexer {
         free(src => i8*);
     }
 
-    pub func dump(self) {
+    pub func dump(self, out: io) {
         var index: u64 = 0;
         while(index < self->toks.size) {
             var loc = self->toks.get(index)->location;
-            io::stderr().out(lexer::tok_kind_to_str(self->toks.get(index)->kind))
-                        .out(" [").out(loc->file.c_str)
-                        .out(":").out_i64(loc->begin_line + 1)
-                        .out(":").out_i64(loc->begin_column + 1)
-                        .out(" -> ").out(loc->file.c_str)
-                        .out(":").out_i64(loc->end_line + 1)
-                        .out(":").out_i64(loc->end_column + 1)
-                        .out("] \"")
-                        .out(self->toks.get(index)->content->c_str)
-                        .out("\"")
-                        .endln();
+            out.out(lexer::tok_kind_to_str(self->toks.get(index)->kind))
+               .out(" [").out(loc->file.c_str)
+               .out(":").out_i64(loc->begin_line + 1)
+               .out(":").out_i64(loc->begin_column + 1)
+               .out(" -> ").out(loc->file.c_str)
+               .out(":").out_i64(loc->end_line + 1)
+               .out(":").out_i64(loc->end_column + 1)
+               .out("] \"")
+               .out(self->toks.get(index)->content->c_str)
+               .out("\"")
+               .endln();
             index += 1;
         }
     }

@@ -42,20 +42,28 @@ func compile(option: cli_option) {
     // do lexer scanning
     cc.lex->scan(option.input_file);
     if (cc.err->error_count > 0) {
+        var COLGM_REPORT = io::colgm_report();
+        cc.lex->dump(COLGM_REPORT);
+        COLGM_REPORT.close();
+
         cc.delete();
         return;
     }
     if (option.OPTION_VIEW_TOKEN) {
-        cc.lex->dump();
+        cc.lex->dump(io::stdout());
     }
 
     cc.par->parse();
     if (cc.err->error_count > 0) {
+        var COLGM_REPORT = io::colgm_report();
+        cc.par->dump(COLGM_REPORT);
+        COLGM_REPORT.close();
+
         cc.delete();
         return;
     }
     if (option.OPTION_VIEW_AST) {
-        cc.par->dump();
+        cc.par->dump(io::stdout());
     }
 
     regpass->run(cc.par->root);
@@ -67,6 +75,9 @@ func compile(option: cli_option) {
     semantic->scan(cc.par->root);
     if (cc.err->error_count > 0) {
         cc.delete();
+        var COLGM_REPORT = io::colgm_report();
+        semantic->ctx->dump(COLGM_REPORT);
+        COLGM_REPORT.close();
         return;
     }
     if (option.OPTION_VIEW_SEMA) {
