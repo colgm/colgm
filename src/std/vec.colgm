@@ -100,6 +100,49 @@ impl vec<T> {
         }
         return self->data[index];
     }
+
+    pub func iter(self) -> vec_iter<T> {
+        return vec_iter<T>::instance(self);
+    }
+}
+
+struct vec_iter<T> {
+    vec: vec<T>*,
+    _index: u64
+}
+
+impl vec_iter<T> {
+    pub func instance(v: vec<T>*) -> vec_iter<T> {
+        return vec_iter<T> {
+            vec: v,
+            _index: 0
+        };
+    }
+
+    pub func is_end(self) -> bool {
+        return self->_index >= self->vec->size;
+    }
+
+    pub func next(self) -> vec_iter<T> {
+        if (self->_index >= self->vec->size) {
+            return vec_iter<T> {
+                vec: self->vec,
+                _index: self->_index
+            };
+        }
+        return vec_iter<T> {
+            vec: self->vec,
+            _index: self->_index + 1
+        };
+    }
+
+    pub func get(self) -> T* {
+        return self->vec->get(self->_index);
+    }
+
+    pub func index(self) -> u64 {
+        return self->_index;
+    }
 }
 
 impl primitive_vec<T> {
@@ -180,5 +223,48 @@ impl primitive_vec<T> {
             panic("std::primitive_vec::pop_back: empty vector");
         }
         self->size -= 1;
+    }
+
+    pub func iter(self) -> primitive_vec_iter<T> {
+        return primitive_vec_iter<T>::instance(self);
+    }
+}
+
+struct primitive_vec_iter<T> {
+    vec: primitive_vec<T>*,
+    _index: u64
+}
+
+impl primitive_vec_iter<T> {
+    pub func instance(v: primitive_vec<T>*) -> primitive_vec_iter<T> {
+        return primitive_vec_iter<T> {
+            vec: v,
+            _index: 0
+        };
+    }
+
+    pub func is_end(self) -> bool {
+        return self->_index >= self->vec->size;
+    }
+
+    pub func next(self) -> primitive_vec_iter<T> {
+        if (self->_index >= self->vec->size) {
+            return primitive_vec_iter<T> {
+                vec: self->vec,
+                _index: self->_index
+            };
+        }
+        return primitive_vec_iter<T> {
+            vec: self->vec,
+            _index: self->_index + 1
+        };
+    }
+
+    pub func get(self) -> T {
+        return self->vec->get(self->_index);
+    }
+
+    pub func index(self) -> u64 {
+        return self->_index;
     }
 }

@@ -1131,6 +1131,10 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
         ctx.generics.insert(i);
     }
     for(auto i : node->get_methods()) {
+        if (stct.field.count(i->get_name())) {
+            rp.report(i, "conflict with field \"" + i->get_name() + "\".");
+            continue;
+        }
         if (stct.method.count(i->get_name())) {
             rp.report(i, "method \"" + i->get_name() + "\" already exists.");
             continue;

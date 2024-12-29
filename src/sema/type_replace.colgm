@@ -1,0 +1,83 @@
+use err::report::{ report };
+use ast::ast::{ ast_kind, ast, root };
+
+use std::str::{ str };
+use std::map::{ hashmap };
+
+use sema::type::{ type };
+use sema::context::{ sema_context };
+use sema::type_resolve::{ type_resolve };
+
+struct generic_data {
+    generic_type: type,
+    types: hashmap<str, type>
+}
+
+impl generic_data {
+    pub func new() -> generic_data* {
+        var res = generic_data::__alloc__();
+        res->generic_type = type::instance();
+        res->types = hashmap<str, type>::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->generic_type.delete();
+        self->types.delete();
+    }
+
+    pub func copy(self) -> generic_data* {
+        var res = generic_data::__alloc__();
+        res->generic_type = self->generic_type.copy_instance();
+        res->types = self->types.copy_instance();
+        return res;
+    }
+}
+
+pub struct generic_visitor {
+    err: report*,
+    ctx: sema_context*,
+    root: root*,
+    tr: type_resolve,
+    generic_type_map: hashmap<str, generic_data>
+}
+
+impl generic_visitor {
+    pub func instance(e: report*, c: sema_context*) -> generic_visitor {
+        return generic_visitor {
+            err: e,
+            ctx: c,
+            root: nil,
+            tr: type_resolve::instance(e, c),
+            generic_type_map: hashmap<str, generic_data>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->generic_type_map.delete();
+    }
+
+    func insert_into_symbol_table(self) -> u64 { return 0; }
+
+    func visit(self, n: root*) {
+        self->generic_type_map.clear();
+        for (var i = n->decls.iter(); !i.is_end(); i = i.next()) {
+            var d = i.get().unwrap();
+            // TODO
+            match (d->kind) {
+                ast_kind::ast_struct_decl => {}
+                ast_kind::ast_func_decl => {}
+                ast_kind::ast_impl => {}
+                _ => {}
+            }
+        }
+    }
+
+    pub func scan_and_insert(self, n: root*) {
+        self->root = n;
+        self->visit(n);
+        while (self->insert_into_symbol_table() != 0) {
+            self->visit(n);
+        }
+    }
+}

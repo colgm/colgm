@@ -25,6 +25,7 @@ use sema::module::{ colgm_module };
 use sema::context::{ sema_context };
 use sema::primitive::{ colgm_primitive };
 use sema::type::{ type, symbol };
+use sema::type_replace::{ generic_visitor };
 use sema::type_resolve::{ type_resolve };
 use sema::sema::{ sema };
 
@@ -35,7 +36,8 @@ pub struct regist_pass {
     root: root*,
     ctx: sema_context*,
     co: cli_option*,
-    tr: type_resolve
+    tr: type_resolve,
+    gnv: generic_visitor,
 }
 
 impl regist_pass {
@@ -54,11 +56,13 @@ impl regist_pass {
         res->ctx = ctx;
         res->co = co;
         res->tr = type_resolve::instance(err, ctx);
+        res->gnv = generic_visitor::instance(err, ctx);
         return res;
 	}
 
     pub func delete(self) {
         self->this_file.delete();
+        self->gnv.delete();
     }
 }
 
@@ -1008,8 +1012,8 @@ impl regist_pass {
     }
 
     func scan_impls(self) {
-        for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
-            var node = self->root->decls.get(i).unwrap();
+        for (var i = self->root->decls.iter(); !i.is_end(); i = i.next()) {
+            var node = i.get().unwrap();
             if (!node->is(ast_kind::ast_impl)) {
                 continue;
             }
@@ -1060,5 +1064,7 @@ impl regist_pass {
             self->ctx->log_dump();
             return;
         }
+
+        self->gnv.scan_and_insert(root);
     }
 }
