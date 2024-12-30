@@ -1,5 +1,6 @@
 use err::report::{ report };
 use ast::ast::{ ast_kind, ast, root };
+use package::{ package };
 
 use std::str::{ str };
 use std::map::{ hashmap };
@@ -43,12 +44,12 @@ pub struct generic_visitor {
 }
 
 impl generic_visitor {
-    pub func instance(e: report*, c: sema_context*) -> generic_visitor {
+    pub func instance(e: report*, c: sema_context*, p: package*) -> generic_visitor {
         return generic_visitor {
             err: e,
             ctx: c,
             root: nil,
-            tr: type_resolve::instance(e, c),
+            tr: type_resolve::instance(e, c, p),
             generic_type_map: hashmap<str, generic_data>::instance()
         };
     }

@@ -1,5 +1,6 @@
 use err::report::{ report };
 use ast::ast::{ ast_kind, ast_type_def };
+use package::{ package };
 
 use sema::context::{ sema_context };
 use sema::type::{ type };
@@ -10,12 +11,13 @@ use std::str::{ str };
 
 pub struct type_resolve {
     err: report*,
-    ctx: sema_context*
+    ctx: sema_context*,
+    pkg: package*
 }
 
 impl type_resolve {
-    pub func instance(e: report*, c: sema_context*) -> type_resolve {
-        return type_resolve { err: e, ctx: c };
+    pub func instance(e: report*, c: sema_context*, p: package*) -> type_resolve {
+        return type_resolve { err: e, ctx: c, pkg: p };
     }
 
     pub func resolve(self, node: ast_type_def*) -> type {
@@ -72,6 +74,18 @@ impl type_resolve {
         if (GN->has(name)) {
             t.is_generic_placeholder = true;
         }
+
+        if (DM->global_symbol.has(name) &&
+            DM->global_symbol.get(name)->kind != symbol_kind::basic_kind) {
+            t.loc_file.append_str(DM->global_symbol.get(name)->loc_file.__ptr__());
+        } else if (DM->generic_symbol.has(name)) {
+            t.loc_file.append_str(DM->generic_symbol.get(name)->loc_file.__ptr__());
+        }
+
+        if (self->pkg->has_file(t.loc_file.__ptr__())) {
+            t.loc_module.append_str(self->pkg->get_module_name(t.loc_file.__ptr__()));
+        }
+
         if (node->generic_types != nil) {
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {

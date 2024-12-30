@@ -9,7 +9,7 @@ use std::vec::{ primitive_vec };
 use std::ptr::{ ptr, basic };
 use std::math::{ isinf, isnan, floor };
 
-use package::{ package, package_status };
+use package::{ package, p_status };
 use ast::ast::*;
 
 use lex::lexer::{ lexer };
@@ -55,8 +55,8 @@ impl regist_pass {
         res->root = nil;
         res->ctx = ctx;
         res->co = co;
-        res->tr = type_resolve::instance(err, ctx);
-        res->gnv = generic_visitor::instance(err, ctx);
+        res->tr = type_resolve::instance(err, ctx, pkg);
+        res->gnv = generic_visitor::instance(err, ctx, pkg);
         return res;
 	}
 
@@ -72,7 +72,7 @@ impl regist_pass {
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::enum_kind;
-            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->loc_file.append_str(dm->file_name.__ptr__());
             sym_info->is_public = i.value()->is_public;
             self->ctx->global_symbol()->insert(name, sym_info);
             sym_info->delete();
@@ -82,7 +82,7 @@ impl regist_pass {
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::struct_kind;
-            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->loc_file.append_str(dm->file_name.__ptr__());
             sym_info->is_public = i.value()->is_public;
             self->ctx->global_symbol()->insert(name, sym_info);
             sym_info->delete();
@@ -92,7 +92,7 @@ impl regist_pass {
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::func_kind;
-            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->loc_file.append_str(dm->file_name.__ptr__());
             sym_info->is_public = i.value()->is_public;
             self->ctx->global_symbol()->insert(name, sym_info);
             sym_info->delete();
@@ -102,7 +102,7 @@ impl regist_pass {
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::struct_kind;
-            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->loc_file.append_str(dm->file_name.__ptr__());
             sym_info->is_public = i.value()->is_public;
             self->ctx->generic_symbol()->insert(name, sym_info);
             sym_info->delete();
@@ -112,7 +112,7 @@ impl regist_pass {
             var name = i.value()->name.__ptr__();
             var sym_info = symbol_info::new();
             sym_info->kind = symbol_kind::func_kind;
-            sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+            sym_info->loc_file.append_str(dm->file_name.__ptr__());
             sym_info->is_public = i.value()->is_public;
             self->ctx->generic_symbol()->insert(name, sym_info);
             sym_info->delete();
@@ -163,23 +163,23 @@ impl regist_pass {
             sym_info->is_public = true;
             if (dm->enums.has(name)) {
                 sym_info->kind = symbol_kind::enum_kind;
-                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                sym_info->loc_file.append_str(dm->file_name.__ptr__());
                 self->ctx->global_symbol()->insert(name, sym_info);
             } else if (dm->structs.has(name)) {
                 sym_info->kind = symbol_kind::struct_kind;
-                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                sym_info->loc_file.append_str(dm->file_name.__ptr__());
                 self->ctx->global_symbol()->insert(name, sym_info);
             } else if (dm->functions.has(name)) {
                 sym_info->kind = symbol_kind::func_kind;
-                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                sym_info->loc_file.append_str(dm->file_name.__ptr__());
                 self->ctx->global_symbol()->insert(name, sym_info);
             } else if (dm->generic_structs.has(name)) {
                 sym_info->kind = symbol_kind::struct_kind;
-                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                sym_info->loc_file.append_str(dm->file_name.__ptr__());
                 self->ctx->generic_symbol()->insert(name, sym_info);
             } else if (dm->generic_functions.has(name)) {
                 sym_info->kind = symbol_kind::func_kind;
-                sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+                sym_info->loc_file.append_str(dm->file_name.__ptr__());
                 self->ctx->generic_symbol()->insert(name, sym_info);
             }
             sym_info->delete();
@@ -212,14 +212,11 @@ impl regist_pass {
     func compile_module(self, name: str*, path: str*) -> bool {
         // change package status
         var info = self->pkg->get_package_info(name);
-        info->status = package_status::analysing;
+        info->status = p_status::analysing;
 
         var lex = lexer::new(self->err);
         var par = parser::new(self->err, lex, self->co);
-        var rp = regist_pass::new(self->err,
-                                  self->pkg,
-                                  self->ctx,
-                                  self->co);
+        var rp = regist_pass::new(self->err, self->pkg, self->ctx, self->co);
         var semantic = sema::new(self->err, self->pkg, self->ctx, self->co);
 
         lex->scan(path->c_str);
@@ -251,7 +248,7 @@ impl regist_pass {
         free(rp => i8*);
         free(semantic => i8*);
 
-        info->status = package_status::analysed;
+        info->status = p_status::analysed;
 
         // ctx's this file maybe over-written, set it back
         self->ctx->this_file.clear();
@@ -306,13 +303,12 @@ impl regist_pass {
 
         self->pkg->insert(expect_name.__ptr__(), expect_path.__ptr__());
 
-        if (self->pkg->get_status(expect_name.__ptr__()) == package_status::not_used) {
-            if (!self->compile_module(expect_name.__ptr__(), expect_path.__ptr__())) {
-                // failed to compile, skip importing this module
-                expect_name.delete();
-                expect_path.delete();
-                return;
-            }
+        if (self->pkg->get_status(expect_name.__ptr__()) == p_status::not_used &&
+            !self->compile_module(expect_name.__ptr__(), expect_path.__ptr__())) {
+            // failed to compile, skip importing this module
+            expect_name.delete();
+            expect_path.delete();
+            return;
         }
 
         self->import_from_module(expect_path.__ptr__(), node);
