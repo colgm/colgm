@@ -68,13 +68,18 @@ public:
 
 public:
     auto to_value_t() const {
-        if (value_kind==mir_value_t::kind::literal ||
-            value_kind==mir_value_t::kind::nil) {
-            return value_t::literal(content);
+        switch (value_kind) {
+            case mir_value_t::kind::null: return value_t::null("null");
+            case mir_value_t::kind::nil:
+            case mir_value_t::kind::literal: return value_t::literal(content);
+            case mir_value_t::kind::variable: return value_t::variable(content);
+            case mir_value_t::kind::primitive: return value_t::null("primitive");
+            case mir_value_t::kind::func_symbol: return value_t::null("func");
+            case mir_value_t::kind::method: return value_t::null("method");
+            case mir_value_t::kind::struct_symbol: return value_t::null("struct");
+            case mir_value_t::kind::enum_symbol: return value_t::null("enum");
         }
-        if (value_kind==mir_value_t::kind::variable) {
-            return value_t::variable(content);
-        }
+        // unreachable
         return value_t::null();
     }
 

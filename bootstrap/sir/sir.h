@@ -60,10 +60,10 @@ public:
     std::string content;
 
 public:
-    static auto null() {
+    static auto null(const std::string& name = "") {
         return value_t {
             .value_kind = value_t::kind::null,
-            .content = ""
+            .content = name
         };
     }
     static auto variable(const std::string& name) {
@@ -84,7 +84,12 @@ public:
         switch(value.value_kind) {
             case value_t::kind::variable: out << "%" << value.content; break;
             case value_t::kind::literal: out << value.content; break;
-            default: break;
+            case value_t::kind::null:
+                // if content is not empty, means there's an error in codegen
+                if (!value.content.empty()) {
+                    out << "<null: " << value.content << ">";
+                }
+                break;
         }
         return out;
     }
