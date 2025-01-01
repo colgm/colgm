@@ -1,5 +1,12 @@
 use err::report::{ report };
-use ast::ast::{ ast_kind, ast, root };
+use ast::ast::{
+    ast_kind,
+    ast,
+    root,
+    ast_struct_decl,
+    ast_func_decl,
+    ast_impl
+};
 use package::{ package };
 
 use std::str::{ str };
@@ -66,9 +73,15 @@ impl generic_visitor {
             var d = i.get().unwrap();
             // TODO
             match (d->kind) {
-                ast_kind::ast_struct_decl => {}
-                ast_kind::ast_func_decl => {}
-                ast_kind::ast_impl => {}
+                ast_kind::ast_struct_decl => {
+                    self->visit_struct_decl(d => ast_struct_decl*);
+                }
+                ast_kind::ast_func_decl => {
+                    self->visit_func_decl(d => ast_func_decl*);
+                }
+                ast_kind::ast_impl => {
+                    self->visit_impl(d => ast_impl*);
+                }
                 _ => {}
             }
         }
@@ -79,6 +92,26 @@ impl generic_visitor {
         self->visit(n);
         while (self->insert_into_symbol_table() != 0) {
             self->visit(n);
+        }
+    }
+}
+
+impl generic_visitor {
+    func visit_struct_decl(self, n: ast_struct_decl*) {
+        if (n->generic_types != nil) {
+            return;
+        }
+    }
+
+    func visit_func_decl(self, n: ast_func_decl*) {
+        if (n->generic_types != nil) {
+            return;
+        }
+    }
+
+    func visit_impl(self, n: ast_impl*) {
+        if (n->generic_types != nil) {
+            return;
         }
     }
 }
