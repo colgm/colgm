@@ -95,6 +95,11 @@ public:
     }
 };
 
+struct array_type_info {
+    bool is_array;
+    usize size;
+};
+
 class sir {
 private:
     sir_kind type;
@@ -131,12 +136,15 @@ class sir_alloca: public sir {
 private:
     std::string variable;
     std::string type;
+    array_type_info array_info;
 
 public:
     sir_alloca(const std::string& v, const std::string& t):
-        sir(sir_kind::sir_alloca), variable(v), type(t) {}
+        sir(sir_kind::sir_alloca), variable(v), type(t),
+        array_info({false, 0}) {}
     ~sir_alloca() override = default;
     void dump(std::ostream&) const override;
+    void set_array(array_type_info ati) { array_info = ati; }
     const auto& get_variable_name() const { return variable; }
     const auto& get_type_name() const { return type; }
 };
@@ -665,6 +673,7 @@ private:
     value_t destination;
     std::string src_type;
     std::string dst_type;
+    array_type_info src_array_info;
 
 private:
     std::string convert_instruction(char, int, char, int) const;
@@ -676,8 +685,10 @@ public:
                      const std::string& dt):
         sir(sir_kind::sir_type_convert),
         source(src), destination(dst),
-        src_type(st), dst_type(dt) {}
+        src_type(st), dst_type(dt),
+        src_array_info({false, 0}) {}
     ~sir_type_convert() override = default;
+    void set_array(array_type_info ati) { src_array_info = ati; }
     void dump(std::ostream&) const override;
 };
 

@@ -43,7 +43,14 @@ std::string quoted_name(const std::string& str) {
 
 void sir_alloca::dump(std::ostream& out) const {
     out << "%" << variable << " = alloca ";
-    out << quoted_name(type) << "\n";
+    if (array_info.is_array) {
+        out << "[" << array_info.size << " x ";
+    }
+    out << quoted_name(type);
+    if (array_info.is_array) {
+        out << "]";
+    }
+    out << "\n";
 }
 
 sir_block::~sir_block() {
@@ -341,9 +348,16 @@ std::string sir_type_convert::convert_instruction(char source_type_mark,
 }
 
 void sir_type_convert::dump(std::ostream& out) const {
-    if (src_type.back()=='*' && dst_type.back()=='*') {
+    if ((src_type.back()=='*' || src_array_info.is_array) &&
+        dst_type.back()=='*') {
         out << destination << " = bitcast ";
-        out << quoted_name(src_type) << " " << source << " to ";
+        if (src_array_info.is_array) {
+            out << "[" << src_array_info.size << " x ";
+            out << quoted_name(src_type) << "]* ";
+        } else {
+            out << quoted_name(src_type) << " ";
+        }
+        out << source << " to ";
         out << quoted_name(dst_type) << "\n";
         return;
     }

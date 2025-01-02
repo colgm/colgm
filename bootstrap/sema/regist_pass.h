@@ -68,6 +68,7 @@ private:
     bool visit_func_decl(ast::func_decl*) override;
     bool visit_impl_struct(ast::impl_struct*) override;
     bool visit_call_id(ast::call_id*) override;
+    bool visit_type_def(ast::type_def*) override;
 
 private:
     void replace_type(type&, const generic_data&);

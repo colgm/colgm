@@ -95,15 +95,26 @@ pub enum assignment_kind {
 
 pub struct ast {
     kind: ast_kind, // ast node kind
-    location: span* // location of ast node
+    location: span*, // location of ast node
+    redirect_location: str
 }
 
 impl ast {
     pub func instance(k: ast_kind, loc: span*) -> ast {
         return ast {
             kind: k,
-            location: loc
+            location: loc,
+            redirect_location: str::from("")
         };
+    }
+
+    pub func is_redirected(self) -> bool {
+        return !self->redirect_location.empty();
+    }
+
+    pub func set_redirect_location(self, loc: str*) {
+        self->redirect_location.clear();
+        self->redirect_location.append_str(loc);
     }
 
     pub func delete(self) {
@@ -111,6 +122,7 @@ impl ast {
             self->location->delete();
             free(self->location => i8*);
         }
+        self->redirect_location.delete();
 
         match (self->kind) {
             ast_kind::ast_null => {}

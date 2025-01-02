@@ -36,6 +36,12 @@ impl generic_data {
     }
 }
 
+pub struct type_replace_pass {
+    err: report*,
+    ctx: sema_context*,
+    g_data: generic_data*
+}
+
 pub struct generic_visitor {
     err: report*,
     ctx: sema_context*,
@@ -74,44 +80,28 @@ impl generic_visitor {
 }
 
 impl generic_visitor {
+    func scan_generic_type(self, n: ast_type_def*) {}
+}
+
+impl generic_visitor {
     func visit_ast(self, n: ast*) {
         match(n->kind) {
-            ast_kind::ast_null => self->visit_null(n => ast_null*);
-            ast_kind::ast_root => return; // do not visit root again
             ast_kind::ast_unary_operator =>
                 self->visit_unary_operator(n => ast_unary_operator*);
             ast_kind::ast_binary_operator =>
                 self->visit_binary_operator(n => ast_binary_operator*);
             ast_kind::ast_type_convert =>
                 self->visit_type_convert(n => ast_type_convert*);
-            ast_kind::ast_identifier =>
-                self->visit_identifier(n => ast_identifier*);
-            ast_kind::ast_nil_literal =>
-                self->visit_nil_literal(n => ast_nil_literal*);
-            ast_kind::ast_number_literal =>
-                self->visit_number_literal(n => ast_number_literal*);
-            ast_kind::ast_string_literal =>
-                self->visit_string_literal(n => ast_string_literal*);
-            ast_kind::ast_char_literal =>
-                self->visit_char_literal(n => ast_char_literal*);
-            ast_kind::ast_bool_literal =>
-                self->visit_bool_literal(n => ast_bool_literal*);
             ast_kind::ast_array_literal =>
                 self->visit_array_literal(n => ast_array_literal*);
             ast_kind::ast_call_index =>
                 self->visit_call_index(n => ast_call_index*);
             ast_kind::ast_call_func_args =>
                 self->visit_call_func_args(n => ast_call_func_args*);
-            ast_kind::ast_get_field =>
-                self->visit_get_field(n => ast_get_field*);
-            ast_kind::ast_ptr_get_field =>
-                self->visit_ptr_get_field(n => ast_ptr_get_field*);
             ast_kind::ast_init_pair =>
                 self->visit_init_pair(n => ast_init_pair*);
             ast_kind::ast_initializer =>
                 self->visit_initializer(n => ast_initializer*);
-            ast_kind::ast_call_path =>
-                self->visit_call_path(n => ast_call_path*);
             ast_kind::ast_call_id =>
                 self->visit_call_id(n => ast_call_id*);
             ast_kind::ast_call => self->visit_call(n => ast_call*);
@@ -123,10 +113,6 @@ impl generic_visitor {
                 self->visit_type_def(n => ast_type_def*);
             ast_kind::ast_generic_type_list =>
                 self->visit_generic_type_list(n => ast_generic_type_list*);
-            ast_kind::ast_enum_member =>
-                self->visit_enum_member(n => ast_enum_member*);
-            ast_kind::ast_enum_decl =>
-                self->visit_enum_decl(n => ast_enum_decl*);
             ast_kind::ast_struct_field =>
                 self->visit_struct_field(n => ast_struct_field*);
             ast_kind::ast_struct_decl =>
@@ -139,8 +125,6 @@ impl generic_visitor {
                 self->visit_func_decl(n => ast_func_decl*);
             ast_kind::ast_impl =>
                 self->visit_impl(n => ast_impl*);
-            ast_kind::ast_use_stmt =>
-                self->visit_use_stmt(n => ast_use_stmt*);
             ast_kind::ast_definition =>
                 self->visit_definition(n => ast_definition*);
             ast_kind::ast_cond_stmt =>
@@ -159,21 +143,14 @@ impl generic_visitor {
                 self->visit_in_stmt_expr(n => ast_in_stmt_expr*);
             ast_kind::ast_ret_stmt =>
                 self->visit_ret_stmt(n => ast_ret_stmt*);
-            ast_kind::ast_continue_stmt =>
-                self->visit_continue_stmt(n => ast_continue_stmt*);
-            ast_kind::ast_break_stmt =>
-                self->visit_break_stmt(n => ast_break_stmt*);
             ast_kind::ast_code_block =>
                 self->visit_code_block(n => ast_code_block*);
+            _ => {}
         }
     }
 }
 
 impl generic_visitor {
-    func visit_null(self, n: ast_null*) {
-        // do nothing
-    }
-
     func visit_root(self, n: root*) {
         for (var i = n->decls.iter(); !i.is_end(); i = i.next()) {
             var d = i.get().unwrap();
@@ -247,30 +224,6 @@ impl generic_visitor {
         self->visit_type_def(n->to);
     }
 
-    func visit_identifier(self, n: ast_identifier*) {
-        // do nothing
-    }
-
-    func visit_nil_literal(self, n: ast_nil_literal*) {
-        // do nothing
-    }
-
-    func visit_number_literal(self, n: ast_number_literal*) {
-        // do nothing
-    }
-
-    func visit_string_literal(self, n: ast_string_literal*) {
-        // do nothing
-    }
-
-    func visit_char_literal(self, n: ast_char_literal*) {
-        // do nothing
-    }
-
-    func visit_bool_literal(self, n: ast_bool_literal*) {
-        // do nothing
-    }
-
     func visit_array_literal(self, n: ast_array_literal*) {
         if (n->type != nil) {
             self->visit_type_def(n->type);
@@ -287,16 +240,7 @@ impl generic_visitor {
         }
     }
 
-    func visit_get_field(self, n: ast_get_field*) {
-        // do nothing
-    }
-
-    func visit_ptr_get_field(self, n: ast_ptr_get_field*) {
-        // do nothing
-    }
-
     func visit_init_pair(self, n: ast_init_pair*) {
-        self->visit_identifier(n->field);
         self->visit_ast(n->value);
     }
 
@@ -306,12 +250,7 @@ impl generic_visitor {
         }
     }
 
-    func visit_call_path(self, n: ast_call_path*) {
-        // do nothing
-    }
-
     func visit_call_id(self, n: ast_call_id*) {
-        self->visit_identifier(n->id);
         if (n->generic_types != nil) {
             self->visit_generic_type_list(n->generic_types);
         }
@@ -336,9 +275,8 @@ impl generic_visitor {
     func visit_type_def(self, n: ast_type_def*) {
         // TODO
         // io::stdout().out("scanning [0x").out_hex(n => i64).out("]\n");
-        self->visit_identifier(n->name);
         if (n->generic_types != nil) {
-            self->visit_generic_type_list(n->generic_types);
+            self->scan_generic_type(n);
         }
     }
 
@@ -348,21 +286,11 @@ impl generic_visitor {
         }
     }
 
-    func visit_enum_member(self, n: ast_enum_member*) {
-        // do nothing
-    }
-
-    func visit_enum_decl(self, n: ast_enum_decl*) {
-        // do nothing
-    }
-
     func visit_struct_field(self, n: ast_struct_field*) {
-        self->visit_identifier(n->name);
         self->visit_type_def(n->type);
     }
 
     func visit_param(self, n: ast_param*) {
-        self->visit_identifier(n->name);
         if (n->type != nil) {
             self->visit_type_def(n->type);
         }
@@ -372,10 +300,6 @@ impl generic_visitor {
         for (var i = n->params.iter(); !i.is_end(); i = i.next()) {
             self->visit_ast(i.get().unwrap());
         }
-    }
-
-    func visit_use_stmt(self, n: ast_use_stmt*) {
-        // do nothing
     }
 
     func visit_definition(self, n: ast_definition*) {
@@ -446,14 +370,6 @@ impl generic_visitor {
         if (n->value != nil) {
             self->visit_ast(n->value);
         }
-    }
-
-    func visit_continue_stmt(self, n: ast_continue_stmt*) {
-        // do nothing
-    }
-
-    func visit_break_stmt(self, n: ast_break_stmt*) {
-        // do nothing
     }
 
     func visit_code_block(self, n: ast_code_block*) {

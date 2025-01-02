@@ -195,7 +195,7 @@ bool generic_visitor::visit_struct_decl(struct_decl* node) {
         if (!i->get_type() || !i->get_type()->get_generic_types()) {
             continue;
         }
-        scan_generic_type(i->get_type());
+        i->get_type()->accept(this);
     }
     return true;
 }
@@ -210,9 +210,11 @@ bool generic_visitor::visit_func_decl(func_decl* node) {
         if (!i->get_type() || !i->get_type()->get_generic_types()) {
             continue;
         }
-        scan_generic_type(i->get_type());
+        i->get_type()->accept(this);
     }
-    node->get_return_type()->accept(this);
+    if (node->get_return_type()) {
+        node->get_return_type()->accept(this);
+    }
     if (node->get_code_block()) {
         node->get_code_block()->accept(this);
     }
@@ -257,6 +259,13 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
         : sdm.generic_functions.at(type_name).generic_template;
     const auto& type_list = node->get_generic_types()->get_types();
     check_generic_type(node, type_name, sym, type_list, generic_template);
+    return true;
+}
+
+bool generic_visitor::visit_type_def(ast::type_def* node) {
+    if (node->get_generic_types()) {
+        scan_generic_type(node);
+    }
     return true;
 }
 
