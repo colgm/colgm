@@ -43,12 +43,11 @@ std::string quoted_name(const std::string& str) {
 
 void sir_alloca::dump(std::ostream& out) const {
     out << "%" << variable << " = alloca ";
-    if (array_info.is_array) {
+    if (array_info.array_base_type.length()) {
         out << "[" << array_info.size << " x ";
-    }
-    out << quoted_name(type);
-    if (array_info.is_array) {
-        out << "]";
+        out << quoted_name(array_info.array_base_type) << "]";
+    } else {
+        out << quoted_name(type);
     }
     out << "\n";
 }
@@ -348,15 +347,8 @@ std::string sir_type_convert::convert_instruction(char source_type_mark,
 }
 
 void sir_type_convert::dump(std::ostream& out) const {
-    if ((src_type.back()=='*' || src_array_info.is_array) &&
-        dst_type.back()=='*') {
-        out << destination << " = bitcast ";
-        if (src_array_info.is_array) {
-            out << "[" << src_array_info.size << " x ";
-            out << quoted_name(src_type) << "]* ";
-        } else {
-            out << quoted_name(src_type) << " ";
-        }
+    if (src_type.back()=='*' && dst_type.back()=='*') {
+        out << destination << " = bitcast " << quoted_name(src_type) << " ";
         out << source << " to ";
         out << quoted_name(dst_type) << "\n";
         return;
@@ -425,6 +417,12 @@ void sir_type_convert::dump(std::ostream& out) const {
     out << destination << " = " << convert_inst << " ";
     out << src_type << " " << source << " to " << dst_type;
     out << " ; " << src_type << " -> " << dst_type << "\n";
+}
+
+void sir_array_cast::dump(std::ostream& out) const {
+    out << destination << " = bitcast [" << array_size << " x ";
+    out << quoted_name(type) << "]* " << source << " to ";
+    out << quoted_name(type) << "*\n";
 }
 
 }

@@ -501,22 +501,21 @@ void mir2sir::visit_mir_array(mir_array* node) {
     auto temp_0 = "arr." + index + ".ptr";
     auto temp_1 = "arr." + index + ".cast_ptr";
     const auto array_elem_type = type_mapping(node->get_type().get_ref_copy());
-    const auto array_type = "[" + std::to_string(node->get_size()) +
-                            " x " + array_elem_type + "]";
     auto array_new = new sir_alloca(
         temp_0,
-        array_elem_type
+        sir_alloca::array_type_info {
+            array_elem_type,
+            node->get_size()
+        }
     );
-    array_new->set_array(array_type_info {true, node->get_size()});
     block->add_alloca(array_new);
 
-    auto cv = new sir_type_convert(
+    auto cv = new sir_array_cast(
         value_t::variable(temp_0),
         value_t::variable(temp_1),
         array_elem_type,
-        type_mapping(node->get_type())
+        node->get_size()
     );
-    cv->set_array(array_type_info {true, node->get_size()});
     block->add_stmt(cv);
 
     value_stack.push_back(mir_value_t::variable(temp_1, node->get_type()));

@@ -42,7 +42,8 @@ enum class sir_kind {
     sir_br,
     sir_br_cond,
     sir_switch,
-    sir_type_convert
+    sir_type_convert,
+    sir_array_cast
 };
 
 std::string quoted_name(const std::string&);
@@ -95,11 +96,6 @@ public:
     }
 };
 
-struct array_type_info {
-    bool is_array;
-    usize size;
-};
-
 class sir {
 private:
     sir_kind type;
@@ -133,6 +129,12 @@ public:
 };
 
 class sir_alloca: public sir {
+public:
+    struct array_type_info {
+        std::string array_base_type;
+        usize size;
+    };
+
 private:
     std::string variable;
     std::string type;
@@ -141,7 +143,11 @@ private:
 public:
     sir_alloca(const std::string& v, const std::string& t):
         sir(sir_kind::sir_alloca), variable(v), type(t),
-        array_info({false, 0}) {}
+        array_info({"", 0}) {}
+    // this constructor is used to allocate array on stack
+    sir_alloca(const std::string& v, const array_type_info& ati):
+        sir(sir_kind::sir_alloca), variable(v), type(""),
+        array_info(ati) {}
     ~sir_alloca() override = default;
     void dump(std::ostream&) const override;
     void set_array(array_type_info ati) { array_info = ati; }
@@ -673,7 +679,6 @@ private:
     value_t destination;
     std::string src_type;
     std::string dst_type;
-    array_type_info src_array_info;
 
 private:
     std::string convert_instruction(char, int, char, int) const;
@@ -685,10 +690,26 @@ public:
                      const std::string& dt):
         sir(sir_kind::sir_type_convert),
         source(src), destination(dst),
-        src_type(st), dst_type(dt),
-        src_array_info({false, 0}) {}
+        src_type(st), dst_type(dt) {}
     ~sir_type_convert() override = default;
-    void set_array(array_type_info ati) { src_array_info = ati; }
+    void dump(std::ostream&) const override;
+};
+
+class sir_array_cast: public sir {
+private:
+    value_t source;
+    value_t destination;
+    std::string type;
+    usize array_size;
+
+public:
+    sir_array_cast(const value_t& src,
+                   const value_t& dst,
+                   const std::string& t,
+                   usize size):
+        sir(sir_kind::sir_array_cast), source(src),
+        destination(dst), type(t), array_size(size) {}
+    ~sir_array_cast() override = default;
     void dump(std::ostream&) const override;
 };
 
