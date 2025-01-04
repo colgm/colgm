@@ -123,7 +123,7 @@ impl regist_pass {
     func import_specified(self, node: ast_use_stmt*, dm: colgm_module*, path: str*) {
         for (var i: u64 = 0; i < node->import_symbol.size; i += 1) {
             var name_node = node->import_symbol.get(i).unwrap() => ast_identifier*;
-            var name = name_node->name.__ptr__();
+            var name = name_node->content.__ptr__();
 
             var is_public = false;
             if (dm->enums.has(name)) {
@@ -283,8 +283,8 @@ impl regist_pass {
             if (!expect_path.empty()) {
                 expect_path.append_char('/');
             }
-            expect_name.append_i8_vec(real_node->name.c_str);
-            expect_path.append_i8_vec(real_node->name.c_str);
+            expect_name.append_i8_vec(real_node->content.c_str);
+            expect_path.append_i8_vec(real_node->content.c_str);
         }
         // generate expect path extention
         expect_path.append_i8_vec(".colgm");
@@ -443,7 +443,7 @@ impl regist_pass {
         for (var i: u64 = 0; i < v->size; i += 1) {
             var n_ast = v->get(i).unwrap() => ast_enum_member*;
             var value = basic<u64>::wrap(i);
-            var member_name = n_ast->name->name.__ptr__();
+            var member_name = n_ast->name->content.__ptr__();
             if (n_ast->value != nil) {
                 var nl = n_ast->value => ast_number_literal*;
                 var res = str_to_num(nl->literal.c_str);
@@ -519,7 +519,7 @@ impl regist_pass {
                 continue;
             }
             var n_ast = n => ast_param*;
-            var param_name = n_ast->name->name.__ptr__();
+            var param_name = n_ast->name->content.__ptr__();
 
             // check self param
             if (param_name->eq_const("self") && i != 0) {
@@ -585,7 +585,7 @@ impl regist_pass {
                     continue;
                 }
                 var n_td = gt => ast_type_def*;
-                self->ctx->generics.insert(n_td->name->name.__ptr__());
+                self->ctx->generics.insert(n_td->name->content.__ptr__());
             }
         }
 
@@ -620,7 +620,7 @@ impl regist_pass {
                     continue;
                 }
                 var n_td = gt => ast_type_def*;
-                func_info->generic_template.push(n_td->name->name.__ptr__());
+                func_info->generic_template.push(n_td->name->content.__ptr__());
             }
             func_info->generic_func_decl = node->copy();
         }
@@ -686,7 +686,7 @@ impl regist_pass {
                     continue;
                 }
                 var n_td = gt => ast_type_def*;
-                self->ctx->generics.insert(n_td->name->name.__ptr__());
+                self->ctx->generics.insert(n_td->name->content.__ptr__());
             }
         }
 
@@ -712,7 +712,7 @@ impl regist_pass {
                     continue;
                 }
                 var n_td = gt => ast_type_def*;
-                struct_info->generic_template.push(n_td->name->name.__ptr__());
+                struct_info->generic_template.push(n_td->name->content.__ptr__());
             }
             struct_info->generic_struct_decl = node->copy();
         }
@@ -724,7 +724,7 @@ impl regist_pass {
             }
 
             var fld_ast = fld => ast_struct_field*;
-            var fld_name = fld_ast->name->name.__ptr__();
+            var fld_name = fld_ast->name->content.__ptr__();
             if (struct_info->fields.has(fld_name)) {
                 var info = str::instance();
                 info.append_i8_vec("field \"");
@@ -823,7 +823,7 @@ impl regist_pass {
             return false;
         }
         var first_param_node = first_param => ast_param*;
-        if (first_param_node->name->name.eq_const("self")) {
+        if (first_param_node->name->content.eq_const("self")) {
             return true;
         }
         return false;
@@ -967,7 +967,7 @@ impl regist_pass {
                     continue;
                 }
                 var n_td = gt => ast_type_def*;
-                self->ctx->generics.insert(n_td->name->name.__ptr__());
+                self->ctx->generics.insert(n_td->name->content.__ptr__());
             }
         }
 

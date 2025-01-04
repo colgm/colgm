@@ -236,6 +236,7 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     if (!node->get_generic_types()) {
         return true;
     }
+    node->get_generic_types()->accept(this);
 
     const auto& type_name = node->get_id()->get_name();
     const auto& dm = node->is_redirected()
@@ -264,6 +265,7 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
 
 bool generic_visitor::visit_type_def(ast::type_def* node) {
     if (node->get_generic_types()) {
+        node->get_generic_types()->accept(this);
         scan_generic_type(node);
     }
     return true;

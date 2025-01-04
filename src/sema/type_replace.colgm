@@ -5,9 +5,11 @@ use package::{ package };
 use std::str::{ str };
 use std::map::{ hashmap };
 use std::io::{ io };
+use std::vec::{ vec };
 
 use sema::type::{ type };
 use sema::context::{ sema_context };
+use sema::symbol_info::{ symbol_kind, symbol_info };
 use sema::type_resolve::{ type_resolve };
 
 struct generic_data {
@@ -44,6 +46,7 @@ pub struct type_replace_pass {
 
 pub struct generic_visitor {
     err: report*,
+    pkg: package*,
     ctx: sema_context*,
     root: root*,
     tr: type_resolve,
@@ -54,6 +57,7 @@ impl generic_visitor {
     pub func instance(e: report*, c: sema_context*, p: package*) -> generic_visitor {
         return generic_visitor {
             err: e,
+            pkg: p,
             ctx: c,
             root: nil,
             tr: type_resolve::instance(e, c, p),
@@ -80,7 +84,101 @@ impl generic_visitor {
 }
 
 impl generic_visitor {
-    func scan_generic_type(self, n: ast_type_def*) {}
+    func scan_generic_type(self, n: ast_type_def*) {
+        var type_name = n->name->content.__ptr__();
+        var domain_file: str* = nil;
+        if (n->base.is_redirected()) {
+            domain_file = n->base.redirect_location.__ptr__();
+        } else {
+            domain_file = n->base.location->file.__ptr__();
+        }
+
+        var dm = self->ctx->get_domain(domain_file);
+
+        // check this symbol exists
+        if (!dm->global_symbol.has(type_name) &&
+            !dm->generic_symbol.has(type_name)) {
+            var info = str::from("unknown type \"");
+            info.append_str(type_name)->append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        // check this symbol is generic type
+        if (!dm->generic_symbol.has(type_name)) {
+            var info = str::from("\"");
+            info.append_str(type_name);
+            info.append_i8_vec("\" is not a generic type");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        var sym = dm->generic_symbol.get(type_name);
+        if (sym->kind != symbol_kind::struct_kind) {
+            var info = str::from("\"");
+            info.append_str(type_name);
+            info.append_i8_vec("\" is not a struct type");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        var sym_belonged_dm = self->ctx->get_domain(sym->loc_file.__ptr__());
+        var generic_struct = sym_belonged_dm->generic_structs.get(type_name);
+        var generic_template = generic_struct->generic_template.__ptr__();
+        self->check_generic_type(n,
+                                 type_name,
+                                 sym,
+                                 n->generic_types,
+                                 generic_template);
+    }
+
+    func check_generic_type(self,
+                            n: ast_type_def*,
+                            type_name: str*,
+                            sym: symbol_info*,
+                            type_list_node: ast_generic_type_list*,
+                            generic_template: vec<str>*) {
+        var type_list = type_list_node->types.__ptr__();
+        // check size match
+        if (type_list->size != generic_template->size) {
+            self->err->error(n->base.location,
+                "generic type count does not match"
+            );
+            return;
+        }
+
+        var ss = str::from("");
+        ss.append_str(type_name)->append_char('<');
+        for (var i = type_list->iter(); !i.is_end(); i = i.next()) {
+            var r_type = self->tr.resolve(i.get().unwrap() => ast_type_def*);
+            var r_type_fpn = r_type.full_path_name(self->pkg);
+            ss.append_str(r_type_fpn.__ptr__());
+            r_type_fpn.delete();
+            if (i.index() != type_list->size - 1) {
+                ss.append_char(',');
+            }
+            r_type.delete();
+        }
+        ss.append_char('>');
+        if (self->err->error_count > 0) {
+            ss.delete();
+            return;
+        }
+
+        // insert data
+        if (self->generic_type_map.has(ss.__ptr__())) {
+            ss.delete();
+            return;
+        }
+        // TODO: unfinished
+        io::stdout().out("insert ").out(ss.c_str).endln();
+
+        ss.delete();
+        return;
+    }
 }
 
 impl generic_visitor {
@@ -273,9 +371,8 @@ impl generic_visitor {
     }
 
     func visit_type_def(self, n: ast_type_def*) {
-        // TODO
-        // io::stdout().out("scanning [0x").out_hex(n => i64).out("]\n");
         if (n->generic_types != nil) {
+            self->visit_generic_type_list(n->generic_types);
             self->scan_generic_type(n);
         }
     }
