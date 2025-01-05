@@ -11,13 +11,24 @@ use sema::type::{ type };
 use sema::context::{ sema_context };
 use sema::symbol_info::{ symbol_kind, symbol_info };
 use sema::type_resolve::{ type_resolve };
+use sema::function::{ colgm_func };
+use sema::structure::{ colgm_struct };
+use sema::module::{ colgm_module };
 
 struct generic_data {
+    // generic type itself
     generic_type: type,
+    // replaced types, key is the generic name, type is the real type
     types: hashmap<str, type>
 }
 
 impl generic_data {
+    pub func instance() -> generic_data {
+        return generic_data {
+            generic_type: type::instance(),
+            types: hashmap<str, type>::instance()
+        };
+    }
     pub func new() -> generic_data* {
         var res = generic_data::__alloc__();
         res->generic_type = type::instance();
@@ -69,8 +80,6 @@ impl generic_visitor {
         self->generic_type_map.delete();
     }
 
-    func insert_into_symbol_table(self) -> u64 { return 0; }
-
     pub func scan_and_insert(self, n: root*) {
         self->root = n;
 
@@ -84,6 +93,30 @@ impl generic_visitor {
 }
 
 impl generic_visitor {
+    func check_generic_exists(self, dm: colgm_module*, type_name: str*, n: ast*) -> bool {
+        // check this symbol exists
+        if (!dm->global_symbol.has(type_name) &&
+            !dm->generic_symbol.has(type_name)) {
+            var info = str::from("unknown type \"");
+            info.append_str(type_name)->append_i8_vec("\"");
+            self->err->error(n->location, info.c_str);
+            info.delete();
+            return false;
+        }
+
+        // check this symbol is generic type
+        if (!dm->generic_symbol.has(type_name)) {
+            var info = str::from("\"");
+            info.append_str(type_name);
+            info.append_i8_vec("\" is not a generic type");
+            self->err->error(n->location, info.c_str);
+            info.delete();
+            return false;
+        }
+
+        return true;
+    }
+
     func scan_generic_type(self, n: ast_type_def*) {
         var type_name = n->name->content.__ptr__();
         var domain_file: str* = nil;
@@ -94,24 +127,7 @@ impl generic_visitor {
         }
 
         var dm = self->ctx->get_domain(domain_file);
-
-        // check this symbol exists
-        if (!dm->global_symbol.has(type_name) &&
-            !dm->generic_symbol.has(type_name)) {
-            var info = str::from("unknown type \"");
-            info.append_str(type_name)->append_i8_vec("\"");
-            self->err->error(n->base.location, info.c_str);
-            info.delete();
-            return;
-        }
-
-        // check this symbol is generic type
-        if (!dm->generic_symbol.has(type_name)) {
-            var info = str::from("\"");
-            info.append_str(type_name);
-            info.append_i8_vec("\" is not a generic type");
-            self->err->error(n->base.location, info.c_str);
-            info.delete();
+        if (!self->check_generic_exists(dm, type_name, n => ast*)) {
             return;
         }
 
@@ -128,7 +144,7 @@ impl generic_visitor {
         var sym_belonged_dm = self->ctx->get_domain(sym->loc_file.__ptr__());
         var generic_struct = sym_belonged_dm->generic_structs.get(type_name);
         var generic_template = generic_struct->generic_template.__ptr__();
-        self->check_generic_type(n,
+        self->check_generic_type(n => ast*,
                                  type_name,
                                  sym,
                                  n->generic_types,
@@ -136,7 +152,7 @@ impl generic_visitor {
     }
 
     func check_generic_type(self,
-                            n: ast_type_def*,
+                            n: ast*,
                             type_name: str*,
                             sym: symbol_info*,
                             type_list_node: ast_generic_type_list*,
@@ -144,7 +160,7 @@ impl generic_visitor {
         var type_list = type_list_node->types.__ptr__();
         // check size match
         if (type_list->size != generic_template->size) {
-            self->err->error(n->base.location,
+            self->err->error(n->location,
                 "generic type count does not match"
             );
             return;
@@ -154,7 +170,7 @@ impl generic_visitor {
         ss.append_str(type_name)->append_char('<');
         for (var i = type_list->iter(); !i.is_end(); i = i.next()) {
             var r_type = self->tr.resolve(i.get().unwrap() => ast_type_def*);
-            var r_type_fpn = r_type.full_path_name(self->pkg);
+            var r_type_fpn = r_type.full_path_name(self->pkg, true);
             ss.append_str(r_type_fpn.__ptr__());
             r_type_fpn.delete();
             if (i.index() != type_list->size - 1) {
@@ -173,10 +189,19 @@ impl generic_visitor {
             ss.delete();
             return;
         }
-        // TODO: unfinished
-        io::stdout().out("insert ").out(ss.c_str).endln();
+
+        var g_data = generic_data::instance();
+        g_data.generic_type.name.append_str(type_name);
+        g_data.generic_type.loc_file.append_str(sym->loc_file.__ptr__());
+        for (var i = type_list->iter(); !i.is_end(); i = i.next()) {
+            var r_type = self->tr.resolve(i.get().unwrap() => ast_type_def*);
+            g_data.types.insert(generic_template->get(i.index()), r_type.__ptr__());
+        }
+
+        self->generic_type_map.insert(ss.__ptr__(), g_data.__ptr__());
 
         ss.delete();
+        g_data.delete();
         return;
     }
 }
@@ -349,9 +374,49 @@ impl generic_visitor {
     }
 
     func visit_call_id(self, n: ast_call_id*) {
-        if (n->generic_types != nil) {
-            self->visit_generic_type_list(n->generic_types);
+        if (n->generic_types == nil) {
+            return;
         }
+        self->visit_generic_type_list(n->generic_types);
+
+        var type_name = n->id->content.__ptr__();
+        var domain_file: str* = nil;
+        if (n->base.is_redirected()) {
+            domain_file = n->base.redirect_location.__ptr__();
+        } else {
+            domain_file = n->base.location->file.__ptr__();
+        }
+
+        var dm = self->ctx->get_domain(domain_file);
+        if (!self->check_generic_exists(dm, type_name, n => ast*)) {
+            return;
+        }
+
+        var sym = dm->generic_symbol.get(type_name);
+        if (sym->kind != symbol_kind::struct_kind &&
+            sym->kind != symbol_kind::func_kind) {
+            var info = str::from("\"");
+            info.append_str(type_name);
+            info.append_i8_vec("\" is not a struct type");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        var sym_belonged_dm = self->ctx->get_domain(sym->loc_file.__ptr__());
+        var generic_template: vec<str>* = nil;
+        if (sym->kind == symbol_kind::struct_kind) {
+            var generic_struct = sym_belonged_dm->generic_structs.get(type_name);
+            generic_template = generic_struct->generic_template.__ptr__();
+        } else {
+            var generic_func = sym_belonged_dm->generic_functions.get(type_name);
+            generic_template = generic_func->generic_template.__ptr__();
+        }
+        self->check_generic_type(n => ast*,
+                                 type_name,
+                                 sym,
+                                 n->generic_types,
+                                 generic_template);
     }
 
     func visit_call(self, n: ast_call*) {
@@ -474,4 +539,15 @@ impl generic_visitor {
             self->visit_ast(i.get().unwrap());
         }
     }
+}
+
+impl generic_visitor {
+    func insert_into_symbol_table(self) -> u64 {
+        var insert_count: u64 = 0;
+        // TODO
+        return insert_count;
+    }
+    func replace_type(self, t: type*, g_data: generic_data*) {}
+    func replace_struct_type(self, s: colgm_struct*, g_data: generic_data*) {}
+    func replace_func_type(self, f: colgm_func*, g_data: generic_data*) {}
 }

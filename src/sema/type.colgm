@@ -168,7 +168,7 @@ impl type {
         out.reset();
     }
 
-    pub func full_path_name(self, pkg: package*) -> str {
+    pub func full_path_name(self, pkg: package*, with_pointer: bool) -> str {
         var res = str::instance();
         if (self->loc_module.size > 0) {
             res.append_str(self->loc_module.__ptr__());
@@ -179,7 +179,7 @@ impl type {
             res.append_char('<');
             for (var i: u64 = 0; i < self->generics.size; i += 1) {
                 var t = self->generics.get(i);
-                var t_fpn = t->full_path_name(pkg);
+                var t_fpn = t->full_path_name(pkg, with_pointer);
                 res.append_i8_vec(t_fpn.c_str);
                 t_fpn.delete();
 
@@ -189,8 +189,10 @@ impl type {
             }
             res.append_char('>');
         }
-        for (var i = 0; i < self->pointer_depth; i += 1) {
-           res.append_char('*');
+        if (with_pointer) {
+            for (var i = 0; i < self->pointer_depth; i += 1) {
+            res.append_char('*');
+            }
         }
         return res;
     }
