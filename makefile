@@ -18,6 +18,7 @@ test: $(COLGMCC) test/*
 	@ $(COLGMCC) test/for_test.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/func.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/generic_array.colgm $(TEST_LIB) && lli out.ll
+	@ $(COLGMCC) test/generic_embed.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/generic.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/hello.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/initializer.colgm $(TEST_LIB) && lli out.ll

@@ -159,7 +159,7 @@ void generic_visitor::check_generic_type(
     ss << type_name << "<";
     for (auto i : type_list) {
         const auto type = tr.resolve(i);
-        ss << type.full_path_name();
+        ss << type.full_path_name_with_pointer();
         if (i != type_list.back()) {
             ss << ",";
         }
