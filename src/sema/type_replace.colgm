@@ -195,6 +195,7 @@ impl generic_visitor {
         g_data.generic_type.loc_file.append_str(sym->loc_file.__ptr__());
         for (var i = type_list->iter(); !i.is_end(); i = i.next()) {
             var r_type = self->tr.resolve(i.get().unwrap() => ast_type_def*);
+            g_data.generic_type.generics.push(r_type.__ptr__());
             g_data.types.insert(generic_template->get(i.index()), r_type.__ptr__());
         }
 
@@ -542,9 +543,43 @@ impl generic_visitor {
 }
 
 impl generic_visitor {
+    func insert_struct(self, dm: colgm_module*, gn: str*) {
+        if (dm->structs.has(gn)) {
+            return;
+        }
+        // TODO
+        io::stdout().out("insert struct ").out(gn->c_str).endln();
+    }
+
+    func insert_function(self, dm: colgm_module*, gn: str*) {
+        if (dm->functions.has(gn)) {
+            return;
+        }
+        // TODO
+        io::stdout().out("insert function ").out(gn->c_str).endln();
+    }
+
     func insert_into_symbol_table(self) -> u64 {
         var insert_count: u64 = 0;
-        // TODO
+        for (var i = self->generic_type_map.iter(); !i.is_end(); i = i.next()) {
+            var g_data = i.value();
+            var generic_name = g_data->generic_type.full_path_name(self->pkg, true);
+            
+            var domain_file = g_data->generic_type.loc_file.__ptr__();
+            if (!self->ctx->has_domain(domain_file)) {
+                continue;
+            }
+
+            var dm = self->ctx->get_domain(domain_file);
+            if (dm->generic_structs.has(g_data->generic_type.name.__ptr__())) {
+                self->insert_struct(dm, generic_name.__ptr__());
+            }
+            if (dm->generic_functions.has(g_data->generic_type.name.__ptr__())) {
+                self->insert_function(dm, generic_name.__ptr__());
+            }
+
+            generic_name.delete();
+        }
         return insert_count;
     }
     func replace_type(self, t: type*, g_data: generic_data*) {}
