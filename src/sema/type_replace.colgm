@@ -6,6 +6,7 @@ use std::str::{ str };
 use std::map::{ hashmap };
 use std::io::{ io };
 use std::vec::{ vec };
+use std::libc::{ free };
 
 use sema::type::{ type };
 use sema::context::{ sema_context };
@@ -543,20 +544,54 @@ impl generic_visitor {
 }
 
 impl generic_visitor {
-    func insert_struct(self, dm: colgm_module*, gn: str*) {
+    func insert_struct(self, dm: colgm_module*, gd: generic_data*, gn: str*) {
         if (dm->structs.has(gn)) {
             return;
         }
-        // TODO
-        io::stdout().out("insert struct ").out(gn->c_str).endln();
+
+        var struct_info = dm->generic_structs.get(gd->generic_type.name.__ptr__())->copy();
+        struct_info->name.clear();
+        struct_info->name.append_str(gn);
+        struct_info->generic_template.clear();
+        dm->structs.insert(gn, struct_info);
+
+        var sym_info = symbol_info::new();
+        sym_info->kind = symbol_kind::struct_kind;
+        sym_info->loc_file.append_str(struct_info->location.file.__ptr__());
+        sym_info->is_public = struct_info->is_public;
+        self->ctx->global_symbol()->insert(gn, sym_info);
+        sym_info->delete();
+        free(sym_info => i8*);
+
+        // TODO: do replace here
+
+        struct_info->delete();
+        free(struct_info => i8*);
     }
 
-    func insert_function(self, dm: colgm_module*, gn: str*) {
+    func insert_function(self, dm: colgm_module*, gd: generic_data*, gn: str*) {
         if (dm->functions.has(gn)) {
             return;
         }
-        // TODO
-        io::stdout().out("insert function ").out(gn->c_str).endln();
+
+        var func_info = dm->generic_functions.get(gd->generic_type.name.__ptr__())->copy();
+        func_info->name.clear();
+        func_info->name.append_str(gn);
+        func_info->generic_template.clear();
+        dm->functions.insert(gn, func_info);
+
+        var sym_info = symbol_info::new();
+        sym_info->kind = symbol_kind::func_kind;
+        sym_info->loc_file.append_str(func_info->location.file.__ptr__());
+        sym_info->is_public = func_info->is_public;
+        self->ctx->global_symbol()->insert(gn, sym_info);
+        sym_info->delete();
+        free(sym_info => i8*);
+
+        // TODO: do replace here
+
+        func_info->delete();
+        free(func_info => i8*);
     }
 
     func insert_into_symbol_table(self) -> u64 {
@@ -572,10 +607,10 @@ impl generic_visitor {
 
             var dm = self->ctx->get_domain(domain_file);
             if (dm->generic_structs.has(g_data->generic_type.name.__ptr__())) {
-                self->insert_struct(dm, generic_name.__ptr__());
+                self->insert_struct(dm, g_data, generic_name.__ptr__());
             }
             if (dm->generic_functions.has(g_data->generic_type.name.__ptr__())) {
-                self->insert_function(dm, generic_name.__ptr__());
+                self->insert_function(dm, g_data, generic_name.__ptr__());
             }
 
             generic_name.delete();
