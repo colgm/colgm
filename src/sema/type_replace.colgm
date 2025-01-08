@@ -563,7 +563,7 @@ impl generic_visitor {
         sym_info->delete();
         free(sym_info => i8*);
 
-        // TODO: do replace here
+        self->replace_struct_type(dm->structs.get(gn), gd);
 
         struct_info->delete();
         free(struct_info => i8*);
@@ -588,7 +588,7 @@ impl generic_visitor {
         sym_info->delete();
         free(sym_info => i8*);
 
-        // TODO: do replace here
+        self->replace_func_type(dm->functions.get(gn), gd);
 
         func_info->delete();
         free(func_info => i8*);
@@ -617,7 +617,63 @@ impl generic_visitor {
         }
         return insert_count;
     }
-    func replace_type(self, t: type*, g_data: generic_data*) {}
-    func replace_struct_type(self, s: colgm_struct*, g_data: generic_data*) {}
-    func replace_func_type(self, f: colgm_func*, g_data: generic_data*) {}
+
+    func replace_type(self, t: type*, g_data: generic_data*) {
+        if (g_data->types.has(t->name.__ptr__())) {
+            var real = g_data->types.get(t->name.__ptr__());
+            t->name.clear();
+            t->name.append_str(real->name.__ptr__());
+            t->loc_file.clear();
+            t->loc_file.append_str(real->loc_file.__ptr__());
+            t->generics.clear();
+            for (var i = real->generics.iter(); !i.is_end(); i = i.next()) {
+                t->generics.push(i.get()); // will do copy
+            }
+            // should add to t.pointer_depth, for example: func foo(a: T*) {}
+            // we should replace T with bar, expected result is: bar*
+            // if we do not add pointer_depth, the result will be bar
+            t->pointer_depth += real->pointer_depth;
+        }
+        if (t->generics.size == 0) {
+            return;
+        }
+    }
+
+    func replace_struct_type(self, s: colgm_struct*, g_data: generic_data*) {
+        for (var i = s->fields.iter(); !i.is_end(); i = i.next()) {
+            var field = i.value();
+            self->replace_type(field->sym_type.__ptr__(), g_data);
+        }
+        for (var i = s->ordered_fields.iter(); !i.is_end(); i = i.next()) {
+            var field = i.get();
+            self->replace_type(field->sym_type.__ptr__(), g_data);
+        }
+        for (var i = s->static_methods.iter(); !i.is_end(); i = i.next()) {
+            var method = i.value();
+            self->replace_func_type(method, g_data);
+        }
+        for (var i = s->methods.iter(); !i.is_end(); i = i.next()) {
+            var method = i.value();
+            self->replace_func_type(method, g_data);
+        }
+
+        // TODO: replace type in ast and insert to root
+    }
+
+    func replace_func_type(self, f: colgm_func*, g_data: generic_data*) {
+        self->replace_type(f->return_type.__ptr__(), g_data);
+        for (var i = f->param_type.iter(); !i.is_end(); i = i.next()) {
+            var param_type = i.get();
+            self->replace_type(param_type, g_data);
+        }
+        for (var i = f->unordered_params.iter(); !i.is_end(); i = i.next()) {
+            var param_type = i.value();
+            self->replace_type(param_type, g_data);
+        }
+
+        // TODO: replace type in ast and insert to root
+        if (f->generic_func_decl != nil) {
+            ;
+        }
+    }
 }
