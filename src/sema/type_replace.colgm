@@ -56,6 +56,285 @@ pub struct type_replace_pass {
     g_data: generic_data*
 }
 
+impl type_replace_pass {
+    pub func replace_func(self, n: ast_func_decl*) {
+        self->visit_func_decl(n);
+    }
+
+    pub func replace_impl(self, n: ast_impl*) {
+        self->visit_impl(n);
+    }
+
+    pub func replace_struct(self, n: ast_struct_decl*) {
+        self->visit_struct_decl(n);
+    }
+}
+
+impl type_replace_pass {
+    func visit_ast(self, n: ast*) {
+        match(n->kind) {
+            ast_kind::ast_unary_operator =>
+                self->visit_unary_operator(n => ast_unary_operator*);
+            ast_kind::ast_binary_operator =>
+                self->visit_binary_operator(n => ast_binary_operator*);
+            ast_kind::ast_type_convert =>
+                self->visit_type_convert(n => ast_type_convert*);
+            ast_kind::ast_array_literal =>
+                self->visit_array_literal(n => ast_array_literal*);
+            ast_kind::ast_call_index =>
+                self->visit_call_index(n => ast_call_index*);
+            ast_kind::ast_call_func_args =>
+                self->visit_call_func_args(n => ast_call_func_args*);
+            ast_kind::ast_init_pair =>
+                self->visit_init_pair(n => ast_init_pair*);
+            ast_kind::ast_initializer =>
+                self->visit_initializer(n => ast_initializer*);
+            ast_kind::ast_call_id =>
+                self->visit_call_id(n => ast_call_id*);
+            ast_kind::ast_call => self->visit_call(n => ast_call*);
+            ast_kind::ast_assignment =>
+                self->visit_assignment(n => ast_assignment*);
+            ast_kind::ast_cond_compile =>
+                self->visit_cond_compile(n => ast_cond_compile*);
+            ast_kind::ast_type_def =>
+                self->visit_type_def(n => ast_type_def*);
+            ast_kind::ast_generic_type_list =>
+                self->visit_generic_type_list(n => ast_generic_type_list*);
+            ast_kind::ast_struct_field =>
+                self->visit_struct_field(n => ast_struct_field*);
+            ast_kind::ast_struct_decl =>
+                self->visit_struct_decl(n => ast_struct_decl*);
+            ast_kind::ast_param =>
+                self->visit_param(n => ast_param*);
+            ast_kind::ast_param_list =>
+                self->visit_param_list(n => ast_param_list*);
+            ast_kind::ast_func_decl => 
+                self->visit_func_decl(n => ast_func_decl*);
+            ast_kind::ast_impl =>
+                self->visit_impl(n => ast_impl*);
+            ast_kind::ast_definition =>
+                self->visit_definition(n => ast_definition*);
+            ast_kind::ast_cond_stmt =>
+                self->visit_cond_stmt(n => ast_cond_stmt*);
+            ast_kind::ast_if_stmt =>
+                self->visit_if_stmt(n => ast_if_stmt*);
+            ast_kind::ast_match_case =>
+                self->visit_match_case(n => ast_match_case*);
+            ast_kind::ast_match_stmt =>
+                self->visit_match_stmt(n => ast_match_stmt*);
+            ast_kind::ast_while_stmt =>
+                self->visit_while_stmt(n => ast_while_stmt*);
+            ast_kind::ast_for_stmt =>
+                self->visit_for_stmt(n => ast_for_stmt*);
+            ast_kind::ast_in_stmt_expr =>
+                self->visit_in_stmt_expr(n => ast_in_stmt_expr*);
+            ast_kind::ast_ret_stmt =>
+                self->visit_ret_stmt(n => ast_ret_stmt*);
+            ast_kind::ast_code_block =>
+                self->visit_code_block(n => ast_code_block*);
+            _ => {}
+        }
+    }
+
+    func visit_struct_decl(self, n: ast_struct_decl*) {
+        for (var i = n->fields.iter(); !i.is_end(); i = i.next()) {
+            var f = i.get().unwrap();
+            if (!f->is(ast_kind::ast_struct_field)) {
+                continue;
+            }
+            self->visit_struct_field(f => ast_struct_field*);
+        }
+    }
+
+    func visit_func_decl(self, n: ast_func_decl*) {
+        self->visit_param_list(n->params);
+        if (n->return_type != nil) {
+            self->visit_type_def(n->return_type);
+        }
+        if (n->body != nil) {
+            self->visit_code_block(n->body);
+        }
+    }
+
+    func visit_impl(self, n: ast_impl*) {
+        for (var i = n->methods.iter(); !i.is_end(); i = i.next()) {
+            var f = i.get().unwrap();
+            if (!f->is(ast_kind::ast_func_decl)) {
+                continue;
+            }
+            self->visit_func_decl(f => ast_func_decl*);
+        }
+    }
+
+    func visit_unary_operator(self, n: ast_unary_operator*) {
+        self->visit_ast(n->value);
+    }
+
+    func visit_binary_operator(self, n: ast_binary_operator*) {
+        self->visit_ast(n->left);
+        self->visit_ast(n->right);
+    }
+
+    func visit_type_convert(self, n: ast_type_convert*) {
+        self->visit_type_def(n->to);
+    }
+
+    func visit_array_literal(self, n: ast_array_literal*) {
+        if (n->type != nil) {
+            self->visit_type_def(n->type);
+        }
+    }
+
+    func visit_call_index(self, n: ast_call_index*) {
+        self->visit_ast(n->index);
+    }
+
+    func visit_call_func_args(self, n: ast_call_func_args*) {
+        for (var i = n->args.iter(); !i.is_end(); i = i.next()) {
+            self->visit_ast(i.get().unwrap());
+        }
+    }
+
+    func visit_init_pair(self, n: ast_init_pair*) {
+        self->visit_ast(n->value);
+    }
+
+    func visit_initializer(self, n: ast_initializer*) {
+        for (var i = n->pairs.iter(); !i.is_end(); i = i.next()) {
+            self->visit_ast(i.get().unwrap());
+        }
+    }
+
+    func visit_call_id(self, n: ast_call_id*) {
+        if (n->generic_types == nil) {
+            return;
+        }
+        self->visit_generic_type_list(n->generic_types);
+        // TODO: do replace
+    }
+
+    func visit_call(self, n: ast_call*) {
+        self->visit_call_id(n->head);
+        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+            self->visit_ast(i.get().unwrap());
+        }
+    }
+
+    func visit_assignment(self, n: ast_assignment*) {
+        self->visit_call(n->left);
+        self->visit_ast(n->right);
+    }
+
+    func visit_cond_compile(self, n: ast_cond_compile*) {
+        self->visit_ast(n->enabled_decl);
+    }
+
+    func visit_type_def(self, n: ast_type_def*) {
+        if (n->generic_types != nil) {
+            self->visit_generic_type_list(n->generic_types);
+        }
+        // TODO: do replace
+    }
+
+    func visit_generic_type_list(self, n: ast_generic_type_list*) {
+        for (var i = n->types.iter(); !i.is_end(); i = i.next()) {
+            self->visit_ast(i.get().unwrap());
+        }
+    }
+
+    func visit_struct_field(self, n: ast_struct_field*) {
+        self->visit_type_def(n->type);
+    }
+
+    func visit_param(self, n: ast_param*) {
+        if (n->type != nil) {
+            self->visit_type_def(n->type);
+        }
+    }
+
+    func visit_param_list(self, n: ast_param_list*) {
+        for (var i = n->params.iter(); !i.is_end(); i = i.next()) {
+            self->visit_ast(i.get().unwrap());
+        }
+    }
+
+    func visit_definition(self, n: ast_definition*) {
+        if (n->type != nil) {
+            self->visit_type_def(n->type);
+        }
+        self->visit_ast(n->value);
+    }
+
+    func visit_cond_stmt(self, n: ast_cond_stmt*) {
+        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+            self->visit_ast(i.get().unwrap());
+        }
+    }
+
+    func visit_if_stmt(self, n: ast_if_stmt*) {
+        if (n->condition != nil) {
+            self->visit_ast(n->condition);
+        }
+        if (n->body != nil) {
+            self->visit_code_block(n->body);
+        }
+    }
+
+    func visit_match_case(self, n: ast_match_case*) {
+        self->visit_call(n->pattern);
+        if (n->body != nil) {
+            self->visit_code_block(n->body);
+        }
+    }
+
+    func visit_match_stmt(self, n: ast_match_stmt*) {
+        self->visit_ast(n->value);
+        for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
+            self->visit_ast(i.get().unwrap());
+        }
+    }
+
+    func visit_while_stmt(self, n: ast_while_stmt*) {
+        if (n->condition != nil) {
+            self->visit_ast(n->condition);
+        }
+        if (n->body != nil) {
+            self->visit_code_block(n->body);
+        }
+    }
+
+    func visit_for_stmt(self, n: ast_for_stmt*) {
+        if (n->init != nil) {
+            self->visit_definition(n->init);
+        }
+        if (n->condition != nil) {
+            self->visit_ast(n->condition);
+        }
+        if (n->update != nil) {
+            self->visit_ast(n->update);
+        }
+        if (n->body != nil) {
+            self->visit_code_block(n->body);
+        }
+    }
+
+    func visit_in_stmt_expr(self, n: ast_in_stmt_expr*) {
+        self->visit_ast(n->value);
+    }
+
+    func visit_ret_stmt(self, n: ast_ret_stmt*) {
+        if (n->value != nil) {
+            self->visit_ast(n->value);
+        }
+    }
+
+    func visit_code_block(self, n: ast_code_block*) {
+        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+            self->visit_ast(i.get().unwrap());
+        }
+    }
+}
+
 pub struct generic_visitor {
     err: report*,
     pkg: package*,
@@ -194,6 +473,11 @@ impl generic_visitor {
         var g_data = generic_data::instance();
         g_data.generic_type.name.append_str(type_name);
         g_data.generic_type.loc_file.append_str(sym->loc_file.__ptr__());
+        if (self->pkg->has_file(sym->loc_file.__ptr__())) {
+            g_data.generic_type.loc_module.append_str(
+                self->pkg->get_module_name(sym->loc_file.__ptr__())
+            );
+        }
         for (var i = type_list->iter(); !i.is_end(); i = i.next()) {
             var r_type = self->tr.resolve(i.get().unwrap() => ast_type_def*);
             g_data.generic_type.generics.push(r_type.__ptr__());
@@ -625,6 +909,8 @@ impl generic_visitor {
             t->name.append_str(real->name.__ptr__());
             t->loc_file.clear();
             t->loc_file.append_str(real->loc_file.__ptr__());
+            t->loc_module.clear();
+            t->loc_module.append_str(real->loc_module.__ptr__());
             t->generics.clear();
             for (var i = real->generics.iter(); !i.is_end(); i = i.next()) {
                 t->generics.push(i.get()); // will do copy
@@ -636,6 +922,9 @@ impl generic_visitor {
         }
         if (t->generics.size == 0) {
             return;
+        }
+        for (var i = t->generics.iter(); !i.is_end(); i = i.next()) {
+            self->replace_type(i.get(), g_data);
         }
     }
 
@@ -657,7 +946,21 @@ impl generic_visitor {
             self->replace_func_type(method, g_data);
         }
 
-        // TODO: replace type in ast and insert to root
+        var trp = type_replace_pass {
+            err: self->err,
+            ctx: self->ctx,
+            g_data: g_data
+        };
+        if (s->generic_struct_decl != nil) {
+            trp.replace_struct(s->generic_struct_decl);
+            // TODO: add to root
+            s->generic_struct_decl = nil;
+        }
+        for (var i = s->generic_struct_impl.iter(); !i.is_end(); i = i.next()) {
+            trp.replace_impl(i.get().unwrap());
+            // TODO: add to root
+        }
+        s->generic_struct_impl.clear();
     }
 
     func replace_func_type(self, f: colgm_func*, g_data: generic_data*) {
@@ -671,9 +974,15 @@ impl generic_visitor {
             self->replace_type(param_type, g_data);
         }
 
-        // TODO: replace type in ast and insert to root
         if (f->generic_func_decl != nil) {
-            ;
+            var trp = type_replace_pass {
+                err: self->err,
+                ctx: self->ctx,
+                g_data: g_data
+            };
+            trp.replace_func(f->generic_func_decl);
+            // TODO: add to root
+            f->generic_func_decl = nil;
         }
     }
 }

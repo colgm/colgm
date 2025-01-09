@@ -315,6 +315,7 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
         // but now it should be replaced with "foo<int, bool>"
         s.generic_struct_decl->set_name(s.name);
         s.generic_struct_decl->clear_generic_types();
+        s.generic_struct_decl = nullptr;
     }
     for(auto i : s.generic_struct_impl) {
         trp.visit_impl(i);
