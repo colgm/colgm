@@ -6,6 +6,7 @@ use std::io::{ io };
 
 use err::span::{ span };
 use ast::ast::{ ast, ast_func_decl };
+use package::{ package };
 use sema::type::{ type };
 
 pub struct colgm_func {
@@ -76,7 +77,7 @@ impl colgm_func {
 }
 
 impl colgm_func {
-    pub func dump(self, out: io, indent: i8*) {
+    pub func dump(self, out: io, pkg: package*, indent: i8*) {
         out.out(indent).out("  ");
         if (self->is_extern) {
             out.green().out("extern ").reset();
@@ -103,13 +104,13 @@ impl colgm_func {
         for (var i: u64 = 0; i < self->param_name.size; i += 1) {
             var n = self->param_name.get(i);
             out.out(n->c_str).out(": ");
-            self->param_type.get(i)->dump(out);
+            self->param_type.get(i)->dump(out, pkg);
             if (i != self->param_name.size - 1) {
                 out.out(", ");
             }
         }
         out.out(") -> ");
-        self->return_type.dump(out);
+        self->return_type.dump(out, pkg);
         out.out("\n");
     }
 }

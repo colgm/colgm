@@ -473,11 +473,6 @@ impl generic_visitor {
         var g_data = generic_data::instance();
         g_data.generic_type.name.append_str(type_name);
         g_data.generic_type.loc_file.append_str(sym->loc_file.__ptr__());
-        if (self->pkg->has_file(sym->loc_file.__ptr__())) {
-            g_data.generic_type.loc_module.append_str(
-                self->pkg->get_module_name(sym->loc_file.__ptr__())
-            );
-        }
         for (var i = type_list->iter(); !i.is_end(); i = i.next()) {
             var r_type = self->tr.resolve(i.get().unwrap() => ast_type_def*);
             g_data.generic_type.generics.push(r_type.__ptr__());
@@ -882,7 +877,7 @@ impl generic_visitor {
         var insert_count: u64 = 0;
         for (var i = self->generic_type_map.iter(); !i.is_end(); i = i.next()) {
             var g_data = i.value();
-            var generic_name = g_data->generic_type.full_path_name(self->pkg, true);
+            var generic_name = g_data->generic_type.generic_name(self->pkg);
             
             var domain_file = g_data->generic_type.loc_file.__ptr__();
             if (!self->ctx->has_domain(domain_file)) {
@@ -909,8 +904,6 @@ impl generic_visitor {
             t->name.append_str(real->name.__ptr__());
             t->loc_file.clear();
             t->loc_file.append_str(real->loc_file.__ptr__());
-            t->loc_module.clear();
-            t->loc_module.append_str(real->loc_module.__ptr__());
             t->generics.clear();
             for (var i = real->generics.iter(); !i.is_end(); i = i.next()) {
                 t->generics.push(i.get()); // will do copy

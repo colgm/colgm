@@ -38,7 +38,6 @@ impl method_info {
 pub struct type {
     name: str,
     loc_file: str,
-    loc_module: str,
     pointer_depth: i64,
     is_global_sym: bool,          // global symbol
     is_global_func: bool,         // global function
@@ -56,7 +55,6 @@ impl type {
     pub func delete(self) {
         self->name.delete();
         self->loc_file.delete();
-        self->loc_module.delete();
         self->stm_info.delete();
         self->prm_info.delete();
         self->generics.delete();
@@ -66,7 +64,6 @@ impl type {
         var res = type::__alloc__();
         res->name = self->name.copy_instance();
         res->loc_file = self->loc_file.copy_instance();
-        res->loc_module = self->loc_module.copy_instance();
         res->pointer_depth = self->pointer_depth;
         res->is_global_sym = self->is_global_sym;
         res->is_global_func = self->is_global_func;
@@ -83,7 +80,6 @@ impl type {
         return type {
             name: self->name.copy_instance(),
             loc_file: self->loc_file.copy_instance(),
-            loc_module: self->loc_module.copy_instance(),
             pointer_depth: self->pointer_depth,
             is_global_sym: self->is_global_sym,
             is_global_func: self->is_global_func,
@@ -112,7 +108,6 @@ impl type {
     func default_init(self) {
         self->name = str::from("");
         self->loc_file = str::from("");
-        self->loc_module = str::from("");
         self->pointer_depth = 0;
         self->is_global_sym = false;
         self->is_global_func = false;
@@ -144,17 +139,18 @@ impl type {
 }
 
 impl type {
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io, pkg: package*) {
         out.light_orange();
-        if (self->loc_module.size > 0) {
-            out.out(self->loc_module.c_str).out("::");
+        if (pkg->has_file(self->loc_file.__ptr__())) {
+            out.out(pkg->get_module_name(self->loc_file.__ptr__())->c_str);
+            out.out("::");
         }
         out.out(self->name.c_str).reset();
         if (self->generics.size > 0) {
             out.out("<");
             for (var i: u64 = 0; i < self->generics.size; i += 1) {
                 var t = self->generics.get(i);
-                t->dump(out);
+                t->dump(out, pkg);
                 if (i != self->generics.size - 1) {
                     out.out(",");
                 }
@@ -168,10 +164,29 @@ impl type {
         out.reset();
     }
 
+    pub func generic_name(self, pkg: package*) -> str {
+        var res = str::from(self->name.c_str);
+        if (self->generics.size > 0) {
+            res.append_char('<');
+            for (var i: u64 = 0; i < self->generics.size; i += 1) {
+                var t = self->generics.get(i);
+                var t_fpn = t->full_path_name(pkg, true);
+                res.append_i8_vec(t_fpn.c_str);
+                t_fpn.delete();
+
+                if (i != self->generics.size - 1) {
+                    res.append_char(',');
+                }
+            }
+            res.append_char('>');
+        }
+        return res;
+    }
+
     pub func full_path_name(self, pkg: package*, with_pointer: bool) -> str {
         var res = str::instance();
-        if (self->loc_module.size > 0) {
-            res.append_str(self->loc_module.__ptr__());
+        if (pkg->has_file(self->loc_file.__ptr__())) {
+            res.append_str(pkg->get_module_name(self->loc_file.__ptr__()));
             res.append_i8_vec("::");
         }
         res.append_str(self->name.__ptr__());
@@ -179,7 +194,7 @@ impl type {
             res.append_char('<');
             for (var i: u64 = 0; i < self->generics.size; i += 1) {
                 var t = self->generics.get(i);
-                var t_fpn = t->full_path_name(pkg, with_pointer);
+                var t_fpn = t->full_path_name(pkg, true);
                 res.append_i8_vec(t_fpn.c_str);
                 t_fpn.delete();
 
@@ -191,7 +206,7 @@ impl type {
         }
         if (with_pointer) {
             for (var i = 0; i < self->pointer_depth; i += 1) {
-            res.append_char('*');
+                res.append_char('*');
             }
         }
         return res;

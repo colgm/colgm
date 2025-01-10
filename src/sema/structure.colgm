@@ -8,6 +8,7 @@ use std::io::{ io };
 use err::span::{ span };
 use err::panic::{ panic };
 use ast::ast::{ ast, ast_struct_decl, ast_impl };
+use package::{ package };
 
 use sema::type::{ symbol };
 use sema::function::{ colgm_func };
@@ -99,7 +100,7 @@ impl colgm_struct {
 }
 
 impl colgm_struct {
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io, pkg: package*) {
         out.out("  ");
         if (self->is_extern) {
             out.green().out("extern ").reset();
@@ -132,14 +133,14 @@ impl colgm_struct {
         for (var i: u64 = 0; i < self->ordered_fields.size; i += 1) {
             var field = self->ordered_fields.get(i);
             out.out("    ").out(field->name.c_str).out(": ");
-            field->sym_type.dump(out);
+            field->sym_type.dump(out, pkg);
             out.out("\n");
         }
         for (var i = self->methods.iter(); !i.is_end(); i = i.next()) {
-            i.value()->dump(out, "  ");
+            i.value()->dump(out, pkg, "  ");
         }
         for (var i = self->static_methods.iter(); !i.is_end(); i = i.next()) {
-            i.value()->dump(out, "  ");
+            i.value()->dump(out, pkg, "  ");
         }
         out.out("  }\n");
     }
