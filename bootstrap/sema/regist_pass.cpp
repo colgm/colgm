@@ -23,12 +23,12 @@ ast::type_def* type_replace_pass::generate_generic_type(const type& t,
     if (t.is_immutable) {
         new_def->set_constant();
     }
-    for(i64 i = 0; i < t.pointer_depth; ++i) {
+    for (i64 i = 0; i < t.pointer_depth; ++i) {
         new_def->add_pointer_level();
     }
     if (!t.generics.empty()) {
         new_def->set_generic_types(new generic_type_list(loc));
-        for(const auto& i : t.generics) {
+        for (const auto& i : t.generics) {
             new_def->get_generic_types()->add_type(
                 generate_generic_type(i, loc)
             );
@@ -60,7 +60,7 @@ bool type_replace_pass::visit_type_def(type_def* node) {
         if (!select_type.generics.empty() &&
             !node->get_generic_types()) {
             node->set_generic_types(new generic_type_list(node->get_location()));
-            for(const auto& i : select_type.generics) {
+            for (const auto& i : select_type.generics) {
                 node->get_generic_types()->add_type(
                     generate_generic_type(i, node->get_location())
                 );

@@ -1,4 +1,6 @@
 use err::report::{ report };
+use err::span::{ span };
+
 use ast::ast::*;
 use package::{ package };
 
@@ -7,6 +9,7 @@ use std::map::{ hashmap };
 use std::io::{ io };
 use std::vec::{ vec };
 use std::libc::{ free };
+use std::ptr::{ ptr };
 
 use sema::type::{ type };
 use sema::context::{ sema_context };
@@ -53,6 +56,7 @@ impl generic_data {
 pub struct type_replace_pass {
     err: report*,
     ctx: sema_context*,
+    pkg: package*,
     g_data: generic_data*
 }
 
@@ -67,6 +71,26 @@ impl type_replace_pass {
 
     pub func replace_struct(self, n: ast_struct_decl*) {
         self->visit_struct_decl(n);
+    }
+}
+
+impl type_replace_pass {
+    func generate_generic_type(self, t: type*, loc: span*) -> ast_type_def* {
+        var new_def = ast_type_def::new(loc->copy());
+        new_def->name = ast_identifier::new(loc->copy(), t->name.__ptr__());
+        new_def->name->base.redirect_location.append_str(t->loc_file.__ptr__());
+        new_def->base.redirect_location.append_str(t->loc_file.__ptr__());
+        new_def->is_const = t->is_immutable;
+        new_def->pointer_depth = t->pointer_depth;
+        if (t->generics.size > 0) {
+            new_def->generic_types = ast_generic_type_list::new(loc->copy());
+            for (var i = t->generics.iter(); !i.is_end(); i = i.next()) {
+                new_def->generic_types->types.push(ptr<ast>::wrap(
+                    self->generate_generic_type(i.get(), loc) => ast*
+                ));
+            }
+        }
+        return new_def;
     }
 }
 
@@ -206,11 +230,57 @@ impl type_replace_pass {
     }
 
     func visit_call_id(self, n: ast_call_id*) {
-        if (n->generic_types == nil) {
-            return;
+        var name = n->id->content.__ptr__();
+        if (self->g_data->types.has(name)) {
+            var select_type = self->g_data->types.get(name);
+
+            if (select_type->pointer_depth > 0) {
+                var st_full_name = select_type->full_path_name(self->pkg, true);
+                var info = str::from("replace generic type with pointer type \"");
+                info.append_str(st_full_name.__ptr__());
+                info.append_i8_vec("\", which is not allowed here");
+                self->err->error(n->base.location, info.c_str);
+                
+                st_full_name.delete();
+                info.delete();
+            }
+
+            // cannot replace T in T<K> with another generic V<X>
+            // because V<X><K> is not a valid type
+            if (select_type->generics.size > 0 &&
+                n->generic_types != nil) {
+                var info = str::from("try to replace generic \"");
+                var st_full_name = select_type->full_path_name(self->pkg, true);
+                info.append_str(name);
+                info.append_i8_vec("\" with \"");
+                info.append_str(st_full_name.__ptr__());
+                info.append_i8_vec("\", which is already a generic type");
+                self->err->error(n->base.location, info.c_str);
+                info.delete();
+                st_full_name.delete();
+            }
+
+            n->id->content.clear();
+            n->id->content.append_str(select_type->name.__ptr__());
+            n->id->base.redirect_location.append_str(select_type->loc_file.__ptr__());
+            n->base.redirect_location.append_str(select_type->loc_file.__ptr__());
+
+            if (select_type->generics.size > 0 &&
+                n->generic_types == nil) {
+                n->generic_types = ast_generic_type_list::new(n->base.location->copy());
+                for (var i = select_type->generics.iter(); !i.is_end(); i = i.next()) {
+                    n->generic_types->types.push(ptr<ast>::wrap(
+                        self->generate_generic_type(i.get(), n->base.location) => ast*
+                    ));
+                }
+            }
         }
-        self->visit_generic_type_list(n->generic_types);
-        // TODO: do replace
+
+        if (n->generic_types != nil) {
+            self->visit_generic_type_list(n->generic_types);
+        }
+
+        io::stdout().out("[type_replace] call_id @ 0x").out_hex(n => i64).endln();
     }
 
     func visit_call(self, n: ast_call*) {
@@ -230,10 +300,48 @@ impl type_replace_pass {
     }
 
     func visit_type_def(self, n: ast_type_def*) {
+        var name = n->name->content.__ptr__();
+        if (self->g_data->types.has(name)) {
+            var select_type = self->g_data->types.get(name);
+
+            // cannot replace T in T<K> with another generic V<X>
+            // because V<X><K> is not a valid type
+            if (select_type->generics.size > 0 &&
+                n->generic_types != nil) {
+                var info = str::from("try to replace generic \"");
+                var st_full_name = select_type->full_path_name(self->pkg, true);
+                info.append_str(name);
+                info.append_i8_vec("\" with \"");
+                info.append_str(st_full_name.__ptr__());
+                info.append_i8_vec("\", which is already a generic type");
+                self->err->error(n->base.location, info.c_str);
+                info.delete();
+                st_full_name.delete();
+            }
+
+            n->name->content.clear();
+            n->name->content.append_str(select_type->name.__ptr__());
+            n->name->base.redirect_location.append_str(select_type->loc_file.__ptr__());
+            n->base.redirect_location.append_str(select_type->loc_file.__ptr__());
+
+            n->pointer_depth += select_type->pointer_depth;
+
+            if (select_type->generics.size > 0 &&
+                n->generic_types == nil) {
+                n->generic_types = ast_generic_type_list::new(n->base.location->copy());
+                for (var i = select_type->generics.iter(); !i.is_end(); i = i.next()) {
+                    n->generic_types->types.push(ptr<ast>::wrap(
+                        self->generate_generic_type(i.get(), n->base.location) => ast*
+                    ));
+                }
+            }
+        }
+
         if (n->generic_types != nil) {
             self->visit_generic_type_list(n->generic_types);
         }
-        // TODO: do replace
+
+        io::stdout().out("[type_replace] type_def @ 0x").out_hex(n => i64).endln();
     }
 
     func visit_generic_type_list(self, n: ast_generic_type_list*) {
@@ -885,10 +993,14 @@ impl generic_visitor {
             }
 
             var dm = self->ctx->get_domain(domain_file);
-            if (dm->generic_structs.has(g_data->generic_type.name.__ptr__())) {
+            if (dm->generic_structs.has(g_data->generic_type.name.__ptr__()) &&
+                !dm->structs.has(generic_name.__ptr__())) {
+                insert_count += 1;
                 self->insert_struct(dm, g_data, generic_name.__ptr__());
             }
-            if (dm->generic_functions.has(g_data->generic_type.name.__ptr__())) {
+            if (dm->generic_functions.has(g_data->generic_type.name.__ptr__()) &&
+                !dm->functions.has(generic_name.__ptr__())) {
+                insert_count += 1;
                 self->insert_function(dm, g_data, generic_name.__ptr__());
             }
 
@@ -942,16 +1054,30 @@ impl generic_visitor {
         var trp = type_replace_pass {
             err: self->err,
             ctx: self->ctx,
+            pkg: self->pkg,
             g_data: g_data
         };
         if (s->generic_struct_decl != nil) {
             trp.replace_struct(s->generic_struct_decl);
-            // TODO: add to root
+            self->root->decls.push(ptr<ast>::wrap(s->generic_struct_decl => ast*));
+            // s.name is generated with generic
+            // for example original name is "foo",
+            // but now it should be replaced with "foo<int, bool>"
+            s->generic_struct_decl->name.clear();
+            s->generic_struct_decl->name.append_str(s->name.__ptr__());
+            s->generic_struct_decl->clear_generic_types();
             s->generic_struct_decl = nil;
         }
         for (var i = s->generic_struct_impl.iter(); !i.is_end(); i = i.next()) {
-            trp.replace_impl(i.get().unwrap());
-            // TODO: add to root
+            var i_n = i.get().unwrap();
+            trp.replace_impl(i_n);
+            self->root->decls.push(ptr<ast>::wrap(i_n => ast*));
+            // s.name is generated with generic
+            // for example original name is "foo",
+            // but now it should be replaced with "foo<int, bool>"
+            i_n->name.clear();
+            i_n->name.append_str(s->name.__ptr__());
+            i_n->clear_generic_types();
         }
         s->generic_struct_impl.clear();
     }
@@ -971,10 +1097,14 @@ impl generic_visitor {
             var trp = type_replace_pass {
                 err: self->err,
                 ctx: self->ctx,
+                pkg: self->pkg,
                 g_data: g_data
             };
             trp.replace_func(f->generic_func_decl);
-            // TODO: add to root
+            self->root->decls.push(ptr<ast>::wrap(f->generic_func_decl => ast*));
+            f->generic_func_decl->name.clear();
+            f->generic_func_decl->name.append_str(f->name.__ptr__());
+            f->generic_func_decl->clear_generic_types();
             f->generic_func_decl = nil;
         }
     }
