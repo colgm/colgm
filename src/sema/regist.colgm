@@ -642,6 +642,9 @@ impl regist_pass {
         sym_info->loc_file.append_str(node->base.location->file.__ptr__());
         sym_info->is_public = true; // true for selves' domain
         self->ctx->global_symbol()->insert(name, sym_info);
+        if (node->generic_types != nil) {
+            self->ctx->generic_symbol()->insert(name, sym_info);
+        }
         sym_info->delete();
         free(sym_info => i8*);
 
@@ -781,10 +784,9 @@ impl regist_pass {
         sym_info->kind = symbol_kind::struct_kind;
         sym_info->loc_file.append_str(node->base.location->file.__ptr__());
         sym_info->is_public = true; // true for selves's domain
+        self->ctx->global_symbol()->insert(name, sym_info);
         if (node->generic_types != nil) {
             self->ctx->generic_symbol()->insert(name, sym_info);
-        } else {
-            self->ctx->global_symbol()->insert(name, sym_info);
         }
         sym_info->delete();
         free(sym_info => i8*);
@@ -986,6 +988,7 @@ impl regist_pass {
         var struct_info: colgm_struct* = nil;
         if (node->generic_types != nil) {
             struct_info = dm->generic_structs.get(name);
+            struct_info->generic_struct_impl.push(ptr<ast_impl>::wrap(node->copy()));
         } else {
             struct_info = dm->structs.get(name);
         }
