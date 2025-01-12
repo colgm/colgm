@@ -200,6 +200,7 @@ impl type_replace_pass {
     }
 
     func visit_type_convert(self, n: ast_type_convert*) {
+        self->visit_ast(n->from);
         self->visit_type_def(n->to);
     }
 
@@ -275,11 +276,11 @@ impl type_replace_pass {
                 }
             }
 
-            io::stdout().out("[type_replace] call_id @ 0x").out_hex(n => i64);
-            var st_full_name = select_type->generic_name(self->pkg);
-            io::stdout().out(" replace with ").out(st_full_name.c_str);
-            n->base.location->dump(io::stdout());
-            st_full_name.delete();
+            // io::stdout().out("[type_replace] call_id");
+            // var st_full_name = select_type->generic_name(self->pkg);
+            // io::stdout().out(" replace with ").out(st_full_name.c_str).out(" ");
+            // n->base.location->dump(io::stdout());
+            // st_full_name.delete();
         }
 
         if (n->generic_types != nil) {
@@ -340,11 +341,11 @@ impl type_replace_pass {
                 }
             }
 
-            io::stdout().out("[type_replace] type_def @ 0x").out_hex(n => i64);
-            var st_full_name = select_type->generic_name(self->pkg);
-            io::stdout().out(" replace with ").out(st_full_name.c_str);
-            n->base.location->dump(io::stdout());
-            st_full_name.delete();
+            // io::stdout().out("[type_replace] type_def");
+            // var st_full_name = select_type->generic_name(self->pkg);
+            // io::stdout().out(" replace with ").out(st_full_name.c_str).out(" ");
+            // n->base.location->dump(io::stdout());
+            // st_full_name.delete();
         }
 
         if (n->generic_types != nil) {
@@ -479,11 +480,18 @@ impl generic_visitor {
     pub func scan_and_insert(self, n: root*) {
         self->root = n;
 
+        var scan_count = 0;
         self->generic_type_map.clear();
         self->visit_root(n);
         while (self->insert_into_symbol_table() != 0) {
+            scan_count += 1;
             self->generic_type_map.clear();
             self->visit_root(n);
+        }
+        if (scan_count > 0) {
+            io::stdout().out("[generic_visitor] generate generics of ")
+                        .out(n->base.location->file.c_str).out(" after ")
+                        .out_i64(scan_count).out(" scan(s)").endln();
         }
     }
 }
@@ -741,6 +749,7 @@ impl generic_visitor {
     }
 
     func visit_type_convert(self, n: ast_type_convert*) {
+        self->visit_ast(n->from);
         self->visit_type_def(n->to);
     }
 
