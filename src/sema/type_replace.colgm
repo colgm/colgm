@@ -2,6 +2,7 @@ use err::report::{ report };
 use err::span::{ span };
 
 use ast::ast::*;
+use util::cli::{ cli_option };
 use package::{ package };
 
 use std::str::{ str };
@@ -57,6 +58,7 @@ pub struct type_replace_pass {
     err: report*,
     ctx: sema_context*,
     pkg: package*,
+    co: cli_option*,
     g_data: generic_data*
 }
 
@@ -276,11 +278,13 @@ impl type_replace_pass {
                 }
             }
 
-            // io::stdout().out("[type_replace] call_id");
-            // var st_full_name = select_type->generic_name(self->pkg);
-            // io::stdout().out(" replace with ").out(st_full_name.c_str).out(" ");
-            // n->base.location->dump(io::stdout());
-            // st_full_name.delete();
+            if (self->co->OPTION_VIEW_PASS) {
+                io::stdout().out("[type_replace] call_id");
+                var st_full_name = select_type->generic_name(self->pkg);
+                io::stdout().out(" replace with ").out(st_full_name.c_str).out(" ");
+                n->base.location->dump(io::stdout());
+                st_full_name.delete();
+            }
         }
 
         if (n->generic_types != nil) {
@@ -341,11 +345,13 @@ impl type_replace_pass {
                 }
             }
 
-            // io::stdout().out("[type_replace] type_def");
-            // var st_full_name = select_type->generic_name(self->pkg);
-            // io::stdout().out(" replace with ").out(st_full_name.c_str).out(" ");
-            // n->base.location->dump(io::stdout());
-            // st_full_name.delete();
+            if (self->co->OPTION_VIEW_PASS) {
+                io::stdout().out("[type_replace] type_def");
+                var st_full_name = select_type->generic_name(self->pkg);
+                io::stdout().out(" replace with ").out(st_full_name.c_str).out(" ");
+                n->base.location->dump(io::stdout());
+                st_full_name.delete();
+            }
         }
 
         if (n->generic_types != nil) {
@@ -458,17 +464,22 @@ pub struct generic_visitor {
     ctx: sema_context*,
     root: root*,
     tr: type_resolve,
+    co: cli_option*,
     generic_type_map: hashmap<str, generic_data>
 }
 
 impl generic_visitor {
-    pub func instance(e: report*, c: sema_context*, p: package*) -> generic_visitor {
+    pub func instance(e: report*,
+                      c: sema_context*,
+                      p: package*,
+                      co: cli_option*) -> generic_visitor {
         return generic_visitor {
             err: e,
             pkg: p,
             ctx: c,
             root: nil,
             tr: type_resolve::instance(e, c, p),
+            co: co,
             generic_type_map: hashmap<str, generic_data>::instance()
         };
     }
@@ -488,10 +499,10 @@ impl generic_visitor {
             self->generic_type_map.clear();
             self->visit_root(n);
         }
-        if (scan_count > 0) {
+        if (scan_count > 0 && self->co->OPTION_VIEW_PASS) {
             io::stdout().out("[generic_visitor] generate generics of ")
-                        .out(n->base.location->file.c_str).out(" after ")
-                        .out_i64(scan_count).out(" scan(s)").endln();
+                        .white().out(n->base.location->file.c_str).reset()
+                        .out(" after ").out_i64(scan_count).out(" scan(s)").endln();
         }
     }
 }
@@ -1072,6 +1083,7 @@ impl generic_visitor {
             err: self->err,
             ctx: self->ctx,
             pkg: self->pkg,
+            co: self->co,
             g_data: g_data
         };
         if (s->generic_struct_decl != nil) {
@@ -1115,6 +1127,7 @@ impl generic_visitor {
                 err: self->err,
                 ctx: self->ctx,
                 pkg: self->pkg,
+                co: self->co,
                 g_data: g_data
             };
             trp.replace_func(f->generic_func_decl);
