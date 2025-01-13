@@ -10,6 +10,7 @@ use package::{ package };
 use ast::ast::*;
 
 use sema::context::{ sema_context };
+use sema::type_resolve::{ type_resolve };
 
 use util::cli::{ cli_option };
 
@@ -17,7 +18,10 @@ pub struct sema {
     err: report*,
     root: root*,
     ctx: sema_context*,
-    co: cli_option*
+    co: cli_option*,
+    tr: type_resolve,
+    in_loop_level: i64,
+    impl_struct_name: str
 }
 
 impl sema {
@@ -32,6 +36,9 @@ impl sema {
         res->err = err;
         res->ctx = ctx;
         res->co = co;
+        res->tr = type_resolve::instance(err, ctx, pkg);
+        res->in_loop_level = 0;
+        res->impl_struct_name = str::from("");
         return res;
     }
 
