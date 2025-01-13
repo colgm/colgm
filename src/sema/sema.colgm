@@ -46,7 +46,27 @@ impl sema {
 }
 
 impl sema {
-    pub func scan(self, root: root*) {
+    pub func analyse(self, root: root*) {
+        self->ctx->this_file.clear();
+        self->ctx->this_file.append_str(root->base.location->file.__ptr__());
         self->root = root;
+
+        self->resolve_function_block(root);
     }
+
+    func resolve_function_block(self, ast_root: root*) {
+        for (var i = ast_root->decls.iter(); !i.is_end(); i = i.next()) {
+            var node = i.get().unwrap();
+            if (node->is(ast_kind::ast_impl)) {
+                self->resolve_impl(node => ast_impl*);
+            }
+            if (node->is(ast_kind::ast_func_decl)) {
+                self->resolve_global_func(node => ast_func_decl*);
+            }
+        }
+    }
+
+    func resolve_impl(self, node: ast_impl*) {}
+
+    func resolve_global_func(self, node: ast_func_decl*) {}
 }
