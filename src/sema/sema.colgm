@@ -25,21 +25,19 @@ pub struct sema {
 }
 
 impl sema {
-    pub func new(err: report*,
-                 pkg: package*,
-                 ctx: sema_context*,
-                 co: cli_option*) -> sema* {
-        var res = sema::__alloc__();
-        if (res == nil) {
-            panic("sema::new: failed to allocate memory");
-        }
-        res->err = err;
-        res->ctx = ctx;
-        res->co = co;
-        res->tr = type_resolve::instance(err, ctx, pkg);
-        res->in_loop_level = 0;
-        res->impl_struct_name = str::from("");
-        return res;
+    pub func instance(err: report*,
+                      pkg: package*,
+                      ctx: sema_context*,
+                      co: cli_option*) -> sema {
+        return sema {
+            err: err,
+            root: nil,
+            ctx: ctx,
+            co: co,
+            tr: type_resolve::instance(err, ctx, pkg),
+            in_loop_level: 0,
+            impl_struct_name: str::from("")
+        };
     }
 
     pub func delete(self) {}
@@ -66,7 +64,47 @@ impl sema {
         }
     }
 
-    func resolve_impl(self, node: ast_impl*) {}
+    func resolve_impl(self, node: ast_impl*) {
+        // do not resolve generic impl
+        if (node->generic_types != nil) {
+            return;
+        }
 
-    func resolve_global_func(self, node: ast_func_decl*) {}
+        var loc_file = self->ctx->this_file.copy_instance();
+        if (self->ctx->global_symbol()->has(node->name.__ptr__())) {
+            loc_file.clear();
+            loc_file.append_str(
+                self->ctx->global_symbol()
+                         ->get(node->name.__ptr__())
+                         ->loc_file.__ptr__()
+            );
+        }
+
+        var dm = self->ctx->global->domain.get(loc_file.__ptr__());
+        if (!dm->structs.has(node->name.__ptr__())) {
+            var info = str::from("cannot implement \"");
+            info.append_str(node->name.__ptr__());
+            info.append_i8_vec("\", because it is not defined in the same file");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+    }
+
+    func resolve_global_func(self, node: ast_func_decl*) {
+        // do not resolve generic function
+        if (node->generic_types != nil) {
+            return;
+        }
+
+        var dm = self->ctx->global->domain.get(self->ctx->this_file.__ptr__());
+        if (!dm->functions.has(node->name.__ptr__())) {
+            var info = str::from("cannot find function \"");
+            info.append_str(node->name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+    }
 }

@@ -31,10 +31,10 @@ func compile(option: cli_option) {
     }
 
     var cc = frontend::instance(option.__ptr__());
-    var gt = global_symbol_table::new();
-    var ctx = sema_context::instance(gt);
-    var regpass = regist_pass::new(cc.err, cc.pkg, ctx.__ptr__(), cc.copt);
-    var semantic = sema::new(cc.err, cc.pkg, ctx.__ptr__(), cc.copt);
+    var gt = global_symbol_table::instance();
+    var ctx = sema_context::instance(gt.__ptr__());
+    var regpass = regist_pass::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt);
+    var semantic = sema::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt);
 
     cc.pkg->library_path.clear();
     cc.pkg->library_path.append_i8_vec(option.library_path);
@@ -66,33 +66,29 @@ func compile(option: cli_option) {
         cc.par->dump(io::stdout());
     }
 
-    regpass->run(cc.par->root);
+    regpass.run(cc.par->root);
     if (cc.err->error_count > 0) {
         cc.delete();
         return;
     }
 
-    semantic->analyse(cc.par->root);
+    semantic.analyse(cc.par->root);
     if (cc.err->error_count > 0) {
         cc.delete();
         var COLGM_REPORT = io::colgm_report();
-        semantic->ctx->dump(COLGM_REPORT, cc.pkg);
+        semantic.ctx->dump(COLGM_REPORT, cc.pkg);
         COLGM_REPORT.close();
         return;
     }
     if (option.OPTION_VIEW_SEMA) {
-        semantic->ctx->dump(io::stdout(), cc.pkg);
+        semantic.ctx->dump(io::stdout(), cc.pkg);
     }
 
     cc.delete();
-
-    gt->delete();
+    gt.delete();
     ctx.delete();
-    regpass->delete();
-    semantic->delete();
-    free(gt => i8*);
-    free(regpass => i8*);
-    free(semantic => i8*);
+    regpass.delete();
+    semantic.delete();
 }
 
 func main(argc: i32, argv: i8**) -> i32 {

@@ -41,23 +41,20 @@ pub struct regist_pass {
 }
 
 impl regist_pass {
-	pub func new(err: report*,
-                 pkg: package*,
-                 ctx: sema_context*,
-                 co: cli_option*) -> regist_pass* {
-		var res = regist_pass::__alloc__();
-        if (res == nil) {
-            panic("regist_pass::new: failed to allocate memory");
-        }
-        res->this_file = str::instance();
-        res->err = err;
-        res->pkg = pkg;
-        res->root = nil;
-        res->ctx = ctx;
-        res->co = co;
-        res->tr = type_resolve::instance(err, ctx, pkg);
-        res->gnv = generic_visitor::instance(err, ctx, pkg, co);
-        return res;
+	pub func instance(err: report*,
+                      pkg: package*,
+                      ctx: sema_context*,
+                      co: cli_option*) -> regist_pass {
+		return regist_pass {
+            this_file: str::instance(),
+            err: err,
+            pkg: pkg,
+            root: nil,
+            ctx: ctx,
+            co: co,
+            tr: type_resolve::instance(err, ctx, pkg),
+            gnv: generic_visitor::instance(err, ctx, pkg, co)
+        };
 	}
 
     pub func delete(self) {
@@ -216,8 +213,8 @@ impl regist_pass {
 
         var lex = lexer::new(self->err);
         var par = parser::new(self->err, lex, self->co);
-        var rp = regist_pass::new(self->err, self->pkg, self->ctx, self->co);
-        var semantic = sema::new(self->err, self->pkg, self->ctx, self->co);
+        var rp = regist_pass::instance(self->err, self->pkg, self->ctx, self->co);
+        var semantic = sema::instance(self->err, self->pkg, self->ctx, self->co);
 
         lex->scan(path->c_str);
         if (self->err->error_count > 0) {
@@ -229,24 +226,22 @@ impl regist_pass {
             return false;
         }
 
-        rp->run(par->root);
+        rp.run(par->root);
         if (self->err->error_count > 0) {
             return false;
         }
 
-        semantic->analyse(par->root);
+        semantic.analyse(par->root);
         if (self->err->error_count > 0) {
             return false;
         }
 
         lex->delete();
         par->delete();
-        rp->delete();
-        semantic->delete();
+        rp.delete();
+        semantic.delete();
         free(lex => i8*);
         free(par => i8*);
-        free(rp => i8*);
-        free(semantic => i8*);
 
         info->status = p_status::analysed;
 
