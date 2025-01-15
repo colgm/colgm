@@ -1,5 +1,6 @@
 use std::map::{ hashmap };
 use std::set::{ hashset };
+use std::vec::{ vec };
 use std::str::{ str };
 use std::io::{ io };
 
@@ -9,6 +10,7 @@ use package::{ package };
 use sema::function::{ colgm_func };
 use sema::primitive::{ colgm_primitive };
 use sema::module::{ colgm_module };
+use sema::type::{ type };
 use sema::symbol_info::{ symbol_info };
 
 pub struct global_symbol_table {
@@ -46,7 +48,24 @@ impl global_symbol_table {
 pub struct sema_context {
     global: global_symbol_table*,
     this_file: str,
-    generics: hashset<str>
+    generics: hashset<str>,
+    local_scope: vec<hashmap<str, type>>
+}
+
+impl sema_context {
+    pub func push_scope_level(self) {
+        var res = hashmap<str, type>::instance();
+        self->local_scope.push(res.__ptr__());
+        res.delete();
+    }
+
+    pub func pop_scope_level(self) {
+        self->local_scope.pop_back();
+    }
+
+    pub func add_local_var(self, name: str*, t: type*) {
+        self->local_scope.back()->insert(name, t);
+    }
 }
 
 impl sema_context {
@@ -76,13 +95,15 @@ impl sema_context {
         return sema_context {
             global: g,
             this_file: str::instance(),
-            generics: hashset<str>::instance()
+            generics: hashset<str>::instance(),
+            local_scope: vec<hashmap<str, type>>::instance()
         };
     }
 
     pub func delete(self) {
         self->this_file.delete();
         self->generics.delete();
+        self->local_scope.delete();
     }
 
     pub func dump(self, out: io, pkg: package*) {

@@ -212,7 +212,7 @@ impl regist_pass {
         info->status = p_status::analysing;
 
         var lex = lexer::new(self->err);
-        var par = parser::new(self->err, lex, self->co);
+        var par = parser::instance(self->err, lex, self->co);
         var rp = regist_pass::instance(self->err, self->pkg, self->ctx, self->co);
         var semantic = sema::instance(self->err, self->pkg, self->ctx, self->co);
 
@@ -221,27 +221,26 @@ impl regist_pass {
             return false;
         }
 
-        par->parse();
+        par.parse();
         if (self->err->error_count > 0) {
             return false;
         }
 
-        rp.run(par->root);
+        rp.run(par.root);
         if (self->err->error_count > 0) {
             return false;
         }
 
-        semantic.analyse(par->root);
+        semantic.analyse(par.root);
         if (self->err->error_count > 0) {
             return false;
         }
 
         lex->delete();
-        par->delete();
+        par.delete();
         rp.delete();
         semantic.delete();
         free(lex => i8*);
-        free(par => i8*);
 
         info->status = p_status::analysed;
 

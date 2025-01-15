@@ -11,7 +11,7 @@ pub struct frontend {
     err: report*,
     pkg: package*,
     lex: lexer*,
-    par: parser*
+    par: parser
 }
 
 impl frontend {
@@ -19,14 +19,13 @@ impl frontend {
         var err = report::new();
         var pkg = package::new(err);
         var lex = lexer::new(err);
-        var par = parser::new(err, lex, co);
 
         return frontend {
             copt: co,
             err: err,
             pkg: pkg,
             lex: lex,
-            par: par
+            par: parser::instance(err, lex, co)
         };
     }
 
@@ -37,7 +36,6 @@ impl frontend {
         free(self->pkg => i8*);
         self->lex->delete();
         free(self->lex => i8*);
-        self->par->delete();
-        free(self->par => i8*);
+        self->par.delete();
     }
 }

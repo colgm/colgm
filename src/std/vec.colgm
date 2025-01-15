@@ -98,6 +98,23 @@ impl vec<T> {
         self->size += 1;
     }
 
+    pub func pop_back(self) {
+        if (self->size == 0) {
+            return;
+        }
+        self->size -= 1;
+        self->data[self->size]->delete();
+        free(self->data[self->size] => i8*);
+        self->data[self->size] = nil;
+    }
+
+    pub func back(self) -> T* {
+        if (self->size == 0) {
+            panic("std::vec::back: empty vector");
+        }
+        return self->data[self->size - 1];
+    }
+
     pub func get(self, index: u64) -> T* {
         if (index >= self->size) {
             panic("std::vec::get: index out of bounds");

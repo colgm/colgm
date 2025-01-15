@@ -9,6 +9,7 @@ use package::{ package };
 
 use ast::ast::*;
 
+use sema::structure::{ colgm_struct };
 use sema::context::{ sema_context };
 use sema::type_resolve::{ type_resolve };
 
@@ -89,6 +90,15 @@ impl sema {
             info.delete();
             return;
         }
+
+        var struct_self = dm->structs.get(node->name.__ptr__());
+        self->impl_struct_name.clear();
+        self->impl_struct_name.append_str(node->name.__ptr__());
+        for (var i = node->methods.iter(); !i.is_end(); i = i.next()) {
+            var func_node = i.get().unwrap();
+            self->resolve_method(func_node => ast_func_decl*, struct_self);
+        }
+        self->impl_struct_name.clear();
     }
 
     func resolve_global_func(self, node: ast_func_decl*) {
@@ -106,5 +116,31 @@ impl sema {
             info.delete();
             return;
         }
+
+        var func_self = dm->functions.get(node->name.__ptr__());
+        if (node->body == nil && !func_self->is_extern) {
+            var info = str::from("non-extern function \"");
+            info.append_str(node->name.__ptr__());
+            info.append_i8_vec("\" is not implemented");
+            self->err->error(node->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        self->ctx->push_scope_level();
+        for (var p = func_self->unordered_params.iter(); !p.is_end(); p = p.next()) {
+            var param_name = p.key();
+            var param_type = p.value();
+            self->ctx->add_local_var(param_name, param_type);
+        }
+        // TODO
+        self->ctx->pop_scope_level();
+    }
+
+    func resolve_method(self, node: ast_func_decl*, struct_self: colgm_struct*) {
+        // TODO
+        self->ctx->push_scope_level();
+        // TODO
+        self->ctx->pop_scope_level();
     }
 }

@@ -53,26 +53,26 @@ func compile(option: cli_option) {
         cc.lex->dump(io::stdout());
     }
 
-    cc.par->parse();
+    cc.par.parse();
     if (cc.err->error_count > 0) {
         var COLGM_REPORT = io::colgm_report();
-        cc.par->dump(COLGM_REPORT);
+        cc.par.dump(COLGM_REPORT);
         COLGM_REPORT.close();
 
         cc.delete();
         return;
     }
     if (option.OPTION_VIEW_AST) {
-        cc.par->dump(io::stdout());
+        cc.par.dump(io::stdout());
     }
 
-    regpass.run(cc.par->root);
+    regpass.run(cc.par.root);
     if (cc.err->error_count > 0) {
         cc.delete();
         return;
     }
 
-    semantic.analyse(cc.par->root);
+    semantic.analyse(cc.par.root);
     if (cc.err->error_count > 0) {
         cc.delete();
         var COLGM_REPORT = io::colgm_report();
