@@ -5,13 +5,15 @@ use std::io::{ io };
 use std::str::{ str };
 use std::libc::{ free };
 use std::fs::{ fs };
-use std::vec::{ primitive_vec };
+use std::map::{ pair };
+use std::set::{ hashset };
+use std::vec::{ vec, primitive_vec };
+use std::queue::{ queue, primitive_queue };
 use std::ptr::{ ptr, basic };
 use std::math::{ isinf, isnan, floor };
 
 use package::{ package, p_status };
 use ast::ast::*;
-
 use lex::lexer::{ lexer };
 use parse::parser::{ parser };
 use util::cli::{ cli_option };
@@ -787,6 +789,7 @@ impl regist_pass {
     }
 
     func scan_structs(self) {
+        // regist symbol into symbol table first
         for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
             var node = self->root->decls.get(i).unwrap();
             if (!node->is(ast_kind::ast_struct_decl)) {
@@ -796,6 +799,7 @@ impl regist_pass {
             self->regist_single_struct_symbol(struct_node);
         }
 
+        // load field into struct info
         for (var i: u64 = 0; i < self->root->decls.size; i += 1) {
             var node = self->root->decls.get(i).unwrap();
             if (!node->is(ast_kind::ast_struct_decl)) {
@@ -804,6 +808,41 @@ impl regist_pass {
             var struct_node = node => ast_struct_decl*;
             self->regist_single_struct(struct_node);
         }
+
+        // do self reference check
+        self->check_struct_self_reference();
+    }
+
+    func check_struct_self_reference(self) {
+        var dm = self->ctx->get_domain(self->ctx->this_file.__ptr__());
+        var structs = dm->structs.__ptr__();
+
+        var need_check = vec<str>::instance();
+        for (var st = structs->iter(); !st.is_end(); st = st.next()) {
+            var info = st.value();
+            for (var f = info->fields.iter(); !f.is_end(); f = f.next()) {
+                var fld = f.key();
+                var fld_ty = f.value();
+                if (!fld_ty->sym_type.is_pointer() &&
+                    structs->has(fld)) {
+                    need_check.push(fld);
+                }
+            }
+        }
+
+        for (var s = need_check.iter(); !s.is_end(); s = s.next()) {
+            var bfs = queue<pair<str, str>>::instance();
+            var visited = hashset<str>::instance();
+            // TODO
+            while (!bfs.empty()) {
+                // TODO
+            }
+
+            bfs.delete();
+            visited.delete();
+        }
+
+        need_check.delete();
     }
 }
 

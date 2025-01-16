@@ -80,6 +80,7 @@ impl list<T> {
         while (curr != nil) {
             var next = curr->next;
             curr->elem->delete();
+            free(curr->elem => i8*);
             free(curr => i8*);
             curr = next;
         }
@@ -90,6 +91,10 @@ impl list<T> {
 
     pub func clear(self) {
         self->delete();
+    }
+
+    pub func empty(self) -> bool {
+        return self->size == 0;
     }
 
     pub func insert(self, elem: T*) {
@@ -109,7 +114,33 @@ impl list<T> {
 
         self->tail = new_node;
         self->size += 1;
-        return;
+    }
+
+    pub func push_back(self, elem: T*) {
+        self->insert(elem);
+    }
+
+    pub func pop_front(self) {
+        if (self->head == nil) {
+            return;
+        }
+
+        if (self->head == self->tail) {
+            self->head->elem->delete();
+            free(self->head->elem => i8*);
+            free(self->head => i8*);
+            self->head = nil;
+            self->tail = nil;
+        } else {
+            var next = self->head->next;
+            self->head->elem->delete();
+            free(self->head->elem => i8*);
+            free(self->head => i8*);
+            next->prev = nil;
+            self->head = next;
+        }
+
+        self->size -= 1;
     }
 
     pub func iter(self) -> list_iter<T> {
@@ -149,6 +180,10 @@ impl primitive_list<T> {
         self->size = 0;
     }
 
+    pub func empty(self) -> bool {
+        return self->size == 0;
+    }
+
     pub func insert(self, elem: T) {
         var new_node = primitive_node<T>::__alloc__();
         if (new_node == nil) {
@@ -167,5 +202,26 @@ impl primitive_list<T> {
         self->tail = new_node;
         self->size += 1;
         return;
+    }
+
+    pub func push_back(self, elem: T) {
+        self->insert(elem);
+    }
+
+    pub func pop_front(self) {
+        if (self->head == nil) {
+            return;
+        }
+
+        if (self->head == self->tail) {
+            free(self->head => i8*);
+            self->head = nil;
+            self->tail = nil;
+        } else {
+            var next = self->head->next;
+            free(self->head => i8*);
+            self->head = next;
+            next->prev = nil;
+        }
     }
 }
