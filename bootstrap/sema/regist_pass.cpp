@@ -956,7 +956,7 @@ void regist_pass::check_struct_self_reference() {
             }
         }
     }
-    for(const auto& st : need_check) {
+    for (const auto& st : need_check) {
         std::queue<std::pair<std::string, std::string>> bfs;
         std::unordered_set<std::string> visited;
         bfs.push({st, st});
@@ -969,7 +969,7 @@ void regist_pass::check_struct_self_reference() {
                 visited.insert(cur);
             }
 
-            for(const auto& field : structs.at(cur).field) {
+            for (const auto& field : structs.at(cur).field) {
                 if (field.second.symbol_type.is_pointer()) {
                     continue;
                 }
@@ -988,7 +988,7 @@ void regist_pass::check_struct_self_reference() {
 }
 
 void regist_pass::regist_global_funcs(ast::root* node) {
-    for(auto i : node->get_decls()) {
+    for (auto i : node->get_decls()) {
         if (i->get_ast_type() != ast_type::ast_func_decl) {
             continue;
         }

@@ -1568,10 +1568,10 @@ void semantic::resolve_global_func(func_decl* node) {
         return;
     }
     ctx.push_level();
-    for(const auto& p : func_self.parameters) {
+    for (const auto& p : func_self.parameters) {
         ctx.add_local(p.name, p.symbol_type);
     }
-    for(auto i : node->get_code_block()->get_stmts()) {
+    for (auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, func_self);
         if (i->is(ast_type::ast_ret_stmt) ||
             i->is(ast_type::ast_continue_stmt) ||
