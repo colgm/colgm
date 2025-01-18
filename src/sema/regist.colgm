@@ -833,9 +833,38 @@ impl regist_pass {
         for (var s = need_check.iter(); !s.is_end(); s = s.next()) {
             var bfs = queue<pair<str, str>>::instance();
             var visited = hashset<str>::instance();
-            // TODO
+
+            var first = pair<str, str>::instance(s.get(), s.get());
+            bfs.push(first.__ptr__());
+            first.delete();
             while (!bfs.empty()) {
-                // TODO
+                var current = bfs.front()->key->copy_instance();
+                var ref_path = bfs.front()->value->copy_instance();
+                bfs.pop();
+
+                if (visited.has(current.__ptr__())) {
+                    current.delete();
+                    ref_path.delete();
+                    continue;
+                } else {
+                    visited.insert(current.__ptr__());
+                }
+
+                var cur_st = structs->get(current.__ptr__());
+                for (var f = cur_st->fields.iter(); !f.is_end(); f = f.next()) {
+                    var fld = f.key();
+                    var fld_ty = f.value();
+                    if (fld_ty->sym_type.is_pointer()) {
+                        continue;
+                    }
+
+                    var new_ref_path = ref_path.copy_instance();
+                    new_ref_path.append_i8_vec("::");
+                    new_ref_path.append_str(fld);
+                    new_ref_path.append_i8_vec(" -> ");
+                    // TODO
+                    new_ref_path.delete();
+                }
             }
 
             bfs.delete();
