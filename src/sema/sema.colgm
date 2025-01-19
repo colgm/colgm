@@ -1,15 +1,18 @@
 use err::report::{ report };
-use err::panic::{ panic };
+use err::panic::{ panic, unreachable };
 
 use std::io::{ io };
 use std::libc::{ free };
 use std::str::{ str };
+use std::ptr::{ ptr };
+use std::vec::{ primitive_vec };
 
 use package::{ package };
 
 use ast::ast::*;
 
 use sema::structure::{ colgm_struct };
+use sema::function::{ colgm_func };
 use sema::context::{ sema_context };
 use sema::type_resolve::{ type_resolve };
 
@@ -41,7 +44,37 @@ impl sema {
         };
     }
 
-    pub func delete(self) {}
+    pub func delete(self) {
+        // nothing to do now
+    }
+}
+
+impl sema {
+    func resolve_statement(self, n: ast*, func_self: colgm_func*) {
+        // TODO
+        match (n->kind) {
+            ast_kind::ast_definition => {}
+            ast_kind::ast_cond_stmt => {}
+            ast_kind::ast_match_stmt => {}
+            ast_kind::ast_while_stmt => {}
+            ast_kind::ast_for_stmt => {}
+            ast_kind::ast_in_stmt_expr => {}
+            ast_kind::ast_ret_stmt => {}
+            ast_kind::ast_break_stmt => {
+                if (self->in_loop_level == 0) {
+                    self->err->error(n->location,
+                                     "break statement is not in loop");
+                }
+            }
+            ast_kind::ast_continue_stmt => {
+                if (self->in_loop_level == 0) {
+                    self->err->error(n->location,
+                                     "continue statement is not in loop");
+                }
+            }
+            _ => { unreachable(); }
+        }
+    }
 }
 
 impl sema {
@@ -51,6 +84,73 @@ impl sema {
         self->root = root;
 
         self->resolve_function_block(root);
+    }
+
+    func report_unreachable_statements(self, n: ast_code_block*) {
+        var flag_block_ended = false;
+        var unreachable_statements = primitive_vec<ptr<ast>>::instance();
+
+        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+            var tmp = i.get().unwrap();
+            if (flag_block_ended) {
+                unreachable_statements.push(ptr<ast>::wrap(tmp));
+            }
+            if (tmp->is(ast_kind::ast_ret_stmt) ||
+                tmp->is(ast_kind::ast_break_stmt) ||
+                tmp->is(ast_kind::ast_continue_stmt)) {
+                flag_block_ended = true;
+            }
+        }
+
+        if (unreachable_statements.empty()) {
+            unreachable_statements.delete();
+            return;
+        }
+
+        var unreachable_location = unreachable_statements
+                                   .get(0).unwrap()->location->copy();
+        for (var i = unreachable_statements.iter(); !i.is_end(); i = i.next()) {
+            var tmp = i.get().unwrap();
+            unreachable_location->end_column = tmp->location->end_column;
+            unreachable_location->end_line = tmp->location->end_line;
+        }
+
+        if (unreachable_statements.size > 1) {
+            self->err->error(unreachable_location,
+                             "unreachable statements");
+        } else {
+            self->err->error(unreachable_location,
+                             "unreachable statement");
+        }
+
+        unreachable_statements.delete();
+        unreachable_location->delete();
+        free(unreachable_location => i8*);
+    }
+
+    func report_top_level_block_has_no_return(self,
+                                              n: ast_code_block*,
+                                              func_self: colgm_func*) {
+        var flag_has_return = false;
+        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+            var tmp = i.get().unwrap();
+            if (tmp->is(ast_kind::ast_ret_stmt)) {
+                flag_has_return = true;
+                break;
+            }
+        }
+
+        if (flag_has_return) {
+            return;
+        }
+
+        if (func_self->return_type.is_void()) {
+            var rs = ast_ret_stmt::new(n->base.location->copy());
+            n->stmts.push(ptr<ast>::wrap(rs => ast*));
+            return;
+        }
+
+        self->err->error(n->base.location, "function has no return statement");
     }
 
     func resolve_function_block(self, ast_root: root*) {
@@ -118,12 +218,14 @@ impl sema {
         }
 
         var func_self = dm->functions.get(node->name.__ptr__());
-        if (node->body == nil && !func_self->is_extern) {
-            var info = str::from("non-extern function \"");
-            info.append_str(node->name.__ptr__());
-            info.append_i8_vec("\" is not implemented");
-            self->err->error(node->base.location, info.c_str);
-            info.delete();
+        if (node->body == nil) {
+            if (!func_self->is_extern) {
+                var info = str::from("non-extern function \"");
+                info.append_str(node->name.__ptr__());
+                info.append_i8_vec("\" is not implemented");
+                self->err->error(node->base.location, info.c_str);
+                info.delete();
+            }
             return;
         }
 
@@ -133,14 +235,51 @@ impl sema {
             var param_type = p.value();
             self->ctx->add_local_var(param_name, param_type);
         }
-        // TODO
+        for (var i = node->body->stmts.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap();
+            self->resolve_statement(n, func_self);
+            if (n->is(ast_kind::ast_ret_stmt) ||
+                n->is(ast_kind::ast_break_stmt) ||
+                n->is(ast_kind::ast_continue_stmt)) {
+                self->report_unreachable_statements(node->body);
+                break;
+            }
+        }
+        self->report_top_level_block_has_no_return(node->body, func_self);
         self->ctx->pop_scope_level();
     }
 
     func resolve_method(self, node: ast_func_decl*, struct_self: colgm_struct*) {
-        // TODO
+        if (node->body == nil) {
+            self->err->error(node->base.location,
+                             "method should be implemented");
+            return;
+        }
+        
+        var method_self: colgm_func* = nil;
+        if (struct_self->methods.has(node->name.__ptr__())) {
+            method_self = struct_self->methods.get(node->name.__ptr__());
+        } else {
+            method_self = struct_self->static_methods.get(node->name.__ptr__());
+        }
+
         self->ctx->push_scope_level();
-        // TODO
+        for (var p = method_self->unordered_params.iter(); !p.is_end(); p = p.next()) {
+            var param_name = p.key();
+            var param_type = p.value();
+            self->ctx->add_local_var(param_name, param_type);
+        }
+        for (var i = node->body->stmts.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap();
+            self->resolve_statement(n, method_self);
+            if (n->is(ast_kind::ast_ret_stmt) ||
+                n->is(ast_kind::ast_break_stmt) ||
+                n->is(ast_kind::ast_continue_stmt)) {
+                self->report_unreachable_statements(node->body);
+                break;
+            }
+        }
+        self->report_top_level_block_has_no_return(node->body, method_self);
         self->ctx->pop_scope_level();
     }
 }

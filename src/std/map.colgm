@@ -105,6 +105,9 @@ impl hashmap<K, V> {
 
 impl hashmap<K, V> {
     pub func has(self, key: K*) -> bool {
+        if (self->bucket_capacity == 0) {
+            panic("hashmap<K, V>::has: bucket_capacity == 0");
+        }
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
         for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
@@ -116,6 +119,9 @@ impl hashmap<K, V> {
     }
 
     pub func get(self, key: K*) -> V* {
+        if (self->bucket_capacity == 0) {
+            panic("hashmap<K, V>::has: bucket_capacity == 0");
+        }
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
         for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
