@@ -737,7 +737,7 @@ impl regist_pass {
                 name: fld_name->copy_instance(),
                 sym_type: self->tr.resolve(fld_ast->type)
             };
-            struct_info->fields.insert(sym.name.__ptr__(), sym.__ptr__());
+            struct_info->fields.insert(sym.name.__ptr__(), sym.sym_type.__ptr__());
             struct_info->ordered_fields.push(sym.__ptr__());
             sym.delete();
         }
@@ -822,9 +822,9 @@ impl regist_pass {
             var info = st.value();
             for (var f = info->fields.iter(); !f.is_end(); f = f.next()) {
                 var fld_ty = f.value();
-                if (!fld_ty->sym_type.is_pointer() &&
-                    structs->has(fld_ty->sym_type.name.__ptr__())) {
-                    need_check.push(fld_ty->sym_type.name.__ptr__());
+                if (!fld_ty->is_pointer() &&
+                    structs->has(fld_ty->name.__ptr__())) {
+                    need_check.push(fld_ty->name.__ptr__());
                 }
             }
         }
@@ -853,7 +853,7 @@ impl regist_pass {
                 for (var f = cur_st->fields.iter(); !f.is_end(); f = f.next()) {
                     var fld_name = f.key();
                     var fld_type = f.value();
-                    if (fld_type->sym_type.is_pointer()) {
+                    if (fld_type->is_pointer()) {
                         continue;
                     }
 
@@ -861,15 +861,15 @@ impl regist_pass {
                     new_ref_path.append_i8_vec("::");
                     new_ref_path.append_str(fld_name);
                     new_ref_path.append_i8_vec(" -> ");
-                    new_ref_path.append_str(fld_type->sym_type.name.__ptr__());
-                    if (fld_type->sym_type.name.eq(s.get())) {
+                    new_ref_path.append_str(fld_type->name.__ptr__());
+                    if (fld_type->name.eq(s.get())) {
                         var info = str::from("self reference: ");
                         info.append_str(new_ref_path.__ptr__());
                         self->err->error(cur_st->location.__ptr__(), info.c_str);
                         info.delete();
-                    } else if (structs->has(fld_type->sym_type.name.__ptr__())) {
+                    } else if (structs->has(fld_type->name.__ptr__())) {
                         var new_pair = pair<str, str>::instance(
-                            fld_type->sym_type.name.__ptr__(),
+                            fld_type->name.__ptr__(),
                             new_ref_path.__ptr__()
                         );
                         bfs.push(new_pair.__ptr__());
