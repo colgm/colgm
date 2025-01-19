@@ -60,6 +60,21 @@ impl type {
         self->generics.delete();
     }
 
+    pub func reset_with(self, t: type*) {
+        self->delete();
+        self->name = t->name.copy_instance();
+        self->loc_file = t->loc_file.copy_instance();
+        self->pointer_depth = t->pointer_depth;
+        self->is_global_sym = t->is_global_sym;
+        self->is_global_func = t->is_global_func;
+        self->is_enum = t->is_enum;
+        self->is_immutable = t->is_immutable;
+        self->is_generic_placeholder = t->is_generic_placeholder;
+        self->stm_info = t->stm_info.copy_instance();
+        self->prm_info = t->prm_info.copy_instance();
+        self->generics = t->generics.copy_instance();
+    }
+
     pub func copy(self) -> type* {
         var res = type::__alloc__();
         res->name = self->name.copy_instance();

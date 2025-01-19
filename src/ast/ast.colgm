@@ -7,6 +7,8 @@ use std::map::{ hashmap };
 use std::vec::{ primitive_vec };
 use std::ptr::{ ptr };
 
+use sema::type::{ type };
+
 pub enum ast_kind {
     ast_null,
     ast_root,
@@ -147,9 +149,10 @@ pub enum assignment_kind {
 }
 
 pub struct ast {
-    kind: ast_kind, // ast node kind
-    location: span*, // location of ast node
-    redirect_location: str
+    kind: ast_kind,         // ast node kind
+    location: span*,        // location of ast node
+    redirect_location: str, // redirect location, used by generic types
+    resolved_type: type     // resolved type, filled by semantic analysis
 }
 
 impl ast {
@@ -157,7 +160,8 @@ impl ast {
         return ast {
             kind: k,
             location: loc,
-            redirect_location: str::from("")
+            redirect_location: str::from(""),
+            resolved_type: type::instance()
         };
     }
 
@@ -176,6 +180,7 @@ impl ast {
             free(self->location => i8*);
         }
         self->redirect_location.delete();
+        self->resolved_type.delete();
 
         match (self->kind) {
             ast_kind::ast_null => {}
