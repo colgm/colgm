@@ -14,6 +14,7 @@ use ast::ast::*;
 use sema::structure::{ colgm_struct };
 use sema::function::{ colgm_func };
 use sema::context::{ sema_context };
+use sema::type::{ type };
 use sema::type_resolve::{ type_resolve };
 
 use util::cli::{ cli_option };
@@ -50,6 +51,13 @@ impl sema {
 }
 
 impl sema {
+    func resolve_expression(self, n: ast*) -> type {
+        // TODO
+        return type::error_type();
+    }
+}
+
+impl sema {
     func resolve_definition(self, n: ast_definition*, func_self: colgm_func*) {
         // TODO
     }
@@ -71,7 +79,9 @@ impl sema {
     }
 
     func resolve_in_stmt_expr(self, n: ast_in_stmt_expr*, func_self: colgm_func*) {
-        // TODO
+        var ty = self->resolve_expression(n->value => ast*);
+        n->base.resolved_type.reset_with(ty.__ptr__());
+        ty.delete();
     }
 
     func resolve_ret_stmt(self, n: ast_ret_stmt*, func_self: colgm_func*) {
