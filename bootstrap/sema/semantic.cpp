@@ -1362,10 +1362,13 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
         const auto case_infer = resolve_expression(case_node);
         case_node->set_resolve_type(case_infer);
         if (case_infer != infer) {
-            rp.report(case_node,
-                "case value should be \"" + infer.to_string() +
-                "\" type but get \"" + case_infer.to_string() + "\"."
-            );
+            // do not report again if case infer is error type
+            if (!case_infer.is_error()) {
+                rp.report(case_node,
+                    "case value should be \"" + infer.to_string() +
+                    "\" type but get \"" + case_infer.to_string() + "\"."
+                );
+            }
             continue;
         }
 
@@ -1406,7 +1409,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
             generated_warning += ", ";
         }
         unused_counter++;
-        if (unused_counter >= 5) {
+        if (unused_counter >= 3) {
             generated_warning += "...";
             break;
         }

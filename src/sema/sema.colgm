@@ -51,8 +51,48 @@ impl sema {
 }
 
 impl sema {
+    func resolve_nil_literal(self, n: ast_nil_literal*) -> type {
+        var ty = type::i8_type(1);
+        n->base.resolved_type.reset_with(ty.__ptr__());
+        return ty;
+    }
+
+    func resolve_char_literal(self, n: ast_char_literal*) -> type {
+        var ty = type::i8_type(0);
+        n->base.resolved_type.reset_with(ty.__ptr__());
+        return ty;
+    }
+
+    func resolve_bool_literal(self, n: ast_bool_literal*) -> type {
+        var ty = type::bool_type();
+        n->base.resolved_type.reset_with(ty.__ptr__());
+        return ty;
+    }
+
     func resolve_expression(self, n: ast*) -> type {
         // TODO
+        match (n->kind) {
+            ast_kind::ast_unary_operator => {}
+            ast_kind::ast_binary_operator => {}
+            ast_kind::ast_type_convert => {}
+            ast_kind::ast_nil_literal => {
+                return self->resolve_nil_literal(n => ast_nil_literal*);
+            }
+            ast_kind::ast_number_literal => {}
+            ast_kind::ast_string_literal => {}
+            ast_kind::ast_char_literal => {
+                return self->resolve_char_literal(n => ast_char_literal*);
+            }
+            ast_kind::ast_bool_literal => {
+                return self->resolve_bool_literal(n => ast_bool_literal*);
+            }
+            ast_kind::ast_array_literal => {}
+            ast_kind::ast_call => {}
+            ast_kind::ast_assignment => {}
+            _ => {
+                self->err->error(n->location, "unimplemented expression");
+            }
+        }
         return type::error_type();
     }
 }
