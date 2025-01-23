@@ -57,6 +57,18 @@ impl sema {
         return ty;
     }
 
+    func resolve_number_literal(self, n: ast_number_literal*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
+    func resolve_string_literal(self, n: ast_string_literal*) -> type {
+        var ty = type::i8_type(1);
+        self->ctx->constant_string.insert(n->literal.__ptr__());
+        n->base.resolved_type.reset_with(ty.__ptr__());
+        return ty;
+    }
+
     func resolve_char_literal(self, n: ast_char_literal*) -> type {
         var ty = type::i8_type(0);
         n->base.resolved_type.reset_with(ty.__ptr__());
@@ -69,6 +81,13 @@ impl sema {
         return ty;
     }
 
+    func resolve_array_literal(self, n: ast_array_literal*) -> type {
+        var size_infer = self->resolve_number_literal(n->size);
+        // TODO
+        size_infer.delete();
+        return type::error_type();
+    }
+
     func resolve_expression(self, n: ast*) -> type {
         // TODO
         match (n->kind) {
@@ -78,15 +97,21 @@ impl sema {
             ast_kind::ast_nil_literal => {
                 return self->resolve_nil_literal(n => ast_nil_literal*);
             }
-            ast_kind::ast_number_literal => {}
-            ast_kind::ast_string_literal => {}
+            ast_kind::ast_number_literal => {
+                return self->resolve_number_literal(n => ast_number_literal*);
+            }
+            ast_kind::ast_string_literal => {
+                return self->resolve_string_literal(n => ast_string_literal*);
+            }
             ast_kind::ast_char_literal => {
                 return self->resolve_char_literal(n => ast_char_literal*);
             }
             ast_kind::ast_bool_literal => {
                 return self->resolve_bool_literal(n => ast_bool_literal*);
             }
-            ast_kind::ast_array_literal => {}
+            ast_kind::ast_array_literal => {
+                return self->resolve_array_literal(n => ast_array_literal*);
+            }
             ast_kind::ast_call => {}
             ast_kind::ast_assignment => {}
             _ => {
