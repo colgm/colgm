@@ -3,6 +3,7 @@ use err::panic::{ panic, unreachable };
 
 use std::io::{ io };
 use std::libc::{ free };
+use std::math::{ isinf, isnan };
 use std::str::{ str };
 use std::ptr::{ ptr };
 use std::vec::{ primitive_vec };
@@ -18,6 +19,7 @@ use sema::type::{ type };
 use sema::type_resolve::{ type_resolve };
 
 use util::cli::{ cli_option };
+use util::to_num::{ str_to_num };
 
 pub struct sema {
     err: report*,
@@ -58,8 +60,35 @@ impl sema {
     }
 
     func resolve_number_literal(self, n: ast_number_literal*) -> type {
-        // TODO
-        return type::error_type();
+        var result = str_to_num(n->literal.c_str);
+        if (isinf(result) || isnan(result)) {
+            var info = str::from("invalid number \"");
+            info.append_str(n->literal.__ptr__());
+            info.append_char('\"');
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            return type::error_type();
+        }
+        if (n->literal.contains('.') || n->literal.contains('e')) {
+            var ty = type::f64_type();
+            n->base.resolved_type.reset_with(ty.__ptr__());
+            return ty;
+        }
+        if (n->literal.size > 2 && n->literal.c_str[1] == 'o') {
+            // TODO: reset number string
+            var ty = type::u64_type();
+            n->base.resolved_type.reset_with(ty.__ptr__());
+            return ty;
+        }
+        if (n->literal.size > 2 && n->literal.c_str[0] == 'x') {
+            // TODO: reset number string
+            var ty = type::u64_type();
+            n->base.resolved_type.reset_with(ty.__ptr__());
+            return ty;
+        }
+        var default_ty = type::i64_type();
+        n->base.resolved_type.reset_with(default_ty.__ptr__());
+        return default_ty;
     }
 
     func resolve_string_literal(self, n: ast_string_literal*) -> type {

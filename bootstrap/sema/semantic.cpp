@@ -431,22 +431,22 @@ type semantic::resolve_nil_literal(nil_literal* node) {
 
 type semantic::resolve_number_literal(number_literal* node) {
     const auto& literal_string = node->get_number();
-    if (literal_string.find(".")!=std::string::npos ||
-        literal_string.find("e")!=std::string::npos) {
-        node->set_resolve_type(type::f64_type());
-        return type::f64_type();
-    }
     f64 result = str_to_num(literal_string.c_str());
     if (std::isinf(result) || std::isnan(result)) {
         rp.report(node, "invalid number \"" + literal_string + "\".");
         return type::error_type();
     }
-    if (literal_string.length()>2 && literal_string[1]=='o') {
+    if (literal_string.find(".") != std::string::npos ||
+        literal_string.find("e") != std::string::npos) {
+        node->set_resolve_type(type::f64_type());
+        return type::f64_type();
+    }
+    if (literal_string.length() > 2 && literal_string[1] == 'o') {
         node->set_resolve_type(type::u64_type());
         node->reset_number(std::to_string(oct_to_u64(literal_string.c_str())));
         return type::u64_type();
     }
-    if (literal_string.length()>2 && literal_string[1]=='x') {
+    if (literal_string.length() > 2 && literal_string[1] == 'x') {
         node->set_resolve_type(type::u64_type());
         node->reset_number(std::to_string(hex_to_u64(literal_string.c_str())));
         return type::u64_type();
