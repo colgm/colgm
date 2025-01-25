@@ -2,7 +2,7 @@ use err::report::{ report };
 use err::panic::{ panic, unreachable };
 
 use std::io::{ io };
-use std::libc::{ free };
+use std::libc::{ free, itoa };
 use std::math::{ isinf, isnan };
 use std::str::{ str };
 use std::ptr::{ ptr };
@@ -19,7 +19,7 @@ use sema::type::{ type };
 use sema::type_resolve::{ type_resolve };
 
 use util::cli::{ cli_option };
-use util::to_num::{ str_to_num };
+use util::to_num::{ str_to_num, hex_to_i64, oct_to_i64 };
 
 pub struct sema {
     err: report*,
@@ -75,13 +75,19 @@ impl sema {
             return ty;
         }
         if (n->literal.size > 2 && n->literal.c_str[1] == 'o') {
-            // TODO: reset number string
+            var buff = [i8; 128];
+            itoa(oct_to_i64(n->literal.c_str), buff, 8);
+            n->literal.clear();
+            n->literal.append_i8_vec(buff);
             var ty = type::u64_type();
             n->base.resolved_type.reset_with(ty.__ptr__());
             return ty;
         }
         if (n->literal.size > 2 && n->literal.c_str[0] == 'x') {
-            // TODO: reset number string
+            var buff = [i8; 128];
+            itoa(hex_to_i64(n->literal.c_str), buff, 8);
+            n->literal.clear();
+            n->literal.append_i8_vec(buff);
             var ty = type::u64_type();
             n->base.resolved_type.reset_with(ty.__ptr__());
             return ty;
@@ -113,6 +119,11 @@ impl sema {
     func resolve_array_literal(self, n: ast_array_literal*) -> type {
         var size_infer = self->resolve_number_literal(n->size);
         // TODO
+        if (!size_infer.is_integer()) {
+            self->err->error(n->base.location, "array size must be integer");
+            size_infer.delete();
+            return type::error_type();
+        }
         size_infer.delete();
         return type::error_type();
     }
