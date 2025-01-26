@@ -118,14 +118,18 @@ impl sema {
 
     func resolve_array_literal(self, n: ast_array_literal*) -> type {
         var size_infer = self->resolve_number_literal(n->size);
-        // TODO
         if (!size_infer.is_integer()) {
             self->err->error(n->base.location, "array size must be integer");
             size_infer.delete();
             return type::error_type();
         }
         size_infer.delete();
-        return type::error_type();
+
+        var type_infer = self->tr.resolve(n->type);
+        type_infer.pointer_depth += 1;
+        type_infer.is_immutable = true;
+        n->base.resolved_type.reset_with(type_infer.__ptr__());
+        return type_infer;
     }
 
     func resolve_expression(self, n: ast*) -> type {
