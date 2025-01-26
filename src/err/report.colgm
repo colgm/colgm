@@ -190,32 +190,36 @@ impl report {
 
 impl report {
     pub func error(self, location: span*, message: i8*) {
-        if (!location->file.eq_const(self->filename.c_str)) {
+        if (location != nil && !location->file.eq_const(self->filename.c_str)) {
             self->load_file_source(location->file.c_str);
         }
         self->error_count += 1;
 
         io::stderr().red().out("Error: ").reset();
         io::stderr().white().out(message).reset().endln();
-        io::stderr().cyan().out("  --> ").red().out(location->file.c_str);
-        io::stderr().out_ch(':').out_i64(location->begin_line + 1);
-        io::stderr().out_ch(':').out_i64(location->begin_column + 1);
-        io::stderr().reset().endln();
-        self->print_file_line(location, true);
+        if (location != nil) {
+            io::stderr().cyan().out("  --> ").red().out(location->file.c_str);
+            io::stderr().out_ch(':').out_i64(location->begin_line + 1);
+            io::stderr().out_ch(':').out_i64(location->begin_column + 1);
+            io::stderr().reset().endln();
+            self->print_file_line(location, true);
+        }
     }
 
     pub func warn(self, location: span*, message: i8*) {
-        if (!location->file.eq_const(self->filename.c_str)) {
+        if (location != nil && !location->file.eq_const(self->filename.c_str)) {
             self->load_file_source(location->file.c_str);
         }
         self->error_count += 1;
 
         io::stderr().orange().out("Warn: ").reset();
         io::stderr().white().out(message).reset().endln();
-        io::stderr().cyan().out("  --> ").orange().out(location->file.c_str);
-        io::stderr().out_ch(':').out_i64(location->begin_line + 1);
-        io::stderr().out_ch(':').out_i64(location->begin_column + 1);
-        io::stderr().reset().endln();
-        self->print_file_line(location, false);
+        if (location != nil) {
+            io::stderr().cyan().out("  --> ").orange().out(location->file.c_str);
+            io::stderr().out_ch(':').out_i64(location->begin_line + 1);
+            io::stderr().out_ch(':').out_i64(location->begin_column + 1);
+            io::stderr().reset().endln();
+            self->print_file_line(location, false);
+        }
     }
 }

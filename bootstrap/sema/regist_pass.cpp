@@ -353,6 +353,18 @@ void generic_visitor::replace_func_type(colgm_func& f,
     f.generic_func_decl = nullptr;
 }
 
+void generic_visitor::report_recursive_generic_generation() {
+    std::string results = "";
+    for(const auto& i : generic_type_map) {
+        results += "  - " + i.second.generic_type.full_path_name() + "\n";
+    }
+    // do not print last \n
+    if (results.size()) {
+        results.pop_back();
+    }
+    err.err("exceed max recursive depth while doing generic generation:\n" + results);
+}
+
 void generic_visitor::dump() const {
     for(const auto& i : generic_type_map) {
         std::cout << i.second.generic_type.full_path_name();

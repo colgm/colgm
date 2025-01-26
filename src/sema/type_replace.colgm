@@ -488,6 +488,22 @@ impl generic_visitor {
         self->generic_type_map.delete();
     }
 
+    func report_recursive_generic_generation(self) {
+        var info = str::from("");
+        info.append_i8_vec("exceed max recursive depth ");
+        info.append_i8_vec("while doing generic generation:\n");
+        for (var i = self->generic_type_map.iter(); !i.is_end(); i = i.next()) {
+            var gd = i.value();
+            var name = gd->generic_type.full_path_name(self->pkg, true);
+            info.append_i8_vec("  - ");
+            info.append_str(name.__ptr__());
+            info.append_char('\n');
+            name.delete();
+        }
+        self->err->error(nil, info.c_str);
+        info.delete();
+    }
+
     pub func scan_and_insert(self, n: root*) {
         self->root = n;
 
@@ -498,7 +514,12 @@ impl generic_visitor {
             scan_count += 1;
             self->generic_type_map.clear();
             self->visit_root(n);
+            if (scan_count > 16) {
+                self->report_recursive_generic_generation();
+                break;
+            }
         }
+        
         if (scan_count > 0 && self->co->OPTION_VIEW_PASS) {
             io::stdout().out("[generic_visitor] generate generics of ")
                         .white().out(n->base.location->file.c_str).reset()

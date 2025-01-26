@@ -82,15 +82,23 @@ private:
         n->accept(this);
     }
     u64 insert_into_symbol_table();
+    void report_recursive_generic_generation();
 
 public:
     generic_visitor(error& e, sema_context& c):
         err(e), ctx(c), rp(e), tr(e, ctx), root(nullptr) {}
     void dump() const;
     void scan_and_insert(ast::root* n) {
+        u64 visit_count = 0;
         visit(n);
-        while(insert_into_symbol_table()) {
+        ++visit_count;
+        while (insert_into_symbol_table()) {
             visit(n);
+            ++visit_count;
+            if (visit_count > 16) {
+                report_recursive_generic_generation();
+                break;
+            }
         }
     }
 };
