@@ -48,12 +48,16 @@ public:
 
 class generic_visitor: public ast::visitor {
 private:
+    const u64 MAX_RECURSIVE_DEPTH = 32;
+
+private:
     error& err;
     sema_context& ctx;
     reporter rp;
     type_resolver tr;
     ast::root* root;
     std::unordered_map<std::string, generic_data> generic_type_map;
+    u64 visit_count;
 
 private:
     void scan_generic_type(ast::type_def*);
@@ -89,16 +93,10 @@ public:
         err(e), ctx(c), rp(e), tr(e, ctx), root(nullptr) {}
     void dump() const;
     void scan_and_insert(ast::root* n) {
-        u64 visit_count = 0;
+        visit_count = 0;
         visit(n);
-        ++visit_count;
         while (insert_into_symbol_table()) {
             visit(n);
-            ++visit_count;
-            if (visit_count > 16) {
-                report_recursive_generic_generation();
-                break;
-            }
         }
     }
 };

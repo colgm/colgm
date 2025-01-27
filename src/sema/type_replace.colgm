@@ -9,7 +9,7 @@ use std::str::{ str };
 use std::map::{ hashmap };
 use std::io::{ io };
 use std::vec::{ vec };
-use std::libc::{ free };
+use std::libc::{ free, itoa };
 use std::ptr::{ ptr };
 
 use sema::type::{ type };
@@ -465,7 +465,10 @@ pub struct generic_visitor {
     root: root*,
     tr: type_resolve,
     co: cli_option*,
-    generic_type_map: hashmap<str, generic_data>
+    generic_type_map: hashmap<str, generic_data>,
+    // avoid too deep template instantiation
+    visit_count: u64,
+    MAX_RECURSIVE_DEPTH: u64
 }
 
 impl generic_visitor {
@@ -480,7 +483,9 @@ impl generic_visitor {
             root: nil,
             tr: type_resolve::instance(e, c, p),
             co: co,
-            generic_type_map: hashmap<str, generic_data>::instance()
+            generic_type_map: hashmap<str, generic_data>::instance(),
+            visit_count: 0,
+            MAX_RECURSIVE_DEPTH: 32
         };
     }
 
@@ -489,16 +494,32 @@ impl generic_visitor {
     }
 
     func report_recursive_generic_generation(self) {
-        var info = str::from("");
-        info.append_i8_vec("exceed max recursive depth ");
-        info.append_i8_vec("while doing generic generation:\n");
+        var info = str::from("template instantiation depth exceeds maximum of ");
+        var buffer = [i8; 128];
+        itoa(self->MAX_RECURSIVE_DEPTH => i64, buffer, 10);
+        info.append_i8_vec(buffer);
+        info.append_i8_vec(":\n");
         for (var i = self->generic_type_map.iter(); !i.is_end(); i = i.next()) {
             var gd = i.value();
-            var name = gd->generic_type.full_path_name(self->pkg, true);
+            var generic_name = gd->generic_type.generic_name(self->pkg);
+            
+            var domain_file = gd->generic_type.loc_file.__ptr__();
+            if (!self->ctx->has_domain(domain_file)) {
+                generic_name.delete();
+                continue;
+            }
+
+            var dm = self->ctx->get_domain(domain_file);
+            if (dm->structs.has(generic_name.__ptr__()) ||
+                dm->functions.has(generic_name.__ptr__())) {
+                generic_name.delete();
+                continue;
+            }
+            
             info.append_i8_vec("  - ");
-            info.append_str(name.__ptr__());
+            info.append_str(generic_name.__ptr__());
             info.append_char('\n');
-            name.delete();
+            generic_name.delete();
         }
         self->err->error(nil, info.c_str);
         info.delete();
@@ -506,6 +527,7 @@ impl generic_visitor {
 
     pub func scan_and_insert(self, n: root*) {
         self->root = n;
+        self->visit_count = 0;
 
         var scan_count = 0;
         self->generic_type_map.clear();
@@ -514,16 +536,13 @@ impl generic_visitor {
             scan_count += 1;
             self->generic_type_map.clear();
             self->visit_root(n);
-            if (scan_count > 16) {
-                self->report_recursive_generic_generation();
-                break;
-            }
         }
-        
+
         if (scan_count > 0 && self->co->OPTION_VIEW_PASS) {
             io::stdout().out("[generic_visitor] generate generics of ")
                         .white().out(n->base.location->file.c_str).reset()
-                        .out(" after ").out_i64(scan_count).out(" scan(s)").endln();
+                        .out(" after ").out_i64(scan_count).out(" scan(s)")
+                        .endln();
         }
     }
 }
@@ -1031,6 +1050,11 @@ impl generic_visitor {
     }
 
     func insert_into_symbol_table(self) -> u64 {
+        self->visit_count += 1;
+        if (self->visit_count > self->MAX_RECURSIVE_DEPTH) {
+            self->report_recursive_generic_generation();
+            return 0;
+        }
         var insert_count: u64 = 0;
         for (var i = self->generic_type_map.iter(); !i.is_end(); i = i.next()) {
             var g_data = i.value();
@@ -1038,6 +1062,7 @@ impl generic_visitor {
             
             var domain_file = g_data->generic_type.loc_file.__ptr__();
             if (!self->ctx->has_domain(domain_file)) {
+                generic_name.delete();
                 continue;
             }
 
