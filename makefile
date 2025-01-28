@@ -25,6 +25,7 @@ test: $(COLGMCC) test/*
 	@ $(COLGMCC) test/local.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/match.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/negative.colgm $(TEST_LIB) && lli out.ll
+	- @ $(COLGMCC) test/recursive_instantiation.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/self-ref-test.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/string.colgm $(TEST_LIB) && lli out.ll
 	@ $(COLGMCC) test/to_str.colgm $(TEST_LIB) && lli out.ll

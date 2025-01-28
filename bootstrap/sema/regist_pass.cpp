@@ -354,7 +354,6 @@ void generic_visitor::replace_func_type(colgm_func& f,
 }
 
 void generic_visitor::report_recursive_generic_generation() {
-    std::string results = "";
     for(const auto& i : generic_type_map) {
         const auto& data = i.second.generic_type;
         if (!ctx.global.domain.count(data.loc_file)) {
@@ -365,16 +364,16 @@ void generic_visitor::report_recursive_generic_generation() {
         if (dm.structs.count(generic_name) || dm.functions.count(generic_name)) {
             continue;
         }
-        results += "  - " + generic_name + "\n";
-    }
-    // do not print last \n
-    if (results.size()) {
-        results.pop_back();
-    }
 
-    auto info = std::string("template instantiation depth exceeds maximum of ");
-    info += std::to_string(MAX_RECURSIVE_DEPTH) + ":\n" + results;
-    err.err(info);
+        const auto& loc = dm.generic_structs.count(data.name)
+            ? dm.generic_structs.at(data.name).location
+            : dm.generic_functions.at(data.name).location;
+
+        auto info = std::string("template instantiation depth exceeds maximum of ");
+        info += std::to_string(MAX_RECURSIVE_DEPTH) + ":\n";
+        info += "  --> " + generic_name;
+        err.err(loc, info);
+    }
 }
 
 void generic_visitor::dump() const {
