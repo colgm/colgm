@@ -132,12 +132,69 @@ impl sema {
         return type_infer;
     }
 
+    func resolve_unary_neg(self, n: ast_unary_operator*) -> type {
+        return type::error_type();
+    }
+
+    func resolve_unary_bnot(self, n: ast_unary_operator*) -> type {
+        return type::error_type();
+    }
+
+    func resolve_unary_lnot(self, n: ast_unary_operator*) -> type {
+        return type::error_type();
+    }
+
+    func resolve_unary_operator(self, n: ast_unary_operator*) -> type {
+        match (n->kind) {
+            unary_kind::neg => {
+                var ty = self->resolve_unary_neg(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            unary_kind::bnot => {
+                var ty = self->resolve_unary_bnot(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            unary_kind::lnot => {
+                var ty = self->resolve_unary_lnot(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+        }
+
+        unreachable();
+        return type::error_type();
+    }
+
+    func resolve_binary_operator(self, n: ast_binary_operator*) -> type {
+        return type::error_type();
+    }
+
+    func resolve_type_convert(self, n: ast_type_convert*) -> type {
+        return type::error_type();
+    }
+
+    func resolve_call(self, n: ast_call*) -> type {
+        return type::error_type();
+    }
+
+    func resolve_assignment(self, n: ast_assignment*) -> type {
+        return type::error_type();
+    }
+
     func resolve_expression(self, n: ast*) -> type {
         // TODO
         match (n->kind) {
-            ast_kind::ast_unary_operator => {}
-            ast_kind::ast_binary_operator => {}
-            ast_kind::ast_type_convert => {}
+            ast_kind::ast_unary_operator => {
+                return self->resolve_unary_operator(n => ast_unary_operator*);
+            }
+            ast_kind::ast_binary_operator => {
+                return self->resolve_binary_operator(n => ast_binary_operator*);
+            }
+            ast_kind::ast_type_convert => {
+                return self->resolve_type_convert(n => ast_type_convert*);
+            }
             ast_kind::ast_nil_literal => {
                 return self->resolve_nil_literal(n => ast_nil_literal*);
             }
@@ -156,11 +213,13 @@ impl sema {
             ast_kind::ast_array_literal => {
                 return self->resolve_array_literal(n => ast_array_literal*);
             }
-            ast_kind::ast_call => {}
-            ast_kind::ast_assignment => {}
-            _ => {
-                self->err->error(n->location, "unimplemented expression");
+            ast_kind::ast_call => {
+                return self->resolve_call(n => ast_call*);
             }
+            ast_kind::ast_assignment => {
+                return self->resolve_assignment(n => ast_assignment*);
+            }
+            _ => { unreachable(); }
         }
         return type::error_type();
     }
@@ -171,8 +230,28 @@ impl sema {
         // TODO
     }
 
+    func resolve_if_stmt(self, n: ast_if_stmt*, func_self: colgm_func*) {
+        if (n->condition != nil) {
+            var ty = self->resolve_expression(n->condition => ast*);
+            if (!ty.is_bool() && !ty.is_error()) {
+                self->err->error(n->condition->location,
+                                 "condition must be bool");
+            }
+            ty.delete();
+        }
+
+        // resolve block
+        if (n->body != nil) {
+            self->in_loop_level += 1;
+            self->resolve_code_block(n->body, func_self);
+            self->in_loop_level -= 1;
+        }
+    }
+
     func resolve_cond_stmt(self, n: ast_cond_stmt*, func_self: colgm_func*) {
-        // TODO
+        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+            self->resolve_if_stmt(i.get().unwrap() => ast_if_stmt*, func_self);
+        }
     }
 
     func resolve_match_stmt(self, n: ast_match_stmt*, func_self: colgm_func*) {
@@ -180,11 +259,44 @@ impl sema {
     }
 
     func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func*) {
-        // TODO
+        var infer = self->resolve_expression(n->condition => ast*);
+        if (!infer.is_bool() && !infer.is_error()) {
+            self->err->error(n->condition->location,
+                             "condition must be bool");
+        }
+        infer.delete();
+
+        // resolve block
+        if (n->body != nil) {
+            self->in_loop_level += 1;
+            self->resolve_code_block(n->body, func_self);
+            self->in_loop_level -= 1;
+        }
     }
 
     func resolve_for_stmt(self, n: ast_for_stmt*, func_self: colgm_func*) {
-        // TODO
+        self->ctx->push_scope_level();
+        if (n->init != nil) {
+            self->resolve_definition(n->init, func_self);
+        }
+        if (n->condition != nil) {
+            var ty = self->resolve_expression(n->condition => ast*);
+            if (!ty.is_bool() && !ty.is_error()) {
+                self->err->error(n->condition->location,
+                                 "condition must be bool");
+            }
+            ty.delete();
+        }
+        if (n->update != nil) {
+            var ty = self->resolve_expression(n->update => ast*);
+            ty.delete();
+        }
+        if (n->body != nil) {
+            self->in_loop_level += 1;
+            self->resolve_code_block(n->body, func_self);
+            self->in_loop_level -= 1;
+        }
+        self->ctx->pop_scope_level();
     }
 
     func resolve_in_stmt_expr(self, n: ast_in_stmt_expr*, func_self: colgm_func*) {
@@ -227,6 +339,21 @@ impl sema {
             }
             _ => { unreachable(); }
         }
+    }
+
+    func resolve_code_block(self, node: ast_code_block*, func_self: colgm_func*) {
+        self->ctx->push_scope_level();
+        for (var i = node->stmts.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap();
+            self->resolve_statement(n, func_self);
+            if (n->is(ast_kind::ast_ret_stmt) ||
+                n->is(ast_kind::ast_break_stmt) ||
+                n->is(ast_kind::ast_continue_stmt)) {
+                self->report_unreachable_statements(node);
+                break;
+            }
+        }
+        self->ctx->pop_scope_level();
     }
 }
 

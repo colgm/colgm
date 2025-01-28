@@ -1086,7 +1086,7 @@ bool semantic::check_valid_left_value(expr* node) {
     }
     if (maybe_invalid_assignment && seg) {
         rp.warn(seg, "function returning non-pointer type,"
-                     " will do copy on return,"
+                     " will do shallow copy on return,"
                      " may cause invalid assignment.");
     }
     return true;
@@ -1446,7 +1446,6 @@ void semantic::resolve_for_stmt(for_stmt* node, const colgm_func& func_self) {
     }
     if (node->get_condition()) {
         const auto infer = resolve_expression(node->get_condition());
-        node->get_condition()->set_resolve_type(infer);
         if (infer!=type::bool_type() && infer!=type::error_type()) {
             rp.report(node->get_condition(),
                 "condition should be \"bool\" type but get \"" +
@@ -1455,8 +1454,7 @@ void semantic::resolve_for_stmt(for_stmt* node, const colgm_func& func_self) {
         }
     }
     if (node->get_update()) {
-        const auto infer = resolve_expression(node->get_update());
-        node->get_update()->set_resolve_type(infer);
+        resolve_expression(node->get_update());
     }
     if (node->get_block()) {
         ++in_loop_level;
