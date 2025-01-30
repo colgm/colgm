@@ -170,12 +170,121 @@ impl sema {
         return type::error_type();
     }
 
+    func resolve_comparison_operator(self, n: ast_binary_operator*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
+    func resolve_logical_operator(self, n: ast_binary_operator*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
+    func resolve_arithmetic_operator(self, n: ast_binary_operator*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
+    func resolve_bitwise_operator(self, n: ast_binary_operator*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
     func resolve_binary_operator(self, n: ast_binary_operator*) -> type {
+        // TODO
+        match (n->kind) {
+            binary_kind::add => {
+                var ty = self->resolve_arithmetic_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::sub => {
+                var ty = self->resolve_arithmetic_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::mul => {
+                var ty = self->resolve_arithmetic_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::div => {
+                var ty = self->resolve_arithmetic_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::rem => {
+                var ty = self->resolve_arithmetic_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::cmpeq => {
+                var ty = self->resolve_comparison_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::cmpne => {
+                var ty = self->resolve_comparison_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::less => {
+                var ty = self->resolve_comparison_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::leq => {
+                var ty = self->resolve_comparison_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::grt => {
+                var ty = self->resolve_comparison_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::geq => {
+                var ty = self->resolve_comparison_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::cmpand => {
+                var ty = self->resolve_logical_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::cmpor => {
+                var ty = self->resolve_logical_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::band => {
+                var ty = self->resolve_bitwise_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::bor => {
+                var ty = self->resolve_bitwise_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+            binary_kind::bxor => {
+                var ty = self->resolve_bitwise_operator(n);
+                n->base.resolved_type.reset_with(ty.__ptr__());
+                return ty;
+            }
+        }
+
+        unreachable();
         return type::error_type();
     }
 
     func resolve_type_convert(self, n: ast_type_convert*) -> type {
-        return type::error_type();
+        var res = self->resolve_expression(n->from);
+        var type_res = self->tr.resolve(n->to);
+        // TODO
+        res.delete();
+        return type_res;
     }
 
     func resolve_call(self, n: ast_call*) -> type {

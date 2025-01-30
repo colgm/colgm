@@ -174,9 +174,11 @@ type semantic::resolve_logical_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
     if (left.is_error() || right.is_error()) {
+        node->set_resolve_type(type::bool_type());
         return type::bool_type();
     }
     if (left.is_boolean() && right.is_boolean()) {
+        node->set_resolve_type(type::bool_type());
         return type::bool_type();
     }
     if (!left.is_boolean()) {
@@ -197,6 +199,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
     if (left.is_error() || right.is_error()) {
+        node->set_resolve_type(type::bool_type());
         return type::bool_type();
     }
     if (left != right) {
@@ -217,6 +220,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
             node->get_opr()!=binary_operator::kind::cmpneq) {
             rp.report(node, "only \"==\" and \"!=\" is allowed.");
         }
+        node->set_resolve_type(type::bool_type());
         return type::bool_type();
     }
 
@@ -262,6 +266,7 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
         return type::error_type();
     }
 
+    node->set_resolve_type(left);
     return left;
 }
 
@@ -272,12 +277,14 @@ type semantic::resolve_bitwise_operator(binary_operator* node) {
         rp.report(node->get_left(),
             "bitwise operator cannot be used on \"" + left.to_string() + "\"."
         );
+        node->set_resolve_type(left);
         return left;
     }
     if (!right.is_integer()) {
         rp.report(node->get_right(),
             "bitwise operator cannot be used on \"" + right.to_string() + "\"."
         );
+        node->set_resolve_type(right);
         return right;
     }
     if (left != right) {
@@ -289,6 +296,7 @@ type semantic::resolve_bitwise_operator(binary_operator* node) {
             );
         }
     }
+    node->set_resolve_type(left);
     return left;
 }
 
@@ -299,33 +307,21 @@ type semantic::resolve_binary_operator(binary_operator* node) {
         case binary_operator::kind::geq:
         case binary_operator::kind::grt:
         case binary_operator::kind::leq:
-        case binary_operator::kind::less: {
-            const auto res = resolve_comparison_operator(node);
-            node->set_resolve_type(res);
-            return res;
-        }
+        case binary_operator::kind::less:
+            return resolve_comparison_operator(node);
         case binary_operator::kind::cmpand:
-        case binary_operator::kind::cmpor: {
-            const auto res = resolve_logical_operator(node);
-            node->set_resolve_type(res);
-            return res;
-        }
+        case binary_operator::kind::cmpor:
+            return resolve_logical_operator(node);
         case binary_operator::kind::add:
         case binary_operator::kind::sub:
         case binary_operator::kind::div:
         case binary_operator::kind::mult:
-        case binary_operator::kind::rem: {
-            const auto res = resolve_arithmetic_operator(node);
-            node->set_resolve_type(res);
-            return res;
-        }
+        case binary_operator::kind::rem:
+            return resolve_arithmetic_operator(node);
         case binary_operator::kind::band:
         case binary_operator::kind::bxor:
-        case binary_operator::kind::bor: {
-            const auto res = resolve_bitwise_operator(node);
-            node->set_resolve_type(res);
-            return res;
-        }
+        case binary_operator::kind::bor:
+            return resolve_bitwise_operator(node);
         default: rp.unimplemented(node); break;
     }
     return type::error_type();
