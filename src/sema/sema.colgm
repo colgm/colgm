@@ -338,8 +338,34 @@ impl sema {
 
 impl sema {
     func resolve_definition(self, n: ast_definition*, func_self: colgm_func*) {
-        // TODO
         var name = n->name.__ptr__();
+        // check if conflicts with local variable
+        if (self->ctx->find_local(name)) {
+            var info = str::from("redefinition of variable \"");
+            info.append_str(name);
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        // check if conflicts with global symbol
+        if (self->ctx->global_symbol()->has(name)) {
+            var info = str::from("variable \"");
+            info.append_str(name);
+            info.append_i8_vec("\" conflicts with global symbol");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        // check if not initialized
+        if (n->value == nil) {
+            self->err->error(n->base.location, "variable must be initialized");
+            return;
+        }
+
+        // TODO
     }
 
     func resolve_if_stmt(self, n: ast_if_stmt*, func_self: colgm_func*) {

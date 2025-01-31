@@ -67,6 +67,30 @@ impl sema_context {
     pub func add_local_var(self, name: str*, t: type*) {
         self->local_scope.back()->insert(name, t);
     }
+
+    pub func get_local(self, name: str*) -> type* {
+        if (self->local_scope.empty()) {
+            return nil;
+        }
+        for (var i = self->local_scope.size - 1; (i => i64) >= 0; i -= 1) {
+            if (self->local_scope.get(i)->has(name)) {
+                return self->local_scope.get(i)->get(name);
+            }
+        }
+        return nil;
+    }
+
+    pub func find_local(self, name: str*) -> bool {
+        if (self->local_scope.empty()) {
+            return false;
+        }
+        for (var i = self->local_scope.size - 1; (i => i64) >= 0; i -= 1) {
+            if (self->local_scope.get(i)->has(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 impl sema_context {
