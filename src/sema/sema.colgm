@@ -26,6 +26,7 @@ pub struct sema {
     root: root*,
     ctx: sema_context*,
     co: cli_option*,
+    pkg: package*,
     tr: type_resolve,
     in_loop_level: i64,
     impl_struct_name: str
@@ -41,6 +42,7 @@ impl sema {
             root: nil,
             ctx: ctx,
             co: co,
+            pkg: pkg,
             tr: type_resolve::instance(err, ctx, pkg),
             in_loop_level: 0,
             impl_struct_name: str::from("")
@@ -337,6 +339,19 @@ impl sema {
 }
 
 impl sema {
+    func check_defined_variable_is_void(self, n: ast_definition*, ty: type*) {
+        var ty_path = ty->full_path_name(self->pkg, true);
+        io::stdout().out(n->name.c_str).out(" : ").out(ty_path.c_str).endln();
+        ty_path.delete();
+        if (!ty->is_void()) {
+            return;
+        }
+        self->err->error(
+            n->base.location,
+            "cannot define variable with void type"
+        );
+    }
+
     func resolve_definition(self, n: ast_definition*, func_self: colgm_func*) {
         var name = n->name.__ptr__();
         // check if conflicts with local variable
@@ -365,7 +380,21 @@ impl sema {
             return;
         }
 
+        if (n->type == nil) {
+            var real_type = self->resolve_expression(n->value);
+            n->base.resolved_type.reset_with(real_type.__ptr__());
+            self->ctx->add_local_var(name, real_type.__ptr__());
+            self->check_defined_variable_is_void(n, real_type.__ptr__());
+            real_type.delete();
+            return;
+        }
+
         // TODO
+        var expect_type = self->tr.resolve(n->type);
+        var real_type = self->resolve_expression(n->value);
+
+        expect_type.delete();
+        real_type.delete();
     }
 
     func resolve_if_stmt(self, n: ast_if_stmt*, func_self: colgm_func*) {
