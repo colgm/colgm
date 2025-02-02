@@ -140,6 +140,11 @@ impl type {
         return res;
     }
 
+    pub func eq(self, t: type*) -> bool {
+        return self->name.eq(t->name.__ptr__()) &&
+               self->pointer_depth == t->pointer_depth;
+    }
+
     pub func is_pointer(self) -> bool {
         return self->pointer_depth > 0;
     }
@@ -168,6 +173,13 @@ impl type {
             self->name.eq_const("u16") ||
             self->name.eq_const("u32") ||
             self->name.eq_const("u64")
+        );
+    }
+
+    pub func is_float(self) -> bool {
+        return self->pointer_depth == 0 && (
+            self->name.eq_const("f32") ||
+            self->name.eq_const("f64")
         );
     }
 

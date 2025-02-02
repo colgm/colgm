@@ -341,7 +341,6 @@ impl sema {
 impl sema {
     func check_defined_variable_is_void(self, n: ast_definition*, ty: type*) {
         var ty_path = ty->full_path_name(self->pkg, true);
-        io::stdout().out(n->name.c_str).out(" : ").out(ty_path.c_str).endln();
         ty_path.delete();
         if (!ty->is_void()) {
             return;
@@ -350,6 +349,83 @@ impl sema {
             n->base.location,
             "cannot define variable with void type"
         );
+    }
+
+    func number_literal_can_be_converted(self, n: ast*, expect_type: type*) -> bool {
+        // if is not number literal, just return false
+        if (!n->is(ast_kind::ast_number_literal)) {
+            return false;
+        }
+
+        // check if number literal is pointer type
+        // in most cases it should not be pointer type
+        var n_type = n->resolved_type.__ptr__();
+        if (n_type->is_pointer()) {
+            return false;
+        }
+
+        // if expect a pointer type,
+        if (expect_type->is_pointer()) {
+            // allow integer to convert to pointer may cause confusion
+            // because if user used C before, in this example:
+            //   <i64*> s += 1
+            // in fact this is equal to:
+            //   <i8*> s += 8
+            // to avoid this confusion, we should not allow this conversion
+            return false;
+        }
+
+        // use same integer type as expected
+        if (expect_type->is_integer() && n_type->is_integer()) {
+            n->resolved_type.reset_with(expect_type);
+            return true;
+        }
+        // use same float type as expected
+        if (expect_type->is_float() && n_type->is_float()) {
+            n->resolved_type.reset_with(expect_type);
+            return true;
+        }
+
+        return false;
+    }
+
+    func unary_number_can_be_converted(self, n: ast*, expect_type: type*) -> bool {
+        if (!n->is(ast_kind::ast_unary_operator)) {
+            return false;
+        }
+        var UO = n => ast_unary_operator*;
+        if (UO->kind != unary_kind::neg) {
+            return false;
+        }
+        if (self->number_literal_can_be_converted(UO->value, expect_type)) {
+            n->resolved_type.reset_with(expect_type);
+            return true;
+        }
+        return false;
+    }
+
+    func nil_can_be_convered(self, n: ast*, expect_type: type*) -> bool {
+        if (!n->is(ast_kind::ast_nil_literal)) {
+            return false;
+        }
+        if (!expect_type->is_pointer()) {
+            return false;
+        }
+        n->resolved_type.reset_with(expect_type);
+        return true;
+    }
+
+    func check_can_be_converted(self, n: ast*, expect_type: type*) -> bool {
+        if (self->number_literal_can_be_converted(n, expect_type)) {
+            return true;
+        }
+        if (self->unary_number_can_be_converted(n, expect_type)) {
+            return true;
+        }
+        if (self->nil_can_be_convered(n, expect_type)) {
+            return true;
+        }
+        return false;
     }
 
     func resolve_definition(self, n: ast_definition*, func_self: colgm_func*) {
@@ -389,9 +465,56 @@ impl sema {
             return;
         }
 
-        // TODO
+        // with type declaration
         var expect_type = self->tr.resolve(n->type);
         var real_type = self->resolve_expression(n->value);
+        if (expect_type.is_error() || real_type.is_error()) {
+            expect_type.delete();
+            real_type.delete();
+            return;
+        }
+        if (expect_type.is_pointer() && real_type.is_pointer()) {
+            // if is not the same type pointer and cannot be automatically converted
+            // report a warning here
+            if (!expect_type.eq(real_type.__ptr__()) &&
+                !self->check_can_be_converted(n->value, expect_type.__ptr__())) {
+                var info = str::instance();
+                var expect_type_name = expect_type.full_path_name(self->pkg, true);
+                var real_type_name = real_type.full_path_name(self->pkg, true);
+                info.append_i8_vec("expect \"");
+                info.append_i8_vec(expect_type_name.c_str);
+                info.append_i8_vec("\", but get \"");
+                info.append_i8_vec(real_type_name.c_str);
+                self->err->warn(n->base.location, info.c_str);
+                info.delete();
+                expect_type_name.delete();
+                real_type_name.delete();
+            }
+        } else if (!expect_type.eq(real_type.__ptr__()) &&
+            !self->check_can_be_converted(n->value, expect_type.__ptr__())) {
+            var info = str::instance();
+            var expect_type_name = expect_type.full_path_name(self->pkg, true);
+            var real_type_name = real_type.full_path_name(self->pkg, true);
+            info.append_i8_vec("def: expect \"");
+            info.append_i8_vec(expect_type_name.c_str);
+            info.append_i8_vec("\", but get \"");
+            info.append_i8_vec(real_type_name.c_str);
+            self->err->warn(n->base.location, info.c_str);
+            info.delete();
+            expect_type_name.delete();
+            real_type_name.delete();
+        }
+
+        // if immutable, make sure the type is correct
+        if (real_type.is_immutable) {
+            n->base.resolved_type.reset_with(real_type.__ptr__());
+            self->ctx->add_local_var(name, real_type.__ptr__());
+            self->check_defined_variable_is_void(n, real_type.__ptr__());
+        } else {
+            n->base.resolved_type.reset_with(expect_type.__ptr__());
+            self->ctx->add_local_var(name, expect_type.__ptr__());
+            self->check_defined_variable_is_void(n, expect_type.__ptr__());
+        }
 
         expect_type.delete();
         real_type.delete();
