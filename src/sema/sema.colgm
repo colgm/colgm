@@ -596,7 +596,18 @@ impl sema {
     }
 
     func resolve_ret_stmt(self, n: ast_ret_stmt*, func_self: colgm_func*) {
+        if (n->value == nil && !func_self->return_type.is_void()) {
+            self->err->error(n->base.location, "expect non-void return value");
+            return;
+        }
+
+        if (n->value == nil) {
+            return;
+        }
+
+        var infer = self->resolve_expression(n->value);
         // TODO
+        infer.delete();
     }
 
     func resolve_statement(self, n: ast*, func_self: colgm_func*) {
