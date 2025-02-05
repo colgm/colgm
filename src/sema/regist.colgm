@@ -103,6 +103,7 @@ impl regist_pass {
             sym_info->kind = symbol_kind::struct_kind;
             sym_info->loc_file.append_str(dm->file_name.__ptr__());
             sym_info->is_public = i.value()->is_public;
+            self->ctx->global_symbol()->insert(name, sym_info);
             self->ctx->generic_symbol()->insert(name, sym_info);
             sym_info->delete();
             free(sym_info => i8*);
@@ -113,6 +114,7 @@ impl regist_pass {
             sym_info->kind = symbol_kind::func_kind;
             sym_info->loc_file.append_str(dm->file_name.__ptr__());
             sym_info->is_public = i.value()->is_public;
+            self->ctx->global_symbol()->insert(name, sym_info);
             self->ctx->generic_symbol()->insert(name, sym_info);
             sym_info->delete();
             free(sym_info => i8*);
@@ -175,10 +177,12 @@ impl regist_pass {
             } else if (dm->generic_structs.has(name)) {
                 sym_info->kind = symbol_kind::struct_kind;
                 sym_info->loc_file.append_str(dm->file_name.__ptr__());
+                self->ctx->global_symbol()->insert(name, sym_info);
                 self->ctx->generic_symbol()->insert(name, sym_info);
             } else if (dm->generic_functions.has(name)) {
                 sym_info->kind = symbol_kind::func_kind;
                 sym_info->loc_file.append_str(dm->file_name.__ptr__());
+                self->ctx->global_symbol()->insert(name, sym_info);
                 self->ctx->generic_symbol()->insert(name, sym_info);
             }
             sym_info->delete();

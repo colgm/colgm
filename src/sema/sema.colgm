@@ -16,6 +16,8 @@ use sema::structure::{ colgm_struct };
 use sema::function::{ colgm_func };
 use sema::context::{ sema_context };
 use sema::type::{ type };
+use sema::symbol_info::{ symbol_kind };
+use sema::module::{ colgm_module };
 use sema::type_resolve::{ type_resolve };
 
 use util::cli::{ cli_option };
@@ -174,7 +176,7 @@ impl sema {
 
     func resolve_comparison_operator(self, n: ast_binary_operator*) -> type {
         // TODO
-        return type::error_type();
+        return type::bool_type();
     }
 
     func resolve_logical_operator(self, n: ast_binary_operator*) -> type {
@@ -193,7 +195,6 @@ impl sema {
     }
 
     func resolve_binary_operator(self, n: ast_binary_operator*) -> type {
-        // TODO
         match (n->kind) {
             binary_kind::add => {
                 var ty = self->resolve_arithmetic_operator(n);
@@ -289,11 +290,69 @@ impl sema {
         return type_res;
     }
 
-    func resolve_call(self, n: ast_call*) -> type {
+    func resolve_identifier(self, n: ast_identifier*) -> type {
+        var name = n->content.__ptr__();
+        if (self->ctx->find_local(name)) {
+            return self->ctx->get_local(name)->copy_instance();
+        }
+
+        var dm: colgm_module* = nil;
+        var n_ast = n => ast*;
+        if (n_ast->is_redirected()) {
+            dm = self->ctx->get_domain(n_ast->redirect_location.__ptr__());
+        } else {
+            dm = self->ctx->get_domain(n_ast->location->file.__ptr__());
+        }
+
+        if (dm->global_symbol.has(name)) {
+            var sym_info = dm->global_symbol.get(name);
+            if (!sym_info->is_public) {
+                var info = str::from("\"");
+                info.append_str(name);
+                info.append_i8_vec("\" is not imported");
+                self->err->error(n_ast->location, info.c_str);
+                info.delete();
+                return type::error_type();
+            }
+
+            var result = type::instance();
+            result.name.append_str(name);
+            result.loc_file.append_str(sym_info->loc_file.__ptr__());
+            result.pointer_depth = 0;
+            result.is_global_sym = true;
+            result.is_global_func = sym_info->kind == symbol_kind::func_kind;
+            return result;
+        }
+
+        var info = str::from("undefined symbol \"");
+        info.append_str(name);
+        info.append_char('\"');
+        self->err->error(n_ast->location, info.c_str);
+        info.delete();
         return type::error_type();
     }
 
+    func resolve_call_identifier(self, n: ast_call_id*) -> type {
+        // TODO
+        var infer = self->resolve_identifier(n->id);
+        if (infer.is_error()) {
+            return infer;
+        }
+
+        return infer;
+    }
+
+    func resolve_call(self, n: ast_call*) -> type {
+        var infer = self->resolve_call_identifier(n->head);
+        if (infer.is_error()) {
+            return infer;
+        }
+
+        return infer;
+    }
+
     func resolve_assignment(self, n: ast_assignment*) -> type {
+        // TODO
         return type::error_type();
     }
 
@@ -524,8 +583,9 @@ impl sema {
         if (n->condition != nil) {
             var ty = self->resolve_expression(n->condition => ast*);
             if (!ty.is_bool() && !ty.is_error()) {
-                self->err->error(n->condition->location,
-                                 "condition must be bool");
+                // TODO: use error after finishing this part
+                self->err->warn(n->condition->location,
+                                "condition must be bool");
             }
             ty.delete();
         }
@@ -551,8 +611,9 @@ impl sema {
     func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func*) {
         var infer = self->resolve_expression(n->condition => ast*);
         if (!infer.is_bool() && !infer.is_error()) {
-            self->err->error(n->condition->location,
-                             "condition must be bool");
+            // TODO: use error after finishing this part
+            self->err->warn(n->condition->location,
+                            "condition must be bool");
         }
         infer.delete();
 
@@ -572,8 +633,9 @@ impl sema {
         if (n->condition != nil) {
             var ty = self->resolve_expression(n->condition => ast*);
             if (!ty.is_bool() && !ty.is_error()) {
-                self->err->error(n->condition->location,
-                                 "condition must be bool");
+                // TODO: use error after finishing this part
+                self->err->warn(n->condition->location,
+                                "condition must be bool");
             }
             ty.delete();
         }
