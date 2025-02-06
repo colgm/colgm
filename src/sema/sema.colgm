@@ -6,7 +6,7 @@ use std::libc::{ free, itoa };
 use std::math::{ isinf, isnan };
 use std::str::{ str };
 use std::ptr::{ ptr };
-use std::vec::{ primitive_vec };
+use std::vec::{ vec, primitive_vec };
 
 use package::{ package };
 
@@ -333,12 +333,68 @@ impl sema {
     }
 
     func resolve_call_identifier(self, n: ast_call_id*) -> type {
-        // TODO
         var infer = self->resolve_identifier(n->id);
         if (infer.is_error()) {
             return infer;
         }
 
+        if (n->generic_types != nil && !infer.is_global_sym) {
+            self->err->error(n->base.location,
+                "cannot instantiate generic type of non-global symbol"
+            );
+        }
+
+        if (n->generic_types != nil) {
+            var types = vec<type>::instance();
+            for (var i = n->generic_types->types.iter(); !i.is_end(); i = i.next()) {
+                var ty = self->tr.resolve(i.get().unwrap() => ast_type_def*);
+                types.push(ty.__ptr__());
+                ty.delete();
+            }
+            var name = n->id->content.copy_instance();
+            name.append_char('<');
+            for (var i = types.iter(); !i.is_end(); i = i.next()) {
+                var full_name = i.get()->full_path_name(self->pkg, true);
+                name.append_str(full_name.__ptr__());
+                full_name.delete();
+                name.append_char(',');
+            }
+            if (name.back() == ',') {
+                name.pop_back();
+            }
+            name.append_char('>');
+
+            if (!self->ctx->global->domain.has(infer.loc_file.__ptr__())) {
+                var info = str::from("namespace in \"");
+                info.append_str(infer.loc_file.__ptr__());
+                info.append_i8_vec("\" not found");
+                self->err->error(n->base.location, info.c_str);
+                info.delete();
+                name.delete();
+                types.delete();
+                return infer;
+            }
+
+            var dm = self->ctx->global->domain.get(infer.loc_file.__ptr__());
+            if (dm->structs.has(name.__ptr__()) ||
+                dm->functions.has(name.__ptr__())) {
+                infer.name.delete();
+                infer.name = n->id->content.copy_instance();
+                infer.generics.delete();
+                infer.generics = types.copy_instance();
+            } else {
+                var info = str::from("error resolving generic symbol \"");
+                info.append_str(name.__ptr__());
+                info.append_char('\"');
+                self->err->error(n->base.location, info.c_str);
+                info.delete();
+            }
+
+            name.delete();
+            types.delete();
+        }
+
+        n->base.resolved_type.reset_with(infer.__ptr__());
         return infer;
     }
 
@@ -700,6 +756,8 @@ impl sema {
                                      "continue statement is not in loop");
                 }
             }
+            // if statement only has one ';', the ast will be ast_null
+            ast_kind::ast_null => {}
             _ => { unreachable(); }
         }
     }
