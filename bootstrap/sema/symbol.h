@@ -127,6 +127,8 @@ public:
     bool is_function() const {
         return stm_info.flag_is_normal ||
                stm_info.flag_is_static ||
+               prm_info.flag_is_normal ||
+               prm_info.flag_is_static ||
                is_global_func;
     }
 

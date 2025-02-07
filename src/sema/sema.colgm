@@ -398,12 +398,120 @@ impl sema {
         return infer;
     }
 
+    func resolve_get_field(self, prev: type*, n: ast_get_field*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
+    func resolve_call_func_args(self, prev: type*, n: ast_call_func_args*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
+    func resolve_call_index(self, prev: type*, n: ast_call_index*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
+    func resolve_call_path(self, prev: type*, n: ast_call_path*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
+    func resolve_initializer(self, prev: type*, n: ast_initializer*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
+    func resolve_ptr_get_field(self, prev: type*, n: ast_ptr_get_field*) -> type {
+        // TODO
+        return type::error_type();
+    }
+
     func resolve_call(self, n: ast_call*) -> type {
         var infer = self->resolve_call_identifier(n->head);
         if (infer.is_error()) {
             return infer;
         }
 
+        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+            var c = i.get().unwrap();
+            if (c->kind != ast_kind::ast_call_func_args &&
+                infer.is_function()) {
+                self->err->error(c->location, "function should be called before");
+                infer.delete();
+                return type::error_type();
+            }
+
+            var prev = infer.copy_instance();
+            infer.delete();
+            match (c->kind) {
+                ast_kind::ast_get_field => {
+                    infer = self->resolve_get_field(
+                        prev.__ptr__(),
+                        c => ast_get_field*
+                    );
+                }
+                ast_kind::ast_call_func_args => {
+                    infer = self->resolve_call_func_args(
+                        prev.__ptr__(),
+                        c => ast_call_func_args*
+                    );
+                }
+                ast_kind::ast_call_index => {
+                    infer = self->resolve_call_index(
+                        prev.__ptr__(),
+                        c => ast_call_index*
+                    );
+                }
+                ast_kind::ast_call_path => {
+                    infer = self->resolve_call_path(
+                        prev.__ptr__(),
+                        c => ast_call_path*
+                    );
+                }
+                ast_kind::ast_initializer => {
+                    infer = self->resolve_initializer(
+                        prev.__ptr__(),
+                        c => ast_initializer*
+                    );
+                }
+                ast_kind::ast_ptr_get_field => {
+                    infer = self->resolve_ptr_get_field(
+                        prev.__ptr__(),
+                        c => ast_ptr_get_field*
+                    );
+                }
+                _ => {
+                    self->err->unimplemented(c->location);
+                    prev.delete();
+                    return type::error_type();
+                }
+            }
+            prev.delete();
+            if (infer.is_error()) {
+                return infer;
+            }
+        }
+
+        // infer should not be a function
+        if (infer.is_function()) {
+            self->err->error(n->base.location, "function should be called here");
+            infer.delete();
+            return type::error_type();
+        }
+
+        n->base.resolved_type.reset_with(infer.__ptr__());
+        // infer should not be a global symbol
+        if (infer.is_global_sym) {
+            var info = str::from("get global symbol \"");
+            var f_n = infer.full_path_name(self->pkg, true);
+            info.append_str(f_n.__ptr__());
+            info.append_i8_vec("\", but not an instance");
+            self->err->error(n->base.location, info.c_str);
+            f_n.delete();
+            info.delete();
+        }
         return infer;
     }
 

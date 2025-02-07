@@ -1032,11 +1032,7 @@ type semantic::resolve_call(call* node) {
             return infer;
         }
     }
-    if (infer.stm_info.flag_is_normal || infer.stm_info.flag_is_static) {
-        rp.report(node, "function should be called here.");
-        return type::error_type();
-    }
-    if (ctx.global.domain.at(ctx.this_file).functions.count(infer.name)) {
+    if (infer.is_function()) {
         rp.report(node, "function should be called here.");
         return type::error_type();
     }
