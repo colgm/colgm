@@ -515,8 +515,63 @@ impl sema {
         return infer;
     }
 
+    func check_valid_left_value(self, n: ast_call*) -> bool {
+        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+            var tmp = i.get().unwrap();
+            if (tmp->kind == ast_kind::ast_initializer) {
+                self->err->error(
+                    tmp->location,
+                    "bad left value: should not contain initializer"
+                );
+                return false;
+            }
+            if (tmp->kind == ast_kind::ast_call_path) {
+                self->err->error(
+                    tmp->location,
+                    "bad left value: should not contain call path"
+                );
+                return false;
+            }
+            if (tmp->kind == ast_kind::ast_call_func_args &&
+                i.index() == n->chain.size - 1) {
+                self->err->error(
+                    tmp->location,
+                    "bad left value: should not end with function call"
+                );
+                return false;
+            }
+        }
+
+        var seg: ast* = nil;
+        var maybe_invalid_assignment = false;
+        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+            var tmp = i.get().unwrap();
+            if (tmp->kind == ast_kind::ast_call_func_args &&
+                !tmp->resolved_type.is_pointer()) {
+                seg = tmp;
+                maybe_invalid_assignment = true;
+            } else if (tmp->kind == ast_kind::ast_ptr_get_field) {
+                maybe_invalid_assignment = false;
+            }
+        }
+
+        if (maybe_invalid_assignment && seg != nil) {
+            self->err->warn(
+                seg->location,
+                "function returning non-pointer type, will do shallow copy, may cause invalid assignment"
+            );
+        }
+        return true;
+    }
+
     func resolve_assignment(self, n: ast_assignment*) -> type {
         // TODO
+        var left = self->resolve_expression(n->left => ast*);
+        if (!self->check_valid_left_value(n->left)) {
+            left.delete();
+            return type::error_type();
+        }
+
         return type::error_type();
     }
 
@@ -747,8 +802,7 @@ impl sema {
         if (n->condition != nil) {
             var ty = self->resolve_expression(n->condition => ast*);
             if (!ty.is_bool() && !ty.is_error()) {
-                // TODO: use error after finishing this part
-                self->err->warn(n->condition->location,
+                self->err->error(n->condition->location,
                                 "condition must be bool");
             }
             ty.delete();
@@ -770,13 +824,20 @@ impl sema {
 
     func resolve_match_stmt(self, n: ast_match_stmt*, func_self: colgm_func*) {
         // TODO
+        var infer = self->resolve_expression(n->value);
+        // check error type
+        if (infer.is_error()) {
+            infer.delete();
+            return;
+        }
+
+        infer.delete();
     }
 
     func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func*) {
         var infer = self->resolve_expression(n->condition => ast*);
         if (!infer.is_bool() && !infer.is_error()) {
-            // TODO: use error after finishing this part
-            self->err->warn(n->condition->location,
+            self->err->error(n->condition->location,
                             "condition must be bool");
         }
         infer.delete();
@@ -797,8 +858,7 @@ impl sema {
         if (n->condition != nil) {
             var ty = self->resolve_expression(n->condition => ast*);
             if (!ty.is_bool() && !ty.is_error()) {
-                // TODO: use error after finishing this part
-                self->err->warn(n->condition->location,
+                self->err->error(n->condition->location,
                                 "condition must be bool");
             }
             ty.delete();
