@@ -398,8 +398,133 @@ impl sema {
         return infer;
     }
 
+    func check_pub_method(self,
+                          n: ast*,
+                          name: str*,
+                          struct_self: colgm_struct*) {
+        if (!struct_self->methods.has(name)) {
+            return;
+        }
+
+        var m = struct_self->methods.get(name);
+        if (m->is_public) {
+            return;
+        }
+
+        if (self->impl_struct_name.empty() ||
+            !self->impl_struct_name.eq(struct_self->name.__ptr__())) {
+            var info = str::from("cannot access private method \"");
+            info.append_str(struct_self->name.__ptr__());
+            info.append_i8_vec("::");
+            info.append_str(name);
+            info.append_i8_vec("\"");
+            self->err->error(n->location, info.c_str);
+            info.delete();
+        }
+    }
+
+    func struct_method_infer(self, prev: type*, fn_name: str*) -> type {
+        var infer = prev->copy_instance();
+        infer.pointer_depth = 0;
+        infer.is_global_sym = true;
+        infer.stm_info.flag_is_static = false;
+        infer.stm_info.flag_is_normal = true;
+        infer.stm_info.method_name.append_str(fn_name);
+        return infer;
+    }
+
     func resolve_get_field(self, prev: type*, n: ast_get_field*) -> type {
-        // TODO
+        var prev_name = prev->full_path_name(self->pkg, true);
+        var prev_name_for_search = prev->generic_name(self->pkg);
+
+        if (prev->is_global_sym) {
+            var info = str::from("cannot get field from global symbol \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        if (prev->is_pointer()) {
+            var info = str::from("cannot use \".\" to get field from pointer \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\". use \"->\" instead");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        // loc_file is empty means prev is native type
+        if (prev->loc_file.empty()) {
+            var info = str::from("cannot get method \"");
+            info.append_str(n->name.__ptr__());
+            info.append_i8_vec("\" from native type \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        if (!dm->structs.has(prev_name_for_search.__ptr__())) {
+            var info = str::from("cannot get field from \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+        if (struct_self->fields.has(n->name.__ptr__())) {
+            var infer = struct_self->fields.get(n->name.__ptr__())->copy_instance();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return infer;
+        }
+        if (struct_self->methods.has(n->name.__ptr__())) {
+            self->check_pub_method(n => ast*, n->name.__ptr__(), struct_self);
+            var infer = self->struct_method_infer(prev, n->name.__ptr__());
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return infer;
+        }
+
+        if (struct_self->static_methods.has(n->name.__ptr__())) {
+            var info = str::from("method \"");
+            info.append_str(n->name.__ptr__());
+            info.append_i8_vec("\" in \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\" is static");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        // TODO: fix __ptr__ not found error
+        // var info = str::from("cannot find field \"");
+        // info.append_str(n->name.__ptr__());
+        // info.append_i8_vec("\" in \"");
+        // info.append_str(prev_name_for_search.__ptr__());
+        // info.append_i8_vec("\"");
+        // self->err->error(n->base.location, info.c_str);
+        // info.delete();
+        prev_name.delete();
+        prev_name_for_search.delete();
         return type::error_type();
     }
 
@@ -424,7 +549,97 @@ impl sema {
     }
 
     func resolve_ptr_get_field(self, prev: type*, n: ast_ptr_get_field*) -> type {
-        // TODO
+        var prev_name = prev->full_path_name(self->pkg, true);
+        var prev_name_for_search = prev->generic_name(self->pkg);
+
+        if (prev->is_global_sym) {
+            var info = str::from("cannot get field from global symbol \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        if (prev->pointer_depth != 1) {
+            var info = str::from("cannot use \"->\" to get field from pointer \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        // loc_file is empty means prev is native type
+        if (prev->loc_file.empty()) {
+            var info = str::from("cannot get method \"");
+            info.append_str(n->name.__ptr__());
+            info.append_i8_vec("\" from native type \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        if (!dm->structs.has(prev_name_for_search.__ptr__())) {
+            var info = str::from("cannot get field from \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+        if (struct_self->fields.has(n->name.__ptr__())) {
+            var infer = struct_self->fields.get(n->name.__ptr__())->copy_instance();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return infer;
+        }
+        if (struct_self->methods.has(n->name.__ptr__())) {
+            self->check_pub_method(n => ast*, n->name.__ptr__(), struct_self);
+            var infer = self->struct_method_infer(prev, n->name.__ptr__());
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return infer;
+        }
+
+        if (struct_self->static_methods.has(n->name.__ptr__())) {
+            var info = str::from("method \"");
+            info.append_str(n->name.__ptr__());
+            info.append_i8_vec("\" in \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\" is static");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        // TODO: fix __ptr__ not found error
+        // var info = str::from("cannot find field \"");
+        // info.append_str(n->name.__ptr__());
+        // info.append_i8_vec("\" in \"");
+        // info.append_str(prev_name_for_search.__ptr__());
+        // info.append_i8_vec("\"");
+        // self->err->error(n->base.location, info.c_str);
+        // info.delete();
+        prev_name.delete();
+        prev_name_for_search.delete();
         return type::error_type();
     }
 

@@ -138,15 +138,14 @@ impl regist_pass {
             } else if (dm->generic_functions.has(name)) {
                 is_public = dm->generic_functions.get(name)->is_public;
             } else {
-                // do not report now
-                // var info = str::instance();
-                // info.append_i8_vec("cannot find symbol \"");
-                // info.append_str(name);
-                // info.append_i8_vec("\" in module \"");
-                // info.append_str(path);
-                // info.append_i8_vec("\"");
-                // self->err->error(name_node->base.location, info.c_str);
-                // info.delete();
+                var info = str::instance();
+                info.append_i8_vec("cannot find symbol \"");
+                info.append_str(name);
+                info.append_i8_vec("\" in module \"");
+                info.append_str(path);
+                info.append_i8_vec("\"");
+                self->err->error(name_node->base.location, info.c_str);
+                info.delete();
                 continue;
             }
 
@@ -745,6 +744,8 @@ impl regist_pass {
             struct_info->ordered_fields.push(sym.__ptr__());
             sym.delete();
         }
+
+        // TODO: regist __size__, __alloc__, __ptr__
 
         self->ctx->generics.clear();
     }
