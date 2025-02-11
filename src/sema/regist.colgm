@@ -745,9 +745,88 @@ impl regist_pass {
             sym.delete();
         }
 
-        // TODO: regist __size__, __alloc__, __ptr__
+        var struct_self_type = type::instance();
+        struct_self_type.name.append_str(name);
+        struct_self_type.loc_file.append_str(node->base.location->file.__ptr__());
+        if (node->generic_types != nil) {
+            for (var i = node->generic_types->types.iter(); !i.is_end(); i = i.next()) {
+                var gt = i.get().unwrap();
+                var ty = self->tr.resolve(gt => ast_type_def*);
+                struct_self_type.generics.push(ty.__ptr__());
+                ty.delete();
+            }
+        }
 
+        self->regist_struct_size_method(struct_info);
+        self->regist_struct_alloc_method(struct_info, struct_self_type.__ptr__());
+        self->regist_struct_ptr_method(struct_info, struct_self_type.__ptr__());
         self->ctx->generics.clear();
+
+        struct_self_type.delete();
+    }
+
+    func regist_struct_size_method(self, struct_info: colgm_struct*) {
+        var name = str::from("__size__");
+        var ret = type::u64_type();
+        var func_info = colgm_func::new(
+            name.__ptr__(),
+            struct_info->location.__ptr__(),
+            ret.__ptr__()
+        );
+        func_info->is_public = true;
+        struct_info->static_methods.insert(name.__ptr__(), func_info);
+
+        func_info->delete();
+        free(func_info => i8*);
+        name.delete();
+        ret.delete();
+    }
+
+    func regist_struct_alloc_method(self,
+                                    struct_info: colgm_struct*,
+                                    struct_self_type: type*) {
+        var name = str::from("__alloc__");
+        var ret = struct_self_type->copy_instance();
+        ret.pointer_depth += 1;
+
+        var func_info = colgm_func::new(
+            name.__ptr__(),
+            struct_info->location.__ptr__(),
+            ret.__ptr__()
+        );
+        func_info->is_public = true;
+        struct_info->static_methods.insert(name.__ptr__(), func_info);
+
+        func_info->delete();
+        free(func_info => i8*);
+        name.delete();
+        ret.delete();
+    }
+
+    func regist_struct_ptr_method(self,
+                                  struct_info: colgm_struct*,
+                                  struct_self_type: type*) {
+        var name = str::from("__ptr__");
+        var self_name = str::from("self");
+        var ret = struct_self_type->copy_instance();
+        ret.pointer_depth += 1;
+
+        var func_info = colgm_func::new(
+            name.__ptr__(),
+            struct_info->location.__ptr__(),
+            ret.__ptr__()
+        );
+        func_info->is_public = true;
+        func_info->param_name.push(self_name.__ptr__());
+        func_info->param_type.push(ret.__ptr__());
+        func_info->unordered_params.insert(self_name.__ptr__(), ret.__ptr__());
+        struct_info->methods.insert(name.__ptr__(), func_info);
+
+        func_info->delete();
+        free(func_info => i8*);
+        name.delete();
+        self_name.delete();
+        ret.delete();
     }
 
     func regist_single_struct_symbol(self, node: ast_struct_decl*) {
