@@ -774,7 +774,7 @@ impl regist_pass {
             ret.__ptr__()
         );
         func_info->is_public = true;
-        struct_info->static_methods.insert(name.__ptr__(), func_info);
+        struct_info->static_method.insert(name.__ptr__(), func_info);
 
         func_info->delete();
         free(func_info => i8*);
@@ -795,7 +795,7 @@ impl regist_pass {
             ret.__ptr__()
         );
         func_info->is_public = true;
-        struct_info->static_methods.insert(name.__ptr__(), func_info);
+        struct_info->static_method.insert(name.__ptr__(), func_info);
 
         func_info->delete();
         free(func_info => i8*);
@@ -820,7 +820,7 @@ impl regist_pass {
         func_info->param_name.push(self_name.__ptr__());
         func_info->param_type.push(ret.__ptr__());
         func_info->unordered_params.insert(self_name.__ptr__(), ret.__ptr__());
-        struct_info->methods.insert(name.__ptr__(), func_info);
+        struct_info->method.insert(name.__ptr__(), func_info);
 
         func_info->delete();
         free(func_info => i8*);
@@ -995,10 +995,10 @@ impl regist_pass {
         if (struct_info->fields.has(name)) {
             return false;
         }
-        if (struct_info->static_methods.has(name)) {
+        if (struct_info->static_method.has(name)) {
             return false;
         }
-        if (struct_info->methods.has(name)) {
+        if (struct_info->method.has(name)) {
             return false;
         }
         return true;
@@ -1069,7 +1069,7 @@ impl regist_pass {
 
         self->generate_self_type_node(struct_info, node);
         self->generate_function_params(func_info, node, false);
-        struct_info->methods.insert(name, func_info);
+        struct_info->method.insert(name, func_info);
         func_info->delete();
         free(func_info => i8*);
     }
@@ -1109,7 +1109,7 @@ impl regist_pass {
         }
 
         self->generate_function_params(func_info, node, false);
-        struct_info->static_methods.insert(name, func_info);
+        struct_info->static_method.insert(name, func_info);
         func_info->delete();
         free(func_info => i8*);
     }

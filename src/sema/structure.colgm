@@ -18,8 +18,8 @@ pub struct colgm_struct {
     location: span,
     fields: hashmap<str, type>,
     ordered_fields: vec<symbol>,
-    static_methods: hashmap<str, colgm_func>,
-    methods: hashmap<str, colgm_func>,
+    static_method: hashmap<str, colgm_func>,
+    method: hashmap<str, colgm_func>,
 
     generic_template: vec<str>,
     generic_struct_decl: ast_struct_decl*,
@@ -39,8 +39,8 @@ impl colgm_struct {
         res->location = loc->copy_instance();
         res->fields = hashmap<str, type>::instance();
         res->ordered_fields = vec<symbol>::instance();
-        res->static_methods = hashmap<str, colgm_func>::instance();
-        res->methods = hashmap<str, colgm_func>::instance();
+        res->static_method = hashmap<str, colgm_func>::instance();
+        res->method = hashmap<str, colgm_func>::instance();
         res->generic_template = vec<str>::instance();
         res->generic_struct_decl = nil;
         res->generic_struct_impl = primitive_vec<ptr<ast_impl>>::instance();
@@ -54,8 +54,8 @@ impl colgm_struct {
         self->location.delete();
         self->fields.delete();
         self->ordered_fields.delete();
-        self->static_methods.delete();
-        self->methods.delete();
+        self->static_method.delete();
+        self->method.delete();
         self->generic_template.delete();
         if (self->generic_struct_decl != nil) {
             var to_ast = self->generic_struct_decl => ast*;
@@ -77,8 +77,8 @@ impl colgm_struct {
         res->location = self->location.copy_instance();
         res->fields = self->fields.copy_instance();
         res->ordered_fields = self->ordered_fields.copy_instance();
-        res->static_methods = self->static_methods.copy_instance();
-        res->methods = self->methods.copy_instance();
+        res->static_method = self->static_method.copy_instance();
+        res->method = self->method.copy_instance();
         res->generic_template = self->generic_template.copy_instance();
         if (self->generic_struct_decl != nil) {
             res->generic_struct_decl = self->generic_struct_decl->copy();
@@ -124,8 +124,8 @@ impl colgm_struct {
         }
 
         if (self->ordered_fields.empty() &&
-            self->static_methods.empty() &&
-            self->methods.empty()) {
+            self->static_method.empty() &&
+            self->method.empty()) {
             out.out(" {}\n");
             return;
         }
@@ -136,10 +136,10 @@ impl colgm_struct {
             field->sym_type.dump(out, pkg);
             out.out("\n");
         }
-        for (var i = self->methods.iter(); !i.is_end(); i = i.next()) {
+        for (var i = self->method.iter(); !i.is_end(); i = i.next()) {
             i.value()->dump(out, pkg, "  ");
         }
-        for (var i = self->static_methods.iter(); !i.is_end(); i = i.next()) {
+        for (var i = self->static_method.iter(); !i.is_end(); i = i.next()) {
             i.value()->dump(out, pkg, "  ");
         }
         out.out("  }\n");
