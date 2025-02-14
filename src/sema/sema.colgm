@@ -552,7 +552,9 @@ impl sema {
         // static method call of native type
         if (prev->prm_info.flag_is_static) {
             var primitive = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
-
+            var method = primitive->static_method.get(
+                prev->prm_info.method_name.__ptr__()
+            );
             prev_name_for_search.delete();
             return type::error_type();
         }
@@ -561,6 +563,9 @@ impl sema {
         if (prev->stm_info.flag_is_static) {
             var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
             var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+            var method = struct_self->static_method.get(
+                prev->stm_info.method_name.__ptr__()
+            );
 
             prev_name_for_search.delete();
             return type::error_type();
@@ -570,6 +575,9 @@ impl sema {
         if (prev->stm_info.flag_is_normal) {
             var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
             var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+            var method = struct_self->method.get(
+                prev->stm_info.method_name.__ptr__()
+            );
 
             prev_name_for_search.delete();
             return type::error_type();
