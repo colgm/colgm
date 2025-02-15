@@ -537,6 +537,90 @@ impl sema {
         return type::error_type();
     }
 
+    func check_static_call_args(self,
+                                func_self: colgm_func*,
+                                n: ast_call_func_args*) {
+        if (func_self->unordered_params.size != n->args.size) {
+            var info = str::from("expect ");
+            var buff = [i8; 256];
+            itoa(func_self->unordered_params.size => i64, buff, 10);
+            info.append_i8_vec(buff);
+            info.append_i8_vec(" argument(s), but got ");
+            itoa(n->args.size => i64, buff, 10);
+            info.append_i8_vec(buff);
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        for (var i = n->args.iter(); !i.is_end(); i = i.next()) {
+            var arg = i.get().unwrap();
+            var infer = self->resolve_expression(arg);
+            if (infer.is_error()) {
+                infer.delete();
+                continue;
+            }
+            var param = func_self->param_type.get(i.index());
+            if (!infer.eq(param)) {
+                if (!self->check_can_be_converted(arg, param)) {
+                    var info = str::from("expect \"");
+                    var param_name = param->full_path_name(self->pkg, true);
+                    info.append_str(param_name.__ptr__());
+                    info.append_i8_vec("\" but got \"");
+                    var infer_name = infer.full_path_name(self->pkg, true);
+                    info.append_str(infer_name.__ptr__());
+                    info.append_i8_vec("\"");
+                    self->err->error(arg->location, info.c_str);
+                    info.delete();
+                    param_name.delete();
+                    infer_name.delete();
+                }
+            }
+        }
+    }
+
+    func check_method_call_args(self,
+                                func_self: colgm_func*,
+                                n: ast_call_func_args*) {
+        if (func_self->unordered_params.size != n->args.size + 1) {
+            var info = str::from("expect ");
+            var buff = [i8; 256];
+            itoa((func_self->unordered_params.size - 1) => i64, buff, 10);
+            info.append_i8_vec(buff);
+            info.append_i8_vec(" argument(s), but got ");
+            itoa(n->args.size => i64, buff, 10);
+            info.append_i8_vec(buff);
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            return;
+        }
+
+        for (var i = n->args.iter(); !i.is_end(); i = i.next()) {
+            var arg = i.get().unwrap();
+            var infer = self->resolve_expression(arg);
+            if (infer.is_error()) {
+                infer.delete();
+                continue;
+            }
+            var param = func_self->param_type.get(i.index() + 1);
+            if (!infer.eq(param)) {
+                if (!self->check_can_be_converted(arg, param)) {
+                    var info = str::from("expect \"");
+                    var param_name = param->full_path_name(self->pkg, true);
+                    info.append_str(param_name.__ptr__());
+                    info.append_i8_vec("\" but got \"");
+                    var infer_name = infer.full_path_name(self->pkg, true);
+                    info.append_str(infer_name.__ptr__());
+                    info.append_i8_vec("\"");
+                    self->err->error(arg->location, info.c_str);
+                    info.delete();
+                    param_name.delete();
+                    infer_name.delete();
+                }
+            }
+        }
+    }
+
     func resolve_call_func_args(self, prev: type*, n: ast_call_func_args*) -> type {
         // TODO
         var prev_name_for_search = prev->generic_name(self->pkg);
@@ -544,9 +628,11 @@ impl sema {
         if (prev->is_global_func) {
             var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
             var func_self = dm->functions.get(prev_name_for_search.__ptr__());
-
+            self->check_static_call_args(func_self, n);
             prev_name_for_search.delete();
-            return type::error_type();
+            var infer = func_self->return_type.copy_instance();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
         }
 
         // static method call of native type
@@ -555,8 +641,11 @@ impl sema {
             var method = primitive->static_method.get(
                 prev->prm_info.method_name.__ptr__()
             );
+            self->check_static_call_args(method, n);
             prev_name_for_search.delete();
-            return type::error_type();
+            var infer = method->return_type.copy_instance();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
         }
 
         // static method call of struct
@@ -566,9 +655,11 @@ impl sema {
             var method = struct_self->static_method.get(
                 prev->stm_info.method_name.__ptr__()
             );
-
+            self->check_static_call_args(method, n);
             prev_name_for_search.delete();
-            return type::error_type();
+            var infer = method->return_type.copy_instance();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
         }
 
         // normal method call of struct
@@ -578,9 +669,11 @@ impl sema {
             var method = struct_self->method.get(
                 prev->stm_info.method_name.__ptr__()
             );
-
+            self->check_method_call_args(method, n);
             prev_name_for_search.delete();
-            return type::error_type();
+            var infer = method->return_type.copy_instance();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
         }
 
         self->err->error(n->base.location, "cannot call non-function");
