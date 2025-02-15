@@ -622,7 +622,6 @@ void semantic::check_static_call_args(const colgm_func& func,
 }
 
 void semantic::check_method_call_args(const colgm_func& func,
-                                      const type& self,
                                       call_func_args* node) {
     if (func.parameters.size()!=node->get_args().size()+1) {
         rp.report(node,
@@ -631,14 +630,6 @@ void semantic::check_method_call_args(const colgm_func& func,
             "."
         );
         return;
-    }
-
-    // make sure self is correct, should be unreachable
-    if (!self.eq_no_ptr(func.parameters[0].symbol_type)) {
-        rp.report(node,
-            "self should be \"" + func.parameters[0].symbol_type.to_string() +
-            "\" but get \"" + self.to_string() + "\"."
-        );
     }
 
     // check args
@@ -763,7 +754,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         }
         const auto& st = domain.structs.at(prev.name_for_search());
         const auto& method = st.method.at(prev.stm_info.method_name);
-        check_method_call_args(method, prev, node);
+        check_method_call_args(method, node);
         node->set_resolve_type(method.return_type);
         return method.return_type;
     }

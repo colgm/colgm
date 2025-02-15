@@ -67,7 +67,7 @@ private:
     void check_pub_static_method(node*, const std::string&, const colgm_struct&);
     type resolve_get_field(const type&, get_field*);
     void check_static_call_args(const colgm_func&, call_func_args*);
-    void check_method_call_args(const colgm_func&, const type&, call_func_args*);
+    void check_method_call_args(const colgm_func&, call_func_args*);
     type resolve_call_id(call_id*);
     type resolve_call_func_args(const type&, call_func_args*);
     type resolve_call_index(const type&, call_index*);
