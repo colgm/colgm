@@ -710,6 +710,17 @@ impl sema {
 
         // resolve index infer, not necessary to check if it is error type
         var index_infer = self->resolve_expression(n->index);
+        if (!index_infer.is_error()) {
+            if (!index_infer.is_integer() || index_infer.is_pointer()) {
+                var info = str::from("cannot get index with \"");
+                var ii_name = index_infer.full_path_name(self->pkg, true);
+                info.append_str(ii_name.__ptr__());
+                info.append_i8_vec("\"");
+                self->err->error(n->base.location, info.c_str);
+                info.delete();
+                ii_name.delete();
+            }
+        }
         index_infer.delete();
 
         var infer = prev->copy_instance();

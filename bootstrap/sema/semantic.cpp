@@ -776,7 +776,16 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
         );
         return type::error_type();
     }
-    resolve_expression(node->get_index());
+
+    auto index_infer = resolve_expression(node->get_index());
+    if (!index_infer.is_error()) {
+        if (!index_infer.is_integer() || index_infer.is_pointer()) {
+            rp.report(node,
+                "cannot get index with \"" + index_infer.to_string() + "\"."
+            );
+        }
+    }
+
     auto result = prev.get_ref_copy();
     if (result.is_immutable) {
         result.is_immutable = false;
