@@ -137,17 +137,62 @@ impl sema {
     }
 
     func resolve_unary_neg(self, n: ast_unary_operator*) -> type {
-        // TODO
-        return type::error_type();
+        var infer = self->resolve_expression(n->value);
+        if (infer.is_error()) {
+            return infer;
+        }
+        if (!infer.is_integer() && !infer.is_float()) {
+            var info = str::from("expect integer or float but get \"");
+            var i_name = infer.full_path_name(self->pkg, true);
+            info.append_str(i_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            i_name.delete();
+            infer.delete();
+            return type::error_type();
+        }
+        return infer;
     }
 
     func resolve_unary_bnot(self, n: ast_unary_operator*) -> type {
-        // TODO
-        return type::error_type();
+        var infer = self->resolve_expression(n->value);
+        if (infer.is_error()) {
+            return infer;
+        }
+        if (!infer.is_integer() || infer.is_pointer()) {
+            var info = str::from("bitwise operator cannot be used on \"");
+            var i_name = infer.full_path_name(self->pkg, true);
+            info.append_str(i_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            i_name.delete();
+            infer.delete();
+            return type::error_type();
+        }
+        return infer;
     }
 
     func resolve_unary_lnot(self, n: ast_unary_operator*) -> type {
-        // TODO
+        var infer = self->resolve_expression(n->value);
+        // do not report if get error type,
+        // because the related error is reported before
+        if (infer.is_error()) {
+            infer.delete();
+            return type::bool_type();
+        }
+        if (!infer.is_bool() || infer.is_pointer()) {
+            var info = str::from("logical operator cannot be used on \"");
+            var i_name = infer.full_path_name(self->pkg, true);
+            info.append_str(i_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            i_name.delete();
+            infer.delete();
+            return type::bool_type();
+        }
         return type::bool_type();
     }
 
@@ -845,6 +890,16 @@ impl sema {
 
     func resolve_initializer(self, prev: type*, n: ast_initializer*) -> type {
         // TODO
+        if (!prev->is_global_sym) {
+            self->err->error(n->base.location, "need a global symbol to initialize");
+            return type::error_type();
+        }
+        if (prev->loc_file.empty()) {
+            self->err->error(n->base.location,
+                "basic type cannot be initialized as a struct"
+            );
+            return type::error_type();
+        }
         return type::error_type();
     }
 

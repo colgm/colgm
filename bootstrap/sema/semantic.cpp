@@ -329,6 +329,9 @@ type semantic::resolve_binary_operator(binary_operator* node) {
 
 type semantic::resolve_unary_neg(unary_operator* node) {
     const auto value = resolve_expression(node->get_value());
+    if (value.is_error()) {
+        return value;
+    }
     if (!value.is_integer() && !value.is_float()) {
         rp.report(node,
             "expect integer or float but get \"" + value.to_string() + "\"."
@@ -339,7 +342,10 @@ type semantic::resolve_unary_neg(unary_operator* node) {
 
 type semantic::resolve_unary_bnot(unary_operator* node) {
     const auto value = resolve_expression(node->get_value());
-    if (!value.is_integer()) {
+    if (value.is_error()) {
+        return value;
+    }
+    if (!value.is_integer() || value.is_pointer()) {
         rp.report(node->get_value(),
             "bitwise operator cannot be used on \"" + value.to_string() + "\"."
         );
@@ -353,7 +359,7 @@ type semantic::resolve_unary_lnot(unary_operator* node) {
     if (value.is_error()) {
         return type::bool_type();
     }
-    if (!value.is_boolean()) {
+    if (!value.is_boolean() || value.is_pointer()) {
         rp.report(node->get_value(),
             "logical operator cannot be used on \"" + value.to_string() + "\"."
         );
