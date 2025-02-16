@@ -1462,15 +1462,18 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
         return;
     }
     const auto infer = resolve_expression(node->get_value());
+    if (infer.is_error()) {
+        return;
+    }
     if (infer.is_pointer() && func_self.return_type.is_pointer()) {
-        if (infer != func_self.return_type && infer != type::error_type() &&
+        if (infer != func_self.return_type &&
             !check_can_be_converted(node->get_value(), func_self.return_type)) {
             rp.warn(node,
                 "expected return type \"" + func_self.return_type.to_string() +
                 "\" but get \"" + infer.to_string() + "\"."
             );
         }
-    } else if (infer!=func_self.return_type && infer!=type::error_type()) {
+    } else if (infer != func_self.return_type) {
         if (!check_can_be_converted(node->get_value(), func_self.return_type)) {
             rp.report(node,
                 "expected return type \"" +

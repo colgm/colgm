@@ -545,7 +545,7 @@ impl sema {
             var buff = [i8; 256];
             itoa(func_self->unordered_params.size => i64, buff, 10);
             info.append_i8_vec(buff);
-            info.append_i8_vec(" argument(s), but got ");
+            info.append_i8_vec(" argument(s), but get ");
             itoa(n->args.size => i64, buff, 10);
             info.append_i8_vec(buff);
             self->err->error(n->base.location, info.c_str);
@@ -566,7 +566,7 @@ impl sema {
                     var info = str::from("expect \"");
                     var param_name = param->full_path_name(self->pkg, true);
                     info.append_str(param_name.__ptr__());
-                    info.append_i8_vec("\" but got \"");
+                    info.append_i8_vec("\" but get \"");
                     var infer_name = infer.full_path_name(self->pkg, true);
                     info.append_str(infer_name.__ptr__());
                     info.append_i8_vec("\"");
@@ -587,7 +587,7 @@ impl sema {
             var buff = [i8; 256];
             itoa((func_self->unordered_params.size - 1) => i64, buff, 10);
             info.append_i8_vec(buff);
-            info.append_i8_vec(" argument(s), but got ");
+            info.append_i8_vec(" argument(s), but get ");
             itoa(n->args.size => i64, buff, 10);
             info.append_i8_vec(buff);
             self->err->error(n->base.location, info.c_str);
@@ -608,7 +608,7 @@ impl sema {
                     var info = str::from("expect \"");
                     var param_name = param->full_path_name(self->pkg, true);
                     info.append_str(param_name.__ptr__());
-                    info.append_i8_vec("\" but got \"");
+                    info.append_i8_vec("\" but get \"");
                     var infer_name = infer.full_path_name(self->pkg, true);
                     info.append_str(infer_name.__ptr__());
                     info.append_i8_vec("\"");
@@ -622,7 +622,6 @@ impl sema {
     }
 
     func resolve_call_func_args(self, prev: type*, n: ast_call_func_args*) -> type {
-        // TODO
         var prev_name_for_search = prev->generic_name(self->pkg);
         // global function call
         if (prev->is_global_func) {
@@ -1363,7 +1362,40 @@ impl sema {
         }
 
         var infer = self->resolve_expression(n->value);
-        // TODO
+        if (infer.is_error()) {
+            infer.delete();
+            return;
+        }
+        if (infer.is_pointer() && func_self->return_type.is_pointer()) {
+            if (!func_self->return_type.eq(infer.__ptr__()) &&
+                !self->check_can_be_converted(n->value, func_self->return_type.__ptr__())) {
+                var info = str::from("expected return type \"");
+                var expect_type_name = func_self->return_type.full_path_name(self->pkg, true);
+                info.append_i8_vec(expect_type_name.c_str);
+                info.append_i8_vec("\", but get \"");
+                var real_type_name = infer.full_path_name(self->pkg, true);
+                info.append_i8_vec(real_type_name.c_str);
+                info.append_i8_vec("\"");
+                self->err->warn(n->base.location, info.c_str);
+                expect_type_name.delete();
+                real_type_name.delete();
+                info.delete();
+            }
+        } else if (!func_self->return_type.eq(infer.__ptr__())) {
+            if (!self->check_can_be_converted(n->value, func_self->return_type.__ptr__())) {
+                var info = str::from("expected return type \"");
+                var expect_type_name = func_self->return_type.full_path_name(self->pkg, true);
+                info.append_i8_vec(expect_type_name.c_str);
+                info.append_i8_vec("\", but get \"");
+                var real_type_name = infer.full_path_name(self->pkg, true);
+                info.append_i8_vec(real_type_name.c_str);
+                info.append_i8_vec("\"");
+                self->err->error(n->base.location, info.c_str);
+                expect_type_name.delete();
+                real_type_name.delete();
+                info.delete();
+            }
+        }
         infer.delete();
     }
 
