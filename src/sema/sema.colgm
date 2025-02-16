@@ -11,6 +11,7 @@ use std::vec::{ vec, primitive_vec };
 use package::{ package };
 
 use ast::ast::*;
+use ast::dumper::{ ast_dumper };
 
 use sema::structure::{ colgm_struct };
 use sema::function::{ colgm_func };
@@ -221,21 +222,41 @@ impl sema {
 
     func resolve_comparison_operator(self, n: ast_binary_operator*) -> type {
         // TODO
+        var left = self->resolve_expression(n->left);
+        var right = self->resolve_expression(n->right);
+
+        left.delete();
+        right.delete();
         return type::bool_type();
     }
 
     func resolve_logical_operator(self, n: ast_binary_operator*) -> type {
         // TODO
+        var left = self->resolve_expression(n->left);
+        var right = self->resolve_expression(n->right);
+
+        left.delete();
+        right.delete();
         return type::error_type();
     }
 
     func resolve_arithmetic_operator(self, n: ast_binary_operator*) -> type {
         // TODO
+        var left = self->resolve_expression(n->left);
+        var right = self->resolve_expression(n->right);
+
+        left.delete();
+        right.delete();
         return type::error_type();
     }
 
     func resolve_bitwise_operator(self, n: ast_binary_operator*) -> type {
         // TODO
+        var left = self->resolve_expression(n->left);
+        var right = self->resolve_expression(n->right);
+
+        left.delete();
+        right.delete();
         return type::error_type();
     }
 
@@ -1141,8 +1162,14 @@ impl sema {
             left.delete();
             return type::error_type();
         }
+        var right = self->resolve_expression(n->right);
 
-        return type::error_type();
+        left.delete();
+        right.delete();
+
+        var infer = type::restrict_type();
+        n->base.resolved_type.reset_with(infer.__ptr__());
+        return infer;
     }
 
     func resolve_expression(self, n: ast*) -> type {
@@ -1753,5 +1780,14 @@ impl sema {
         }
         self->report_top_level_block_has_no_return(node->body, method_self);
         self->ctx->pop_scope_level();
+    }
+}
+
+impl sema {
+    pub func view_resolved_ast(self, out: io) {
+        var dumper = ast_dumper::instance();
+        dumper.pkg = self->pkg;
+        dumper.dump(self->root => ast*, out);
+        dumper.delete();
     }
 }

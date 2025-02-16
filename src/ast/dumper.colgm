@@ -2,6 +2,9 @@ use ast::ast::*;
 use std::str::{ str };
 use std::io::{ io };
 
+use sema::type::{ type };
+use package::{ package };
+
 enum indent_state {
     indent_none,
     indent_middle,
@@ -10,13 +13,15 @@ enum indent_state {
 }
 
 pub struct ast_dumper {
-    indent: str
+    indent: str,
+    pkg: package*
 }
 
 impl ast_dumper {
     func instance() -> ast_dumper {
         var res = ast_dumper {
-            indent: str::instance()
+            indent: str::instance(),
+            pkg: nil
         };
         res.indent.clear();
         return res;
@@ -94,6 +99,14 @@ impl ast_dumper {
             self->indent.append_i8_vec("|--");
         }
         out.out(self->indent.c_str);
+    }
+
+    func dump_resolved_type(self, out: io, ty: type*) {
+        if (self->pkg == nil || ty == nil || ty->name.empty()) {
+            return;
+        }
+        var name = ty->full_path_name(self->pkg, true);
+        out.cyan().out("[resolved: ").out(name.c_str).out("] ").reset();
     }
 }
 
@@ -258,6 +271,7 @@ impl ast_dumper {
     func dump_unary_operator(self, node: ast_unary_operator*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("unary-operator ");
         match (node->kind) {
             unary_kind::neg => out.cyan().out("-").reset();
@@ -276,6 +290,7 @@ impl ast_dumper {
     func dump_binary_operator(self, node: ast_binary_operator*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("binary-operator ");
         match (node->kind) {
             binary_kind::add => out.cyan().out("+").reset();
@@ -308,6 +323,7 @@ impl ast_dumper {
     func dump_type_convert(self, node: ast_type_convert*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("type-convert -> ");
         node->base.location->dump(out);
 
@@ -321,6 +337,7 @@ impl ast_dumper {
     func dump_identifier(self, node: ast_identifier*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("identifier ")
            .green().out(node->content.c_str).reset()
            .out(" -> ");
@@ -330,6 +347,7 @@ impl ast_dumper {
     func dump_nil_literal(self, node: ast_nil_literal*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("nil-literal ")
            .orange().out("nil").reset().out(" -> ");
         node->base.location->dump(out);
@@ -338,6 +356,7 @@ impl ast_dumper {
     func dump_number_literal(self, node: ast_number_literal*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("number-literal ")
            .orange().out(node->literal.c_str).reset().out(" -> ");
         node->base.location->dump(out);
@@ -346,6 +365,7 @@ impl ast_dumper {
     func dump_string_literal(self, node: ast_string_literal*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         var tmp = ast_dumper::llvm_raw_string(node->literal);
         out.out("string-literal ")
            .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
@@ -356,6 +376,7 @@ impl ast_dumper {
     func dump_char_literal(self, node: ast_char_literal*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         var tmp = ast_dumper::llvm_raw_string(node->literal);
         out.out("char-literal: ")
            .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
@@ -366,6 +387,7 @@ impl ast_dumper {
     func dump_bool_literal(self, node: ast_bool_literal*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("bool-literal ");
         if (node->flag) {
             out.orange().out("true").reset();
@@ -379,6 +401,7 @@ impl ast_dumper {
     func dump_array_literal(self, node: ast_array_literal*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("array-literal -> ");
         node->base.location->dump(out);
 
@@ -392,6 +415,7 @@ impl ast_dumper {
     func dump_call_index(self, node: ast_call_index*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("call-index -> ");
         node->base.location->dump(out);
         self->push_indent();
@@ -403,6 +427,7 @@ impl ast_dumper {
     func dump_call_func_args(self, node: ast_call_func_args*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("call-func-args -> ");
         node->base.location->dump(out);
 
@@ -419,6 +444,7 @@ impl ast_dumper {
     func dump_get_field(self, node: ast_get_field*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("get-field ")
            .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
@@ -427,6 +453,7 @@ impl ast_dumper {
     func dump_ptr_get_field(self, node: ast_ptr_get_field*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("ptr-get-field ")
            .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location->dump(out);
@@ -435,6 +462,7 @@ impl ast_dumper {
     func dump_init_pair(self, node: ast_init_pair*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("init-pair ");
         out.green().out(node->field->content.c_str).reset();
         out.out(" -> ");
@@ -449,6 +477,7 @@ impl ast_dumper {
     func dump_initializer(self, node: ast_initializer*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("initializer -> ");
         node->base.location->dump(out);
 
@@ -465,6 +494,7 @@ impl ast_dumper {
     func dump_call_path(self, node: ast_call_path*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("call-path ")
            .green().out(node->name.c_str).reset()
            .out(" -> ");
@@ -474,6 +504,7 @@ impl ast_dumper {
     func dump_call_id(self, node: ast_call_id*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("call-id ");
         out.green().out(node->id->content.c_str).reset().out(" ");
         node->base.location->dump(out);
@@ -489,6 +520,7 @@ impl ast_dumper {
     func dump_call(self, node: ast_call*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("call -> ");
         node->base.location->dump(out);
 
@@ -511,6 +543,7 @@ impl ast_dumper {
     func dump_assignment(self, node: ast_assignment*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("assignment ");
         match (node->kind) {
             assignment_kind::eq => out.cyan().out("=").reset();
@@ -874,6 +907,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("match -> ");
         node->base.location->dump(out);
+
         self->push_indent();
         self->dump(node->value, out);
         for (var index: u64 = 0; index < node->cases.size; index += 1) {
@@ -924,6 +958,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("in-stmt-expr -> ");
         node->base.location->dump(out);
+
         self->push_indent();
         self->set_last();
         self->dump(node->value, out);
@@ -963,6 +998,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("code-block -> ");
         node->base.location->dump(out);
+
         self->push_indent();
         for (var index: u64 = 0; index < node->stmts.size; index += 1) {
             if (index == node->stmts.size - 1) {
