@@ -323,13 +323,48 @@ impl sema {
     }
 
     func resolve_logical_operator(self, n: ast_binary_operator*) -> type {
-        // TODO
         var left = self->resolve_expression(n->left);
         var right = self->resolve_expression(n->right);
+        if (left.is_error() || !right.is_error()) {
+            left.delete();
+            right.delete();
+            var infer = type::bool_type();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
+        }
+
+        if (left.is_bool() && right.is_bool()) {
+            left.delete();
+            right.delete();
+            var infer = type::bool_type();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
+        }
+
+        if (!left.is_bool()) {
+            var info = str::from("expect \"bool\" but get \"");
+            var name = left.full_path_name(self->pkg, true);
+            info.append_str(name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->left->location, info.c_str);
+            info.delete();
+            name.delete();
+        }
+        if (!right.is_bool()) {
+            var info = str::from("expect \"bool\" but get \"");
+            var name = right.full_path_name(self->pkg, true);
+            info.append_str(name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->right->location, info.c_str);
+            info.delete();
+            name.delete();
+        }
 
         left.delete();
         right.delete();
-        return type::error_type();
+        var infer = type::bool_type();
+        n->base.resolved_type.reset_with(infer.__ptr__());
+        return infer;
     }
 
     func resolve_arithmetic_operator(self, n: ast_binary_operator*) -> type {
@@ -1002,7 +1037,6 @@ impl sema {
     }
 
     func resolve_initializer(self, prev: type*, n: ast_initializer*) -> type {
-        // TODO
         if (!prev->is_global_sym) {
             self->err->error(n->base.location, "need a global symbol to initialize");
             return type::error_type();
@@ -1013,7 +1047,64 @@ impl sema {
             );
             return type::error_type();
         }
-        return type::error_type();
+
+        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        if (!dm->structs.has(prev_name_for_search.__ptr__())) {
+            var info = str::from("\"");
+            info.append_str(prev_name_for_search.__ptr__());
+            info.append_i8_vec("\" is not a struct type, cannot initialize");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        }
+
+        var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+        for (var i = n->pairs.iter(); !i.is_end(); i = i.next()) {
+            var tmp = i.get().unwrap() => ast_init_pair*;
+            var field = tmp->field->content.__ptr__();
+            if (!struct_self->fields.has(field)) {
+                var info = str::from("cannot find field \"");
+                info.append_str(field);
+                info.append_i8_vec("\" in \"");
+                info.append_str(prev_name_for_search.__ptr__());
+                info.append_i8_vec("\"");
+                self->err->error(tmp->base.location, info.c_str);
+                info.delete();
+                continue;
+            }
+
+            var infer = self->resolve_expression(tmp->value);
+            tmp->base.resolved_type.reset_with(infer.__ptr__());
+            if (infer.is_error()) {
+                infer.delete();
+                continue;
+            }
+
+            var expect = struct_self->fields.get(field);
+            if (!infer.eq(expect)) {
+                if (!self->check_can_be_converted(tmp->value, expect)) {
+                    var info = str::from("expect \"");
+                    var e_name = expect->full_path_name(self->pkg, true);
+                    var i_name = infer.full_path_name(self->pkg, true);
+                    info.append_str(e_name.__ptr__());
+                    info.append_i8_vec("\" but get \"");
+                    info.append_str(i_name.__ptr__());
+                    self->err->error(tmp->base.location, info.c_str);
+                    info.delete();
+                    e_name.delete();
+                    i_name.delete();
+                    continue;
+                }
+            }
+        }
+
+        prev_name_for_search.delete();
+        var copy = prev->copy_instance();
+        copy.is_global_sym = false;
+        n->base.resolved_type.reset_with(copy.__ptr__());
+        return copy;
     }
 
     func resolve_ptr_get_field(self, prev: type*, n: ast_ptr_get_field*) -> type {
