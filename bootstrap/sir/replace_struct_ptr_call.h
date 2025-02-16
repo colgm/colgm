@@ -21,9 +21,8 @@ public:
         return "replace struct __ptr__ call";
     }
     std::string info() override {
-        return "replace " +
-               std::to_string(replace_count) +
-               " __ptr__ method call" +
+        return std::to_string(replace_count) +
+               " replacement" +
                (replace_count > 1 ? "s" : "");
     }
     bool run(sir_context*) override;

@@ -20,10 +20,6 @@ void pass_manager::execute(mir_context* mctx, bool verbose) {
     work_list.push_back(new type_cast_number);
 
     for(auto i : work_list) {
-        if (verbose) {
-            std::clog << "[" << green << "mir" << reset;
-            std::clog << "] run " << i->name() << " pass...\n";
-        }
         if (!i->run(mctx)) {
             break;
         }

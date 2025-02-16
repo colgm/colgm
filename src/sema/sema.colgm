@@ -285,6 +285,11 @@ impl sema {
     func resolve_type_convert(self, n: ast_type_convert*) -> type {
         var res = self->resolve_expression(n->from);
         var type_res = self->tr.resolve(n->to);
+        if (res.is_error() || type_res.is_error()) {
+            res.delete();
+            type_res.delete();
+            return type::error_type();
+        }
         // TODO
         res.delete();
         return type_res;

@@ -23,10 +23,6 @@ void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
     passes.push_back(new primitive_size_opt);
     passes.push_back(new replace_struct_ptr_call);
     for(auto i : passes) {
-        if (verbose) {
-            std::clog << "[" << green << "sir" << reset;
-            std::clog << "] run " << i->name() << " pass...\n";
-        }
         if (!i->run(sctx)) {
             break;
         }
