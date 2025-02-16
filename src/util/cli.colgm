@@ -13,6 +13,7 @@ pub struct cli_option {
     OPTION_VIEW_PASS: bool,
     VIEW_TYPE_REPLACE_INFO: bool,
     VIEW_RESOLVED_AST: bool,
+    VERBOSE: bool,
     input_file: i8*,
     output_file: i8*,
     library_path: i8*,
@@ -32,6 +33,7 @@ impl cli_option {
             OPTION_VIEW_PASS: false,
             VIEW_TYPE_REPLACE_INFO: false,
             VIEW_RESOLVED_AST: false,
+            VERBOSE: false,
             input_file: nil,
             output_file: nil,
             library_path: nil,
@@ -53,45 +55,47 @@ pub func print_version() {
 }
 
 pub func help() {
+    print_version();
     io::stdout()
-        .out("\ncolgm <option>\n")
-        .out("option:\n")
-        .out("   -h,   --help                     | get help.\n")
-        .out("   -v,   --version                  | get version.\n")
-        .out("\ncolgm [option] <file>\n")
-        .out("option:\n")
-        .out("   -o,   --output <file>            | output file, default <out.ll>.\n")
-        .out("   -l,   --lex                      | view analysed tokens.\n")
-        .out("   -a,   --ast                      | view ast.\n")
-        .out("   -s,   --sema                     | view semantic result.\n")
-        .out("         --mir                      | view mir.\n")
-        .out("         --sir                      | view sir.\n")
-        .out("         --library <path>           | specify library path, default <.>.\n")
-        .out("         --dump-lib                 | view libraries.\n")
-        .out("         --pass-info                | view pass info.\n")
-        .out("         --view-resolved-ast        | view resolved ast.\n")
-        .out("         --enable-type-replace-info | view type replace info.\n")
-        .out("         --arch                     | specify target arch.\n")
-        .out("         --platform                 | specify target platform.\n")
-        .out("file:\n")
-        .out("   <filename>                       | input file.\n")
-        .endln();
+    .out("\ncolgm <option>\n")
+    .out("option:\n")
+    .out("   -h,   --help                     | get help.\n")
+    .out("   -v,   --version                  | get version.\n")
+    .out("\ncolgm [option] <file>\n")
+    .out("option:\n")
+    .out("   -o,   --output <file>            | output file, default <out.ll>.\n")
+    .out("   -l,   --lex                      | view analysed tokens.\n")
+    .out("   -a,   --ast                      | view ast.\n")
+    .out("   -s,   --sema                     | view semantic result.\n")
+    .out("         --mir                      | view mir.\n")
+    .out("         --sir                      | view sir.\n")
+    .out("         --library <path>           | specify library path, default <.>.\n")
+    .out("         --dump-lib                 | view libraries.\n")
+    .out("         --pass-info                | view pass info.\n")
+    .out("         --view-resolved-ast        | view resolved ast.\n")
+    .out("         --enable-type-replace-info | view type replace info.\n")
+    .out("         --arch <arch>              | specify target arch.\n")
+    .out("         --platform <platform>      | specify target platform.\n")
+    .out("   -V,   --verbose                  | verbose mode.\n")
+    .out("file:\n")
+    .out("   <filename>                       | input file.\n")
+    .endln();
 }
 
 pub func logo(executable: i8*) {
     io::stdout()
-        .out("                __              \n")
-        .out("    _________  / /___ _____ ___ \n")
-        .out("   / ___/ __ \\/ / __ `/ __ `__ \\\n")
-        .out("  / /__/ /_/ / / /_/ / / / / / /\n")
-        .out("  \\___/\\____/_/\\__, /_/ /_/ /_/ \n")
-        .out("              /____/            \n\n")
-        .out("version  : ").out(version()).out("\n")
-        .out("platform : ").out(get_platform()).out(" ").out(get_arch()).out("\n")
-        .out("repo     : https://github.com/colgm/colgm\n")
-        .out("repo     : https://gitee.com/valkmjolnir/colgm\n")
-        .out("license  : Apache 2.0\n\n")
-        .out("input <").out(executable).out(" -h> to get help.\n\n");
+    .out("                __              \n")
+    .out("    _________  / /___ _____ ___ \n")
+    .out("   / ___/ __ \\/ / __ `/ __ `__ \\\n")
+    .out("  / /__/ /_/ / / /_/ / / / / / /\n")
+    .out("  \\___/\\____/_/\\__, /_/ /_/ /_/ \n")
+    .out("              /____/            \n\n")
+    .out("version  : ").out(version()).out("\n")
+    .out("platform : ").out(get_platform()).out(" ").out(get_arch()).out("\n")
+    .out("repo     : https://github.com/colgm/colgm\n")
+    .out("repo     : https://gitee.com/valkmjolnir/colgm\n")
+    .out("license  : Apache 2.0\n\n")
+    .out("input <").out(executable).out(" -h> to get help.\n\n");
 }
 
 pub func report_missing_given_info(info: i8*) {
