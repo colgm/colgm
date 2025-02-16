@@ -686,8 +686,37 @@ impl sema {
     }
 
     func resolve_call_index(self, prev: type*, n: ast_call_index*) -> type {
-        // TODO
-        return type::error_type();
+        if (prev->is_global_sym) {
+            var info = str::from("cannot get index from global symbol \"");
+            var prev_name = prev->generic_name(self->pkg);
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            return type::error_type();
+        }
+
+        if (!prev->is_pointer()) {
+            var info = str::from("cannot get index from \"");
+            var prev_name = prev->full_path_name(self->pkg, true);
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location, info.c_str);
+            info.delete();
+            prev_name.delete();
+            return type::error_type();
+        }
+
+        // resolve index infer, not necessary to check if it is error type
+        var index_infer = self->resolve_expression(n->index);
+        index_infer.delete();
+
+        var infer = prev->copy_instance();
+        infer.pointer_depth -= 1;
+        infer.is_immutable = false;
+        n->base.resolved_type.reset_with(infer.__ptr__());
+        return infer;
     }
 
     func resolve_call_path(self, prev: type*, n: ast_call_path*) -> type {
