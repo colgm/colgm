@@ -1155,17 +1155,113 @@ impl sema {
         return true;
     }
 
+    func check_mutale_left_value(self, n: ast_call*, left: type*) {
+        if (!left->is_immutable) {
+            return;
+        }
+        var info = str::from("cannot assign to \"const ");
+        var l_name = left->full_path_name(self->pkg, true);
+        info.append_str(l_name.__ptr__());
+        info.append_i8_vec("\"");
+        self->err->error(n->base.location, info.c_str);
+        info.delete();
+        l_name.delete();
+    }
+
     func resolve_assignment(self, n: ast_assignment*) -> type {
-        // TODO
         var left = self->resolve_expression(n->left => ast*);
         if (!self->check_valid_left_value(n->left)) {
             left.delete();
             return type::error_type();
         }
+
+        // left value should be mutable
+        self->check_mutale_left_value(n->left, left.__ptr__());
+
         var right = self->resolve_expression(n->right);
+        if (left.is_error() || right.is_error()) {
+            left.delete();
+            right.delete();
+            return type::error_type();
+        }
+
+        if (n->kind == assignment_kind::andeq ||
+            n->kind == assignment_kind::xoreq ||
+            n->kind == assignment_kind::oreq) {
+            var l_name = left.full_path_name(self->pkg, true);
+            var r_name = right.full_path_name(self->pkg, true);
+            if (!left.is_integer() || left.is_pointer()) {
+                var info = str::from("bitwise operator cannot be used on \"");
+                info.append_str(l_name.__ptr__());
+                info.append_i8_vec("\"");
+                self->err->error(n->left->base.location, info.c_str);
+                info.delete();
+                l_name.delete();
+                r_name.delete();
+                left.delete();
+                right.delete();
+                return type::restrict_type();
+            }
+            if (!right.is_integer() || right.is_pointer()) {
+                var info = str::from("bitwise operator cannot be used on \"");
+                info.append_str(r_name.__ptr__());
+                info.append_i8_vec("\"");
+                self->err->error(n->right->location, info.c_str);
+                info.delete();
+                l_name.delete();
+                r_name.delete();
+                left.delete();
+                right.delete();
+                return type::restrict_type();
+            }
+            l_name.delete();
+            r_name.delete();
+        }
+
+        if (left.is_pointer() && right.is_pointer()) {
+            if (!left.eq(right.__ptr__()) &&
+                !self->check_can_be_converted(n->right, left.__ptr__())) {
+                var info = str::from("cannot calculate \"");
+                var l_name = left.full_path_name(self->pkg, true);
+                var r_name = right.full_path_name(self->pkg, true);
+                info.append_str(l_name.__ptr__());
+                info.append_i8_vec("\" and \"");
+                info.append_str(r_name.__ptr__());
+                info.append_i8_vec("\"");
+                self->err->error(n->right->location, info.c_str);
+                info.delete();
+                l_name.delete();
+                r_name.delete();
+            }
+        } else if (!left.eq(right.__ptr__())) {
+            if (!self->check_can_be_converted(n->right, left.__ptr__())) {
+                var info = str::from("get \"");
+                var l_name = left.full_path_name(self->pkg, true);
+                var r_name = right.full_path_name(self->pkg, true);
+                info.append_str(r_name.__ptr__());
+                info.append_i8_vec("\" but expect \"");
+                info.append_str(l_name.__ptr__());
+                info.append_i8_vec("\"");
+                self->err->error(n->right->location, info.c_str);
+                info.delete();
+                l_name.delete();
+                r_name.delete();
+            }
+        }
 
         left.delete();
         right.delete();
+
+        // only = is allowed to be applied on enums
+        if (left.is_enum && n->kind != assignment_kind::eq) {
+            var info = str::from("cannot calculate enum \"");
+            var l_name = left.full_path_name(self->pkg, true);
+            info.append_str(l_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->left->base.location, info.c_str);
+            info.delete();
+            l_name.delete();
+        }
 
         var infer = type::restrict_type();
         n->base.resolved_type.reset_with(infer.__ptr__());
