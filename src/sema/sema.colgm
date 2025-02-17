@@ -7,6 +7,8 @@ use std::math::{ isinf, isnan };
 use std::str::{ str };
 use std::ptr::{ ptr };
 use std::vec::{ vec, primitive_vec };
+use std::set::{ hashset };
+use std::ptr::{ basic };
 
 use package::{ package };
 
@@ -1698,8 +1700,57 @@ impl sema {
         }
     }
 
+    func check_is_match_default(self, n: ast_call*) -> bool {
+        if (!n->chain.empty()) {
+            return false;
+        }
+
+        var name = n->head->id->content.__ptr__();
+        return name->eq_const("_");
+    }
+
+    func check_is_enum_literal(self, n: ast_call*) -> bool {
+        if (n->chain.size != 1) {
+            return false;
+        }
+
+        var name = n->head->id->content.__ptr__();
+        if (!self->ctx->global_symbol()->has(name)) {
+            return false;
+        }
+
+        if (self->ctx->global_symbol()->get(name)->kind != symbol_kind::enum_kind) {
+            return false;
+        }
+
+        var call_node = n->chain.get(0).unwrap();
+        if (call_node->kind != ast_kind::ast_call_path) {
+            return false;
+        }
+        return true;
+    }
+
+    func get_enum_literal_value(self, n: ast_call*, infer: type*) -> u64 {
+        var name = n->head->id->content.__ptr__();
+        if (!self->ctx->global->domain.has(infer->loc_file.__ptr__())) {
+            return 0xffffffffffffffff;
+        }
+
+        var dm = self->ctx->global->domain.get(infer->loc_file.__ptr__());
+        if (!dm->enums.has(name)) {
+            return 0xffffffffffffffff;
+        }
+
+        var em = dm->enums.get(name);
+        var call_node = n->chain.get(0).unwrap() => ast_call_path*;
+        var e_name = call_node->name.__ptr__();
+        if (!em->members.has(e_name)) {
+            return 0xffffffffffffffff;
+        }
+        return em->members.get(e_name)->unwrap();
+    }
+
     func resolve_match_stmt(self, n: ast_match_stmt*, func_self: colgm_func*) {
-        // TODO
         var infer = self->resolve_expression(n->value);
         // check error type
         if (infer.is_error()) {
@@ -1707,7 +1758,126 @@ impl sema {
             return;
         }
 
+        if (!self->is_enum_type(infer.__ptr__())) {
+            self->err->error(n->value->location,
+                            "match value must be enum type");
+            infer.delete();
+            return;
+        }
+
+        if (n->cases.empty()) {
+            self->err->error(n->value->location, "must have at least one case");
+            infer.delete();
+            return;
+        }
+
+        var default_found = false;
+        var used_values = hashset<basic<u64>>::instance();
+        for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
+            var case_node = i.get().unwrap() => ast_match_case*;
+
+            if (self->check_is_match_default(case_node->pattern)) {
+                var case_type = type::default_match_type();
+                case_node->pattern->base.resolved_type.reset_with(case_type.__ptr__());
+                case_node->base.resolved_type.reset_with(case_type.__ptr__());
+                default_found = true;
+                self->resolve_code_block(case_node->body, func_self);
+                case_type.delete();
+                continue;
+            }
+
+            var case_type = self->resolve_call(case_node->pattern);
+            case_node->base.resolved_type.reset_with(case_type.__ptr__());
+            case_node->pattern->base.resolved_type.reset_with(case_type.__ptr__());
+
+            if (!case_type.eq(infer.__ptr__())) {
+                if (!case_type.is_error()) {
+                    var info = str::from("case value should be \"");
+                    var c_name = case_type.full_path_name(self->pkg, true);
+                    var i_name = infer.full_path_name(self->pkg, true);
+                    info.append_i8_vec(c_name.c_str);
+                    info.append_i8_vec("\", but get \"");
+                    info.append_i8_vec(i_name.c_str);
+                    info.append_i8_vec("\"");
+                    self->err->error(case_node->pattern->base.location, info.c_str);
+                    info.delete();
+                    c_name.delete();
+                    i_name.delete();
+                }
+                case_type.delete();
+                continue;
+            }
+
+            if (!self->check_is_enum_literal(case_node->pattern)) {
+                self->err->error(case_node->pattern->base.location,
+                                "match value must be enum literal");
+                case_type.delete();
+                continue;
+            } else {
+                var value = self->get_enum_literal_value(case_node->pattern, infer.__ptr__());
+                if (value != 0xffffffffffffffff) {
+                    var tmp = basic<u64>::wrap(value);
+                    used_values.insert(tmp.__ptr__());
+                }
+            }
+
+            self->resolve_code_block(case_node->body, func_self);
+            case_type.delete();
+        }
+
+        if (default_found) {
+            infer.delete();
+            used_values.delete();
+            return;
+        }
+
+        if (!self->ctx->global->domain.has(infer.loc_file.__ptr__())) {
+            infer.delete();
+            used_values.delete();
+            return;
+        }
+        var dm = self->ctx->global->domain.get(infer.loc_file.__ptr__());
+        if (!dm->enums.has(infer.name.__ptr__())) {
+            infer.delete();
+            used_values.delete();
+            return;
+        }
+        var em = dm->enums.get(infer.name.__ptr__());
+        var generated_warning = str::instance();
+        var unused_counter = 0;
+
+        for (var i = em->members.iter(); !i.is_end(); i = i.next()) {
+            if (used_values.has(i.value())) {
+                continue;
+            }
+            if (generated_warning.size > 0) {
+                generated_warning.append_i8_vec(", ");
+            }
+            unused_counter += 1;
+            if (unused_counter >= 5) {
+                generated_warning.append_i8_vec("...");
+                break;
+            }
+            generated_warning.append_str(i.key());
+        }
+
+        if (generated_warning.size > 0) {
+            var info = str::from("match statement with enum \"");
+            var i_name = infer.full_path_name(self->pkg, true);
+            info.append_str(i_name.__ptr__());
+            info.append_i8_vec("\" has unused member");
+            if (unused_counter > 1) {
+                info.append_i8_vec("s");
+            }
+            info.append_i8_vec(": ")->append_str(generated_warning.__ptr__());
+            self->err->warn(n->base.location, info.c_str);
+            info.delete();
+            i_name.delete();
+        }
+
         infer.delete();
+        used_values.delete();
+        generated_warning.delete();
     }
 
     func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func*) {
