@@ -83,7 +83,6 @@ Learn more about [Self-host compiler](./src/README.md)
 ## TODO
 
 1. develop self-host compiler
-    - develop semantic analysis
     - develop mir codegen
     - develop sir codegen
 2. support foreach/forindex (feature for self-host compiler):

@@ -262,7 +262,10 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
 
     // cannot calculate enum
     if (ctx.search_symbol_kind(left)==sym_kind::enum_kind) {
-        rp.report(node, "cannot calculate enum \"" + left.to_string() + "\".");
+        rp.report(node->get_left(), "cannot calculate enum \"" + left.to_string() + "\".");
+        return type::error_type();
+    } else if (ctx.search_symbol_kind(right)==sym_kind::enum_kind) {
+        rp.report(node->get_right(), "cannot calculate enum \"" + right.to_string() + "\".");
         return type::error_type();
     }
 
