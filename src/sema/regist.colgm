@@ -1,4 +1,5 @@
 use err::report::{ report };
+use err::span::{ span };
 use err::panic::{ panic, assert };
 
 use std::io::{ io };
@@ -384,9 +385,31 @@ impl regist_pass {
             empty_prim.name.append_i8_vec(prim_table[i]);
 
             gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+            var pt = gt->primitives.get(prim_name.__ptr__());
+            self->regist_primitive_size_method(pt);
+
             prim_name.delete();
             empty_prim.delete();
         }
+    }
+
+    func regist_primitive_size_method(self, pt: colgm_primitive*) {
+        var name = str::from("__size__");
+        var loc = span::instance();
+        var ret = type::u64_type();
+        var func_info = colgm_func::new(
+            name.__ptr__(),
+            loc.__ptr__(),
+            ret.__ptr__()
+        );
+        func_info->is_public = true;
+        pt->static_method.insert(name.__ptr__(), func_info);
+
+        func_info->delete();
+        free(func_info => i8*);
+        name.delete();
+        loc.delete();
+        ret.delete();
     }
 }
 

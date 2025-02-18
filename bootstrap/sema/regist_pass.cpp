@@ -607,12 +607,12 @@ void regist_pass::regist_primitive_types() {
         cp.name = i;
         cp.static_methods.insert({
             "__size__",
-            generate_primitive_size_method(i)
+            generate_primitive_size_method()
         });
     }
 }
 
-colgm_func regist_pass::generate_primitive_size_method(const char* name) {
+colgm_func regist_pass::generate_primitive_size_method() {
     auto func = colgm_func();
     func.name = "__size__";
     func.location = span::null();

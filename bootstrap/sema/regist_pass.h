@@ -130,7 +130,7 @@ private: // primitive types
     // primitive types, now support:
     // bool, i8, i16, i32, i64, u8, u16, u32, u64, f32, f64, void
     void regist_primitive_types();
-    colgm_func generate_primitive_size_method(const char*);
+    colgm_func generate_primitive_size_method();
 
 private: // import symbols
     void regist_single_import(ast::use_stmt*);
