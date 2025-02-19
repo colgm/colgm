@@ -43,11 +43,8 @@ func compile(option: cli_option) {
     cc.lex->scan(option.input_file);
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
-            var COLGM_REPORT = io::colgm_report();
-            cc.lex->dump(COLGM_REPORT);
-            COLGM_REPORT.close();
+            cc.lex->log_dump();
         }
-
         cc.delete();
         return;
     }
@@ -58,11 +55,8 @@ func compile(option: cli_option) {
     cc.par.parse();
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
-            var COLGM_REPORT = io::colgm_report();
-            cc.par.dump(COLGM_REPORT);
-            COLGM_REPORT.close();
+            cc.par.log_dump();
         }
-
         cc.delete();
         return;
     }
@@ -81,7 +75,6 @@ func compile(option: cli_option) {
         if (option.VERBOSE) {
             semantic.ctx->log_dump(cc.pkg);
         }
-
         cc.delete();
         return;
     }
