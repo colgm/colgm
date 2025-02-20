@@ -1,5 +1,12 @@
+use err::span::{ span };
 
-enum mir_kind {
+use std::str::{ str };
+use std::vec::{ vec, primitive_vec };
+use std::ptr::{ ptr };
+
+use sema::type::{ type };
+
+pub enum mir_kind {
     mir_none,
     mir_block,
     mir_unary,
@@ -29,4 +36,238 @@ enum mir_kind {
     mir_continue,
     mir_loop,
     mir_return
+}
+
+pub enum mir_unary_opr {
+    neg,
+    bnot,
+    lnot
+}
+
+pub enum mir_binary_opr {
+    add,
+    sub,
+    mult,
+    div,
+    rem,
+    cmpeq,
+    cmpneq,
+    less,
+    leq,
+    grt,
+    geq,
+    cmpand,
+    cmpor,
+    band,
+    bor,
+    bxor
+}
+
+pub enum mir_assign_opr {
+    eq,
+    addeq,
+    subeq,
+    multeq,
+    diveq,
+    remeq,
+    andeq,
+    xoreq,
+    oreq
+}
+
+pub struct mir {
+    kind: mir_kind,
+    location: span
+}
+
+impl mir {
+    pub func instance(k: mir_kind, l: span*) -> mir {
+        return mir { kind: k, location: l->copy_instance() };
+    }
+
+    pub func delete(self) {
+        self->location.delete();
+    }
+}
+
+pub struct mir_block {
+    base: mir,
+    content: primitive_vec<ptr<mir*>>
+}
+
+pub struct mir_unary {
+    base: mir,
+    op: mir_unary_opr,
+    resolved_type: type,
+    value: mir_block*
+}
+
+pub struct mir_binary {
+    base: mir,
+    op: mir_binary_opr,
+    resolved_type: type,
+    left: mir_block*,
+    right: mir_block*
+}
+
+pub struct mir_type_convert {
+    base: mir,
+    source: mir_block*,
+    target: type
+}
+
+pub struct mir_nil {
+    base: mir,
+    resolved_type: type
+}
+
+pub struct mir_number {
+    base: mir,
+    value: str,
+    resolved_type: type
+}
+
+pub struct mir_string {
+    base: mir,
+    value: str,
+    resolved_type: type
+}
+
+pub struct mir_char {
+    base: mir,
+    value: str,
+    resolved_type: type
+}
+
+pub struct mir_bool {
+    base: mir,
+    value: str,
+    resolved_type: type
+}
+
+pub struct mir_array {
+    base: mir,
+    size: u64,
+    resolved_type: type
+}
+
+struct field {
+    name: str,
+    content: mir_block*,
+    resolved_type: type
+}
+
+impl field {
+    pub func copy(self) -> field* {
+        var res = field::__alloc__();
+        res->name = self->name.copy_instance();
+        res->content = self->content;
+        res->resolved_type = self->resolved_type.copy_instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        // self->content->delete();
+        self->resolved_type.delete();
+    }
+}
+
+pub struct mir_struct_init {
+    base: mir,
+    resolved_type: type,
+    fields: vec<field>
+}
+
+pub struct mir_call {
+    base: mir,
+    content: mir_block*,
+    resolved_type: type
+}
+
+pub struct mir_call_index {
+    base: mir,
+    index: mir_block*,
+    resolved_type: type
+}
+
+pub struct mir_call_func {
+    base: mir,
+    args: mir_block*,
+    resolved_type: type
+}
+
+pub struct mir_get_field {
+    base: mir,
+    name: str,
+    resolved_type: type
+}
+
+pub struct mir_ptr_get_field {
+    base: mir,
+    name: str,
+    resolved_type: type
+}
+
+pub struct mir_get_path {
+    base: mir,
+    name: str,
+    resolved_type: type
+}
+
+pub struct mir_define {
+    base: mir,
+    init_value: mir_block*,
+    resolved_type: type
+}
+
+pub struct mir_assign {
+    base: mir,
+    opr: mir_assign_opr,
+    left: mir_block*,
+    right: mir_block*
+}
+
+pub struct mir_if {
+    base: mir,
+    condition: mir_block*,
+    content: mir_block*
+}
+
+pub struct mir_branch {
+    base: mir,
+    branch: primitive_vec<ptr<mir_if*>>
+}
+
+pub struct mir_switch_case {
+    base: mir,
+    value: i64,
+    content: mir_block*
+}
+
+pub struct mir_switch {
+    base: mir,
+    condition: mir_block*,
+    cases: primitive_vec<ptr<mir_switch_case*>>,
+    default_case: mir_block*
+}
+
+pub struct mir_break {
+    base: mir
+}
+
+pub struct mir_continue {
+    base: mir
+}
+
+pub struct mir_loop {
+    base: mir,
+    condition: mir_block*,
+    content: mir_block*,
+    update: mir_block*
+}
+
+pub struct mir_return {
+    base: mir,
+    value: mir_block*
 }
