@@ -1,3 +1,8 @@
+use std::str::{ str };
+use std::ptr::{ ptr };
+use std::vec::{ primitive_vec };
+
+use sir::value::{ value_t };
 
 enum sir_kind {
     sir_null,
@@ -31,4 +36,82 @@ enum sir_kind {
     sir_switch,
     sir_type_convert,
     sir_array_cast
+}
+
+pub struct sir {
+    kind: sir_kind
+}
+
+pub struct sir_nop {
+    base: sir,
+    info: str
+}
+
+pub struct sir_block {
+    base: sir,
+    allocas: primitive_vec<ptr<sir_alloca>>,
+    move_register: primitive_vec<ptr<sir_alloca>>,
+    stmts: primitive_vec<ptr<sir>>
+}
+
+struct array_type_t {
+    base_type: str,
+    size: u64
+}
+
+pub struct sir_alloca {
+    base: sir,
+    variable: str,
+    type: str,
+    array_info: array_type_t    
+}
+
+pub struct sir_temp_ptr {
+//
+// used to get temporary pointer of numbering variable
+//     %_1.real = alloca i32
+// this operand will do this:
+//     %1 = getelementptr i32, i32* %_1.real, i32 0
+// and %1 is i32*
+//
+    base: sir,
+    target: str,
+    source: str,
+    comment: str // for tail comment
+}
+
+pub struct sir_ret {
+    base: sir,
+    type: str,
+    value: value_t
+}
+
+pub struct sir_str {
+    base: sir,
+    index: u64,
+    length: u64,
+    target: value_t
+}
+
+pub struct sir_zeroinitializer {
+    base: sir,
+    type: str,
+    target: value_t
+}
+
+pub struct sir_get_index {
+    base: sir,
+    source: value_t,
+    target: value_t,
+    index: value_t,
+    type: str,
+    index_type: str
+}
+
+pub struct sir_get_field {
+    base: sir,
+    source: value_t,
+    target: value_t,
+    struct_name: str,
+    index: u64
 }

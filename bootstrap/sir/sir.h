@@ -237,12 +237,12 @@ public:
 
 class sir_zeroinitializer: public sir {
 private:
-    value_t destination;
+    value_t target;
     std::string type;
 
 public:
-    sir_zeroinitializer(const value_t& dst, const std::string& t):
-        sir(sir_kind::sir_zeroinitializer), destination(dst), type(t) {}
+    sir_zeroinitializer(const value_t& tgt, const std::string& t):
+        sir(sir_kind::sir_zeroinitializer), target(tgt), type(t) {}
     ~sir_zeroinitializer() override = default;
     void dump(std::ostream&) const override;
 };
@@ -269,14 +269,14 @@ public:
 
 class sir_get_field: public sir {
 private:
-    std::string destination;
-    std::string source;
+    value_t destination;
+    value_t source;
     std::string struct_name;
     usize index;
 
 public:
-    sir_get_field(const std::string& dst,
-                  const std::string& src,
+    sir_get_field(const value_t& dst,
+                  const value_t& src,
                   const std::string& sn,
                   usize i):
         sir(sir_kind::sir_get_field),

@@ -103,7 +103,7 @@ void sir_string::dump(std::ostream& out) const {
 
 void sir_zeroinitializer::dump(std::ostream& out) const {
     out << "store " << quoted_name(type) << " zeroinitializer";
-    out << ", " << quoted_name(type) << "* " << destination << "\n";
+    out << ", " << quoted_name(type) << "* " << target << "\n";
 }
 
 void sir_get_index::dump(std::ostream& out) const {
@@ -113,9 +113,9 @@ void sir_get_index::dump(std::ostream& out) const {
 }
 
 void sir_get_field::dump(std::ostream& out) const {
-    out << "%" << destination << " = getelementptr inbounds ";
+    out << destination << " = getelementptr inbounds ";
     out << quoted_name(struct_name) << ", ";
-    out << quoted_name(struct_name) << "* %" << source << ", ";
+    out << quoted_name(struct_name) << "* " << source << ", ";
     out << "i32 0, i32 " << index << "\n";
 }
 

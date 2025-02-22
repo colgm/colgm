@@ -579,8 +579,8 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
         const auto target = ssa_gen.create();
         const auto index = st.field_index(i.name);
         block->add_stmt(new sir_get_field(
-            target,
-            temp_var,
+            value_t::variable(target),
+            value_t::variable(temp_var),
             type_mapping(node->get_type()),
             index
         ));
@@ -802,8 +802,8 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
     const auto target = ssa_gen.create();
     const auto index = st.field_index(node->get_name());
     block->add_stmt(new sir_get_field(
-        target,
-        prev.content,
+        value_t::variable(target),
+        prev.to_value_t(),
         type_mapping(prev.resolve_type.get_ref_copy()),
         index
     ));
@@ -874,8 +874,8 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
         value_t::variable(temp_0)
     ));
     block->add_stmt(new sir_get_field(
-        temp_1,
-        temp_0,
+        value_t::variable(temp_1),
+        value_t::variable(temp_0),
         type_mapping(prev.resolve_type.get_ref_copy().get_ref_copy()),
         index
     ));
