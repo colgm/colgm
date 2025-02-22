@@ -1,6 +1,9 @@
 use std::io::{ flag };
-use std::libc::{ open, close, free, stat };
+use std::libc::{ open, close, free, stat, getenv, strlen };
 use std::sys::{ stat_flag, stat_info };
+
+use std::str::{ str };
+use std::vec::{ vec };
 
 pub struct fs {}
 
@@ -21,5 +24,30 @@ impl fs {
         }
         var ifmt = (info.st_mode => u32) & (stat_flag::S_IFMT => u32);
         return (ifmt => stat_flag) == stat_flag::S_IFDIR;
+    }
+}
+
+impl fs {
+    pub func PATH() -> vec<str> {
+        var path = getenv("PATH");
+        var path_len = strlen(path);
+
+        var tmp = str::from("");
+        var res = vec<str>::instance();
+
+        for (var i = 0; i < path_len; i += 1) {
+            if (path[i] == ':') {
+                res.push(tmp.__ptr__());
+                tmp.clear();
+            } else {
+                tmp.append_char(path[i]);
+            }
+        }
+        if (tmp.size > 0) {
+            res.push(tmp.__ptr__());
+        }
+
+        tmp.delete();
+        return res;
     }
 }
