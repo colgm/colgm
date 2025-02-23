@@ -1,6 +1,7 @@
 use std::str::{ str };
 use std::ptr::{ ptr };
 use std::vec::{ primitive_vec, vec };
+use std::libc::{ free };
 
 use err::panic::{ unreachable };
 use sir::value::{ value_t };
@@ -59,6 +60,156 @@ impl sir {
 
     pub func delete(self) {
         match (self->kind) {
+            sir_kind::sir_nop => {
+                var n = self => sir_nop*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_block => {
+                var n = self => sir_block*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_alloca => {
+                var n = self => sir_alloca*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_temp_ptr =>{
+                var n = self => sir_temp_ptr*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_ret => {
+                var n = self => sir_ret*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_str => {
+                var n = self => sir_str*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_zeroinitializer => {
+                var n = self => sir_zeroinitializer*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_get_index => {
+                var n = self => sir_get_index*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_get_field => {
+                var n = self => sir_get_field*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_call => {
+                var n = self => sir_call*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_neg => {
+                var n = self => sir_neg*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_bnot => {
+                var n = self => sir_bnot*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_lnot => {
+                var n = self => sir_lnot*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_add => {
+                var n = self => sir_add*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_sub => {
+                var n = self => sir_sub*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_mul =>{
+                var n = self => sir_mul*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_div => {
+                var n = self => sir_div*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_rem => {
+                var n = self => sir_rem*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_band => {
+                var n = self => sir_band*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_bxor => {
+                var n = self => sir_bxor*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_bor => {
+                var n = self => sir_bor*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_cmp => {
+                var n = self => sir_cmp*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_label => {
+                var n = self => sir_label*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_store => {
+                var n = self => sir_store*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_load => {
+                var n = self => sir_load*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_br => {
+                var n = self => sir_br*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_br_cond => {
+                var n = self => sir_br_cond*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_switch => {
+                var n = self => sir_switch*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_type_convert => {
+                var n = self => sir_type_convert*;
+                n->delete();
+                free(n => i8*);
+            }
+            sir_kind::sir_array_cast => {
+                var n = self => sir_array_cast*;
+                n->delete();
+                free(n => i8*);
+            }
             _ => { unreachable(); }
         }
     }
@@ -69,6 +220,23 @@ pub struct sir_nop {
     info: str
 }
 
+impl sir_nop {
+    pub func new(info: str*) -> sir_nop* {
+        var n = sir_nop::__alloc__();
+        n->base = sir::instance(sir_kind::sir_nop);
+        if (info != nil) {
+            n->info = info->copy_instance();
+        } else {
+            n->info = str::instance();
+        }
+        return n;
+    }
+
+    pub func delete(self) {
+        self->info.delete();
+    }
+}
+
 pub struct sir_block {
     base: sir,
     allocas: primitive_vec<ptr<sir_alloca>>,
@@ -76,9 +244,54 @@ pub struct sir_block {
     stmts: primitive_vec<ptr<sir>>
 }
 
+impl sir_block {
+    pub func new() -> sir_block* {
+        var n = sir_block::__alloc__();
+        n->base = sir::instance(sir_kind::sir_block);
+        n->allocas = primitive_vec<ptr<sir_alloca>>::instance();
+        n->move_register = primitive_vec<ptr<sir_alloca>>::instance();
+        n->stmts = primitive_vec<ptr<sir>>::instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        for (var i = self->allocas.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap() => sir*;
+            n->delete();
+            free(n => i8*);
+        }
+        for (var i = self->move_register.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap() => sir*;
+            n->delete();
+            free(n => i8*);
+        }
+        for (var i = self->stmts.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap();
+            n->delete();
+            free(n => i8*);
+        }
+        self->allocas.delete();
+        self->move_register.delete();
+        self->stmts.delete();
+    }
+}
+
 struct array_type_t {
     base_type: str,
     size: u64
+}
+
+impl array_type_t {
+    pub func instance() -> array_type_t {
+        return array_type_t {
+            base_type: str::instance(),
+            size: 0
+        };
+    }
+
+    pub func delete(self) {
+        self->base_type.delete();
+    }
 }
 
 pub struct sir_alloca {
@@ -86,6 +299,23 @@ pub struct sir_alloca {
     variable: str,
     type: str,
     array_info: array_type_t    
+}
+
+impl sir_alloca {
+    pub func new(variable: str*, type: str*) -> sir_alloca* {
+        var n = sir_alloca::__alloc__();
+        n->base = sir::instance(sir_kind::sir_alloca);
+        n->variable = variable->copy_instance();
+        n->type = type->copy_instance();
+        n->array_info = array_type_t::instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->variable.delete();
+        self->type.delete();
+        self->array_info.delete();
+    }
 }
 
 pub struct sir_temp_ptr {
@@ -102,10 +332,46 @@ pub struct sir_temp_ptr {
     comment: str // for tail comment
 }
 
+impl sir_temp_ptr {
+    pub func new(target: str*, source: str*, comment: str*) -> sir_temp_ptr* {
+        var n = sir_temp_ptr::__alloc__();
+        n->base = sir::instance(sir_kind::sir_temp_ptr);
+        n->target = target->copy_instance();
+        n->source = source->copy_instance();
+        if (comment != nil) {
+            n->comment = comment->copy_instance();
+        } else {
+            n->comment = str::instance();
+        }
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->source.delete();
+        self->comment.delete();
+    }
+}
+
 pub struct sir_ret {
     base: sir,
     type: str,
     value: value_t
+}
+
+impl sir_ret {
+    pub func new(type: str*) -> sir_ret* {
+        var n = sir_ret::__alloc__();
+        n->base = sir::instance(sir_kind::sir_ret);
+        n->type = type->copy_instance();
+        n->value = value_t::instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->type.delete();
+        self->value.delete();
+    }
 }
 
 pub struct sir_str {
@@ -115,10 +381,40 @@ pub struct sir_str {
     target: value_t
 }
 
+impl sir_str {
+    pub func new(index: u64, length: u64) -> sir_str* {
+        var n = sir_str::__alloc__();
+        n->base = sir::instance(sir_kind::sir_str);
+        n->index = index;
+        n->length = length;
+        n->target = value_t::instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+    }
+}
+
 pub struct sir_zeroinitializer {
     base: sir,
     type: str,
     target: value_t
+}
+
+impl sir_zeroinitializer {
+    pub func new(type: str*) -> sir_zeroinitializer* {
+        var n = sir_zeroinitializer::__alloc__();
+        n->base = sir::instance(sir_kind::sir_zeroinitializer);
+        n->type = type->copy_instance();
+        n->target = value_t::instance();
+        return n;
+    }
+
+    pub func delete(self){
+        self->type.delete();
+        self->target.delete();
+    }
 }
 
 pub struct sir_get_index {
@@ -130,12 +426,51 @@ pub struct sir_get_index {
     index_type: str
 }
 
+impl sir_get_index {
+    pub func new(type: str*, index_type: str*) -> sir_get_index* {
+        var n = sir_get_index::__alloc__();
+        n->base = sir::instance(sir_kind::sir_get_index);
+        n->source = value_t::instance();
+        n->target = value_t::instance();
+        n->index = value_t::instance();
+        n->type = type->copy_instance();
+        n->index_type = index_type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->source.delete();
+        self->target.delete();
+        self->index.delete();
+        self->type.delete();
+        self->index_type.delete();
+    }
+}
+
 pub struct sir_get_field {
     base: sir,
     source: value_t,
     target: value_t,
     struct_name: str,
     index: u64
+}
+
+impl sir_get_field {
+    pub func new(struct_name: str*) -> sir_get_field* {
+        var n = sir_get_field::__alloc__();
+        n->base = sir::instance(sir_kind::sir_get_field);
+        n->source = value_t::instance();
+        n->target = value_t::instance();
+        n->struct_name = struct_name->copy_instance();
+        n->index = 0;
+        return n;
+    }
+
+    pub func delete(self) {
+        self->source.delete();
+        self->target.delete();
+        self->struct_name.delete();
+    }
 }
 
 pub struct sir_call {
@@ -150,12 +485,54 @@ pub struct sir_call {
     debug_info_index: u64
 }
 
+impl sir_call {
+    pub func new(name: str*, return_type: str*) -> sir_call* {
+        var n = sir_call::__alloc__();
+        n->base = sir::instance(sir_kind::sir_call);
+        n->name = name->copy_instance();
+        n->return_type = return_type->copy_instance();
+        n->target = value_t::instance();
+        n->args_type = vec<str>::instance();
+        n->args = vec<value_t>::instance();
+        n->with_va_args = false;
+        n->with_va_args_real_param_size = 0;
+        n->debug_info_index = 0;
+        return n;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->return_type.delete();
+        self->target.delete();
+        self->args_type.delete();
+        self->args.delete();
+    }
+}
+
 pub struct sir_neg {
     base: sir,
     target: value_t,
     source: value_t,
     is_integer: bool,
     type: str
+}
+
+impl sir_neg {
+    pub func new(type: str*) -> sir_neg* {
+        var n = sir_neg::__alloc__();
+        n->base = sir::instance(sir_kind::sir_neg);
+        n->target = value_t::instance();
+        n->source = value_t::instance();
+        n->is_integer = false;
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->source.delete();
+        self->type.delete();
+    }
 }
 
 pub struct sir_bnot {
@@ -165,11 +542,45 @@ pub struct sir_bnot {
     type: str
 }
 
+impl sir_bnot {
+    pub func new(type: str*) -> sir_bnot* {
+        var n = sir_bnot::__alloc__();
+        n->base = sir::instance(sir_kind::sir_bnot);
+        n->target = value_t::instance();
+        n->source = value_t::instance();
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->source.delete();
+        self->type.delete();
+    }
+}
+
 pub struct sir_lnot {
     base: sir,
     target: value_t,
     source: value_t,
     type: str
+}
+
+impl sir_lnot {
+    pub func new(type: str*) -> sir_lnot* {
+        var n = sir_lnot::__alloc__();
+        n->base = sir::instance(sir_kind::sir_lnot);
+        n->target = value_t::instance();
+        n->source = value_t::instance();
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->source.delete();
+        self->type.delete();
+    }
 }
 
 pub struct sir_add {
@@ -181,6 +592,26 @@ pub struct sir_add {
     type: str
 }
 
+impl sir_add {
+    pub func new(type: str*) -> sir_add* {
+        var n = sir_add::__alloc__();
+        n->base = sir::instance(sir_kind::sir_add);
+        n->target = value_t::instance();
+        n->left = value_t::instance();
+        n->right = value_t::instance();
+        n->is_integer = false;
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->left.delete();
+        self->right.delete();
+        self->type.delete();
+    }
+}
+
 pub struct sir_sub {
     base: sir,
     target: value_t,
@@ -190,6 +621,26 @@ pub struct sir_sub {
     type: str
 }
 
+impl sir_sub {
+    pub func new(type: str*) -> sir_sub* {
+        var n = sir_sub::__alloc__();
+        n->base = sir::instance(sir_kind::sir_sub);
+        n->target = value_t::instance();
+        n->left = value_t::instance();
+        n->right = value_t::instance();
+        n->is_integer = false;
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->left.delete();
+        self->right.delete();
+        self->type.delete();
+    }
+}
+
 pub struct sir_mul {
     base: sir,
     target: value_t,
@@ -197,6 +648,26 @@ pub struct sir_mul {
     right: value_t,
     is_integer: bool,
     type: str
+}
+
+impl sir_mul {
+    pub func new(type: str*) -> sir_mul* {
+        var n = sir_mul::__alloc__();
+        n->base = sir::instance(sir_kind::sir_mul);
+        n->target = value_t::instance();
+        n->left = value_t::instance();
+        n->right = value_t::instance();
+        n->is_integer = false;
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->left.delete();
+        self->right.delete();
+        self->type.delete();
+    }
 }
 
 pub struct sir_div {
@@ -209,6 +680,27 @@ pub struct sir_div {
     type: str
 }
 
+impl sir_div {
+    pub func new(type: str*) -> sir_div* {
+        var n = sir_div::__alloc__();
+        n->base = sir::instance(sir_kind::sir_div);
+        n->target = value_t::instance();
+        n->left = value_t::instance();
+        n->right = value_t::instance();
+        n->is_integer = false;
+        n->is_signed = false;
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->left.delete();
+        self->right.delete();
+        self->type.delete();
+    }
+}
+
 pub struct sir_rem {
     base: sir,
     target: value_t,
@@ -219,12 +711,52 @@ pub struct sir_rem {
     type: str
 }
 
+impl sir_rem {
+    pub func new(type: str*) -> sir_rem* {
+        var n = sir_rem::__alloc__();
+        n->base = sir::instance(sir_kind::sir_rem);
+        n->target = value_t::instance();
+        n->left = value_t::instance();
+        n->right = value_t::instance();
+        n->is_integer = false;
+        n->is_signed = false;
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->left.delete();
+        self->right.delete();
+        self->type.delete();
+    }
+}
+
 pub struct sir_band {
     base: sir,
     target: value_t,
     left: value_t,
     right: value_t,
     type: str
+}
+
+impl sir_band {
+    pub func new(type: str*) -> sir_band* {
+        var n = sir_band::__alloc__();
+        n->base = sir::instance(sir_kind::sir_band);
+        n->target = value_t::instance();
+        n->left = value_t::instance();
+        n->right = value_t::instance();
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->left.delete();
+        self->right.delete();
+        self->type.delete();
+    }
 }
 
 pub struct sir_bxor {
@@ -235,12 +767,50 @@ pub struct sir_bxor {
     type: str
 }
 
+impl sir_bxor {
+    pub func new(type: str*) -> sir_bxor* {
+        var n = sir_bxor::__alloc__();
+        n->base = sir::instance(sir_kind::sir_bxor);
+        n->target = value_t::instance();
+        n->left = value_t::instance();
+        n->right = value_t::instance();
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->left.delete();
+        self->right.delete();
+        self->type.delete();
+    }
+}
+
 pub struct sir_bor {
     base: sir,
     target: value_t,
     left: value_t,
     right: value_t,
     type: str
+}
+
+impl sir_bor {
+    pub func new(type: str*) -> sir_bor* {
+        var n = sir_bor::__alloc__();
+        n->base = sir::instance(sir_kind::sir_bor);
+        n->target = value_t::instance();
+        n->left = value_t::instance();
+        n->right = value_t::instance();
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->left.delete();
+        self->right.delete();
+        self->type.delete();
+    }
 }
 
 pub struct sir_cmp {
@@ -254,10 +824,46 @@ pub struct sir_cmp {
     type: str
 }
 
+impl sir_cmp {
+    pub func new(type: str*) -> sir_cmp* {
+        var n = sir_cmp::__alloc__();
+        n->base = sir::instance(sir_kind::sir_cmp);
+        n->target = value_t::instance();
+        n->left = value_t::instance();
+        n->right = value_t::instance();
+        n->kind = sir_cmp_kind::cmp_eq;
+        n->is_integer = false;
+        n->is_signed = false;
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->left.delete();
+        self->right.delete();
+        self->type.delete();
+    }
+}
+
 pub struct sir_label {
     base: sir,
     label: u64,
     comment: str
+}
+
+impl sir_label {
+    pub func new(label: u64, comment: str*) -> sir_label* {
+        var n = sir_label::__alloc__();
+        n->base = sir::instance(sir_kind::sir_label);
+        n->label = label;
+        n->comment = comment->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->comment.delete();
+    }
 }
 
 pub struct sir_store {
@@ -267,6 +873,23 @@ pub struct sir_store {
     type: str
 }
 
+impl sir_store {
+    pub func new(type: str*) -> sir_store* {
+        var n = sir_store::__alloc__();
+        n->base = sir::instance(sir_kind::sir_store);
+        n->target = value_t::instance();
+        n->source = value_t::instance();
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->source.delete();
+        self->type.delete();
+    }
+}
+
 pub struct sir_load {
     base: sir,
     target: value_t,
@@ -274,9 +897,37 @@ pub struct sir_load {
     type: str
 }
 
+impl sir_load {
+    pub func new(type: str*) -> sir_load* {
+        var n = sir_load::__alloc__();
+        n->base = sir::instance(sir_kind::sir_load);
+        n->target = value_t::instance();
+        n->source = value_t::instance();
+        n->type = type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->source.delete();
+        self->type.delete();
+    }
+}
+
 pub struct sir_br {
     base: sir,
     label: u64
+}
+
+impl sir_br {
+    pub func new(label: u64) -> sir_br* {
+        var n = sir_br::__alloc__();
+        n->base = sir::instance(sir_kind::sir_br);
+        n->label = label;
+        return n;
+    }
+
+    pub func delete(self) {}
 }
 
 pub struct sir_br_cond {
@@ -284,6 +935,21 @@ pub struct sir_br_cond {
     cond: value_t,
     label_true: u64,
     label_false: u64
+}
+
+impl sir_br_cond {
+    pub func new(label_true: u64, label_false: u64) -> sir_br_cond* {
+        var n = sir_br_cond::__alloc__();
+        n->base = sir::instance(sir_kind::sir_br_cond);
+        n->cond = value_t::instance();
+        n->label_true = label_true;
+        n->label_false = label_false;
+        return n;
+    }
+
+    pub func delete(self) {
+        self->cond.delete();
+    }
 }
 
 pub struct sir_switch {
@@ -294,6 +960,24 @@ pub struct sir_switch {
     case_label: primitive_vec<u64>
 }
 
+impl sir_switch {
+    pub func new(default_label: u64) -> sir_switch* {
+        var n = sir_switch::__alloc__();
+        n->base = sir::instance(sir_kind::sir_switch);
+        n->source = value_t::instance();
+        n->default_label = default_label;
+        n->case_value = primitive_vec<i64>::instance();
+        n->case_label = primitive_vec<u64>::instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->source.delete();
+        self->case_value.delete();
+        self->case_label.delete();
+    }
+}
+
 pub struct sir_type_convert {
     base: sir,
     target: value_t,
@@ -302,10 +986,47 @@ pub struct sir_type_convert {
     dst_type: str
 }
 
+impl sir_type_convert {
+    pub func new(src_type: str*, dst_type: str*) -> sir_type_convert* {
+        var n = sir_type_convert::__alloc__();
+        n->base = sir::instance(sir_kind::sir_type_convert);
+        n->target = value_t::instance();
+        n->source = value_t::instance();
+        n->src_type = src_type->copy_instance();
+        n->dst_type = dst_type->copy_instance();
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->source.delete();
+        self->src_type.delete();
+        self->dst_type.delete();
+    }
+}
+
 pub struct sir_array_cast {
     base: sir,
     target: value_t,
     source: value_t,
     type: str,
     array_size: u64
+}
+
+impl sir_array_cast {
+    pub func new(type: str*, array_size: u64) -> sir_array_cast* {
+        var n = sir_array_cast::__alloc__();
+        n->base = sir::instance(sir_kind::sir_array_cast);
+        n->target = value_t::instance();
+        n->source = value_t::instance();
+        n->type = type->copy_instance();
+        n->array_size = array_size;
+        return n;
+    }
+
+    pub func delete(self) {
+        self->target.delete();
+        self->source.delete();
+        self->type.delete();
+    }
 }
