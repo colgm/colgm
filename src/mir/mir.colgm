@@ -1,5 +1,7 @@
 use err::span::{ span };
+use err::panic::{ unreachable };
 
+use std::libc::{ free };
 use std::str::{ str };
 use std::vec::{ vec, primitive_vec };
 use std::ptr::{ ptr };
@@ -87,12 +89,145 @@ impl mir {
 
     pub func delete(self) {
         self->location.delete();
+        match (self->kind) {
+            mir_kind::mir_block => {
+                var n = self => mir_block*;
+                n->delete();
+            }
+            mir_kind::mir_unary => {
+                var n = self => mir_unary*;
+                n->delete();
+            }
+            mir_kind::mir_binary => {
+                var n = self => mir_binary*;
+                n->delete();
+            }
+            mir_kind::mir_type_convert => {
+                var n = self => mir_type_convert*;
+                n->delete();
+            }
+            mir_kind::mir_nil => {
+                var n = self => mir_nil*;
+                n->delete();
+            }
+            mir_kind::mir_number => {
+                var n = self => mir_number*;
+                n->delete();
+            }
+            mir_kind::mir_string => {
+                var n = self => mir_string*;
+                n->delete();
+            }
+            mir_kind::mir_char => {
+                var n = self => mir_char*;
+                n->delete();
+            }
+            mir_kind::mir_bool => {
+                var n = self => mir_bool*;
+                n->delete();
+            }
+            mir_kind::mir_array => {
+                var n = self => mir_array*;
+                n->delete();
+            }
+            mir_kind::mir_struct_init => {
+                var n = self => mir_struct_init*;
+                n->delete();
+            }
+            mir_kind::mir_call => {
+                var n = self => mir_call*;
+                n->delete();
+            }
+            mir_kind::mir_call_id => {
+                var n = self => mir_call_id*;
+                n->delete();
+            }
+            mir_kind::mir_call_index => {
+                var n = self => mir_call_index*;
+                n->delete();
+            }
+            mir_kind::mir_call_func => {
+                var n = self => mir_call_func*;
+               n->delete();
+            }
+            mir_kind::mir_get_field => {
+                var n = self => mir_get_field*;
+                n->delete();
+            }
+            mir_kind::mir_get_path => {
+                var n = self => mir_get_path*;
+                n->delete();
+            }
+            mir_kind::mir_ptr_get_field => {
+                var n = self => mir_ptr_get_field*;
+                n->delete();
+            }
+            mir_kind::mir_define => {
+                var n = self => mir_define*;
+                n->delete();
+            }
+            mir_kind::mir_assign => {
+                var n = self => mir_assign*;
+                n->delete();
+            }
+            mir_kind::mir_if => {
+                var n = self => mir_if*;
+                n->delete();
+            }
+            mir_kind::mir_branch => {
+                var n = self => mir_branch*;
+                n->delete();
+            }
+            mir_kind::mir_switch_case => {
+                var n = self => mir_switch_case*;
+                n->delete();
+            }
+            mir_kind::mir_switch => {
+                var n = self => mir_switch*;
+                n->delete();
+            }
+            mir_kind::mir_break => {
+                var n = self => mir_break*;
+                n->delete();
+            }
+            mir_kind::mir_continue => {
+                var n = self => mir_continue*;
+                n->delete();
+            }
+            mir_kind::mir_loop => {
+                var n = self => mir_loop*;
+                n->delete();
+            }
+            mir_kind::mir_return => {
+                var n = self => mir_return*;
+                n->delete();
+            }
+           _ => { unreachable(); }
+        }
     }
 }
 
 pub struct mir_block {
     base: mir,
-    content: primitive_vec<ptr<mir*>>
+    content: primitive_vec<ptr<mir>>
+}
+
+impl mir_block {
+    pub func new(l: span*) -> mir_block* {
+        var res = mir_block::__alloc__();
+        res->base = mir::instance(mir_kind::mir_block, l);
+        res->content = primitive_vec<ptr<mir>>::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        for (var i = self->content.iter(); !i.is_end(); i = i.next()) {
+            var item = i.get().unwrap();
+            item->delete();
+            free(item => i8*);
+        }
+        self->content.delete();
+    }
 }
 
 pub struct mir_unary {
@@ -100,6 +235,25 @@ pub struct mir_unary {
     op: mir_unary_opr,
     resolved_type: type,
     value: mir_block*
+}
+
+impl mir_unary {
+    pub func new(l: span*) -> mir_unary* {
+        var res = mir_unary::__alloc__();
+        res->base = mir::instance(mir_kind::mir_unary, l);
+        res->resolved_type = type::instance();
+        res->value = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        self->resolved_type.delete();
+        if (self->value != nil) {
+            var n = self->value => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
 }
 
 pub struct mir_binary {
@@ -110,15 +264,72 @@ pub struct mir_binary {
     right: mir_block*
 }
 
+impl mir_binary {
+    pub func new(l: span*) -> mir_binary* {
+        var res = mir_binary::__alloc__();
+        res->base = mir::instance(mir_kind::mir_binary, l);
+        res->resolved_type = type::instance();
+        res->left = nil;
+        res->right = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        self->resolved_type.delete();
+        if (self->left != nil) {
+            var n = self->left => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        if (self->right != nil) {
+            var n = self->right => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
+}
+
 pub struct mir_type_convert {
     base: mir,
     source: mir_block*,
     target: type
 }
 
+impl mir_type_convert {
+    pub func new(l: span*) -> mir_type_convert* {
+        var res = mir_type_convert::__alloc__();
+        res->base = mir::instance(mir_kind::mir_type_convert, l);
+        res->source = nil;
+        res->target = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->source != nil) {
+            var n = self->source => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->target.delete();
+    }
+}
+
 pub struct mir_nil {
     base: mir,
     resolved_type: type
+}
+
+impl mir_nil {
+    pub func new(l: span*) -> mir_nil* {
+        var res = mir_nil::__alloc__();
+        res->base = mir::instance(mir_kind::mir_nil, l);
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->resolved_type.delete();
+    }
 }
 
 pub struct mir_number {
@@ -127,10 +338,40 @@ pub struct mir_number {
     resolved_type: type
 }
 
+impl mir_number {
+    pub func new(l: span*) -> mir_number* {
+        var res = mir_number::__alloc__();
+        res->base = mir::instance(mir_kind::mir_number, l);
+        res->value = str::instance();
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->value.delete();
+        self->resolved_type.delete();
+   }
+}
+
 pub struct mir_string {
     base: mir,
     value: str,
     resolved_type: type
+}
+
+impl mir_string {
+    pub func new(l: span*) -> mir_string* {
+        var res = mir_string::__alloc__();
+        res->base = mir::instance(mir_kind::mir_string, l);
+        res->value = str::instance();
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->value.delete();
+        self->resolved_type.delete();
+    }
 }
 
 pub struct mir_char {
@@ -139,16 +380,59 @@ pub struct mir_char {
     resolved_type: type
 }
 
+impl mir_char {
+    pub func new(l: span*) -> mir_char* {
+        var res = mir_char::__alloc__();
+        res->base = mir::instance(mir_kind::mir_char, l);
+        res->value = str::instance();
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->value.delete();
+        self->resolved_type.delete();
+    }
+}
+
 pub struct mir_bool {
     base: mir,
-    value: str,
+    value: bool,
     resolved_type: type
+}
+
+impl mir_bool {
+    pub func new(l: span*) -> mir_bool* {
+        var res = mir_bool::__alloc__();
+        res->base = mir::instance(mir_kind::mir_bool, l);
+        res->value = false;
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->resolved_type.delete();
+   }
 }
 
 pub struct mir_array {
     base: mir,
     size: u64,
     resolved_type: type
+}
+
+impl mir_array {
+    pub func new(l: span*) -> mir_array* {
+        var res = mir_array::__alloc__();
+        res->base = mir::instance(mir_kind::mir_array, l);
+        res->size = 0;
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->resolved_type.delete();
+    }
 }
 
 struct field {
@@ -168,7 +452,11 @@ impl field {
 
     pub func delete(self) {
         self->name.delete();
-        // self->content->delete();
+        if (self->content != nil) {
+            var n = self->content => mir*;
+            n->delete();
+            free(n => i8*);
+        }
         self->resolved_type.delete();
     }
 }
@@ -179,10 +467,65 @@ pub struct mir_struct_init {
     fields: vec<field>
 }
 
+impl mir_struct_init {
+    pub func new(l: span*) -> mir_struct_init* {
+        var res = mir_struct_init::__alloc__();
+        res->base = mir::instance(mir_kind::mir_struct_init, l);
+        res->resolved_type = type::instance();
+        res->fields = vec<field>::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->resolved_type.delete();
+        self->fields.delete();
+    }
+}
+
 pub struct mir_call {
     base: mir,
     content: mir_block*,
     resolved_type: type
+}
+
+impl mir_call {
+    pub func new(l: span*) -> mir_call* {
+        var res = mir_call::__alloc__();
+        res->base = mir::instance(mir_kind::mir_call, l);
+        res->resolved_type = type::instance();
+        res->content = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->content != nil) {
+            var n = self->content => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->resolved_type.delete();
+    }
+}
+
+pub struct mir_call_id {
+    base: mir,
+    name: str,
+    resolved_type: type
+}
+
+impl mir_call_id {
+    pub func new(l: span*) -> mir_call_id* {
+        var res = mir_call_id::__alloc__();
+        res->base = mir::instance(mir_kind::mir_call_id, l);
+        res->name = str::instance();
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->resolved_type.delete();
+    }
 }
 
 pub struct mir_call_index {
@@ -191,10 +534,48 @@ pub struct mir_call_index {
     resolved_type: type
 }
 
+impl mir_call_index {
+    pub func new(l: span*) -> mir_call_index* {
+        var res = mir_call_index::__alloc__();
+        res->base = mir::instance(mir_kind::mir_call_index, l);
+        res->resolved_type = type::instance();
+        res->index = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->index != nil) {
+            var n = self->index => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->resolved_type.delete();
+    }
+}
+
 pub struct mir_call_func {
     base: mir,
     args: mir_block*,
     resolved_type: type
+}
+
+impl mir_call_func {
+    pub func new(l: span*) -> mir_call_func* {
+        var res = mir_call_func::__alloc__();
+        res->base = mir::instance(mir_kind::mir_call_func, l);
+        res->resolved_type = type::instance();
+        res->args = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->args != nil) {
+            var n = self->args => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->resolved_type.delete();
+    }
 }
 
 pub struct mir_get_field {
@@ -203,10 +584,40 @@ pub struct mir_get_field {
     resolved_type: type
 }
 
+impl mir_get_field {
+    pub func new(l: span*) -> mir_get_field* {
+        var res = mir_get_field::__alloc__();
+        res->base = mir::instance(mir_kind::mir_get_field, l);
+        res->name = str::instance();
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->resolved_type.delete();
+    }
+}
+
 pub struct mir_ptr_get_field {
     base: mir,
     name: str,
     resolved_type: type
+}
+
+impl mir_ptr_get_field {
+    pub func new(l: span*) -> mir_ptr_get_field* {
+        var res = mir_ptr_get_field::__alloc__();
+        res->base = mir::instance(mir_kind::mir_ptr_get_field, l);
+        res->name = str::instance();
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->resolved_type.delete();
+    }
 }
 
 pub struct mir_get_path {
@@ -215,10 +626,44 @@ pub struct mir_get_path {
     resolved_type: type
 }
 
+impl mir_get_path {
+    pub func new(l: span*) -> mir_get_path* {
+        var res = mir_get_path::__alloc__();
+        res->base = mir::instance(mir_kind::mir_get_path, l);
+        res->name = str::instance();
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->resolved_type.delete();
+    }
+}
+
 pub struct mir_define {
     base: mir,
     init_value: mir_block*,
     resolved_type: type
+}
+
+impl mir_define {
+    pub func new(l: span*) -> mir_define* {
+        var res = mir_define::__alloc__();
+        res->base = mir::instance(mir_kind::mir_define, l);
+        res->init_value = nil;
+        res->resolved_type = type::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->init_value != nil) {
+            var n = self->init_value => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->resolved_type.delete();
+    }
 }
 
 pub struct mir_assign {
@@ -228,15 +673,79 @@ pub struct mir_assign {
     right: mir_block*
 }
 
+impl mir_assign {
+    pub func new(l: span*) -> mir_assign* {
+        var res = mir_assign::__alloc__();
+        res->base = mir::instance(mir_kind::mir_assign, l);
+        res->left = nil;
+        res->right = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->left != nil) {
+            var n= self->left => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        if (self->right != nil) {
+            var n= self->right => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
+}
+
 pub struct mir_if {
     base: mir,
     condition: mir_block*,
     content: mir_block*
 }
 
+impl mir_if {
+    pub func new(l: span*) -> mir_if* {
+        var res = mir_if::__alloc__();
+        res->base = mir::instance(mir_kind::mir_if, l);
+        res->condition = nil;
+        res->content = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->condition != nil) {
+            var n= self->condition => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        if (self->content != nil) {
+            var n= self->content => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
+}
+
 pub struct mir_branch {
     base: mir,
-    branch: primitive_vec<ptr<mir_if*>>
+    branch: primitive_vec<ptr<mir_if>>
+}
+
+impl mir_branch {
+    pub func new(l: span*) -> mir_branch* {
+        var res = mir_branch::__alloc__();
+        res->base = mir::instance(mir_kind::mir_branch, l);
+        res->branch = primitive_vec<ptr<mir_if>>::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        for (var i = self->branch.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap() => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->branch.delete();
+    }
 }
 
 pub struct mir_switch_case {
@@ -245,19 +754,86 @@ pub struct mir_switch_case {
     content: mir_block*
 }
 
+impl mir_switch_case {
+    pub func new(l: span*) -> mir_switch_case* {
+        var res = mir_switch_case::__alloc__();
+        res->base = mir::instance(mir_kind::mir_switch_case, l);
+        res->content = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->content != nil) {
+            var n= self->content => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
+}
+
 pub struct mir_switch {
     base: mir,
     condition: mir_block*,
-    cases: primitive_vec<ptr<mir_switch_case*>>,
+    cases: primitive_vec<ptr<mir_switch_case>>,
     default_case: mir_block*
+}
+
+impl mir_switch {
+    pub func new(l: span*) -> mir_switch* {
+        var res = mir_switch::__alloc__();
+        res->base = mir::instance(mir_kind::mir_switch, l);
+        res->condition = nil;
+        res->cases = primitive_vec<ptr<mir_switch_case>>::instance();
+        res->default_case = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->condition != nil) {
+            var n= self->condition => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        for (var i = self->cases.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap() => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->cases.delete();
+        if (self->default_case != nil) {
+            var n= self->default_case => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
 }
 
 pub struct mir_break {
     base: mir
 }
 
+impl mir_break {
+    pub func new(l: span*) -> mir_break* {
+        var res = mir_break::__alloc__();
+        res->base = mir::instance(mir_kind::mir_break, l);
+        return res;
+    }
+
+    pub func delete(self) {}
+}
+
 pub struct mir_continue {
     base: mir
+}
+
+impl mir_continue {
+    pub func new(l: span*) -> mir_continue* {
+        var res = mir_continue::__alloc__();
+        res->base = mir::instance(mir_kind::mir_continue, l);
+        return res;
+    }
+
+    pub func delete(self) {}
 }
 
 pub struct mir_loop {
@@ -267,7 +843,52 @@ pub struct mir_loop {
     update: mir_block*
 }
 
+impl mir_loop {
+    pub func new(l: span*) -> mir_loop* {
+        var res = mir_loop::__alloc__();
+        res->base = mir::instance(mir_kind::mir_loop, l);
+        res->condition = nil;
+        res->content = nil;
+        res->update = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->condition != nil) {
+            var n= self->condition => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        if (self->content != nil) {
+            var n= self->content => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+        if (self->update != nil) {
+            var n= self->update => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
+}
+
 pub struct mir_return {
     base: mir,
     value: mir_block*
+}
+
+impl mir_return {
+    pub func new(l: span*) -> mir_return* {
+        var res = mir_return::__alloc__();
+        res->base = mir::instance(mir_kind::mir_return, l);
+        res->value = nil;
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->value != nil) {
+            var n= self->value => mir*;
+            n->delete();
+        }
+    }
 }

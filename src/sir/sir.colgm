@@ -2,9 +2,10 @@ use std::str::{ str };
 use std::ptr::{ ptr };
 use std::vec::{ primitive_vec, vec };
 
+use err::panic::{ unreachable };
 use sir::value::{ value_t };
 
-enum sir_kind {
+pub enum sir_kind {
     sir_null,
     sir_nop,
     sir_block,
@@ -38,8 +39,29 @@ enum sir_kind {
     sir_array_cast
 }
 
+pub enum sir_cmp_kind {
+    cmp_eq,
+    cmp_neq,
+    cmp_ge,
+    cmp_gt,
+    cmp_le,
+    cmp_lt
+}
+
 pub struct sir {
     kind: sir_kind
+}
+
+impl sir {
+    pub func instance(kind: sir_kind) -> sir {
+        return sir { kind: kind };
+    }
+
+    pub func delete(self) {
+        match (self->kind) {
+            _ => { unreachable(); }
+        }
+    }
 }
 
 pub struct sir_nop {
@@ -219,4 +241,71 @@ pub struct sir_bor {
     left: value_t,
     right: value_t,
     type: str
+}
+
+pub struct sir_cmp {
+    base: sir,
+    target: value_t,
+    left: value_t,
+    right: value_t,
+    kind: sir_cmp_kind,
+    is_integer: bool,
+    is_signed: bool,
+    type: str
+}
+
+pub struct sir_label {
+    base: sir,
+    label: u64,
+    comment: str
+}
+
+pub struct sir_store {
+    base: sir,
+    target: value_t,
+    source: value_t,
+    type: str
+}
+
+pub struct sir_load {
+    base: sir,
+    target: value_t,
+    source: value_t,
+    type: str
+}
+
+pub struct sir_br {
+    base: sir,
+    label: u64
+}
+
+pub struct sir_br_cond {
+    base: sir,
+    cond: value_t,
+    label_true: u64,
+    label_false: u64
+}
+
+pub struct sir_switch {
+    base: sir,
+    source: value_t,
+    default_label: u64,
+    case_value: primitive_vec<i64>,
+    case_label: primitive_vec<u64>
+}
+
+pub struct sir_type_convert {
+    base: sir,
+    target: value_t,
+    source: value_t,
+    src_type: str,
+    dst_type: str
+}
+
+pub struct sir_array_cast {
+    base: sir,
+    target: value_t,
+    source: value_t,
+    type: str,
+    array_size: u64
 }
