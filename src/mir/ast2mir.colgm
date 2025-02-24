@@ -4,6 +4,7 @@ use std::io::{ io };
 
 use err::report::{ report };
 use err::span::{ span };
+use err::panic::{ unreachable };
 
 use ast::ast::*;
 
@@ -27,7 +28,10 @@ pub struct ast2mir {
 }
 
 impl ast2mir {
-    pub func instance(e: report*, c: sema_context*, p: package*, m: mir_context*) -> ast2mir {
+    pub func instance(e: report*,
+                      c: sema_context*,
+                      p: package*,
+                      m: mir_context*) -> ast2mir {
         return ast2mir {
             err: e,
             ctx: c,
@@ -57,5 +61,15 @@ impl ast2mir {
             .out(r->base.location->file.c_str)
             .out("> ...")
             .endln();
+        for (var i = r->decls.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap();
+            match (n->kind) {
+                ast_kind::ast_enum_decl => {}
+                ast_kind::ast_struct_decl => {}
+                ast_kind::ast_impl => {}
+                ast_kind::ast_func_decl => {}
+                _ => { unreachable(); }
+            }
+        }
     }
 }
