@@ -10,6 +10,9 @@ use sema::regist::{ regist_pass };
 use sema::sema::{ sema };
 
 use mir::mir::*;
+use mir::context::{ mir_context };
+use mir::ast2mir::{ ast2mir };
+
 use sir::sir::*;
 
 func compile(option: cli_option) {
@@ -36,8 +39,15 @@ func compile(option: cli_option) {
     var cc = frontend::instance(option.__ptr__());
     var gt = global_symbol_table::instance();
     var ctx = sema_context::instance(gt.__ptr__());
-    var regpass = regist_pass::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt);
+    var mctx = mir_context::instance();
+    var regpass = regist_pass::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt, mctx.__ptr__());
     var semantic = sema::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt);
+    var ast2mir_worker = ast2mir::instance(
+        cc.err,
+        ctx.__ptr__(),
+        cc.pkg,
+        mctx.__ptr__()
+    );
 
     cc.pkg->library_path.clear();
     cc.pkg->library_path.append_i8_vec(option.library_path);
@@ -88,11 +98,15 @@ func compile(option: cli_option) {
         semantic.ctx->dump(io::stdout(), cc.pkg);
     }
 
+    ast2mir_worker.generate(cc.par.root);
+
     cc.delete();
     gt.delete();
     ctx.delete();
     regpass.delete();
     semantic.delete();
+    mctx.delete();
+    ast2mir_worker.delete();
 }
 
 func main(argc: i32, argv: i8**) -> i32 {

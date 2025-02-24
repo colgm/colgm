@@ -1,0 +1,96 @@
+use std::vec::{ vec };
+use std::str::{ str };
+use std::map::{ hashmap };
+use std::ptr::{ basic };
+use std::libc::{ free };
+
+use err::span::{ span };
+use sema::type::{ type };
+use mir::mir::*;
+
+pub struct mir_struct {
+    name: str,
+    location: span,
+    field_type: vec<type>
+}
+
+impl mir_struct {
+    pub func copy(self) -> mir_struct* {
+        var res = mir_struct::__alloc__();
+        res->name = self->name.copy_instance();
+        res->location = self->location.copy_instance();
+        res->field_type = self->field_type.copy_instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->location.delete();
+        self->field_type.delete();
+    }
+}
+
+pub struct mir_func {
+    name: str,
+    location: span,
+    param_name: vec<str>,
+    param_type: vec<type>,
+    with_va_args: bool,
+    attributes: vec<str>,
+    return_type: type,
+    block: mir_block*
+}
+
+impl mir_func {
+    pub func copy(self) -> mir_func* {
+        var res = mir_func::__alloc__();
+        res->name = self->name.copy_instance();
+        res->location = self->location.copy_instance();
+        res->param_name = self->param_name.copy_instance();
+        res->param_type = self->param_type.copy_instance();
+        res->with_va_args = self->with_va_args;
+        res->attributes = self->attributes.copy_instance();
+        res->return_type = self->return_type.copy_instance();
+        res->block = self->block; // shallow copy
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->location.delete();
+        self->param_name.delete();
+        self->param_type.delete();
+        self->attributes.delete();
+        self->return_type.delete();
+        if (self->block != nil) {
+            var n = self->block => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
+}
+
+pub struct mir_context {
+    structs: vec<mir_struct>,
+    decls: vec<mir_func>,
+    impls: vec<mir_func>,
+    const_strings: hashmap<str, basic<u64>>
+}
+
+impl mir_context {
+    pub func instance() -> mir_context {
+        return mir_context {
+            structs: vec<mir_struct>::instance(),
+            decls: vec<mir_func>::instance(),
+            impls: vec<mir_func>::instance(),
+            const_strings: hashmap<str, basic<u64>>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->structs.delete();
+        self->decls.delete();
+        self->impls.delete();
+        self->const_strings.delete();
+    }
+}

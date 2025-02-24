@@ -1,0 +1,61 @@
+use std::str::{ str };
+use std::libc::{ free };
+use std::io::{ io };
+
+use err::report::{ report };
+use err::span::{ span };
+
+use ast::ast::*;
+
+use sema::type::{ type };
+use sema::context::{ sema_context };
+use sema::type_resolve::{ type_resolve };
+
+use mir::mir::*;
+use mir::context::{ mir_context };
+
+use package::{ package };
+
+pub struct ast2mir {
+    err: report*,
+    ctx: sema_context*,
+    tr: type_resolve,
+
+    mctx: mir_context*,
+    impl_struct_name: str,
+    block: mir_block*
+}
+
+impl ast2mir {
+    pub func instance(e: report*, c: sema_context*, p: package*, m: mir_context*) -> ast2mir {
+        return ast2mir {
+            err: e,
+            ctx: c,
+            tr: type_resolve::instance(e, c, p),
+            mctx: m,
+            impl_struct_name: str::instance(),
+            block: nil
+        };
+    }
+
+    pub func delete(self) {
+        self->impl_struct_name.delete();
+        if (self->block != nil) {
+            var n = self->block => mir*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
+}
+
+impl ast2mir {
+    pub func generate(self, r: root*) {
+        io::stdout()
+            .out("[ast2mir] worker 0x")
+            .out_hex(self => i64)
+            .out(" generating MIR for <")
+            .out(r->base.location->file.c_str)
+            .out("> ...")
+            .endln();
+    }
+}

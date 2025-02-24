@@ -2,6 +2,7 @@ use std::str::{ str };
 use std::ptr::{ ptr };
 use std::vec::{ primitive_vec, vec };
 use std::libc::{ free };
+use std::io::{ io };
 
 use err::panic::{ unreachable };
 use sir::value::{ value_t };
@@ -234,6 +235,13 @@ impl sir_nop {
 
     pub func delete(self) {
         self->info.delete();
+    }
+
+    pub func dump(self, out: io) {
+        if (!self->info.empty()) {
+            out.out("; ").out(self->info.c_str);
+        }
+        out.out("\n");
     }
 }
 

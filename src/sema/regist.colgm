@@ -32,6 +32,9 @@ use sema::type_replace::{ generic_visitor };
 use sema::type_resolve::{ type_resolve };
 use sema::sema::{ sema };
 
+use mir::context::{ mir_context };
+use mir::ast2mir::{ ast2mir };
+
 pub struct regist_pass {
     this_file: str,
     err: report*,
@@ -41,13 +44,16 @@ pub struct regist_pass {
     co: cli_option*,
     tr: type_resolve,
     gnv: generic_visitor,
+
+    mctx: mir_context*
 }
 
 impl regist_pass {
 	pub func instance(err: report*,
                       pkg: package*,
                       ctx: sema_context*,
-                      co: cli_option*) -> regist_pass {
+                      co: cli_option*,
+                      mctx: mir_context*) -> regist_pass {
 		return regist_pass {
             this_file: str::instance(),
             err: err,
@@ -56,7 +62,8 @@ impl regist_pass {
             ctx: ctx,
             co: co,
             tr: type_resolve::instance(err, ctx, pkg),
-            gnv: generic_visitor::instance(err, ctx, pkg, co)
+            gnv: generic_visitor::instance(err, ctx, pkg, co),
+            mctx: mctx
         };
 	}
 
@@ -219,9 +226,20 @@ impl regist_pass {
 
         var lex = lexer::new(self->err);
         var par = parser::instance(self->err, lex, self->co);
-        var rp = regist_pass::instance(self->err, self->pkg, self->ctx, self->co);
+        var rp = regist_pass::instance(
+            self->err,
+            self->pkg,
+            self->ctx,
+            self->co,
+            self->mctx
+        );
         var semantic = sema::instance(self->err, self->pkg, self->ctx, self->co);
-
+        var ast2mir_worker = ast2mir::instance(
+            self->err,
+            self->ctx,
+            self->pkg,
+            self->mctx
+        );
         lex->scan(path->c_str);
         if (self->err->error_count > 0) {
             return false;
@@ -241,6 +259,8 @@ impl regist_pass {
         if (self->err->error_count > 0) {
             return false;
         }
+
+        ast2mir_worker.generate(par.root);
 
         lex->delete();
         par.delete();
