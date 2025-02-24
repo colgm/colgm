@@ -2,6 +2,8 @@ COLGMCC = ./build/colgm
 
 colgm.ll: $(COLGMCC) src/**/*.colgm src/*.colgm
 	$(COLGMCC) --library src --pass-info src/main.colgm -o colgm.ll
+
+test.ll: $(COLGMCC) src/**/*.colgm src/*.colgm
 	$(COLGMCC) --library src --pass-info src/test/test.colgm -o test.ll
 
 TEST_LIB = --library test/test_lib
