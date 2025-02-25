@@ -13,7 +13,7 @@ use sema::context::{ sema_context };
 use sema::type_resolve::{ type_resolve };
 
 use mir::mir::*;
-use mir::context::{ mir_context };
+use mir::context::{ mir_context, mir_struct, mir_func };
 
 use package::{ package };
 
@@ -53,6 +53,51 @@ impl ast2mir {
 }
 
 impl ast2mir {
+    func visit_enum_decl(self, n: ast_enum_decl*) { return; }
+
+    func visit_struct_decl(self, n: ast_struct_decl*) {
+        if (n->generic_types != nil) {
+            return;
+        }
+
+        var st = mir_struct::instance(n->name.__ptr__(), n->base.location);
+        for (var i = n->fields.iter(); !i.is_end(); i = i.next()) {
+            var f = i.get().unwrap() => ast_struct_field*;
+            var t = self->tr.resolve(f->type);
+            st.field_type.push(t.__ptr__());
+            t.delete();
+        }
+        self->mctx->structs.push(st.__ptr__());
+        st.delete();
+    }
+
+    func visit_impl(self, n: ast_impl*) {
+        if (n->generic_types != nil) {
+            return;
+        }
+        self->impl_struct_name.clear();
+        self->impl_struct_name.append_str(n->name.__ptr__());
+        io::stdout()
+            .out("[ast2mir] generating impl ")
+            .out(n->name.c_str)
+            .endln();
+        // TODO
+        self->impl_struct_name.clear();
+    }
+    
+    func visit_func_decl(self, n: ast_func_decl*) {
+        if (n->generic_types != nil) {
+            return;
+        }
+        // TODO
+        io::stdout()
+            .out("[ast2mir] generating function ")
+            .out(n->name.c_str)
+            .endln();
+    }
+}
+
+impl ast2mir {
     pub func generate(self, r: root*) {
         io::stdout()
             .out("[ast2mir] worker 0x")
@@ -64,10 +109,18 @@ impl ast2mir {
         for (var i = r->decls.iter(); !i.is_end(); i = i.next()) {
             var n = i.get().unwrap();
             match (n->kind) {
-                ast_kind::ast_enum_decl => {}
-                ast_kind::ast_struct_decl => {}
-                ast_kind::ast_impl => {}
-                ast_kind::ast_func_decl => {}
+                ast_kind::ast_enum_decl => {
+                    self->visit_enum_decl(n => ast_enum_decl*);
+                }
+                ast_kind::ast_struct_decl => {
+                    self->visit_struct_decl(n => ast_struct_decl*);
+                }
+                ast_kind::ast_impl => {
+                    self->visit_impl(n => ast_impl*);
+                }
+                ast_kind::ast_func_decl => {
+                    self->visit_func_decl(n => ast_func_decl*);
+                }
                 _ => { unreachable(); }
             }
         }
