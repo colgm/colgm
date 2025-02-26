@@ -7,6 +7,7 @@ use err::span::{ span };
 use err::panic::{ unreachable };
 
 use ast::ast::*;
+use ast::dumper::{ ast_dumper };
 
 use sema::type::{ type };
 use sema::context::{ sema_context };
@@ -21,6 +22,7 @@ pub struct ast2mir {
     err: report*,
     ctx: sema_context*,
     tr: type_resolve,
+    pkg: package*,
 
     mctx: mir_context*,
     impl_struct_name: str,
@@ -36,6 +38,7 @@ impl ast2mir {
             err: e,
             ctx: c,
             tr: type_resolve::instance(e, c, p),
+            pkg: p,
             mctx: m,
             impl_struct_name: str::instance(),
             block: nil
@@ -53,6 +56,19 @@ impl ast2mir {
 }
 
 impl ast2mir {
+    func visit(self, a: ast*) {}
+}
+
+impl ast2mir {
+    func generate_full_name(self, n: str*, loc: span*) -> str {
+        var ty = type::instance();
+        ty.name.append_str(n);
+        ty.loc_file.append_str(loc->file.__ptr__());
+        var name = ty.full_path_name(self->pkg, false);
+        ty.delete();
+        return name;
+    }
+
     func visit_enum_decl(self, n: ast_enum_decl*) { return; }
 
     func visit_struct_decl(self, n: ast_struct_decl*) {
@@ -77,11 +93,10 @@ impl ast2mir {
         }
         self->impl_struct_name.clear();
         self->impl_struct_name.append_str(n->name.__ptr__());
-        io::stdout()
-            .out("[ast2mir] generating impl ")
-            .out(n->name.c_str)
-            .endln();
-        // TODO
+        for (var i = n->methods.iter(); !i.is_end(); i = i.next()) {
+            var m = i.get().unwrap() => ast_func_decl*;
+            self->visit_func_decl(m);
+        }
         self->impl_struct_name.clear();
     }
     
@@ -89,11 +104,80 @@ impl ast2mir {
         if (n->generic_types != nil) {
             return;
         }
-        // TODO
-        io::stdout()
-            .out("[ast2mir] generating function ")
-            .out(n->name.c_str)
-            .endln();
+
+        var name = n->name.copy_instance();
+        if (!self->impl_struct_name.empty()) {
+            var tmp_ty_name = self->generate_full_name(
+                self->impl_struct_name.__ptr__(),
+                n->base.location
+            );
+            name.clear();
+            name.append_str(tmp_ty_name.__ptr__())
+                ->append_i8_vec(".")
+                ->append_str(n->name.__ptr__());
+            tmp_ty_name.delete();
+        }
+
+        // global function with is not extern
+        if (self->impl_struct_name.empty() && !n->is_extern) {
+            var tmp_ty_name = self->generate_full_name(
+                n->name.__ptr__(),
+                n->base.location
+            );
+            name.clear();
+            name.append_str(tmp_ty_name.__ptr__());
+            tmp_ty_name.delete();
+        }
+
+        
+        var ret_ty = type::instance();
+        if (n->return_type != nil) {
+            var t = self->tr.resolve(n->return_type);
+            ret_ty.reset_with(t.__ptr__());
+            t.delete();
+        } else {
+            var t = type::void_type();
+            ret_ty.reset_with(t.__ptr__());
+            t.delete();
+        }
+        var f = mir_func::instance(
+            name.__ptr__(),
+            n->base.location,
+            ret_ty.__ptr__()
+        );
+
+        for (var i = n->params->params.iter(); !i.is_end(); i = i.next()) {
+            var p = i.get().unwrap() => ast_param*;
+            var t = self->tr.resolve(p->type);
+            f.param_name.push(p->name->content.__ptr__());
+            f.param_type.push(t.__ptr__());
+            t.delete();
+        }
+
+        ret_ty.delete();
+        name.delete();
+
+        if (n->body == nil) {
+            self->mctx->decls.push(f.__ptr__());
+            f.delete();
+            return;
+        }
+
+        self->block = mir_block::new(n->body->base.location);
+        f.block = self->block;
+        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+            var stmt = i.get().unwrap();
+            self->visit(stmt);
+            if (stmt->is(ast_kind::ast_ret_stmt) ||
+                stmt->is(ast_kind::ast_break_stmt) ||
+                stmt->is(ast_kind::ast_continue_stmt)) {
+                break;
+            }
+        }
+        self->block = nil;
+
+        self->mctx->impls.push(f.__ptr__());
+        f.delete();
     }
 }
 

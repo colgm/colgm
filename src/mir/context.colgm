@@ -3,8 +3,10 @@ use std::str::{ str };
 use std::map::{ hashmap };
 use std::ptr::{ basic };
 use std::libc::{ free };
+use std::io::{ io };
 
 use err::span::{ span };
+use err::panic::{ print_backtrace };
 use sema::type::{ type };
 use mir::mir::*;
 
@@ -50,6 +52,19 @@ pub struct mir_func {
 }
 
 impl mir_func {
+    pub func instance(name: str*, loc: span*, ret_ty: type*) -> mir_func {
+        return mir_func {
+            name: name->copy_instance(),
+            location: loc->copy_instance(),
+            param_name: vec<str>::instance(),
+            param_type: vec<type>::instance(),
+            with_va_args: false,
+            attributes: vec<str>::instance(),
+            return_type: ret_ty->copy_instance(),
+            block: nil
+        };
+    }
+
     pub func copy(self) -> mir_func* {
         var res = mir_func::__alloc__();
         res->name = self->name.copy_instance();
@@ -59,7 +74,9 @@ impl mir_func {
         res->with_va_args = self->with_va_args;
         res->attributes = self->attributes.copy_instance();
         res->return_type = self->return_type.copy_instance();
+        
         res->block = self->block; // shallow copy
+        self->block = nil; // clear source func block
         return res;
     }
 

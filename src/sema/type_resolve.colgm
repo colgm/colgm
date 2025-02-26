@@ -1,4 +1,5 @@
 use err::report::{ report };
+use err::panic::{ panic };
 use ast::ast::{ ast_kind, ast_type_def };
 use package::{ package };
 
@@ -21,6 +22,9 @@ impl type_resolve {
     }
 
     pub func resolve(self, node: ast_type_def*) -> type {
+        if (node == nil) {
+            panic("node for type resolve cannot be nil");
+        }
         var name = node->name->content.__ptr__();
         var file = node->base.location->file.__ptr__();
         if (node->base.is_redirected()) {

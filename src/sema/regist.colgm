@@ -1189,7 +1189,6 @@ impl regist_pass {
         var struct_info: colgm_struct* = nil;
         if (node->generic_types != nil) {
             struct_info = dm->generic_structs.get(name);
-            struct_info->generic_struct_impl.push(ptr<ast_impl>::wrap(node->copy()));
         } else {
             struct_info = dm->structs.get(name);
         }
@@ -1206,6 +1205,12 @@ impl regist_pass {
             } else {
                 self->generate_impl_static_method(struct_info, mthd_node);
             }
+        }
+
+        // do copy here, because above logic does some parameter type node generation
+        // if do copy above the logic, generated type nodes will not be copied
+        if (node->generic_types != nil) {
+            struct_info->generic_struct_impl.push(ptr<ast_impl>::wrap(node->copy()));
         }
 
         self->ctx->generics.clear();
