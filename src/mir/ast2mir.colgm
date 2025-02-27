@@ -1,6 +1,7 @@
 use std::str::{ str };
 use std::libc::{ free };
 use std::io::{ io };
+use std::ptr::{ ptr };
 
 use err::report::{ report };
 use err::span::{ span };
@@ -56,7 +57,66 @@ impl ast2mir {
 }
 
 impl ast2mir {
-    func visit(self, a: ast*) {}
+    func visit(self, a: ast*) {
+        match (a->kind) {
+            ast_kind::ast_null => {}
+            ast_kind::ast_root => { unreachable(); }
+            ast_kind::ast_unary_operator => {
+                self->visit_unary_operator(a => ast_unary_operator*);
+            }
+            ast_kind::ast_binary_operator => {
+                self->visit_binary_operator(a => ast_binary_operator*);
+            }
+            ast_kind::ast_type_convert => {
+                self->visit_type_convert(a => ast_type_convert*);
+            }
+            ast_kind::ast_nil_literal => {
+                self->visit_nil_literal(a => ast_nil_literal*);
+            }
+            ast_kind::ast_number_literal => {
+                self->visit_number_literal(a => ast_number_literal*);
+            }
+            _ => {}
+        }
+    }
+
+    func visit_unary_operator(self, n: ast_unary_operator*) {
+        // TODO
+        self->visit(n->value);
+        return;
+    }
+
+    func visit_binary_operator(self, n: ast_binary_operator*) {
+        // TODO
+        self->visit(n->left);
+        self->visit(n->right);
+        return;
+    }
+
+    func visit_type_convert(self, n: ast_type_convert*) {
+        // TODO
+        self->visit(n->from);
+        return;
+    }
+
+    func visit_nil_literal(self, n: ast_nil_literal*) {
+        var m = mir_nil::new(
+            n->base.location,
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+        return;
+    }
+
+    func visit_number_literal(self, n: ast_number_literal*) {
+        var m = mir_number::new(
+            n->base.location,
+            n->literal.__ptr__(),
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+        return;
+    }
 }
 
 impl ast2mir {

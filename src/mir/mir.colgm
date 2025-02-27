@@ -321,10 +321,10 @@ pub struct mir_nil {
 }
 
 impl mir_nil {
-    pub func new(l: span*) -> mir_nil* {
+    pub func new(l: span*, t: type*) -> mir_nil* {
         var res = mir_nil::__alloc__();
         res->base = mir::instance(mir_kind::mir_nil, l);
-        res->resolved_type = type::instance();
+        res->resolved_type = t->copy_instance();
         return res;
     }
 
@@ -340,11 +340,11 @@ pub struct mir_number {
 }
 
 impl mir_number {
-    pub func new(l: span*) -> mir_number* {
+    pub func new(l: span*, num: str*, t: type*) -> mir_number* {
         var res = mir_number::__alloc__();
         res->base = mir::instance(mir_kind::mir_number, l);
-        res->value = str::instance();
-        res->resolved_type = type::instance();
+        res->value = num->copy_instance();
+        res->resolved_type = t->copy_instance();
         return res;
     }
 
