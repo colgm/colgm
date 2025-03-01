@@ -76,6 +76,15 @@ impl ast2mir {
             ast_kind::ast_number_literal => {
                 self->visit_number_literal(a => ast_number_literal*);
             }
+            ast_kind::ast_string_literal => {
+                self->visit_string_literal(a => ast_string_literal*);
+            }
+            ast_kind::ast_char_literal => {
+                self->visit_char_literal(a => ast_char_literal*);
+            }
+            ast_kind::ast_bool_literal => {
+                self->visit_bool_literal(a => ast_bool_literal*);
+            }
             _ => {}
         }
     }
@@ -112,6 +121,36 @@ impl ast2mir {
         var m = mir_number::new(
             n->base.location,
             n->literal.__ptr__(),
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+        return;
+    }
+
+    func visit_string_literal(self, n: ast_string_literal*) {
+        var m = mir_string::new(
+            n->base.location,
+            n->literal.__ptr__(),
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+        return;
+    }
+
+    func visit_char_literal(self, n: ast_char_literal*) {
+        var m = mir_char::new(
+            n->base.location,
+            n->literal.__ptr__(),
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+        return;
+    }
+
+    func visit_bool_literal(self, n: ast_bool_literal*) {
+        var m = mir_bool::new(
+            n->base.location,
+            n->flag,
             n->base.resolved_type.__ptr__()
         );
         self->block->content.push(ptr<mir>::wrap(m => mir*));
