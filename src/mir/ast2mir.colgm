@@ -5,7 +5,7 @@ use std::ptr::{ ptr };
 
 use err::report::{ report };
 use err::span::{ span };
-use err::panic::{ unreachable };
+use err::panic::{ panic, unreachable };
 
 use ast::ast::*;
 use ast::dumper::{ ast_dumper };
@@ -92,20 +92,48 @@ impl ast2mir {
             ast_kind::ast_call_index => {
                 self->visit_call_index(a => ast_call_index*);
             }
+            ast_kind::ast_call_func_args => {
+                self->visit_call_func_args(a => ast_call_func_args*);
+            }
+            ast_kind::ast_get_field => {
+                self->visit_get_field(a => ast_get_field*);
+            }
+            ast_kind::ast_ptr_get_field => {
+                self->visit_ptr_get_field(a => ast_ptr_get_field*);
+            }
+            ast_kind::ast_initializer => {
+                self->visit_initializer(a => ast_initializer*);
+            }
+            ast_kind::ast_call_path => {
+                self->visit_call_path(a => ast_call_path*);
+            }
+            ast_kind::ast_call => {
+                self->visit_call(a => ast_call*);
+            }
+            ast_kind::ast_definition => {
+                self->visit_definition(a => ast_definition*);
+            }
+            ast_kind::ast_assignment => {
+                self->visit_assignment(a => ast_assignment*);
+            }
+            ast_kind::ast_cond_stmt => {
+                self->visit_cond_stmt(a => ast_cond_stmt*);
+            }
+            ast_kind::ast_match_stmt => self->visit_match_stmt(a => ast_match_stmt*);
+            ast_kind::ast_while_stmt => self->visit_while_stmt(a => ast_while_stmt*);
+            ast_kind::ast_for_stmt => self->visit_for_stmt(a => ast_for_stmt*);
             ast_kind::ast_in_stmt_expr => {
                 self->visit_in_stmt_expr(a => ast_in_stmt_expr*);
             }
             ast_kind::ast_ret_stmt => {
                 self->visit_ret_stmt(a => ast_ret_stmt*);
             }
-            ast_kind::ast_continue_stmt => {
-                self->visit_continue_stmt(a => ast_continue_stmt*);
-            }
-            ast_kind::ast_break_stmt => {
-                self->visit_break_stmt(a => ast_break_stmt*);
-            }
+            ast_kind::ast_continue_stmt => self->visit_continue_stmt(a => ast_continue_stmt*);
+            ast_kind::ast_break_stmt => self->visit_break_stmt(a => ast_break_stmt*);
             _ => {
-                io::stdout().out("unsupported ast: ").out(ast_kind_name(a->kind)).endln();
+                var info = str::from("[ast2mir] unsupported ast: ");
+                info.append_i8_vec(ast_kind_name(a->kind));
+                panic(info.c_str);
             }
         }
     }
@@ -225,9 +253,88 @@ impl ast2mir {
         );
         self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
+
+    func visit_call_func_args(self, n: ast_call_func_args*) {
+        var new_block = mir_block::new(n->base.location);
+        var temp = self->block;
+        self->block = new_block;
+        for (var i = n->args.iter(); !i.is_end(); i = i.next()) {
+            self->visit(i.get().unwrap());
+        }
+        self->block = temp;
+
+        var m = mir_call_func::new(
+            n->base.location,
+            new_block,
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+    }
+
+    func visit_get_field(self, n: ast_get_field*) {
+        var m = mir_get_field::new(
+            n->base.location,
+            n->name.__ptr__(),
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+    }
+
+    func visit_ptr_get_field(self, n: ast_ptr_get_field*) {
+        var m = mir_ptr_get_field::new(
+            n->base.location,
+            n->name.__ptr__(),
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+    }
+
+    func visit_initializer(self, n: ast_initializer*) {
+        // TODO
+    }
+
+    func visit_call_path(self, n: ast_call_path*) {
+        var m = mir_get_path::new(
+            n->base.location,
+            n->name.__ptr__(),
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+    }
+
+    func visit_call(self, n: ast_call*) {
+        // TODO
+        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+            self->visit(i.get().unwrap());
+        }
+    }
 }
 
 impl ast2mir {
+    func visit_definition(self, n: ast_definition*) {
+        // TODO
+    }
+
+    func visit_assignment(self, n: ast_assignment*) {
+        // TODO
+    }
+
+    func visit_cond_stmt(self, n: ast_cond_stmt*) {
+        // TODO
+    }
+
+    func visit_match_stmt(self, n: ast_match_stmt*) {
+        // TODO
+    }
+
+    func visit_while_stmt(self, n: ast_while_stmt*) {
+        // TODO
+    }
+
+    func visit_for_stmt(self, n: ast_for_stmt*) {
+        // TODO
+    }
+
     func visit_in_stmt_expr(self, n: ast_in_stmt_expr*) {
         self->visit(n->value);
     }
