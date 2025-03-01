@@ -17,6 +17,7 @@ use sema::type_resolve::{ type_resolve };
 use mir::mir::*;
 use mir::context::{ mir_context, mir_struct, mir_func };
 
+use util::to_num::{ hex_to_u64, dec_to_u64 };
 use package::{ package };
 
 pub struct ast2mir {
@@ -85,6 +86,9 @@ impl ast2mir {
             ast_kind::ast_bool_literal => {
                 self->visit_bool_literal(a => ast_bool_literal*);
             }
+            ast_kind::ast_array_literal => {
+                self->visit_array_literal(a => ast_array_literal*);
+            }
             _ => {}
         }
     }
@@ -103,8 +107,25 @@ impl ast2mir {
     }
 
     func visit_type_convert(self, n: ast_type_convert*) {
-        // TODO
+        var new_block = mir_block::new(n->base.location);
+        var temp = self->block;
+        self->block = new_block;
         self->visit(n->from);
+        self->block = temp;
+
+        var target_type = self->tr.resolve(n->to);
+        if (self->ctx->global->domain.has(target_type.loc_file.__ptr__())) {
+            var dm = self->ctx->global->domain.get(target_type.loc_file.__ptr__());
+            if (dm->enums.has(target_type.name.__ptr__())) {
+                target_type.is_enum = true;
+            }
+        }
+        var m = mir_type_convert::new(
+            n->base.location,
+            new_block,
+            target_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
         return;
     }
 
@@ -155,6 +176,22 @@ impl ast2mir {
         );
         self->block->content.push(ptr<mir>::wrap(m => mir*));
         return;
+    }
+
+    func visit_array_literal(self, n: ast_array_literal*) {
+        var num = n->size->literal.__ptr__();
+        var res: u64 = 0;
+        if (num->size >= 2 && num->c_str[0] == '0' && num->c_str[1] == 'x') {
+            res = hex_to_u64(num->c_str);
+        } else {
+            res = dec_to_u64(num->c_str);
+        }
+        var m = mir_array::new(
+            n->base.location,
+            res,
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 }
 

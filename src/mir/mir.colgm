@@ -297,11 +297,11 @@ pub struct mir_type_convert {
 }
 
 impl mir_type_convert {
-    pub func new(l: span*) -> mir_type_convert* {
+    pub func new(l: span*, src: mir_block*, t: type*) -> mir_type_convert* {
         var res = mir_type_convert::__alloc__();
         res->base = mir::instance(mir_kind::mir_type_convert, l);
-        res->source = nil;
-        res->target = type::instance();
+        res->source = src;
+        res->target = t->copy_instance();
         return res;
     }
 
@@ -423,11 +423,11 @@ pub struct mir_array {
 }
 
 impl mir_array {
-    pub func new(l: span*) -> mir_array* {
+    pub func new(l: span*, s: u64, t: type*) -> mir_array* {
         var res = mir_array::__alloc__();
         res->base = mir::instance(mir_kind::mir_array, l);
-        res->size = 0;
-        res->resolved_type = type::instance();
+        res->size = s;
+        res->resolved_type = t->copy_instance();
         return res;
     }
 

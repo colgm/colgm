@@ -244,7 +244,7 @@ f64 dec_to_f64(const char* str) {
 }
 
 u64 dec_to_u64(const char* str) {
-    u64 ret = 0, num_pow = 0;
+    u64 ret = 0;
     while('0'<=*str && *str<='9') {
         ret = ret*10 + (*str++ - '0');
     }
