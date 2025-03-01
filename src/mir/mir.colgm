@@ -536,11 +536,11 @@ pub struct mir_call_index {
 }
 
 impl mir_call_index {
-    pub func new(l: span*) -> mir_call_index* {
+    pub func new(l: span*, idx: mir_block*, t: type*) -> mir_call_index* {
         var res = mir_call_index::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_index, l);
-        res->resolved_type = type::instance();
-        res->index = nil;
+        res->index = idx;
+        res->resolved_type = t->copy_instance();
         return res;
     }
 
@@ -879,10 +879,10 @@ pub struct mir_return {
 }
 
 impl mir_return {
-    pub func new(l: span*) -> mir_return* {
+    pub func new(l: span*, v: mir_block*) -> mir_return* {
         var res = mir_return::__alloc__();
         res->base = mir::instance(mir_kind::mir_return, l);
-        res->value = nil;
+        res->value = v;
         return res;
     }
 

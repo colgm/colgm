@@ -89,7 +89,24 @@ impl ast2mir {
             ast_kind::ast_array_literal => {
                 self->visit_array_literal(a => ast_array_literal*);
             }
-            _ => {}
+            ast_kind::ast_call_index => {
+                self->visit_call_index(a => ast_call_index*);
+            }
+            ast_kind::ast_in_stmt_expr => {
+                self->visit_in_stmt_expr(a => ast_in_stmt_expr*);
+            }
+            ast_kind::ast_ret_stmt => {
+                self->visit_ret_stmt(a => ast_ret_stmt*);
+            }
+            ast_kind::ast_continue_stmt => {
+                self->visit_continue_stmt(a => ast_continue_stmt*);
+            }
+            ast_kind::ast_break_stmt => {
+                self->visit_break_stmt(a => ast_break_stmt*);
+            }
+            _ => {
+                io::stdout().out("unsupported ast: ").out(ast_kind_name(a->kind)).endln();
+            }
         }
     }
 
@@ -191,6 +208,53 @@ impl ast2mir {
             res,
             n->base.resolved_type.__ptr__()
         );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+    }
+
+    func visit_call_index(self, n: ast_call_index*) {
+        var new_block = mir_block::new(n->base.location);
+        var temp = self->block;
+        self->block = new_block;
+        self->visit(n->index);
+        self->block = temp;
+
+        var m = mir_call_index::new(
+            n->base.location,
+            new_block,
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+    }
+}
+
+impl ast2mir {
+    func visit_in_stmt_expr(self, n: ast_in_stmt_expr*) {
+        self->visit(n->value);
+    }
+
+    func visit_ret_stmt(self, n: ast_ret_stmt*) {
+        var new_block = mir_block::new(n->base.location);
+        var temp = self->block;
+        self->block = new_block;
+        if (n->value != nil) {
+            self->visit(n->value);
+        }
+        self->block = temp;
+
+        var m = mir_return::new(
+            n->base.location,
+            new_block
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+    }
+
+    func visit_continue_stmt(self, n: ast_continue_stmt*) {
+        var m = mir_continue::new(n->base.location);
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
+    }
+
+    func visit_break_stmt(self, n: ast_break_stmt*) {
+        var m = mir_break::new(n->base.location);
         self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 }
