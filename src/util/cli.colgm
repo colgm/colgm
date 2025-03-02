@@ -3,6 +3,7 @@ use std::libc::{ exit };
 use std::fs::{ fs };
 
 use util::misc::{ get_platform, get_arch };
+use util::clang_finder::{ find_clang };
 
 pub struct cli_option {
     OPTION_VIEW_TOKEN: bool,
@@ -45,7 +46,7 @@ impl cli_option {
 }
 
 pub func version() -> i8* {
-    return "0.2.3";
+    return "0.2.5";
 }
 
 pub func print_version() {
@@ -84,6 +85,8 @@ pub func help() {
 }
 
 pub func logo(executable: i8*) {
+    var possible_clang = find_clang();
+
     io::stdout()
     .out("                __              \n")
     .out("    _________  / /___ _____ ___ \n")
@@ -91,12 +94,18 @@ pub func logo(executable: i8*) {
     .out("  / /__/ /_/ / / /_/ / / / / / /\n")
     .out("  \\___/\\____/_/\\__, /_/ /_/ /_/ \n")
     .out("              /____/            \n\n")
-    .out("version  : ").out(version()).out("\n")
-    .out("platform : ").out(get_platform()).out(" ").out(get_arch()).out("\n")
-    .out("repo     : https://github.com/colgm/colgm\n")
-    .out("repo     : https://gitee.com/valkmjolnir/colgm\n")
-    .out("license  : Apache 2.0\n\n")
-    .out("input <").out(executable).out(" -h> to get help.\n\n");
+    .out("version : ").out(version()).out("\n")
+    .out("arch    : ").out(get_platform()).out(" ").out(get_arch()).out("\n")
+    .out("repo    : https://github.com/colgm/colgm\n")
+    .out("repo    : https://gitee.com/valkmjolnir/colgm\n")
+    .out("license : Apache 2.0\n");
+
+    if (possible_clang.empty()) {
+        io::stdout().out("clang   : cannot find clang on this machine\n");
+    } else {
+        io::stdout().out("clang   : ").out(possible_clang.c_str).out("\n");
+    }
+    io::stdout().out("\ninput <").out(executable).out(" -h> to get help.\n\n");
 }
 
 pub func report_missing_given_info(info: i8*) {

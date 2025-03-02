@@ -1,0 +1,45 @@
+use std::fs::{ fs };
+use std::str::{ str };
+use std::vec::{ vec };
+use std::libc::{ itoa };
+
+func supported_clang_version() -> vec<str> {
+    var res = vec<str>::instance();
+    for (var i = 13; i <= 19; i += 1) {
+        var buffer = [i8; 128];
+        itoa(i, buffer, 10);
+        var name = str::from("clang-");
+        name.append_i8_vec(buffer);
+        res.push(name.__ptr__());
+
+        name.clear();
+        name.append_i8_vec("clang++-")->append_i8_vec(buffer);
+        res.push(name.__ptr__());
+
+        name.delete();
+    }
+    return res;
+}
+
+pub func find_clang() -> str {
+    var path = fs::PATH();
+    var version = supported_clang_version();
+    var res = str::from("");
+    for (var p = path.iter(); !p.is_end(); p = p.next()) {
+        for (var cl = version.iter(); !cl.is_end(); cl = cl.next()) {
+            var full_path = p.get()->copy_instance();
+            full_path.append_i8_vec("/")->append_i8_vec(cl.get()->c_str);
+            if (fs::exists(full_path.c_str)) {
+                res.append_str(full_path.__ptr__());
+                break;
+            }
+        }
+        if (!res.empty()) {
+            break;
+        }
+    }
+
+    path.delete();
+    version.delete();
+    return res;
+}
