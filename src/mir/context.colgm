@@ -118,4 +118,22 @@ impl mir_context {
         self->impls.delete();
         self->const_strings.delete();
     }
+
+    pub func dump(self, out: io) {
+        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+            out.out(i.get()->name.c_str).endln();
+            if (i.get()->block != nil) {
+                var m = i.get()->block => mir*;
+                m->dump(out, 0);
+            }
+        }
+        for (var i = self->impls.iter(); !i.is_end(); i = i.next()) {
+            out.out(i.get()->name.c_str).endln();
+            if (i.get()->block != nil) {
+                var m = i.get()->block => mir*;
+                m->dump(out, 0);
+            }
+            out.endln();
+        }
+    }
 }

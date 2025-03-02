@@ -206,6 +206,42 @@ impl mir {
             _ => { unreachable(); }
         }
     }
+
+    pub func dump(self, out: io, depth: u32) {
+        for (var i: u32 = 0; i < depth; i = i + 1) {
+            out.out("  ");
+        }
+        out.out("[0x").out_hex(self => i64).out("] ");
+        match (self->kind) {
+            mir_kind::mir_block => {
+                var n = self => mir_block*;
+                n->dump(out, depth);
+            }
+            mir_kind::mir_call => {
+                var n = self => mir_call*;
+                n->dump(out, depth);
+            }
+            mir_kind::mir_call_id => {
+                var n = self => mir_call_id*;
+                n->dump(out, depth);
+            }
+            mir_kind::mir_break => {
+                var n = self => mir_break*;
+                n->dump(out, depth);
+            }
+            mir_kind::mir_continue => {
+                var n = self => mir_continue*;
+                n->dump(out, depth);
+            }
+            mir_kind::mir_return => {
+                var n = self => mir_return*;
+                n->dump(out, depth);
+            }
+            _ => {
+                out.out("unknown mir").endln();
+            }
+        }
+    }
 }
 
 pub struct mir_block {
@@ -228,6 +264,14 @@ impl mir_block {
             free(item => i8*);
         }
         self->content.delete();
+    }
+
+    pub func dump(self, out: io, depth: u32) {
+        out.out("mir_block").endln();
+        for (var i = self->content.iter(); !i.is_end(); i = i.next()) {
+            var item = i.get().unwrap();
+            item->dump(out, depth + 1);
+        }
     }
 }
 
@@ -436,15 +480,15 @@ impl mir_array {
     }
 }
 
-struct field {
+struct init_field {
     name: str,
     content: mir_block*,
     resolved_type: type
 }
 
-impl field {
-    pub func copy(self) -> field* {
-        var res = field::__alloc__();
+impl init_field {
+    pub func copy(self) -> init_field* {
+        var res = init_field::__alloc__();
         res->name = self->name.copy_instance();
         res->content = self->content;
         res->resolved_type = self->resolved_type.copy_instance();
@@ -465,21 +509,32 @@ impl field {
 pub struct mir_struct_init {
     base: mir,
     resolved_type: type,
-    fields: vec<field>
+    fields: vec<init_field>
 }
 
 impl mir_struct_init {
-    pub func new(l: span*) -> mir_struct_init* {
+    pub func new(l: span*, t: type*) -> mir_struct_init* {
         var res = mir_struct_init::__alloc__();
         res->base = mir::instance(mir_kind::mir_struct_init, l);
-        res->resolved_type = type::instance();
-        res->fields = vec<field>::instance();
+        res->resolved_type = t->copy_instance();
+        res->fields = vec<init_field>::instance();
         return res;
     }
 
     pub func delete(self) {
         self->resolved_type.delete();
         self->fields.delete();
+    }
+
+    pub func add_field(self, n: str*, b: mir_block*, t: type*) {
+        var in_fld = init_field {
+            name: n->copy_instance(),
+            content: b,
+            resolved_type: t->copy_instance()
+        };
+        self->fields.push(in_fld.__ptr__());
+        in_fld.content = nil;
+        in_fld.delete();
     }
 }
 
@@ -490,11 +545,11 @@ pub struct mir_call {
 }
 
 impl mir_call {
-    pub func new(l: span*) -> mir_call* {
+    pub func new(l: span*, b: mir_block*, t: type*) -> mir_call* {
         var res = mir_call::__alloc__();
         res->base = mir::instance(mir_kind::mir_call, l);
-        res->resolved_type = type::instance();
-        res->content = nil;
+        res->content = b;
+        res->resolved_type = t->copy_instance();
         return res;
     }
 
@@ -506,6 +561,12 @@ impl mir_call {
         }
         self->resolved_type.delete();
     }
+
+    pub func dump(self, out: io, depth: u32) {
+        out.out("mir_call").endln();
+        var t = self->content => mir*;
+        t->dump(out, depth + 1);
+    }
 }
 
 pub struct mir_call_id {
@@ -515,17 +576,21 @@ pub struct mir_call_id {
 }
 
 impl mir_call_id {
-    pub func new(l: span*) -> mir_call_id* {
+    pub func new(l: span*, n: str*, t: type*) -> mir_call_id* {
         var res = mir_call_id::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_id, l);
-        res->name = str::instance();
-        res->resolved_type = type::instance();
+        res->name = n->copy_instance();
+        res->resolved_type = t->copy_instance();
         return res;
     }
 
     pub func delete(self) {
         self->name.delete();
         self->resolved_type.delete();
+    }
+
+    pub func dump(self, out: io, depth: u32) {
+        out.out("mir_call_id: ").out(self->name.c_str).endln();
     }
 }
 
@@ -821,6 +886,10 @@ impl mir_break {
     }
 
     pub func delete(self) {}
+
+    pub func dump(self, out: io, depth: u32) {
+        out.out("mir_break").endln();
+    }
 }
 
 pub struct mir_continue {
@@ -835,6 +904,10 @@ impl mir_continue {
     }
 
     pub func delete(self) {}
+
+    pub func dump(self, out: io, depth: u32) {
+        out.out("mir_continue").endln();
+    }
 }
 
 pub struct mir_loop {
@@ -890,6 +963,14 @@ impl mir_return {
         if (self->value != nil) {
             var n= self->value => mir*;
             n->delete();
+        }
+    }
+
+    pub func dump(self, out: io, depth: u32) {
+        out.out("mir_ret").endln();
+        if (self->value != nil) {
+            var t = self->value => mir*;
+            t->dump(out, depth + 1);
         }
     }
 }
