@@ -6,6 +6,7 @@ use std::str::{ str };
 use std::vec::{ vec, primitive_vec };
 use std::ptr::{ ptr };
 use std::io::{ io };
+use package::{ package };
 
 use sema::type::{ type };
 
@@ -50,11 +51,11 @@ pub enum mir_unary_opr {
 pub enum mir_binary_opr {
     add,
     sub,
-    mult,
+    mul,
     div,
     rem,
     cmpeq,
-    cmpneq,
+    cmpne,
     less,
     leq,
     grt,
@@ -207,7 +208,7 @@ impl mir {
         }
     }
 
-    pub func dump(self, out: io, depth: u32) {
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
         for (var i: u32 = 0; i < depth; i = i + 1) {
             out.out("  ");
         }
@@ -215,27 +216,67 @@ impl mir {
         match (self->kind) {
             mir_kind::mir_block => {
                 var n = self => mir_block*;
-                n->dump(out, depth);
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_unary => {
+                var n = self => mir_unary*;
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_binary => {
+                var n = self => mir_binary*;
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_type_convert => {
+                var n = self => mir_type_convert*;
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_nil => {
+                var n = self => mir_nil*;
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_number => {
+                var n = self => mir_number*;
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_string => {
+                var n = self => mir_string*;
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_char => {
+                var n = self => mir_char*;
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_bool => {
+                var n = self => mir_bool*;
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_array => {
+                var n = self => mir_array*;
+                n->dump(out, pkg, depth);
+            }
+            mir_kind::mir_struct_init => {
+                var n = self => mir_struct_init*;
+                n->dump(out, pkg, depth);
             }
             mir_kind::mir_call => {
                 var n = self => mir_call*;
-                n->dump(out, depth);
+                n->dump(out, pkg, depth);
             }
             mir_kind::mir_call_id => {
                 var n = self => mir_call_id*;
-                n->dump(out, depth);
+                n->dump(out, pkg, depth);
             }
             mir_kind::mir_break => {
                 var n = self => mir_break*;
-                n->dump(out, depth);
+                n->dump(out, pkg, depth);
             }
             mir_kind::mir_continue => {
                 var n = self => mir_continue*;
-                n->dump(out, depth);
+                n->dump(out, pkg, depth);
             }
             mir_kind::mir_return => {
                 var n = self => mir_return*;
-                n->dump(out, depth);
+                n->dump(out, pkg, depth);
             }
             _ => {
                 out.out("unknown mir").endln();
@@ -266,11 +307,11 @@ impl mir_block {
         self->content.delete();
     }
 
-    pub func dump(self, out: io, depth: u32) {
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.out("mir_block").endln();
         for (var i = self->content.iter(); !i.is_end(); i = i.next()) {
             var item = i.get().unwrap();
-            item->dump(out, depth + 1);
+            item->dump(out, pkg, depth + 1);
         }
     }
 }
@@ -283,11 +324,12 @@ pub struct mir_unary {
 }
 
 impl mir_unary {
-    pub func new(l: span*) -> mir_unary* {
+    pub func new(l: span*, op: mir_unary_opr, t: type*, v: mir_block*) -> mir_unary* {
         var res = mir_unary::__alloc__();
         res->base = mir::instance(mir_kind::mir_unary, l);
-        res->resolved_type = type::instance();
-        res->value = nil;
+        res->op = op;
+        res->resolved_type = t->copy_instance();
+        res->value = v;
         return res;
     }
 
@@ -298,6 +340,19 @@ impl mir_unary {
             n->delete();
             free(n => i8*);
         }
+    }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        out.out("mir_unary ");
+        match (self->op) {
+            mir_unary_opr::neg => out.out("-");
+            mir_unary_opr::bnot => out.out("~");
+            mir_unary_opr::lnot => out.out("!");
+        }
+        out.endln();
+
+        var n = self->value => mir*;
+        n->dump(out, pkg, depth + 1);
     }
 }
 
@@ -310,12 +365,17 @@ pub struct mir_binary {
 }
 
 impl mir_binary {
-    pub func new(l: span*) -> mir_binary* {
+    pub func new(l: span*,
+                 op: mir_binary_opr,
+                 t: type*,
+                 lhs: mir_block*,
+                 rhs: mir_block*) -> mir_binary* {
         var res = mir_binary::__alloc__();
         res->base = mir::instance(mir_kind::mir_binary, l);
-        res->resolved_type = type::instance();
-        res->left = nil;
-        res->right = nil;
+        res->op = op;
+        res->resolved_type = t->copy_instance();
+        res->left = lhs;
+        res->right = rhs;
         return res;
     }
 
@@ -331,6 +391,34 @@ impl mir_binary {
             n->delete();
             free(n => i8*);
         }
+    }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        out.out("mir_binary ");
+        match (self->op) {
+            mir_binary_opr::add => out.out("+");
+            mir_binary_opr::sub => out.out("-");
+            mir_binary_opr::mul => out.out("*");
+            mir_binary_opr::div => out.out("/");
+            mir_binary_opr::rem => out.out("%");
+            mir_binary_opr::cmpeq => out.out("==");
+            mir_binary_opr::cmpne => out.out("!=");
+            mir_binary_opr::less => out.out("<");
+            mir_binary_opr::leq => out.out("<=");
+            mir_binary_opr::grt => out.out(">");
+            mir_binary_opr::geq => out.out(">=");
+            mir_binary_opr::cmpand => out.out("&&");
+            mir_binary_opr::cmpor => out.out("||");
+            mir_binary_opr::band => out.out("&");
+            mir_binary_opr::bor => out.out("|");
+            mir_binary_opr::bxor => out.out("^");
+        }
+        out.endln();
+
+        var n = self->left => mir*;
+        n->dump(out, pkg, depth + 1);
+        n = self->right => mir*;
+        n->dump(out, pkg, depth + 1);
     }
 }
 
@@ -357,6 +445,15 @@ impl mir_type_convert {
         }
         self->target.delete();
     }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        var name = self->target.full_path_name(pkg, true);
+        out.out("mir_type_convert => ").out(name.c_str).endln();
+        name.delete();
+
+        var n = self->source => mir*;
+        n->dump(out, pkg, depth + 1);
+    }
 }
 
 pub struct mir_nil {
@@ -374,6 +471,12 @@ impl mir_nil {
 
     pub func delete(self) {
         self->resolved_type.delete();
+    }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        var tn = self->resolved_type.full_path_name(pkg, true);
+        out.out("mir_nil [").out(tn.c_str).out("]").endln();
+        tn.delete();
     }
 }
 
@@ -396,6 +499,13 @@ impl mir_number {
         self->value.delete();
         self->resolved_type.delete();
    }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        var tn = self->resolved_type.full_path_name(pkg, true);
+        out.out("mir_number: ").out(self->value.c_str);
+        out.out(" [").out(tn.c_str).out("]").endln();
+        tn.delete();
+    }
 }
 
 pub struct mir_string {
@@ -416,6 +526,10 @@ impl mir_string {
     pub func delete(self) {
         self->value.delete();
         self->resolved_type.delete();
+    }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        out.out("mir_string: \"").out(self->value.c_str).out("\"").endln();
     }
 }
 
@@ -438,6 +552,10 @@ impl mir_char {
         self->value.delete();
         self->resolved_type.delete();
     }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        out.out("mir_char: '").out(self->value.c_str).out("'").endln();
+    }
 }
 
 pub struct mir_bool {
@@ -457,7 +575,16 @@ impl mir_bool {
 
     pub func delete(self) {
         self->resolved_type.delete();
-   }
+    }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        out.out("mir_bool: ");
+        if (self->value) {
+            out.out("true").endln();
+        } else {
+            out.out("false").endln();
+        }
+    }
 }
 
 pub struct mir_array {
@@ -477,6 +604,13 @@ impl mir_array {
 
     pub func delete(self) {
         self->resolved_type.delete();
+    }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        var name = self->resolved_type.full_path_name(pkg, true);
+        out.out("mir_array: ").out_i64(self->size => i64);
+        out.out(" of ").out(name.c_str).endln();
+        name.delete();
     }
 }
 
@@ -503,6 +637,19 @@ impl init_field {
             free(n => i8*);
         }
         self->resolved_type.delete();
+    }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        for (var j: u32 = 0; j < depth; j += 1) {
+            out.out("  ");
+        }
+        out.out("[").out(self->name.c_str).out("]: [");
+        var tn = self->resolved_type.full_path_name(pkg, true);
+        out.out(tn.c_str).out("]").endln();
+        tn.delete();
+
+        var n = self->content => mir*;
+        n->dump(out, pkg, depth + 1);
     }
 }
 
@@ -536,6 +683,16 @@ impl mir_struct_init {
         in_fld.content = nil;
         in_fld.delete();
     }
+
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
+        var sn = self->resolved_type.full_path_name(pkg, true);
+        out.out("mir_struct_init: ").out(sn.c_str).endln();
+        sn.delete();
+
+        for (var i = self->fields.iter(); !i.is_end(); i = i.next()) {
+            i.get()->dump(out, pkg, depth + 1);
+        }
+    }
 }
 
 pub struct mir_call {
@@ -562,10 +719,10 @@ impl mir_call {
         self->resolved_type.delete();
     }
 
-    pub func dump(self, out: io, depth: u32) {
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.out("mir_call").endln();
         var t = self->content => mir*;
-        t->dump(out, depth + 1);
+        t->dump(out, pkg, depth + 1);
     }
 }
 
@@ -589,7 +746,7 @@ impl mir_call_id {
         self->resolved_type.delete();
     }
 
-    pub func dump(self, out: io, depth: u32) {
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.out("mir_call_id: ").out(self->name.c_str).endln();
     }
 }
@@ -887,7 +1044,7 @@ impl mir_break {
 
     pub func delete(self) {}
 
-    pub func dump(self, out: io, depth: u32) {
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.out("mir_break").endln();
     }
 }
@@ -905,7 +1062,7 @@ impl mir_continue {
 
     pub func delete(self) {}
 
-    pub func dump(self, out: io, depth: u32) {
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.out("mir_continue").endln();
     }
 }
@@ -966,11 +1123,11 @@ impl mir_return {
         }
     }
 
-    pub func dump(self, out: io, depth: u32) {
+    pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.out("mir_ret").endln();
         if (self->value != nil) {
             var t = self->value => mir*;
-            t->dump(out, depth + 1);
+            t->dump(out, pkg, depth + 1);
         }
     }
 }

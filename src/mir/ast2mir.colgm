@@ -139,14 +139,70 @@ impl ast2mir {
     }
 
     func visit_unary_operator(self, n: ast_unary_operator*) {
-        // TODO
+        var temp = self->block;
+
+        var v = mir_block::new(n->value->location);
+        self->block = v;
         self->visit(n->value);
+        self->block = temp;
+
+        var op = mir_unary_opr::neg;
+        match (n->kind) {
+            unary_kind::neg => op = mir_unary_opr::neg;
+            unary_kind::bnot => op = mir_unary_opr::bnot;
+            unary_kind::lnot => op = mir_unary_opr::lnot;
+        }
+
+        var m = mir_unary::new(
+            n->base.location,
+            op,
+            n->base.resolved_type.__ptr__(),
+            v
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
     func visit_binary_operator(self, n: ast_binary_operator*) {
-        // TODO
+        var temp = self->block;
+
+        var lhs = mir_block::new(n->left->location);
+        self->block = lhs;
         self->visit(n->left);
+        self->block = temp;
+
+        var rhs = mir_block::new(n->right->location);
+        self->block = rhs;
         self->visit(n->right);
+        self->block = temp;
+
+        var op = mir_binary_opr::add;
+        match (n->kind) {
+            binary_kind::add => op = mir_binary_opr::add;
+            binary_kind::sub => op = mir_binary_opr::sub;
+            binary_kind::mul => op = mir_binary_opr::mul;
+            binary_kind::div => op = mir_binary_opr::div;
+            binary_kind::rem => op = mir_binary_opr::rem;
+            binary_kind::cmpeq => op = mir_binary_opr::cmpeq;
+            binary_kind::cmpne => op = mir_binary_opr::cmpne;
+            binary_kind::less => op = mir_binary_opr::less;
+            binary_kind::leq => op = mir_binary_opr::leq;
+            binary_kind::grt => op = mir_binary_opr::grt;
+            binary_kind::geq => op = mir_binary_opr::geq;
+            binary_kind::cmpand => op = mir_binary_opr::cmpand;
+            binary_kind::cmpor => op = mir_binary_opr::cmpor;
+            binary_kind::band => op = mir_binary_opr::band;
+            binary_kind::bor => op = mir_binary_opr::bor;
+            binary_kind::bxor => op = mir_binary_opr::bxor;
+        }
+
+        var m = mir_binary::new(
+            n->base.location,
+            op,
+            n->base.resolved_type.__ptr__(),
+            lhs,
+            rhs
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
     func visit_type_convert(self, n: ast_type_convert*) {
@@ -532,13 +588,6 @@ impl ast2mir {
 
 impl ast2mir {
     pub func generate(self, r: root*) {
-        io::stdout()
-            .out("[ast2mir] worker 0x")
-            .out_hex(self => i64)
-            .out(" generating MIR for <")
-            .out(r->base.location->file.c_str)
-            .out("> ...")
-            .endln();
         for (var i = r->decls.iter(); !i.is_end(); i = i.next()) {
             var n = i.get().unwrap();
             match (n->kind) {
