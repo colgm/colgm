@@ -407,14 +407,54 @@ impl ast2mir {
 
 impl ast2mir {
     func visit_definition(self, n: ast_definition*) {
-        // TODO
+        var new_block = mir_block::new(n->base.location);
+        var temp = self->block;
+        self->block = new_block;
         self->visit(n->value);
+        self->block = temp;
+
+        var m = mir_define::new(
+            n->base.location,
+            n->name.__ptr__(),
+            new_block,
+            n->base.resolved_type.__ptr__()
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
     func visit_assignment(self, n: ast_assignment*) {
-        // TODO
+        var temp = self->block;
+
+        var lhs = mir_block::new(n->left->base.location);
+        self->block = lhs;
         self->visit_call(n->left);
+        self->block = temp;
+
+        var rhs = mir_block::new(n->right->location);
+        self->block = rhs;
         self->visit(n->right);
+        self->block = temp;
+
+        var ty = mir_assign_opr::eq;
+        match (n->kind) {
+            assignment_kind::eq => ty = mir_assign_opr::eq;
+            assignment_kind::addeq => ty = mir_assign_opr::addeq;
+            assignment_kind::subeq => ty = mir_assign_opr::subeq;
+            assignment_kind::muleq => ty = mir_assign_opr::muleq;
+            assignment_kind::diveq => ty = mir_assign_opr::diveq;
+            assignment_kind::remeq => ty =mir_assign_opr::remeq;
+            assignment_kind::andeq => ty = mir_assign_opr::andeq;
+            assignment_kind::oreq => ty = mir_assign_opr::oreq;
+            assignment_kind::xoreq => ty = mir_assign_opr::xoreq;
+        }
+
+        var m = mir_assign::new(
+            n->base.location,
+            ty,
+            lhs,
+            rhs
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
     func visit_cond_stmt(self, n: ast_cond_stmt*) {
