@@ -212,7 +212,7 @@ impl mir {
         for (var i: u32 = 0; i < depth; i = i + 1) {
             out.out("  ");
         }
-        out.out("[0x").out_hex(self => i64).out("]----");
+        out.out("[0x").out_hex(self => i64).out("]--");
         match (self->kind) {
             mir_kind::mir_block => {
                 var n = self => mir_block*;
@@ -1060,11 +1060,11 @@ pub struct mir_if {
 }
 
 impl mir_if {
-    pub func new(l: span*) -> mir_if* {
+    pub func new(l: span*, cond: mir_block*, ctt: mir_block*) -> mir_if* {
         var res = mir_if::__alloc__();
         res->base = mir::instance(mir_kind::mir_if, l);
-        res->condition = nil;
-        res->content = nil;
+        res->condition = cond;
+        res->content = ctt;
         return res;
     }
 
@@ -1082,7 +1082,18 @@ impl mir_if {
     }
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
-        // TODO
+        if (self->condition != nil) {
+            out.out("mir_if (if)").endln();
+            var t = self->condition => mir*;
+            t->dump(out, pkg, depth + 1);
+        } else {
+            out.out("mir_if (else)").endln();
+        }
+
+        if (self->content != nil) {
+            var t = self->content => mir*;
+            t->dump(out, pkg, depth + 1);
+        }
     }
 }
 
@@ -1109,7 +1120,11 @@ impl mir_branch {
     }
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
-        // TODO
+        out.out("mir_branch").endln();
+        for (var i = self->branch.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap() => mir*;
+            n->dump(out, pkg, depth + 1);
+        }
     }
 }
 
@@ -1225,12 +1240,15 @@ pub struct mir_loop {
 }
 
 impl mir_loop {
-    pub func new(l: span*) -> mir_loop* {
+    pub func new(l: span*,
+                 cond: mir_block*,
+                 ctt: mir_block*,
+                 updt: mir_block*) -> mir_loop* {
         var res = mir_loop::__alloc__();
         res->base = mir::instance(mir_kind::mir_loop, l);
-        res->condition = nil;
-        res->content = nil;
-        res->update = nil;
+        res->condition = cond;
+        res->content = ctt;
+        res->update = updt;
         return res;
     }
 
@@ -1253,7 +1271,20 @@ impl mir_loop {
     }
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
-        // TODO
+        out.out("mir_loop ");
+        self->base.location.dump(out);
+        if (self->condition != nil) {
+            var t = self->condition => mir*;
+            t->dump(out, pkg, depth + 1);
+        }
+        if (self->content != nil) {
+            var t = self->content => mir*;
+            t->dump(out, pkg, depth + 1);
+        }
+        if (self->update != nil) {
+            var t = self->update => mir*;
+            t->dump(out, pkg, depth + 1);
+        }
     }
 }
 

@@ -457,8 +457,52 @@ impl ast2mir {
         self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
+    func generate_if_stmt(self, n: ast_if_stmt*) -> mir_if* {
+        // else branch
+        if (n->condition == nil) {
+            var new_block = mir_block::new(n->body->base.location);
+            var temp = self->block;
+            self->block = new_block;
+            for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+                self->visit(i.get().unwrap());
+            }
+            self->block = temp;
+
+            return mir_if::new(
+                n->base.location,
+                nil,
+                new_block
+            );
+        }
+
+        var cond_block = mir_block::new(n->condition->location);
+        var temp = self->block;
+        self->block = cond_block;
+        self->visit(n->condition);
+        self->block = temp;
+
+        var body_block = mir_block::new(n->body->base.location);
+        self->block = body_block;
+        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+            self->visit(i.get().unwrap());
+        }
+        self->block = temp;
+
+        return mir_if::new(
+            n->base.location,
+            cond_block,
+            body_block
+        );
+    }
+
     func visit_cond_stmt(self, n: ast_cond_stmt*) {
-        // TODO
+       var m = mir_branch::new(n->base.location);
+       for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+           var c = i.get().unwrap() => ast_if_stmt*;
+           var mi = self->generate_if_stmt(c);
+           m->branch.push(ptr<mir_if>::wrap(mi));
+       }
+       self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
     func visit_match_stmt(self, n: ast_match_stmt*) {
@@ -466,11 +510,108 @@ impl ast2mir {
     }
 
     func visit_while_stmt(self, n: ast_while_stmt*) {
-        // TODO
+        var cond_block = mir_block::new(n->condition->location);
+        var temp = self->block;
+        self->block = cond_block;
+        self->visit(n->condition);
+        self->block = temp;
+
+        var body_block = mir_block::new(n->body->base.location);
+        self->block = body_block;
+        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+            self->visit(i.get().unwrap());
+        }
+        self->block = temp;
+
+        var m = mir_loop::new(
+            n->base.location,
+            cond_block,
+            body_block,
+            nil // no update stage in while loop
+        );
+        self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
     func visit_for_stmt(self, n: ast_for_stmt*) {
-        // TODO
+        var temp = self->block;
+
+        // for top level block will keep defined variable in live range
+        // util for loop exit
+        var for_top_level = mir_block::new(n->base.location);
+        self->block->content.push(ptr<mir>::wrap(for_top_level => mir*));
+
+        if (n->init != nil) {
+            self->block = for_top_level;
+            self->visit(n->init => ast*);
+            self->block = temp;
+        }
+
+        var cond_block: mir_block* = nil;
+        if (n->condition != nil) {
+            cond_block = mir_block::new(n->condition->location);
+            self->block = cond_block;
+            self->visit(n->condition);
+            self->block = temp;
+        } else {
+            cond_block = mir_block::new(n->base.location);
+
+            // generate 1 == 1
+            var bt = type::bool_type();
+            var it = type::i64_type();
+            var one = str::from("1");
+
+            var cond = mir_binary::new(
+                n->base.location,
+                mir_binary_opr::cmpeq,
+                bt.__ptr__(),
+                mir_block::new(n->base.location),
+                mir_block::new(n->base.location)
+            );
+
+            cond->left->content.push(ptr<mir>::wrap(
+                mir_number::new(
+                    n->base.location,
+                    one.__ptr__(),
+                    it.__ptr__()
+                ) => mir*
+            ));
+            cond->right->content.push(ptr<mir>::wrap(
+                mir_number::new(
+                    n->base.location,
+                    one.__ptr__(),
+                    it.__ptr__()
+                ) => mir*
+            ));
+            cond_block->content.push(ptr<mir>::wrap(cond => mir*));
+
+            bt.delete();
+            it.delete();
+            one.delete();
+        }
+
+        var update_block: mir_block* = nil;
+        if (n->update != nil) {
+            update_block = mir_block::new(n->update->location);
+            self->block = update_block;
+            self->visit(n->update);
+            self->block = temp;
+        }
+
+        var body_block = mir_block::new(n->body->base.location);
+        self->block = body_block;
+        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+            self->visit(i.get().unwrap());
+        }
+        self->block = temp;
+
+        for_top_level->content.push(ptr<mir>::wrap(
+            mir_loop::new(
+                n->base.location,
+                cond_block,
+                body_block,
+                update_block
+            ) => mir*
+        ));
     }
 
     func visit_in_stmt_expr(self, n: ast_in_stmt_expr*) {
