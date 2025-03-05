@@ -505,8 +505,64 @@ impl ast2mir {
        self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
+    func generate_match_case(self, n: ast_match_case*) -> mir_switch_case* {
+        var temp = self->block;
+        
+        var enum_ty = n->pattern->base.resolved_type.__ptr__();
+        var dm = self->ctx->global->domain.get(enum_ty->loc_file.__ptr__());
+        var em = dm->enums.get(enum_ty->name.__ptr__());
+
+        var path_node = n->pattern->chain.get(0).unwrap();
+        if (!path_node->is(ast_kind::ast_call_path)) {
+            panic("path node should be ast_call_path");
+        }
+        var p = path_node => ast_call_path*;
+        var em_name = p->name.__ptr__();
+        var index = em->members.get(em_name)->unwrap();
+
+        var body_block = mir_block::new(n->body->base.location);
+        self->block = body_block;
+        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+            var ds = i.get().unwrap();
+            self->visit(ds);
+        }
+        self->block = temp;
+        
+        return mir_switch_case::new(n->base.location, index, body_block);
+    }
+
     func visit_match_stmt(self, n: ast_match_stmt*) {
-        // TODO
+        var cond_block = mir_block::new(n->value->location);
+        var temp = self->block;
+        self->block = cond_block;
+        self->visit(n->value);
+        self->block = temp;
+
+        var switch_block = mir_switch::new(n->base.location, cond_block);
+        self->block->content.push(ptr<mir>::wrap(switch_block => mir*));
+
+        var default_case: ast_match_case* = nil;
+        for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
+            var t = i.get().unwrap() => ast_match_case*;
+            if (t->pattern->base.resolved_type.is_default_match()) {
+                default_case = t;
+                continue;
+            }
+            switch_block->cases.push(
+                ptr<mir_switch_case>::wrap(self->generate_match_case(t))
+            );
+        }
+
+        if (default_case != nil) {
+            var default_block = mir_block::new(default_case->base.location);
+            self->block = default_block;
+            for (var i = default_case->body->stmts.iter(); !i.is_end(); i = i.next()) {
+                var ds = i.get().unwrap();
+                self->visit(ds);
+            }
+            self->block = temp;
+            switch_block->default_case = default_block;
+        }
     }
 
     func visit_while_stmt(self, n: ast_while_stmt*) {
