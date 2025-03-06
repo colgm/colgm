@@ -1,0 +1,32 @@
+use std::map::{ hashmap };
+use std::str::{ str };
+use std::ptr::{ basic };
+
+use mir::mir::*;
+use mir::context::{ mir_context };
+use sir::context::{ sir_context };
+
+use sema::symbol_info::{ symbol_kind };
+use sema::context::{ sema_context };
+
+pub struct mir2sir {
+    ctx: sema_context*,
+    sctx: sir_context*,
+    type_mapper: hashmap<str, basic<symbol_kind>>
+}
+
+impl mir2sir {
+    pub func instance(ctx: sema_context*, sctx: sir_context*) -> mir2sir {
+        return mir2sir {
+            ctx: ctx,
+            sctx: sctx,
+            type_mapper: hashmap<str, basic<symbol_kind>>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->type_mapper.delete();
+    }
+
+    pub func generate(self, mctx: mir_context*) {}
+}

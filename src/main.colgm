@@ -14,6 +14,8 @@ use mir::context::{ mir_context };
 use mir::ast2mir::{ ast2mir };
 
 use sir::sir::*;
+use sir::context::{ sir_context };
+use sir::mir2sir::{ mir2sir };
 
 func compile(option: cli_option) {
     var err = io::stderr();
@@ -40,6 +42,7 @@ func compile(option: cli_option) {
     var gt = global_symbol_table::instance();
     var ctx = sema_context::instance(gt.__ptr__());
     var mctx = mir_context::instance();
+    var sctx = sir_context::instance();
     var regpass = regist_pass::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt, mctx.__ptr__());
     var semantic = sema::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt);
     var ast2mir_worker = ast2mir::instance(
@@ -47,6 +50,10 @@ func compile(option: cli_option) {
         ctx.__ptr__(),
         cc.pkg,
         mctx.__ptr__()
+    );
+    var mir2sir_worder = mir2sir::instance(
+        ctx.__ptr__(),
+        sctx.__ptr__()
     );
 
     cc.pkg->library_path.clear();
@@ -103,13 +110,24 @@ func compile(option: cli_option) {
         mctx.dump(io::stdout(), cc.pkg);
     }
 
+    mir2sir_worder.generate(mctx.__ptr__());
+    if (option.OPTION_VIEW_SIR) {
+        sctx.dump(io::stdout());
+    }
+
+    var file_output = io::fileout("out.self_host.ll");
+    sctx.dump(file_output);
+    file_output.close();
+
     cc.delete();
     gt.delete();
     ctx.delete();
     regpass.delete();
     semantic.delete();
     mctx.delete();
+    sctx.delete();
     ast2mir_worker.delete();
+    mir2sir_worder.delete();
 }
 
 func main(argc: i32, argv: i8**) -> i32 {

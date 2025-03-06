@@ -200,7 +200,16 @@ impl io {
         var flags = flag::O_WRONLY | flag::O_APPEND | flag::O_CREAT;
         var fd = open(file, flags => i32, 0o666); // rw-rw-rw-
         if (fd < 0) {
-            panic("io: failed to open the file in append mode");
+            panic("failed to open the file in append mode");
+        }
+        return fd;
+    }
+
+    func open_file(file: i8*) -> i32 {
+        var flags = flag::O_WRONLY | flag::O_CREAT;
+        var fd = open(file, flags => i32, 0o666); // rw-rw-rw-
+        if (fd < 0) {
+            panic("failed to open the file in append mode");
         }
         return fd;
     }
@@ -211,6 +220,10 @@ impl io {
 
     pub func colgm_report() -> io {
         return io::logger("colgm.report.log");
+    }
+
+    pub func fileout(file: i8*) -> io {
+        return io { fd: io::open_file(file), color_out: false };
     }
 
     pub func close(self) {
