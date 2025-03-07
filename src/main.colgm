@@ -1,9 +1,10 @@
-use std::libc::{ streq, strlen, free };
+use std::libc::{ streq, strlen, free, system };
 use std::io::{ readfile_into_string, io };
 use std::fs::{ fs };
 
 use util::cli::*;
 use util::frontend::{ frontend };
+use util::clang_finder::{ find_clang };
 
 use sema::context::{ global_symbol_table, sema_context };
 use sema::regist::{ regist_pass };
@@ -16,6 +17,28 @@ use mir::ast2mir::{ ast2mir };
 use sir::sir::*;
 use sir::context::{ sir_context };
 use sir::mir2sir::{ mir2sir };
+
+func clang_compile() {
+    var clang = find_clang();
+    if (clang.empty()) {
+        clang.delete();
+        return;
+    }
+
+    var cmd = clang.copy_instance();
+    if (!fs::exists("out.self_host.ll")) {
+        clang.delete();
+        cmd.delete();
+        return;
+    }
+
+    cmd.append_i8_vec(" -O2 out.self_host.ll -o a.out -rdynamic -lm");
+    system(cmd.c_str);
+
+    clang.delete();
+    cmd.delete();
+    return;
+}
 
 func compile(option: cli_option) {
     var err = io::stderr();
@@ -118,6 +141,8 @@ func compile(option: cli_option) {
     var file_output = io::fileout("out.self_host.ll");
     sctx.dump(file_output);
     file_output.close();
+
+    clang_compile();
 
     cc.delete();
     gt.delete();
