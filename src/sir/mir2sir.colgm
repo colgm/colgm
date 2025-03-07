@@ -12,21 +12,75 @@ use sema::context::{ sema_context };
 pub struct mir2sir {
     ctx: sema_context*,
     sctx: sir_context*,
-    type_mapper: hashmap<str, basic<symbol_kind>>
+    type_mapper: hashmap<str, basic<symbol_kind>>,
+    basic_type_mapper: hashmap<str, str>
 }
 
 impl mir2sir {
+    func init_basic_type_mapper(self) {
+        var i64_s = str::from("i64");
+        var i32_s = str::from("i32");
+        var i16_s = str::from("i16");
+        var i8_s = str::from("i8");
+        var i1_s = str::from("i1");
+        var u64_s = str::from("u64");
+        var u32_s = str::from("u32");
+        var u16_s = str::from("u16");
+        var u8_s = str::from("u8");
+        var f64_s = str::from("f64");
+        var f32_s = str::from("f32");
+        var void_s = str::from("void");
+        var bool_s = str::from("bool");
+
+        var double_s = str::from("double");
+        var float_s = str::from("float");
+
+        self->basic_type_mapper.insert(i64_s.__ptr__(), i64_s.__ptr__());
+        self->basic_type_mapper.insert(i32_s.__ptr__(), i32_s.__ptr__());
+        self->basic_type_mapper.insert(i16_s.__ptr__(), i16_s.__ptr__());
+        self->basic_type_mapper.insert(i8_s.__ptr__(), i8_s.__ptr__());
+        self->basic_type_mapper.insert(u64_s.__ptr__(), i64_s.__ptr__());
+        self->basic_type_mapper.insert(u32_s.__ptr__(), i32_s.__ptr__());
+        self->basic_type_mapper.insert(u16_s.__ptr__(), i16_s.__ptr__());
+        self->basic_type_mapper.insert(u8_s.__ptr__(), i8_s.__ptr__());
+        self->basic_type_mapper.insert(f64_s.__ptr__(), double_s.__ptr__());
+        self->basic_type_mapper.insert(f32_s.__ptr__(), float_s.__ptr__());
+        self->basic_type_mapper.insert(bool_s.__ptr__(), i1_s.__ptr__());
+
+        i64_s.delete();
+        i32_s.delete();
+        i16_s.delete();
+        i8_s.delete();
+        i1_s.delete();
+        u64_s.delete();
+        u32_s.delete();
+        u16_s.delete();
+        u8_s.delete();
+        f64_s.delete();
+        f32_s.delete();
+        void_s.delete();
+        bool_s.delete();
+        double_s.delete();
+        float_s.delete();
+    }
+
     pub func instance(ctx: sema_context*, sctx: sir_context*) -> mir2sir {
-        return mir2sir {
+        var res = mir2sir {
             ctx: ctx,
             sctx: sctx,
-            type_mapper: hashmap<str, basic<symbol_kind>>::instance()
+            type_mapper: hashmap<str, basic<symbol_kind>>::instance(),
+            basic_type_mapper: hashmap<str, str>::instance()
         };
+        res.init_basic_type_mapper();
+        return res;
     }
 
     pub func delete(self) {
         self->type_mapper.delete();
+        self->basic_type_mapper.delete();
     }
+}
 
+impl mir2sir {
     pub func generate(self, mctx: mir_context*) {}
 }
