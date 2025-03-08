@@ -1,6 +1,7 @@
 use std::map::{ hashmap };
 use std::str::{ str };
 use std::ptr::{ basic };
+use std::io::{ io };
 
 use mir::mir::*;
 use mir::context::{ mir_context };
@@ -8,15 +9,39 @@ use sir::context::{ sir_context };
 
 use sema::symbol_info::{ symbol_kind };
 use sema::context::{ sema_context };
+use sema::type::{ type };
+
+use err::panic::{ unreachable };
+use package::{ package };
 
 pub struct mir2sir {
     ctx: sema_context*,
     sctx: sir_context*,
+    pkg: package*,
     type_mapper: hashmap<str, basic<symbol_kind>>,
     basic_type_mapper: hashmap<str, str>
 }
 
 impl mir2sir {
+    pub func instance(ctx: sema_context*,
+                      sctx: sir_context*,
+                      pkg: package*) -> mir2sir {
+        var res = mir2sir {
+            ctx: ctx,
+            sctx: sctx,
+            pkg: pkg,
+            type_mapper: hashmap<str, basic<symbol_kind>>::instance(),
+            basic_type_mapper: hashmap<str, str>::instance()
+        };
+        res.init_basic_type_mapper();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->type_mapper.delete();
+        self->basic_type_mapper.delete();
+    }
+
     func init_basic_type_mapper(self) {
         var i64_s = str::from("i64");
         var i32_s = str::from("i32");
@@ -63,24 +88,77 @@ impl mir2sir {
         double_s.delete();
         float_s.delete();
     }
+}
 
-    pub func instance(ctx: sema_context*, sctx: sir_context*) -> mir2sir {
-        var res = mir2sir {
-            ctx: ctx,
-            sctx: sctx,
-            type_mapper: hashmap<str, basic<symbol_kind>>::instance(),
-            basic_type_mapper: hashmap<str, str>::instance()
-        };
-        res.init_basic_type_mapper();
-        return res;
+impl mir2sir {
+    func generate_type_mapper(self) {
+        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
+            var dm = i.value();
+            for (var j = dm->enums.iter(); !j.is_end(); j = j.next()) {
+                var e_type = type::instance();
+                e_type.name.append_str(j.value()->name.__ptr__());
+                e_type.loc_file.append_str(j.value()->location.file.__ptr__());
+                
+                var e_name = e_type.full_path_name(self->pkg, false);
+                var e_kind = basic<symbol_kind>::wrap(symbol_kind::enum_kind);
+
+                self->type_mapper.insert(e_name.__ptr__(), e_kind.__ptr__());
+                
+                e_type.delete();
+                e_name.delete();
+            }
+            for (var j = dm->structs.iter(); !j.is_end(); j = j.next()) {
+                var s_type = type::instance();
+                s_type.name.append_str(j.value()->name.__ptr__());
+                s_type.loc_file.append_str(j.value()->location.file.__ptr__());
+                
+                var s_name = s_type.full_path_name(self->pkg, false);
+                var s_kind = basic<symbol_kind>::wrap(symbol_kind::struct_kind);
+
+                self->type_mapper.insert(s_name.__ptr__(), s_kind.__ptr__());
+                
+                s_type.delete();
+                s_name.delete();
+            }
+        }
     }
 
-    pub func delete(self) {
-        self->type_mapper.delete();
-        self->basic_type_mapper.delete();
+    func type_mapping(self, t: type*) -> str {
+        var copy = t->copy_instance();
+        // basic type mapping
+        if (self->basic_type_mapper.has(copy.name.__ptr__())) {
+            var replace = self->basic_type_mapper.get(copy.name.__ptr__());
+            copy.name.clear();
+            copy.name.append_str(replace);
+
+            var res = copy.full_path_name(self->pkg, true);
+            copy.delete();
+            return res;
+        }
+
+        var full_name = t->full_path_name(self->pkg, false);
+        // if not found, let it crash
+        if (!self->type_mapper.has(full_name.__ptr__())) {
+            unreachable();
+        }
+
+        // TODO
+        match (self->type_mapper.get(full_name.__ptr__())->unwrap()) {
+            symbol_kind::struct_kind => {}
+            symbol_kind::enum_kind => {}
+            _ => {
+                unreachable();
+            }
+        }
+
+        var res = copy.full_path_name(self->pkg, true);
+        copy.delete();
+        return res;
     }
 }
 
 impl mir2sir {
-    pub func generate(self, mctx: mir_context*) {}
+    pub func generate(self, mctx: mir_context*) {
+        self->generate_type_mapper();
+    }
 }
