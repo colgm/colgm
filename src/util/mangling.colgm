@@ -52,7 +52,18 @@ pub func mangle_struct_name(name: str*) -> str {
         mangled.append_str(temp.__ptr__());
         temp.delete();
     }
+    return mangled;
+}
 
+pub func mangle_function_name(name: str*) -> str {
+    var mangled = mangle(name);
+    if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
+        var temp = str::from("\"");
+        temp.append_str(mangled.__ptr__())->append_i8_vec("\"");
+        mangled.clear();
+        mangled.append_str(temp.__ptr__());
+        temp.delete();
+    }
     return mangled;
 }
 

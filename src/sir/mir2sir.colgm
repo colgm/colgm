@@ -14,7 +14,7 @@ use sema::type::{ type };
 
 use err::panic::{ panic, unreachable };
 use package::{ package };
-use util::mangling::{ mangle_struct_name };
+use util::mangling::{ mangle_struct_name, mangle_function_name };
 
 pub struct mir2sir {
     ctx: sema_context*,
@@ -158,6 +158,32 @@ impl mir2sir {
     }
 
     func emit_func_impl(self, mctx: mir_context*) {
+        for (var i = mctx->impls.iter(); !i.is_end(); i = i.next()) {
+            var m_func = i.get();
+            var m_mangled_name = mangle_function_name(m_func->name.__ptr__());
+            var s_func = sir_func::instance(m_mangled_name.__ptr__());
+            m_mangled_name.delete();
+            
+            s_func.set_attributes(m_func->attributes.__ptr__());
+
+            var ret_type_name = self->type_mapping(m_func->return_type.__ptr__());
+            s_func.return_type.append_str(ret_type_name.__ptr__());
+            ret_type_name.delete();
+
+            for (var j = m_func->params.iter(); !j.is_end(); j = j.next()) {
+                var m_param = j.get();
+                var mapped_type = self->type_mapping(m_param->value);
+                var p_pair = pair<str, str>::instance(m_param->key, mapped_type.__ptr__());
+
+                s_func.params.push(p_pair.__ptr__());
+
+                mapped_type.delete();
+                p_pair.delete();
+            }
+
+            self->sctx->func_impls.push(s_func.__ptr__());
+            s_func.delete();
+        }
     }
 }
 
