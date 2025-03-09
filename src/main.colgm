@@ -22,9 +22,12 @@ func clang_compile(co: cli_option*) {
     var clang = find_clang();
     if (clang.empty()) {
         clang.delete();
+        io::stdout().red().out("[clang] ").reset();
+        io::stdout().out("cannot find suitable clang\n");
         return;
     } else if (co->VERBOSE) {
-        io::stdout().out("[clang] ").out(clang.c_str).out(" found\n");
+        io::stdout().green().out("[clang] ").reset();
+        io::stdout().out("\"").out(clang.c_str).out("\" found\n");
     }
 
     var cmd = clang.copy_instance();
@@ -36,14 +39,17 @@ func clang_compile(co: cli_option*) {
 
     cmd.append_i8_vec(" -O2 out.self_host.ll -o a.out -rdynamic -lm");
     if (co->VERBOSE) {
-        io::stdout().out("[clang] executing \"").out(cmd.c_str).out("\"\n");
+        io::stdout().green().out("[clang] ").reset();
+        io::stdout().out("executing \"").out(cmd.c_str).out("\"\n");
     }
     var ret_code = system(cmd.c_str);
     if (co->VERBOSE) {
         if (ret_code == 0) {
-            io::stdout().out("[clang] compilation succeeded\n");
+            io::stdout().green().out("[clang] ").reset();
+            io::stdout().out("compilation succeeded\n");
         } else {
-            io::stdout().out("[clang] compilation failed\n");
+            io::stdout().red().out("[clang] ").reset();
+            io::stdout().out("compilation failed\n");
         }
     }
 
@@ -141,21 +147,30 @@ func compile(option: cli_option) {
         semantic.ctx->dump(io::stdout(), cc.pkg);
     }
 
+    if (option.VERBOSE) {
+        io::stdout().green().out("[ast2mir] ").reset();
+        io::stdout().out("translating ast to mir").endln();
+    }
     ast2mir_worker.generate(cc.par.root);
     if (option.OPTION_VIEW_MIR) {
         mctx.dump(io::stdout(), cc.pkg);
     }
 
+    if (option.VERBOSE) {
+        io::stdout().green().out("[mir2sir] ").reset();
+        io::stdout().out("translating mir to sir").endln();
+    }
     mir2sir_worder.generate(mctx.__ptr__());
     if (option.OPTION_VIEW_SIR) {
         sctx.dump(io::stdout());
     }
 
     var file_output = io::fileout("out.self_host.ll");
-    sctx.dump(file_output);
     if (option.VERBOSE) {
-        io::stdout().out("[sir] \"out.self_host.ll\"").out(" generated\n");
+        io::stdout().green().out("[sir] ").reset();
+        io::stdout().out("generating \"out.self_host.ll\"").endln();
     }
+    sctx.dump(file_output);
     file_output.close();
 
     clang_compile(option.__ptr__());
