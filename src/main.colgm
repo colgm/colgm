@@ -18,11 +18,13 @@ use sir::sir::*;
 use sir::context::{ sir_context };
 use sir::mir2sir::{ mir2sir };
 
-func clang_compile() {
+func clang_compile(co: cli_option*) {
     var clang = find_clang();
     if (clang.empty()) {
         clang.delete();
         return;
+    } else if (co->VERBOSE) {
+        io::stdout().out("[clang] ").out(clang.c_str).out(" found\n");
     }
 
     var cmd = clang.copy_instance();
@@ -33,7 +35,17 @@ func clang_compile() {
     }
 
     cmd.append_i8_vec(" -O2 out.self_host.ll -o a.out -rdynamic -lm");
-    system(cmd.c_str);
+    if (co->VERBOSE) {
+        io::stdout().out("[clang] executing \"").out(cmd.c_str).out("\"\n");
+    }
+    var ret_code = system(cmd.c_str);
+    if (co->VERBOSE) {
+        if (ret_code == 0) {
+            io::stdout().out("[clang] compilation succeeded\n");
+        } else {
+            io::stdout().out("[clang] compilation failed\n");
+        }
+    }
 
     clang.delete();
     cmd.delete();
@@ -141,9 +153,12 @@ func compile(option: cli_option) {
 
     var file_output = io::fileout("out.self_host.ll");
     sctx.dump(file_output);
+    if (option.VERBOSE) {
+        io::stdout().out("[sir] \"out.self_host.ll\"").out(" generated\n");
+    }
     file_output.close();
 
-    clang_compile();
+    clang_compile(option.__ptr__());
 
     cc.delete();
     gt.delete();
