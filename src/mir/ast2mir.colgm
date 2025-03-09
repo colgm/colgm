@@ -2,6 +2,7 @@ use std::str::{ str };
 use std::libc::{ free };
 use std::io::{ io };
 use std::ptr::{ ptr, basic };
+use std::map::{ pair };
 
 use err::report::{ report };
 use err::span::{ span };
@@ -791,9 +792,16 @@ impl ast2mir {
         for (var i = n->params->params.iter(); !i.is_end(); i = i.next()) {
             var p = i.get().unwrap() => ast_param*;
             var t = self->tr.resolve(p->type);
-            f.param_name.push(p->name->content.__ptr__());
-            f.param_type.push(t.__ptr__());
+
+            var p_pair = pair<str, type>::instance(
+                p->name->content.__ptr__(),
+                t.__ptr__()
+            );
+
+            f.params.push(p_pair.__ptr__());
+
             t.delete();
+            p_pair.delete();
         }
 
         ret_ty.delete();

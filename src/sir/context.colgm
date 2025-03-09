@@ -1,5 +1,5 @@
 use std::vec::{ vec };
-use std::map::{ hashmap };
+use std::map::{ hashmap, pair };
 use std::ptr::{ basic };
 use std::str::{ str };
 use std::libc::{ free };
@@ -40,8 +40,7 @@ impl sir_struct {
 
 pub struct sir_func {
     name: str,
-    param_name: vec<str>,
-    param_type: vec<str>,
+    params: vec<pair<str, str>>,
     return_type: str,
     attributes: vec<str>,
     with_va_args: bool,
@@ -53,8 +52,7 @@ impl sir_func {
     pub func instance(n: str*) -> sir_func {
         return sir_func {
             name: n->copy_instance(),
-            param_name: vec<str>::instance(),
-            param_type: vec<str>::instance(),
+            params: vec<pair<str, str>>::instance(),
             return_type: str::instance(),
             attributes: vec<str>::instance(),
             with_va_args: false,
@@ -65,8 +63,7 @@ impl sir_func {
 
     pub func delete(self) {
         self->name.delete();
-        self->param_name.delete();
-        self->param_type.delete();
+        self->params.delete();
         self->return_type.delete();
         self->attributes.delete();
         if (self->body != nil) {
@@ -79,8 +76,7 @@ impl sir_func {
     pub func copy(self) -> sir_func* {
         var res = sir_func::__alloc__();
         res->name = self->name.copy_instance();
-        res->param_name = self->param_name.copy_instance();
-        res->param_type = self->param_type.copy_instance();
+        res->params = self->params.copy_instance();
         res->return_type = self->return_type.copy_instance();
         res->attributes = self->attributes.copy_instance();
         res->with_va_args = self->with_va_args;
@@ -130,14 +126,37 @@ impl sir_context {
             }
             out.out(" }\n");
         }
+
+        if (self->struct_decls.size > 0) {
+            out.out("\n");
+        }
+    }
+
+    func dump_func_decls(self, out: io) {
+        for (var i = self->func_decls.iter(); !i.is_end(); i = i.next()) {
+            var f = i.get();
+            out.out("declare ").out(f->return_type.c_str);
+            out.out(" @").out(f->name.c_str).out("(");
+            for (var j = f->params.iter(); !j.is_end(); j = j.next()) {
+                if (j.index() != 0) {
+                    out.out(", ");
+                }
+                out.out(j.get()->value->c_str).out(" %");
+                out.out(j.get()->key->c_str);
+            }
+            out.out(")\n");
+        }
+
+        if (self->func_decls.size > 0) {
+            out.out("\n");
+        }
     }
 
     pub func dump(self, out: io) {
         self->dump_structs(out);
+        self->dump_func_decls(out);
 
-        var output = "\n@.str.0 = private unnamed_addr constant [27 x i8] c\"[hello.colgm] hello world!\\00\"
-
-declare i32 @puts(i8* %str.param)
+        var output = "@.str.0 = private unnamed_addr constant [27 x i8] c\"[hello.colgm] hello world!\\00\"
 
 define i32 @main() {
 label.entry:

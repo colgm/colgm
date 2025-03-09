@@ -1,6 +1,6 @@
 use std::vec::{ vec };
 use std::str::{ str };
-use std::map::{ hashmap };
+use std::map::{ hashmap, pair };
 use std::ptr::{ basic };
 use std::libc::{ free };
 use std::io::{ io };
@@ -45,8 +45,7 @@ impl mir_struct {
 pub struct mir_func {
     name: str,
     location: span,
-    param_name: vec<str>,
-    param_type: vec<type>,
+    params: vec<pair<str, type>>,
     with_va_args: bool,
     attributes: vec<str>,
     return_type: type,
@@ -58,8 +57,7 @@ impl mir_func {
         return mir_func {
             name: name->copy_instance(),
             location: loc->copy_instance(),
-            param_name: vec<str>::instance(),
-            param_type: vec<type>::instance(),
+            params: vec<pair<str, type>>::instance(),
             with_va_args: false,
             attributes: vec<str>::instance(),
             return_type: ret_ty->copy_instance(),
@@ -71,8 +69,7 @@ impl mir_func {
         var res = mir_func::__alloc__();
         res->name = self->name.copy_instance();
         res->location = self->location.copy_instance();
-        res->param_name = self->param_name.copy_instance();
-        res->param_type = self->param_type.copy_instance();
+        res->params = self->params.copy_instance();
         res->with_va_args = self->with_va_args;
         res->attributes = self->attributes.copy_instance();
         res->return_type = self->return_type.copy_instance();
@@ -85,8 +82,7 @@ impl mir_func {
     pub func delete(self) {
         self->name.delete();
         self->location.delete();
-        self->param_name.delete();
-        self->param_type.delete();
+        self->params.delete();
         self->attributes.delete();
         self->return_type.delete();
         if (self->block != nil) {

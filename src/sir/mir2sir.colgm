@@ -1,4 +1,4 @@
-use std::map::{ hashmap };
+use std::map::{ hashmap, pair };
 use std::str::{ str };
 use std::ptr::{ basic };
 use std::io::{ io };
@@ -12,7 +12,7 @@ use sema::symbol_info::{ symbol_kind };
 use sema::context::{ sema_context };
 use sema::type::{ type };
 
-use err::panic::{ unreachable };
+use err::panic::{ panic, unreachable };
 use package::{ package };
 
 pub struct mir2sir {
@@ -71,6 +71,7 @@ impl mir2sir {
         self->basic_type_mapper.insert(u8_s.__ptr__(), i8_s.__ptr__());
         self->basic_type_mapper.insert(f64_s.__ptr__(), double_s.__ptr__());
         self->basic_type_mapper.insert(f32_s.__ptr__(), float_s.__ptr__());
+        self->basic_type_mapper.insert(void_s.__ptr__(), void_s.__ptr__());
         self->basic_type_mapper.insert(bool_s.__ptr__(), i1_s.__ptr__());
 
         i64_s.delete();
@@ -126,6 +127,28 @@ impl mir2sir {
     }
 
     func emit_func_decl(self, mctx: mir_context*) {
+        for (var i = mctx->decls.iter(); !i.is_end(); i = i.next()) {
+            var m_func = i.get();
+            var s_func = sir_func::instance(m_func->name.__ptr__());
+
+            var ret_type_name = self->type_mapping(m_func->return_type.__ptr__());
+            s_func.return_type.append_str(ret_type_name.__ptr__());
+            ret_type_name.delete();
+
+            for (var j = m_func->params.iter(); !j.is_end(); j = j.next()) {
+                var m_param = j.get();
+                var mapped_type = self->type_mapping(m_param->value);
+                var p_pair = pair<str, str>::instance(m_param->key, mapped_type.__ptr__());
+
+                s_func.params.push(p_pair.__ptr__());
+
+                mapped_type.delete();
+                p_pair.delete();
+            }
+
+            self->sctx->func_decls.push(s_func.__ptr__());
+            s_func.delete();
+        }
     }
 
     func emit_func_impl(self, mctx: mir_context*) {
@@ -182,7 +205,10 @@ impl mir2sir {
         var full_name = t->full_path_name(self->pkg, false);
         // if not found, let it crash
         if (!self->type_mapper.has(full_name.__ptr__())) {
-            unreachable();
+            var info = str::from("type not found: ");
+            info.append_str(full_name.__ptr__());
+            panic(info.c_str);
+            info.delete();
         }
 
         match (self->type_mapper.get(full_name.__ptr__())->unwrap()) {
