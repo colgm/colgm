@@ -94,6 +94,11 @@ impl mir2sir {
 }
 
 impl mir2sir {
+    func emit_const_strings(self, mctx: mir_context*) {
+        self->sctx->const_strings.delete();
+        self->sctx->const_strings = mctx->const_strings.copy_instance();
+    }
+
     func emit_struct(self, mctx: mir_context*) {
         for (var i = mctx->structs.iter(); !i.is_end(); i = i.next()) {
             var m_stct = i.get();
@@ -265,6 +270,7 @@ impl mir2sir {
 impl mir2sir {
     pub func generate(self, mctx: mir_context*) {
         self->generate_type_mapper();
+        self->emit_const_strings(mctx);
         self->emit_struct(mctx);
         self->emit_func_decl(mctx);
         self->emit_func_impl(mctx);

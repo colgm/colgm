@@ -55,3 +55,41 @@ pub func mangle_struct_name(name: str*) -> str {
 
     return mangled;
 }
+
+func llvm_visible_char(c: i8) -> bool {
+    if ('0' <= c && c <= '9') {
+        return true;
+    }
+    if ('a' <= c && c <= 'z') {
+        return true;
+    }
+    if ('A' <= c && c <= 'Z') {
+        return true;
+    }
+
+    return c=='_' || c==':' || c==' ' || c==',' ||
+           c=='[' || c==']' || c=='(' || c==')' ||
+           c=='{' || c=='}' || c=='<' || c=='>' ||
+           c=='.' || c==';' || c=='-' || c=='+' ||
+           c=='*' || c=='/' || c=='~' || c=='?' ||
+           c=='!' || c=='=' || c=='&' || c=='|' ||
+           c=='%' || c=='^' || c=='@';
+}
+
+pub func llvm_raw_string(s: str*) -> str {
+    var table = "0123456789abcdef";
+    var res = str::from("");
+    for (var i: u64 = 0; i < s->size; i += 1) {
+        var c = s->get(i);
+        if (llvm_visible_char(c)) {
+            res.append_char(c);
+            continue;
+        }
+
+        res.append_char('\\');
+        res.append_char(table[c / 16]);
+        res.append_char(table[c & 15]);
+    }
+    res.append_i8_vec("\\00");
+    return res;
+}

@@ -7,6 +7,8 @@ use std::io::{ io };
 
 use err::span::{ span };
 use sir::sir::*;
+
+use util::mangling::{ llvm_raw_string };
 use util::misc::{ get_platform, get_arch };
 
 pub struct sir_struct {
@@ -36,6 +38,26 @@ impl sir_struct {
         res->location = self->location.copy_instance();
         res->field_type = self->field_type.copy_instance();
         return res;
+    }
+
+    pub func dump(self, out: io) {
+        out.out(self->name.c_str).out(" = type ");
+
+        if (self->field_type.empty()) {
+            out.out("{}\n");
+            return;
+        } else {
+            out.out("{ ");
+        }
+
+        for (var i = self->field_type.iter(); !i.is_end(); i = i.next()) {
+            if (i.index() != 0) {
+                out.out(", ");
+            }
+            out.out(i.get()->c_str);
+        }
+
+        out.out(" }\n");
     }
 }
 
@@ -94,6 +116,30 @@ impl sir_func {
             self->attributes.push(i.get());
         }
     }
+
+    pub func dump(self, out: io) {
+        if (self->body == nil) {
+            out.out("declare ");
+        } else {
+            out.out("define ");
+        }
+        out.out(self->return_type.c_str).out(" @").out(self->name.c_str).out("(");
+        for (var i = self->params.iter(); !i.is_end(); i = i.next()) {
+            if (i.index() != 0) {
+                out.out(", ");
+            }
+            out.out(i.get()->value->c_str).out(" %");
+            out.out(i.get()->key->c_str);
+        }
+        out.out(")");
+
+        if (self->body == nil) {
+            out.out("\n");
+            return;
+        }
+
+        // TODO
+    }
 }
 
 pub struct sir_context {
@@ -144,21 +190,7 @@ impl sir_context {
 
     func dump_structs(self, out: io) {
         for (var i = self->struct_decls.iter(); !i.is_end(); i = i.next()) {
-            var s = i.get();
-            out.out(s->name.c_str).out(" = type ");
-            if (s->field_type.empty()) {
-                out.out("{}\n");
-                continue;
-            } else {
-                out.out("{ ");
-            }
-            for (var j = s->field_type.iter(); !j.is_end(); j = j.next()) {
-                if (j.index() != 0) {
-                    out.out(", ");
-                }
-                out.out(j.get()->c_str);
-            }
-            out.out(" }\n");
+            i.get()->dump(out);
         }
 
         if (self->struct_decls.size > 0) {
@@ -168,17 +200,7 @@ impl sir_context {
 
     func dump_func_decls(self, out: io) {
         for (var i = self->func_decls.iter(); !i.is_end(); i = i.next()) {
-            var f = i.get();
-            out.out("declare ").out(f->return_type.c_str);
-            out.out(" @").out(f->name.c_str).out("(");
-            for (var j = f->params.iter(); !j.is_end(); j = j.next()) {
-                if (j.index() != 0) {
-                    out.out(", ");
-                }
-                out.out(j.get()->value->c_str).out(" %");
-                out.out(j.get()->key->c_str);
-            }
-            out.out(")\n");
+            i.get()->dump(out);
         }
 
         if (self->func_decls.size > 0) {
@@ -186,17 +208,51 @@ impl sir_context {
         }
     }
 
+    func dump_const_strings(self, out: io) {
+        var ordered_const_string = vec<str>::instance();
+        for (var i = self->const_strings.iter(); !i.is_end(); i = i.next()) {
+            var t = str::instance();
+            ordered_const_string.push(t.__ptr__());
+            t.delete();
+        }
+
+        for (var i = self->const_strings.iter(); !i.is_end(); i = i.next()) {
+            var s_value = i.key();
+            var s_index = i.value()->unwrap();
+
+            var s_ptr = ordered_const_string.get(s_index);
+            s_ptr->append_str(s_value);
+        }
+
+        for (var i = ordered_const_string.iter(); !i.is_end(); i = i.next()) {
+            out.out("@.str.").out_i64(i.index() => i64);
+            out.out(" = private unnamed_addr constant [");
+            out.out_i64(i.get()->size => i64 + 1).out(" x i8] c\"");
+
+            var raw_str = llvm_raw_string(i.get());
+            out.out(raw_str.c_str).out("\"\n");
+            raw_str.delete();
+        }
+
+        if (!ordered_const_string.empty()) {
+            out.out("\n");
+        }
+
+        ordered_const_string.delete();
+    }
+
     pub func dump(self, out: io) {
         self->dump_target_tripple(out);
         self->dump_structs(out);
         self->dump_func_decls(out);
+        self->dump_const_strings(out);
 
-        var output = "@.str.0 = private unnamed_addr constant [27 x i8] c\"[hello.colgm] hello world!\\00\"
+        var output = "@.str.xx = private unnamed_addr constant [27 x i8] c\"[hello.colgm] hello world!\\00\"
 
 define i32 @main() {
 label.entry:
   %_2.real = alloca i32
-  %0 = bitcast [27 x i8]* @.str.0 to i8*
+  %0 = bitcast [27 x i8]* @.str.xx to i8*
   %1 = call i32 @puts(i8* %0)
   %2 = getelementptr i32, i32* %_2.real, i32 0 ; %_2.real -> %2
   store i32 %1, i32* %2
