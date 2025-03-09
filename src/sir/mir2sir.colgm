@@ -5,7 +5,8 @@ use std::io::{ io };
 
 use mir::mir::*;
 use mir::context::{ mir_context };
-use sir::context::{ sir_context };
+use sir::sir::*;
+use sir::context::{ sir_struct, sir_func, sir_context };
 
 use sema::symbol_info::{ symbol_kind };
 use sema::context::{ sema_context };
@@ -91,6 +92,47 @@ impl mir2sir {
 }
 
 impl mir2sir {
+    func emit_struct(self, mctx: mir_context*) {
+        for (var i = mctx->structs.iter(); !i.is_end(); i = i.next()) {
+            var m_stct = i.get();
+
+            var s_ty = type::instance();
+            s_ty.name.append_str(m_stct->name.__ptr__());
+            s_ty.loc_file.append_str(m_stct->location.file.__ptr__());
+            var s_ty_name = s_ty.full_path_name(self->pkg, false);
+            
+            var s_ty_llvm_name = str::from("%\"struct.");
+            s_ty_llvm_name.append_str(s_ty_name.__ptr__())->append_i8_vec("\"");
+
+            var s_stct = sir_struct::instance(
+                s_ty_llvm_name.__ptr__(),
+                m_stct->location.__ptr__()
+            );
+            s_ty_name.delete();
+            s_ty_llvm_name.delete();
+
+            for (var j = m_stct->field_type.iter(); !j.is_end(); j = j.next()) {
+                var m_field = j.get();
+                var mapped_type = self->type_mapping(m_field);
+
+                s_stct.field_type.push(mapped_type.__ptr__());
+
+                mapped_type.delete();
+            }
+
+            self->sctx->struct_decls.push(s_stct.__ptr__());
+            s_stct.delete();
+        }
+    }
+
+    func emit_func_decl(self, mctx: mir_context*) {
+    }
+
+    func emit_func_impl(self, mctx: mir_context*) {
+    }
+}
+
+impl mir2sir {
     func generate_type_mapper(self) {
         for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
             var dm = i.value();
@@ -130,6 +172,7 @@ impl mir2sir {
             var replace = self->basic_type_mapper.get(copy.name.__ptr__());
             copy.name.clear();
             copy.name.append_str(replace);
+            copy.loc_file.clear();
 
             var res = copy.full_path_name(self->pkg, true);
             copy.delete();
@@ -142,10 +185,47 @@ impl mir2sir {
             unreachable();
         }
 
-        // TODO
         match (self->type_mapper.get(full_name.__ptr__())->unwrap()) {
-            symbol_kind::struct_kind => {}
-            symbol_kind::enum_kind => {}
+            symbol_kind::struct_kind => {
+                var new_name = str::from("%\"struct.");
+                new_name.append_str(full_name.__ptr__());
+
+                copy.name.clear();
+                copy.name.append_str(new_name.__ptr__());
+                copy.name.append_i8_vec("\"");
+                // need to clear loc_file info
+                // otherwise for example:
+                // std::vec<data::foo>
+                //
+                // will be wrongly mapped to
+                // std::%struct.std.vec<data::foo>
+                // but expect to be
+                // %struct.std.vec<data::foo>
+                copy.loc_file.clear();
+                // here we need to clear generic info
+                // otherwise for example:
+                // std::vec<data::foo>
+                //
+                // will be wrongly mapped to
+                // %struct.std.vec<data::foo><data::foo>
+                //         ^^^^^^^^^^^^^^^^^^ name
+                //                           ^^^^^^^^^^^ generated from generics
+                //
+                // but expect to be
+                // %struct.std.vec<data::foo>
+                copy.generics.clear();
+
+                new_name.delete();
+            }
+            symbol_kind::enum_kind => {
+                var i64_t = type::i64_type();
+
+                // should copy pointer depth too
+                i64_t.pointer_depth = copy.pointer_depth;
+                copy.reset_with(i64_t.__ptr__());
+
+                i64_t.delete();
+            }
             _ => {
                 unreachable();
             }
@@ -153,6 +233,7 @@ impl mir2sir {
 
         var res = copy.full_path_name(self->pkg, true);
         copy.delete();
+        full_name.delete();
         return res;
     }
 }
@@ -160,5 +241,8 @@ impl mir2sir {
 impl mir2sir {
     pub func generate(self, mctx: mir_context*) {
         self->generate_type_mapper();
+        self->emit_struct(mctx);
+        self->emit_func_decl(mctx);
+        self->emit_func_impl(mctx);
     }
 }

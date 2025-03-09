@@ -118,8 +118,24 @@ impl sir_context {
 }
 
 impl sir_context {
+    func dump_structs(self, out: io) {
+        for (var i = self->struct_decls.iter(); !i.is_end(); i = i.next()) {
+            var s = i.get();
+            out.out(s->name.c_str).out(" = type { ");
+            for (var j = s->field_type.iter(); !j.is_end(); j = j.next()) {
+                if (j.index() != 0) {
+                    out.out(", ");
+                }
+                out.out(j.get()->c_str);
+            }
+            out.out(" }\n");
+        }
+    }
+
     pub func dump(self, out: io) {
-        var output = "@.str.0 = private unnamed_addr constant [27 x i8] c\"[hello.colgm] hello world!\\00\"
+        self->dump_structs(out);
+
+        var output = "\n@.str.0 = private unnamed_addr constant [27 x i8] c\"[hello.colgm] hello world!\\00\"
 
 declare i32 @puts(i8* %str.param)
 
