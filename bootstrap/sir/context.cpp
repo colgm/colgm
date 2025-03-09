@@ -82,13 +82,13 @@ void sir_context::dump_target_tripple(std::ostream& out) const {
     const auto arch = std::string(get_arch());
 
     if (platform == "linux" && arch == "x86_64") {
-        out << "target triple = \"x86_64-pc-linux-gnu\"\n";
+        out << "target triple = \"x86_64-pc-linux-gnu\"\n\n";
     }
     if (platform == "linux" && arch == "aarch64") {
-        out << "target triple = \"aarch64-unknown-linux-gnu\"\n";
+        out << "target triple = \"aarch64-unknown-linux-gnu\"\n\n";
     }
     if (platform == "macos" && arch == "aarch64") {
-        out << "target triple = \"arm64-apple-macosx12.0.0\"\n";
+        out << "target triple = \"arm64-apple-macosx12.0.0\"\n\n";
     }
 }
 

@@ -7,6 +7,7 @@ use std::io::{ io };
 
 use err::span::{ span };
 use sir::sir::*;
+use util::misc::{ get_platform, get_arch };
 
 pub struct sir_struct {
     name: str,
@@ -86,6 +87,13 @@ impl sir_func {
         self->body = nil; // set to nil to avoid double free
         return res;
     }
+
+    pub func set_attributes(self, v: vec<str>*) {
+        self->attributes.clear();
+        for (var i = v->iter(); !i.is_end(); i = i.next()) {
+            self->attributes.push(i.get());
+        }
+    }
 }
 
 pub struct sir_context {
@@ -114,10 +122,36 @@ impl sir_context {
 }
 
 impl sir_context {
+    func dump_target_tripple(self, out: io) {
+        var platform = str::from(get_platform());
+        var arch = str::from(get_arch());
+
+        if (platform.eq_const("linux") && arch.eq_const("x86_64")) {
+            out.out("target triple = \"x86_64-pc-linux-gnu\"\n\n");
+        }
+
+        if (platform.eq_const("linux") && arch.eq_const("aarch64")) {
+            out.out("target triple = \"aarch64-unknown-linux-gnu\"\n\n");
+        }
+
+        if (platform.eq_const("macos") && arch.eq_const("aarch64")) {
+            out.out("target triple = \"arm64-apple-macosx12.0.0\"\n\n");
+        }
+
+        platform.delete();
+        arch.delete();
+    }
+
     func dump_structs(self, out: io) {
         for (var i = self->struct_decls.iter(); !i.is_end(); i = i.next()) {
             var s = i.get();
-            out.out(s->name.c_str).out(" = type { ");
+            out.out(s->name.c_str).out(" = type ");
+            if (s->field_type.empty()) {
+                out.out("{}\n");
+                continue;
+            } else {
+                out.out("{ ");
+            }
             for (var j = s->field_type.iter(); !j.is_end(); j = j.next()) {
                 if (j.index() != 0) {
                     out.out(", ");
@@ -153,6 +187,7 @@ impl sir_context {
     }
 
     pub func dump(self, out: io) {
+        self->dump_target_tripple(out);
         self->dump_structs(out);
         self->dump_func_decls(out);
 

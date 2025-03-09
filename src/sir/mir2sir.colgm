@@ -14,6 +14,7 @@ use sema::type::{ type };
 
 use err::panic::{ panic, unreachable };
 use package::{ package };
+use util::mangling::{ mangle_struct_name };
 
 pub struct mir2sir {
     ctx: sema_context*,
@@ -100,10 +101,9 @@ impl mir2sir {
             var s_ty = type::instance();
             s_ty.name.append_str(m_stct->name.__ptr__());
             s_ty.loc_file.append_str(m_stct->location.file.__ptr__());
-            var s_ty_name = s_ty.full_path_name(self->pkg, false);
             
-            var s_ty_llvm_name = str::from("%\"struct.");
-            s_ty_llvm_name.append_str(s_ty_name.__ptr__())->append_i8_vec("\"");
+            var s_ty_name = s_ty.full_path_name(self->pkg, false);
+            var s_ty_llvm_name = mangle_struct_name(s_ty_name.__ptr__());
 
             var s_stct = sir_struct::instance(
                 s_ty_llvm_name.__ptr__(),
@@ -130,6 +130,7 @@ impl mir2sir {
         for (var i = mctx->decls.iter(); !i.is_end(); i = i.next()) {
             var m_func = i.get();
             var s_func = sir_func::instance(m_func->name.__ptr__());
+            s_func.set_attributes(m_func->attributes.__ptr__());
 
             var ret_type_name = self->type_mapping(m_func->return_type.__ptr__());
             s_func.return_type.append_str(ret_type_name.__ptr__());
@@ -213,12 +214,9 @@ impl mir2sir {
 
         match (self->type_mapper.get(full_name.__ptr__())->unwrap()) {
             symbol_kind::struct_kind => {
-                var new_name = str::from("%\"struct.");
-                new_name.append_str(full_name.__ptr__());
-
+                var new_name = mangle_struct_name(full_name.__ptr__());
                 copy.name.clear();
                 copy.name.append_str(new_name.__ptr__());
-                copy.name.append_i8_vec("\"");
                 // need to clear loc_file info
                 // otherwise for example:
                 // std::vec<data::foo>
