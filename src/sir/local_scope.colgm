@@ -1,0 +1,36 @@
+use std::str::{ str };
+use std::vec::{ vec };
+use std::map::{ hashmap };
+
+pub struct local_table {
+    elem: vec<hashmap<str, str>>,
+    local_scope_depth: i64
+}
+
+impl local_table {
+    pub func instance() -> local_table {
+        return local_table {
+            elem: vec<hashmap<str, str>>::instance(),
+            local_scope_depth: 0
+        };
+    }
+
+    pub func delete(self) {
+        self->elem.delete();
+    }
+
+    pub func size(self) -> u64 {
+        return self->elem.size;
+    }
+
+    pub func push(self) {
+        var scope = hashmap<str, str>::instance();
+        self->elem.push(scope.__ptr__());
+        scope.delete();
+        self->local_scope_depth += 1;
+    }
+
+    pub func pop(self) {
+        self->elem.pop_back();
+    }
+}

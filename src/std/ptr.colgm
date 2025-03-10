@@ -5,6 +5,19 @@ pub struct ptr<T> {
 }
 
 impl ptr<T> {
+    // do nothing, you should free it manually
+    pub func delete(self) {}
+
+    // shallow copy
+    pub func copy(self) -> ptr<T>* {
+        var res = ptr<T>::__alloc__();
+        if (res == nil) {
+            panic("ptr<T>::copy: failed to allocate memory");
+        }
+        res->data = self->data;
+        return res;
+    }
+
     pub func wrap(p: T*) -> ptr<T> {
         return ptr<T>{ data: p };
     }

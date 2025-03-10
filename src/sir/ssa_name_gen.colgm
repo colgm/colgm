@@ -1,0 +1,23 @@
+use std::str::{ str };
+use std::libc::{ itoa };
+
+pub struct ssa_generator {
+    counter: u64
+}
+
+impl ssa_generator {
+    pub func instance() -> ssa_generator {
+        return ssa_generator { counter: 0 };
+    }
+
+    pub func clear(self) {
+        self->counter = 0;
+    }
+
+    pub func generate(self) -> str {
+        var buffer = [i8; 128];
+        itoa(self->counter => i64, buffer, 10);
+        self->counter += 1;
+        return str::from(buffer);
+    }
+}

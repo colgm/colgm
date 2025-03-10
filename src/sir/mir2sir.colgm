@@ -1,11 +1,13 @@
 use std::map::{ hashmap, pair };
 use std::str::{ str };
-use std::ptr::{ basic };
+use std::ptr::{ ptr, basic };
 use std::io::{ io };
-use std::libc::{ itoa };
+use std::vec::{ vec };
 
 use mir::mir::*;
 use mir::context::{ mir_context };
+use sir::ssa_name_gen::{ ssa_generator };
+use sir::local_scope::{ local_table };
 use sir::sir::*;
 use sir::context::{ sir_struct, sir_func, sir_context };
 
@@ -17,25 +19,22 @@ use err::panic::{ panic, unreachable };
 use package::{ package };
 use util::mangling::{ mangle_struct_name, mangle_function_name };
 
-struct ssa_generator {
-    counter: u64
+enum mir_value_kind {
+    null, // reserved
+    nil_value,
+    variable,
+    literal,
+    primitive,
+    func_symbol,
+    method,
+    struct_symbol,
+    enum_symbol
 }
 
-impl ssa_generator {
-    pub func instance() -> ssa_generator {
-        return ssa_generator { counter: 0 };
-    }
-
-    pub func clear(self) {
-        self->counter = 0;
-    }
-
-    pub func generate(self) -> str {
-        var buffer = [i8; 128];
-        itoa(self->counter => i64, buffer, 10);
-        self->counter += 1;
-        return str::from(buffer);
-    }
+struct mir_value_t {
+    value_kind: mir_value_kind,
+    content: str,
+    resolved_type: type
 }
 
 pub struct mir2sir {
@@ -45,7 +44,13 @@ pub struct mir2sir {
     type_mapper: hashmap<str, basic<symbol_kind>>,
     basic_type_mapper: hashmap<str, str>,
 
-    block: sir_block*
+    block: sir_block*,
+    ssa_gen: ssa_generator,
+    array_ssa_gen: ssa_generator,
+
+    continue_inst: vec<vec<ptr<sir_br>>>,
+    break_inst: vec<vec<ptr<sir_br>>>,
+    branch_jump_out: vec<vec<ptr<sir_br>>>
 }
 
 impl mir2sir {
@@ -58,7 +63,12 @@ impl mir2sir {
             pkg: pkg,
             type_mapper: hashmap<str, basic<symbol_kind>>::instance(),
             basic_type_mapper: hashmap<str, str>::instance(),
-            block: nil
+            block: nil,
+            ssa_gen: ssa_generator::instance(),
+            array_ssa_gen: ssa_generator::instance(),
+            continue_inst: vec<vec<ptr<sir_br>>>::instance(),
+            break_inst: vec<vec<ptr<sir_br>>>::instance(),
+            branch_jump_out: vec<vec<ptr<sir_br>>>::instance()
         };
         res.init_basic_type_mapper();
         return res;
@@ -67,6 +77,12 @@ impl mir2sir {
     pub func delete(self) {
         self->type_mapper.delete();
         self->basic_type_mapper.delete();
+
+        // do not need to delete ptr in them
+        // all ptrs are inserted into sir_func's body
+        self->continue_inst.delete();
+        self->break_inst.delete();
+        self->branch_jump_out.delete();
     }
 
     func init_basic_type_mapper(self) {
