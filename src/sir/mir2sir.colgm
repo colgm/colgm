@@ -2,6 +2,7 @@ use std::map::{ hashmap, pair };
 use std::str::{ str };
 use std::ptr::{ basic };
 use std::io::{ io };
+use std::libc::{ itoa };
 
 use mir::mir::*;
 use mir::context::{ mir_context };
@@ -16,12 +17,35 @@ use err::panic::{ panic, unreachable };
 use package::{ package };
 use util::mangling::{ mangle_struct_name, mangle_function_name };
 
+struct ssa_generator {
+    counter: u64
+}
+
+impl ssa_generator {
+    pub func instance() -> ssa_generator {
+        return ssa_generator { counter: 0 };
+    }
+
+    pub func clear(self) {
+        self->counter = 0;
+    }
+
+    pub func generate(self) -> str {
+        var buffer = [i8; 128];
+        itoa(self->counter => i64, buffer, 10);
+        self->counter += 1;
+        return str::from(buffer);
+    }
+}
+
 pub struct mir2sir {
     ctx: sema_context*,
     sctx: sir_context*,
     pkg: package*,
     type_mapper: hashmap<str, basic<symbol_kind>>,
-    basic_type_mapper: hashmap<str, str>
+    basic_type_mapper: hashmap<str, str>,
+
+    block: sir_block*
 }
 
 impl mir2sir {
@@ -33,7 +57,8 @@ impl mir2sir {
             sctx: sctx,
             pkg: pkg,
             type_mapper: hashmap<str, basic<symbol_kind>>::instance(),
-            basic_type_mapper: hashmap<str, str>::instance()
+            basic_type_mapper: hashmap<str, str>::instance(),
+            block: nil
         };
         res.init_basic_type_mapper();
         return res;
@@ -180,6 +205,8 @@ impl mir2sir {
                 mapped_type.delete();
                 p_pair.delete();
             }
+
+            s_func.body = sir_block::new();
 
             self->sctx->func_impls.push(s_func.__ptr__());
             s_func.delete();
