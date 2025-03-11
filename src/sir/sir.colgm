@@ -184,6 +184,29 @@ impl sir {
             _ => { unreachable(); }
         }
     }
+
+    pub func dump(self, out: io) {
+        match (self->kind) {
+            sir_kind::sir_nop => {
+                out.out("  ; nop\n");
+            }
+            sir_kind::sir_block => {
+                var n = self => sir_block*;
+                n->dump(out);
+            }
+            sir_kind::sir_alloca => {
+                var n = self => sir_alloca*;
+                n->dump(out);
+            }
+            sir_kind::sir_store => {
+                var n = self => sir_store*;
+                n->dump(out);
+            }
+            _ => {
+                out.out("  ; 0x").out_i64(self => i64).endln();
+            }
+        }
+    }
 }
 
 pub struct sir_nop {
@@ -252,6 +275,28 @@ impl sir_block {
         self->move_register.delete();
         self->stmts.delete();
     }
+
+    pub func add_alloca(self, s: sir_alloca*) {
+        self->allocas.push(ptr<sir_alloca>::wrap(s));
+    }
+
+    pub func add_stmt(self, s: sir*) {
+        self->stmts.push(ptr<sir>::wrap(s));
+    }
+
+    pub func dump(self, out: io) {
+        for (var i = self->allocas.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap() => sir*;
+            n->dump(out);
+        }
+        for (var i = self->move_register.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap() => sir*;
+            n->dump(out);
+        }
+        for (var i = self->stmts.iter(); !i.is_end(); i = i.next()) {
+            i.get().unwrap()->dump(out);
+        }
+    }
 }
 
 struct array_type_t {
@@ -293,6 +338,16 @@ impl sir_alloca {
         self->variable.delete();
         self->type.delete();
         self->array_info.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  %").out(self->variable.c_str).out(" = alloca ");
+        if (self->array_info.base_type.empty()) {
+            out.out(self->type.c_str).endln();
+        } else {
+            out.out("[").out(self->array_info.base_type.c_str).out(" x ");
+            out.out_i64(self->array_info.size => i64).out("]").endln();
+        }
     }
 }
 
@@ -852,11 +907,11 @@ pub struct sir_store {
 }
 
 impl sir_store {
-    pub func new(type: str*) -> sir_store* {
+    pub func new(type: str*, src: value_t*, tgt: value_t*) -> sir_store* {
         var n = sir_store::__alloc__();
         n->base = sir::instance(sir_kind::sir_store);
-        n->target = value_t::instance();
-        n->source = value_t::instance();
+        n->target = tgt->copy_instance();
+        n->source = src->copy_instance();
         n->type = type->copy_instance();
         return n;
     }
@@ -865,6 +920,14 @@ impl sir_store {
         self->target.delete();
         self->source.delete();
         self->type.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  store ").out(self->type.c_str).out(" ");
+        self->source.dump(out);
+        out.out(", ").out(self->type.c_str).out("* ");
+        self->target.dump(out);
+        out.endln();
     }
 }
 

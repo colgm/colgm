@@ -5,11 +5,12 @@ use std::io::{ io };
 use std::vec::{ vec };
 
 use mir::mir::*;
-use mir::context::{ mir_context };
+use mir::context::{ mir_context, mir_func };
 use sir::ssa_name_gen::{ ssa_generator };
 use sir::local_scope::{ local_table };
 use sir::sir::*;
 use sir::context::{ sir_struct, sir_func, sir_context };
+use sir::value::{ value_t };
 
 use sema::symbol_info::{ symbol_kind };
 use sema::context::{ sema_context };
@@ -48,6 +49,8 @@ pub struct mir2sir {
     ssa_gen: ssa_generator,
     array_ssa_gen: ssa_generator,
 
+    locals: local_table,
+
     continue_inst: vec<vec<ptr<sir_br>>>,
     break_inst: vec<vec<ptr<sir_br>>>,
     branch_jump_out: vec<vec<ptr<sir_br>>>
@@ -66,6 +69,7 @@ impl mir2sir {
             block: nil,
             ssa_gen: ssa_generator::instance(),
             array_ssa_gen: ssa_generator::instance(),
+            locals: local_table::instance(),
             continue_inst: vec<vec<ptr<sir_br>>>::instance(),
             break_inst: vec<vec<ptr<sir_br>>>::instance(),
             branch_jump_out: vec<vec<ptr<sir_br>>>::instance()
@@ -77,6 +81,7 @@ impl mir2sir {
     pub func delete(self) {
         self->type_mapper.delete();
         self->basic_type_mapper.delete();
+        self->locals.delete();
 
         // do not need to delete ptr in them
         // all ptrs are inserted into sir_func's body
@@ -211,21 +216,39 @@ impl mir2sir {
             s_func.return_type.append_str(ret_type_name.__ptr__());
             ret_type_name.delete();
 
+            // push local scope
+            self->locals.push();
+            self->locals.local_scope_depth = 0;
+
             for (var j = m_func->params.iter(); !j.is_end(); j = j.next()) {
                 var m_param = j.get();
                 var mapped_type = self->type_mapping(m_param->value);
-                var p_pair = pair<str, str>::instance(m_param->key, mapped_type.__ptr__());
+
+                var param_name = m_param->key->copy_instance();
+                param_name.append_i8_vec(".param");
+
+                var p_pair = pair<str, str>::instance(
+                    param_name.__ptr__(),
+                    mapped_type.__ptr__()
+                );
 
                 s_func.params.push(p_pair.__ptr__());
 
+                param_name.delete();
                 mapped_type.delete();
                 p_pair.delete();
             }
 
             s_func.body = sir_block::new();
+            self->block = s_func.body;
+            self->generate_func_impl_from_mir_func(m_func);
+            self->block = nil;
 
             self->sctx->func_impls.push(s_func.__ptr__());
             s_func.delete();
+
+            // pop local scope
+            self->locals.pop();
         }
     }
 }
@@ -334,6 +357,39 @@ impl mir2sir {
         full_name.delete();
         return res;
     }
+}
+
+impl mir2sir {
+    func generate_func_impl_from_mir_func(self, m_func: mir_func*) {
+        for (var i = m_func->params.iter(); !i.is_end(); i = i.next()) {
+            var m_param = i.get();
+            var mapped_type = self->type_mapping(m_param->value);
+
+            var param_name = m_param->key->copy_instance();
+            param_name.append_i8_vec(".param");
+
+            self->block->add_alloca(
+                sir_alloca::new(m_param->key, mapped_type.__ptr__())
+            );
+
+            var source = value_t::variable(param_name.__ptr__());
+            var target = value_t::variable(m_param->key);
+            self->block->add_stmt(sir_store::new(
+                mapped_type.__ptr__(),
+                source.__ptr__(),
+                target.__ptr__()
+            ) => sir*);
+
+            param_name.delete();
+            mapped_type.delete();
+            source.delete();
+            target.delete();
+        }
+
+        self->visit_mir_block(m_func->block);
+    }
+
+    func visit_mir_block(self, n: mir_block*) {}
 }
 
 impl mir2sir {

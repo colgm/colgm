@@ -102,6 +102,10 @@ func compile(option: cli_option) {
     cc.pkg->library_path.append_i8_vec(option.library_path);
 
     // do lexer scanning
+    if (option.VERBOSE) {
+        io::stdout().green().out("[lexer] ").reset();
+        io::stdout().out("scanning tokens").endln();
+    }
     cc.lex->scan(option.input_file);
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
@@ -114,6 +118,10 @@ func compile(option: cli_option) {
         cc.lex->dump(io::stdout());
     }
 
+    if (option.VERBOSE) {
+        io::stdout().green().out("[parse] ").reset();
+        io::stdout().out("parsing").endln();
+    }
     cc.par.parse();
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
@@ -126,12 +134,20 @@ func compile(option: cli_option) {
         cc.par.dump(io::stdout());
     }
 
+    if (option.VERBOSE) {
+        io::stdout().green().out("[sema] ").reset();
+        io::stdout().out("scanning symbols").endln();
+    }
     regpass.run(cc.par.root);
     if (cc.err->error_count > 0) {
         cc.delete();
         return;
     }
 
+    if (option.VERBOSE) {
+        io::stdout().green().out("[sema] ").reset();
+        io::stdout().out("analysing").endln();
+    }
     semantic.analyse(cc.par.root);
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {

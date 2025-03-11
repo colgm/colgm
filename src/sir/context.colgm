@@ -138,7 +138,11 @@ impl sir_func {
             return;
         }
 
-        // TODO
+        out.out(" {\n");
+        var n = self->body => sir*;
+        out.out("label.entry:\n");
+        n->dump(out);
+        out.out("}\n");
     }
 }
 
@@ -208,6 +212,16 @@ impl sir_context {
         }
     }
 
+    func dump_func_impls(self, out: io) {
+        for (var i = self->func_impls.iter(); !i.is_end(); i = i.next()) {
+            i.get()->dump(out);
+        }
+
+        if (self->func_impls.size > 0) {
+            out.out("\n");
+        }
+    }
+
     func dump_const_strings(self, out: io) {
         var ordered_const_string = vec<str>::instance();
         for (var i = self->const_strings.iter(); !i.is_end(); i = i.next()) {
@@ -246,7 +260,7 @@ impl sir_context {
         self->dump_structs(out);
         self->dump_func_decls(out);
         self->dump_const_strings(out);
-        // self->dump_func_impls(out);
+        // self->dump_func_impls(io::stdout());
 
         var output = "@.str.xx = private unnamed_addr constant [27 x i8] c\"[hello.colgm] hello world!\\00\"
 
