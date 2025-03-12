@@ -1,6 +1,8 @@
 use std::str::{ str };
 use std::io::{ io };
 
+use err::panic::{ panic };
+
 pub enum value_kind {
     null,
     variable,
@@ -59,13 +61,18 @@ impl value_t {
     pub func null(name: str*) -> value_t {
         var res = value_t::instance();
         res.kind = value_kind::null;
-        res.content.append_str(name);
+        if (name != nil) {
+            res.content.append_str(name);
+        }
         return res;
     }
 
     pub func variable(name: str*) -> value_t {
         var res = value_t::instance();
         res.kind = value_kind::variable;
+        if (name == nil) {
+            panic("variable name is null");
+        }
         res.content.append_str(name);
         return res;
     }
@@ -73,6 +80,9 @@ impl value_t {
     pub func literal(name: str*) -> value_t {
         var res = value_t::instance();
         res.kind = value_kind::literal;
+        if (name == nil) {
+            panic("literal name is null");
+        }
         res.content.append_str(name);
         return res;
     }

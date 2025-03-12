@@ -38,6 +38,137 @@ struct mir_value_t {
     resolved_type: type
 }
 
+impl mir_value_t {
+    pub func copy(self) -> mir_value_t* {
+        var res = mir_value_t::__alloc__();
+        res->value_kind = self->value_kind;
+        res->content = self->content.copy_instance();
+        res->resolved_type = self->resolved_type.copy_instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->content.delete();
+        self->resolved_type.delete();
+    }
+
+    pub func to_value_t(self) -> value_t {
+        match (self->value_kind) {
+            mir_value_kind::null => {
+                var name = str::from("null");
+                var res = value_t::null(name.__ptr__());
+                name.delete();
+                return res;
+            }
+            mir_value_kind::nil_value => {
+                return value_t::literal(self->content.__ptr__());
+            }
+            mir_value_kind::literal => {
+                return value_t::variable(self->content.__ptr__());
+            }
+            mir_value_kind::variable => {
+                return value_t::variable(self->content.__ptr__());
+            }
+            mir_value_kind::primitive => {
+                var name = str::from("primitive");
+                var res = value_t::null(name.__ptr__());
+                name.delete();
+                return res;
+            }
+            mir_value_kind::func_symbol => {
+                var name = str::from("func");
+                var res = value_t::null(name.__ptr__());
+                name.delete();
+                return res;
+            }
+            mir_value_kind::method => {
+                var name = str::from("method");
+                var res = value_t::null(name.__ptr__());
+                name.delete();
+                return res;
+            }
+            mir_value_kind::struct_symbol => {
+                var name = str::from("struct");
+                var res = value_t::null(name.__ptr__());
+                name.delete();
+                return res;
+            }
+            mir_value_kind::enum_symbol => {
+                var name = str::from("enum");
+                var res = value_t::null(name.__ptr__());
+                name.delete();
+                return res;
+            }
+        }
+        // unreachable
+        return value_t::null(nil);
+    }
+
+    func nil_value(ty: type*) -> mir_value_t {
+        return mir_value_t {
+            value_kind: mir_value_kind::nil_value,
+            content: str::from("null"),
+            resolved_type: ty->copy_instance()
+        };
+    }
+
+    func variable(name: str*, ty: type*) -> mir_value_t {
+        return mir_value_t {
+            value_kind: mir_value_kind::variable,
+            content: name->copy_instance(),
+            resolved_type: ty->copy_instance()
+        };
+    }
+
+    func literal(value: str*, ty: type*) -> mir_value_t {
+        return mir_value_t {
+            value_kind: mir_value_kind::literal,
+            content: value->copy_instance(),
+            resolved_type: ty->copy_instance()
+        };
+    }
+
+    func primitive(value: str*, ty: type*) -> mir_value_t {
+        return mir_value_t {
+            value_kind: mir_value_kind::primitive,
+            content: value->copy_instance(),
+            resolved_type: ty->copy_instance()
+        };
+    }
+
+    func func_symbol(name: str*, ty: type*) -> mir_value_t {
+        return mir_value_t {
+            value_kind: mir_value_kind::func_symbol,
+            content: name->copy_instance(),
+            resolved_type: ty->copy_instance()
+        };
+    }
+
+    func method(name: str*, ty: type*) -> mir_value_t {
+        return mir_value_t {
+            value_kind: mir_value_kind::method,
+            content: name->copy_instance(),
+            resolved_type: ty->copy_instance()
+        };
+    }
+
+    func struct_symbol(name: str*, ty: type*) -> mir_value_t {
+        return mir_value_t {
+            value_kind: mir_value_kind::struct_symbol,
+            content: name->copy_instance(),
+            resolved_type: ty->copy_instance()
+        };
+    }
+
+    func enum_symbol(name: str*, ty: type*) -> mir_value_t {
+        return mir_value_t {
+            value_kind: mir_value_kind::enum_symbol,
+            content: name->copy_instance(),
+            resolved_type: ty->copy_instance()
+        };
+    }
+}
+
 pub struct mir2sir {
     ctx: sema_context*,
     sctx: sir_context*,
@@ -48,6 +179,8 @@ pub struct mir2sir {
     block: sir_block*,
     ssa_gen: ssa_generator,
     array_ssa_gen: ssa_generator,
+    
+    value_stack: vec<mir_value_t>,
 
     locals: local_table,
 
@@ -69,6 +202,7 @@ impl mir2sir {
             block: nil,
             ssa_gen: ssa_generator::instance(),
             array_ssa_gen: ssa_generator::instance(),
+            value_stack: vec<mir_value_t>::instance(),
             locals: local_table::instance(),
             continue_inst: vec<vec<ptr<sir_br>>>::instance(),
             break_inst: vec<vec<ptr<sir_br>>>::instance(),
@@ -81,6 +215,7 @@ impl mir2sir {
     pub func delete(self) {
         self->type_mapper.delete();
         self->basic_type_mapper.delete();
+        self->value_stack.delete();
         self->locals.delete();
 
         // do not need to delete ptr in them
@@ -388,8 +523,80 @@ impl mir2sir {
 
         self->visit_mir_block(m_func->block);
     }
+}
 
-    func visit_mir_block(self, n: mir_block*) {}
+impl mir2sir {
+    func visit_mir_block(self, n: mir_block*) {
+        // push local scope
+        self->locals.push();
+
+        for (var i = n->content.iter(); !i.is_end(); i = i.next()) {
+            self->visit(i.get().unwrap());
+        }
+
+        // pop local scope
+        self->locals.pop();
+    }
+
+    func visit_mir_nil(self, n: mir_nil*) {
+        var v = mir_value_t::nil_value(n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+        v.delete();
+    }
+
+    func visit_mir_bool(self, n: mir_bool*) {
+        var flag = str::instance();
+        if (n->value) {
+            flag.append_i8_vec("1");
+        } else {
+            flag.append_i8_vec("0");
+        }
+
+        var v = mir_value_t::literal(flag.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+
+        v.delete();
+        flag.delete();
+    }
+
+    func visit(self, n: mir*) {
+        match (n->kind) {
+            mir_kind::mir_block => {
+                self->visit_mir_block(n => mir_block*);
+            }
+            mir_kind::mir_unary => {}
+            mir_kind::mir_binary => {}
+            mir_kind::mir_type_convert => {}
+            mir_kind::mir_nil => {
+                self->visit_mir_nil(n => mir_nil*);
+            }
+            mir_kind::mir_number => {}
+            mir_kind::mir_string => {}
+            mir_kind::mir_char => {}
+            mir_kind::mir_bool => {
+                self->visit_mir_bool(n => mir_bool*);
+            }
+            mir_kind::mir_array => {}
+            mir_kind::mir_struct_init => {}
+            mir_kind::mir_call => {}
+            mir_kind::mir_call_id => {}
+            mir_kind::mir_call_index => {}
+            mir_kind::mir_call_func => {}
+            mir_kind::mir_get_field => {}
+            mir_kind::mir_ptr_get_field => {}
+            mir_kind::mir_define => {}
+            mir_kind::mir_assign => {}
+            mir_kind::mir_if => {}
+            mir_kind::mir_branch => {}
+            mir_kind::mir_switch_case => {}
+            mir_kind::mir_switch => {}
+            mir_kind::mir_break => {}
+            mir_kind::mir_continue => {}
+            mir_kind::mir_loop => {}
+            mir_kind::mir_return => {}
+            _ => unreachable();
+        }
+    }
 }
 
 impl mir2sir {
