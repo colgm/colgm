@@ -198,6 +198,10 @@ impl sir {
                 var n = self => sir_alloca*;
                 n->dump(out);
             }
+            sir_kind::sir_str => {
+                var n = self => sir_str*;
+                n->dump(out);
+            }
             sir_kind::sir_store => {
                 var n = self => sir_store*;
                 n->dump(out);
@@ -415,17 +419,24 @@ pub struct sir_str {
 }
 
 impl sir_str {
-    pub func new(index: u64, length: u64) -> sir_str* {
+    pub func new(index: u64, length: u64, tgt: value_t*) -> sir_str* {
         var n = sir_str::__alloc__();
         n->base = sir::instance(sir_kind::sir_str);
         n->index = index;
         n->length = length;
-        n->target = value_t::instance();
+        n->target = tgt->copy_instance();
         return n;
     }
 
     pub func delete(self) {
         self->target.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = bitcast [").out_i64(self->length => i64).out(" x i8]* ");
+        out.out("@.str.").out_i64(self->index => i64).out(" to i8*\n");
     }
 }
 

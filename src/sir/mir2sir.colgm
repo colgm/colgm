@@ -544,6 +544,27 @@ impl mir2sir {
         v.delete();
     }
 
+    func visit_mir_string(self, n: mir_string*) {
+        var temp = self->ssa_gen.create();
+        var v = value_t::variable(temp.__ptr__());
+        self->block->add_stmt(sir_str::new(
+            self->sctx->const_strings.get(n->value.__ptr__())->unwrap(),
+            n->value.size + 1,
+            v.__ptr__()
+        ) => sir*);
+
+        temp.delete();
+        v.delete();
+    }
+
+    func visit_mir_char(self, n: mir_char*) {
+        var ch = str::from_i64(n->value.get(0) => i64);
+        var v = mir_value_t::literal(ch.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+        v.delete();
+        ch.delete();
+    }
+
     func visit_mir_bool(self, n: mir_bool*) {
         var flag = str::instance();
         if (n->value) {
@@ -559,6 +580,37 @@ impl mir2sir {
         flag.delete();
     }
 
+    func visit_mir_define(self, n: mir_define*) {
+        // TODO
+        self->visit(n->init_value => mir*);
+    }
+
+    func visit_mir_assign(self, n: mir_assign*) {
+        // TODO
+        self->visit(n->left => mir*);
+        self->visit(n->right => mir*);
+    }
+
+    func visit_mir_loop(self, n: mir_loop*) {
+        // TODO
+        if (n->condition != nil) {
+            self->visit(n->condition => mir*);
+        }
+        if (n->content != nil) {
+            self->visit(n->content => mir*);
+        }
+        if (n->update != nil) {
+            self->visit(n->update => mir*);
+        }
+    }
+
+    func visit_mir_return(self, n: mir_return*) {
+        // TODO
+        if (n->value != nil) {
+            self->visit(n->value => mir*);
+        }
+    }
+
     func visit(self, n: mir*) {
         match (n->kind) {
             mir_kind::mir_block => {
@@ -571,8 +623,12 @@ impl mir2sir {
                 self->visit_mir_nil(n => mir_nil*);
             }
             mir_kind::mir_number => {}
-            mir_kind::mir_string => {}
-            mir_kind::mir_char => {}
+            mir_kind::mir_string => {
+                self->visit_mir_string(n => mir_string*);
+            }
+            mir_kind::mir_char => {
+                self->visit_mir_char(n => mir_char*);
+            }
             mir_kind::mir_bool => {
                 self->visit_mir_bool(n => mir_bool*);
             }
@@ -584,16 +640,24 @@ impl mir2sir {
             mir_kind::mir_call_func => {}
             mir_kind::mir_get_field => {}
             mir_kind::mir_ptr_get_field => {}
-            mir_kind::mir_define => {}
-            mir_kind::mir_assign => {}
+            mir_kind::mir_define => {
+                self->visit_mir_define(n => mir_define*);
+            }
+            mir_kind::mir_assign => {
+                self->visit_mir_assign(n => mir_assign*);
+            }
             mir_kind::mir_if => {}
             mir_kind::mir_branch => {}
             mir_kind::mir_switch_case => {}
             mir_kind::mir_switch => {}
             mir_kind::mir_break => {}
             mir_kind::mir_continue => {}
-            mir_kind::mir_loop => {}
-            mir_kind::mir_return => {}
+            mir_kind::mir_loop => {
+                self->visit_mir_loop(n => mir_loop*);
+            }
+            mir_kind::mir_return => {
+                self->visit_mir_return(n => mir_return*);
+            }
             _ => unreachable();
         }
     }
