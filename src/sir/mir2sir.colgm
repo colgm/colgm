@@ -538,10 +538,26 @@ impl mir2sir {
         self->locals.pop();
     }
 
+    func visit_mir_unary(self, n: mir_unary*) {
+        // TODO
+    }
+
+    func visit_mir_binary(self, n: mir_binary*) {
+        // TODO
+    }
+
+    func visit_mir_type_convert(self, n: mir_type_convert*) {
+        // TODO
+    }
+
     func visit_mir_nil(self, n: mir_nil*) {
         var v = mir_value_t::nil_value(n->resolved_type.__ptr__());
         self->value_stack.push(v.__ptr__());
         v.delete();
+    }
+
+    func visit_mir_number(self, n: mir_number*) {
+        // TODO
     }
 
     func visit_mir_string(self, n: mir_string*) {
@@ -580,6 +596,38 @@ impl mir2sir {
         flag.delete();
     }
 
+    func visit_mir_array(self, n: mir_array*) {
+        // TODO
+    }
+
+    func visit_mir_struct_init(self, n: mir_struct_init*) {
+        // TODO
+    }
+    
+    func visit_mir_call(self, n: mir_call*) {
+        // TODO
+    }
+
+    func visit_mir_call_id(self, n: mir_call_id*) {
+        // TODO
+    }
+
+    func visit_mir_call_index(self, n: mir_call_index*) {
+        // TODO
+    }
+
+    func visit_mir_call_func(self, n: mir_call_func*) {
+        // TODO
+    }
+
+    func visit_mir_get_field(self, n: mir_get_field*) {
+        // TODO
+    }
+
+    func visit_mir_ptr_get_field(self, n: mir_ptr_get_field*) {
+        // TODO
+    }
+
     func visit_mir_define(self, n: mir_define*) {
         // TODO
         self->visit(n->init_value => mir*);
@@ -589,6 +637,30 @@ impl mir2sir {
         // TODO
         self->visit(n->left => mir*);
         self->visit(n->right => mir*);
+    }
+
+    func visit_mir_if(self, n: mir_if*) {
+        // TODO
+    }
+
+    func visit_mir_branch(self, n: mir_branch*) {
+        // TODO
+    }
+
+    func visit_mir_switch_case(self, n: mir_switch_case*) {
+        // TODO
+    }
+
+    func visit_mir_switch(self, n: mir_switch*) {
+        // TODO
+    }
+
+    func visit_mir_break(self, n: mir_break*) {
+        // TODO
+    }
+
+    func visit_mir_continue(self, n: mir_continue*) {
+        // TODO
     }
 
     func visit_mir_loop(self, n: mir_loop*) {
@@ -616,13 +688,21 @@ impl mir2sir {
             mir_kind::mir_block => {
                 self->visit_mir_block(n => mir_block*);
             }
-            mir_kind::mir_unary => {}
-            mir_kind::mir_binary => {}
-            mir_kind::mir_type_convert => {}
+            mir_kind::mir_unary => {
+                self->visit_mir_unary(n => mir_unary*);
+            }
+            mir_kind::mir_binary => {
+                self->visit_mir_binary(n => mir_binary*);
+            }
+            mir_kind::mir_type_convert => {
+                self->visit_mir_type_convert(n => mir_type_convert*);
+            }
             mir_kind::mir_nil => {
                 self->visit_mir_nil(n => mir_nil*);
             }
-            mir_kind::mir_number => {}
+            mir_kind::mir_number => {
+                self->visit_mir_number(n => mir_number*);
+            }
             mir_kind::mir_string => {
                 self->visit_mir_string(n => mir_string*);
             }
@@ -632,26 +712,54 @@ impl mir2sir {
             mir_kind::mir_bool => {
                 self->visit_mir_bool(n => mir_bool*);
             }
-            mir_kind::mir_array => {}
-            mir_kind::mir_struct_init => {}
-            mir_kind::mir_call => {}
-            mir_kind::mir_call_id => {}
-            mir_kind::mir_call_index => {}
-            mir_kind::mir_call_func => {}
-            mir_kind::mir_get_field => {}
-            mir_kind::mir_ptr_get_field => {}
+            mir_kind::mir_array => {
+                self->visit_mir_array(n => mir_array*);
+            }
+            mir_kind::mir_struct_init => {
+                self->visit_mir_struct_init(n => mir_struct_init*);
+            }
+            mir_kind::mir_call => {
+                self->visit_mir_call(n => mir_call*);
+            }
+            mir_kind::mir_call_id => {
+                self->visit_mir_call_id(n => mir_call_id*);
+            }
+            mir_kind::mir_call_index => {
+                self->visit_mir_call_index(n => mir_call_index*);
+            }
+            mir_kind::mir_call_func => {
+                self->visit_mir_call_func(n => mir_call_func*);
+            }
+            mir_kind::mir_get_field => {
+                self->visit_mir_get_field(n => mir_get_field*);
+            }
+            mir_kind::mir_ptr_get_field => {
+                self->visit_mir_ptr_get_field(n => mir_ptr_get_field*);
+            }
             mir_kind::mir_define => {
                 self->visit_mir_define(n => mir_define*);
             }
             mir_kind::mir_assign => {
                 self->visit_mir_assign(n => mir_assign*);
             }
-            mir_kind::mir_if => {}
-            mir_kind::mir_branch => {}
-            mir_kind::mir_switch_case => {}
-            mir_kind::mir_switch => {}
-            mir_kind::mir_break => {}
-            mir_kind::mir_continue => {}
+            mir_kind::mir_if => {
+                self->visit_mir_if(n => mir_if*);
+            }
+            mir_kind::mir_branch => {
+                self->visit_mir_branch(n => mir_branch*);
+            }
+            mir_kind::mir_switch_case => {
+                self->visit_mir_switch_case(n => mir_switch_case*);
+            }
+            mir_kind::mir_switch => {
+                self->visit_mir_switch(n => mir_switch*);
+            }
+            mir_kind::mir_break => {
+                self->visit_mir_break(n => mir_break*);
+            }
+            mir_kind::mir_continue => {
+                self->visit_mir_continue(n => mir_continue*);
+            }
             mir_kind::mir_loop => {
                 self->visit_mir_loop(n => mir_loop*);
             }
