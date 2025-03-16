@@ -653,9 +653,13 @@ impl mir2sir {
     func visit_mir_struct_init(self, n: mir_struct_init*) {
         // TODO
     }
+
+    func call_expr_gen(self, n: mir_call*, need_address: bool) {
+        self->visit(n->content => mir*);
+    }
     
     func visit_mir_call(self, n: mir_call*) {
-        // TODO
+        self->call_expr_gen(n, false);
     }
 
     func visit_mir_call_id(self, n: mir_call_id*) {
@@ -664,10 +668,12 @@ impl mir2sir {
 
     func visit_mir_call_index(self, n: mir_call_index*) {
         // TODO
+        self->visit(n->index => mir*);
     }
 
     func visit_mir_call_func(self, n: mir_call_func*) {
         // TODO
+        self->visit(n->args => mir*);
     }
 
     func visit_mir_get_field(self, n: mir_get_field*) {
@@ -678,6 +684,10 @@ impl mir2sir {
         // TODO
     }
 
+    func visit_mir_get_path(self, n: mir_get_path*) {
+        // TODO
+    }
+
     func visit_mir_define(self, n: mir_define*) {
         // TODO
         self->visit(n->init_value => mir*);
@@ -685,24 +695,48 @@ impl mir2sir {
 
     func visit_mir_assign(self, n: mir_assign*) {
         // TODO
-        self->visit(n->left => mir*);
+        self->call_expr_gen(
+            n->left->content.get(0).unwrap() => mir_call*,
+            true
+        );
         self->visit(n->right => mir*);
     }
 
     func visit_mir_if(self, n: mir_if*) {
         // TODO
+        if (n->condition != nil) {
+            self->visit(n->condition => mir*);
+        }
+        if (n->content != nil) {
+            self->visit(n->content => mir*);
+        }
     }
 
     func visit_mir_branch(self, n: mir_branch*) {
         // TODO
+        for (var i = n->branch.iter(); !i.is_end(); i = i.next()) {
+            self->visit(i.get().unwrap() => mir*);
+        }
     }
 
     func visit_mir_switch_case(self, n: mir_switch_case*) {
         // TODO
+        if (n->content != nil) {
+            self->visit(n->content => mir*);
+        }
     }
 
     func visit_mir_switch(self, n: mir_switch*) {
         // TODO
+        if (n->condition != nil) {
+            self->visit(n->condition => mir*);
+        }
+        for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
+            self->visit(i.get().unwrap() => mir*);
+        }
+        if (n->default_case != nil) {
+            self->visit(n->default_case => mir*);
+        }
     }
 
     func visit_mir_break(self, n: mir_break*) {
@@ -785,6 +819,9 @@ impl mir2sir {
             }
             mir_kind::mir_ptr_get_field => {
                 self->visit_mir_ptr_get_field(n => mir_ptr_get_field*);
+            }
+            mir_kind::mir_get_path => {
+                self->visit_mir_get_path(n => mir_get_path*);
             }
             mir_kind::mir_define => {
                 self->visit_mir_define(n => mir_define*);
