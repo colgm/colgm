@@ -206,6 +206,10 @@ impl sir {
                 var n = self => sir_store*;
                 n->dump(out);
             }
+            sir_kind::sir_array_cast => {
+                var n = self => sir_array_cast*;
+                n->dump(out);
+            }
             _ => {
                 out.out("  ; 0x").out_i64(self => i64).endln();
             }
@@ -303,16 +307,30 @@ impl sir_block {
     }
 }
 
-struct array_type_t {
+pub struct array_type_t {
     base_type: str,
     size: u64
 }
 
 impl array_type_t {
-    pub func instance() -> array_type_t {
+    pub func instance(base: str*, size: u64) -> array_type_t {
+        return array_type_t {
+            base_type: base->copy_instance(),
+            size: size
+        };
+    }
+
+    pub func default_instance() -> array_type_t {
         return array_type_t {
             base_type: str::instance(),
             size: 0
+        };
+    }
+
+    pub func copy_instance(self) -> array_type_t {
+        return array_type_t {
+            base_type: self->base_type.copy_instance(),
+            size: self->size
         };
     }
 
@@ -334,7 +352,16 @@ impl sir_alloca {
         n->base = sir::instance(sir_kind::sir_alloca);
         n->variable = variable->copy_instance();
         n->type = type->copy_instance();
-        n->array_info = array_type_t::instance();
+        n->array_info = array_type_t::default_instance();
+        return n;
+    }
+
+    pub func new_array(variable: str*, at: array_type_t*) -> sir_alloca* {
+        var n = sir_alloca::__alloc__();
+        n->base = sir::instance(sir_kind::sir_alloca);
+        n->variable = variable->copy_instance();
+        n->type = str::instance();
+        n->array_info = at->copy_instance();
         return n;
     }
 
@@ -1066,13 +1093,13 @@ pub struct sir_array_cast {
 }
 
 impl sir_array_cast {
-    pub func new(type: str*, array_size: u64) -> sir_array_cast* {
+    pub func new(src: value_t*, tgt: value_t*, type: str*, size: u64) -> sir_array_cast* {
         var n = sir_array_cast::__alloc__();
         n->base = sir::instance(sir_kind::sir_array_cast);
-        n->target = value_t::instance();
-        n->source = value_t::instance();
+        n->source = src->copy_instance();
+        n->target = tgt->copy_instance();
         n->type = type->copy_instance();
-        n->array_size = array_size;
+        n->array_size = size;
         return n;
     }
 
@@ -1080,5 +1107,14 @@ impl sir_array_cast {
         self->target.delete();
         self->source.delete();
         self->type.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = bitcast [").out_i64(self->array_size => i64).out(" x ");
+        out.out(self->type.c_str).out("]* ");
+        self->source.dump(out);
+        out.out(" to ").out(self->type.c_str).out("*\n");
     }
 }

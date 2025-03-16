@@ -374,6 +374,9 @@ impl mir2sir {
                 p_pair.delete();
             }
 
+            self->ssa_gen.clear();
+            self->array_ssa_gen.clear();
+            self->value_stack.clear();
             s_func.body = sir_block::new();
             self->block = s_func.body;
             self->generate_func_impl_from_mir_func(m_func);
@@ -561,7 +564,15 @@ impl mir2sir {
     }
 
     func visit_mir_number(self, n: mir_number*) {
-        // TODO
+        var literal = n->value.copy_instance();
+        if (!n->resolved_type.is_integer() &&
+            !literal.contains('.')) {
+            literal.append_i8_vec(".0");
+        }
+        var v = mir_value_t::literal(literal.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+        v.delete();
+        literal.delete();
     }
 
     func visit_mir_string(self, n: mir_string*) {
@@ -601,7 +612,42 @@ impl mir2sir {
     }
 
     func visit_mir_array(self, n: mir_array*) {
-        // TODO
+        var index = self->array_ssa_gen.create();
+        var temp_0 = str::from("arr.");
+        var temp_1 = str::from("arr.");
+        temp_0.append_str(index.__ptr__())->append_i8_vec(".ptr");
+        temp_1.append_str(index.__ptr__())->append_i8_vec(".cast_ptr");
+
+        var ref_copy = n->resolved_type.ref_copy();
+        var array_elem_type = self->type_mapping(ref_copy.__ptr__());
+
+        var ati = array_type_t::instance(
+            array_elem_type.__ptr__(),
+            n->size
+        );
+        var array_new = sir_alloca::new_array(
+            temp_0.__ptr__(),
+            ati.__ptr__()
+        );
+        self->block->add_alloca(array_new);
+
+        var v_temp_0 = value_t::variable(temp_0.__ptr__());
+        var v_temp_1 = value_t::variable(temp_1.__ptr__());
+        var cv = sir_array_cast::new(
+            v_temp_0.__ptr__(),
+            v_temp_1.__ptr__(),
+            array_elem_type.__ptr__(),
+            n->size
+        );
+        self->block->add_stmt(cv => sir*);
+
+        temp_0.delete();
+        temp_1.delete();
+        ref_copy.delete();
+        array_elem_type.delete();
+        ati.delete();
+        v_temp_0.delete();
+        v_temp_1.delete();
     }
 
     func visit_mir_struct_init(self, n: mir_struct_init*) {

@@ -106,6 +106,21 @@ impl type {
             generics: self->generics.copy_instance()
         };
     }
+
+    pub func ref_copy(self) -> type {
+        var res = self->copy_instance();
+        if (res.pointer_depth == 0) {
+            panic("get ref copy from non-pointer type");
+        }
+        res.pointer_depth -= 1;
+        return res;
+    }
+
+    pub func pointer_copy(self) -> type {
+        var res = self->copy_instance();
+        res.pointer_depth += 1;
+        return res;
+    }
 }
 
 impl type {
