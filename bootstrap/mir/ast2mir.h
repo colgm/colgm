@@ -37,7 +37,6 @@ struct mir_context {
     std::vector<mir_struct*> structs;
     std::vector<mir_func*> decls;
     std::vector<mir_func*> impls;
-    std::unordered_map<std::string, u64> const_strings;
 
     ~mir_context() {
         for(auto i : structs) {

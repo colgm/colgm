@@ -101,7 +101,7 @@ void sir_context::dump_const_string(std::ostream& out) const {
     }
 
     for(usize i = 0; i<ordered_const_string.size(); ++i) {
-        out << "@.str." << i;
+        out << "@str." << i;
         out << " = private unnamed_addr constant [";
         out << ordered_const_string[i].length() + 1 << " x i8] c\"";
         out << llvm_raw_string(ordered_const_string[i]);

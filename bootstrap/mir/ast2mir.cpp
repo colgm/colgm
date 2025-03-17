@@ -109,7 +109,6 @@ bool ast2mir::visit_string_literal(ast::string_literal* node) {
         node->get_string(),
         node->get_resolve()
     ));
-    mctx.const_strings.insert({node->get_string(), mctx.const_strings.size()});
     return true;
 }
 
@@ -626,18 +625,6 @@ type ast2mir::generate_type(ast::type_def* node) {
 }
 
 void ast2mir::dump(std::ostream& os) {
-    std::vector<std::string> const_strings;
-    const_strings.resize(mctx.const_strings.size());
-    for(const auto& i : mctx.const_strings) {
-        const_strings[i.second] = i.first;
-    }
-    for(usize i = 0; i<mctx.const_strings.size(); ++i) {
-        os << i << " \"" << llvm_raw_string(const_strings[i]) << "\"\n";
-    }
-    if (const_strings.size()) {
-        os << "\n";
-    }
-
     for(const auto i : mctx.structs) {
         os << i->name << " {";
         size_t count = 0;

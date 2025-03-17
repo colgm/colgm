@@ -476,6 +476,9 @@ void mir2sir::visit_mir_number(mir_number* node) {
 
 void mir2sir::visit_mir_string(mir_string* node) {
     auto temp_var = ssa_gen.create();
+    if (!ictx.const_strings.count(node->get_literal())) {
+        ictx.const_strings.insert({node->get_literal(), ictx.const_strings.size()});
+    }
     block->add_stmt(new sir_string(
         node->get_literal().length() + 1,
         ictx.const_strings.at(node->get_literal()),
@@ -1539,9 +1542,6 @@ const error& mir2sir::generate(const mir_context& mctx) {
     generate_DWARF(mctx);
 
     generate_type_mapper();
-    for(const auto& i : mctx.const_strings) {
-        ictx.const_strings.insert(i);
-    }
     emit_struct(mctx);
     emit_func_decl(mctx);
     emit_func_impl(mctx);

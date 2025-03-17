@@ -97,7 +97,7 @@ void sir_ret::dump(std::ostream& out) const {
 
 void sir_string::dump(std::ostream& out) const {
     out << target << " = bitcast ";
-    out << "[" << length << " x i8]* @.str." << index;
+    out << "[" << length << " x i8]* @str." << index;
     out << " to i8*\n";
 }
 
