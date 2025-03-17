@@ -275,11 +275,6 @@ impl mir2sir {
 }
 
 impl mir2sir {
-    func emit_const_strings(self, mctx: mir_context*) {
-        self->sctx->const_strings.delete();
-        self->sctx->const_strings = mctx->const_strings.copy_instance();
-    }
-
     func emit_struct(self, mctx: mir_context*) {
         for (var i = mctx->structs.iter(); !i.is_end(); i = i.next()) {
             var m_stct = i.get();
@@ -578,6 +573,10 @@ impl mir2sir {
     func visit_mir_string(self, n: mir_string*) {
         var temp = self->ssa_gen.create();
         var v = value_t::variable(temp.__ptr__());
+        if (!self->sctx->const_strings.has(n->value.__ptr__())) {
+            var index = basic<u64>::wrap(self->sctx->const_strings.size);
+            self->sctx->const_strings.insert(n->value.__ptr__(), index.__ptr__());
+        }
         self->block->add_stmt(sir_str::new(
             self->sctx->const_strings.get(n->value.__ptr__())->unwrap(),
             n->value.size + 1,
@@ -664,6 +663,7 @@ impl mir2sir {
 
     func visit_mir_call_id(self, n: mir_call_id*) {
         // TODO
+        if (!n->resolved_type.is_global_sym) {}
     }
 
     func visit_mir_call_index(self, n: mir_call_index*) {
@@ -689,8 +689,23 @@ impl mir2sir {
     }
 
     func visit_mir_define(self, n: mir_define*) {
-        // TODO
+        var name = n->name.copy_instance();
+        name.append_i8_vec(".");
+        name.append_i64(self->locals.local_scope_depth);
+
+        // real name of the local variable
+        self->locals.elem.back()->insert(n->name.__ptr__(), name.__ptr__());
+        var type_name = self->type_mapping(n->resolved_type.__ptr__());
+        self->block->add_alloca(sir_alloca::new(
+            name.__ptr__(),
+            type_name.__ptr__()
+        ));
+
         self->visit(n->init_value => mir*);
+        // TODO: store
+
+        name.delete();
+        type_name.delete();
     }
 
     func visit_mir_assign(self, n: mir_assign*) {
@@ -861,7 +876,6 @@ impl mir2sir {
 impl mir2sir {
     pub func generate(self, mctx: mir_context*) {
         self->generate_type_mapper();
-        self->emit_const_strings(mctx);
         self->emit_struct(mctx);
         self->emit_func_decl(mctx);
         self->emit_func_impl(mctx);
