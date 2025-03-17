@@ -5,7 +5,7 @@ use std::libc::{ free };
 use std::io::{ io };
 
 use err::panic::{ unreachable };
-use sir::value::{ value_t };
+use sir::value::{ value_t, value_kind };
 
 pub enum sir_kind {
     sir_null,
@@ -198,12 +198,24 @@ impl sir {
                 var n = self => sir_alloca*;
                 n->dump(out);
             }
+            sir_kind::sir_ret => {
+                var n = self => sir_ret*;
+                n->dump(out);
+            }
             sir_kind::sir_str => {
                 var n = self => sir_str*;
                 n->dump(out);
             }
+            sir_kind::sir_label => {
+                var n = self => sir_label*;
+                n->dump(out);
+            }
             sir_kind::sir_store => {
                 var n = self => sir_store*;
+                n->dump(out);
+            }
+            sir_kind::sir_br => {
+                var n = self => sir_br*;
                 n->dump(out);
             }
             sir_kind::sir_array_cast => {
@@ -424,17 +436,26 @@ pub struct sir_ret {
 }
 
 impl sir_ret {
-    pub func new(type: str*) -> sir_ret* {
+    pub func new(type: str*, v: value_t*) -> sir_ret* {
         var n = sir_ret::__alloc__();
         n->base = sir::instance(sir_kind::sir_ret);
         n->type = type->copy_instance();
-        n->value = value_t::instance();
+        n->value = v->copy_instance();
         return n;
     }
 
     pub func delete(self) {
         self->type.delete();
         self->value.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  ret ").out(self->type.c_str);
+        if (self->value.kind != value_kind::null) {
+            out.out(" ");
+            self->value.dump(out);
+        }
+        out.endln();
     }
 }
 
@@ -924,16 +945,24 @@ pub struct sir_label {
 }
 
 impl sir_label {
-    pub func new(label: u64, comment: str*) -> sir_label* {
+    pub func new(label: u64, comment: i8*) -> sir_label* {
         var n = sir_label::__alloc__();
         n->base = sir::instance(sir_kind::sir_label);
         n->label = label;
-        n->comment = comment->copy_instance();
+        n->comment = str::from(comment);
         return n;
     }
 
     pub func delete(self) {
         self->comment.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("label.").out_hex(self->label => i64).out(":");
+        if (!self->comment.empty()) {
+            out.out("\t; ").out(self->comment.c_str);
+        }
+        out.endln();
     }
 }
 
@@ -1007,6 +1036,10 @@ impl sir_br {
     }
 
     pub func delete(self) {}
+
+    pub func dump(self, out: io) {
+        out.out("  br label %label.").out_hex(self->label => i64).endln();
+    }
 }
 
 pub struct sir_br_cond {

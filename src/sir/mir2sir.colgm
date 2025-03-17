@@ -673,7 +673,9 @@ impl mir2sir {
 
     func visit_mir_call_func(self, n: mir_call_func*) {
         // TODO
-        self->visit(n->args => mir*);
+        for (var i = n->args->content.iter(); !i.is_end(); i = i.next()) {
+            self->visit(i.get().unwrap());
+        }
     }
 
     func visit_mir_get_field(self, n: mir_get_field*) {
@@ -755,31 +757,63 @@ impl mir2sir {
     }
 
     func visit_mir_break(self, n: mir_break*) {
-        // TODO
+        var break_br = sir_br::new(0);
+        var ptr_break = ptr<sir_br>::wrap(break_br);
+        self->break_inst.back()->push(ptr_break.__ptr__());
+
+        self->block->add_stmt(break_br => sir*);
+        self->block->add_stmt(sir_label::new(
+            self->block->stmts.size,
+            "break.end"
+        ) => sir*);
     }
 
     func visit_mir_continue(self, n: mir_continue*) {
-        // TODO
+        var continue_br = sir_br::new(0);
+        var ptr_continue = ptr<sir_br>::wrap(continue_br);
+        self->continue_inst.back()->push(ptr_continue.__ptr__());
+
+        self->block->add_stmt(continue_br => sir*);
+        self->block->add_stmt(sir_label::new(
+            self->block->stmts.size,
+            "continue.end"
+        ) => sir*);
     }
 
     func visit_mir_loop(self, n: mir_loop*) {
+        var new_break_continue_table = vec<ptr<sir_br>>::instance();
+        self->continue_inst.push(new_break_continue_table.__ptr__());
+        self->break_inst.push(new_break_continue_table.__ptr__());
+        new_break_continue_table.delete();
+
         // TODO
         if (n->condition != nil) {
             self->visit(n->condition => mir*);
         }
-        if (n->content != nil) {
-            self->visit(n->content => mir*);
-        }
+        self->visit(n->content => mir*);
         if (n->update != nil) {
             self->visit(n->update => mir*);
         }
+
+        self->continue_inst.pop_back();
+        self->break_inst.pop_back();
     }
 
     func visit_mir_return(self, n: mir_return*) {
-        // TODO
-        if (n->value != nil) {
-            self->visit(n->value => mir*);
+        if (n->value->content.empty()) {
+            var void_name = str::from("void");
+            var null_val = value_t::null(nil);
+            self->block->add_stmt(sir_ret::new(
+                void_name.__ptr__(),
+                null_val.__ptr__()
+            ) => sir*);
+            void_name.delete();
+            null_val.delete();
+            return;
         }
+
+        self->visit(n->value => mir*);
+        // TODO
     }
 
     func visit(self, n: mir*) {
