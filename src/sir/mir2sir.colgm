@@ -798,7 +798,82 @@ impl mir2sir {
     }
 
     func visit_mir_get_field(self, n: mir_get_field*) {
+        // TODO: delete this later
+        if (self->value_stack.empty()) {
+            return;
+        }
         // TODO
+        var prev = self->value_stack.back()->copy_instance();
+        var prev_name_for_search = prev.resolved_type.generic_name(self->pkg);
+        self->value_stack.pop_back();
+
+        // TODO: delete this later
+        if (!self->ctx->global->domain.has(prev.resolved_type.loc_file.__ptr__())) {
+            self->value_stack.push(prev.__ptr__());
+            return;
+        }
+
+        var dm = self->ctx->global->domain.get(prev.resolved_type.loc_file.__ptr__());
+        // TODO: delete this later
+        if (!dm->structs.has(prev_name_for_search.__ptr__())) {
+            self->value_stack.push(prev.__ptr__());
+            return;
+        }
+        var st = dm->structs.get(prev_name_for_search.__ptr__());
+
+        // get method
+        if (st->method.has(n->name.__ptr__())) {
+            // push self into stack
+            self->value_stack.push(prev.__ptr__());
+            var method_name = prev.resolved_type.full_path_name(self->pkg, false);
+            method_name.append_char('.')->append_str(n->name.__ptr__());
+
+            var v = mir_value_t::method(
+                method_name.__ptr__(),
+                n->resolved_type.__ptr__()
+            );
+            self->value_stack.push(v.__ptr__());
+
+            prev.delete();
+            prev_name_for_search.delete();
+            method_name.delete();
+            v.delete();
+            return;
+        }
+
+        var target = self->ssa_gen.create();
+        var target_value = value_t::variable(target.__ptr__());
+        var index = st->field_index(n->name.__ptr__());
+        // TODO: delete this later
+        if (index < 0) {
+            self->value_stack.push(prev.__ptr__());
+            return;
+        }
+
+        var prev_value = prev.to_value_t();
+        var prev_ref = prev.resolved_type.ref_copy();
+        var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
+        self->block->add_stmt(sir_get_field::new(
+            target_value.__ptr__(),
+            prev_value.__ptr__(),
+            prev_ref_ty.__ptr__(),
+            index
+        ) => sir*);
+
+        var n_ty = n->resolved_type.pointer_copy();
+        var v = mir_value_t::variable(target.__ptr__(), n_ty.__ptr__());
+
+        self->value_stack.push(v.__ptr__());
+
+        prev.delete();
+        prev_name_for_search.delete();
+        target.delete();
+        target_value.delete();
+        prev_value.delete();
+        prev_ref.delete();
+        prev_ref_ty.delete();
+        n_ty.delete();
+        v.delete();
     }
 
     func visit_mir_ptr_get_field(self, n: mir_ptr_get_field*) {

@@ -210,6 +210,10 @@ impl sir {
                 var n = self => sir_get_index*;
                 n->dump(out);
             }
+            sir_kind::sir_get_field => {
+                var n = self => sir_get_field*;
+                n->dump(out);
+            }
             sir_kind::sir_label => {
                 var n = self => sir_label*;
                 n->dump(out);
@@ -567,17 +571,17 @@ pub struct sir_get_field {
     source: value_t,
     target: value_t,
     struct_name: str,
-    index: u64
+    index: i64
 }
 
 impl sir_get_field {
-    pub func new(struct_name: str*) -> sir_get_field* {
+    pub func new(tgt: value_t*, src: value_t*, sn: str*, i: i64) -> sir_get_field* {
         var n = sir_get_field::__alloc__();
         n->base = sir::instance(sir_kind::sir_get_field);
-        n->source = value_t::instance();
-        n->target = value_t::instance();
-        n->struct_name = struct_name->copy_instance();
-        n->index = 0;
+        n->target = tgt->copy_instance();
+        n->source = src->copy_instance();
+        n->struct_name = sn->copy_instance();
+        n->index = i;
         return n;
     }
 
@@ -585,6 +589,16 @@ impl sir_get_field {
         self->source.delete();
         self->target.delete();
         self->struct_name.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = getelementptr inbounds ");
+        out.out(self->struct_name.c_str).out(", ");
+        out.out(self->struct_name.c_str).out("* ");
+        self->source.dump(out);
+        out.out(", i32 0, i32 ").out_i64(self->index).endln();
     }
 }
 
