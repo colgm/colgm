@@ -33,4 +33,17 @@ impl local_table {
     pub func pop(self) {
         self->elem.pop_back();
     }
+
+    pub func get_local(self, name: str*) -> str {
+        for (var i = (self->elem.size - 1) => i64; i >= 0; i -= 1) {
+            var scope = self->elem.get(i => u64);
+            if (scope->has(name)) {
+                return scope->get(name)->copy_instance();
+            }
+        }
+
+        var error_name = str::from("<");
+        error_name.append_str(name)->append_i8_vec("-not-found>");
+        return error_name;
+    }
 }

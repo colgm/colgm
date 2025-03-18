@@ -206,12 +206,20 @@ impl sir {
                 var n = self => sir_str*;
                 n->dump(out);
             }
+            sir_kind::sir_get_index => {
+                var n = self => sir_get_index*;
+                n->dump(out);
+            }
             sir_kind::sir_label => {
                 var n = self => sir_label*;
                 n->dump(out);
             }
             sir_kind::sir_store => {
                 var n = self => sir_store*;
+                n->dump(out);
+            }
+            sir_kind::sir_load => {
+                var n = self => sir_load*;
                 n->dump(out);
             }
             sir_kind::sir_br => {
@@ -519,14 +527,18 @@ pub struct sir_get_index {
 }
 
 impl sir_get_index {
-    pub func new(type: str*, index_type: str*) -> sir_get_index* {
+    pub func new(src: value_t*,
+                 tgt: value_t*,
+                 idx: value_t*,
+                 t: str*,
+                 it: str*) -> sir_get_index* {
         var n = sir_get_index::__alloc__();
         n->base = sir::instance(sir_kind::sir_get_index);
-        n->source = value_t::instance();
-        n->target = value_t::instance();
-        n->index = value_t::instance();
-        n->type = type->copy_instance();
-        n->index_type = index_type->copy_instance();
+        n->source = src->copy_instance();
+        n->target = tgt->copy_instance();
+        n->index = idx->copy_instance();
+        n->type = t->copy_instance();
+        n->index_type = it->copy_instance();
         return n;
     }
 
@@ -536,6 +548,17 @@ impl sir_get_index {
         self->index.delete();
         self->type.delete();
         self->index_type.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = getelementptr ").out(self->type.c_str).out(", ");
+        out.out(self->type.c_str).out("* ");
+        self->source.dump(out);
+        out.out(", i32 0, i32 ");
+        self->index.dump(out);
+        out.endln();
     }
 }
 
@@ -1006,11 +1029,11 @@ pub struct sir_load {
 }
 
 impl sir_load {
-    pub func new(type: str*) -> sir_load* {
+    pub func new(type: str*, src: value_t*, tgt: value_t*) -> sir_load* {
         var n = sir_load::__alloc__();
         n->base = sir::instance(sir_kind::sir_load);
-        n->target = value_t::instance();
-        n->source = value_t::instance();
+        n->source = src->copy_instance();
+        n->target = tgt->copy_instance();
         n->type = type->copy_instance();
         return n;
     }
@@ -1019,6 +1042,15 @@ impl sir_load {
         self->target.delete();
         self->source.delete();
         self->type.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = load ").out(self->type.c_str).out(", ");
+        out.out(self->type.c_str).out("* ");
+        self->source.dump(out);
+        out.endln();
     }
 }
 

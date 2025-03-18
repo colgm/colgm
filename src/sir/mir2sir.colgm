@@ -47,6 +47,14 @@ impl mir_value_t {
         return res;
     }
 
+    pub func copy_instance(self) -> mir_value_t {
+        return mir_value_t {
+            value_kind: self->value_kind,
+            content: self->content.copy_instance(),
+            resolved_type: self->resolved_type.copy_instance()
+        };
+    }
+
     pub func delete(self) {
         self->content.delete();
         self->resolved_type.delete();
@@ -357,6 +365,8 @@ impl mir2sir {
                 var param_name = m_param->key->copy_instance();
                 param_name.append_i8_vec(".param");
 
+                self->locals.elem.back()->insert(m_param->key, param_name.__ptr__());
+
                 var p_pair = pair<str, str>::instance(
                     param_name.__ptr__(),
                     mapped_type.__ptr__()
@@ -662,13 +672,122 @@ impl mir2sir {
     }
 
     func visit_mir_call_id(self, n: mir_call_id*) {
-        // TODO
-        if (!n->resolved_type.is_global_sym) {}
+        if (!n->resolved_type.is_global_sym) {
+            var name = self->locals.get_local(n->name.__ptr__());
+            var ty = n->resolved_type.pointer_copy();
+            var v = mir_value_t::variable(name.__ptr__(), ty.__ptr__());
+
+            self->value_stack.push(v.__ptr__());
+            name.delete();
+            ty.delete();
+            v.delete();
+            return;
+        }
+
+        var loc_file = n->resolved_type.loc_file.__ptr__();
+        if (loc_file->empty()) {
+            if (!self->ctx->global->primitives.has(n->name.__ptr__())) {
+                panic("empty location for global symbol");
+            } else {
+                var v = mir_value_t::primitive(
+                    n->name.__ptr__(),
+                    n->resolved_type.__ptr__()
+                );
+                self->value_stack.push(v.__ptr__());
+                v.delete();
+            }
+            return;
+        }
+
+        var dm = self->ctx->global->domain.get(loc_file);
+        var name_for_search = n->resolved_type.generic_name(self->pkg);
+        if (dm->functions.has(name_for_search.__ptr__())) {
+            var v = mir_value_t::func_symbol(
+                name_for_search.__ptr__(),
+                n->resolved_type.__ptr__()
+            );
+            self->value_stack.push(v.__ptr__());
+            v.delete();
+        } else if (dm->structs.has(name_for_search.__ptr__())) {
+            var v = mir_value_t::struct_symbol(
+                name_for_search.__ptr__(),
+                n->resolved_type.__ptr__()
+            );
+            self->value_stack.push(v.__ptr__());
+            v.delete();
+        } else if (dm->enums.has(name_for_search.__ptr__())) {
+            var v = mir_value_t::enum_symbol(
+                name_for_search.__ptr__(),
+                n->resolved_type.__ptr__()
+            );
+            self->value_stack.push(v.__ptr__());
+            v.delete();
+        } else {
+            var info = str::from("cannot get global symbol ");
+            info.append_str(name_for_search.__ptr__())
+                ->append_i8_vec(" from ")
+                ->append_str(loc_file);
+            panic(info.c_str);
+            info.delete();
+        }
+        name_for_search.delete();
     }
 
     func visit_mir_call_index(self, n: mir_call_index*) {
-        // TODO
+        var prev = self->value_stack.back()->copy_instance();
+        self->value_stack.pop_back();
+
         self->visit(n->index => mir*);
+        var index = self->value_stack.back()->copy_instance();
+        self->value_stack.pop_back();
+
+        var temp_var = self->ssa_gen.create();
+        var prev_ref = prev.resolved_type.ref_copy();
+        var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
+        var prev_value = prev.to_value_t();
+        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        self->block->add_stmt(sir_load::new(
+            prev_ref_ty.__ptr__(),
+            prev_value.__ptr__(),
+            temp_var_value.__ptr__()
+        ) => sir*);
+
+        var target = self->ssa_gen.create();
+        var target_value = value_t::variable(target.__ptr__());
+        var index_value = index.to_value_t();
+        var prev_ref_ref = prev_ref.ref_copy();
+        var prev_ref_ref_ty = self->type_mapping(prev_ref_ref.__ptr__());
+        var index_ty = self->type_mapping(index.resolved_type.__ptr__());
+        self->block->add_stmt(sir_get_index::new(
+            temp_var_value.__ptr__(),
+            target_value.__ptr__(),
+            index_value.__ptr__(),
+            prev_ref_ref_ty.__ptr__(),
+            index_ty.__ptr__()
+        ) => sir*);
+
+        var n_ref = n->resolved_type.ref_copy();
+        var v = mir_value_t::variable(
+            target.__ptr__(),
+            n_ref.__ptr__()
+        );
+        self->value_stack.push(v.__ptr__());
+
+        prev.delete();
+        index.delete();
+        temp_var.delete();
+        prev_ref.delete();
+        prev_ref_ty.delete();
+        prev_value.delete();
+        temp_var_value.delete();
+        target.delete();
+        target_value.delete();
+        index_value.delete();
+        prev_ref_ref.delete();
+        prev_ref_ref_ty.delete();
+        index_ty.delete();
+        n_ref.delete();
+        v.delete();
     }
 
     func visit_mir_call_func(self, n: mir_call_func*) {
