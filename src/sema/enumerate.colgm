@@ -10,7 +10,7 @@ pub struct colgm_enum {
     name: str,
     location: span,
     ordered_member: vec<str>,
-    members: hashmap<str, basic<u64>>,
+    members: hashmap<str, basic<i64>>,
     // mark whether the enum is public or not
     is_public: bool
 }
@@ -21,7 +21,7 @@ impl colgm_enum {
         res->name = name->copy_instance();
         res->location = loc->copy_instance();
         res->ordered_member = vec<str>::instance();
-        res->members = hashmap<str, basic<u64>>::instance();
+        res->members = hashmap<str, basic<i64>>::instance();
         res->is_public = false;
         return res;
     }
@@ -60,7 +60,7 @@ impl colgm_enum {
         for (var i: u64 = 0; i < self->ordered_member.size; i += 1) {
             out.out("    ").out(self->ordered_member.get(i)->c_str).out(": ");
             var v = self->members.get(self->ordered_member.get(i));
-            out.orange().out_i64(v->data => i64).reset().out("\n");
+            out.orange().out_i64(v->data).reset().out("\n");
         }
         out.out("  }\n");
     }

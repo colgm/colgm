@@ -1130,12 +1130,12 @@ impl mir_branch {
 
 pub struct mir_switch_case {
     base: mir,
-    value: u64,
+    value: i64,
     content: mir_block*
 }
 
 impl mir_switch_case {
-    pub func new(l: span*, i: u64, ctt: mir_block*) -> mir_switch_case* {
+    pub func new(l: span*, i: i64, ctt: mir_block*) -> mir_switch_case* {
         var res = mir_switch_case::__alloc__();
         res->base = mir::instance(mir_kind::mir_switch_case, l);
         res->value = i;
@@ -1152,7 +1152,7 @@ impl mir_switch_case {
     }
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
-        out.out("mir_switch_case ").out_i64(self->value => i64).endln();
+        out.out("mir_switch_case ").out_i64(self->value).endln();
 
         var t = self->content => mir*;
         t->dump(out, pkg, depth + 1);

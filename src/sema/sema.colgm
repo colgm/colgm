@@ -1885,7 +1885,7 @@ impl sema {
         return true;
     }
 
-    func get_enum_literal_value(self, n: ast_call*, infer: type*) -> u64 {
+    func get_enum_literal_value(self, n: ast_call*, infer: type*) -> i64 {
         var name = n->head->id->content.__ptr__();
         if (!self->ctx->global->domain.has(infer->loc_file.__ptr__())) {
             return 0xffffffffffffffff;
@@ -1927,7 +1927,7 @@ impl sema {
         }
 
         var default_found = false;
-        var used_values = hashset<basic<u64>>::instance();
+        var used_values = hashset<basic<i64>>::instance();
         for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
             var case_node = i.get().unwrap() => ast_match_case*;
 
@@ -1971,7 +1971,7 @@ impl sema {
             } else {
                 var value = self->get_enum_literal_value(case_node->pattern, infer.__ptr__());
                 if (value != 0xffffffffffffffff) {
-                    var tmp = basic<u64>::wrap(value);
+                    var tmp = basic<i64>::wrap(value);
                     used_values.insert(tmp.__ptr__());
                 }
             }

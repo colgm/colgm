@@ -198,6 +198,10 @@ impl sir {
                 var n = self => sir_alloca*;
                 n->dump(out);
             }
+            sir_kind::sir_temp_ptr => {
+                var n = self => sir_temp_ptr*;
+                n->dump(out);
+            }
             sir_kind::sir_ret => {
                 var n = self => sir_ret*;
                 n->dump(out);
@@ -214,6 +218,10 @@ impl sir {
                 var n = self => sir_get_field*;
                 n->dump(out);
             }
+            sir_kind::sir_call => {
+                var n = self => sir_call*;
+                n->dump(out);
+            }
             sir_kind::sir_label => {
                 var n = self => sir_label*;
                 n->dump(out);
@@ -228,6 +236,10 @@ impl sir {
             }
             sir_kind::sir_br => {
                 var n = self => sir_br*;
+                n->dump(out);
+            }
+            sir_kind::sir_type_convert => {
+                var n = self => sir_type_convert*;
                 n->dump(out);
             }
             sir_kind::sir_array_cast => {
@@ -310,6 +322,10 @@ impl sir_block {
 
     pub func add_alloca(self, s: sir_alloca*) {
         self->allocas.push(ptr<sir_alloca>::wrap(s));
+    }
+
+    pub func add_move_register(self, s: sir_alloca*) {
+        self->move_register.push(ptr<sir_alloca>::wrap(s));
     }
 
     pub func add_stmt(self, s: sir*) {
@@ -417,17 +433,19 @@ pub struct sir_temp_ptr {
     base: sir,
     target: str,
     source: str,
+    type: str,
     comment: str // for tail comment
 }
 
 impl sir_temp_ptr {
-    pub func new(target: str*, source: str*, comment: str*) -> sir_temp_ptr* {
+    pub func new(target: str*, source: str*, ty: str*, comment: i8*) -> sir_temp_ptr* {
         var n = sir_temp_ptr::__alloc__();
         n->base = sir::instance(sir_kind::sir_temp_ptr);
         n->target = target->copy_instance();
         n->source = source->copy_instance();
+        n->type = ty->copy_instance();
         if (comment != nil) {
-            n->comment = comment->copy_instance();
+            n->comment = str::from(comment);
         } else {
             n->comment = str::instance();
         }
@@ -437,7 +455,20 @@ impl sir_temp_ptr {
     pub func delete(self) {
         self->target.delete();
         self->source.delete();
+        self->type.delete();
         self->comment.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  %").out(self->target.c_str).out(" = ");
+        out.out("getelementptr ").out(self->type.c_str).out(", ");
+        out.out(self->type.c_str).out("* %").out(self->source.c_str);
+        out.out(", i32 0");
+        if (self->comment.empty()) {
+            out.out(" ; %").out(self->source.c_str).out(" -> %").out(self->target.c_str).endln();
+        } else {
+            out.out(" ; ").out(self->comment.c_str).endln();
+        }
     }
 }
 
@@ -615,12 +646,12 @@ pub struct sir_call {
 }
 
 impl sir_call {
-    pub func new(name: str*, return_type: str*) -> sir_call* {
+    pub func new(name: str*, return_type: str*, tgt: value_t*) -> sir_call* {
         var n = sir_call::__alloc__();
         n->base = sir::instance(sir_kind::sir_call);
         n->name = name->copy_instance();
         n->return_type = return_type->copy_instance();
-        n->target = value_t::instance();
+        n->target = tgt->copy_instance();
         n->args_type = vec<str>::instance();
         n->args = vec<value_t>::instance();
         n->with_va_args = false;
@@ -635,6 +666,30 @@ impl sir_call {
         self->target.delete();
         self->args_type.delete();
         self->args.delete();
+    }
+
+    pub func add_arg(self, arg: value_t*, arg_type: str*) {
+        self->args.push(arg);
+        self->args_type.push(arg_type);
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  ");
+        if (self->target.kind == value_kind::variable) {
+            self->target.dump(out);
+            out.out(" = ");
+        }
+        out.out("call ").out(self->return_type.c_str);
+
+        out.out(" @").out(self->name.c_str).out("(");
+        for (var i: u64 = 0; i < self->args.size; i += 1) {
+            out.out(self->args_type.get(i)->c_str).out(" ");
+            self->args.get(i)->dump(out);
+            if (i != self->args.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out(")\n");
     }
 }
 
@@ -1145,13 +1200,13 @@ pub struct sir_type_convert {
 }
 
 impl sir_type_convert {
-    pub func new(src_type: str*, dst_type: str*) -> sir_type_convert* {
+    pub func new(src: value_t*, tgt: value_t*, st: str*, dt: str*) -> sir_type_convert* {
         var n = sir_type_convert::__alloc__();
         n->base = sir::instance(sir_kind::sir_type_convert);
-        n->target = value_t::instance();
-        n->source = value_t::instance();
-        n->src_type = src_type->copy_instance();
-        n->dst_type = dst_type->copy_instance();
+        n->target =tgt->copy_instance();
+        n->source = src->copy_instance();
+        n->src_type = st->copy_instance();
+        n->dst_type = dt->copy_instance();
         return n;
     }
 
@@ -1160,6 +1215,52 @@ impl sir_type_convert {
         self->source.delete();
         self->src_type.delete();
         self->dst_type.delete();
+    }
+
+    func dump_bitcast(self, out: io) {
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = bitcast ").out(self->src_type.c_str).out(" ");
+        self->source.dump(out);
+        out.out(" to ").out(self->dst_type.c_str).endln();
+    }
+
+    func dump_inttoptr(self, out: io) {
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = inttoptr ").out(self->src_type.c_str).out(" ");
+        self->source.dump(out);
+        out.out(" to ").out(self->dst_type.c_str).endln();
+    }
+
+    func dump_ptrtoint(self, out: io) {
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = ptrtoint ").out(self->src_type.c_str).out(" ");
+        self->source.dump(out);
+        out.out(" to ").out(self->dst_type.c_str).endln();
+    }
+
+    pub func dump(self, out: io) {
+        // TODO
+        if (self->src_type.back() == '*' && self->dst_type.back() == '*') {
+            self->dump_bitcast(out);
+            return;
+        }
+        if (self->src_type.back() != '*' && self->dst_type.back() == '*') {
+            self->dump_inttoptr(out);
+            return;
+        }
+        if (self->src_type.back() == '*' && self->dst_type.back() != '*') {
+            self->dump_inttoptr(out);
+            return;
+        }
+
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = cast ").out(self->src_type.c_str).out(" ");
+        self->source.dump(out);
+        out.out(" to ").out(self->dst_type.c_str).endln();
     }
 }
 
