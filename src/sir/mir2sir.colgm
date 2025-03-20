@@ -858,9 +858,10 @@ impl mir2sir {
 
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
             var target_value = value_t::variable(target.__ptr__());
-
+            var mangled_name = mangle_function_name(prev.content.__ptr__());
+            
             sir_function_call = sir_call::new(
-                prev.content.__ptr__(),
+                mangled_name.__ptr__(),
                 n_ty.__ptr__(),
                 target_value.__ptr__()
             );
@@ -868,18 +869,21 @@ impl mir2sir {
             temp.delete();
             n_ty.delete();
             target_value.delete();
+            mangled_name.delete();
         } else {
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
             var target_value = value_t::null(nil);
+            var mangled_name = mangle_function_name(prev.content.__ptr__());
 
             sir_function_call = sir_call::new(
-                prev.content.__ptr__(),
+                mangled_name.__ptr__(),
                 n_ty.__ptr__(),
                 target_value.__ptr__()
             );
 
             n_ty.delete();
             target_value.delete();
+            mangled_name.delete();
         }
 
         // load args
@@ -1036,7 +1040,7 @@ impl mir2sir {
         match (prev.value_kind) {
             mir_value_kind::primitive => {
                 var name = prev.resolved_type.full_path_name(self->pkg, false);
-                name.append_char('.')->append_str(n->name.__ptr__());
+                name.append_i8_vec(".")->append_str(n->name.__ptr__());
 
                 var v = mir_value_t::func_symbol(
                     name.__ptr__(),
@@ -1048,7 +1052,7 @@ impl mir2sir {
             }
             mir_value_kind::struct_symbol => {
                 var name = prev.resolved_type.full_path_name(self->pkg, false);
-                name.append_char('.')->append_str(n->name.__ptr__());
+                name.append_i8_vec(".")->append_str(n->name.__ptr__());
 
                 var v = mir_value_t::func_symbol(
                     name.__ptr__(),
