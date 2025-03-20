@@ -341,10 +341,15 @@ impl mir2sir {
         }
     }
 
+    func process_print(self, curr: u64, total: u64) {
+        io::stdout().green().out("  [mir2sir] ").reset();
+        io::stdout().out("generating function (").out_i64((curr + 1) => i64);
+        io::stdout().out("/").out_i64(total => i64).out(")\r");
+    }
+
     func emit_func_impl(self, mctx: mir_context*) {
         for (var i = mctx->impls.iter(); !i.is_end(); i = i.next()) {
-            io::stdout().out("generating function (").out_i64((i.index() + 1) => i64);
-            io::stdout().out("/").out_i64(mctx->impls.size => i64).out(")\r");
+            self->process_print(i.index(), mctx->impls.size);
             var m_func = i.get();
             var m_mangled_name = mangle_function_name(m_func->name.__ptr__());
             var s_func = sir_func::instance(m_mangled_name.__ptr__());
