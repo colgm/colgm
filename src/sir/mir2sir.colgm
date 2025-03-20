@@ -555,22 +555,62 @@ impl mir2sir {
     }
 
     func visit_mir_unary(self, n: mir_unary*) {
-        // TODO
         self->visit(n->value => mir*);
+
+        var source = self->value_stack.back()->copy_instance();
+        self->value_stack.pop_back();
+        var source_value = source.to_value_t();
+        var source_ty = self->type_mapping(source.resolved_type.__ptr__());
+
+        var temp_var = self->ssa_gen.create();
+        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        if (n->op == mir_unary_opr::neg) {
+            self->block->add_stmt(sir_neg::new(
+                source_value.__ptr__(),
+                temp_var_value.__ptr__(),
+                source.resolved_type.is_integer(),
+                source_ty.__ptr__()
+            ) => sir*);
+        } else if (n->op == mir_unary_opr::bnot) {
+            self->block->add_stmt(sir_bnot::new(
+                source_value.__ptr__(),
+                temp_var_value.__ptr__(),
+                source_ty.__ptr__()
+            ) => sir*);
+        } else if (n->op == mir_unary_opr::lnot) {
+            self->block->add_stmt(sir_lnot::new(
+                source_value.__ptr__(),
+                temp_var_value.__ptr__(),
+                source_ty.__ptr__()
+            ) => sir*);
+        }
+
+        var v = mir_value_t::variable(temp_var.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+        
+        source.delete();
+        source_value.delete();
+        source_ty.delete();
+        temp_var.delete();
+        temp_var_value.delete();
+        v.delete();
     }
 
     func visit_mir_binary(self, n: mir_binary*) {
         // TODO
         self->visit(n->left => mir*);
         self->visit(n->right => mir*);
+
+        var temp_var = self->ssa_gen.create();
+        var v = mir_value_t::variable(temp_var.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+
+        temp_var.delete();
+        v.delete();
     }
 
     func visit_mir_type_convert(self, n: mir_type_convert*) {
         self->visit(n->source => mir*);
-        // TODO: delete this later
-        if (self->value_stack.empty()) {
-            return;
-        }
 
         var source = self->value_stack.back()->copy_instance();
         self->value_stack.pop_back();
@@ -635,8 +675,12 @@ impl mir2sir {
             v.__ptr__()
         ) => sir*);
 
+        var sv = mir_value_t::variable(temp.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(sv.__ptr__());
+
         temp.delete();
         v.delete();
+        sv.delete();
     }
 
     func visit_mir_char(self, n: mir_char*) {
@@ -692,6 +736,9 @@ impl mir2sir {
         );
         self->block->add_stmt(cv => sir*);
 
+        var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+
         temp_0.delete();
         temp_1.delete();
         ref_copy.delete();
@@ -702,7 +749,36 @@ impl mir2sir {
     }
 
     func visit_mir_struct_init(self, n: mir_struct_init*) {
+        var temp_var = self->ssa_gen.create();
+        var temp_var_real = str::from("_");
+        temp_var_real.append_str(temp_var.__ptr__())->append_i8_vec(".real");
+        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        var n_ty = self->type_mapping(n->resolved_type.__ptr__());
+
+        self->block->add_move_register(sir_alloca::new(
+            temp_var_real.__ptr__(),
+            n_ty.__ptr__()
+        ));
+        self->block->add_stmt(sir_temp_ptr::new(
+            temp_var.__ptr__(),
+            temp_var_real.__ptr__(),
+            n_ty.__ptr__(),
+            ""
+        ) => sir*);
+        self->block->add_stmt(sir_zeroinitializer::new(
+            temp_var_value.__ptr__(),
+            n_ty.__ptr__()
+        ) => sir*);
+
         // TODO
+        var v = mir_value_t::variable(temp_var.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+
+        temp_var.delete();
+        temp_var_real.delete();
+        temp_var_value.delete();
+        n_ty.delete();
+        v.delete();
     }
 
     func call_expr_gen(self, n: mir_call*, need_address: bool) {
@@ -845,10 +921,6 @@ impl mir2sir {
 
         for (var i = n->args->content.iter(); !i.is_end(); i = i.next()) {
             self->visit(i.get().unwrap());
-            // TODO: delete this later
-            if (self->value_stack.empty()) {
-                continue;
-            }
             args.push(self->value_stack.back());
             self->value_stack.pop_back();
         }
