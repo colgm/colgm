@@ -783,6 +783,49 @@ impl mir2sir {
 
     func call_expr_gen(self, n: mir_call*, need_address: bool) {
         self->visit(n->content => mir*);
+
+        var source = self->value_stack.back()->copy_instance();
+        // for enum member
+        if (!source.resolved_type.is_pointer()) {
+            source.delete();
+            return;
+        }
+        if (source.resolved_type.is_void()) {
+            source.delete();
+            self->value_stack.pop_back();
+            return;
+        }
+
+        if (need_address) {
+            source.delete();
+            return;
+        }
+
+        self->value_stack.pop_back();
+
+        var temp_var = self->ssa_gen.create();
+        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        var source_ref = source.resolved_type.ref_copy();
+        var source_ref_ty = self->type_mapping(source_ref.__ptr__());
+        var source_value = source.to_value_t();
+        self->block->add_stmt(sir_load::new(
+            source_ref_ty.__ptr__(),
+            source_value.__ptr__(),
+            temp_var_value.__ptr__()
+        ) => sir*);
+
+        var v = mir_value_t::variable(
+            temp_var.__ptr__(),
+            source_ref.__ptr__()
+        );
+        self->value_stack.push(v.__ptr__());
+
+        temp_var.delete();
+        temp_var_value.delete();
+        source_ref.delete();
+        source_ref_ty.delete();
+        source_value.delete();
+        v.delete();
     }
     
     func visit_mir_call(self, n: mir_call*) {
@@ -1251,12 +1294,250 @@ impl mir2sir {
     }
 
     func visit_mir_assign(self, n: mir_assign*) {
-        // TODO
         self->call_expr_gen(
             n->left->content.get(0).unwrap() => mir_call*,
             true
         );
+        var left = self->value_stack.back()->copy_instance();
+        var left_value = left.to_value_t();
+        self->value_stack.pop_back();
+
         self->visit(n->right => mir*);
+        var right = self->value_stack.back()->copy_instance();
+        var right_value = right.to_value_t();
+        var right_ty = self->type_mapping(right.resolved_type.__ptr__());
+        self->value_stack.pop_back();
+
+        match (n->opr) {
+            mir_assign_opr::addeq => {
+                var temp_0 = self->ssa_gen.create();
+                var temp_1 = self->ssa_gen.create();
+                var temp_0_value = value_t::variable(temp_0.__ptr__());
+                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                self->block->add_stmt(sir_load::new(
+                    right_ty.__ptr__(),
+                    left_value.__ptr__(),
+                    temp_0_value.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_add::new(
+                    temp_0_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    right_ty.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_store::new(
+                    right_ty.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left_value.__ptr__()
+                ) => sir*);
+                temp_0.delete();
+                temp_1.delete();
+                temp_0_value.delete();
+                temp_1_value.delete();
+            }
+            mir_assign_opr::subeq => {
+                var temp_0 = self->ssa_gen.create();
+                var temp_1 = self->ssa_gen.create();
+                var temp_0_value = value_t::variable(temp_0.__ptr__());
+                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                self->block->add_stmt(sir_load::new(
+                    right_ty.__ptr__(),
+                    left_value.__ptr__(),
+                    temp_0_value.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_sub::new(
+                    temp_0_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    right_ty.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_store::new(
+                    right_ty.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left_value.__ptr__()
+                ) => sir*);
+                temp_0.delete();
+                temp_1.delete();
+                temp_0_value.delete();
+                temp_1_value.delete();
+            }
+            mir_assign_opr::muleq => {
+                var temp_0 = self->ssa_gen.create();
+                var temp_1 = self->ssa_gen.create();
+                var temp_0_value = value_t::variable(temp_0.__ptr__());
+                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                self->block->add_stmt(sir_load::new(
+                    right_ty.__ptr__(),
+                    left_value.__ptr__(),
+                    temp_0_value.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_mul::new(
+                    temp_0_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    right_ty.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_store::new(
+                    right_ty.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left_value.__ptr__()
+                ) => sir*);
+                temp_0.delete();
+                temp_1.delete();
+                temp_0_value.delete();
+                temp_1_value.delete();
+            }
+            mir_assign_opr::diveq => {
+                var temp_0 = self->ssa_gen.create();
+                var temp_1 = self->ssa_gen.create();
+                var temp_0_value = value_t::variable(temp_0.__ptr__());
+                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                self->block->add_stmt(sir_load::new(
+                    right_ty.__ptr__(),
+                    left_value.__ptr__(),
+                    temp_0_value.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_div::new(
+                    temp_0_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    !left.resolved_type.is_unsigned(),
+                    right_ty.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_store::new(
+                    right_ty.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left_value.__ptr__()
+                ) => sir*);
+                temp_0.delete();
+                temp_1.delete();
+                temp_0_value.delete();
+                temp_1_value.delete();
+            }
+            mir_assign_opr::remeq => {
+                var temp_0 = self->ssa_gen.create();
+                var temp_1 = self->ssa_gen.create();
+                var temp_0_value = value_t::variable(temp_0.__ptr__());
+                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                self->block->add_stmt(sir_load::new(
+                    right_ty.__ptr__(),
+                    left_value.__ptr__(),
+                    temp_0_value.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_rem::new(
+                    temp_0_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    !left.resolved_type.is_unsigned(),
+                    right_ty.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_store::new(
+                    right_ty.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left_value.__ptr__()
+                ) => sir*);
+                temp_0.delete();
+                temp_1.delete();
+                temp_0_value.delete();
+                temp_1_value.delete();
+            }
+            mir_assign_opr::eq => {
+                self->block->add_stmt(sir_store::new(
+                    right_ty.__ptr__(),
+                    right_value.__ptr__(),
+                    left_value.__ptr__()
+                ) => sir*);
+            }
+            mir_assign_opr::andeq => {
+                var temp_0 = self->ssa_gen.create();
+                var temp_1 = self->ssa_gen.create();
+                var temp_0_value = value_t::variable(temp_0.__ptr__());
+                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                self->block->add_stmt(sir_load::new(
+                    right_ty.__ptr__(),
+                    left_value.__ptr__(),
+                    temp_0_value.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_band::new(
+                    temp_0_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    right_ty.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_store::new(
+                    right_ty.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left_value.__ptr__()
+                ) => sir*);
+                temp_0.delete();
+                temp_1.delete();
+                temp_0_value.delete();
+                temp_1_value.delete();
+            }
+            mir_assign_opr::xoreq => {
+                var temp_0 = self->ssa_gen.create();
+                var temp_1 = self->ssa_gen.create();
+                var temp_0_value = value_t::variable(temp_0.__ptr__());
+                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                self->block->add_stmt(sir_load::new(
+                    right_ty.__ptr__(),
+                    left_value.__ptr__(),
+                    temp_0_value.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_bxor::new(
+                    temp_0_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    right_ty.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_store::new(
+                    right_ty.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left_value.__ptr__()
+                ) => sir*);
+                temp_0.delete();
+                temp_1.delete();
+                temp_0_value.delete();
+                temp_1_value.delete();
+            }
+            mir_assign_opr::oreq => {
+                var temp_0 = self->ssa_gen.create();
+                var temp_1 = self->ssa_gen.create();
+                var temp_0_value = value_t::variable(temp_0.__ptr__());
+                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                self->block->add_stmt(sir_load::new(
+                    right_ty.__ptr__(),
+                    left_value.__ptr__(),
+                    temp_0_value.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_bor::new(
+                    temp_0_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    right_ty.__ptr__()
+                ) => sir*);
+                self->block->add_stmt(sir_store::new(
+                    right_ty.__ptr__(),
+                    temp_1_value.__ptr__(),
+                    left_value.__ptr__()
+                ) => sir*);
+                temp_0.delete();
+                temp_1.delete();
+                temp_0_value.delete();
+                temp_1_value.delete();
+            }
+        }
+
+        left.delete();
+        left_value.delete();
+        right.delete();
+        right_value.delete();
+        right_ty.delete();
     }
 
     func visit_mir_if(self, n: mir_if*) {

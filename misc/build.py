@@ -38,7 +38,7 @@ os.chdir("..")
 # Build colgm self-host compiler
 execute(["./" + BUILD_DIRECTORY + "/colgm", "--library", "src", "src/main.colgm", "-o", "colgm.ll", "--pass-info"])
 used_clang = find_clang()
-execute([used_clang, "colgm.ll", "-o", "colgm_bootstrapped", "-O2", "-rdynamic", "-lm"])
+execute([used_clang, "colgm.ll", "-o", "colgm_bootstrapped", "-O2", "-rdynamic", "-lm", "--verbose"])
 
 # Test colgm self-host compiler compiling itself
 execute(["./colgm_bootstrapped", "--library", "src", "src/main.colgm", "--verbose"])
