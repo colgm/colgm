@@ -72,7 +72,7 @@ impl mir_value_t {
                 return value_t::literal(self->content.__ptr__());
             }
             mir_value_kind::literal => {
-                return value_t::variable(self->content.__ptr__());
+                return value_t::literal(self->content.__ptr__());
             }
             mir_value_kind::variable => {
                 return value_t::variable(self->content.__ptr__());
@@ -1231,10 +1231,23 @@ impl mir2sir {
         ));
 
         self->visit(n->init_value => mir*);
-        // TODO: store
+
+        var source = self->value_stack.back()->copy_instance();
+        self->value_stack.pop_back();
+        var source_value = source.to_value_t();
+        var name_value = value_t::variable(name.__ptr__());
+
+        self->block->add_stmt(sir_store::new(
+            type_name.__ptr__(),
+            source_value.__ptr__(),
+            name_value.__ptr__()
+        ) => sir*);
 
         name.delete();
         type_name.delete();
+        source.delete();
+        source_value.delete();
+        name_value.delete();
     }
 
     func visit_mir_assign(self, n: mir_assign*) {
@@ -1340,7 +1353,19 @@ impl mir2sir {
         }
 
         self->visit(n->value => mir*);
-        // TODO
+        var ret = self->value_stack.back()->copy_instance();
+        self->value_stack.pop_back();
+
+        var ret_ty = self->type_mapping(ret.resolved_type.__ptr__());
+        var ret_val = ret.to_value_t();
+        self->block->add_stmt(sir_ret::new(
+            ret_ty.__ptr__(),
+            ret_val.__ptr__()
+        ) => sir*);
+
+        ret.delete();
+        ret_ty.delete();
+        ret_val.delete();
     }
 
     func visit(self, n: mir*) {
