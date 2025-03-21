@@ -770,14 +770,51 @@ impl mir2sir {
             n_ty.__ptr__()
         ) => sir*);
 
-        // TODO
-        var v = mir_value_t::variable(temp_var.__ptr__(), n->resolved_type.__ptr__());
+        var name_for_search = n->resolved_type.generic_name(self->pkg);
+        var dm = self->ctx->global->domain.get(n->resolved_type.loc_file.__ptr__());
+        var st = dm->structs.get(name_for_search.__ptr__());
+
+        for (var i = n->fields.iter(); !i.is_end(); i = i.next()) {
+            var target = self->ssa_gen.create();
+            var target_value = value_t::variable(target.__ptr__());
+            var index = st->field_index(i.get()->name.__ptr__());
+            self->block->add_stmt(sir_get_field::new(
+                target_value.__ptr__(),
+                temp_var_value.__ptr__(),
+                n_ty.__ptr__(),
+                index
+            ) => sir*);
+
+            self->visit(i.get()->content => mir*);
+
+            var res = self->value_stack.back()->copy_instance();
+            self->value_stack.pop_back();
+
+            var res_ty = self->type_mapping(res.resolved_type.__ptr__());
+            var res_value = res.to_value_t();
+            self->block->add_stmt(sir_store::new(
+                res_ty.__ptr__(),
+                res_value.__ptr__(),
+                target_value.__ptr__()
+            ) => sir*);
+
+            target.delete();
+            target_value.delete();
+            res.delete();
+            res_ty.delete();
+            res_value.delete();
+        }
+
+        var n_ptr = n->resolved_type.pointer_copy();
+        var v = mir_value_t::variable(temp_var.__ptr__(), n_ptr.__ptr__());
         self->value_stack.push(v.__ptr__());
 
         temp_var.delete();
         temp_var_real.delete();
         temp_var_value.delete();
         n_ty.delete();
+        name_for_search.delete();
+        n_ptr.delete();
         v.delete();
     }
 
