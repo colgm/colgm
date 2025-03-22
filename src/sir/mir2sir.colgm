@@ -1595,23 +1595,28 @@ impl mir2sir {
     }
 
     func visit_mir_switch_case(self, n: mir_switch_case*) {
-        // TODO
-        if (n->content != nil) {
-            self->visit(n->content => mir*);
-        }
+        self->visit(n->content => mir*);
     }
 
     func visit_mir_switch(self, n: mir_switch*) {
         // TODO
-        if (n->condition != nil) {
-            self->visit(n->condition => mir*);
-        }
+        self->visit(n->condition => mir*);
+        var value = self->value_stack.back()->copy_instance();
+        self->value_stack.pop_back();
+        var value_val = value.to_value_t();
+
+        var jmp_exits = vec<ptr<sir_br>>::instance();
+
         for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
             self->visit(i.get().unwrap() => mir*);
         }
         if (n->default_case != nil) {
             self->visit(n->default_case => mir*);
         }
+
+        value.delete();
+        value_val.delete();
+        jmp_exits.delete();
     }
 
     func visit_mir_break(self, n: mir_break*) {

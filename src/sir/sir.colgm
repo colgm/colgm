@@ -286,6 +286,10 @@ impl sir {
                 var n = self => sir_br*;
                 n->dump(out);
             }
+            sir_kind::sir_switch => {
+                var n = self => sir_switch*;
+                n->dump(out);
+            }
             sir_kind::sir_type_convert => {
                 var n = self => sir_type_convert*;
                 n->dump(out);
@@ -1419,11 +1423,11 @@ pub struct sir_switch {
 }
 
 impl sir_switch {
-    pub func new(default_label: u64) -> sir_switch* {
+    pub func new(src: value_t*) -> sir_switch* {
         var n = sir_switch::__alloc__();
         n->base = sir::instance(sir_kind::sir_switch);
-        n->source = value_t::instance();
-        n->default_label = default_label;
+        n->source = src->copy_instance();
+        n->default_label = 0;
         n->case_value = primitive_vec<i64>::instance();
         n->case_label = primitive_vec<u64>::instance();
         return n;
@@ -1433,6 +1437,19 @@ impl sir_switch {
         self->source.delete();
         self->case_value.delete();
         self->case_label.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  switch i64 ");
+        self->source.dump(out);
+        out.out(", label %").out_i64(self->default_label => i64).out(" [\n");
+        for (var i: u64 = 0; i < self->case_value.size; i += 1) {
+            var value = self->case_value.get(i);
+            var label = self->case_label.get(i);
+            out.out("    i64 ").out_i64(value);
+            out.out(", label %label.").out_hex(label => i64).out("\n");
+        }
+        out.out("  ]\n");
     }
 }
 
