@@ -306,7 +306,10 @@ impl sir {
                 var n = self => sir_array_cast*;
                 n->dump(out);
             }
-            _ => unreachable();
+            _ => {
+                io::stdout().out("unsupported ").out_i64(self->kind => i64).endln();
+                unreachable();
+            }
         }
     }
 }
@@ -661,7 +664,7 @@ impl sir_get_index {
         out.out(" = getelementptr ").out(self->type.c_str).out(", ");
         out.out(self->type.c_str).out("* ");
         self->source.dump(out);
-        out.out(", i32 0, i32 ");
+        out.out(", ").out(self->index_type.c_str).out(" ");
         self->index.dump(out);
         out.endln();
     }
@@ -1465,7 +1468,7 @@ impl sir_br_cond {
     pub func new(c: value_t*, label_true: u64, label_false: u64) -> sir_br_cond* {
         var n = sir_br_cond::__alloc__();
         n->base = sir::instance(sir_kind::sir_br_cond);
-        n->cond = value_t::instance();
+        n->cond = c->copy_instance();
         n->label_true = label_true;
         n->label_false = label_false;
         return n;

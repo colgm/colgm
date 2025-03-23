@@ -1,4 +1,4 @@
-use std::libc::{ open, read, write, close, strlen, itoa };
+use std::libc::{ open, read, write, close, strlen, itoa, malloc, free };
 use std::str::{ str };
 use err::panic::{ panic };
 
@@ -63,20 +63,21 @@ pub func readfile_into_string(filename: i8*, dst: str*) -> i64 {
 
 pub struct io {
     fd: i32,
-    color_out: bool
+    color_out: bool,
+    cache: str*
 }
 
 impl io {
     pub func stdin() -> io {
-        return io { fd: 0, color_out: false };
+        return io { fd: 0, color_out: false, cache: nil };
     }
 
     pub func stdout() -> io {
-        return io { fd: 1, color_out: true };
+        return io { fd: 1, color_out: true, cache: nil };
     }
 
     pub func stderr() -> io {
-        return io { fd: 2, color_out: true };
+        return io { fd: 2, color_out: true, cache: nil };
     }
 
     pub func disable_color(self) -> io {
@@ -84,12 +85,33 @@ impl io {
         return self[0];
     }
 
+    func force_flush(self) {
+        write(self->fd, self->cache->c_str, self->cache->size => i64);
+        self->cache->clear();
+    }
+
+    func check_and_flush(self) {
+        if (self->cache == nil) {
+            return;
+        }
+        if (self->cache->size < 4096) {
+            return;
+        }
+        self->force_flush();
+    }
+
     pub func out(self, info: i8*) -> io {
         // do nothing if is stdin
         if (self->fd == 0) {
             return self[0];
         }
-        write(self->fd, info, strlen(info));
+
+        if (self->cache == nil) {
+            write(self->fd, info, strlen(info));
+        } else {
+            self->cache->append_i8_vec(info);
+            self->check_and_flush();
+        }
         return self[0];
     }
 
@@ -99,9 +121,14 @@ impl io {
             return self[0];
         }
 
-        var buff = [i8; 8];
-        buff[0] = info;
-        write(self->fd, buff, 1);
+        if (self->cache == nil) {
+            var buff = [i8; 4];
+            buff[0] = info;
+            write(self->fd, buff, 1);
+        } else {
+            self->cache->append_char(info);
+            self->check_and_flush();
+        }
         return self[0];
     }
 
@@ -113,7 +140,12 @@ impl io {
 
         var buff = [i8; 256];
         itoa(info, buff, 10);
-        write(self->fd, buff, strlen(buff));
+        if (self->cache == nil) {
+            write(self->fd, buff, strlen(buff));
+        } else {
+            self->cache->append_i8_vec(buff);
+            self->check_and_flush();
+        }
         return self[0];
     }
 
@@ -125,13 +157,23 @@ impl io {
 
         var buff = [i8; 256];
         itoa(info, buff, 16);
-        write(self->fd, buff, strlen(buff));
+        if (self->cache == nil) {
+            write(self->fd, buff, strlen(buff));
+        } else {
+            self->cache->append_i8_vec(buff);
+            self->check_and_flush();
+        }
         return self[0];
     }
 
     pub func endln(self) {
         if (self->fd != 0) {
-            write(self->fd, "\n", 1);
+            if (self->cache == nil) {
+                write(self->fd, "\n", 1);
+            } else {
+                self->cache->append_char('\n');
+                self->check_and_flush();
+            }
         }
     }
 }
@@ -209,13 +251,17 @@ impl io {
         var flags = flag::O_WRONLY | flag::O_CREAT | flag::O_TRUNC;
         var fd = open(file, flags => i32, 0o666); // rw-rw-rw-
         if (fd < 0) {
-            panic("failed to open the file in append mode");
+            panic("failed to open the file in trunc mode");
         }
         return fd;
     }
 
     func logger(file: i8*) -> io {
-        return io { fd: io::open_append_write_file(file), color_out: false };
+        return io {
+            fd: io::open_append_write_file(file),
+            color_out: false,
+            cache: str::new()
+        };
     }
 
     pub func colgm_report() -> io {
@@ -223,12 +269,22 @@ impl io {
     }
 
     pub func fileout(file: i8*) -> io {
-        return io { fd: io::open_file(file), color_out: false };
+        return io {
+            fd: io::open_file(file),
+            color_out: false,
+            cache: str::new()
+        };
     }
 
     pub func close(self) {
         if (self->fd <= 0 || self->fd == 1 || self->fd == 2) {
             return;
+        }
+        if (self->cache != nil) {
+            self->force_flush();
+            self->cache->delete();
+            free(self->cache => i8*);
+            self->cache = nil;
         }
         close(self->fd);
     }
