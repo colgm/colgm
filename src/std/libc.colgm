@@ -79,3 +79,42 @@ pub func itoa(num: i64, buf: i8*, base: i64) -> i8* {
     }
     return buf;
 }
+
+pub func utoa(num: u64, buf: i8*, base: u64) -> i8* {
+    // invalid base
+    if (base < 2 or base > 16) {
+        buf[0] = '\0';
+        return buf;
+    }
+    // zero
+    if (num == 0) {
+        buf[0] = '0';
+        buf[1] = '\0';
+        return buf;
+    }
+
+    var i = 0;
+    for (; num > 0; i += 1) {
+        var tmp_bit = (num % base) => i8;
+        if (tmp_bit < 10) {
+            buf[i] = '0' + tmp_bit;
+        } else {
+            buf[i] = 'a' + tmp_bit - 10;
+        }
+        num /= base;
+    }
+    buf[i] = '\0';
+
+    var s_begin = 0;
+    var s_end = i;
+    var s_mid = (s_begin + s_end) / 2;
+
+    i = 0;
+    for (; i < s_mid; i += 1) {
+        var tmp = buf[i];
+        buf[i] = buf[s_end - i - 1];
+        buf[s_end - i - 1] = tmp;
+    }
+
+    return buf;
+}

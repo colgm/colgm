@@ -1,4 +1,4 @@
-use std::libc::{ malloc, realloc, free, memcpy, strlen, streq, exit, write, itoa };
+use std::libc::{ malloc, realloc, free, memcpy, strlen, streq, exit, write, itoa, utoa };
 use err::panic::{ panic };
 
 pub struct str {
@@ -181,6 +181,13 @@ impl str {
         return self;
     }
 
+    pub func append_u64(self, num: u64) -> str* {
+        var buffer = [i8; 128];
+        utoa(num, buffer, 10);
+        self->append_i8_vec(buffer);
+        return self;
+    }
+
     pub func pop_back(self) {
         if (self->size == 0) {
             return;
@@ -188,6 +195,13 @@ impl str {
 
         self->size -= 1;
         self->c_str[self->size] = '\0';
+    }
+
+    pub func front(self) -> i8 {
+        if (self->size == 0) {
+            panic("str::front: empty string");
+        }
+        return self->c_str[0];
     }
 
     pub func back(self) -> i8 {
@@ -219,6 +233,10 @@ impl str {
             res.append_char(self->c_str[i]);
         }
         return res;
+    }
+
+    pub func substr_from(self, start: u64) -> str {
+        return self->substr(start, self->size);
     }
 
     pub func find(self, ch: i8) -> u64 {

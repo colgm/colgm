@@ -18,6 +18,7 @@ use sema::type::{ type };
 
 use err::panic::{ panic, unreachable };
 use package::{ package };
+use util::to_num::{ oct_to_u64, hex_to_u64 };
 use util::mangling::{ mangle_struct_name, mangle_function_name };
 
 enum mir_value_kind {
@@ -979,6 +980,20 @@ impl mir2sir {
             !literal.contains('.')) {
             literal.append_i8_vec(".0");
         }
+        if (n->resolved_type.is_integer() &&
+            literal.size > 2 &&
+            literal.get(1) == 'o') {
+            var num = oct_to_u64(literal.c_str);
+            literal.clear();
+            literal.append_u64(num);
+        }
+        if (n->resolved_type.is_integer() &&
+            literal.size > 2 &&
+            literal.get(1) == 'x') {
+            var num = hex_to_u64(literal.c_str);
+            literal.clear();
+            literal.append_u64(num);
+        }
         var v = mir_value_t::literal(literal.__ptr__(), n->resolved_type.__ptr__());
         self->value_stack.push(v.__ptr__());
         v.delete();
@@ -1222,16 +1237,17 @@ impl mir2sir {
 
         var dm = self->ctx->global->domain.get(loc_file);
         var name_for_search = n->resolved_type.generic_name(self->pkg);
+        var full_path_name = n->resolved_type.full_path_name(self->pkg, false);
         if (dm->functions.has(name_for_search.__ptr__())) {
             var v = mir_value_t::func_symbol(
-                name_for_search.__ptr__(),
+                full_path_name.__ptr__(),
                 n->resolved_type.__ptr__()
             );
             self->value_stack.push(v.__ptr__());
             v.delete();
         } else if (dm->structs.has(name_for_search.__ptr__())) {
             var v = mir_value_t::struct_symbol(
-                name_for_search.__ptr__(),
+                full_path_name.__ptr__(),
                 n->resolved_type.__ptr__()
             );
             self->value_stack.push(v.__ptr__());
@@ -1252,6 +1268,7 @@ impl mir2sir {
             info.delete();
         }
         name_for_search.delete();
+        full_path_name.delete();
     }
 
     func visit_mir_call_index(self, n: mir_call_index*) {
@@ -1287,10 +1304,10 @@ impl mir2sir {
             index_ty.__ptr__()
         ) => sir*);
 
-        var n_ref = n->resolved_type.ref_copy();
+        var n_ptr = n->resolved_type.pointer_copy();
         var v = mir_value_t::variable(
             target.__ptr__(),
-            n_ref.__ptr__()
+            n_ptr.__ptr__()
         );
         self->value_stack.push(v.__ptr__());
 
@@ -1307,7 +1324,7 @@ impl mir2sir {
         prev_ref_ref.delete();
         prev_ref_ref_ty.delete();
         index_ty.delete();
-        n_ref.delete();
+        n_ptr.delete();
         v.delete();
     }
 
@@ -1683,7 +1700,7 @@ impl mir2sir {
                     temp_0_value.__ptr__(),
                     right_value.__ptr__(),
                     temp_1_value.__ptr__(),
-                    left.resolved_type.is_integer(),
+                    right.resolved_type.is_integer(),
                     right_ty.__ptr__()
                 ) => sir*);
                 self->block->add_stmt(sir_store::new(
@@ -1710,7 +1727,7 @@ impl mir2sir {
                     temp_0_value.__ptr__(),
                     right_value.__ptr__(),
                     temp_1_value.__ptr__(),
-                    left.resolved_type.is_integer(),
+                    right.resolved_type.is_integer(),
                     right_ty.__ptr__()
                 ) => sir*);
                 self->block->add_stmt(sir_store::new(
@@ -1737,7 +1754,7 @@ impl mir2sir {
                     temp_0_value.__ptr__(),
                     right_value.__ptr__(),
                     temp_1_value.__ptr__(),
-                    left.resolved_type.is_integer(),
+                    right.resolved_type.is_integer(),
                     right_ty.__ptr__()
                 ) => sir*);
                 self->block->add_stmt(sir_store::new(
@@ -1764,8 +1781,8 @@ impl mir2sir {
                     temp_0_value.__ptr__(),
                     right_value.__ptr__(),
                     temp_1_value.__ptr__(),
-                    left.resolved_type.is_integer(),
-                    !left.resolved_type.is_unsigned(),
+                    right.resolved_type.is_integer(),
+                    !right.resolved_type.is_unsigned(),
                     right_ty.__ptr__()
                 ) => sir*);
                 self->block->add_stmt(sir_store::new(
@@ -1792,8 +1809,8 @@ impl mir2sir {
                     temp_0_value.__ptr__(),
                     right_value.__ptr__(),
                     temp_1_value.__ptr__(),
-                    left.resolved_type.is_integer(),
-                    !left.resolved_type.is_unsigned(),
+                    right.resolved_type.is_integer(),
+                    !right.resolved_type.is_unsigned(),
                     right_ty.__ptr__()
                 ) => sir*);
                 self->block->add_stmt(sir_store::new(
