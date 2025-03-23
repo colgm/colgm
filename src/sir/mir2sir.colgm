@@ -596,16 +596,339 @@ impl mir2sir {
         v.delete();
     }
 
-    func visit_mir_binary(self, n: mir_binary*) {
-        // TODO
+    func generate_and(self, n: mir_binary*) {
+        var i1_name = str::from("i1");
+        var temp_0 = self->ssa_gen.create();
+        var temp_0_value = value_t::variable(temp_0.__ptr__());
+        var temp_0_real = str::from("_");
+        temp_0_real.append_str(temp_0.__ptr__())->append_i8_vec(".real");
+        self->block->add_move_register(sir_alloca::new(
+            temp_0_real.__ptr__(),
+            i1_name.__ptr__()
+        ));
+        self->block->add_stmt(sir_temp_ptr::new(
+            temp_0.__ptr__(),
+            temp_0_real.__ptr__(),
+            i1_name.__ptr__(),
+            ""
+        ) => sir*);
+
         self->visit(n->left => mir*);
+        var left = self->value_stack.back()->copy_instance();
+        var left_value = left.to_value_t();
+        self->value_stack.pop_back();
+        self->block->add_stmt(sir_store::new(
+            i1_name.__ptr__(),
+            left_value.__ptr__(),
+            temp_0_value.__ptr__()
+        ) => sir*);
+
+        var true_label_index = self->block->stmts.size + 1;
+        var br = sir_br_cond::new(
+            left_value.__ptr__(),
+            true_label_index,
+            0
+        );
+        self->block->add_stmt(br => sir*);
+        self->block->add_stmt(sir_label::new(true_label_index, "and.true") => sir*);
+
         self->visit(n->right => mir*);
+        var right = self->value_stack.back()->copy_instance();
+        var right_value = right.to_value_t();
+        self->value_stack.pop_back();
+        self->block->add_stmt(sir_store::new(
+            i1_name.__ptr__(),
+            right_value.__ptr__(),
+            temp_0_value.__ptr__()
+        ) => sir*);
+
+        var next_label_index = self->block->stmts.size + 1;
+        self->block->add_stmt(sir_br::new(next_label_index) => sir*);
+
+        var false_label_index = self->block->stmts.size;
+        br->label_false = false_label_index;
+        self->block->add_stmt(sir_label::new(next_label_index, "and.false") => sir*);
+
+        var temp_1 = self->ssa_gen.create();
+        var temp_1_value = value_t::variable(temp_1.__ptr__());
+        self->block->add_stmt(sir_load::new(
+            i1_name.__ptr__(),
+            temp_0_value.__ptr__(),
+            temp_1_value.__ptr__()
+        ) => sir*);
+
+        var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+
+        i1_name.delete();
+        temp_0.delete();
+        temp_0_value.delete();
+        temp_0_real.delete();
+        left.delete();
+        left_value.delete();
+        right.delete();
+        right_value.delete();
+        temp_1.delete();
+        temp_1_value.delete();
+        v.delete();
+    }
+
+    func generate_or(self, n: mir_binary*) {
+        var i1_name = str::from("i1");
+        var temp_0 = self->ssa_gen.create();
+        var temp_0_value = value_t::variable(temp_0.__ptr__());
+        var temp_0_real = str::from("_");
+        temp_0_real.append_str(temp_0.__ptr__())->append_i8_vec(".real");
+        self->block->add_move_register(sir_alloca::new(
+            temp_0_real.__ptr__(),
+            i1_name.__ptr__()
+        ));
+        self->block->add_stmt(sir_temp_ptr::new(
+            temp_0.__ptr__(),
+            temp_0_real.__ptr__(),
+            i1_name.__ptr__(),
+            ""
+        ) => sir*);
+
+        self->visit(n->left => mir*);
+        var left = self->value_stack.back()->copy_instance();
+        var left_value = left.to_value_t();
+        self->value_stack.pop_back();
+        self->block->add_stmt(sir_store::new(
+            i1_name.__ptr__(),
+            left_value.__ptr__(),
+            temp_0_value.__ptr__()
+        ) => sir*);
+
+        var false_label_index = self->block->stmts.size + 1;
+        var br = sir_br_cond::new(
+            left_value.__ptr__(),
+            0,
+            false_label_index
+        );
+        self->block->add_stmt(br => sir*);
+        self->block->add_stmt(sir_label::new(false_label_index, "or.false") => sir*);
+
+        self->visit(n->right => mir*);
+        var right = self->value_stack.back()->copy_instance();
+        var right_value = right.to_value_t();
+        self->value_stack.pop_back();
+        self->block->add_stmt(sir_store::new(
+            i1_name.__ptr__(),
+            right_value.__ptr__(),
+            temp_0_value.__ptr__()
+        ) => sir*);
+
+        var next_label_index = self->block->stmts.size + 1;
+        self->block->add_stmt(sir_br::new(next_label_index) => sir*);
+
+        var true_label_index = self->block->stmts.size;
+        br->label_true = true_label_index;
+        self->block->add_stmt(sir_label::new(next_label_index, "or.true") => sir*);
+
+        var temp_1 = self->ssa_gen.create();
+        var temp_1_value = value_t::variable(temp_1.__ptr__());
+        self->block->add_stmt(sir_load::new(
+            i1_name.__ptr__(),
+            temp_0_value.__ptr__(),
+            temp_1_value.__ptr__()
+        ) => sir*);
+
+        var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
+        self->value_stack.push(v.__ptr__());
+
+        i1_name.delete();
+        temp_0.delete();
+        temp_0_value.delete();
+        temp_0_real.delete();
+        left.delete();
+        left_value.delete();
+        right.delete();
+        right_value.delete();
+        temp_1.delete();
+        temp_1_value.delete();
+        v.delete();
+    }
+
+    func visit_mir_binary(self, n: mir_binary*) {
+        if (n->op == mir_binary_opr::cmpand) {
+            self->generate_and(n);
+            return;
+        } else if (n->op == mir_binary_opr::cmpor) {
+            self->generate_or(n);
+            return;
+        }
+
+        self->visit(n->left => mir*);
+        var left = self->value_stack.back()->copy_instance();
+        var left_value = left.to_value_t();
+        var left_ty = self->type_mapping(left.resolved_type.__ptr__());
+        self->value_stack.pop_back();
+
+        self->visit(n->right => mir*);
+        var right = self->value_stack.back()->copy_instance();
+        var right_value = right.to_value_t();
+        self->value_stack.pop_back();
 
         var temp_var = self->ssa_gen.create();
+        var temp_var_value = value_t::variable(temp_var.__ptr__());
+
+        var flag_is_integer = left.resolved_type.is_integer() ||
+                              left.resolved_type.is_pointer() ||
+                              left.resolved_type.is_bool() ||
+                              left_ty.eq_const("i64");
+
+        match (n->op) {
+            mir_binary_opr::add => {
+                self->block->add_stmt(sir_add::new(
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::sub => {
+                self->block->add_stmt(sir_sub::new(
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::mul => {
+                self->block->add_stmt(sir_mul::new(
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::div => {
+                self->block->add_stmt(sir_div::new(
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    !left.resolved_type.is_unsigned(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::rem => {
+                self->block->add_stmt(sir_rem::new(
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    !left.resolved_type.is_unsigned(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::band => {
+                self->block->add_stmt(sir_band::new(
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::bxor => {
+                self->block->add_stmt(sir_bxor::new(
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::bor => {
+                self->block->add_stmt(sir_bor::new(
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::cmpeq => {
+                self->block->add_stmt(sir_cmp::new(
+                    sir_cmp_kind::cmp_eq,
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    flag_is_integer,
+                    !left.resolved_type.is_unsigned(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::cmpne => {
+                self->block->add_stmt(sir_cmp::new(
+                    sir_cmp_kind::cmp_neq,
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    flag_is_integer,
+                    !left.resolved_type.is_unsigned(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::grt => {
+                self->block->add_stmt(sir_cmp::new(
+                    sir_cmp_kind::cmp_gt,
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    !left.resolved_type.is_unsigned(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::geq => {
+                self->block->add_stmt(sir_cmp::new(
+                    sir_cmp_kind::cmp_ge,
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    !left.resolved_type.is_unsigned(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::less => {
+                self->block->add_stmt(sir_cmp::new(
+                    sir_cmp_kind::cmp_lt,
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    !left.resolved_type.is_unsigned(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            mir_binary_opr::leq => {
+                self->block->add_stmt(sir_cmp::new(
+                    sir_cmp_kind::cmp_le,
+                    left_value.__ptr__(),
+                    right_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    left.resolved_type.is_integer(),
+                    !left.resolved_type.is_unsigned(),
+                    left_ty.__ptr__()
+                ) => sir*);
+            }
+            _ => {}
+        }
+
         var v = mir_value_t::variable(temp_var.__ptr__(), n->resolved_type.__ptr__());
         self->value_stack.push(v.__ptr__());
 
+        left.delete();
+        left_value.delete();
+        left_ty.delete();
+        right.delete();
+        right_value.delete();
         temp_var.delete();
+        temp_var_value.delete();
         v.delete();
     }
 
@@ -1624,12 +1947,15 @@ impl mir2sir {
 
         for (var i = n->branch.iter(); !i.is_end(); i = i.next()) {
             self->visit(i.get().unwrap() => mir*);
+            if (i.get().unwrap()->condition != nil && i.index() == n->branch.size - 1) {
+                self->block->add_stmt(sir_br::new(self->block->stmts.size + 1) => sir*);
+            }
         }
 
+        // set jump out
         for (var i = self->branch_jump_out.back()->iter(); !i.is_end(); i = i.next()) {
             i.get()->unwrap()->label = self->block->stmts.size;
         }
-
         self->branch_jump_out.pop_back();
 
         self->block->add_stmt(sir_label::new(self->block->stmts.size, "branch.end") => sir*);

@@ -181,7 +181,7 @@ impl sir {
                 var n = self => sir_array_cast*;
                 n->delete();
             }
-            _ => { unreachable(); }
+            _ => unreachable();
         }
     }
 
@@ -270,6 +270,10 @@ impl sir {
                 var n = self => sir_bor*;
                 n->dump(out);
             }
+            sir_kind::sir_cmp => {
+                var n = self => sir_cmp*;
+                n->dump(out);
+            }
             sir_kind::sir_label => {
                 var n = self => sir_label*;
                 n->dump(out);
@@ -302,9 +306,7 @@ impl sir {
                 var n = self => sir_array_cast*;
                 n->dump(out);
             }
-            _ => {
-                out.out("  ; 0x").out_i64(self => i64).endln();
-            }
+            _ => unreachable();
         }
     }
 }
@@ -1267,15 +1269,21 @@ pub struct sir_cmp {
 }
 
 impl sir_cmp {
-    pub func new(type: str*) -> sir_cmp* {
+    pub func new(op: sir_cmp_kind,
+                 l: value_t*,
+                 r: value_t*,
+                 tgt: value_t*,
+                 is_int: bool,
+                 is_sign: bool,
+                 type: str*) -> sir_cmp* {
         var n = sir_cmp::__alloc__();
         n->base = sir::instance(sir_kind::sir_cmp);
-        n->target = value_t::instance();
-        n->left = value_t::instance();
-        n->right = value_t::instance();
-        n->kind = sir_cmp_kind::cmp_eq;
-        n->is_integer = false;
-        n->is_signed = false;
+        n->target = tgt->copy_instance();
+        n->left = l->copy_instance();
+        n->right = r->copy_instance();
+        n->kind = op;
+        n->is_integer = is_int;
+        n->is_signed = is_sign;
         n->type = type->copy_instance();
         return n;
     }
@@ -1285,6 +1293,51 @@ impl sir_cmp {
         self->left.delete();
         self->right.delete();
         self->type.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  ");
+        self->target.dump(out);
+        out.out(" = ");
+        if (self->is_integer) {
+            out.out("icmp ");
+        } else {
+            out.out("fcmp ");
+        }
+
+        var head = 's';
+        if (self->is_integer && self->is_signed) {
+            head = 's';
+        } else {
+            head = 'u';
+        }
+
+        match (self->kind) {
+            sir_cmp_kind::cmp_eq => {
+                if (self->is_integer) {
+                    out.out("eq");
+                } else {
+                    out.out("ueq");
+                }
+            }
+            sir_cmp_kind::cmp_neq => {
+                if (self->is_integer) {
+                    out.out("ne");
+                } else {
+                    out.out("une");
+                }
+            }
+            sir_cmp_kind::cmp_ge => out.out_ch(head).out("ge");
+            sir_cmp_kind::cmp_gt => out.out_ch(head).out("gt");
+            sir_cmp_kind::cmp_le => out.out_ch(head).out("le");
+            sir_cmp_kind::cmp_lt => out.out_ch(head).out("lt");
+        }
+
+        out.out(" ").out(self->type.c_str).out(" ");
+        self->left.dump(out);
+        out.out(", ");
+        self->right.dump(out);
+        out.endln();
     }
 }
 
