@@ -4,6 +4,7 @@ use std::map::{ pair };
 use std::ptr::{ basic };
 use std::libc::{ free };
 use std::io::{ io };
+use std::ptr::{ ptr };
 
 use err::span::{ span };
 use err::panic::{ print_backtrace };
@@ -126,5 +127,136 @@ impl mir_context {
             }
             out.endln();
         }
+    }
+
+    pub func adjust_posix_open(self) {
+        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+            if (!i.get()->name.eq_const("open")) {
+                continue;
+            }
+
+            var open_func = i.get();
+            while (open_func->params.size > 2) {
+                open_func->params.pop_back();
+            }
+            open_func->with_va_args = true;
+            break;
+        }
+    }
+
+    func add_malloc_decl(self) {
+        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+            if (i.get()->name.eq_const("malloc")) {
+                return;
+            }
+        }
+
+        var name = str::from("malloc");
+        var null_loc = span::instance();
+        var ret_type = type::i8_type(1);
+
+        var arg_type = type::i64_type();
+        var size = str::from("size");
+        var arg_pair = pair<str, type>::instance(
+            size.__ptr__(),
+            arg_type.__ptr__()
+        );
+
+        var malloc_decl = mir_func::instance(
+            name.__ptr__(),
+            null_loc.__ptr__(),
+            ret_type.__ptr__()
+        );
+        malloc_decl.params.push(arg_pair.__ptr__());
+        self->decls.push(malloc_decl.__ptr__());
+        malloc_decl.delete();
+
+        name.delete();
+        null_loc.delete();
+        ret_type.delete();
+        arg_type.delete();
+        size.delete();
+        arg_pair.delete();
+    }
+
+    func add_free_decl(self) {
+        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+            if (i.get()->name.eq_const("free")) {
+                return;
+            }
+        }
+
+        var name = str::from("free");
+        var null_loc = span::instance();
+        var ret_type = type::void_type();
+
+        var arg_type = type::i8_type(1);
+        var p = str::from("ptr");
+        var arg_pair = pair<str, type>::instance(
+            p.__ptr__(),
+            arg_type.__ptr__()
+        );
+
+        var free_decl = mir_func::instance(
+            name.__ptr__(),
+            null_loc.__ptr__(),
+            ret_type.__ptr__()
+        );
+        free_decl.params.push(arg_pair.__ptr__());
+        self->decls.push(free_decl.__ptr__());
+        free_decl.delete();
+
+        name.delete();
+        null_loc.delete();
+        ret_type.delete();
+        arg_type.delete();
+        p.delete();
+        arg_pair.delete();
+    }
+
+    func add_main_impl(self) {
+        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+            if (i.get()->name.eq_const("main")) {
+                return;
+            }
+        }
+        for (var i = self->impls.iter(); !i.is_end(); i = i.next()) {
+            if (i.get()->name.eq_const("main")) {
+                return;
+            }
+        }
+
+        var name = str::from("main");
+        var null_loc = span::instance();
+        var ret_type = type::i32_type();
+
+        var main_impl = mir_func::instance(
+            name.__ptr__(),
+            null_loc.__ptr__(),
+            ret_type.__ptr__()
+        );
+        main_impl.block = mir_block::new(null_loc.__ptr__());
+        var ret_stmt = mir_return::new(
+            null_loc.__ptr__(),
+            mir_block::new(null_loc.__ptr__())
+        );
+        var zero = str::from("0");
+        ret_stmt->value->content.push(ptr<mir>::wrap(
+            mir_number::new(null_loc.__ptr__(), zero.__ptr__(), ret_type.__ptr__()) => mir*
+        ));
+        main_impl.block->content.push(ptr<mir>::wrap(ret_stmt => mir*));
+        self->impls.push(main_impl.__ptr__());
+        main_impl.delete();
+
+        name.delete();
+        null_loc.delete();
+        ret_type.delete();
+        zero.delete();
+    }
+
+    pub func add_default_func(self) {
+        self->add_malloc_decl();
+        self->add_free_decl();
+        self->add_main_impl();
     }
 }
