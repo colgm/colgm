@@ -286,6 +286,10 @@ impl sir {
                 var n = self => sir_br*;
                 n->dump(out);
             }
+            sir_kind::sir_br_cond => {
+                var n = self => sir_br_cond*;
+                n->dump(out);
+            }
             sir_kind::sir_switch => {
                 var n = self => sir_switch*;
                 n->dump(out);
@@ -382,6 +386,11 @@ impl sir_block {
 
     pub func add_stmt(self, s: sir*) {
         self->stmts.push(ptr<sir>::wrap(s));
+    }
+
+    pub func back_is_ret_stmt(self) -> bool {
+        return self->stmts.size > 0 &&
+               self->stmts.back().unwrap()->kind == sir_kind::sir_ret;
     }
 
     pub func dump(self, out: io) {
@@ -1299,7 +1308,7 @@ impl sir_label {
     }
 
     pub func dump(self, out: io) {
-        out.out("label.").out_hex(self->label => i64).out(":");
+        out.out("\nlabel.").out_hex(self->label => i64).out(":");
         if (!self->comment.empty()) {
             out.out("\t; ").out(self->comment.c_str);
         }
@@ -1400,7 +1409,7 @@ pub struct sir_br_cond {
 }
 
 impl sir_br_cond {
-    pub func new(label_true: u64, label_false: u64) -> sir_br_cond* {
+    pub func new(c: value_t*, label_true: u64, label_false: u64) -> sir_br_cond* {
         var n = sir_br_cond::__alloc__();
         n->base = sir::instance(sir_kind::sir_br_cond);
         n->cond = value_t::instance();
@@ -1411,6 +1420,13 @@ impl sir_br_cond {
 
     pub func delete(self) {
         self->cond.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("  br i1 ");
+        self->cond.dump(out);
+        out.out(", label %label.").out_hex(self->label_true => i64);
+        out.out(", label %label.").out_hex(self->label_false => i64).endln();
     }
 }
 
@@ -1439,10 +1455,15 @@ impl sir_switch {
         self->case_label.delete();
     }
 
+    pub func add_case(self, value: i64, label: u64) {
+        self->case_value.push(value);
+        self->case_label.push(label);
+    }
+
     pub func dump(self, out: io) {
         out.out("  switch i64 ");
         self->source.dump(out);
-        out.out(", label %").out_i64(self->default_label => i64).out(" [\n");
+        out.out(", label %label.").out_hex(self->default_label => i64).out(" [\n");
         for (var i: u64 = 0; i < self->case_value.size; i += 1) {
             var value = self->case_value.get(i);
             var label = self->case_label.get(i);
