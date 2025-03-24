@@ -755,6 +755,14 @@ impl sir_call {
         }
         out.out("call ").out(self->return_type.c_str);
 
+        if (self->with_va_args) {
+            out.out("(");
+            for (var i: u64 = 0; i < self->with_va_args_real_param_size; i += 1) {
+                out.out(self->args_type.get(i)->c_str).out(", ");
+            }
+            out.out("...)");
+        }
+
         out.out(" @").out(self->name.c_str).out("(");
         for (var i: u64 = 0; i < self->args.size; i += 1) {
             out.out(self->args_type.get(i)->c_str).out(" ");
@@ -1637,7 +1645,6 @@ impl sir_type_convert {
     }
 
     pub func dump(self, out: io) {
-        // TODO
         if (self->src_type.back() == '*' && self->dst_type.back() == '*') {
             self->dump_bitcast(out);
             return;

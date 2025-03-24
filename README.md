@@ -5,7 +5,7 @@
 
 ## Repo Content
 
-- [bootstrap](./bootstrap/README.md) : bootstrap compiler, welcome to try.
+- [bootstrap](./bootstrap/README.md) : bootstrap compiler.
 - [src](./src/README.md) : self-host compiler.
 - [test](./test): test cases.
 
@@ -14,7 +14,7 @@
 Hello world example is available in `bootstrap`:
 
 ```rust
-use libc::puts;
+use std::libc::puts;
 
 pub func main() -> i32 {
     puts("hello world!");
@@ -82,13 +82,13 @@ Learn more about [Self-host compiler](./src/README.md)
 
 ## TODO
 
-1. develop self-host compiler
-    - develop sir codegen
-2. support foreach/forindex (feature for self-host compiler):
+1. support foreach/forindex:
     - forindex loop, container should have `size()` method
     - foreach loop, container should have iterator-like stuff
         - `iter()`, `next()` and `is_end()` method
-3. llvm debug info (feature for self-host compiler)
-4. array type like `[i32; 128]` (feature for self-host compiler)
+2. llvm debug info
+3. array type like `[i32; 128]`
     - syntax like `var a: [i32; 128] = [1, 2, 3];`
     - syntax like `var a: [i8*; 128] = ["foo", "bar", tmp];`
+4. tagged union
+5. tuple

@@ -11,6 +11,8 @@ use sir::local_scope::{ local_table };
 use sir::sir::*;
 use sir::context::{ sir_struct, sir_func, sir_context };
 use sir::value::{ value_t };
+use sir::adjust_va_arg::{ adjust_va_arg };
+use sir::replace_ptr_call::{ replace_struct_ptr_call };
 
 use sema::symbol_info::{ symbol_kind };
 use sema::context::{ sema_context };
@@ -183,6 +185,7 @@ pub struct mir2sir {
     pkg: package*,
     type_mapper: hashmap<str, basic<symbol_kind>>,
     basic_type_mapper: hashmap<str, str>,
+    primitive_methods: hashmap<str, str>,
 
     block: sir_block*,
     ssa_gen: ssa_generator,
@@ -207,6 +210,7 @@ impl mir2sir {
             pkg: pkg,
             type_mapper: hashmap<str, basic<symbol_kind>>::instance(),
             basic_type_mapper: hashmap<str, str>::instance(),
+            primitive_methods: hashmap<str, str>::instance(),
             block: nil,
             ssa_gen: ssa_generator::instance(),
             array_ssa_gen: ssa_generator::instance(),
@@ -217,12 +221,14 @@ impl mir2sir {
             branch_jump_out: vec<vec<ptr<sir_br>>>::instance()
         };
         res.init_basic_type_mapper();
+        res.init_primitive__size_methods();
         return res;
     }
 
     pub func delete(self) {
         self->type_mapper.delete();
         self->basic_type_mapper.delete();
+        self->primitive_methods.delete();
         self->value_stack.delete();
         self->locals.delete();
 
@@ -279,6 +285,55 @@ impl mir2sir {
         bool_s.delete();
         double_s.delete();
         float_s.delete();
+    }
+
+    func init_primitive__size_methods(self) {
+        var size_1 = str::from("1");
+        var size_2 = str::from("2");
+        var size_4 = str::from("4");
+        var size_8 = str::from("8");
+
+        var i64_s = str::from("i64.__size__");
+        var i32_s = str::from("i32.__size__");
+        var i16_s = str::from("i16.__size__");
+        var i8_s = str::from("i8.__size__");
+        var i1_s = str::from("i1.__size__");
+        var u64_s = str::from("u64.__size__");
+        var u32_s = str::from("u32.__size__");
+        var u16_s = str::from("u16.__size__");
+        var u8_s = str::from("u8.__size__");
+        var f64_s = str::from("f64.__size__");
+        var f32_s = str::from("f32.__size__");
+        var bool_s = str::from("bool.__size__");
+
+        self->primitive_methods.insert(i64_s.__ptr__(), size_8.__ptr__());
+        self->primitive_methods.insert(i32_s.__ptr__(), size_4.__ptr__());
+        self->primitive_methods.insert(i16_s.__ptr__(), size_2.__ptr__());
+        self->primitive_methods.insert(i8_s.__ptr__(), size_1.__ptr__());
+        self->primitive_methods.insert(u64_s.__ptr__(), size_8.__ptr__());
+        self->primitive_methods.insert(u32_s.__ptr__(), size_4.__ptr__());
+        self->primitive_methods.insert(u16_s.__ptr__(), size_2.__ptr__());
+        self->primitive_methods.insert(u8_s.__ptr__(), size_1.__ptr__());
+        self->primitive_methods.insert(f64_s.__ptr__(), size_8.__ptr__());
+        self->primitive_methods.insert(f32_s.__ptr__(), size_4.__ptr__());
+        self->primitive_methods.insert(bool_s.__ptr__(), size_1.__ptr__());
+
+        size_1.delete();
+        size_2.delete();
+        size_4.delete();
+        size_8.delete();
+        i64_s.delete();
+        i32_s.delete();
+        i16_s.delete();
+        i8_s.delete();
+        i1_s.delete();
+        u64_s.delete();
+        u32_s.delete();
+        u16_s.delete();
+        u8_s.delete();
+        f64_s.delete();
+        f32_s.delete();
+        bool_s.delete();
     }
 }
 
@@ -1229,6 +1284,11 @@ impl mir2sir {
                 full_path_name.__ptr__(),
                 n->resolved_type.__ptr__()
             );
+            // extern function remain raw name
+            if (dm->functions.get(name_for_search.__ptr__())->is_extern) {
+                v.content.clear();
+                v.content.append_str(name_for_search.__ptr__());
+            }
             self->value_stack.push(v.__ptr__());
             v.delete();
         } else if (dm->structs.has(name_for_search.__ptr__())) {
@@ -1317,6 +1377,17 @@ impl mir2sir {
     func visit_mir_call_func(self, n: mir_call_func*) {
         var prev = self->value_stack.back()->copy_instance();
         self->value_stack.pop_back();
+
+        // if is primitive size method call, replace with number literal
+        if (self->primitive_methods.has(prev.content.__ptr__())) {
+            var size = self->primitive_methods.get(prev.content.__ptr__());
+            var v = mir_value_t::literal(size, n->resolved_type.__ptr__());
+            self->value_stack.push(v.__ptr__());
+
+            prev.delete();
+            v.delete();
+            return;
+        }
 
         var args = vec<mir_value_t>::instance();
         // load "self" argument
@@ -2259,5 +2330,7 @@ impl mir2sir {
         self->emit_struct(mctx);
         self->emit_func_decl(mctx);
         self->emit_func_impl(mctx);
+        adjust_va_arg(self->sctx);
+        replace_struct_ptr_call(self->sctx);
     }
 }

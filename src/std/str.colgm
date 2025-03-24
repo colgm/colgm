@@ -1,4 +1,4 @@
-use std::libc::{ malloc, realloc, free, memcpy, strlen, streq, exit, write, itoa, utoa };
+use std::libc::{ malloc, realloc, free, memcpy, memcmp, strlen, streq, exit, write, itoa, utoa };
 use err::panic::{ panic };
 
 pub struct str {
@@ -242,6 +242,16 @@ impl str {
     pub func find(self, ch: i8) -> u64 {
         for (var i: u64 = 0; i < self->size; i += 1) {
             if (self->c_str[i] == ch) {
+                return i;
+            }
+        }
+        return str::npos();
+    }
+
+    pub func find_i8_vec(self, src: i8*) -> u64 {
+        for (var i: u64 = 0; i < self->size; i += 1) {
+            var addr = (i + self->c_str => u64) => i8*;
+            if (memcmp(addr, src, strlen(src) => u64) == 0) {
                 return i;
             }
         }

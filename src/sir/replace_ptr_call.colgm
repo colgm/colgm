@@ -1,0 +1,66 @@
+use sir::sir::*;
+use sir::context::{ sir_func, sir_context };
+
+use std::vec::{ primitive_vec };
+use std::ptr::{ ptr };
+use std::str::{ str };
+use std::io::{ io };
+use std::libc::{ free };
+
+func adjust_single_function(f: sir_func*) -> i64 {
+    var replace_count = 0;
+    var temp = primitive_vec<ptr<sir>>::instance();
+    for (var i = f->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        var inst = i.get().unwrap();
+        if (inst->kind != sir_kind::sir_call) {
+            temp.push(ptr<sir>::wrap(inst));
+            continue;
+        }
+
+        var call = inst => sir_call*;
+        if (call->name.find_i8_vec(".__ptr__") == str::npos()) {
+            temp.push(ptr<sir>::wrap(inst));
+            continue;
+        }
+
+        if (call->args.size != 1 ||
+            call->return_type.empty() ||
+            call->return_type.back() != '*') {
+            temp.push(ptr<sir>::wrap(inst));
+            continue;
+        }
+
+        var rtt = call->return_type.copy_instance();
+        rtt.pop_back();
+
+        replace_count += 1;
+        var constant = sir_temp_ptr::new(
+            call->target.content.__ptr__(),
+            call->args.get(0)->content.__ptr__(),
+            rtt.__ptr__(),
+            "__ptr__ call"
+        );
+        temp.push(ptr<sir>::wrap(constant => sir*));
+
+        rtt.delete();
+        inst->delete();
+        free(inst => i8*);
+    }
+
+    f->body->stmts.clear();
+    for (var i = temp.iter(); !i.is_end(); i = i.next()) {
+        f->body->stmts.push(i.get());
+    }
+
+    temp.delete();
+    return replace_count;
+}
+
+pub func replace_struct_ptr_call(ctx: sir_context*) {
+    var replace_count = 0;
+    for (var i = ctx->func_impls.iter(); !i.is_end(); i = i.next()) {
+        replace_count += adjust_single_function(i.get());
+    }
+    io::stdout().green().out("  [sir] ").reset();
+    io::stdout().out("run replace __ptr__ call: ").out_i64(replace_count).endln();
+}
