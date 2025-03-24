@@ -18,7 +18,6 @@ use sema::type::{ type };
 
 use err::panic::{ panic, unreachable };
 use package::{ package };
-use util::to_num::{ oct_to_u64, hex_to_u64 };
 use util::mangling::{ mangle_struct_name, mangle_function_name };
 
 enum mir_value_kind {
@@ -980,20 +979,6 @@ impl mir2sir {
         if (!n->resolved_type.is_integer() &&
             !literal.contains('.')) {
             literal.append_i8_vec(".0");
-        }
-        if (n->resolved_type.is_integer() &&
-            literal.size > 2 &&
-            literal.get(1) == 'o') {
-            var num = oct_to_u64(literal.c_str);
-            literal.clear();
-            literal.append_u64(num);
-        }
-        if (n->resolved_type.is_integer() &&
-            literal.size > 2 &&
-            literal.get(1) == 'x') {
-            var num = hex_to_u64(literal.c_str);
-            literal.clear();
-            literal.append_u64(num);
         }
         var v = mir_value_t::literal(literal.__ptr__(), n->resolved_type.__ptr__());
         self->value_stack.push(v.__ptr__());

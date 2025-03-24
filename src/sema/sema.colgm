@@ -2,7 +2,7 @@ use err::report::{ report };
 use err::panic::{ panic, unreachable };
 
 use std::io::{ io };
-use std::libc::{ free, itoa };
+use std::libc::{ free, itoa, utoa };
 use std::math::{ isinf, isnan };
 use std::str::{ str };
 use std::ptr::{ ptr };
@@ -24,7 +24,7 @@ use sema::module::{ colgm_module };
 use sema::type_resolve::{ type_resolve };
 
 use util::cli::{ cli_option };
-use util::to_num::{ str_to_num, hex_to_i64, oct_to_i64 };
+use util::to_num::{ str_to_num, hex_to_u64, oct_to_u64 };
 
 pub struct sema {
     err: report*,
@@ -107,16 +107,16 @@ impl sema {
         }
         if (n->literal.size > 2 && n->literal.c_str[1] == 'o') {
             var buff = [i8; 128];
-            itoa(oct_to_i64(n->literal.c_str), buff, 8);
+            utoa(oct_to_u64((n->literal.c_str => u64 + 2) => i8*), buff, 10);
             n->literal.clear();
             n->literal.append_i8_vec(buff);
             var ty = type::u64_type();
             n->base.resolved_type.reset_with(ty.__ptr__());
             return ty;
         }
-        if (n->literal.size > 2 && n->literal.c_str[0] == 'x') {
+        if (n->literal.size > 2 && n->literal.c_str[1] == 'x') {
             var buff = [i8; 128];
-            itoa(hex_to_i64(n->literal.c_str), buff, 8);
+            utoa(hex_to_u64((n->literal.c_str => u64 + 2) => i8*), buff, 10);
             n->literal.clear();
             n->literal.append_i8_vec(buff);
             var ty = type::u64_type();
