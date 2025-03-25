@@ -1,4 +1,7 @@
 use std::io::{ io };
+use std::str::{ str };
+use std::vec::{ vec };
+use std::ptr::{ ptr };
 
 pub enum DI_kind {
     DI_error,
@@ -41,4 +44,88 @@ impl DI_node {
             out.out("!").out_u64(self->index).out(" = ");
         }
     }
+
+    pub func is(self, k: DI_kind) -> bool {
+        return self->kind == k;
+    }
+}
+
+pub struct DI_named_metadata {
+    base: DI_node,
+    name: str,
+    nodes: vec<ptr<DI_node>>
+}
+
+pub struct DI_ref_index {
+    base: DI_node,
+    index: u64
+}
+
+pub struct DI_i32 {
+    base: DI_node,
+    value: i32
+}
+
+pub struct DI_string {
+    base: DI_node,
+    value: str
+}
+
+pub struct DI_file {
+    base: DI_node,
+    filename: str,
+    directory: str
+}
+
+pub struct DI_compile_unit {
+    base: DI_node,
+    producer: str,
+    file_index: u64,
+    imports_index: u64
+}
+
+pub struct DI_basic_type {
+    base: DI_node,
+    name: str,
+    size_in_bits: u64,
+    encoding: str
+}
+
+pub struct DI_structure_type {
+    base: DI_node,
+    name: str,
+    identifier: str,
+    file_index: u64,
+    line: u64
+}
+
+pub struct DI_enum_type {
+    base: DI_node,
+    name: str,
+    identifier: str,
+    file_index: u64,
+    line: u64,
+    base_type_index: u64,
+    elements_index: u64
+}
+
+pub struct DI_enumerator {
+    base: DI_node,
+    name: str,
+    value: i32
+}
+
+pub struct DI_subprogram {
+    base: DI_node,
+    name: str,
+    file_index: u64,
+    line: u64,
+    compile_unit_index: u64
+}
+
+pub struct DI_location {
+    base: DI_node,
+    line: u64,
+    column: u64,
+    scope_index: u64
 }
