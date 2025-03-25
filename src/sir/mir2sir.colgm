@@ -14,6 +14,8 @@ use sir::value::{ value_t };
 use sir::adjust_va_arg::{ adjust_va_arg };
 use sir::replace_ptr_call::{ replace_struct_ptr_call };
 
+use dwarf::dwarf::*;
+
 use sema::symbol_info::{ symbol_kind };
 use sema::context::{ sema_context };
 use sema::type::{ type };
@@ -399,8 +401,8 @@ impl mir2sir {
 
     func process_print(self, curr: u64, total: u64) {
         io::stdout().green().out("[mir2sir] ").reset();
-        io::stdout().out("generating function (").out_i64((curr + 1) => i64);
-        io::stdout().out("/").out_i64(total => i64).out(")\r");
+        io::stdout().out("generating function (").out_u64(curr + 1);
+        io::stdout().out("/").out_u64(total).out(")\r");
     }
 
     func emit_func_impl(self, mctx: mir_context*) {

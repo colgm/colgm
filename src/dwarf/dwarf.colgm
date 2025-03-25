@@ -1,0 +1,44 @@
+use std::io::{ io };
+
+pub enum DI_kind {
+    DI_error,
+    DI_named_metadata,
+    DI_ref_index,
+    DI_list,
+    DI_i32,
+    DI_string,
+    DI_file,
+    DI_compile_unit,
+    DI_basic_type,
+    DI_structure_type,
+    DI_enum_type,
+    DI_enumerator,
+    DI_subprogram,
+    DI_location
+}
+
+pub func DI_ERROR_INDEX() -> u64 {
+    return 0xffffffffffffffff;
+}
+
+pub struct DI_node {
+    kind: DI_kind,
+    index: u64
+}
+
+impl DI_node {
+    pub func new(k: DI_kind, i: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res->kind = k;
+        res->index = i;
+        return res;
+    }
+
+    pub func delete(self) {}
+
+    pub func dump_index(self, out: io) {
+        if (self->index != DI_ERROR_INDEX()) {
+            out.out("!").out_u64(self->index).out(" = ");
+        }
+    }
+}

@@ -31,13 +31,15 @@ func clang_compile(co: cli_option*) -> i32 {
     }
 
     var cmd = clang.copy_instance();
-    if (!fs::exists("out.self_host.ll")) {
+    if (!fs::exists(co->output_file)) {
         clang.delete();
         cmd.delete();
         return -1;
     }
 
-    cmd.append_i8_vec(" -Oz out.self_host.ll -o a.out -rdynamic -lm");
+    cmd.append_i8_vec(" -Oz ");
+    cmd.append_i8_vec(co->output_file);
+    cmd.append_i8_vec(" -o a.out -rdynamic -lm");
     if (co->VERBOSE) {
         io::stdout().green().out("[clang] ").reset();
         io::stdout().out("executing \"").out(cmd.c_str).out("\"\n");
@@ -178,10 +180,10 @@ func compile(option: cli_option) -> i32 {
         sctx.dump(io::stdout());
     }
 
-    var file_output = io::fileout("out.self_host.ll");
+    var file_output = io::fileout(option.output_file);
     if (option.VERBOSE) {
         io::stdout().green().out("[sir] ").reset();
-        io::stdout().out("generating \"out.self_host.ll\"").endln();
+        io::stdout().out("generating \"").out(option.output_file).out("\"").endln();
     }
     sctx.dump(file_output);
     file_output.close();
@@ -305,9 +307,12 @@ func main(argc: i32, argv: i8**) -> i32 {
                     .out(" no source file specified").endln();
         return -1;
     }
+
+    // set default output file
     if (option.output_file == nil) {
         option.output_file = "out.ll";
     }
+    // set default library path
     if (option.library_path == nil) {
         option.library_path = ".";
     }

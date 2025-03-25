@@ -483,7 +483,7 @@ impl sir_alloca {
         if (self->array_info.base_type.empty()) {
             out.out(self->type.c_str).endln();
         } else {
-            out.out("[").out_i64(self->array_info.size => i64).out(" x ");
+            out.out("[").out_u64(self->array_info.size).out(" x ");
             out.out(self->array_info.base_type.c_str).out("]").endln();
         }
     }
@@ -593,8 +593,8 @@ impl sir_str {
     pub func dump(self, out: io) {
         out.out("  ");
         self->target.dump(out);
-        out.out(" = bitcast [").out_i64(self->length => i64).out(" x i8]* ");
-        out.out("@str.").out_i64(self->index => i64).out(" to i8*\n");
+        out.out(" = bitcast [").out_u64(self->length).out(" x i8]* ");
+        out.out("@str.").out_u64(self->index).out(" to i8*\n");
     }
 }
 
@@ -1759,7 +1759,7 @@ impl sir_array_cast {
     pub func dump(self, out: io) {
         out.out("  ");
         self->target.dump(out);
-        out.out(" = bitcast [").out_i64(self->array_size => i64).out(" x ");
+        out.out(" = bitcast [").out_u64(self->array_size).out(" x ");
         out.out(self->type.c_str).out("]* ");
         self->source.dump(out);
         out.out(" to ").out(self->type.c_str).out("*\n");
