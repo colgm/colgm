@@ -2396,9 +2396,63 @@ impl mir2sir {
         self->dwarf_status.DI_counter += 1;
     }
 
+    func generate_DI_file(self) {
+        self->sctx->DI_file_map.clear();
+
+        // empty file name maybe used for auto-generated functions
+        var empty_file_name = str::from("");
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(
+            DI_file::new(self->dwarf_status.DI_counter, "", "") => DI_node*
+        ));
+        self->sctx->DI_file_map.insert(
+            empty_file_name.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
+        self->dwarf_status.DI_counter += 1;
+        empty_file_name.delete();
+
+        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
+            self->sctx->debug_info.push(ptr<DI_node>::wrap(
+                DI_file::new(
+                    self->dwarf_status.DI_counter,
+                    i.key()->c_str,
+                    ""
+                ) => DI_node*
+            ));
+            self->sctx->DI_file_map.insert(
+                i.key(),
+                basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+            );
+            self->dwarf_status.DI_counter += 1;
+        }
+    }
+
+    func generate_llvm_dbg_cu(self) {
+        var llvm_dbg_cu = DI_named_metadata::new("llvm.dbg.cu");
+        self->sctx->named_metadata.push(ptr<DI_named_metadata>::wrap(llvm_dbg_cu));
+
+        var main_input_file_index = self->sctx->DI_file_map.get(
+            self->ctx->global->main_input_file.__ptr__()
+        )->unwrap();
+        self->dwarf_status.compile_unit_index = self->dwarf_status.DI_counter;
+        
+        var version_str = str::from("colgm compiler version ");
+        version_str.append_i8_vec(version());
+        var cu = DI_compile_unit::new(
+            self->dwarf_status.DI_counter,
+            version_str.c_str,
+            main_input_file_index
+        );
+        llvm_dbg_cu->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(cu => DI_node*));
+        self->dwarf_status.DI_counter += 1;
+    }
+
     func generate_DWARF(self) {
         self->generate_llvm_ident();
         self->generate_llvm_module_flags();
+        self->generate_DI_file();
+        self->generate_llvm_dbg_cu();
     }
 }
 

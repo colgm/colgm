@@ -56,6 +56,14 @@ impl DI_node {
                 var n = self => DI_string*;
                 n->delete();
             }
+            DI_kind::DI_file => {
+                var n = self => DI_file*;
+                n->delete();
+            }
+            DI_kind::DI_compile_unit => {
+                var n = self => DI_compile_unit*;
+                n->delete();
+            }
             _ => unimplemented();
         }
     }
@@ -93,6 +101,14 @@ impl DI_node {
             }
             DI_kind::DI_string => {
                 var n = self => DI_string*;
+                n->dump(out);
+            }
+            DI_kind::DI_file => {
+                var n = self => DI_file*;
+                n->dump(out);
+            }
+            DI_kind::DI_compile_unit => {
+                var n = self => DI_compile_unit*;
                 n->dump(out);
             }
             _ => unimplemented();
@@ -245,11 +261,57 @@ pub struct DI_file {
     directory: str
 }
 
+impl DI_file {
+    pub func new(i: u64, f: i8*, d: i8*) -> DI_file* {
+        var res = DI_file::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_file, i);
+        res->filename = str::from(f);
+        res->directory = str::from(d);
+        return res;
+    }
+
+    pub func delete(self) {
+        self->filename.delete();
+        self->directory.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DIFile(filename: \"").out(self->filename.c_str);
+        out.out("\", directory: \"").out(self->directory.c_str).out("\")");
+    }
+}
+
 pub struct DI_compile_unit {
     base: DI_node,
     producer: str,
     file_index: u64,
     imports_index: u64
+}
+
+impl DI_compile_unit {
+    pub func new(i: u64, p: i8*, fi: u64) -> DI_compile_unit* {
+        var res = DI_compile_unit::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_compile_unit, i);
+        res->producer = str::from(p);
+        res->file_index = fi;
+        res->imports_index = DI_ERROR_INDEX();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->producer.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("distinct !DICompileUnit(");
+        out.out("language: DW_LANG_C99, ");
+        out.out("file: !").out_u64(self->file_index).out(", ");
+        out.out("producer: \"").out(self->producer.c_str).out("\", ");
+        if (self->imports_index != DI_ERROR_INDEX()) {
+            out.out("imports: !").out_u64(self->imports_index).out(", ");
+        }
+        out.out("isOptimized: false)");
+    }
 }
 
 pub struct DI_basic_type {

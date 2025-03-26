@@ -83,9 +83,18 @@ func compile(option: cli_option) -> i32 {
     }
 
     var cc = frontend::instance(option.__ptr__());
+
+    // global symbol table
     var gt = global_symbol_table::instance();
+    gt.main_input_file.append_i8_vec(option.input_file);
+
+    // semantic context
     var ctx = sema_context::instance(gt.__ptr__());
+
+    // mir context
     var mctx = mir_context::instance();
+
+    // sir context
     var sctx = sir_context::instance(cc.pkg);
     var regpass = regist_pass::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt, mctx.__ptr__());
     var semantic = sema::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt);
