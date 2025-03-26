@@ -2,9 +2,12 @@ use std::io::{ io };
 use std::str::{ str };
 use std::vec::{ vec };
 use std::ptr::{ ptr };
+use std::libc::{ free };
+
+use err::panic::{ unimplemented };
 
 pub enum DI_kind {
-    DI_error,
+    DI_error, // reserved for errors
     DI_named_metadata,
     DI_ref_index,
     DI_list,
@@ -30,14 +33,32 @@ pub struct DI_node {
 }
 
 impl DI_node {
-    pub func new(k: DI_kind, i: u64) -> DI_node* {
-        var res = DI_node::__alloc__();
-        res->kind = k;
-        res->index = i;
-        return res;
+    pub func instance(k: DI_kind, i: u64) -> DI_node {
+        return DI_node {
+            kind: k,
+            index: i
+        };
     }
 
-    pub func delete(self) {}
+    pub func delete(self) {
+        match (self->kind) {
+            DI_kind::DI_named_metadata => {
+                var n = self => DI_named_metadata*;
+                n->delete();
+            }
+            DI_kind::DI_ref_index => {}
+            DI_kind::DI_list => {
+                var n = self => DI_list*;
+                n->delete();
+            }
+            DI_kind::DI_i32 => {}
+            DI_kind::DI_string => {
+                var n = self => DI_string*;
+                n->delete();
+            }
+            _ => unimplemented();
+        }
+    }
 
     pub func dump_index(self, out: io) {
         if (self->index != DI_ERROR_INDEX()) {
@@ -48,6 +69,35 @@ impl DI_node {
     pub func is(self, k: DI_kind) -> bool {
         return self->kind == k;
     }
+
+    pub func dump(self, out: io) {
+        if (self->index != DI_ERROR_INDEX()) {
+            out.out("!").out_i64(self->index => i64).out(" = ");
+        }
+        match (self->kind) {
+            DI_kind::DI_named_metadata => {
+                var n = self => DI_named_metadata*;
+                n->dump(out);
+            }
+            DI_kind::DI_ref_index => {
+                var n = self => DI_ref_index*;
+                n->dump(out);
+            }
+            DI_kind::DI_list => {
+                var n = self => DI_list*;
+                n->dump(out);
+            }
+            DI_kind::DI_i32 => {
+                var n = self => DI_i32*;
+                n->dump(out);
+            }
+            DI_kind::DI_string => {
+                var n = self => DI_string*;
+                n->dump(out);
+            }
+            _ => unimplemented();
+        }
+    }
 }
 
 pub struct DI_named_metadata {
@@ -56,9 +106,95 @@ pub struct DI_named_metadata {
     nodes: vec<ptr<DI_node>>
 }
 
+impl DI_named_metadata {
+    pub func new(name: i8*) -> DI_named_metadata* {
+        var res = DI_named_metadata::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_named_metadata, DI_ERROR_INDEX());
+        res->name = str::from(name);
+        res->nodes = vec<ptr<DI_node>>::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get()->unwrap();
+            n->delete();
+            free(n => i8*);
+        }
+        self->nodes.delete();
+    }
+
+    pub func add(self, n: DI_node*) {
+        self->nodes.push(ptr<DI_node>::wrap(n).__ptr__());
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!").out(self->name.c_str).out(" = !{");
+        for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
+            i.get()->unwrap()->dump(out);
+            if (i.index() != self->nodes.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out("}");
+    }
+}
+
 pub struct DI_ref_index {
     base: DI_node,
     index: u64
+}
+
+impl DI_ref_index {
+    pub func new(index: u64) -> DI_ref_index* {
+        var res = DI_ref_index::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_ref_index, DI_ERROR_INDEX());
+        res->index = index;
+        return res;
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!").out_u64(self->index);
+    }
+}
+
+pub struct DI_list {
+    base: DI_node,
+    nodes: vec<ptr<DI_node>>
+}
+
+impl DI_list {
+    pub func new(i: u64) -> DI_list* {
+        var res = DI_list::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_list, i);
+        res->nodes = vec<ptr<DI_node>>::instance();
+        return res;
+    }
+
+    pub func delete(self) {
+        for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get()->unwrap();
+            n->delete();
+            free(n => i8*);
+        }
+        self->nodes.delete();
+    }
+
+    pub func add(self, n: DI_node*) {
+        self->nodes.push(ptr<DI_node>::wrap(n).__ptr__());
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!{");
+        for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
+            i.get()->unwrap()->dump(out);
+            if (i.index() != self->nodes.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out("}");
+    }
 }
 
 pub struct DI_i32 {
@@ -66,9 +202,41 @@ pub struct DI_i32 {
     value: i32
 }
 
+impl DI_i32 {
+    pub func new(value: i32) -> DI_i32* {
+        var res = DI_i32::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_i32, DI_ERROR_INDEX());
+        res->value = value;
+        return res;
+    }
+
+    pub func delete(self) {}
+
+    pub func dump(self, out: io) {
+        out.out("i32 ").out_i64(self->value => i64);
+    }
+}
+
 pub struct DI_string {
     base: DI_node,
     value: str
+}
+
+impl DI_string {
+    pub func new(value: i8*) -> DI_string* {
+        var res = DI_string::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_string, DI_ERROR_INDEX());
+        res->value = str::from(value);
+        return res;
+    }
+
+    pub func delete(self) {
+        self->value.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!\"").out(self->value.c_str).out("\"");
+    }
 }
 
 pub struct DI_file {

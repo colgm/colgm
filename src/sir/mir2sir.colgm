@@ -15,6 +15,7 @@ use sir::adjust_va_arg::{ adjust_va_arg };
 use sir::replace_ptr_call::{ replace_struct_ptr_call };
 
 use dwarf::dwarf::*;
+use dwarf::status::{ DWARF_status };
 
 use sema::symbol_info::{ symbol_kind };
 use sema::context::{ sema_context };
@@ -22,6 +23,8 @@ use sema::type::{ type };
 
 use err::panic::{ panic, unreachable };
 use package::{ package };
+
+use util::cli::{ version };
 use util::mangling::{ mangle_struct_name, mangle_function_name };
 
 enum mir_value_kind {
@@ -199,7 +202,9 @@ pub struct mir2sir {
 
     continue_inst: vec<vec<ptr<sir_br>>>,
     break_inst: vec<vec<ptr<sir_br>>>,
-    branch_jump_out: vec<vec<ptr<sir_br>>>
+    branch_jump_out: vec<vec<ptr<sir_br>>>,
+
+    dwarf_status: DWARF_status
 }
 
 impl mir2sir {
@@ -220,7 +225,8 @@ impl mir2sir {
             locals: local_table::instance(),
             continue_inst: vec<vec<ptr<sir_br>>>::instance(),
             break_inst: vec<vec<ptr<sir_br>>>::instance(),
-            branch_jump_out: vec<vec<ptr<sir_br>>>::instance()
+            branch_jump_out: vec<vec<ptr<sir_br>>>::instance(),
+            dwarf_status: DWARF_status::instance()
         };
         res.init_basic_type_mapper();
         res.init_primitive__size_methods();
@@ -239,6 +245,8 @@ impl mir2sir {
         self->continue_inst.delete();
         self->break_inst.delete();
         self->branch_jump_out.delete();
+
+        self->dwarf_status.delete();
     }
 
     func init_basic_type_mapper(self) {
@@ -2327,7 +2335,77 @@ impl mir2sir {
 }
 
 impl mir2sir {
+    func generate_llvm_ident(self) {
+        var ident = DI_named_metadata::new("llvm.ident");
+        self->sctx->named_metadata.push(ptr<DI_named_metadata>::wrap(ident));
+        
+        var version_str = str::from("colgm compiler version ");
+        version_str.append_i8_vec(version());
+        
+        var ver_list = DI_list::new(self->dwarf_status.DI_counter);
+        ver_list->add(DI_string::new(version_str.c_str) => DI_node*);
+        ident->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(ver_list => DI_node*));
+
+        self->dwarf_status.DI_counter += 1;
+        version_str.delete();
+    }
+
+    func generate_llvm_module_flags(self) {
+        var module_flags = DI_named_metadata::new("llvm.module.flags");
+        self->sctx->named_metadata.push(ptr<DI_named_metadata>::wrap(module_flags));
+
+        var dwarf_version = DI_list::new(self->dwarf_status.DI_counter);
+        dwarf_version->add(DI_i32::new(7) => DI_node*);
+        dwarf_version->add(DI_string::new("Dwarf Version") => DI_node*);
+        dwarf_version->add(DI_i32::new(4) => DI_node*);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(dwarf_version => DI_node*));
+        module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+        self->dwarf_status.DI_counter += 1;
+
+        var debug_info_version = DI_list::new(self->dwarf_status.DI_counter);
+        debug_info_version->add(DI_i32::new(2) => DI_node*);
+        debug_info_version->add(DI_string::new("Debug Info Version") => DI_node*);
+        debug_info_version->add(DI_i32::new(3) => DI_node*);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(debug_info_version => DI_node*));
+        module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+        self->dwarf_status.DI_counter += 1;
+
+        var wchar_size = DI_list::new(self->dwarf_status.DI_counter);
+        wchar_size->add(DI_i32::new(1) => DI_node*);
+        wchar_size->add(DI_string::new("wchar_size") => DI_node*);
+        wchar_size->add(DI_i32::new(4) => DI_node*);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(wchar_size => DI_node*));
+        module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+        self->dwarf_status.DI_counter += 1;
+
+        var uwtable = DI_list::new(self->dwarf_status.DI_counter);
+        uwtable->add(DI_i32::new(7) => DI_node*);
+        uwtable->add(DI_string::new("uwtable") => DI_node*);
+        uwtable->add(DI_i32::new(1) => DI_node*);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(uwtable => DI_node*));
+        module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+        self->dwarf_status.DI_counter += 1;
+
+        var frame_pointer = DI_list::new(self->dwarf_status.DI_counter);
+        frame_pointer->add(DI_i32::new(7) => DI_node*);
+        frame_pointer->add(DI_string::new("frame-pointer") => DI_node*);
+        frame_pointer->add(DI_i32::new(2) => DI_node*);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(frame_pointer => DI_node*));
+        module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+        self->dwarf_status.DI_counter += 1;
+    }
+
+    func generate_DWARF(self) {
+        self->generate_llvm_ident();
+        self->generate_llvm_module_flags();
+    }
+}
+
+impl mir2sir {
     pub func generate(self, mctx: mir_context*) {
+        self->generate_DWARF();
+
         self->generate_type_mapper();
         self->emit_struct(mctx);
         self->emit_func_decl(mctx);

@@ -1,14 +1,16 @@
-use std::vec::{ vec };
+use std::vec::{ primitive_vec, vec };
 use std::map::{ hashmap, pair };
 use std::ptr::{ basic };
 use std::str::{ str };
 use std::libc::{ free };
 use std::io::{ io };
+use std::ptr::{ ptr };
 
 use err::span::{ span };
 use sir::sir::*;
 
 use sema::type::{ type };
+use dwarf::dwarf::*;
 
 use util::mangling::{ llvm_raw_string };
 use util::misc::{ get_platform, get_arch };
@@ -158,6 +160,12 @@ pub struct sir_context {
     func_decls: vec<sir_func>,
     func_impls: vec<sir_func>,
     const_strings: hashmap<str, basic<u64>>,
+
+    named_metadata: primitive_vec<ptr<DI_named_metadata>>,
+    debug_info: primitive_vec<ptr<DI_node>>,
+    DI_file_map: hashmap<str, basic<u64>>,
+    DI_basic_type_map: hashmap<str, basic<u64>>,
+
     pkg: package*
 }
 
@@ -168,6 +176,10 @@ impl sir_context {
             func_decls: vec<sir_func>::instance(),
             func_impls: vec<sir_func>::instance(),
             const_strings: hashmap<str, basic<u64>>::instance(),
+            named_metadata: primitive_vec<ptr<DI_named_metadata>>::instance(),
+            debug_info: primitive_vec<ptr<DI_node>>::instance(),
+            DI_file_map: hashmap<str, basic<u64>>::instance(),
+            DI_basic_type_map: hashmap<str, basic<u64>>::instance(),
             pkg: pkg
         };
     }
@@ -177,6 +189,20 @@ impl sir_context {
         self->func_decls.delete();
         self->func_impls.delete();
         self->const_strings.delete();
+        for (var i = self->named_metadata.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap() => DI_node*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->named_metadata.delete();
+        for (var i = self->debug_info.iter(); !i.is_end(); i = i.next()) {
+            var n = i.get().unwrap();
+            n->delete();
+            free(n => i8*);
+        }
+        self->debug_info.delete();
+        self->DI_file_map.delete();
+        self->DI_basic_type_map.delete();
     }
 }
 
@@ -336,6 +362,23 @@ impl sir_context {
         }
     }
 
+    func dump_named_metadata(self, out: io) {
+        for (var i = self->named_metadata.iter(); !i.is_end(); i = i.next()) {
+            i.get().unwrap()->dump(out);
+            out.endln();
+        }
+        if (self->named_metadata.size > 0) {
+            out.endln();
+        }
+    }
+
+    func dump_debug_info(self, out: io) {
+        for (var i = self->debug_info.iter(); !i.is_end(); i = i.next()) {
+            i.get().unwrap()->dump(out);
+            out.endln();
+        }
+    }
+
     pub func dump(self, out: io) {
         self->dump_target_tripple(out);
         self->dump_structs(out);
@@ -344,5 +387,7 @@ impl sir_context {
         self->dump_struct_size_method(out);
         self->dump_struct_alloc_method(out);
         self->dump_func_impls(out);
+        self->dump_named_metadata(out);
+        self->dump_debug_info(out);
     }
 }
