@@ -64,6 +64,10 @@ impl DI_node {
                 var n = self => DI_compile_unit*;
                 n->delete();
             }
+            DI_kind::DI_basic_type => {
+                var n = self => DI_basic_type*;
+                n->delete();
+            }
             _ => unimplemented();
         }
     }
@@ -109,6 +113,10 @@ impl DI_node {
             }
             DI_kind::DI_compile_unit => {
                 var n = self => DI_compile_unit*;
+                n->dump(out);
+            }
+            DI_kind::DI_basic_type => {
+                var n = self => DI_basic_type*;
                 n->dump(out);
             }
             _ => unimplemented();
@@ -319,6 +327,28 @@ pub struct DI_basic_type {
     name: str,
     size_in_bits: u64,
     encoding: str
+}
+
+impl DI_basic_type {
+    pub func new(i: u64, n: i8*, s: u64, e: i8*) -> DI_basic_type* {
+        var res = DI_basic_type::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_basic_type, i);
+        res->name = str::from(n);
+        res->size_in_bits = s;
+        res->encoding = str::from(e);
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->encoding.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DIBasicType(name: \"").out(self->name.c_str);
+        out.out("\", size: ").out_u64(self->size_in_bits).out(", encoding: ");
+        out.out(self->encoding.c_str).out(")");
+    }
 }
 
 pub struct DI_structure_type {
