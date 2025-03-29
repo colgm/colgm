@@ -68,6 +68,10 @@ impl DI_node {
                 var n = self => DI_basic_type*;
                 n->delete();
             }
+            DI_kind::DI_structure_type => {
+                var n = self => DI_structure_type*;
+                n->delete();
+            }
             DI_kind::DI_enum_type => {
                 var n = self => DI_enum_type*;
                 n->delete();
@@ -76,6 +80,11 @@ impl DI_node {
                 var n = self => DI_enumerator*;
                 n->delete();
             }
+            DI_kind::DI_subprogram => {
+                var n = self => DI_subprogram*;
+                n->delete();
+            }
+            DI_kind::DI_location => {}
             _ => unimplemented();
         }
     }
@@ -127,12 +136,24 @@ impl DI_node {
                 var n = self => DI_basic_type*;
                 n->dump(out);
             }
+            DI_kind::DI_structure_type => {
+                var n = self => DI_structure_type*;
+                n->dump(out);
+            }
             DI_kind::DI_enum_type => {
                 var n = self => DI_enum_type*;
                 n->dump(out);
             }
             DI_kind::DI_enumerator => {
                 var n = self => DI_enumerator*;
+                n->dump(out);
+            }
+            DI_kind::DI_subprogram => {
+                var n = self => DI_subprogram*;
+                n->dump(out);
+            }
+            DI_kind::DI_location => {
+                var n = self => DI_location*;
                 n->dump(out);
             }
             _ => unimplemented();
@@ -372,7 +393,32 @@ pub struct DI_structure_type {
     name: str,
     identifier: str,
     file_index: u64,
-    line: u64
+    line: i64
+}
+
+impl DI_structure_type {
+    pub func new(i: u64, n: i8*, id: i8*, fi: u64, l: i64) -> DI_structure_type* {
+        var res = DI_structure_type::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_structure_type, i);
+        res->name = str::from(n);
+        res->identifier = str::from(id);
+        res->file_index = fi;
+        res->line = l;
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->identifier.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DICompositeType(tag: DW_TAG_structure_type, ");
+        out.out("name: \"").out(self->name.c_str).out("\", ");
+        out.out("file: !").out_u64(self->file_index).out(", ");
+        out.out("line: ").out_i64(self->line).out(", ");
+        out.out("identifier: \"").out(self->identifier.c_str).out("\")");
+    }
 }
 
 pub struct DI_enum_type {
@@ -445,13 +491,53 @@ pub struct DI_subprogram {
     base: DI_node,
     name: str,
     file_index: u64,
-    line: u64,
+    line: i64,
     compile_unit_index: u64
+}
+
+impl DI_subprogram {
+    pub func new(i: u64, n: i8*, fi: u64, l: i64, cu: u64) -> DI_subprogram* {
+        var res = DI_subprogram::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_subprogram, i);
+        res->name = str::from(n);
+        res->file_index = fi;
+        res->line = l;
+        res->compile_unit_index = cu;
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("distinct !DISubprogram(name: \"").out(self->name.c_str).out("\", ");
+        out.out("file: !").out_u64(self->file_index).out(", ");
+        out.out("line: ").out_i64(self->line).out(", ");
+        out.out("unit: !").out_u64(self->compile_unit_index).out(")");
+    }
 }
 
 pub struct DI_location {
     base: DI_node,
-    line: u64,
-    column: u64,
+    line: i64,
+    column: i64,
     scope_index: u64
+}
+
+impl DI_location {
+    pub func new(i: u64, l: i64, c: i64, si: u64) -> DI_location* {
+        var res = DI_location::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_location, i);
+        res->line = l;
+        res->column = c;
+        res->scope_index = si;
+        return res;
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DILocation(line: ").out_i64(self->line).out(", ");
+        out.out("column: ").out_i64(self->column).out(", ");
+        out.out("scope: !").out_u64(self->scope_index).out(")");
+    }
 }

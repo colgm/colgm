@@ -19,6 +19,7 @@ use dwarf::status::{ DWARF_status };
 
 use sema::symbol_info::{ symbol_kind };
 use sema::enumerate::{ colgm_enum };
+use sema::structure::{ colgm_struct };
 use sema::context::{ sema_context };
 use sema::type::{ type };
 
@@ -2676,9 +2677,59 @@ impl mir2sir {
         }
     }
 
-    func generate_DI_structure_type(self, mctx: mir_context*) {}
+    func generate_single_DI_struct(self, s: colgm_struct*) {
+        var ty = type::instance();
+        ty.name.append_i8_vec(s->name.c_str);
+        ty.loc_file.append_i8_vec(s->location.file.c_str);
+        var id = ty.full_path_name(self->pkg, false);
 
-    func generate_DI_subprogram(self, mctx: mir_context*) {}
+        var tmp = DI_structure_type::new(
+            self->dwarf_status.DI_counter,
+            s->name.c_str,
+            id.c_str,
+            self->sctx->DI_file_map.get(s->location.file.__ptr__())->unwrap(),
+            s->location.begin_line,
+        );
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
+        self->dwarf_status.DI_counter += 1;
+
+        ty.delete();
+        id.delete();
+    }
+
+    func generate_DI_structure_type(self) {
+        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
+            for (var j = i.value()->structs.iter(); !j.is_end(); j = j.next()) {
+                self->generate_single_DI_struct(j.value());
+            }
+        }
+    }
+
+    func generate_single_DI_subprogram(self, f: mir_func*) {
+        // auto added libc functions may not have location
+        if (!self->sctx->DI_file_map.has(f->location.file.__ptr__())) {
+            return;
+        }
+
+        var tmp = DI_subprogram::new(
+            self->dwarf_status.DI_counter,
+            f->name.c_str,
+            self->sctx->DI_file_map.get(f->location.file.__ptr__())->unwrap(),
+            f->location.begin_line,
+            self->dwarf_status.compile_unit_index
+        );
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
+        self->dwarf_status.DI_counter += 1;
+    }
+
+    func generate_DI_subprogram(self, mctx: mir_context*) {
+        for (var i = mctx->decls.iter(); !i.is_end(); i = i.next()) {
+            self->generate_single_DI_subprogram(i.get());
+        }
+        for (var i = mctx->impls.iter(); !i.is_end(); i = i.next()) {
+            self->generate_single_DI_subprogram(i.get());
+        }
+    }
 
     func generate_DWARF(self, mctx: mir_context*) {
         self->generate_llvm_ident();
@@ -2687,7 +2738,7 @@ impl mir2sir {
         self->generate_llvm_dbg_cu();
         self->generate_basic_type();
         self->generate_DI_enum_type();
-        self->generate_DI_structure_type(mctx);
+        self->generate_DI_structure_type();
         self->generate_DI_subprogram(mctx);
     }
 }
