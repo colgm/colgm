@@ -1,6 +1,6 @@
 use std::io::{ io };
 use std::str::{ str };
-use std::vec::{ vec };
+use std::vec::{ primitive_vec };
 use std::ptr::{ ptr };
 use std::libc::{ free };
 
@@ -127,7 +127,7 @@ impl DI_node {
 pub struct DI_named_metadata {
     base: DI_node,
     name: str,
-    nodes: vec<ptr<DI_node>>
+    nodes: primitive_vec<ptr<DI_node>>
 }
 
 impl DI_named_metadata {
@@ -135,14 +135,14 @@ impl DI_named_metadata {
         var res = DI_named_metadata::__alloc__();
         res->base = DI_node::instance(DI_kind::DI_named_metadata, DI_ERROR_INDEX());
         res->name = str::from(name);
-        res->nodes = vec<ptr<DI_node>>::instance();
+        res->nodes = primitive_vec<ptr<DI_node>>::instance();
         return res;
     }
 
     pub func delete(self) {
         self->name.delete();
         for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
-            var n = i.get()->unwrap();
+            var n = i.get().unwrap();
             n->delete();
             free(n => i8*);
         }
@@ -150,13 +150,13 @@ impl DI_named_metadata {
     }
 
     pub func add(self, n: DI_node*) {
-        self->nodes.push(ptr<DI_node>::wrap(n).__ptr__());
+        self->nodes.push(ptr<DI_node>::wrap(n));
     }
 
     pub func dump(self, out: io) {
         out.out("!").out(self->name.c_str).out(" = !{");
         for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
-            i.get()->unwrap()->dump(out);
+            i.get().unwrap()->dump(out);
             if (i.index() != self->nodes.size - 1) {
                 out.out(", ");
             }
@@ -185,20 +185,20 @@ impl DI_ref_index {
 
 pub struct DI_list {
     base: DI_node,
-    nodes: vec<ptr<DI_node>>
+    nodes: primitive_vec<ptr<DI_node>>
 }
 
 impl DI_list {
     pub func new(i: u64) -> DI_list* {
         var res = DI_list::__alloc__();
         res->base = DI_node::instance(DI_kind::DI_list, i);
-        res->nodes = vec<ptr<DI_node>>::instance();
+        res->nodes = primitive_vec<ptr<DI_node>>::instance();
         return res;
     }
 
     pub func delete(self) {
         for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
-            var n = i.get()->unwrap();
+            var n = i.get().unwrap();
             n->delete();
             free(n => i8*);
         }
@@ -206,13 +206,13 @@ impl DI_list {
     }
 
     pub func add(self, n: DI_node*) {
-        self->nodes.push(ptr<DI_node>::wrap(n).__ptr__());
+        self->nodes.push(ptr<DI_node>::wrap(n));
     }
 
     pub func dump(self, out: io) {
         out.out("!{");
         for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
-            i.get()->unwrap()->dump(out);
+            i.get().unwrap()->dump(out);
             if (i.index() != self->nodes.size - 1) {
                 out.out(", ");
             }

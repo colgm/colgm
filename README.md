@@ -3,14 +3,6 @@
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 [![nightly-build](https://github.com/colgm/colgm/actions/workflows/release.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/release.yml)
 
-## Repo Content
-
-- [bootstrap](./bootstrap/README.md) : bootstrap compiler.
-- [src](./src/README.md) : self-host compiler.
-- [test](./test): test cases.
-
-## Hello World
-
 ```rust
 use std::libc::puts;
 
@@ -19,6 +11,12 @@ pub func main() -> i32 {
     return 0;
 }
 ```
+
+## Repo Content
+
+- [bootstrap](./bootstrap/README.md) : bootstrap compiler.
+- [src](./src/README.md) : self-host compiler.
+- [test](./test): test cases.
 
 ## Tutorial
 
@@ -78,7 +76,7 @@ On macOS this option is not necessary because attribute
 
 Learn more about [Self-host compiler](./src/README.md)
 
-## TODO
+## Features and Roadmap
 
 1. support foreach/forindex:
     - forindex loop, container should have `size()` method
