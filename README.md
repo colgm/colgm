@@ -11,8 +11,6 @@
 
 ## Hello World
 
-Hello world example is available in `bootstrap`:
-
 ```rust
 use std::libc::puts;
 
@@ -40,7 +38,7 @@ Use these commands to build the bootstrap compiler, use `-DCMAKE_BUILD_TYPE=Debu
 
 ```sh
 mkdir build && cd build
-cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release && make -j
+cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release && make -j6
 ```
 
 The executable is located as `build/colgm`.
@@ -90,5 +88,5 @@ Learn more about [Self-host compiler](./src/README.md)
 3. array type like `[i32; 128]`
     - syntax like `var a: [i32; 128] = [1, 2, 3];`
     - syntax like `var a: [i8*; 128] = ["foo", "bar", tmp];`
-4. tagged union
-5. tuple
+4. feature: [tagged union](./doc/spec/tagged_union.md)
+5. feature: [tuple](./doc/spec/tuple.md)
