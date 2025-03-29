@@ -1434,7 +1434,7 @@ void mir2sir::generate_basic_type() {
     }
 }
 
-void mir2sir::generate_DI_enum_type(const mir_context&) {
+void mir2sir::generate_DI_enum_type() {
     for (auto& d : ctx.global.domain) {
         for (auto& e : d.second.enums) {
             const auto ty = type {
@@ -1533,7 +1533,7 @@ void mir2sir::generate_DWARF(const mir_context& mctx) {
     generate_DIFile();
     generate_llvm_dbg_cu();
     generate_basic_type();
-    generate_DI_enum_type(mctx);
+    generate_DI_enum_type();
     generate_DI_structure_type(mctx);
     generate_DI_subprogram(mctx);
 }

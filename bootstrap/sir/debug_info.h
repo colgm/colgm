@@ -200,10 +200,10 @@ public:
 class DI_enumerator: public DI_node {
 private:
     std::string name;
-    i32 value;
+    u64 value;
 
 public:
-    DI_enumerator(u64 i, const std::string& n, i32 v):
+    DI_enumerator(u64 i, const std::string& n, u64 v):
         DI_node(DI_kind::DI_enumerator, i), name(n), value(v) {}
     ~DI_enumerator() = default;
     void dump(std::ostream&) const override;

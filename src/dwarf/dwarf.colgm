@@ -68,6 +68,14 @@ impl DI_node {
                 var n = self => DI_basic_type*;
                 n->delete();
             }
+            DI_kind::DI_enum_type => {
+                var n = self => DI_enum_type*;
+                n->delete();
+            }
+            DI_kind::DI_enumerator => {
+                var n = self => DI_enumerator*;
+                n->delete();
+            }
             _ => unimplemented();
         }
     }
@@ -117,6 +125,14 @@ impl DI_node {
             }
             DI_kind::DI_basic_type => {
                 var n = self => DI_basic_type*;
+                n->dump(out);
+            }
+            DI_kind::DI_enum_type => {
+                var n = self => DI_enum_type*;
+                n->dump(out);
+            }
+            DI_kind::DI_enumerator => {
+                var n = self => DI_enumerator*;
                 n->dump(out);
             }
             _ => unimplemented();
@@ -364,15 +380,65 @@ pub struct DI_enum_type {
     name: str,
     identifier: str,
     file_index: u64,
-    line: u64,
+    line: i64,
     base_type_index: u64,
     elements_index: u64
+}
+
+impl DI_enum_type {
+    pub func new(i: u64, n: i8*, id: i8*, fi: u64, l: i64, bti: u64) -> DI_enum_type* {
+        var res = DI_enum_type::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_enum_type, i);
+        res->name = str::from(n);
+        res->identifier = str::from(id);
+        res->file_index = fi;
+        res->line = l;
+        res->base_type_index = bti;
+        res->elements_index = DI_ERROR_INDEX();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->identifier.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DICompositeType(tag: DW_TAG_enumeration_type, ");
+        out.out("name: \"").out(self->name.c_str).out("\", ");
+        out.out("file: !").out_u64(self->file_index).out(", ");
+        out.out("line: ").out_i64(self->line).out(", ");
+        out.out("baseType: !").out_u64(self->base_type_index).out(", ");
+        if (self->elements_index != DI_ERROR_INDEX()) {
+            out.out("elements: !").out_u64(self->elements_index).out(", ");
+        }
+        out.out("identifier: \"").out(self->identifier.c_str).out("\")");
+    }
 }
 
 pub struct DI_enumerator {
     base: DI_node,
     name: str,
-    value: i32
+    value: i64
+}
+
+impl DI_enumerator {
+    pub func new(i: u64, n: i8*, v: i64) -> DI_enumerator* {
+        var res = DI_enumerator::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_enumerator, i);
+        res->name = str::from(n);
+        res->value = v;
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DIEnumerator(name: \"").out(self->name.c_str).out("\", ");
+        out.out("value: ").out_i64(self->value).out(")");
+    }
 }
 
 pub struct DI_subprogram {

@@ -244,7 +244,7 @@ public:
     void generate_llvm_dbg_cu();
     void generate_DIFile();
     void generate_basic_type();
-    void generate_DI_enum_type(const mir_context&);
+    void generate_DI_enum_type();
     void generate_DI_structure_type(const mir_context&);
     void generate_DI_subprogram(const mir_context&);
     void generate_DWARF(const mir_context&);

@@ -18,6 +18,7 @@ use dwarf::dwarf::*;
 use dwarf::status::{ DWARF_status };
 
 use sema::symbol_info::{ symbol_kind };
+use sema::enumerate::{ colgm_enum };
 use sema::context::{ sema_context };
 use sema::type::{ type };
 
@@ -2447,6 +2448,18 @@ impl mir2sir {
     }
 
     func generate_basic_type(self) {
+        var i64_s = str::from("i64");
+        var i32_s = str::from("i32");
+        var i16_s = str::from("i16");
+        var i8_s = str::from("i8");
+        var u64_s = str::from("u64");
+        var u32_s = str::from("u32");
+        var u16_s = str::from("u16");
+        var u8_s = str::from("u8");
+        var f64_s = str::from("f64");
+        var f32_s = str::from("f32");
+        var bool_s = str::from("bool");
+
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
             DI_basic_type::new(
                 self->dwarf_status.DI_counter,
@@ -2455,7 +2468,12 @@ impl mir2sir {
                 "DW_ATE_signed"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            i8_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
+
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
             DI_basic_type::new(
                 self->dwarf_status.DI_counter,
@@ -2464,7 +2482,12 @@ impl mir2sir {
                 "DW_ATE_signed"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            i16_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
+
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
             DI_basic_type::new(
                 self->dwarf_status.DI_counter,
@@ -2473,7 +2496,12 @@ impl mir2sir {
                 "DW_ATE_signed"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            i32_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
+
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
             DI_basic_type::new(
                 self->dwarf_status.DI_counter,
@@ -2482,6 +2510,10 @@ impl mir2sir {
                 "DW_ATE_signed"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            i64_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
 
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
@@ -2492,7 +2524,12 @@ impl mir2sir {
                 "DW_ATE_unsigned"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            u8_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
+
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
             DI_basic_type::new(
                 self->dwarf_status.DI_counter,
@@ -2501,7 +2538,12 @@ impl mir2sir {
                 "DW_ATE_unsigned"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            u16_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
+
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
             DI_basic_type::new(
                 self->dwarf_status.DI_counter,
@@ -2510,7 +2552,12 @@ impl mir2sir {
                 "DW_ATE_unsigned"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            u32_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
+
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
             DI_basic_type::new(
                 self->dwarf_status.DI_counter,
@@ -2519,6 +2566,10 @@ impl mir2sir {
                 "DW_ATE_unsigned"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            u64_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
 
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
@@ -2529,7 +2580,12 @@ impl mir2sir {
                 "DW_ATE_float"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            f32_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
+
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
             DI_basic_type::new(
                 self->dwarf_status.DI_counter,
@@ -2538,6 +2594,10 @@ impl mir2sir {
                 "DW_ATE_float"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            f64_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
 
         self->sctx->debug_info.push(ptr<DI_node>::wrap(
@@ -2548,21 +2608,93 @@ impl mir2sir {
                 "DW_ATE_boolean"
             ) => DI_node*
         ));
+        self->sctx->DI_basic_type_map.insert(
+            bool_s.__ptr__(),
+            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+        );
         self->dwarf_status.DI_counter += 1;
+
+        i64_s.delete();
+        i32_s.delete();
+        i16_s.delete();
+        i8_s.delete();
+        u64_s.delete();
+        u32_s.delete();
+        u16_s.delete();
+        u8_s.delete();
+        f64_s.delete();
+        f32_s.delete();
+        bool_s.delete();
     }
 
-    func generate_DWARF(self) {
+    func generate_single_DI_enum(self, e: colgm_enum*) {
+        var ty = type::instance();
+        ty.name.append_i8_vec(e->name.c_str);
+        ty.loc_file.append_i8_vec(e->location.file.c_str);
+        var id = ty.full_path_name(self->pkg, false);
+
+        var i64_s = str::from("i64");
+
+        var tmp = DI_enum_type::new(
+            self->dwarf_status.DI_counter,
+            e->name.c_str,
+            id.c_str,
+            self->sctx->DI_file_map.get(e->location.file.__ptr__())->unwrap(),
+            e->location.begin_line,
+            self->sctx->DI_basic_type_map.get(i64_s.__ptr__())->unwrap()
+        );
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
+        self->dwarf_status.DI_counter += 1;
+
+        var enum_list = DI_list::new(self->dwarf_status.DI_counter);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(enum_list => DI_node*));
+        tmp->elements_index = self->dwarf_status.DI_counter;
+        self->dwarf_status.DI_counter += 1;
+
+        for (var i = e->ordered_member.iter(); !i.is_end(); i = i.next()) {
+            self->sctx->debug_info.push(ptr<DI_node>::wrap(
+                DI_enumerator::new(
+                    self->dwarf_status.DI_counter,
+                    i.get()->c_str,
+                    e->members.get(i.get())->unwrap()
+                ) => DI_node*
+            ));
+            enum_list->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+            self->dwarf_status.DI_counter += 1;
+        }
+
+        ty.delete();
+        id.delete();
+        i64_s.delete();
+    }
+
+    func generate_DI_enum_type(self) {
+        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
+            for (var j = i.value()->enums.iter(); !j.is_end(); j = j.next()) {
+                self->generate_single_DI_enum(j.value());
+            }
+        }
+    }
+
+    func generate_DI_structure_type(self, mctx: mir_context*) {}
+
+    func generate_DI_subprogram(self, mctx: mir_context*) {}
+
+    func generate_DWARF(self, mctx: mir_context*) {
         self->generate_llvm_ident();
         self->generate_llvm_module_flags();
         self->generate_DI_file();
         self->generate_llvm_dbg_cu();
         self->generate_basic_type();
+        self->generate_DI_enum_type();
+        self->generate_DI_structure_type(mctx);
+        self->generate_DI_subprogram(mctx);
     }
 }
 
 impl mir2sir {
     pub func generate(self, mctx: mir_context*) {
-        self->generate_DWARF();
+        self->generate_DWARF(mctx);
 
         self->generate_type_mapper();
         self->emit_struct(mctx);
