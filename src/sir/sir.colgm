@@ -544,15 +544,17 @@ impl sir_temp_ptr {
 pub struct sir_ret {
     base: sir,
     type: str,
-    value: value_t
+    value: value_t,
+    debug_info_index: u64
 }
 
 impl sir_ret {
-    pub func new(type: str*, v: value_t*) -> sir_ret* {
+    pub func new(type: str*, v: value_t*, dii: u64) -> sir_ret* {
         var n = sir_ret::__alloc__();
         n->base = sir::instance(sir_kind::sir_ret);
         n->type = type->copy_instance();
         n->value = v->copy_instance();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -567,6 +569,9 @@ impl sir_ret {
             out.out(" ");
             self->value.dump(out);
         }
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
         out.endln();
     }
 }
@@ -575,16 +580,18 @@ pub struct sir_str {
     base: sir,
     index: u64,
     length: u64,
-    target: value_t
+    target: value_t,
+    debug_info_index: u64
 }
 
 impl sir_str {
-    pub func new(index: u64, length: u64, tgt: value_t*) -> sir_str* {
+    pub func new(index: u64, length: u64, tgt: value_t*, dii: u64) -> sir_str* {
         var n = sir_str::__alloc__();
         n->base = sir::instance(sir_kind::sir_str);
         n->index = index;
         n->length = length;
         n->target = tgt->copy_instance();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -596,22 +603,28 @@ impl sir_str {
         out.out("  ");
         self->target.dump(out);
         out.out(" = bitcast [").out_u64(self->length).out(" x i8]* ");
-        out.out("@str.").out_u64(self->index).out(" to i8*\n");
+        out.out("@str.").out_u64(self->index).out(" to i8*");
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
+        out.endln();
     }
 }
 
 pub struct sir_zeroinitializer {
     base: sir,
     type: str,
-    target: value_t
+    target: value_t,
+    debug_info_index: u64
 }
 
 impl sir_zeroinitializer {
-    pub func new(tgt: value_t*, type: str*) -> sir_zeroinitializer* {
+    pub func new(tgt: value_t*, type: str*, dii: u64) -> sir_zeroinitializer* {
         var n = sir_zeroinitializer::__alloc__();
         n->base = sir::instance(sir_kind::sir_zeroinitializer);
         n->type = type->copy_instance();
         n->target = tgt->copy_instance();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -624,6 +637,9 @@ impl sir_zeroinitializer {
         out.out("  store ").out(self->type.c_str).out(" zeroinitializer, ");
         out.out(self->type.c_str).out("* ");
         self->target.dump(out);
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
         out.endln();
     }
 }
@@ -634,7 +650,8 @@ pub struct sir_get_index {
     target: value_t,
     index: value_t,
     type: str,
-    index_type: str
+    index_type: str,
+    debug_info_index: u64
 }
 
 impl sir_get_index {
@@ -642,7 +659,8 @@ impl sir_get_index {
                  tgt: value_t*,
                  idx: value_t*,
                  t: str*,
-                 it: str*) -> sir_get_index* {
+                 it: str*,
+                 dii: u64) -> sir_get_index* {
         var n = sir_get_index::__alloc__();
         n->base = sir::instance(sir_kind::sir_get_index);
         n->source = src->copy_instance();
@@ -650,6 +668,7 @@ impl sir_get_index {
         n->index = idx->copy_instance();
         n->type = t->copy_instance();
         n->index_type = it->copy_instance();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -669,6 +688,9 @@ impl sir_get_index {
         self->source.dump(out);
         out.out(", ").out(self->index_type.c_str).out(" ");
         self->index.dump(out);
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
         out.endln();
     }
 }
@@ -678,17 +700,19 @@ pub struct sir_get_field {
     source: value_t,
     target: value_t,
     struct_name: str,
-    index: i64
+    index: i64,
+    debug_info_index: u64
 }
 
 impl sir_get_field {
-    pub func new(tgt: value_t*, src: value_t*, sn: str*, i: i64) -> sir_get_field* {
+    pub func new(tgt: value_t*, src: value_t*, sn: str*, i: i64, dii: u64) -> sir_get_field* {
         var n = sir_get_field::__alloc__();
         n->base = sir::instance(sir_kind::sir_get_field);
         n->target = tgt->copy_instance();
         n->source = src->copy_instance();
         n->struct_name = sn->copy_instance();
         n->index = i;
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -705,7 +729,11 @@ impl sir_get_field {
         out.out(self->struct_name.c_str).out(", ");
         out.out(self->struct_name.c_str).out("* ");
         self->source.dump(out);
-        out.out(", i32 0, i32 ").out_i64(self->index).endln();
+        out.out(", i32 0, i32 ").out_i64(self->index);
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
+        out.endln();
     }
 }
 

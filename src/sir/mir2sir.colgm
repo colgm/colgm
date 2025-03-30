@@ -24,6 +24,7 @@ use sema::context::{ sema_context };
 use sema::type::{ type };
 
 use err::panic::{ panic, unreachable };
+use err::span::{ span };
 use package::{ package };
 
 use util::cli::{ version };
@@ -1072,7 +1073,8 @@ impl mir2sir {
         self->block->add_stmt(sir_str::new(
             self->sctx->const_strings.get(n->value.__ptr__())->unwrap(),
             n->value.size + 1,
-            v.__ptr__()
+            v.__ptr__(),
+            self->generate_DI_location(n->base.location.__ptr__())
         ) => sir*);
 
         var sv = mir_value_t::variable(temp.__ptr__(), n->resolved_type.__ptr__());
@@ -1167,7 +1169,8 @@ impl mir2sir {
         ) => sir*);
         self->block->add_stmt(sir_zeroinitializer::new(
             temp_var_value.__ptr__(),
-            n_ty.__ptr__()
+            n_ty.__ptr__(),
+            self->generate_DI_location(n->base.location.__ptr__())
         ) => sir*);
 
         var name_for_search = n->resolved_type.generic_name(self->pkg);
@@ -1182,7 +1185,8 @@ impl mir2sir {
                 target_value.__ptr__(),
                 temp_var_value.__ptr__(),
                 n_ty.__ptr__(),
-                index
+                index,
+                self->generate_DI_location(i.get()->content->base.location.__ptr__())
             ) => sir*);
 
             self->visit(i.get()->content => mir*);
@@ -1368,7 +1372,8 @@ impl mir2sir {
             target_value.__ptr__(),
             index_value.__ptr__(),
             prev_ref_ref_ty.__ptr__(),
-            index_ty.__ptr__()
+            index_ty.__ptr__(),
+            self->generate_DI_location(n->base.location.__ptr__())
         ) => sir*);
 
         var n_ptr = n->resolved_type.pointer_copy();
@@ -1460,16 +1465,7 @@ impl mir2sir {
         }
 
         // generate DWARF info
-        var DI_loc = DI_location::new(
-            self->dwarf_status.DI_counter,
-            n->base.location.file.c_str,
-            n->base.location.begin_line + 1,
-            n->base.location.begin_column,
-            self->dwarf_status.scope_index
-        );
-        sir_function_call->debug_info_index = self->dwarf_status.DI_counter;
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(DI_loc => DI_node*));
-        self->dwarf_status.DI_counter += 1;
+        sir_function_call->debug_info_index = self->generate_DI_location(n->base.location.__ptr__());
 
         // load args
         for (var i = args.iter(); !i.is_end(); i = i.next()) {
@@ -1569,7 +1565,8 @@ impl mir2sir {
             target_value.__ptr__(),
             prev_value.__ptr__(),
             prev_ref_ty.__ptr__(),
-            index
+            index,
+            self->generate_DI_location(n->base.location.__ptr__())
         ) => sir*);
 
         var n_ty = n->resolved_type.pointer_copy();
@@ -1657,7 +1654,8 @@ impl mir2sir {
             temp_1_value.__ptr__(),
             temp_0_value.__ptr__(),
             prev_ref_ref_ty.__ptr__(),
-            index
+            index,
+            self->generate_DI_location(n->base.location.__ptr__())
         ) => sir*);
 
         var n_ty = n->resolved_type.pointer_copy();
@@ -2241,7 +2239,8 @@ impl mir2sir {
             var null_val = value_t::null(nil);
             self->block->add_stmt(sir_ret::new(
                 void_name.__ptr__(),
-                null_val.__ptr__()
+                null_val.__ptr__(),
+                self->generate_DI_location(n->base.location.__ptr__())
             ) => sir*);
             void_name.delete();
             null_val.delete();
@@ -2256,7 +2255,8 @@ impl mir2sir {
         var ret_val = ret.to_value_t();
         self->block->add_stmt(sir_ret::new(
             ret_ty.__ptr__(),
-            ret_val.__ptr__()
+            ret_val.__ptr__(),
+            self->generate_DI_location(n->base.location.__ptr__())
         ) => sir*);
 
         ret.delete();
@@ -2356,6 +2356,20 @@ impl mir2sir {
 }
 
 impl mir2sir {
+    func generate_DI_location(self, loc: span*) -> u64 {
+        var index = self->dwarf_status.DI_counter;
+        var DI_loc = DI_location::new(
+            index,
+            loc->file.c_str,
+            loc->begin_line + 1,
+            loc->begin_column,
+            self->dwarf_status.scope_index
+        );
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(DI_loc => DI_node*));
+        self->dwarf_status.DI_counter += 1;
+        return index;
+    }
+
     func generate_llvm_ident(self) {
         var ident = DI_named_metadata::new("llvm.ident");
         self->sctx->named_metadata.push(ptr<DI_named_metadata>::wrap(ident));
