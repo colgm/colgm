@@ -1,5 +1,5 @@
 use std::io::{ flag };
-use std::libc::{ open, close, free, stat, getenv, strlen };
+use std::libc::{ open, close, free, stat, getenv, getcwd, strlen };
 use std::sys::{ stat_flag, stat_info };
 
 use std::str::{ str };
@@ -49,5 +49,13 @@ impl fs {
 
         tmp.delete();
         return res;
+    }
+
+    pub func CWD() -> str {
+        var buffer = [i8; 1025];
+        if (getcwd(buffer, 1024) != nil) {
+            return str::from(buffer);
+        }
+        return str::from("");
     }
 }

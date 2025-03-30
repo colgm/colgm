@@ -129,7 +129,7 @@ impl mir_context {
         }
     }
 
-    pub func adjust_posix_open(self) {
+    pub func adjust_posix_open(self, verbose: bool) {
         for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
             if (!i.get()->name.eq_const("open")) {
                 continue;
@@ -142,8 +142,10 @@ impl mir_context {
             open_func->with_va_args = true;
             break;
         }
-        io::stdout().green().out("[     MIR ] ").reset();
-        io::stdout().out("run adjust posix open: passed\n");
+        if (verbose) {
+            io::stdout().green().out("[ MIR-PASS ] ").reset();
+            io::stdout().out("run adjust posix open: passed\n");
+        }
     }
 
     func add_malloc_decl(self) {
@@ -262,11 +264,13 @@ impl mir_context {
         zero.delete();
     }
 
-    pub func add_default_func(self) {
+    pub func add_default_func(self, verbose: bool) {
         self->add_malloc_decl();
         self->add_free_decl();
         self->add_main_impl();
-        io::stdout().green().out("[     MIR ] ").reset();
-        io::stdout().out("run add default function: passed\n");
+        if (verbose) {
+            io::stdout().green().out("[ MIR-PASS ] ").reset();
+            io::stdout().out("run add default function: passed\n");
+        }
     }
 }

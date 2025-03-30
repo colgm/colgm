@@ -430,7 +430,15 @@ impl parser {
         var res = ast_array_literal::new(self->this_tok_loc_copy());
         self->match_token(tok_kind::tok_lbracket);
         res->type = self->type_def_gen();
-        self->match_token(tok_kind::tok_semi);
+        if (self->this_tok()->kind == tok_kind::tok_colon) {
+            self->err->error(
+                self->this_tok()->location,
+                "\":\" is not allowed in array literal. maybe \";\"?"
+            );
+            self->match_token(tok_kind::tok_colon);
+        } else {
+            self->match_token(tok_kind::tok_semi);
+        }
         res->size = self->number_literal_gen();
         self->match_token(tok_kind::tok_rbracket);
         self->update_location(res => ast*);

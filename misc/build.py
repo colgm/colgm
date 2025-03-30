@@ -43,4 +43,4 @@ used_clang = find_clang()
 execute([used_clang, "colgm.ll", "-o", SELF_HOST_COMPILER, "-Oz", "-rdynamic", "-lm", "--verbose"])
 
 # Test colgm self-host compiler compiling itself
-execute([SELF_HOST_COMPILER, "--library", "src", "src/main.colgm", "--verbose"])
+execute([SELF_HOST_COMPILER, "--library", "src", "src/main.colgm", "--verbose", "-Oz"])

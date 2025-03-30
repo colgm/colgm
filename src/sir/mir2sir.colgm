@@ -410,7 +410,7 @@ impl mir2sir {
     }
 
     func process_print(self, curr: u64, total: u64) {
-        io::stdout().green().out("[ MIR2SIR ] ").reset();
+        io::stdout().green().out("[  MIR2SIR ] ").reset();
         io::stdout().out("generating function (").out_u64(curr + 1);
         io::stdout().out("/").out_u64(total).out(")\r");
     }
@@ -2771,7 +2771,7 @@ impl mir2sir {
 }
 
 impl mir2sir {
-    pub func generate(self, mctx: mir_context*) {
+    pub func generate(self, mctx: mir_context*, verbose: bool) {
         self->dwarf_status.DI_counter = 0;
         self->dwarf_status.compile_unit_index = DI_ERROR_INDEX();
         self->dwarf_status.impl_debug_info.clear();
@@ -2781,7 +2781,7 @@ impl mir2sir {
         self->emit_struct(mctx);
         self->emit_func_decl(mctx);
         self->emit_func_impl(mctx);
-        adjust_va_arg(self->sctx);
-        replace_struct_ptr_call(self->sctx);
+        adjust_va_arg(self->sctx, verbose);
+        replace_struct_ptr_call(self->sctx, verbose);
     }
 }

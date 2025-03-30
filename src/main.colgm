@@ -22,11 +22,11 @@ func clang_compile(co: cli_option*) -> i32 {
     var clang = find_clang();
     if (clang.empty()) {
         clang.delete();
-        io::stdout().red().out("[   CLANG ] ").reset();
+        io::stdout().red().out("[    CLANG ] ").reset();
         io::stdout().out("cannot find suitable clang\n");
         return -1;
     } else if (co->VERBOSE) {
-        io::stdout().green().out("[   CLANG ] ").reset();
+        io::stdout().green().out("[    CLANG ] ").reset();
         io::stdout().out("find clang <").out(clang.c_str).out(">\n");
     }
 
@@ -41,18 +41,18 @@ func clang_compile(co: cli_option*) -> i32 {
     cmd.append_i8_vec(co->output_file);
     cmd.append_i8_vec(" -o a.out -rdynamic -lm");
     if (co->VERBOSE) {
-        io::stdout().green().out("[   CLANG ] ").reset();
+        io::stdout().green().out("[    CLANG ] ").reset();
         io::stdout().out("executing \"").out(cmd.c_str).out("\"\n");
     } else {
-        io::stdout().green().out("[   CLANG ] ").reset();
+        io::stdout().green().out("[    CLANG ] ").reset();
         io::stdout().out("compiling...\r");
     }
     var ret_code = system(cmd.c_str);
     if (ret_code == 0) {
-        io::stdout().green().out("[   CLANG ] ").reset();
+        io::stdout().green().out("[    CLANG ] ").reset();
         io::stdout().out("compilation succeeded\n");
     } else {
-        io::stdout().red().out("[   CLANG ] ").reset();
+        io::stdout().red().out("[    CLANG ] ").reset();
         io::stdout().out("compilation failed\n");
     }
 
@@ -81,6 +81,13 @@ func compile(option: cli_option) -> i32 {
         err.out(">, check if exists and is directory\n");
         return -1;
     }
+
+    var cwd = fs::CWD();
+    if (!cwd.empty()) {
+        io::stdout().green().out("[    COLGM ] ").reset();
+        io::stdout().out("in directory <").out(cwd.c_str).out(">").endln();
+    }
+    cwd.delete();
 
     var cc = frontend::instance(option.__ptr__());
 
@@ -114,8 +121,10 @@ func compile(option: cli_option) -> i32 {
     cc.pkg->library_path.append_i8_vec(option.library_path);
 
     // do lexer scanning
-    io::stdout().green().out("[   LEXER ] ").reset();
-    io::stdout().out("scanning tokens for entry file").endln();
+    if (option.VERBOSE) {
+        io::stdout().green().out("[    LEXER ] ").reset();
+        io::stdout().out("scanning tokens for entry file").endln();
+    }
     cc.lex->scan(option.input_file);
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
@@ -128,8 +137,10 @@ func compile(option: cli_option) -> i32 {
         cc.lex->dump(io::stdout());
     }
 
-    io::stdout().green().out("[   PARSE ] ").reset();
-    io::stdout().out("parsing syntax").endln();
+    if (option.VERBOSE) {
+        io::stdout().green().out("[   PARSER ] ").reset();
+        io::stdout().out("parsing syntax").endln();
+    }
     cc.par.parse();
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
@@ -142,16 +153,16 @@ func compile(option: cli_option) -> i32 {
         cc.par.dump(io::stdout());
     }
 
-    io::stdout().green().out("[    SEMA ] ").reset();
-    io::stdout().out("scanning symbols").endln();
+    io::stdout().green().out("[ SEMANTIC ] ").reset();
+    io::stdout().out("scanning global symbols").endln();
     regpass.run(cc.par.root);
     if (cc.err->error_count > 0) {
         cc.delete();
         return -1;
     }
 
-    io::stdout().green().out("[    SEMA ] ").reset();
-    io::stdout().out("semantic checking").endln();
+    io::stdout().green().out("[ SEMANTIC ] ").reset();
+    io::stdout().out("compiling file <").out(option.input_file).out(">").endln();
     semantic.analyse(cc.par.root);
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
@@ -167,29 +178,21 @@ func compile(option: cli_option) -> i32 {
         semantic.ctx->dump(io::stdout(), cc.pkg);
     }
 
-    if (option.VERBOSE) {
-        io::stdout().green().out("[ AST2MIR ] ").reset();
-        io::stdout().out("translating ast to mir").endln();
-    }
     ast2mir_worker.generate(cc.par.root);
-    mctx.adjust_posix_open();
-    mctx.add_default_func();
+    mctx.adjust_posix_open(option.VERBOSE);
+    mctx.add_default_func(option.VERBOSE);
     if (option.OPTION_VIEW_MIR) {
         mctx.dump(io::stdout(), cc.pkg);
     }
 
-    if (option.VERBOSE) {
-        io::stdout().green().out("[ MIR2SIR ] ").reset();
-        io::stdout().out("translating mir to sir").endln();
-    }
-    mir2sir_worder.generate(mctx.__ptr__());
+    mir2sir_worder.generate(mctx.__ptr__(), option.VERBOSE);
     if (option.OPTION_VIEW_SIR) {
         sctx.dump(io::stdout());
     }
 
     var file_output = io::fileout(option.output_file);
     if (option.VERBOSE) {
-        io::stdout().green().out("[     SIR ] ").reset();
+        io::stdout().green().out("[ SIR-PASS ] ").reset();
         io::stdout().out("generating \"").out(option.output_file).out("\"").endln();
     }
     sctx.dump(file_output);

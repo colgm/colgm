@@ -23,11 +23,13 @@ func adjust_posix_open(f: sir_func*) -> i64 {
     return adjust_count;
 }
 
-pub func adjust_va_arg(ctx: sir_context*) {
+pub func adjust_va_arg(ctx: sir_context*, verbose: bool) {
     var adjust_count = 0;
     for (var i = ctx->func_impls.iter(); !i.is_end(); i = i.next()) {
         adjust_count += adjust_posix_open(i.get());
     }
-    io::stdout().green().out("[     SIR ] ").reset();
-    io::stdout().out("run adjust va_arg call: ").out_i64(adjust_count).endln();
+    if (verbose) {
+        io::stdout().green().out("[ SIR-PASS ] ").reset();
+        io::stdout().out("run adjust va_arg call: ").out_i64(adjust_count).endln();
+    }
 }
