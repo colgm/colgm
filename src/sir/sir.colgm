@@ -8,6 +8,8 @@ use err::panic::{ unreachable };
 use sir::value::{ value_t, value_kind };
 use util::to_num::{ dec_to_u64 };
 
+use dwarf::dwarf::{ DI_ERROR_INDEX };
+
 pub enum sir_kind {
     sir_null,
     sir_nop,
@@ -730,7 +732,7 @@ impl sir_call {
         n->args = vec<value_t>::instance();
         n->with_va_args = false;
         n->with_va_args_real_param_size = 0;
-        n->debug_info_index = 0;
+        n->debug_info_index = DI_ERROR_INDEX();
         return n;
     }
 
@@ -771,7 +773,12 @@ impl sir_call {
                 out.out(", ");
             }
         }
-        out.out(")\n");
+        out.out(")");
+
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
+        out.endln();
     }
 }
 

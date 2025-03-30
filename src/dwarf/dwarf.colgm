@@ -84,7 +84,10 @@ impl DI_node {
                 var n = self => DI_subprogram*;
                 n->delete();
             }
-            DI_kind::DI_location => {}
+            DI_kind::DI_location => {
+                var n = self => DI_location*;
+                n->delete();
+            }
             _ => unimplemented();
         }
     }
@@ -520,24 +523,35 @@ impl DI_subprogram {
 
 pub struct DI_location {
     base: DI_node,
+    file: str,
     line: i64,
     column: i64,
     scope_index: u64
 }
 
 impl DI_location {
-    pub func new(i: u64, l: i64, c: i64, si: u64) -> DI_location* {
+    pub func new(i: u64, f: i8*, l: i64, c: i64, si: u64) -> DI_location* {
         var res = DI_location::__alloc__();
         res->base = DI_node::instance(DI_kind::DI_location, i);
+        res->file = str::from(f);
         res->line = l;
         res->column = c;
         res->scope_index = si;
         return res;
     }
 
+    pub func delete(self) {
+        self->file.delete();
+    }
+
     pub func dump(self, out: io) {
         out.out("!DILocation(line: ").out_i64(self->line).out(", ");
         out.out("column: ").out_i64(self->column).out(", ");
         out.out("scope: !").out_u64(self->scope_index).out(")");
+        if (!self->file.empty()) {
+            out.out(" ; ").out(self->file.c_str);
+            out.out(":").out_i64(self->line);
+            out.out(":").out_i64(self->column);
+        }
     }
 }

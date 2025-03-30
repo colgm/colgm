@@ -454,6 +454,15 @@ impl mir2sir {
                 p_pair.delete();
             }
 
+            if (self->dwarf_status.impl_debug_info.has(m_func->name.__ptr__())) {
+                self->dwarf_status.scope_index = self->dwarf_status
+                                                     .impl_debug_info
+                                                     .get(m_func->name.__ptr__())
+                                                     ->unwrap();
+            } else {
+                self->dwarf_status.scope_index = DI_ERROR_INDEX();
+            }
+
             self->ssa_gen.clear();
             self->array_ssa_gen.clear();
             self->value_stack.clear();
@@ -1449,6 +1458,18 @@ impl mir2sir {
             target_value.delete();
             mangled_name.delete();
         }
+
+        // generate DWARF info
+        var DI_loc = DI_location::new(
+            self->dwarf_status.DI_counter,
+            n->base.location.file.c_str,
+            n->base.location.begin_line + 1,
+            n->base.location.begin_column,
+            self->dwarf_status.scope_index
+        );
+        sir_function_call->debug_info_index = self->dwarf_status.DI_counter;
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(DI_loc => DI_node*));
+        self->dwarf_status.DI_counter += 1;
 
         // load args
         for (var i = args.iter(); !i.is_end(); i = i.next()) {
@@ -2719,6 +2740,12 @@ impl mir2sir {
             self->dwarf_status.compile_unit_index
         );
         self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
+        if (f->block != nil) {
+            self->dwarf_status.impl_debug_info.insert(
+                f->name.__ptr__(),
+                basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+            );
+        }
         self->dwarf_status.DI_counter += 1;
     }
 
@@ -2745,6 +2772,9 @@ impl mir2sir {
 
 impl mir2sir {
     pub func generate(self, mctx: mir_context*) {
+        self->dwarf_status.DI_counter = 0;
+        self->dwarf_status.compile_unit_index = DI_ERROR_INDEX();
+        self->dwarf_status.impl_debug_info.clear();
         self->generate_DWARF(mctx);
 
         self->generate_type_mapper();
