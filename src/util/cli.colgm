@@ -1,9 +1,18 @@
 use std::io::{ io };
-use std::libc::{ exit };
+use std::libc::{ exit, streq };
 use std::fs::{ fs };
 
 use util::misc::{ get_platform, get_arch };
 use util::clang_finder::{ find_clang };
+
+enum opt_level {
+    OPT_LEVEL_0,
+    OPT_LEVEL_1,
+    OPT_LEVEL_2,
+    OPT_LEVEL_3,
+    OPT_LEVEL_Z,
+    OPT_LEVEL_S
+}
 
 pub struct cli_option {
     OPTION_VIEW_TOKEN: bool,
@@ -12,10 +21,10 @@ pub struct cli_option {
     OPTION_VIEW_SEMA: bool,
     OPTION_VIEW_SIR: bool,
     OPTION_VIEW_MIR: bool,
-    OPTION_VIEW_PASS: bool,
     VIEW_TYPE_REPLACE_INFO: bool,
     VIEW_RESOLVED_AST: bool,
     VERBOSE: bool,
+    OPT_LEVEL: opt_level,
     input_file: i8*,
     output_file: i8*,
     library_path: i8*,
@@ -32,16 +41,58 @@ impl cli_option {
             OPTION_VIEW_SEMA: false,
             OPTION_VIEW_SIR: false,
             OPTION_VIEW_MIR: false,
-            OPTION_VIEW_PASS: false,
             VIEW_TYPE_REPLACE_INFO: false,
             VIEW_RESOLVED_AST: false,
             VERBOSE: false,
+            OPT_LEVEL: opt_level::OPT_LEVEL_0,
             input_file: nil,
             output_file: nil,
             library_path: nil,
             arch: nil,
             platform: nil
         };
+    }
+
+    func check_opt_level(self, level: i8*) {
+        if (self->OPT_LEVEL => i64 > 0) {
+            report_multiple_given_info("optimization level");
+        }
+    }
+
+    pub func set_opt_level(self, level: i8*) {
+        if (streq(level, "-O0")) {
+            self->OPT_LEVEL = opt_level::OPT_LEVEL_0;
+        } else if (streq(level, "-O1")) {
+            self->check_opt_level(level);
+            self->OPT_LEVEL = opt_level::OPT_LEVEL_1;
+        } else if (streq(level, "-O2")) {
+            self->check_opt_level(level);
+            self->OPT_LEVEL = opt_level::OPT_LEVEL_2;
+        } else if (streq(level, "-O3")) {
+            self->check_opt_level(level);
+            self->OPT_LEVEL = opt_level::OPT_LEVEL_3;
+        } else if (streq(level, "-Os")) {
+            self->check_opt_level(level);
+            self->OPT_LEVEL = opt_level::OPT_LEVEL_S;
+        } else if (streq(level, "-Oz")) {
+            self->check_opt_level(level);
+            self->OPT_LEVEL = opt_level::OPT_LEVEL_Z;
+        } else {
+            report_invalid_given_info("optimization level", level);
+        }
+    }
+
+    pub func get_opt_level(self) -> i8* {
+        match (self->OPT_LEVEL) {
+            opt_level::OPT_LEVEL_0 => return "-O0";
+            opt_level::OPT_LEVEL_1 => return "-O1";
+            opt_level::OPT_LEVEL_2 => return "-O2";
+            opt_level::OPT_LEVEL_3 => return "-O3";
+            opt_level::OPT_LEVEL_S => return "-Os";
+            opt_level::OPT_LEVEL_Z => return "-Oz";
+            _ => return "-O0";
+        }
+        return "-O0";
     }
 }
 
@@ -72,12 +123,13 @@ pub func help() {
     .out("         --sir                      | view sir.\n")
     .out("         --library <path>           | specify library path, default <.>.\n")
     .out("         --dump-lib                 | view libraries.\n")
-    .out("         --pass-info                | view pass info.\n")
     .out("         --view-resolved-ast        | view resolved ast.\n")
     .out("         --enable-type-replace-info | view type replace info.\n")
     .out("         --arch <arch>              | specify target arch.\n")
     .out("         --platform <platform>      | specify target platform.\n")
     .out("   -V,   --verbose                  | verbose mode.\n")
+    .out("   -O0                              | disable optimizations.\n")
+    .out("   -O1/O2/O3/Oz/Os                  | enable optimizations.\n")
     .out("file:\n")
     .out("   <filename>                       | input file.\n")
     .endln();
