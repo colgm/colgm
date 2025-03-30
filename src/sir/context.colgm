@@ -2,7 +2,7 @@ use std::vec::{ primitive_vec, vec };
 use std::map::{ hashmap, pair };
 use std::ptr::{ basic };
 use std::str::{ str };
-use std::libc::{ free };
+use std::libc::{ free, strcmp };
 use std::io::{ io };
 use std::ptr::{ ptr };
 
@@ -123,6 +123,27 @@ impl sir_func {
         }
     }
 
+    func dump_attributes(self, out: io) {
+        var contain_frame_pointer_attribute = false;
+        for (var i = self->attributes.iter(); !i.is_end(); i = i.next()) {
+            out.out(" ").out(i.get()->c_str);
+            // if frame-pointer attribute is found
+            // do not generate frame-pointer=non-leaf for macos
+            if (i.get()->find_i8_vec("frame-pointer") != str::npos()) {
+                contain_frame_pointer_attribute = true;
+            }
+        }
+
+        // add frame pointer attribute for macos
+        // then backtrace can get symbol of functions
+        // but on linux, option `-rdynamic` should be given to ld
+        // otherwise this attribute does not work
+        if (self->body != nil && !contain_frame_pointer_attribute &&
+            strcmp(get_platform(), "macos") == 0) {
+            out.out(" ").out("\"frame-pointer\"=\"non-leaf\"");
+        }
+    }
+
     pub func dump(self, out: io) {
         if (self->body == nil) {
             out.out("declare ");
@@ -141,6 +162,7 @@ impl sir_func {
             out.out(", ...");
         }
         out.out(")");
+        self->dump_attributes(out);
 
         if (self->body == nil) {
             out.out("\n");
