@@ -460,6 +460,7 @@ impl mir2sir {
                                                      .impl_debug_info
                                                      .get(m_func->name.__ptr__())
                                                      ->unwrap();
+                s_func.debug_info_index = self->dwarf_status.scope_index;
             } else {
                 self->dwarf_status.scope_index = DI_ERROR_INDEX();
             }
@@ -2751,6 +2752,7 @@ impl mir2sir {
             f->name.c_str,
             self->sctx->DI_file_map.get(f->location.file.__ptr__())->unwrap(),
             f->location.begin_line,
+            self->dwarf_status.DI_counter + 1,
             self->dwarf_status.compile_unit_index
         );
         self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
@@ -2760,6 +2762,17 @@ impl mir2sir {
                 basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
             );
         }
+        self->dwarf_status.DI_counter += 1;
+
+        var subroutine = DI_subroutine::new(
+            self->dwarf_status.DI_counter,
+            self->dwarf_status.DI_counter + 1
+        );
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(subroutine => DI_node*));
+        self->dwarf_status.DI_counter += 1;
+
+        var ty_list = DI_list::new(self->dwarf_status.DI_counter);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(ty_list => DI_node*));
         self->dwarf_status.DI_counter += 1;
     }
 

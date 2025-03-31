@@ -20,6 +20,7 @@ pub enum DI_kind {
     DI_enum_type,
     DI_enumerator,
     DI_subprogram,
+    DI_subroutine,
     DI_location
 }
 
@@ -84,6 +85,7 @@ impl DI_node {
                 var n = self => DI_subprogram*;
                 n->delete();
             }
+            DI_kind::DI_subroutine => {}
             DI_kind::DI_location => {
                 var n = self => DI_location*;
                 n->delete();
@@ -153,6 +155,10 @@ impl DI_node {
             }
             DI_kind::DI_subprogram => {
                 var n = self => DI_subprogram*;
+                n->dump(out);
+            }
+            DI_kind::DI_subroutine => {
+                var n = self => DI_subroutine*;
                 n->dump(out);
             }
             DI_kind::DI_location => {
@@ -358,7 +364,7 @@ impl DI_compile_unit {
         if (self->imports_index != DI_ERROR_INDEX()) {
             out.out("imports: !").out_u64(self->imports_index).out(", ");
         }
-        out.out("isOptimized: false)");
+        out.out("isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)");
     }
 }
 
@@ -495,16 +501,18 @@ pub struct DI_subprogram {
     name: str,
     file_index: u64,
     line: i64,
+    type_index: u64,
     compile_unit_index: u64
 }
 
 impl DI_subprogram {
-    pub func new(i: u64, n: i8*, fi: u64, l: i64, cu: u64) -> DI_subprogram* {
+    pub func new(i: u64, n: i8*, fi: u64, l: i64, ti: u64, cu: u64) -> DI_subprogram* {
         var res = DI_subprogram::__alloc__();
         res->base = DI_node::instance(DI_kind::DI_subprogram, i);
         res->name = str::from(n);
         res->file_index = fi;
         res->line = l;
+        res->type_index = ti;
         res->compile_unit_index = cu;
         return res;
     }
@@ -517,7 +525,26 @@ impl DI_subprogram {
         out.out("distinct !DISubprogram(name: \"").out(self->name.c_str).out("\", ");
         out.out("file: !").out_u64(self->file_index).out(", ");
         out.out("line: ").out_i64(self->line).out(", ");
+        out.out("type: !").out_u64(self->type_index).out(", ");
         out.out("unit: !").out_u64(self->compile_unit_index).out(")");
+    }
+}
+
+pub struct DI_subroutine {
+    base: DI_node,
+    types_index: u64
+}
+
+impl DI_subroutine {
+    pub func new(i: u64, ti: u64) -> DI_subroutine* {
+        var res = DI_subroutine::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_subroutine, i);
+        res->types_index = ti;
+        return res;
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DISubroutineType(types: !").out_u64(self->types_index).out(")");
     }
 }
 
