@@ -190,7 +190,7 @@ pub struct sir_context {
     named_metadata: primitive_vec<ptr<DI_named_metadata>>,
     debug_info: primitive_vec<ptr<DI_node>>,
     DI_file_map: hashmap<str, basic<u64>>,
-    DI_basic_type_map: hashmap<str, basic<u64>>,
+    DI_type_map: hashmap<str, basic<u64>>,
 
     pkg: package*
 }
@@ -205,7 +205,7 @@ impl sir_context {
             named_metadata: primitive_vec<ptr<DI_named_metadata>>::instance(),
             debug_info: primitive_vec<ptr<DI_node>>::instance(),
             DI_file_map: hashmap<str, basic<u64>>::instance(),
-            DI_basic_type_map: hashmap<str, basic<u64>>::instance(),
+            DI_type_map: hashmap<str, basic<u64>>::instance(),
             pkg: pkg
         };
     }
@@ -228,7 +228,15 @@ impl sir_context {
         }
         self->debug_info.delete();
         self->DI_file_map.delete();
-        self->DI_basic_type_map.delete();
+        self->DI_type_map.delete();
+    }
+}
+
+impl sir_context {
+    pub func add_DI_type(self, name: i8*, index: u64) {
+        var temp = str::from(name);
+        self->DI_type_map.insert(temp.__ptr__(), basic<u64>::wrap(index).__ptr__());
+        temp.delete();
     }
 }
 
