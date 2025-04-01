@@ -2357,6 +2357,51 @@ impl mir2sir {
 }
 
 impl mir2sir {
+    func generate_DI_type_if_not_exists(self, n: str*) {
+        var temp = n->copy_instance();
+        var p: DI_derived_type* = nil;
+        while (temp.back() == '*') {
+            if (self->sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
+                p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__())->unwrap();
+                break;
+            }
+            if (p != nil) {
+                p->base_type_index = self->dwarf_status.DI_counter;
+            }
+            p = DI_derived_type::new(
+                self->dwarf_status.DI_counter,
+                "DW_TAG_pointer_type",
+                DI_ERROR_INDEX(),
+                64,
+                temp.c_str
+            );
+            self->sctx->debug_info.push(ptr<DI_node>::wrap(p => DI_node*));
+            self->sctx->add_DI_type(temp.c_str, self->dwarf_status.DI_counter);
+            self->dwarf_status.DI_counter += 1;
+            temp.pop_back();
+        }
+
+        if (self->sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
+            p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__())->unwrap();
+        } else {
+            unreachable();
+        }
+    }
+
+    func find_DI_type(self, ty: type*) -> DI_node* {
+        if (ty->is_void() && !ty->is_pointer()) {
+            return DI_null::new() => DI_node*;
+        }
+
+        var n = ty->full_path_name(self->pkg, true);
+        if (!self->sctx->DI_type_map.has(n.__ptr__())) {
+            self->generate_DI_type_if_not_exists(n.__ptr__());
+        }
+        var index = self->sctx->DI_type_map.get(n.__ptr__())->unwrap();
+        n.delete();
+        return DI_ref_index::new(index) => DI_node*;
+    }
+
     func generate_DI_location(self, loc: span*) -> u64 {
         if (self->dwarf_status.scope_index == DI_ERROR_INDEX()) {
             return DI_ERROR_INDEX();
@@ -2724,11 +2769,9 @@ impl mir2sir {
         self->sctx->debug_info.push(ptr<DI_node>::wrap(ty_list => DI_node*));
         self->dwarf_status.DI_counter += 1;
 
+        ty_list->add(self->find_DI_type(f->return_type.__ptr__()));
         for (var i = f->params.iter(); !i.is_end(); i = i.next()) {
-            var n = i.get()->value->full_path_name(self->pkg, false);
-            var index = self->sctx->DI_type_map.get(n.__ptr__())->unwrap();
-            ty_list->add(DI_ref_index::new(index) => DI_node*);
-            n.delete();
+            ty_list->add(self->find_DI_type(i.get()->value));
         }
     }
 

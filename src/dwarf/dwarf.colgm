@@ -8,6 +8,7 @@ use err::panic::{ unimplemented };
 
 pub enum DI_kind {
     DI_error, // reserved for errors
+    DI_null,
     DI_named_metadata,
     DI_ref_index,
     DI_list,
@@ -21,7 +22,8 @@ pub enum DI_kind {
     DI_enumerator,
     DI_subprogram,
     DI_subroutine,
-    DI_location
+    DI_location,
+    DI_derived_type
 }
 
 pub func DI_ERROR_INDEX() -> u64 {
@@ -43,6 +45,7 @@ impl DI_node {
 
     pub func delete(self) {
         match (self->kind) {
+            DI_kind::DI_null => {}
             DI_kind::DI_named_metadata => {
                 var n = self => DI_named_metadata*;
                 n->delete();
@@ -90,6 +93,10 @@ impl DI_node {
                 var n = self => DI_location*;
                 n->delete();
             }
+            DI_kind::DI_derived_type => {
+                var n = self => DI_derived_type*;
+                n->delete();
+            }
             _ => unimplemented();
         }
     }
@@ -109,6 +116,10 @@ impl DI_node {
             out.out("!").out_i64(self->index => i64).out(" = ");
         }
         match (self->kind) {
+            DI_kind::DI_null => {
+                var n = self => DI_null*;
+                n->dump(out);
+            }
             DI_kind::DI_named_metadata => {
                 var n = self => DI_named_metadata*;
                 n->dump(out);
@@ -165,8 +176,28 @@ impl DI_node {
                 var n = self => DI_location*;
                 n->dump(out);
             }
+            DI_kind::DI_derived_type => {
+                var n = self => DI_derived_type*;
+                n->dump(out);
+            }
             _ => unimplemented();
         }
+    }
+}
+
+pub struct DI_null {
+    base: DI_node
+}
+
+impl DI_null {
+    pub func new() -> DI_null* {
+        var res = DI_null::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_null, DI_ERROR_INDEX());
+        return res;
+    }
+
+    pub func dump(self, out: io) {
+        out.out("null");
     }
 }
 
@@ -580,5 +611,35 @@ impl DI_location {
             out.out(":").out_i64(self->line);
             out.out(":").out_i64(self->column);
         }
+    }
+}
+
+pub struct DI_derived_type {
+    base: DI_node,
+    tag: str,
+    base_type_index: u64,
+    size: u64,
+    name: str
+}
+
+impl DI_derived_type {
+    pub func new(i: u64, t: i8*, bti: u64, s: u64, n: i8*) -> DI_derived_type* {
+        var res = DI_derived_type::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_derived_type, i);
+        res->tag = str::from(t);
+        res->base_type_index = bti;
+        res->size = s;
+        res->name = str::from(n);
+        return res;
+    }
+
+    pub func delete(self) {
+        self->tag.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DIDerivedType(tag: ").out(self->tag.c_str).out(", ");
+        out.out("baseType: !").out_u64(self->base_type_index).out(", ");
+        out.out("size: ").out_u64(self->size).out(") ; ").out(self->name.c_str);
     }
 }
