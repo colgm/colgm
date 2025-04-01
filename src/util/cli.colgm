@@ -2,7 +2,7 @@ use std::io::{ io };
 use std::libc::{ exit, streq };
 use std::fs::{ fs };
 
-use util::misc::{ get_platform, get_arch };
+use util::misc::{ get_platform, get_arch, get_target_triple };
 use util::clang_finder::{ find_clang };
 
 enum opt_level {
@@ -23,6 +23,7 @@ pub struct cli_option {
     OPTION_VIEW_MIR: bool,
     VIEW_TYPE_REPLACE_INFO: bool,
     VIEW_RESOLVED_AST: bool,
+    DEBUG_MODE: bool,
     VERBOSE: bool,
     OPT_LEVEL: opt_level,
     input_file: i8*,
@@ -43,6 +44,7 @@ impl cli_option {
             OPTION_VIEW_MIR: false,
             VIEW_TYPE_REPLACE_INFO: false,
             VIEW_RESOLVED_AST: false,
+            DEBUG_MODE: false,
             VERBOSE: false,
             OPT_LEVEL: opt_level::OPT_LEVEL_0,
             input_file: nil,
@@ -111,27 +113,28 @@ pub func help() {
     io::stdout()
     .out("\ncolgm <option>\n")
     .out("option:\n")
-    .out("   -h,   --help                     | get help.\n")
-    .out("   -v,   --version                  | get version.\n")
+    .out("  -h,  --help                     | get help.\n")
+    .out("  -v,  --version                  | get version.\n")
     .out("\ncolgm [option] <file>\n")
     .out("option:\n")
-    .out("   -o,   --output <file>            | output file, default <out.ll>.\n")
-    .out("   -l,   --lex                      | view analysed tokens.\n")
-    .out("   -a,   --ast                      | view ast.\n")
-    .out("   -s,   --sema                     | view semantic result.\n")
-    .out("         --mir                      | view mir.\n")
-    .out("         --sir                      | view sir.\n")
-    .out("         --library <path>           | specify library path, default <.>.\n")
-    .out("         --dump-lib                 | view libraries.\n")
-    .out("         --view-resolved-ast        | view resolved ast.\n")
-    .out("         --enable-type-replace-info | view type replace info.\n")
-    .out("         --arch <arch>              | specify target arch.\n")
-    .out("         --platform <platform>      | specify target platform.\n")
-    .out("   -V,   --verbose                  | verbose mode.\n")
-    .out("   -O0                              | disable optimizations.\n")
-    .out("   -O1/O2/O3/Oz/Os                  | enable optimizations.\n")
+    .out("  -g                              | debug mode.\n")
+    .out("  -o,  --output <file>            | output file, default <out.ll>.\n")
+    .out("  -l,  --lex                      | view analysed tokens.\n")
+    .out("  -a,  --ast                      | view ast.\n")
+    .out("  -s,  --sema                     | view semantic result.\n")
+    .out("       --mir                      | view mir.\n")
+    .out("       --sir                      | view sir.\n")
+    .out("       --library <path>           | specify library path, default <.>.\n")
+    .out("       --dump-lib                 | view libraries.\n")
+    .out("       --view-resolved-ast        | view resolved ast.\n")
+    .out("       --enable-type-replace-info | view type replace info.\n")
+    .out("       --arch <arch>              | specify target arch.\n")
+    .out("       --platform <platform>      | specify target platform.\n")
+    .out("  -V,  --verbose                  | verbose mode.\n")
+    .out("  -O0                             | disable optimizations.\n")
+    .out("  -O1/O2/O3/Oz/Os                 | enable optimizations.\n")
     .out("file:\n")
-    .out("   <filename>                       | input file.\n")
+    .out("  <filename>                      | input file.\n")
     .endln();
 }
 
@@ -147,6 +150,7 @@ pub func logo(executable: i8*) {
     .out("              /____/            \n\n")
     .out("version : ").out(version()).out("\n")
     .out("arch    : ").out(get_platform()).out(" ").out(get_arch()).out("\n")
+    .out("target  : ").out(get_target_triple()).out("\n")
     .out("repo    : https://github.com/colgm/colgm\n")
     .out("repo    : https://gitee.com/valkmjolnir/colgm\n")
     .out("license : Apache 2.0\n");

@@ -1,3 +1,4 @@
+use std::libc::{ streq };
 
 #[enable_if(target_os = "macos")]
 pub func get_platform() -> i8* {
@@ -22,4 +23,21 @@ pub func get_arch() -> i8* {
 #[enable_if(arch = "aarch64")]
 pub func get_arch() -> i8* {
     return "aarch64";
+}
+
+pub func get_target_triple() -> i8* {
+    var platform = get_platform();
+    var arch = get_arch();
+    if (streq(platform, "linux") && streq(arch, "x86_64")) {
+        return "x86_64-pc-linux-gnu";
+    }
+
+    if (streq(platform, "linux") && streq(arch, "aarch64")) {
+        return "aarch64-unknown-linux-gnu";
+    }
+
+    if (streq(platform, "macos") && streq(arch, "aarch64")) {
+        return "arm64-apple-macosx12.0.0";
+    }
+    return "unknown-unknown-unknown";
 }

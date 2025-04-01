@@ -39,6 +39,9 @@ func clang_compile(co: cli_option*) -> i32 {
 
     cmd.append_i8_vec(" ")->append_i8_vec(co->get_opt_level())->append_i8_vec(" ");
     cmd.append_i8_vec(co->output_file);
+    if (co->DEBUG_MODE) {
+        cmd.append_i8_vec(" -g");
+    }
     cmd.append_i8_vec(" -o a.out -rdynamic -lm");
     if (co->VERBOSE) {
         io::stdout().green().out("[    CLANG ] ").reset();
@@ -185,7 +188,7 @@ func compile(option: cli_option) -> i32 {
         mctx.dump(io::stdout(), cc.pkg);
     }
 
-    mir2sir_worder.generate(mctx.__ptr__(), option.VERBOSE);
+    mir2sir_worder.generate(mctx.__ptr__(), option.VERBOSE, option.DEBUG_MODE);
     if (option.OPTION_VIEW_SIR) {
         sctx.dump(io::stdout());
     }
@@ -243,6 +246,8 @@ func main(argc: i32, argv: i8**) -> i32 {
             option.OPTION_VIEW_SEMA = true;
         } elsif (streq(argv[i], "-V") || streq(argv[i], "--verbose")) {
             option.VERBOSE = true;
+        } elsif (streq(argv[i], "-g")) {
+            option.DEBUG_MODE = true;
         } elsif (streq(argv[i], "--library")) {
             if (i + 1 >= argc) {
                 report_missing_given_info("library path");

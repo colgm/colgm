@@ -2358,6 +2358,10 @@ impl mir2sir {
 
 impl mir2sir {
     func generate_DI_location(self, loc: span*) -> u64 {
+        if (self->dwarf_status.scope_index == DI_ERROR_INDEX()) {
+            return DI_ERROR_INDEX();
+        }
+
         var index = self->dwarf_status.DI_counter;
         var DI_loc = DI_location::new(
             index,
@@ -2750,11 +2754,13 @@ impl mir2sir {
 }
 
 impl mir2sir {
-    pub func generate(self, mctx: mir_context*, verbose: bool) {
+    pub func generate(self, mctx: mir_context*, verbose: bool, debug_mode: bool) {
         self->dwarf_status.DI_counter = 0;
         self->dwarf_status.compile_unit_index = DI_ERROR_INDEX();
         self->dwarf_status.impl_debug_info.clear();
-        self->generate_DWARF(mctx);
+        if (debug_mode) {
+            self->generate_DWARF(mctx);
+        }
 
         self->generate_type_mapper();
         self->emit_struct(mctx);

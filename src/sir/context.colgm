@@ -13,7 +13,7 @@ use sema::type::{ type };
 use dwarf::dwarf::*;
 
 use util::mangling::{ llvm_raw_string };
-use util::misc::{ get_platform, get_arch };
+use util::misc::{ get_platform, get_target_triple };
 
 use package::{ package };
 
@@ -242,23 +242,7 @@ impl sir_context {
 
 impl sir_context {
     func dump_target_tripple(self, out: io) {
-        var platform = str::from(get_platform());
-        var arch = str::from(get_arch());
-
-        if (platform.eq_const("linux") && arch.eq_const("x86_64")) {
-            out.out("target triple = \"x86_64-pc-linux-gnu\"\n\n");
-        }
-
-        if (platform.eq_const("linux") && arch.eq_const("aarch64")) {
-            out.out("target triple = \"aarch64-unknown-linux-gnu\"\n\n");
-        }
-
-        if (platform.eq_const("macos") && arch.eq_const("aarch64")) {
-            out.out("target triple = \"arm64-apple-macosx12.0.0\"\n\n");
-        }
-
-        platform.delete();
-        arch.delete();
+        out.out("target triple = \"").out(get_target_triple()).out("\"\n\n");
     }
 
     func dump_structs(self, out: io) {
