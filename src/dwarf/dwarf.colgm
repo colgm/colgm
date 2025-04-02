@@ -23,7 +23,8 @@ pub enum DI_kind {
     DI_subprogram,
     DI_subroutine,
     DI_location,
-    DI_derived_type
+    DW_TAG_pointer_type,
+    DW_TAG_member
 }
 
 pub func DI_ERROR_INDEX() -> u64 {
@@ -93,8 +94,12 @@ impl DI_node {
                 var n = self => DI_location*;
                 n->delete();
             }
-            DI_kind::DI_derived_type => {
-                var n = self => DI_derived_type*;
+            DI_kind::DW_TAG_pointer_type => {
+                var n = self => DW_TAG_pointer_type*;
+                n->delete();
+            }
+            DI_kind::DW_TAG_member => {
+                var n = self => DW_TAG_member*;
                 n->delete();
             }
             _ => unimplemented();
@@ -176,8 +181,12 @@ impl DI_node {
                 var n = self => DI_location*;
                 n->dump(out);
             }
-            DI_kind::DI_derived_type => {
-                var n = self => DI_derived_type*;
+            DI_kind::DW_TAG_pointer_type => {
+                var n = self => DW_TAG_pointer_type*;
+                n->dump(out);
+            }
+            DI_kind::DW_TAG_member => {
+                var n = self => DW_TAG_member*;
                 n->dump(out);
             }
             _ => unimplemented();
@@ -433,7 +442,8 @@ pub struct DI_structure_type {
     name: str,
     identifier: str,
     file_index: u64,
-    line: i64
+    line: i64,
+    elements: u64
 }
 
 impl DI_structure_type {
@@ -444,6 +454,7 @@ impl DI_structure_type {
         res->identifier = str::from(id);
         res->file_index = fi;
         res->line = l;
+        res->elements = DI_ERROR_INDEX();
         return res;
     }
 
@@ -457,7 +468,11 @@ impl DI_structure_type {
         out.out("name: \"").out(self->name.c_str).out("\", ");
         out.out("file: !").out_u64(self->file_index).out(", ");
         out.out("line: ").out_i64(self->line).out(", ");
-        out.out("identifier: \"").out(self->identifier.c_str).out("\")");
+        out.out("identifier: \"").out(self->identifier.c_str).out("\"");
+        if (self->elements != DI_ERROR_INDEX()) {
+            out.out(", elements: !").out_u64(self->elements);
+        }
+        out.out(")");
     }
 }
 
@@ -614,19 +629,17 @@ impl DI_location {
     }
 }
 
-pub struct DI_derived_type {
+pub struct DW_TAG_pointer_type {
     base: DI_node,
-    tag: str,
     base_type_index: u64,
     size: u64,
     name: str
 }
 
-impl DI_derived_type {
-    pub func new(i: u64, t: i8*, bti: u64, s: u64, n: i8*) -> DI_derived_type* {
-        var res = DI_derived_type::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_derived_type, i);
-        res->tag = str::from(t);
+impl DW_TAG_pointer_type {
+    pub func new(i: u64, bti: u64, s: u64, n: i8*) -> DW_TAG_pointer_type* {
+        var res = DW_TAG_pointer_type::__alloc__();
+        res->base = DI_node::instance(DI_kind::DW_TAG_pointer_type, i);
         res->base_type_index = bti;
         res->size = s;
         res->name = str::from(n);
@@ -634,12 +647,45 @@ impl DI_derived_type {
     }
 
     pub func delete(self) {
-        self->tag.delete();
+        self->name.delete();
     }
 
     pub func dump(self, out: io) {
-        out.out("!DIDerivedType(tag: ").out(self->tag.c_str).out(", ");
+        out.out("!DIDerivedType(tag: DW_TAG_pointer_type, ");
         out.out("baseType: !").out_u64(self->base_type_index).out(", ");
         out.out("size: ").out_u64(self->size).out(") ; ").out(self->name.c_str);
+    }
+}
+
+pub struct DW_TAG_member {
+    base: DI_node,
+    name: str,
+    scope_index: u64,
+    file_index: u64,
+    line: i64,
+    base_type_index: u64
+}
+
+impl DW_TAG_member {
+    pub func new(i: u64, n: i8*, si: u64, fi: u64, bti: u64) -> DW_TAG_member* {
+        var res = DW_TAG_member::__alloc__();
+        res->base = DI_node::instance(DI_kind::DW_TAG_member, i);
+        res->name = str::from(n);
+        res->scope_index = si;
+        res->file_index = fi;
+        res->base_type_index = bti;
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DIDerivedType(tag: DW_TAG_member, ");
+        out.out("name: \"").out(self->name.c_str).out("\", ");
+        out.out("scope: !").out_u64(self->scope_index).out(", ");
+        out.out("file: !").out_u64(self->file_index).out(", ");
+        out.out("baseType: !").out_u64(self->base_type_index).out(")");
     }
 }

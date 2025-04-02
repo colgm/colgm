@@ -1028,7 +1028,8 @@ impl mir2sir {
             source_value.__ptr__(),
             temp_var_value.__ptr__(),
             source_ty.__ptr__(),
-            n_ty.__ptr__()
+            n_ty.__ptr__(),
+            self->generate_DI_location(n->base.location.__ptr__())
         ) => sir*);
 
         var v = mir_value_t::variable(
@@ -2359,7 +2360,7 @@ impl mir2sir {
 impl mir2sir {
     func generate_DI_type_if_not_exists(self, n: str*) {
         var temp = n->copy_instance();
-        var p: DI_derived_type* = nil;
+        var p: DW_TAG_pointer_type* = nil;
         while (temp.back() == '*') {
             if (self->sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
                 p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__())->unwrap();
@@ -2368,9 +2369,8 @@ impl mir2sir {
             if (p != nil) {
                 p->base_type_index = self->dwarf_status.DI_counter;
             }
-            p = DI_derived_type::new(
+            p = DW_TAG_pointer_type::new(
                 self->dwarf_status.DI_counter,
-                "DW_TAG_pointer_type",
                 DI_ERROR_INDEX(),
                 64,
                 temp.c_str
@@ -2384,7 +2384,10 @@ impl mir2sir {
         if (self->sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
             p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__())->unwrap();
         } else {
-            unreachable();
+            var info = str::from("cannot generate DI_type for \"");
+            info.append_i8_vec(n->c_str)->append_i8_vec("\"");
+            panic(info.c_str);
+            info.delete();
         }
     }
 
@@ -2400,6 +2403,20 @@ impl mir2sir {
         var index = self->sctx->DI_type_map.get(n.__ptr__())->unwrap();
         n.delete();
         return DI_ref_index::new(index) => DI_node*;
+    }
+
+    func find_DI_type_index(self, ty: type*) -> u64 {
+        if (ty->is_void() && !ty->is_pointer()) {
+            return DI_ERROR_INDEX();
+        }
+
+        var n = ty->full_path_name(self->pkg, true);
+        if (!self->sctx->DI_type_map.has(n.__ptr__())) {
+            self->generate_DI_type_if_not_exists(n.__ptr__());
+        }
+        var index = self->sctx->DI_type_map.get(n.__ptr__())->unwrap();
+        n.delete();
+        return index;
     }
 
     func generate_DI_location(self, loc: span*) -> u64 {
@@ -2717,9 +2734,10 @@ impl mir2sir {
             s->name.c_str,
             id.c_str,
             self->sctx->DI_file_map.get(s->location.file.__ptr__())->unwrap(),
-            s->location.begin_line,
+            s->location.begin_line
         );
         self->sctx->add_DI_type(id.c_str, self->dwarf_status.DI_counter);
+        self->sctx->add_DI_struct(id.c_str, tmp);
         self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
         self->dwarf_status.DI_counter += 1;
 
@@ -2731,6 +2749,46 @@ impl mir2sir {
         for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
             for (var j = i.value()->structs.iter(); !j.is_end(); j = j.next()) {
                 self->generate_single_DI_struct(j.value());
+            }
+        }
+    }
+
+    func generate_single_struct_member_dwarf(self, s: colgm_struct*) {
+        var ty = type::instance();
+        ty.name.append_i8_vec(s->name.c_str);
+        ty.loc_file.append_i8_vec(s->location.file.c_str);
+        var id = ty.full_path_name(self->pkg, false);
+
+        var s_node = self->sctx->DI_struct_map.get(id.__ptr__())->unwrap();
+
+        var element = DI_list::new(self->dwarf_status.DI_counter);
+        s_node->elements = self->dwarf_status.DI_counter;
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(element => DI_node*));
+        self->dwarf_status.DI_counter += 1;
+
+        for (var i = s->ordered_fields.iter(); !i.is_end(); i = i.next()) {
+            var member = i.get();
+            var member_type_index = self->find_DI_type_index(member->sym_type.__ptr__());
+            var field_node = DW_TAG_member::new(
+                self->dwarf_status.DI_counter,
+                member->name.c_str,
+                s_node->base.index,
+                self->sctx->DI_file_map.get(s->location.file.__ptr__())->unwrap(),
+                member_type_index
+            );
+            self->sctx->debug_info.push(ptr<DI_node>::wrap(field_node => DI_node*));
+            element->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+            self->dwarf_status.DI_counter += 1;
+        }
+
+        ty.delete();
+        id.delete();
+    }
+
+    func generate_structure_member_dwarf(self) {
+        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
+            for (var j = i.value()->structs.iter(); !j.is_end(); j = j.next()) {
+                self->generate_single_struct_member_dwarf(j.value());
             }
         }
     }
@@ -2792,19 +2850,22 @@ impl mir2sir {
         self->generate_llvm_module_flags();
         self->generate_DI_file();
         self->generate_llvm_dbg_cu();
+
+        // generate info for base types
         self->generate_basic_type();
         self->generate_DI_enum_type();
         self->generate_DI_structure_type();
+
+        // generate after all base types are registered
+        self->generate_structure_member_dwarf();
         self->generate_DI_subprogram(mctx);
     }
 }
 
 impl mir2sir {
     pub func generate(self, mctx: mir_context*, verbose: bool, debug_mode: bool) {
-        self->dwarf_status.DI_counter = 0;
-        self->dwarf_status.compile_unit_index = DI_ERROR_INDEX();
-        self->dwarf_status.impl_debug_info.clear();
         if (debug_mode) {
+            self->dwarf_status.clear();
             self->generate_DWARF(mctx);
         }
 

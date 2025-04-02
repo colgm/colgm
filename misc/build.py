@@ -27,6 +27,7 @@ def find_clang():
 BUILD_DIRECTORY = "build"
 BOOTSTRAP_COMPILER = BUILD_DIRECTORY + "/colgm"
 SELF_HOST_COMPILER = "./colgm"
+SELF_HOST_OUT = "./a.out"
 
 if not os.path.exists(BUILD_DIRECTORY):
     os.mkdir(BUILD_DIRECTORY)
@@ -44,3 +45,4 @@ execute([used_clang, "colgm.ll", "-o", SELF_HOST_COMPILER, "-g", "-Oz", "-rdynam
 
 # Test colgm self-host compiler compiling itself
 execute([SELF_HOST_COMPILER, "--library", "src", "src/main.colgm", "--verbose", "-g", "-Oz"])
+execute([SELF_HOST_OUT, "--library", "src", "src/main.colgm", "--verbose", "-g", "-Oz"])

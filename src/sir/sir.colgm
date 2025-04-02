@@ -1579,17 +1579,19 @@ pub struct sir_type_convert {
     target: value_t,
     source: value_t,
     src_type: str,
-    dst_type: str
+    dst_type: str,
+    debug_info_index: u64
 }
 
 impl sir_type_convert {
-    pub func new(src: value_t*, tgt: value_t*, st: str*, dt: str*) -> sir_type_convert* {
+    pub func new(src: value_t*, tgt: value_t*, st: str*, dt: str*, dii: u64) -> sir_type_convert* {
         var n = sir_type_convert::__alloc__();
         n->base = sir::instance(sir_kind::sir_type_convert);
         n->target =tgt->copy_instance();
         n->source = src->copy_instance();
         n->src_type = st->copy_instance();
         n->dst_type = dt->copy_instance();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -1605,7 +1607,9 @@ impl sir_type_convert {
         self->target.dump(out);
         out.out(" = bitcast ").out(self->src_type.c_str).out(" ");
         self->source.dump(out);
-        out.out(" to ").out(self->dst_type.c_str).endln();
+        out.out(" to ").out(self->dst_type.c_str);
+        self->dump_debug_info(out);
+        out.endln();
     }
 
     func dump_inttoptr(self, out: io) {
@@ -1613,7 +1617,9 @@ impl sir_type_convert {
         self->target.dump(out);
         out.out(" = inttoptr ").out(self->src_type.c_str).out(" ");
         self->source.dump(out);
-        out.out(" to ").out(self->dst_type.c_str).endln();
+        out.out(" to ").out(self->dst_type.c_str);
+        self->dump_debug_info(out);
+        out.endln();
     }
 
     func dump_ptrtoint(self, out: io) {
@@ -1621,7 +1627,9 @@ impl sir_type_convert {
         self->target.dump(out);
         out.out(" = ptrtoint ").out(self->src_type.c_str).out(" ");
         self->source.dump(out);
-        out.out(" to ").out(self->dst_type.c_str).endln();
+        out.out(" to ").out(self->dst_type.c_str);
+        self->dump_debug_info(out);
+        out.endln();
     }
 
     func convert_instruction(src_type_mark: i8,
@@ -1679,6 +1687,12 @@ impl sir_type_convert {
         return "";
     }
 
+    func dump_debug_info(self, out: io) {
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
+    }
+
     pub func dump(self, out: io) {
         if (self->src_type.back() == '*' && self->dst_type.back() == '*') {
             self->dump_bitcast(out);
@@ -1721,7 +1735,9 @@ impl sir_type_convert {
             self->target.dump(out);
             out.out(" = bitcast ").out(self->src_type.c_str).out(" ");
             self->source.dump(out);
-            out.out(" to ").out(self->dst_type.c_str).endln();
+            out.out(" to ").out(self->dst_type.c_str);
+            self->dump_debug_info(out);
+            out.endln();
 
             real_src_type.delete();
             real_dst_type.delete();
@@ -1734,7 +1750,9 @@ impl sir_type_convert {
             self->target.dump(out);
             out.out(" = bitcast ").out(self->src_type.c_str).out(" ");
             self->source.dump(out);
-            out.out(" to ").out(self->dst_type.c_str).endln();
+            out.out(" to ").out(self->dst_type.c_str);
+            self->dump_debug_info(out);
+            out.endln();
 
             real_src_type.delete();
             real_dst_type.delete();
@@ -1757,7 +1775,9 @@ impl sir_type_convert {
         self->target.dump(out);
         out.out(" = ").out(conv_inst).out(" ").out(self->src_type.c_str).out(" ");
         self->source.dump(out);
-        out.out(" to ").out(self->dst_type.c_str).endln();
+        out.out(" to ").out(self->dst_type.c_str);
+        self->dump_debug_info(out);
+        out.endln();
 
         real_src_type.delete();
         real_dst_type.delete();
