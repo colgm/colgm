@@ -36,19 +36,21 @@ jobs:
       run: |
           export PATH="/opt/homebrew/opt/llvm@17/bin:$PATH"
           make colgm.ll
-          make test.ll
-          /opt/homebrew/opt/llvm@17/bin/clang -O3 -rdynamic colgm.ll -o colgm
-          /opt/homebrew/opt/llvm@17/bin/clang -O3 -rdynamic test.ll -o colgm_test
+          /opt/homebrew/opt/llvm@17/bin/clang -g -O3 -rdynamic colgm.ll -o colgm
           ./colgm
-          ./colgm --library src src/main.colgm --verbose -Oz
+          ./colgm --library src src/main.colgm --verbose -g -Oz
     - name: std-test
       run: |
+          make test.ll
+          /opt/homebrew/opt/llvm@17/bin/clang -g -O3 -rdynamic test.ll -o colgm_test
           ./colgm_test
     - name: package
       run: |
           zip colgm-macos-aarch64-nightly.zip build/colgm
           zip colgm-macos-aarch64-nightly.zip colgm
           zip colgm-macos-aarch64-nightly.zip colgm.ll
+          zip colgm-macos-aarch64-nightly.zip a.out
+          zip colgm-macos-aarch64-nightly.zip out.ll
           zip -r colgm-macos-aarch64-nightly.zip bootstrap
           zip -r colgm-macos-aarch64-nightly.zip doc
           zip -r colgm-macos-aarch64-nightly.zip src
@@ -92,19 +94,21 @@ jobs:
       run: |
           export PATH="/usr/lib/llvm-14/bin:$PATH"
           make colgm.ll
-          make test.ll
-          /usr/bin/clang-14 -rdynamic -O3 colgm.ll -o colgm -lm
-          /usr/bin/clang-14 -rdynamic -O3 test.ll -o colgm_test -lm
+          /usr/bin/clang-14 -rdynamic -g -O3 colgm.ll -o colgm -lm
           ./colgm
-          ./colgm --library src src/main.colgm --verbose -Oz
+          ./colgm --library src src/main.colgm --verbose -g -Oz
     - name: std-test
       run: |
+          make test.ll
+          /usr/bin/clang-14 -rdynamic -g -O3 test.ll -o colgm_test -lm
           ./colgm_test
     - name: package
       run: |
           zip colgm-linux-x86_64-nightly.zip build/colgm
           zip colgm-linux-x86_64-nightly.zip colgm
           zip colgm-linux-x86_64-nightly.zip colgm.ll
+          zip colgm-linux-x86_64-nightly.zip a.out
+          zip colgm-linux-x86_64-nightly.zip out.ll
           zip -r colgm-linux-x86_64-nightly.zip bootstrap
           zip -r colgm-linux-x86_64-nightly.zip doc
           zip -r colgm-linux-x86_64-nightly.zip src

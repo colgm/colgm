@@ -33,14 +33,14 @@ if not os.path.exists(BUILD_DIRECTORY):
 
 # Build bootstrap compiler
 os.chdir(BUILD_DIRECTORY)
-execute(["cmake", "../bootstrap", "-DCMAKE_BUILD_TYPE=Release"])
+execute(["cmake", "../bootstrap", "-DCMAKE_BUILD_TYPE=RelWithDebInfo"])
 execute(["make", "-j6"])
 os.chdir("..")
 
 # Build colgm self-host compiler
 execute(["./" + BOOTSTRAP_COMPILER, "--library", "src", "src/main.colgm", "-o", "colgm.ll", "--pass-info"])
 used_clang = find_clang()
-execute([used_clang, "colgm.ll", "-o", SELF_HOST_COMPILER, "-Oz", "-rdynamic", "-lm", "--verbose"])
+execute([used_clang, "colgm.ll", "-o", SELF_HOST_COMPILER, "-g", "-Oz", "-rdynamic", "-lm", "--verbose"])
 
 # Test colgm self-host compiler compiling itself
-execute([SELF_HOST_COMPILER, "--library", "src", "src/main.colgm", "--verbose", "-Oz"])
+execute([SELF_HOST_COMPILER, "--library", "src", "src/main.colgm", "--verbose", "-g", "-Oz"])

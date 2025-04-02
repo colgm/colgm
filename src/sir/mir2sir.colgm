@@ -2746,8 +2746,8 @@ impl mir2sir {
             f->name.c_str,
             self->sctx->DI_file_map.get(f->location.file.__ptr__())->unwrap(),
             f->location.begin_line,
-            self->dwarf_status.DI_counter + 1,
-            self->dwarf_status.compile_unit_index
+            self->dwarf_status.DI_counter + 1,    // `type` field, DISubroutineType
+            self->dwarf_status.compile_unit_index // `unit` field, DICompileUnit
         );
         self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
         if (f->block != nil) {
@@ -2758,9 +2758,12 @@ impl mir2sir {
         }
         self->dwarf_status.DI_counter += 1;
 
+        // DISubprogram must have DISubroutineType as `type` field
+        // otherwise segfault will happen when using llc or clang
+        // issue: https://github.com/llvm/llvm-project/issues/59471
         var subroutine = DI_subroutine::new(
-            self->dwarf_status.DI_counter,
-            self->dwarf_status.DI_counter + 1
+            self->dwarf_status.DI_counter,    // self index
+            self->dwarf_status.DI_counter + 1 // DI_list index
         );
         self->sctx->debug_info.push(ptr<DI_node>::wrap(subroutine => DI_node*));
         self->dwarf_status.DI_counter += 1;

@@ -3,20 +3,14 @@
 ## Syntax
 
 ```rust
-pub enum mir_kind {
-    m_block,
-    m_num,
-    m_str
-}
-
-pub union(mir_kind) mir {
+pub union(enum) mir {
     m_block: mir_block ,
     m_num: mir_num,
     m_str: mir_str
 }
 
 pub func generate_mir_from_m_block() -> mir {
-    return mir { m_block: mir_block::instance() };
+    return mir::m_block(mir_block::instance());
 }
 
 pub func fetch_m_block_from_mir(m: mir) -> mir_block {
@@ -24,9 +18,6 @@ pub func fetch_m_block_from_mir(m: mir) -> mir_block {
         mir_kind::m_block => return m.m_block;
         _ => { unreachable(); }
     }
-
-    // unreachable
-    return mir_block::instance();
 }
 
 pub func test_match(m: mir) {
