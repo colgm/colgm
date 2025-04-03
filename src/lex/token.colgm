@@ -83,27 +83,33 @@ pub enum tok_kind {
 
 pub struct token {
     kind: tok_kind,
-    content: str*,
-    location: span*
+    content: str,
+    location: span
 }
 
 impl token {
+    pub func instance(k: tok_kind, c: str*, loc: span*) -> token {
+        return token {
+            kind: k,
+            content: c->copy_instance(),
+            location: loc->copy_instance()
+        };
+    }
+
     pub func copy(self) -> token* {
         var res = token::__alloc__();
         if (res == nil) {
-            panic("token::copy: failed to allocate memory");
+            panic("failed to allocate memory");
         }
         res->kind = self->kind;
-        res->content = self->content->copy();
-        res->location = self->location->copy();
+        res->content = self->content.copy_instance();
+        res->location = self->location.copy_instance();
         return res;
     }
 
     pub func delete(self) {
-        self->content->delete();
-        free(self->content => i8*);
-        self->location->delete();
-        free(self->location => i8*);
+        self->content.delete();
+        self->location.delete();
     }
 
     pub func tok_kind_to_str(self) -> const i8* {

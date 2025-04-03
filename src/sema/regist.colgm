@@ -1063,18 +1063,17 @@ impl regist_pass {
         }
 
         var loc = first_param->base.location;
-        var tn = ast_type_def::new(loc->copy());
-        tn->name = ast_identifier::new(loc->copy(),
-                                       struct_info->name.__ptr__());
+        var tn = ast_type_def::new(loc);
+        tn->name = ast_identifier::new(loc, struct_info->name.__ptr__());
         tn->pointer_depth = 1;
         // copy generic template
         var GT = struct_info->generic_template.__ptr__();
         if (GT->size > 0) {
-            tn->generic_types = ast_generic_type_list::new(loc->copy());
+            tn->generic_types = ast_generic_type_list::new(loc);
             for (var i: u64 = 0; i < GT->size; i += 1) {
                 var g = GT->get(i);
-                var tmp = ast_type_def::new(loc->copy());
-                tmp->name = ast_identifier::new(loc->copy(), g);
+                var tmp = ast_type_def::new(loc);
+                tmp->name = ast_identifier::new(loc, g);
                 tn->generic_types->types.push(ptr<ast>::wrap(tmp => ast*));
             }
         }

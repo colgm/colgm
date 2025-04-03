@@ -2211,24 +2211,23 @@ impl sema {
         }
 
         var unreachable_location = unreachable_statements
-                                   .get(0).unwrap()->location->copy();
+                                   .get(0).unwrap()->location->copy_instance();
         for (var i = unreachable_statements.iter(); !i.is_end(); i = i.next()) {
             var tmp = i.get().unwrap();
-            unreachable_location->end_column = tmp->location->end_column;
-            unreachable_location->end_line = tmp->location->end_line;
+            unreachable_location.end_column = tmp->location->end_column;
+            unreachable_location.end_line = tmp->location->end_line;
         }
 
         if (unreachable_statements.size > 1) {
-            self->err->error(unreachable_location,
+            self->err->error(unreachable_location.__ptr__(),
                              "unreachable statements");
         } else {
-            self->err->error(unreachable_location,
+            self->err->error(unreachable_location.__ptr__(),
                              "unreachable statement");
         }
 
         unreachable_statements.delete();
-        unreachable_location->delete();
-        free(unreachable_location => i8*);
+        unreachable_location.delete();
     }
 
     func report_top_level_block_has_no_return(self,
@@ -2248,7 +2247,7 @@ impl sema {
         }
 
         if (func_self->return_type.is_void()) {
-            var rs = ast_ret_stmt::new(n->base.location->copy());
+            var rs = ast_ret_stmt::new(n->base.location);
             n->stmts.push(ptr<ast>::wrap(rs => ast*));
             return;
         }

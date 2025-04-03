@@ -159,7 +159,7 @@ impl ast {
     pub func instance(k: ast_kind, loc: span*) -> ast {
         return ast {
             kind: k,
-            location: loc,
+            location: loc->copy(),
             redirect_location: str::from(""),
             resolved_type: type::instance()
         };
@@ -352,7 +352,7 @@ impl ast {
                 var tmp = self => ast_code_block*;
                 tmp->delete();
             }
-            _ => { panic("ast::delete: unknown ast kind"); }
+            _ => { panic("unknown ast kind"); }
         }
     }
 }
@@ -548,7 +548,7 @@ impl ast {
                 var tmp = self => ast_code_block*;
                 return tmp->copy() => ast*;
             }
-            _ => { panic("ast::copy: unknown ast kind"); }
+            _ => { panic("unknown ast kind"); }
         }
         unreachable();
         return nil;

@@ -23,7 +23,7 @@ impl lexer {
     pub func new(e: report*) -> lexer* {
         var res = lexer::__alloc__();
         if (res == nil) {
-            panic("lexer::new: failed to allocate memory");
+            panic("failed to allocate memory");
         }
         res->err = e;
         res->toks = vec<token>::instance();
@@ -40,13 +40,10 @@ impl lexer {
     }
 
     pub func push_token(self, kind: tok_kind, content: str*, loc: span*) {
-        var res = token {
-            kind: kind,
-            content: content,
-            location: loc
-        };
-        // do token::copy, content and loc are all copied
+        var res = token::instance(kind, content, loc);
+        // do token::copy(), content and loc are all copied
         self->toks.push(res.__ptr__());
+        res.delete();
     }
 }
 
@@ -606,7 +603,7 @@ impl lexer {
         loc->begin_column = self->column;
 
         var quote_type = src->get(self->pos);
-        var tmp = str::new();
+        var tmp = str::instance();
         // skip first quote
         self->pos += 1;
         self->column += 1;
@@ -624,33 +621,33 @@ impl lexer {
                 self->pos += 1;
                 var next_ch = src->get(self->pos);
                 if (next_ch=='0') {
-                    tmp->append_char('\0');
+                    tmp.append_char('\0');
                 } elsif (next_ch=='a') {
-                    tmp->append_char('\a');
+                    tmp.append_char('\a');
                 } elsif (next_ch=='b') {
-                    tmp->append_char('\b');
+                    tmp.append_char('\b');
                 } elsif (next_ch=='e') {
-                    tmp->append_char('\e');
+                    tmp.append_char('\e');
                 } elsif (next_ch=='t') {
-                    tmp->append_char('\t');
+                    tmp.append_char('\t');
                 } elsif (next_ch=='n') {
-                    tmp->append_char('\n');
+                    tmp.append_char('\n');
                 } elsif (next_ch=='v') {
-                    tmp->append_char('\v');
+                    tmp.append_char('\v');
                 } elsif (next_ch=='f') {
-                    tmp->append_char('\f');
+                    tmp.append_char('\f');
                 } elsif (next_ch=='r') {
-                    tmp->append_char('\r');
+                    tmp.append_char('\r');
                 } elsif (next_ch=='?') {
-                    tmp->append_char('\?');
+                    tmp.append_char('\?');
                 } elsif (next_ch=='\\') {
-                    tmp->append_char('\\');
+                    tmp.append_char('\\');
                 } elsif (next_ch=='\'') {
-                    tmp->append_char('\'');
+                    tmp.append_char('\'');
                 } elsif (next_ch=='\"') {
-                    tmp->append_char('\"');
+                    tmp.append_char('\"');
                 } else {
-                    tmp->append_char(next_ch);
+                    tmp.append_char(next_ch);
                 }
                 if (next_ch=='\n') {
                     self->line += 1;
@@ -659,16 +656,18 @@ impl lexer {
                     self->column += 1;
                 }
             } else {
-                tmp->append_char(this_ch);
+                tmp.append_char(this_ch);
             }
             self->pos += 1;
         }
+
         if (self->pos >= src->size) {
             loc->end_line = self->line;
             loc->end_column = self->column;
             self->err->error(loc, "get <eof> when generating string.");
             loc->delete();
             free(loc => i8*);
+            tmp.delete();
             return;
         }
 
@@ -680,13 +679,17 @@ impl lexer {
         loc->end_column = self->column;
 
         if (quote_type == '"') {
-            self->push_token(tok_kind::tok_str, tmp, loc);
+            self->push_token(tok_kind::tok_str, tmp.__ptr__(), loc);
         } else {
-            if (tmp->size != 1) {
+            if (tmp.size != 1) {
                 self->err->error(loc, "should only contain one character.");
             }
-            self->push_token(tok_kind::tok_ch, tmp, loc);
+            self->push_token(tok_kind::tok_ch, tmp.__ptr__(), loc);
         }
+
+        loc->delete();
+        free(loc => i8*);
+        tmp.delete();
     }
 
     func generate_coloncolon(self, src: str*) {
@@ -850,14 +853,14 @@ impl lexer {
         while(index < self->toks.size) {
             var loc = self->toks.get(index)->location;
             out.out(self->toks.get(index)->tok_kind_to_str())
-               .out(" [").out(loc->file.c_str)
-               .out(":").out_i64(loc->begin_line + 1)
-               .out(":").out_i64(loc->begin_column + 1)
-               .out(" ~ ").out(loc->file.c_str)
-               .out(":").out_i64(loc->end_line + 1)
-               .out(":").out_i64(loc->end_column + 1)
+               .out(" [").out(loc.file.c_str)
+               .out(":").out_i64(loc.begin_line + 1)
+               .out(":").out_i64(loc.begin_column + 1)
+               .out(" ~ ").out(loc.file.c_str)
+               .out(":").out_i64(loc.end_line + 1)
+               .out(":").out_i64(loc.end_column + 1)
                .out("] \"")
-               .out(self->toks.get(index)->content->c_str)
+               .out(self->toks.get(index)->content.c_str)
                .out("\"")
                .endln();
             index += 1;

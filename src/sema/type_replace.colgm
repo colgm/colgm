@@ -78,14 +78,14 @@ impl type_replace_pass {
 
 impl type_replace_pass {
     func generate_generic_type(self, t: type*, loc: span*) -> ast_type_def* {
-        var new_def = ast_type_def::new(loc->copy());
-        new_def->name = ast_identifier::new(loc->copy(), t->name.__ptr__());
+        var new_def = ast_type_def::new(loc);
+        new_def->name = ast_identifier::new(loc, t->name.__ptr__());
         new_def->name->base.redirect_location.append_str(t->loc_file.__ptr__());
         new_def->base.redirect_location.append_str(t->loc_file.__ptr__());
         new_def->is_const = t->is_immutable;
         new_def->pointer_depth = t->pointer_depth;
         if (t->generics.size > 0) {
-            new_def->generic_types = ast_generic_type_list::new(loc->copy());
+            new_def->generic_types = ast_generic_type_list::new(loc);
             for (var i = t->generics.iter(); !i.is_end(); i = i.next()) {
                 new_def->generic_types->types.push(ptr<ast>::wrap(
                     self->generate_generic_type(i.get(), loc) => ast*
@@ -271,7 +271,7 @@ impl type_replace_pass {
 
             if (select_type->generics.size > 0 &&
                 n->generic_types == nil) {
-                n->generic_types = ast_generic_type_list::new(n->base.location->copy());
+                n->generic_types = ast_generic_type_list::new(n->base.location);
                 for (var i = select_type->generics.iter(); !i.is_end(); i = i.next()) {
                     n->generic_types->types.push(ptr<ast>::wrap(
                         self->generate_generic_type(i.get(), n->base.location) => ast*
@@ -342,7 +342,7 @@ impl type_replace_pass {
 
             if (select_type->generics.size > 0 &&
                 n->generic_types == nil) {
-                n->generic_types = ast_generic_type_list::new(n->base.location->copy());
+                n->generic_types = ast_generic_type_list::new(n->base.location);
                 for (var i = select_type->generics.iter(); !i.is_end(); i = i.next()) {
                     n->generic_types->types.push(ptr<ast>::wrap(
                         self->generate_generic_type(i.get(), n->base.location) => ast*

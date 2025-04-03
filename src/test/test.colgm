@@ -1,4 +1,4 @@
-use std::libc::{ free, itoa, time, srand, rand };
+use std::libc::{ time, srand, rand };
 use std::list::{ list, primitive_list };
 use std::vec::{ vec, primitive_vec };
 use std::map::{ hashmap };
@@ -6,79 +6,81 @@ use std::set::{ hashset };
 use std::str::{ str };
 use std::io::{ io };
 
-func test_set() {
-    var buff = [i8; 1024];
+func test_set() -> bool {
     var set = hashset<str>::instance();
     for (var i = 0; i < 128; i += 1) {
-        itoa(i, buff, 10);
         var n = str::instance();
-        n.append_i8_vec(buff);
+        n.append_i64(i);
         set.insert(n.__ptr__());
         n.delete();
     }
 
+    var result = true;
     for (var i = set.iter(); !i.is_end(); i = i.next()) {
         var n = i.elem();
         if (set.has(n)) {
-            io::stdout().out("[").green().out("test").reset().out("] hashset: ");
+            io::stdout().green().out("[test]").reset().out(" hashset: ");
             io::stdout().out(n->c_str).out(" found in bucket ");
             io::stdout().out_u64(i.bucket_index).endln();
         } else {
-            io::stdout().out("[").red().out("test").reset().out("] hashset: ");
+            io::stdout().red().out("[test]").reset().out(" hashset: ");
             io::stdout().out(n->c_str).out(" not found\n");
+            result = false;
         }
     }
 
     set.delete();
+    return result;
 }
 
-func test_hashmap() {
-    var buff = [i8; 1024];
+func test_hashmap() -> bool {
     var map = hashmap<str, str>::instance();
     var stored = vec<str>::instance();
 
     for (var i = 0; i < 128; i += 1) {
         var num = rand() % 4096;
-        itoa(num => i64, buff, 10);
         var k = str::instance();
         var v = str::instance();
-        k.append_i8_vec(buff);
+        k.append_i64(num => i64);
         v.append_i8_vec("[test hashmap<str, str> ");
-        v.append_i8_vec(buff)->append_i8_vec("]");
+        v.append_i64(num => i64)->append_i8_vec("]");
         map.insert(k.__ptr__(), v.__ptr__());
         stored.push(k.__ptr__());
         k.delete();
         v.delete();
     }
 
+    var result = true;
     for (var i = 0; i < 128; i += 1) {
         var key = stored.get(i => u64);
         if (map.has(key)) {
-            io::stdout().out("[").green().out("test").reset().out("] hashmap ");
+            io::stdout().green().out("[test]").reset().out(" hashmap ");
             io::stdout().out_i64(i).out(": key ");
             io::stdout().out(key->c_str).out(" found -> ");
             io::stdout().out(map.get(key)->c_str).endln();
         } else {
-            io::stdout().out("[").red().out("test").reset().out("] hashmap ");
+            io::stdout().red().out("[test]").reset().out(" hashmap ");
             io::stdout().out_i64(i).out(": ");
             io::stdout().out(key->c_str).out(" not found\n");
+            result = false;
         }
     }
 
     for (var i = map.iter(); !i.is_end(); i = i.next()) {
-        io::stdout().out("[").green().out("test").reset();
-        io::stdout().out("] hashmap::iter ");
+        io::stdout().green().out("[test]").reset();
+        io::stdout().out(" hashmap::iter ");
         io::stdout().out(i.key()->c_str).out(" -> ").out(i.value()->c_str);
         io::stdout().out(" in bucket ").out_u64(i.bucket_index).out("\n");
     }
 
     map.delete();
     stored.delete();
+    return result;
 }
 
 func list_dump(list: list<str>*) {
     for (var i = list->iter(); !i.is_end(); i = i.next()) {
-        io::stdout().out("[").green().out("test").reset().out("] list: ");
+        io::stdout().green().out("[test]").reset().out(" list: ");
         io::stdout().out(i.elem()->c_str).endln();
     }
 }
@@ -86,7 +88,7 @@ func list_dump(list: list<str>*) {
 func primitive_list_dump(list: primitive_list<i64>*) {
     var temp = list->head;
     while (temp != nil) {
-        io::stdout().out("[").green().out("test").reset().out("] list: ");
+        io::stdout().green().out("[test]").reset().out(" list: ");
         io::stdout().out_i64(temp->elem).endln();
         temp = temp->next;
     }
@@ -99,14 +101,13 @@ func test_list() {
 
     for (var i = 0; i < 32; i += 1) {
         var num = rand() % 4096;
-        var buff = [i8; 1024];
-        itoa(num => i64, buff, 10);
         s.clear();
         s.append_i8_vec("test list<str> ");
-        s.append_i8_vec(buff);
+        s.append_i64(num => i64);
         str_list.insert(s.__ptr__());
         int_list.insert(num => i64);
     }
+
     list_dump(str_list.__ptr__());
     primitive_list_dump(int_list.__ptr__());
 
@@ -117,7 +118,7 @@ func test_list() {
 
 func vec_dump(vec: vec<str>*) {
     for (var i = vec->iter(); !i.is_end(); i = i.next()) {
-        io::stdout().out("[").green().out("test").reset().out("] vec[");
+        io::stdout().green().out("[test]").reset().out(" vec[");
         io::stdout().out_u64(i.index()).out("]: ");
         io::stdout().out(i.get()->c_str).endln();
     }
@@ -125,7 +126,7 @@ func vec_dump(vec: vec<str>*) {
 
 func primitive_vec_dump(vec: primitive_vec<i64>*) {
     for (var i = vec->iter(); !i.is_end(); i = i.next()) {
-        io::stdout().out("[").green().out("test").reset().out("] vec[");
+        io::stdout().green().out("[test]").reset().out(" vec[");
         io::stdout().out_u64(i.index()).out("]: ");
         io::stdout().out_i64(i.get()).endln();
     }
@@ -137,14 +138,13 @@ func test_vector() {
     var int_vec = primitive_vec<i64>::instance();
     for (var i = 0; i < 32; i += 1) {
         var num = rand() % 4096;
-        var buff = [i8; 1024];
-        itoa(num => i64, buff, 10);
         s.clear();
         s.append_i8_vec("test vec<str> ");
-        s.append_i8_vec(buff);
+        s.append_i64(num => i64);
         str_vec.push(s.__ptr__());
         int_vec.push(num => i64);
     }
+
     vec_dump(str_vec.__ptr__());
     primitive_vec_dump(int_vec.__ptr__());
 
@@ -153,15 +153,24 @@ func test_vector() {
     int_vec.delete();
 }
 
-func TEST_ALL() {
+func TEST_ALL() -> bool {
     srand(time(nil) => u32);
-    test_hashmap();
+
+    var result = true;
+    if (!test_hashmap()) {
+        result = false;
+    }
     test_list();
     test_vector();
-    test_set();
+    if (!test_set()) {
+        result = false;
+    }
+    return result;
 }
 
 func main() -> i32 {
-    TEST_ALL();
+    if (!TEST_ALL()) {
+        return -1;
+    }
     return 0;
 }
