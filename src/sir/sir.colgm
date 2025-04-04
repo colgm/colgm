@@ -1791,17 +1791,19 @@ pub struct sir_array_cast {
     target: value_t,
     source: value_t,
     type: str,
-    array_size: u64
+    array_size: u64,
+    debug_info_index: u64
 }
 
 impl sir_array_cast {
-    pub func new(src: value_t*, tgt: value_t*, type: str*, size: u64) -> sir_array_cast* {
+    pub func new(src: value_t*, tgt: value_t*, type: str*, size: u64, dii: u64) -> sir_array_cast* {
         var n = sir_array_cast::__alloc__();
         n->base = sir::instance(sir_kind::sir_array_cast);
         n->source = src->copy_instance();
         n->target = tgt->copy_instance();
         n->type = type->copy_instance();
         n->array_size = size;
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -1817,6 +1819,10 @@ impl sir_array_cast {
         out.out(" = bitcast [").out_u64(self->array_size).out(" x ");
         out.out(self->type.c_str).out("]* ");
         self->source.dump(out);
-        out.out(" to ").out(self->type.c_str).out("*\n");
+        out.out(" to ").out(self->type.c_str).out("*");
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
+        out.endln();
     }
 }
