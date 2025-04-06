@@ -150,7 +150,7 @@ pub enum assignment_kind {
 
 pub struct ast {
     kind: ast_kind,         // ast node kind
-    location: span*,        // location of ast node
+    location: span,         // location of ast node
     redirect_location: str, // redirect location, used by generic types
     resolved_type: type     // resolved type, filled by semantic analysis
 }
@@ -159,7 +159,7 @@ impl ast {
     pub func instance(k: ast_kind, loc: span*) -> ast {
         return ast {
             kind: k,
-            location: loc->copy(),
+            location: loc->copy_instance(),
             redirect_location: str::from(""),
             resolved_type: type::instance()
         };
@@ -175,10 +175,7 @@ impl ast {
     }
 
     pub func delete(self) {
-        if (self->location != nil) {
-            self->location->delete();
-            free(self->location => i8*);
-        }
+        self->location.delete();
         self->redirect_location.delete();
         self->resolved_type.delete();
 
@@ -588,7 +585,7 @@ impl root {
         var res = root::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_root,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->imports = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->imports.size; i += 1) {
@@ -636,7 +633,7 @@ impl ast_unary_operator {
         var res = ast_unary_operator::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_unary_operator,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->kind = self->kind;
         if (self->value != nil) {
@@ -676,7 +673,7 @@ impl ast_binary_operator {
         var res = ast_binary_operator::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_binary_operator,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->kind = self->kind;
         if (self->left != nil) {
@@ -723,7 +720,7 @@ impl ast_type_convert {
         var res = ast_type_convert::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_type_convert,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->from != nil) {
             res->from = self->from->copy();
@@ -767,7 +764,7 @@ impl ast_identifier {
         var res = ast_identifier::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_identifier,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->content = self->content.copy_instance();
         return res;
@@ -790,7 +787,7 @@ impl ast_nil_literal {
     }
 
     pub func copy(self) -> ast_nil_literal* {
-        return ast_nil_literal::new(self->base.location->copy());
+        return ast_nil_literal::new(self->base.location.__ptr__());
     }
 }
 
@@ -811,7 +808,7 @@ impl ast_number_literal {
         var res = ast_number_literal::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_number_literal,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->literal = self->literal.copy_instance();
         return res;
@@ -839,7 +836,7 @@ impl ast_string_literal {
         var res = ast_string_literal::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_string_literal,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->literal = self->literal.copy_instance();
         return res;
@@ -867,7 +864,7 @@ impl ast_char_literal {
         var res = ast_char_literal::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_char_literal,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->literal = self->literal.copy_instance();
         return res;
@@ -892,7 +889,7 @@ impl ast_bool_literal {
     }
 
     pub func copy(self) -> ast_bool_literal* {
-        return ast_bool_literal::new(self->base.location->copy(), self->flag);
+        return ast_bool_literal::new(self->base.location.__ptr__(), self->flag);
     }
 }
 
@@ -915,7 +912,7 @@ impl ast_array_literal {
         var res = ast_array_literal::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_array_literal,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->size != nil) {
             res->size = self->size->copy();
@@ -960,7 +957,7 @@ impl ast_call_index {
         var res = ast_call_index::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call_index,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->index != nil) {
             res->index = self->index->copy();
@@ -995,7 +992,7 @@ impl ast_call_func_args {
         var res = ast_call_func_args::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call_func_args,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->args = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->args.size; i += 1) {
@@ -1030,7 +1027,7 @@ impl ast_get_field {
         var res = ast_get_field::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_get_field,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->name = self->name.copy_instance();
         return res;
@@ -1058,7 +1055,7 @@ impl ast_ptr_get_field {
         var res = ast_ptr_get_field::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_ptr_get_field,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->name = self->name.copy_instance();
         return res;
@@ -1088,7 +1085,7 @@ impl ast_init_pair {
         var res = ast_init_pair::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_init_pair,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->field != nil) {
             res->field = self->field->copy();
@@ -1132,7 +1129,7 @@ impl ast_initializer {
         var res = ast_initializer::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_initializer,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->pairs = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->pairs.size; i += 1) {
@@ -1167,7 +1164,7 @@ impl ast_call_path {
         var res = ast_call_path::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call_path,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->name = self->name.copy_instance();
         return res;
@@ -1197,7 +1194,7 @@ impl ast_call_id {
         var res = ast_call_id::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call_id,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->id != nil) {
             res->id = self->id->copy();
@@ -1243,7 +1240,7 @@ impl ast_call {
         var res = ast_call::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->head != nil) {
             res->head = self->head->copy();
@@ -1290,7 +1287,7 @@ impl ast_assignment {
         var res = ast_assignment::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_assignment,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->kind = self->kind;
         if (self->left != nil) {
@@ -1341,7 +1338,7 @@ impl ast_cond_compile {
         var res = ast_cond_compile::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_cond_compile,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->cond_name = self->cond_name.copy_instance();
         res->conds = self->conds.copy_instance();
@@ -1390,7 +1387,7 @@ impl ast_type_def {
         var res = ast_type_def::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_type_def,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->name != nil) {
             res->name = self->name->copy();
@@ -1436,7 +1433,7 @@ impl ast_generic_type_list {
         var res = ast_generic_type_list::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_generic_type_list,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->types = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->types.size; i += 1) {
@@ -1473,7 +1470,7 @@ impl ast_enum_member {
         var res = ast_enum_member::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_enum_member,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->name != nil) {
             res->name = self->name->copy();
@@ -1521,7 +1518,7 @@ impl ast_enum_decl {
         var res = ast_enum_decl::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_enum_decl,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->members = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->members.size; i += 1) {
@@ -1561,7 +1558,7 @@ impl ast_struct_field {
         var res = ast_struct_field::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_struct_field,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->name != nil) {
             res->name = self->name->copy();
@@ -1613,7 +1610,7 @@ impl ast_struct_decl {
         var res = ast_struct_decl::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_struct_decl,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->fields = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->fields.size; i += 1) {
@@ -1673,7 +1670,7 @@ impl ast_param {
         var res = ast_param::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_param,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->name != nil) {
             res->name = self->name->copy();
@@ -1717,7 +1714,7 @@ impl ast_param_list {
         var res = ast_param_list::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_param_list,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->params = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->params.size; i += 1) {
@@ -1764,7 +1761,7 @@ impl ast_func_decl {
         var res = ast_func_decl::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_func_decl,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->name = self->name.copy_instance();
         if (self->generic_types != nil) {
@@ -1844,7 +1841,7 @@ impl ast_impl {
         var res = ast_impl::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_impl,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->name = self->name.copy_instance();
         if (self->generic_types != nil) {
@@ -1904,7 +1901,7 @@ impl ast_use_stmt {
         var res = ast_use_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_use_stmt,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->module_path = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->module_path.size; i += 1) {
@@ -1952,7 +1949,7 @@ impl ast_definition {
         var res = ast_definition::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_definition,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->name = self->name.copy_instance();
         if (self->type != nil) {
@@ -1998,7 +1995,7 @@ impl ast_cond_stmt {
         var res = ast_cond_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_cond_stmt,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->stmts = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->stmts.size; i += 1) {
@@ -2035,7 +2032,7 @@ impl ast_if_stmt {
         var res = ast_if_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_if_stmt,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->condition != nil) {
             res->condition = self->condition->copy();
@@ -2081,7 +2078,7 @@ impl ast_match_case {
         var res = ast_match_case::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_match_case,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->pattern != nil) {
             res->pattern = self->pattern->copy();
@@ -2127,7 +2124,7 @@ impl ast_match_stmt {
         var res = ast_match_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_match_stmt,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->value != nil) {
             res->value = self->value->copy();
@@ -2173,7 +2170,7 @@ impl ast_while_stmt {
         var res = ast_while_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_while_stmt,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->condition != nil) {
             res->condition = self->condition->copy();
@@ -2223,7 +2220,7 @@ impl ast_for_stmt {
         var res = ast_for_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_for_stmt,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->init != nil) {
             res->init = self->init->copy();
@@ -2285,7 +2282,7 @@ impl ast_in_stmt_expr {
         var res = ast_in_stmt_expr::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_in_stmt_expr,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->value != nil) {
             res->value = self->value->copy();
@@ -2320,7 +2317,7 @@ impl ast_ret_stmt {
         var res = ast_ret_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_ret_stmt,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         if (self->value != nil) {
             res->value = self->value->copy();
@@ -2351,7 +2348,7 @@ impl ast_continue_stmt {
         var res = ast_continue_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_continue_stmt,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         return res;
     }
@@ -2370,7 +2367,7 @@ impl ast_break_stmt {
         var res = ast_break_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_break_stmt,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         return res;
     }
@@ -2393,7 +2390,7 @@ impl ast_code_block {
         var res = ast_code_block::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_code_block,
-            self->base.location->copy()
+            self->base.location.__ptr__()
         );
         res->stmts = primitive_vec<ptr<ast>>::instance();
         for (var i: u64 = 0; i < self->stmts.size; i += 1) {

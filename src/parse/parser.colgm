@@ -145,14 +145,9 @@ impl parser {
             return;
         }
 
-        // do not update location if node does not have location info
-        if (node->location == nil) {
-            return;
-        }
-
         var last_loc = self->get_tok(self->index - 1)->location.__ptr__();
-        node->location->end_line = last_loc->end_line;
-        node->location->end_column = last_loc->end_column;
+        node->location.end_line = last_loc->end_line;
+        node->location.end_column = last_loc->end_column;
     }
 
     func lookahead(self, kind: tok_kind) -> bool {
@@ -180,7 +175,7 @@ impl parser {
             self->next();
             return;
         }
-        var loc = self->this_tok()->location.__ptr__();
+        var loc = self->this_tok_loc();
         match (kind) {
             tok_kind::tok_id => {
                 self->err->error(loc, "expected identifier here.");
@@ -416,7 +411,7 @@ impl parser {
             self->match_token(tok_kind::tok_false);
         } else {
             self->err->error(
-                self->this_tok()->location.__ptr__(),
+                self->this_tok_loc(),
                 "expected \"true\" or \"false\" here."
             );
         }
@@ -429,7 +424,7 @@ impl parser {
         res->type = self->type_def_gen();
         if (self->this_tok()->kind == tok_kind::tok_colon) {
             self->err->error(
-                self->this_tok()->location.__ptr__(),
+                self->this_tok_loc(),
                 "\":\" is not allowed in array literal. maybe \";\"?"
             );
             self->match_token(tok_kind::tok_colon);
@@ -471,7 +466,7 @@ impl parser {
         }
 
         self->err->error(
-            self->this_tok()->location.__ptr__(),
+            self->this_tok_loc(),
             "expected scalar here."
         );
         return ast_null::new() => ast*;
@@ -993,7 +988,7 @@ impl parser {
         }
 
         self->err->error(
-            self->this_tok()->location.__ptr__(),
+            self->this_tok_loc(),
             "expected statement here."
         );
         self->next();
@@ -1154,7 +1149,10 @@ impl parser {
                 tmp->is_public = true;
                 return tmp => ast*;
             } else {
-                self->err->error(res->location, "unreachable, please report bug.");
+                self->err->error(
+                    res->location.__ptr__(),
+                    "unreachable, please report bug."
+                );
             }
         } elsif (self->lookahead(tok_kind::tok_func)) {
             var res = self->function_decl_gen();

@@ -57,7 +57,7 @@ match (xxx) {
 
 ## Characters Per Line
 
-One single line should not contain more than 90 characters (just an advice), if characters exceed,
+One single line should not contain more than 100 characters (just an advice), if characters exceed,
 use the llvm style:
 
 ```rs

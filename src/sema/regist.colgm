@@ -152,7 +152,7 @@ impl regist_pass {
                 info.append_i8_vec("\" in module \"");
                 info.append_str(path);
                 info.append_i8_vec("\"");
-                self->err->error(name_node->base.location, info.c_str);
+                self->err->error(name_node->base.location.__ptr__(), info.c_str);
                 info.delete();
                 continue;
             }
@@ -162,7 +162,7 @@ impl regist_pass {
                 info.append_i8_vec("cannot import private symbol \"");
                 info.append_str(name);
                 info.append_i8_vec("\"");
-                self->err->error(name_node->base.location, info.c_str);
+                self->err->error(name_node->base.location.__ptr__(), info.c_str);
                 info.delete();
                 continue;
             }
@@ -205,7 +205,7 @@ impl regist_pass {
             info.append_i8_vec(" may encounter compilation failure");
             info.append_i8_vec(" or circle dependency");
             self->err->error(
-                node->base.location,
+                node->base.location.__ptr__(),
                 info.c_str
             );
             info.delete();
@@ -296,7 +296,7 @@ impl regist_pass {
         for (var i: u64 = 0; i < node->module_path.size; i += 1) {
             var name = node->module_path.get(i).unwrap();
             if (!name->is(ast_kind::ast_identifier)) {
-                self->err->error(name->location, "invalid module path");
+                self->err->error(name->location.__ptr__(), "invalid module path");
                 expect_name.delete();
                 expect_path.delete();
                 return;
@@ -322,7 +322,7 @@ impl regist_pass {
             info.append_i8_vec("\" not found, \"");
             info.append_i8_vec(expect_path.c_str);
             info.append_i8_vec("\" does not exist");
-            self->err->error(node->base.location, info.c_str);
+            self->err->error(node->base.location.__ptr__(), info.c_str);
             info.delete();
         }
 
@@ -346,7 +346,7 @@ impl regist_pass {
         for (var i: u64 = 0; i < self->root->imports.size; i += 1) {
             var node = self->root->imports.get(i).unwrap();
             if (!node->is(ast_kind::ast_use_stmt)) {
-                self->err->error(node->location, "invalid import");
+                self->err->error(node->location.__ptr__(), "invalid import");
                 return;
             }
             self->scan_single_import(node => ast_use_stmt*);
@@ -466,7 +466,7 @@ impl regist_pass {
         for (var i: u64 = 0; i < v->size; i += 1) {
             var n = v->get(i).unwrap();
             if (!n->is(ast_kind::ast_enum_member)) {
-                self->err->error(n->location,
+                self->err->error(n->location.__ptr__(),
                     "invalid ast node, expect enum member"
                 );
                 return;
@@ -481,7 +481,7 @@ impl regist_pass {
 
         // specified value is required for all members now
         if (has_specified_value && has_non_specified_value) {
-            self->err->error(node->base.location,
+            self->err->error(node->base.location.__ptr__(),
                 "should use specified number for all members"
             );
             return;
@@ -509,23 +509,23 @@ impl regist_pass {
             info.append_i8_vec("enum \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist symbol");
-            self->err->error(node->base.location, info.c_str);
+            self->err->error(node->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
         }
 
         // allocate enum info
-        var enum_info = colgm_enum::new(name, node->base.location);
+        var enum_info = colgm_enum::new(name, node->base.location.__ptr__());
         self->generate_enum_member(enum_info, node);
         // insert to domain
-        var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         dm->enums.insert(name, enum_info);
         enum_info->delete();
         free(enum_info => i8*);
 
         var sym_info = symbol_info::new();
         sym_info->kind = symbol_kind::enum_kind;
-        sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+        sym_info->loc_file.append_str(node->base.location.file.__ptr__());
         sym_info->is_public = true; // true for selves' domain
         self->ctx->global_symbol()->insert(name, sym_info);
         sym_info->delete();
@@ -560,7 +560,7 @@ impl regist_pass {
         for (var i: u64 = 0; i < v->size; i += 1) {
             var n = v->get(i).unwrap();
             if (!n->is(ast_kind::ast_param)) {
-                self->err->error(n->location,
+                self->err->error(n->location.__ptr__(),
                     "invalid ast node, expect param"
                 );
                 continue;
@@ -570,13 +570,13 @@ impl regist_pass {
 
             // check self param
             if (param_name->eq_const("self") && i != 0) {
-                self->err->error(n->location,
+                self->err->error(n->location.__ptr__(),
                     "\"self\" must be the first param"
                 );
                 continue;
             }
             if (param_name->eq_const("self") && i == 0 && is_global_func) {
-                self->err->error(n->location,
+                self->err->error(n->location.__ptr__(),
                     "global function cannot use \"self\" as parameter"
                 );
                 continue;
@@ -587,7 +587,7 @@ impl regist_pass {
                 info.append_i8_vec("param \"");
                 info.append_str(param_name);
                 info.append_i8_vec("\" conflicts with exist param");
-                self->err->error(n->location, info.c_str);
+                self->err->error(n->location.__ptr__(), info.c_str);
                 info.delete();
                 continue;
             }
@@ -615,7 +615,7 @@ impl regist_pass {
             info.append_i8_vec("\"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist symbol");
-            self->err->error(node->base.location, info.c_str);
+            self->err->error(node->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
         }
@@ -626,7 +626,7 @@ impl regist_pass {
             for (var i: u64 = 0; i < gtv->size; i += 1) {
                 var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
-                    self->err->error(gt->location,
+                    self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"
                     );
                     continue;
@@ -642,7 +642,7 @@ impl regist_pass {
             var ret_type = type::void_type();
             func_info = colgm_func::new(
                 name,
-                node->base.location,
+                node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
             ret_type.delete();
@@ -650,7 +650,7 @@ impl regist_pass {
             var ret_type = self->tr.resolve(node->return_type);
             func_info = colgm_func::new(
                 name,
-                node->base.location,
+                node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
             ret_type.delete();
@@ -661,7 +661,7 @@ impl regist_pass {
             for (var i: u64 = 0; i < gtv->size; i += 1) {
                 var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
-                    self->err->error(gt->location,
+                    self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"
                     );
                     continue;
@@ -675,7 +675,7 @@ impl regist_pass {
         self->generate_function_params(func_info, node, true);
 
         // insert to domain
-        var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         if (node->generic_types != nil) {
             dm->generic_functions.insert(name, func_info);
         } else {
@@ -686,7 +686,7 @@ impl regist_pass {
 
         var sym_info = symbol_info::new();
         sym_info->kind = symbol_kind::func_kind;
-        sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+        sym_info->loc_file.append_str(node->base.location.file.__ptr__());
         sym_info->is_public = true; // true for selves' domain
         self->ctx->global_symbol()->insert(name, sym_info);
         if (node->generic_types != nil) {
@@ -719,7 +719,7 @@ impl regist_pass {
             info.append_i8_vec("cannot find symbol \"");
             info.append_str(name);
             info.append_i8_vec("\"");
-            self->err->error(node->base.location, info.c_str);
+            self->err->error(node->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
         }
@@ -730,7 +730,7 @@ impl regist_pass {
             for (var i: u64 = 0; i < gtv->size; i += 1) {
                 var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
-                    self->err->error(gt->location,
+                    self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"
                     );
                     continue;
@@ -740,7 +740,7 @@ impl regist_pass {
             }
         }
 
-        var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         if (node->generic_types == nil && !dm->structs.has(name)) {
             return;
         }
@@ -756,7 +756,7 @@ impl regist_pass {
             for (var i: u64 = 0; i < gtv->size; i += 1) {
                 var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
-                    self->err->error(gt->location,
+                    self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"
                     );
                     continue;
@@ -780,7 +780,7 @@ impl regist_pass {
                 info.append_i8_vec("field \"");
                 info.append_str(fld_name);
                 info.append_i8_vec("\" conflicts with exist field");
-                self->err->error(node->base.location, info.c_str);
+                self->err->error(node->base.location.__ptr__(), info.c_str);
                 info.delete();
                 continue;
             }
@@ -795,7 +795,7 @@ impl regist_pass {
 
         var struct_self_type = type::instance();
         struct_self_type.name.append_str(name);
-        struct_self_type.loc_file.append_str(node->base.location->file.__ptr__());
+        struct_self_type.loc_file.append_str(node->base.location.file.__ptr__());
         if (node->generic_types != nil) {
             for (var i = node->generic_types->types.iter(); !i.is_end(); i = i.next()) {
                 var gt = i.get().unwrap();
@@ -885,13 +885,13 @@ impl regist_pass {
             info.append_i8_vec("struct \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist symbol");
-            self->err->error(node->base.location, info.c_str);
+            self->err->error(node->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
         }
 
         // allocate struct info
-        var struct_info = colgm_struct::new(name, node->base.location);
+        var struct_info = colgm_struct::new(name, node->base.location.__ptr__());
         if (node->is_extern) {
             struct_info->is_extern = true;
         }
@@ -899,7 +899,7 @@ impl regist_pass {
             struct_info->is_public = true;
         }
         // insert to domain
-        var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         if (node->generic_types != nil) {
             dm->generic_structs.insert(name, struct_info);
         } else {
@@ -910,7 +910,7 @@ impl regist_pass {
 
         var sym_info = symbol_info::new();
         sym_info->kind = symbol_kind::struct_kind;
-        sym_info->loc_file.append_str(node->base.location->file.__ptr__());
+        sym_info->loc_file.append_str(node->base.location.file.__ptr__());
         sym_info->is_public = true; // true for selves's domain
         self->ctx->global_symbol()->insert(name, sym_info);
         if (node->generic_types != nil) {
@@ -1062,7 +1062,7 @@ impl regist_pass {
             return;
         }
 
-        var loc = first_param->base.location;
+        var loc = first_param->base.location.__ptr__();
         var tn = ast_type_def::new(loc);
         tn->name = ast_identifier::new(loc, struct_info->name.__ptr__());
         tn->pointer_depth = 1;
@@ -1089,7 +1089,7 @@ impl regist_pass {
             info.append_i8_vec("field \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist field or method");
-            self->err->error(node->base.location, info.c_str);
+            self->err->error(node->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
         }
@@ -1100,7 +1100,7 @@ impl regist_pass {
             var ret_type = type::void_type();
             func_info = colgm_func::new(
                 name,
-                node->base.location,
+                node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
             ret_type.delete();
@@ -1108,7 +1108,7 @@ impl regist_pass {
             var ret_type = self->tr.resolve(node->return_type);
             func_info = colgm_func::new(
                 name,
-                node->base.location,
+                node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
             ret_type.delete();
@@ -1130,7 +1130,7 @@ impl regist_pass {
             info.append_i8_vec("field \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist field or method");
-            self->err->error(node->base.location, info.c_str);
+            self->err->error(node->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
         }
@@ -1141,7 +1141,7 @@ impl regist_pass {
             var ret_type = type::void_type();
             func_info = colgm_func::new(
                 name,
-                node->base.location,
+                node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
             ret_type.delete();
@@ -1149,7 +1149,7 @@ impl regist_pass {
             var ret_type = self->tr.resolve(node->return_type);
             func_info = colgm_func::new(
                 name,
-                node->base.location,
+                node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
             ret_type.delete();
@@ -1168,7 +1168,7 @@ impl regist_pass {
             for (var i: u64 = 0; i < gtv->size; i += 1) {
                 var gt = gtv->get(i).unwrap();
                 if (!gt->is(ast_kind::ast_type_def)) {
-                    self->err->error(gt->location,
+                    self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"
                     );
                     continue;
@@ -1179,13 +1179,13 @@ impl regist_pass {
         }
 
         var name = node->name.__ptr__();
-        var dm = self->ctx->get_domain(node->base.location->file.__ptr__());
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         if (!dm->structs.has(name) && !dm->generic_structs.has(name)) {
             var info = str::instance();
             info.append_i8_vec("cannot find struct \"");
             info.append_str(name);
             info.append_i8_vec("\"");
-            self->err->error(node->base.location, info.c_str);
+            self->err->error(node->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
         }
@@ -1240,16 +1240,16 @@ impl regist_pass {
 
         // clear this file's name and reset to the current ast file
         self->this_file.clear();
-        self->this_file.append_i8_vec(root->base.location->file.c_str);
+        self->this_file.append_i8_vec(root->base.location.file.c_str);
         self->ctx->this_file.clear();
-        self->ctx->this_file.append_i8_vec(root->base.location->file.c_str);
+        self->ctx->this_file.append_i8_vec(root->base.location.file.c_str);
 
         // create domain if not exist
         self->ctx->create_domain_if_not_exist(self->this_file.__ptr__());
 
         var this_dm = self->ctx->get_domain(self->this_file.__ptr__());
         this_dm->file_name.clear();
-        this_dm->file_name.append_i8_vec(root->base.location->file.c_str);
+        this_dm->file_name.append_i8_vec(root->base.location.file.c_str);
 
         self->regist_primitives();
         self->scan_imports();

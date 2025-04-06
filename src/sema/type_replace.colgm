@@ -243,7 +243,7 @@ impl type_replace_pass {
                 var info = str::from("replace generic type with pointer type \"");
                 info.append_str(st_full_name.__ptr__());
                 info.append_i8_vec("\", which is not allowed here");
-                self->err->error(n->base.location, info.c_str);
+                self->err->error(n->base.location.__ptr__(), info.c_str);
                 
                 st_full_name.delete();
                 info.delete();
@@ -259,7 +259,7 @@ impl type_replace_pass {
                 info.append_i8_vec("\" with \"");
                 info.append_str(st_full_name.__ptr__());
                 info.append_i8_vec("\", which is already a generic type");
-                self->err->error(n->base.location, info.c_str);
+                self->err->error(n->base.location.__ptr__(), info.c_str);
                 info.delete();
                 st_full_name.delete();
             }
@@ -271,10 +271,10 @@ impl type_replace_pass {
 
             if (select_type->generics.size > 0 &&
                 n->generic_types == nil) {
-                n->generic_types = ast_generic_type_list::new(n->base.location);
+                n->generic_types = ast_generic_type_list::new(n->base.location.__ptr__());
                 for (var i = select_type->generics.iter(); !i.is_end(); i = i.next()) {
                     n->generic_types->types.push(ptr<ast>::wrap(
-                        self->generate_generic_type(i.get(), n->base.location) => ast*
+                        self->generate_generic_type(i.get(), n->base.location.__ptr__()) => ast*
                     ));
                 }
             }
@@ -284,7 +284,7 @@ impl type_replace_pass {
                 var st_full_name = select_type->generic_name(self->pkg);
                 io::stdout().out(" replace ").orange().out(copy.c_str).reset();
                 io::stdout().out(" with ").cyan().out(st_full_name.c_str).reset().out(" ");
-                n->base.location->dump(io::stdout());
+                n->base.location.dump(io::stdout());
                 st_full_name.delete();
             }
         }
@@ -328,7 +328,7 @@ impl type_replace_pass {
                 info.append_i8_vec("\" with \"");
                 info.append_str(st_full_name.__ptr__());
                 info.append_i8_vec("\", which is already a generic type");
-                self->err->error(n->base.location, info.c_str);
+                self->err->error(n->base.location.__ptr__(), info.c_str);
                 info.delete();
                 st_full_name.delete();
             }
@@ -342,10 +342,10 @@ impl type_replace_pass {
 
             if (select_type->generics.size > 0 &&
                 n->generic_types == nil) {
-                n->generic_types = ast_generic_type_list::new(n->base.location);
+                n->generic_types = ast_generic_type_list::new(n->base.location.__ptr__());
                 for (var i = select_type->generics.iter(); !i.is_end(); i = i.next()) {
                     n->generic_types->types.push(ptr<ast>::wrap(
-                        self->generate_generic_type(i.get(), n->base.location) => ast*
+                        self->generate_generic_type(i.get(), n->base.location.__ptr__()) => ast*
                     ));
                 }
             }
@@ -355,7 +355,7 @@ impl type_replace_pass {
                 var st_full_name = select_type->generic_name(self->pkg);
                 io::stdout().out(" replace ").orange().out(copy.c_str).reset();
                 io::stdout().out(" with ").cyan().out(st_full_name.c_str).reset().out(" ");
-                n->base.location->dump(io::stdout());
+                n->base.location.dump(io::stdout());
                 st_full_name.delete();
             }
         }
@@ -563,7 +563,7 @@ impl generic_visitor {
 
         if (scan_count > 0 && self->co->VIEW_TYPE_REPLACE_INFO) {
             io::stdout().out("[generic_visitor] generate generics of ")
-                        .white().out(n->base.location->file.c_str).reset()
+                        .white().out(n->base.location.file.c_str).reset()
                         .out(" after ").out_i64(scan_count).out(" scan(s)")
                         .endln();
         }
@@ -577,7 +577,7 @@ impl generic_visitor {
             !dm->generic_symbol.has(type_name)) {
             var info = str::from("unknown type \"");
             info.append_str(type_name)->append_i8_vec("\"");
-            self->err->error(n->location, info.c_str);
+            self->err->error(n->location.__ptr__(), info.c_str);
             info.delete();
             return false;
         }
@@ -587,7 +587,7 @@ impl generic_visitor {
             var info = str::from("\"");
             info.append_str(type_name);
             info.append_i8_vec("\" is not a generic type");
-            self->err->error(n->location, info.c_str);
+            self->err->error(n->location.__ptr__(), info.c_str);
             info.delete();
             return false;
         }
@@ -601,7 +601,7 @@ impl generic_visitor {
         if (n->base.is_redirected()) {
             domain_file = n->base.redirect_location.__ptr__();
         } else {
-            domain_file = n->base.location->file.__ptr__();
+            domain_file = n->base.location.file.__ptr__();
         }
 
         var dm = self->ctx->get_domain(domain_file);
@@ -614,7 +614,7 @@ impl generic_visitor {
             var info = str::from("\"");
             info.append_str(type_name);
             info.append_i8_vec("\" is not a struct type");
-            self->err->error(n->base.location, info.c_str);
+            self->err->error(n->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
         }
@@ -638,7 +638,7 @@ impl generic_visitor {
         var type_list = type_list_node->types.__ptr__();
         // check size match
         if (type_list->size != generic_template->size) {
-            self->err->error(n->location,
+            self->err->error(n->location.__ptr__(),
                 "generic type count does not match"
             );
             return;
@@ -864,7 +864,7 @@ impl generic_visitor {
         if (n->base.is_redirected()) {
             domain_file = n->base.redirect_location.__ptr__();
         } else {
-            domain_file = n->base.location->file.__ptr__();
+            domain_file = n->base.location.file.__ptr__();
         }
 
         var dm = self->ctx->get_domain(domain_file);
@@ -878,7 +878,7 @@ impl generic_visitor {
             var info = str::from("\"");
             info.append_str(type_name);
             info.append_i8_vec("\" is not a struct type");
-            self->err->error(n->base.location, info.c_str);
+            self->err->error(n->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
         }

@@ -142,7 +142,7 @@ impl ast2mir {
     func visit_unary_operator(self, n: ast_unary_operator*) {
         var temp = self->block;
 
-        var v = mir_block::new(n->value->location);
+        var v = mir_block::new(n->value->location.__ptr__());
         self->block = v;
         self->visit(n->value);
         self->block = temp;
@@ -155,7 +155,7 @@ impl ast2mir {
         }
 
         var m = mir_unary::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             op,
             n->base.resolved_type.__ptr__(),
             v
@@ -166,12 +166,12 @@ impl ast2mir {
     func visit_binary_operator(self, n: ast_binary_operator*) {
         var temp = self->block;
 
-        var lhs = mir_block::new(n->left->location);
+        var lhs = mir_block::new(n->left->location.__ptr__());
         self->block = lhs;
         self->visit(n->left);
         self->block = temp;
 
-        var rhs = mir_block::new(n->right->location);
+        var rhs = mir_block::new(n->right->location.__ptr__());
         self->block = rhs;
         self->visit(n->right);
         self->block = temp;
@@ -197,7 +197,7 @@ impl ast2mir {
         }
 
         var m = mir_binary::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             op,
             n->base.resolved_type.__ptr__(),
             lhs,
@@ -207,7 +207,7 @@ impl ast2mir {
     }
 
     func visit_type_convert(self, n: ast_type_convert*) {
-        var new_block = mir_block::new(n->base.location);
+        var new_block = mir_block::new(n->base.location.__ptr__());
         var temp = self->block;
         self->block = new_block;
         self->visit(n->from);
@@ -221,7 +221,7 @@ impl ast2mir {
             }
         }
         var m = mir_type_convert::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             new_block,
             target_type.__ptr__()
         );
@@ -230,7 +230,7 @@ impl ast2mir {
 
     func visit_nil_literal(self, n: ast_nil_literal*) {
         var m = mir_nil::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->base.resolved_type.__ptr__()
         );
         self->block->content.push(ptr<mir>::wrap(m => mir*));
@@ -238,7 +238,7 @@ impl ast2mir {
 
     func visit_number_literal(self, n: ast_number_literal*) {
         var m = mir_number::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->literal.__ptr__(),
             n->base.resolved_type.__ptr__()
         );
@@ -247,7 +247,7 @@ impl ast2mir {
 
     func visit_string_literal(self, n: ast_string_literal*) {
         var m = mir_string::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->literal.__ptr__(),
             n->base.resolved_type.__ptr__()
         );
@@ -256,7 +256,7 @@ impl ast2mir {
 
     func visit_char_literal(self, n: ast_char_literal*) {
         var m = mir_char::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->literal.__ptr__(),
             n->base.resolved_type.__ptr__()
         );
@@ -265,7 +265,7 @@ impl ast2mir {
 
     func visit_bool_literal(self, n: ast_bool_literal*) {
         var m = mir_bool::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->flag,
             n->base.resolved_type.__ptr__()
         );
@@ -281,7 +281,7 @@ impl ast2mir {
             res = dec_to_u64(num->c_str);
         }
         var m = mir_array::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             res,
             n->base.resolved_type.__ptr__()
         );
@@ -289,14 +289,14 @@ impl ast2mir {
     }
 
     func visit_call_index(self, n: ast_call_index*) {
-        var new_block = mir_block::new(n->base.location);
+        var new_block = mir_block::new(n->base.location.__ptr__());
         var temp = self->block;
         self->block = new_block;
         self->visit(n->index);
         self->block = temp;
 
         var m = mir_call_index::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             new_block,
             n->base.resolved_type.__ptr__()
         );
@@ -304,7 +304,7 @@ impl ast2mir {
     }
 
     func visit_call_func_args(self, n: ast_call_func_args*) {
-        var new_block = mir_block::new(n->base.location);
+        var new_block = mir_block::new(n->base.location.__ptr__());
         var temp = self->block;
         self->block = new_block;
         for (var i = n->args.iter(); !i.is_end(); i = i.next()) {
@@ -313,7 +313,7 @@ impl ast2mir {
         self->block = temp;
 
         var m = mir_call_func::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             new_block,
             n->base.resolved_type.__ptr__()
         );
@@ -322,7 +322,7 @@ impl ast2mir {
 
     func visit_get_field(self, n: ast_get_field*) {
         var m = mir_get_field::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->name.__ptr__(),
             n->base.resolved_type.__ptr__()
         );
@@ -331,7 +331,7 @@ impl ast2mir {
 
     func visit_ptr_get_field(self, n: ast_ptr_get_field*) {
         var m = mir_ptr_get_field::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->name.__ptr__(),
             n->base.resolved_type.__ptr__()
         );
@@ -341,12 +341,12 @@ impl ast2mir {
     func visit_initializer(self, n: ast_initializer*) {
         var temp = self->block;
         var m = mir_struct_init::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->base.resolved_type.__ptr__()
         );
         for (var i = n->pairs.iter(); !i.is_end(); i = i.next()) {
             var p = i.get().unwrap() => ast_init_pair*;
-            self->block = mir_block::new(p->base.location);
+            self->block = mir_block::new(p->base.location.__ptr__());
             self->visit(p->value);
             m->add_field(
                 p->field->content.__ptr__(),
@@ -360,7 +360,7 @@ impl ast2mir {
 
     func visit_call_path(self, n: ast_call_path*) {
         var m = mir_get_path::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->name.__ptr__(),
             n->base.resolved_type.__ptr__()
         );
@@ -368,20 +368,20 @@ impl ast2mir {
     }
 
     func visit_call(self, n: ast_call*) {
-        var new_block = mir_block::new(n->base.location);
+        var new_block = mir_block::new(n->base.location.__ptr__());
         var temp = self->block;
         self->block = new_block;
         if (n->head->generic_types != nil) {
             var ht = n->head->base.resolved_type.full_path_name(self->pkg, false);
             var m = mir_call_id::new(
-                n->head->base.location,
+                n->head->base.location.__ptr__(),
                 ht.__ptr__(),
                 n->head->base.resolved_type.__ptr__()
             );
             self->block->content.push(ptr<mir>::wrap(m => mir*));
         } else {
             var m = mir_call_id::new(
-                n->head->base.location,
+                n->head->base.location.__ptr__(),
                 n->head->id->content.__ptr__(),
                 n->head->base.resolved_type.__ptr__()
             );
@@ -393,7 +393,7 @@ impl ast2mir {
         self->block = temp;
 
         var m = mir_call::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             new_block,
             n->base.resolved_type.__ptr__()
         );
@@ -403,14 +403,14 @@ impl ast2mir {
 
 impl ast2mir {
     func visit_definition(self, n: ast_definition*) {
-        var new_block = mir_block::new(n->base.location);
+        var new_block = mir_block::new(n->base.location.__ptr__());
         var temp = self->block;
         self->block = new_block;
         self->visit(n->value);
         self->block = temp;
 
         var m = mir_define::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             n->name.__ptr__(),
             new_block,
             n->base.resolved_type.__ptr__()
@@ -421,12 +421,12 @@ impl ast2mir {
     func visit_assignment(self, n: ast_assignment*) {
         var temp = self->block;
 
-        var lhs = mir_block::new(n->left->base.location);
+        var lhs = mir_block::new(n->left->base.location.__ptr__());
         self->block = lhs;
         self->visit_call(n->left);
         self->block = temp;
 
-        var rhs = mir_block::new(n->right->location);
+        var rhs = mir_block::new(n->right->location.__ptr__());
         self->block = rhs;
         self->visit(n->right);
         self->block = temp;
@@ -445,7 +445,7 @@ impl ast2mir {
         }
 
         var m = mir_assign::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             ty,
             lhs,
             rhs
@@ -456,7 +456,7 @@ impl ast2mir {
     func generate_if_stmt(self, n: ast_if_stmt*) -> mir_if* {
         // else branch
         if (n->condition == nil) {
-            var new_block = mir_block::new(n->body->base.location);
+            var new_block = mir_block::new(n->body->base.location.__ptr__());
             var temp = self->block;
             self->block = new_block;
             for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
@@ -465,19 +465,19 @@ impl ast2mir {
             self->block = temp;
 
             return mir_if::new(
-                n->base.location,
+                n->base.location.__ptr__(),
                 nil,
                 new_block
             );
         }
 
-        var cond_block = mir_block::new(n->condition->location);
+        var cond_block = mir_block::new(n->condition->location.__ptr__());
         var temp = self->block;
         self->block = cond_block;
         self->visit(n->condition);
         self->block = temp;
 
-        var body_block = mir_block::new(n->body->base.location);
+        var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
         for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
             self->visit(i.get().unwrap());
@@ -485,14 +485,14 @@ impl ast2mir {
         self->block = temp;
 
         return mir_if::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             cond_block,
             body_block
         );
     }
 
     func visit_cond_stmt(self, n: ast_cond_stmt*) {
-       var m = mir_branch::new(n->base.location);
+       var m = mir_branch::new(n->base.location.__ptr__());
        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
            var c = i.get().unwrap() => ast_if_stmt*;
            var mi = self->generate_if_stmt(c);
@@ -516,7 +516,7 @@ impl ast2mir {
         var em_name = p->name.__ptr__();
         var index = em->members.get(em_name)->unwrap();
 
-        var body_block = mir_block::new(n->body->base.location);
+        var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
         for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
             var ds = i.get().unwrap();
@@ -524,17 +524,17 @@ impl ast2mir {
         }
         self->block = temp;
         
-        return mir_switch_case::new(n->base.location, index, body_block);
+        return mir_switch_case::new(n->base.location.__ptr__(), index, body_block);
     }
 
     func visit_match_stmt(self, n: ast_match_stmt*) {
-        var cond_block = mir_block::new(n->value->location);
+        var cond_block = mir_block::new(n->value->location.__ptr__());
         var temp = self->block;
         self->block = cond_block;
         self->visit(n->value);
         self->block = temp;
 
-        var switch_block = mir_switch::new(n->base.location, cond_block);
+        var switch_block = mir_switch::new(n->base.location.__ptr__(), cond_block);
         self->block->content.push(ptr<mir>::wrap(switch_block => mir*));
 
         var default_case: ast_match_case* = nil;
@@ -550,7 +550,7 @@ impl ast2mir {
         }
 
         if (default_case != nil) {
-            var default_block = mir_block::new(default_case->base.location);
+            var default_block = mir_block::new(default_case->base.location.__ptr__());
             self->block = default_block;
             for (var i = default_case->body->stmts.iter(); !i.is_end(); i = i.next()) {
                 var ds = i.get().unwrap();
@@ -562,13 +562,13 @@ impl ast2mir {
     }
 
     func visit_while_stmt(self, n: ast_while_stmt*) {
-        var cond_block = mir_block::new(n->condition->location);
+        var cond_block = mir_block::new(n->condition->location.__ptr__());
         var temp = self->block;
         self->block = cond_block;
         self->visit(n->condition);
         self->block = temp;
 
-        var body_block = mir_block::new(n->body->base.location);
+        var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
         for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
             self->visit(i.get().unwrap());
@@ -576,7 +576,7 @@ impl ast2mir {
         self->block = temp;
 
         var m = mir_loop::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             cond_block,
             body_block,
             nil // no update stage in while loop
@@ -589,7 +589,7 @@ impl ast2mir {
 
         // for top level block will keep defined variable in live range
         // util for loop exit
-        var for_top_level = mir_block::new(n->base.location);
+        var for_top_level = mir_block::new(n->base.location.__ptr__());
         self->block->content.push(ptr<mir>::wrap(for_top_level => mir*));
 
         if (n->init != nil) {
@@ -600,12 +600,12 @@ impl ast2mir {
 
         var cond_block: mir_block* = nil;
         if (n->condition != nil) {
-            cond_block = mir_block::new(n->condition->location);
+            cond_block = mir_block::new(n->condition->location.__ptr__());
             self->block = cond_block;
             self->visit(n->condition);
             self->block = temp;
         } else {
-            cond_block = mir_block::new(n->base.location);
+            cond_block = mir_block::new(n->base.location.__ptr__());
 
             // generate 1 == 1
             var bt = type::bool_type();
@@ -613,23 +613,23 @@ impl ast2mir {
             var one = str::from("1");
 
             var cond = mir_binary::new(
-                n->base.location,
+                n->base.location.__ptr__(),
                 mir_binary_opr::cmpeq,
                 bt.__ptr__(),
-                mir_block::new(n->base.location),
-                mir_block::new(n->base.location)
+                mir_block::new(n->base.location.__ptr__()),
+                mir_block::new(n->base.location.__ptr__())
             );
 
             cond->left->content.push(ptr<mir>::wrap(
                 mir_number::new(
-                    n->base.location,
+                    n->base.location.__ptr__(),
                     one.__ptr__(),
                     it.__ptr__()
                 ) => mir*
             ));
             cond->right->content.push(ptr<mir>::wrap(
                 mir_number::new(
-                    n->base.location,
+                    n->base.location.__ptr__(),
                     one.__ptr__(),
                     it.__ptr__()
                 ) => mir*
@@ -643,13 +643,13 @@ impl ast2mir {
 
         var update_block: mir_block* = nil;
         if (n->update != nil) {
-            update_block = mir_block::new(n->update->location);
+            update_block = mir_block::new(n->update->location.__ptr__());
             self->block = update_block;
             self->visit(n->update);
             self->block = temp;
         }
 
-        var body_block = mir_block::new(n->body->base.location);
+        var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
         for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
             self->visit(i.get().unwrap());
@@ -658,7 +658,7 @@ impl ast2mir {
 
         for_top_level->content.push(ptr<mir>::wrap(
             mir_loop::new(
-                n->base.location,
+                n->base.location.__ptr__(),
                 cond_block,
                 body_block,
                 update_block
@@ -671,7 +671,7 @@ impl ast2mir {
     }
 
     func visit_ret_stmt(self, n: ast_ret_stmt*) {
-        var new_block = mir_block::new(n->base.location);
+        var new_block = mir_block::new(n->base.location.__ptr__());
         var temp = self->block;
         self->block = new_block;
         if (n->value != nil) {
@@ -680,19 +680,19 @@ impl ast2mir {
         self->block = temp;
 
         var m = mir_return::new(
-            n->base.location,
+            n->base.location.__ptr__(),
             new_block
         );
         self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
     func visit_continue_stmt(self, n: ast_continue_stmt*) {
-        var m = mir_continue::new(n->base.location);
+        var m = mir_continue::new(n->base.location.__ptr__());
         self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 
     func visit_break_stmt(self, n: ast_break_stmt*) {
-        var m = mir_break::new(n->base.location);
+        var m = mir_break::new(n->base.location.__ptr__());
         self->block->content.push(ptr<mir>::wrap(m => mir*));
     }
 }
@@ -714,7 +714,7 @@ impl ast2mir {
             return;
         }
 
-        var st = mir_struct::instance(n->name.__ptr__(), n->base.location);
+        var st = mir_struct::instance(n->name.__ptr__(), n->base.location.__ptr__());
         for (var i = n->fields.iter(); !i.is_end(); i = i.next()) {
             var f = i.get().unwrap() => ast_struct_field*;
             var t = self->tr.resolve(f->type);
@@ -747,7 +747,7 @@ impl ast2mir {
         if (!self->impl_struct_name.empty()) {
             var tmp_ty_name = self->generate_full_name(
                 self->impl_struct_name.__ptr__(),
-                n->base.location
+                n->base.location.__ptr__()
             );
             name.clear();
             name.append_str(tmp_ty_name.__ptr__())
@@ -760,7 +760,7 @@ impl ast2mir {
         if (self->impl_struct_name.empty() && !n->is_extern) {
             var tmp_ty_name = self->generate_full_name(
                 n->name.__ptr__(),
-                n->base.location
+                n->base.location.__ptr__()
             );
             name.clear();
             name.append_str(tmp_ty_name.__ptr__());
@@ -780,7 +780,7 @@ impl ast2mir {
         }
         var f = mir_func::instance(
             name.__ptr__(),
-            n->base.location,
+            n->base.location.__ptr__(),
             ret_ty.__ptr__()
         );
 
@@ -808,7 +808,7 @@ impl ast2mir {
             return;
         }
 
-        self->block = mir_block::new(n->body->base.location);
+        self->block = mir_block::new(n->body->base.location.__ptr__());
         f.block = self->block;
         for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
             var stmt = i.get().unwrap();
