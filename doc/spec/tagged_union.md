@@ -22,7 +22,7 @@ pub enum mir_tag {
 pub union(mir_tag) mir {
     m_block: mir_block ,
     m_num: mir_num,
-    m_str: mir_str.
+    m_str: mir_str
 };
 ```
 
