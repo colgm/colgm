@@ -136,7 +136,7 @@ func compile(option: cli_option) -> i32 {
         cc.delete();
         return -1;
     }
-    if (option.OPTION_VIEW_TOKEN) {
+    if (option.VIEW_TOKEN) {
         cc.lex->dump(io::stdout());
     }
 
@@ -152,7 +152,7 @@ func compile(option: cli_option) -> i32 {
         cc.delete();
         return -1;
     }
-    if (option.OPTION_VIEW_AST) {
+    if (option.VIEW_AST) {
         cc.par.dump(io::stdout());
     }
 
@@ -177,19 +177,19 @@ func compile(option: cli_option) -> i32 {
     if (option.VIEW_RESOLVED_AST) {
         semantic.view_resolved_ast(io::stdout());
     }
-    if (option.OPTION_VIEW_SEMA) {
+    if (option.VIEW_SEMA) {
         semantic.ctx->dump(io::stdout(), cc.pkg);
     }
 
     ast2mir_worker.generate(cc.par.root);
     mctx.adjust_posix_open(option.VERBOSE);
     mctx.add_default_func(option.VERBOSE);
-    if (option.OPTION_VIEW_MIR) {
+    if (option.VIEW_MIR) {
         mctx.dump(io::stdout(), cc.pkg);
     }
 
     mir2sir_worder.generate(mctx.__ptr__(), option.VERBOSE, option.DEBUG_MODE);
-    if (option.OPTION_VIEW_SIR) {
+    if (option.VIEW_SIR) {
         sctx.dump(io::stdout());
     }
 
@@ -239,11 +239,11 @@ func main(argc: i32, argv: i8**) -> i32 {
             print_version();
             return 0;
         } elsif (streq(argv[i], "-l") || streq(argv[i], "--lex")) {
-            option.OPTION_VIEW_TOKEN = true;
+            option.VIEW_TOKEN = true;
         } elsif (streq(argv[i], "-a") || streq(argv[i], "--ast")) {
-            option.OPTION_VIEW_AST = true;
+            option.VIEW_AST = true;
         } elsif (streq(argv[i], "-s") || streq(argv[i], "--sema")) {
-            option.OPTION_VIEW_SEMA = true;
+            option.VIEW_SEMA = true;
         } elsif (streq(argv[i], "-V") || streq(argv[i], "--verbose")) {
             option.VERBOSE = true;
         } elsif (streq(argv[i], "-g")) {
@@ -297,15 +297,15 @@ func main(argc: i32, argv: i8**) -> i32 {
             }
             i += 1;
         } elsif (streq(argv[i], "--dump-lib")) {
-            option.OPTION_VIEW_LIB = true;
+            option.VIEW_LIB = true;
         } elsif (streq(argv[i], "--view-resolved-ast")) {
             option.VIEW_RESOLVED_AST = true;
         } elsif (streq(argv[i], "--enable-type-replace-info")) {
             option.VIEW_TYPE_REPLACE_INFO = true;
         } elsif (streq(argv[i], "--mir")) {
-            option.OPTION_VIEW_MIR = true;
+            option.VIEW_MIR = true;
         } elsif (streq(argv[i], "--sir")) {
-            option.OPTION_VIEW_SIR = true;
+            option.VIEW_SIR = true;
         } elsif (streq(argv[i], "-O0") ||
                  streq(argv[i], "-O1") ||
                  streq(argv[i], "-O2") ||
