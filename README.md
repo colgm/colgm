@@ -82,9 +82,8 @@ Learn more about [Self-host compiler](./src/README.md)
     - forindex loop, container should have `size()` method
     - foreach loop, container should have iterator-like stuff
         - `iter()`, `next()` and `is_end()` method
-2. llvm debug info
-3. array type like `[i32; 128]`
+2. array type like `[i32; 128]`
     - syntax like `var a: [i32; 128] = [1, 2, 3];`
     - syntax like `var a: [i8*; 128] = ["foo", "bar", tmp];`
-4. feature: [tagged union](./doc/spec/tagged_union.md)
-5. feature: [tuple](./doc/spec/tuple.md)
+3. feature: [tagged union](./doc/spec/tagged_union.md)
+4. feature: [tuple](./doc/spec/tuple.md)

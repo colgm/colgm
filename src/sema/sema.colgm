@@ -814,7 +814,7 @@ impl sema {
         }
 
         if (prev->is_pointer()) {
-            var info = str::from("cannot use \".\" to get field from pointer \"");
+            var info = str::from("cannot use \".\" to get field from pointer ?\"");
             info.append_str(prev_name.__ptr__());
             info.append_i8_vec("\". use \"->\" instead");
             self->err->error(n->base.location.__ptr__(), info.c_str);
@@ -1279,7 +1279,16 @@ impl sema {
             return type::error_type();
         }
 
-        if (prev->pointer_depth != 1) {
+        if (prev->pointer_depth == 0) {
+            var info = str::from("cannot use \"->\" to get field from \"");
+            info.append_str(prev_name.__ptr__());
+            info.append_i8_vec("\", use \".\" instead");
+            self->err->error(n->base.location.__ptr__(), info.c_str);
+            info.delete();
+            prev_name.delete();
+            prev_name_for_search.delete();
+            return type::error_type();
+        } else if (prev->pointer_depth > 1) {
             var info = str::from("cannot use \"->\" to get field from pointer \"");
             info.append_str(prev_name.__ptr__());
             info.append_i8_vec("\"");
