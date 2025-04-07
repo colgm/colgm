@@ -667,12 +667,13 @@ pub struct DW_TAG_member {
 }
 
 impl DW_TAG_member {
-    pub func new(i: u64, n: i8*, si: u64, fi: u64, bti: u64) -> DW_TAG_member* {
+    pub func new(i: u64, n: i8*, si: u64, fi: u64, l: i64, bti: u64) -> DW_TAG_member* {
         var res = DW_TAG_member::__alloc__();
         res->base = DI_node::instance(DI_kind::DW_TAG_member, i);
         res->name = str::from(n);
         res->scope_index = si;
         res->file_index = fi;
+        res->line = l;
         res->base_type_index = bti;
         return res;
     }
@@ -686,6 +687,7 @@ impl DW_TAG_member {
         out.out("name: \"").out(self->name.c_str).out("\", ");
         out.out("scope: !").out_u64(self->scope_index).out(", ");
         out.out("file: !").out_u64(self->file_index).out(", ");
+        out.out("line: ").out_i64(self->line).out(", ");
         out.out("baseType: !").out_u64(self->base_type_index).out(")");
     }
 }

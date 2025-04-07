@@ -2769,12 +2769,13 @@ impl mir2sir {
 
         for (var i = s->ordered_fields.iter(); !i.is_end(); i = i.next()) {
             var member = i.get();
-            var member_type_index = self->find_DI_type_index(member->sym_type.__ptr__());
+            var member_type_index = self->find_DI_type_index(member->type.__ptr__());
             var field_node = DW_TAG_member::new(
                 self->dwarf_status.DI_counter,
                 member->name.c_str,
                 s_node->base.index,
-                self->sctx->DI_file_map.get(s->location.file.__ptr__())->unwrap(),
+                self->sctx->DI_file_map.get(member->loc.file.__ptr__())->unwrap(),
+                member->loc.begin_line + 1,
                 member_type_index
             );
             self->sctx->debug_info.push(ptr<DI_node>::wrap(field_node => DI_node*));

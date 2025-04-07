@@ -3,6 +3,8 @@ use std::vec::{ vec };
 use std::io::{ io };
 
 use err::panic::{ panic };
+use err::span::{ span };
+
 use package::{ package };
 
 pub struct method_info {
@@ -394,26 +396,30 @@ impl type {
 
 pub struct symbol {
     name: str,
-    sym_type: type
+    type: type,
+    loc: span
 }
 
 impl symbol {
     pub func delete(self) {
         self->name.delete();
-        self->sym_type.delete();
+        self->type.delete();
+        self->loc.delete();
     }
 
     pub func copy(self) -> symbol* {
         var res = symbol::__alloc__();
         res->name = self->name.copy_instance();
-        res->sym_type = self->sym_type.copy_instance();
+        res->type = self->type.copy_instance();
+        res->loc = self->loc.copy_instance();
         return res;
     }
 
     pub func copy_instance(self) -> symbol {
         return symbol {
             name: self->name.copy_instance(),
-            sym_type: self->sym_type.copy_instance()
+            type: self->type.copy_instance(),
+            loc: self->loc.copy_instance()
         };
     }
 }
