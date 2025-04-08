@@ -169,12 +169,14 @@ void generic_visitor::check_generic_type(
         return;
     }
 
-    // insert data
-    if (generic_type_map.count(ss.str())) {
+    // insert data, use symbols location file to avoid duplication of name
+    auto unique_name = sym.loc_file + "|" + ss.str();
+    if (generic_type_map.count(unique_name)) {
         return;
     }
-    generic_type_map.insert({ss.str(), {}});
-    auto& rec = generic_type_map.at(ss.str());
+    generic_type_map.insert({unique_name, {}});
+    auto& rec = generic_type_map.at(unique_name);
+    rec.name = ss.str();
     rec.generic_type.name = type_name;
     rec.generic_type.loc_file = sym.loc_file;
 

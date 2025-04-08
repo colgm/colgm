@@ -574,7 +574,11 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
 
     const auto& domain = ctx.global.domain.at(prev.loc_file);
     if (!domain.structs.count(prev.name_for_search())) {
-        rp.report(node, "cannot get field from \"" + prev.full_path_name() + "\".");
+        rp.report(node,
+            "cannot get field from \"" +
+            prev.full_path_name() +
+            "\", struct not found."
+        );
         return type::error_type();
     }
 
@@ -1196,7 +1200,8 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         rp.report(node, "redefinition of variable \"" + name + "\".");
         return;
     }
-    if (ctx.global_symbol().count(name)) {
+    if (ctx.get_domain(node->get_file()).global_symbol.count(name) ||
+        ctx.get_domain(node->get_file()).generic_symbol.count(name)) {
         rp.report(node, "variable \"" + name + "\" conflicts with global symbol.");
         return;
     }
@@ -1618,12 +1623,9 @@ void semantic::resolve_impl(impl_struct* node) {
         return; // do not resolve generic impl
     }
 
-    auto loc_file = ctx.this_file;
-    if (ctx.global_symbol().count(node->get_struct_name())) {
-        loc_file = ctx.global_symbol().at(node->get_struct_name()).loc_file;
-    }
-
-    const auto& domain = ctx.global.domain.at(loc_file);
+    const auto& domain = node->is_redirected()
+        ? ctx.global.domain.at(node->get_redirect_location())
+        : ctx.global.domain.at(node->get_file());
     if (!domain.structs.count(node->get_struct_name())) {
         rp.report(node,
             "cannot implement \"" + node->get_struct_name() +

@@ -842,7 +842,7 @@ impl sema {
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("cannot get field from \"");
             info.append_str(prev_name.__ptr__());
-            info.append_i8_vec("\"");
+            info.append_i8_vec("\", struct not found");
             self->err->error(n->base.location.__ptr__(), info.c_str);
             info.delete();
             prev_name.delete();
@@ -2286,17 +2286,13 @@ impl sema {
             return;
         }
 
-        var loc_file = self->ctx->this_file.copy_instance();
-        if (self->ctx->global_symbol()->has(node->name.__ptr__())) {
-            loc_file.clear();
-            loc_file.append_str(
-                self->ctx->global_symbol()
-                         ->get(node->name.__ptr__())
-                         ->loc_file.__ptr__()
-            );
+        var dm: colgm_module* = nil;
+        if (node->base.is_redirected()) {
+            dm = self->ctx->global->domain.get(node->base.redirect_location.__ptr__());
+        } else {
+            dm = self->ctx->global->domain.get(node->base.location.file.__ptr__());
         }
 
-        var dm = self->ctx->global->domain.get(loc_file.__ptr__());
         if (!dm->structs.has(node->name.__ptr__())) {
             var info = str::from("cannot implement \"");
             info.append_str(node->name.__ptr__());

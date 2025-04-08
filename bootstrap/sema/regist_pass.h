@@ -15,6 +15,7 @@
 namespace colgm {
 
 struct generic_data {
+    std::string name;
     type generic_type;
     std::unordered_map<std::string, type> types;
 };
