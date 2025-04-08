@@ -92,27 +92,27 @@ impl hashset<T> {
     }
 }
 
-pub struct hashset_iter<T> {
+struct iter<T> {
     set: hashset<T>*,
     bucket_index: u64,
     bucket_iter: list_iter<T>
 }
 
-impl hashset_iter<T> {
-    func instance(set: hashset<T>*) -> hashset_iter<T> {
+impl iter<T> {
+    func instance(set: hashset<T>*) -> iter<T> {
         var index: u64 = 0;
-        var iter = set->bucket[0].iter();
-        while (iter.is_end()) {
+        var i = set->bucket[0].iter();
+        while (i.is_end()) {
             index += 1;
             if (index >= set->bucket_capacity) {
                 break;
             }
-            iter = set->bucket[index].iter();
+            i = set->bucket[index].iter();
         }
-        return hashset_iter<T> {
+        return iter<T> {
             set: set,
             bucket_index: index,
-            bucket_iter: iter
+            bucket_iter: i
         };
     }
 
@@ -125,7 +125,7 @@ impl hashset_iter<T> {
         return self->bucket_iter.elem();
     }
 
-    pub func next(self) -> hashset_iter<T> {
+    pub func next(self) -> iter<T> {
         if (!self->bucket_iter.is_end()) {
             self->bucket_iter = self->bucket_iter.next();
         }
@@ -138,7 +138,7 @@ impl hashset_iter<T> {
             self->bucket_iter = self->set->bucket[self->bucket_index].iter();
         }
 
-        return hashset_iter<T> {
+        return iter<T> {
             set: self->set,
             bucket_index: self->bucket_index,
             bucket_iter: self->bucket_iter,
@@ -147,7 +147,7 @@ impl hashset_iter<T> {
 }
 
 impl hashset<T> {
-    pub func iter(self) -> hashset_iter<T> {
-        return hashset_iter<T>::instance(self);
+    pub func iter(self) -> iter<T> {
+        return iter<T>::instance(self);
     }
 }

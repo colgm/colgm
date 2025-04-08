@@ -159,15 +159,15 @@ impl hashmap<K, V> {
     }
 }
 
-pub struct hashmap_iter<K, V> {
+struct iter<K, V> {
     map: hashmap<K, V>*,
     bucket_index: u64,
     bucket_iter: list_iter<pair<K, V>>
 }
 
-impl hashmap_iter<K, V> {
-    func instance(map: hashmap<K, V>*) -> hashmap_iter<K, V> {
-        var res = hashmap_iter<K, V> {
+impl iter<K, V> {
+    func instance(map: hashmap<K, V>*) -> iter<K, V> {
+        var res = iter<K, V> {
             map: map,
             bucket_index: 0,
             bucket_iter: map->bucket[0].iter()
@@ -182,7 +182,7 @@ impl hashmap_iter<K, V> {
         return res;
     }
 
-    pub func next(self) -> hashmap_iter<K, V> {
+    pub func next(self) -> iter<K, V> {
         if (!self->bucket_iter.is_end()) {
             self->bucket_iter = self->bucket_iter.next();
         }
@@ -195,7 +195,7 @@ impl hashmap_iter<K, V> {
             self->bucket_iter = self->map->bucket[self->bucket_index].iter();
         }
 
-        return hashmap_iter<K, V> {
+        return iter<K, V> {
             map: self->map,
             bucket_index: self->bucket_index,
             bucket_iter: self->bucket_iter,
@@ -217,7 +217,7 @@ impl hashmap_iter<K, V> {
 }
 
 impl hashmap<K, V> {
-    pub func iter(self) -> hashmap_iter<K, V> {
-        return hashmap_iter<K, V>::instance(self);
+    pub func iter(self) -> iter<K, V> {
+        return iter<K, V>::instance(self);
     }
 }
