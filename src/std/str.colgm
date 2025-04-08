@@ -11,7 +11,7 @@ impl str {
     pub func new() -> str* {
         var res = str::__alloc__();
         if (res == nil) {
-            panic("str::new: failed to allocate memory");
+            panic("failed to allocate memory");
         }
         res->c_str = nil;
         res->init();
@@ -26,7 +26,7 @@ impl str {
 
     pub func from(src: i8*) -> str {
         if (src == nil) {
-            panic("str::from: cannot create string from nil");
+            panic("cannot create string from nil");
         }
         var res = str::instance();
         res.append_i8_vec(src);
@@ -155,10 +155,18 @@ impl str {
     }
 
     pub func append_str(self, src: str*) -> str* {
-        var len = src->size => i64;
-        for (var index = 0; index < len; index += 1) {
-            self->append_char(src->c_str[index]);
+        // do nothing if src is null pointer
+        if (src == nil) {
+            return self;
         }
+
+        var len = src->size;
+        while (self->size + len >= self->capacity) {
+            self->expand_capacity();
+        }
+        memcpy((self->c_str => u64 + self->size) => i8*, src->c_str, len);
+        self->c_str[self->size + len] = '\0';
+        self->size += len;
         return self;
     }
 
@@ -167,10 +175,13 @@ impl str {
         if (src == nil) {
             return self;
         }
-        var len = strlen(src);
-        for (var index = 0; index < len; index += 1) {
-            self->append_char(src[index]);
+        var len = strlen(src) => u64;
+        while (self->size + len >= self->capacity) {
+            self->expand_capacity();
         }
+        memcpy((self->c_str => u64 + self->size) => i8*, src, len);
+        self->c_str[self->size + len] = '\0';
+        self->size += len;
         return self;
     }
 
@@ -199,14 +210,14 @@ impl str {
 
     pub func front(self) -> i8 {
         if (self->size == 0) {
-            panic("str::front: empty string");
+            panic("empty string");
         }
         return self->c_str[0];
     }
 
     pub func back(self) -> i8 {
         if (self->size == 0) {
-            panic("str::back: empty string");
+            panic("empty string");
         }
         return self->c_str[self->size - 1];
     }
@@ -222,7 +233,7 @@ impl str {
 impl str {
     pub func get(self, index: u64) -> i8 {
         if (index >= self->size) {
-            panic("str::get: index out of range");
+            panic("index out of range");
         }
         return self->c_str[index];
     }

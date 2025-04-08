@@ -64,7 +64,7 @@ impl sema {
         if (ty->loc_file.empty()) {
             return false;
         }
-        var dm = self->ctx->global->domain.get(ty->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(ty->loc_file.__ptr__());
         if (dm->enums.has(ty->name.__ptr__())) {
             return true;
         }
@@ -75,7 +75,7 @@ impl sema {
         if (ty->loc_file.empty()) {
             return false;
         }
-        var dm = self->ctx->global->domain.get(ty->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(ty->loc_file.__ptr__());
         if (dm->structs.has(ty->name.__ptr__())) {
             return true;
         }
@@ -730,7 +730,7 @@ impl sema {
                 return infer;
             }
 
-            var dm = self->ctx->global->domain.get(infer.loc_file.__ptr__());
+            var dm = self->ctx->get_domain(infer.loc_file.__ptr__());
             if (dm->structs.has(name.__ptr__()) ||
                 dm->functions.has(name.__ptr__())) {
                 infer.name.delete();
@@ -838,7 +838,7 @@ impl sema {
             return type::error_type();
         }
 
-        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("cannot get field from \"");
             info.append_str(prev_name.__ptr__());
@@ -980,7 +980,7 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self->pkg);
         // global function call
         if (prev->is_global_func) {
-            var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+            var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
             var func_self = dm->functions.get(prev_name_for_search.__ptr__());
             self->check_static_call_args(func_self, n);
             prev_name_for_search.delete();
@@ -1004,7 +1004,7 @@ impl sema {
 
         // static method call of struct
         if (prev->stm_info.flag_is_static) {
-            var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+            var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
             var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
             var method = struct_self->static_method.get(
                 prev->stm_info.method_name.__ptr__()
@@ -1018,7 +1018,7 @@ impl sema {
 
         // normal method call of struct
         if (prev->stm_info.flag_is_normal) {
-            var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+            var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
             var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
             var method = struct_self->method.get(
                 prev->stm_info.method_name.__ptr__()
@@ -1123,7 +1123,7 @@ impl sema {
             return infer;
         }
 
-        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (dm->structs.has(prev_name_for_search.__ptr__()) &&
             prev->is_global_sym) {
             var st = dm->structs.get(prev_name_for_search.__ptr__());
@@ -1205,7 +1205,7 @@ impl sema {
             return type::error_type();
         }
 
-        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         var prev_name_for_search = prev->generic_name(self->pkg);
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("\"");
@@ -1313,7 +1313,7 @@ impl sema {
             return type::error_type();
         }
 
-        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("cannot get field from \"");
             info.append_str(prev_name.__ptr__());
@@ -1761,8 +1761,8 @@ impl sema {
         }
 
         // check if conflicts with global symbol
-        if (self->ctx->global->domain.get(n->base.location.file.__ptr__())->global_symbol.has(name) ||
-            self->ctx->global->domain.get(n->base.location.file.__ptr__())->generic_symbol.has(name)) {
+        if (self->ctx->get_domain(n->base.location.file.__ptr__())->global_symbol.has(name) ||
+            self->ctx->get_domain(n->base.location.file.__ptr__())->generic_symbol.has(name)) {
             var info = str::from("variable \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with global symbol");
@@ -1901,7 +1901,7 @@ impl sema {
             return 0xffffffffffffffff;
         }
 
-        var dm = self->ctx->global->domain.get(infer->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(infer->loc_file.__ptr__());
         if (!dm->enums.has(name)) {
             return 0xffffffffffffffff;
         }
@@ -2004,7 +2004,7 @@ impl sema {
             used_values.delete();
             return;
         }
-        var dm = self->ctx->global->domain.get(infer.loc_file.__ptr__());
+        var dm = self->ctx->get_domain(infer.loc_file.__ptr__());
         if (!dm->enums.has(infer.name.__ptr__())) {
             infer.delete();
             used_values.delete();
@@ -2288,9 +2288,9 @@ impl sema {
 
         var dm: colgm_module* = nil;
         if (node->base.is_redirected()) {
-            dm = self->ctx->global->domain.get(node->base.redirect_location.__ptr__());
+            dm = self->ctx->get_domain(node->base.redirect_location.__ptr__());
         } else {
-            dm = self->ctx->global->domain.get(node->base.location.file.__ptr__());
+            dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         }
 
         if (!dm->structs.has(node->name.__ptr__())) {
@@ -2318,7 +2318,7 @@ impl sema {
             return;
         }
 
-        var dm = self->ctx->global->domain.get(self->ctx->this_file.__ptr__());
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         if (!dm->functions.has(node->name.__ptr__())) {
             var info = str::from("cannot find function \"");
             info.append_str(node->name.__ptr__());

@@ -1177,7 +1177,7 @@ impl mir2sir {
         ) => sir*);
 
         var name_for_search = n->resolved_type.generic_name(self->pkg);
-        var dm = self->ctx->global->domain.get(n->resolved_type.loc_file.__ptr__());
+        var dm = self->ctx->get_domain(n->resolved_type.loc_file.__ptr__());
         var st = dm->structs.get(name_for_search.__ptr__());
 
         for (var i = n->fields.iter(); !i.is_end(); i = i.next()) {
@@ -1304,7 +1304,7 @@ impl mir2sir {
             return;
         }
 
-        var dm = self->ctx->global->domain.get(loc_file);
+        var dm = self->ctx->get_domain(loc_file);
         var name_for_search = n->resolved_type.generic_name(self->pkg);
         var full_path_name = n->resolved_type.full_path_name(self->pkg, false);
         if (dm->functions.has(name_for_search.__ptr__())) {
@@ -1534,7 +1534,7 @@ impl mir2sir {
         var prev_name_for_search = prev.resolved_type.generic_name(self->pkg);
         self->value_stack.pop_back();
 
-        var dm = self->ctx->global->domain.get(prev.resolved_type.loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
         var st = dm->structs.get(prev_name_for_search.__ptr__());
 
         // get method
@@ -1593,7 +1593,7 @@ impl mir2sir {
         var prev_name_for_search = prev.resolved_type.generic_name(self->pkg);
         self->value_stack.pop_back();
 
-        var dm = self->ctx->global->domain.get(prev.resolved_type.loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
         var st = dm->structs.get(prev_name_for_search.__ptr__());
 
         // get method
@@ -1711,7 +1711,7 @@ impl mir2sir {
                 v.delete();
             }
             mir_value_kind::enum_symbol => {
-                var dm = self->ctx->global->domain.get(prev.resolved_type.loc_file.__ptr__());
+                var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
                 var em = dm->enums.get(prev.resolved_type.name.__ptr__());
                 var index = em->members.get(n->name.__ptr__())->unwrap();
                 var index_str = str::from_i64(index);

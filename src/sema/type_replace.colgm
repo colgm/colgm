@@ -668,7 +668,7 @@ impl generic_visitor {
             return;
         }
 
-        // insert data
+        // insert data, use symbols location file to avoid duplication of name
         var unique_name = sym->loc_file.copy_instance();
         unique_name.append_i8_vec("|")->append_str(ss.__ptr__());
         if (self->generic_type_map.has(unique_name.__ptr__())) {
@@ -677,10 +677,12 @@ impl generic_visitor {
             return;
         }
 
+        // load useful data into generic_data
         var g_data = generic_data::instance();
         g_data.name.append_str(ss.__ptr__());
         g_data.generic_type.name.append_str(type_name);
         g_data.generic_type.loc_file.append_str(sym->loc_file.__ptr__());
+
         for (var i = type_list->iter(); !i.is_end(); i = i.next()) {
             var r_type = self->tr.resolve(i.get().unwrap() => ast_type_def*);
             g_data.generic_type.generics.push(r_type.__ptr__());
