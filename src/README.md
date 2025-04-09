@@ -1,4 +1,4 @@
-# <img src="../doc/colgm.svg" height="50px"/> Self-Host Colgm Compiler
+# <img src="../doc/logo/colgm.svg" height="50px"/> Self-Host Colgm Compiler
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 [![nightly-build](https://github.com/colgm/colgm/actions/workflows/release.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/release.yml)
