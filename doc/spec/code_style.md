@@ -1,6 +1,6 @@
 # Code Style
 
-## Struct Definitions
+## Struct Definition
 
 Indentation: 4 spaces
 
@@ -12,15 +12,16 @@ pub struct name_of_this_struct {
 }
 ```
 
-## Functions
+## Function
 
 ```rs
-pub func name_of_the_function(param_1: type_1, param_2: type_2) -> return_type_name {
+pub func name_of_the_function(param_1: type_1,
+                              param_2: type_2) -> return_type_name {
     ......
 }
 ```
 
-## Impls
+## Impl
 
 ```rs
 impl name_of_this_struct {
@@ -34,7 +35,7 @@ impl name_of_this_struct {
 }
 ```
 
-## Statements
+## Statement
 
 ```rs
 if (xxx) {
@@ -57,8 +58,9 @@ match (xxx) {
 
 ## Characters Per Line
 
-One single line should not contain more than 100 characters (just an advice), if characters exceed,
-use the llvm style:
+One single line should not contain more than 100 characters (just advice),
+if control the number of characters to 80 each line, that's better.
+If characters exceed, use the llvm style:
 
 ```rs
 pub func foo(param_1: type_1,

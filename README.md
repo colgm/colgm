@@ -3,11 +3,15 @@
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 [![nightly-build](https://github.com/colgm/colgm/actions/workflows/release.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/release.yml)
 
+- [__macos-aarch64-nightly-build__](https://github.com/colgm/colgm/releases/tag/macOS_nightly)
+- [__linux-x86_64-nightly-build__](https://github.com/colgm/colgm/releases/tag/linux_nightly)
+- [__windows-x86_64-nightly-build__ [WIP]](https://github.com/colgm/colgm/releases/tag/windows_nightly)
+
 ```rust
-use std::libc::puts;
+use std::io::io;
 
 pub func main() -> i32 {
-    puts("hello world!");
+    io::stdout().out("hello world!").endln();
     return 0;
 }
 ```
@@ -15,66 +19,28 @@ pub func main() -> i32 {
 ## Repo Content
 
 - [bootstrap](./bootstrap/README.md) : bootstrap compiler.
-- [src](./src/README.md) : self-host compiler.
+- [src](./src) : self-host compiler.
 - [test](./test): test cases.
 
-## Tutorial
+## Language Guide
 
-Welcome to try. See simple tutorial in [bootstrap/README.md](./bootstrap/README.md).
+See simple language guide in [doc/guide/tutorial.md](./doc/guide/tutorial.md).
 
-## Bootstrap Compiler
+## Build and Development
 
-- [macos-aarch64-nightly-build](https://github.com/colgm/colgm/releases/tag/macOS_nightly)
+We suggest you to just follow the build script at [misc/build.py](./misc/build.py).
 
-- [linux-x86_64-nightly-build](https://github.com/colgm/colgm/releases/tag/linux_nightly)
-
-- [windows-x86_64-nightly-build __[WIP]__](https://github.com/colgm/colgm/releases/tag/windows_nightly)
-
-Bootstrap compiler locates at `{repo_path}/bootstrap`, written by C++(`-std=c++17`):
-
-Use these commands to build the bootstrap compiler, use `-DCMAKE_BUILD_TYPE=Debug` if want debug version:
+Use this command in top level directory:
 
 ```sh
-mkdir build && cd build
-cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release && make -j6
+python3 misc/build.py
 ```
 
-The executable is located as `build/colgm`.
+Then it will build the bootstrap compiler and self-host compiler,
+and try to build the self-host compiler by itself
+(maybe as a test, who knows).
 
-Then use this command to build self-host compiler:
-
-```sh
-make colgm.ll
-```
-
-The self-host compiler should be `{repo_path}/colgm.ll`.
-If having `lli`(LLVM JIT interpreter), you could try this to
-execute self-host compiler:
-
-```sh
-lli colgm.ll main.colgm --library .
-```
-
-LLVM JIT interpreter maybe unstable on some platforms,
-if `lli` crashed, try using `clang` to build to executable
-(suggested):
-
-```sh
-clang colgm.ll -o colgm
-```
-
-If want to make `panic` print stack trace with function name, remember to use `-rdynamic`:
-
-```sh
-clang -rdynamic colgm.ll -o colgm
-```
-
-On macOS this option is not necessary because attribute
-`frame-pointer=non-leaf` is added after function definition.
-
-## Self-Host Compiler
-
-Learn more about [Self-host compiler](./src/README.md)
+And for development, you should follow the code style in [doc/spec/code_style.md](./doc/spec/code_style.md).
 
 ## Features and Roadmap
 

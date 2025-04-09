@@ -1,5 +1,7 @@
 # Feature: Tagged Union
 
+Work in progress.
+
 ## Definition
 
 ```rust
