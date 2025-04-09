@@ -36,7 +36,6 @@ use mir::context::{ mir_context };
 use mir::ast2mir::{ ast2mir };
 
 pub struct regist_pass {
-    this_file: str,
     err: report*,
     pkg: package*,
     root: root*,
@@ -55,7 +54,6 @@ impl regist_pass {
                       co: cli_option*,
                       mctx: mir_context*) -> regist_pass {
 		return regist_pass {
-            this_file: str::instance(),
             err: err,
             pkg: pkg,
             root: nil,
@@ -68,7 +66,6 @@ impl regist_pass {
 	}
 
     pub func delete(self) {
-        self->this_file.delete();
         self->gnv.delete();
     }
 }
@@ -277,7 +274,7 @@ impl regist_pass {
 
         // ctx's this file maybe over-written, set it back
         self->ctx->this_file.clear();
-        self->ctx->this_file.append_i8_vec(self->this_file.c_str);
+        self->ctx->this_file.append_i8_vec(self->root->base.location.file.c_str);
         return true;
     }
 
@@ -1240,15 +1237,13 @@ impl regist_pass {
         self->root = root;
 
         // clear this file's name and reset to the current ast file
-        self->this_file.clear();
-        self->this_file.append_i8_vec(root->base.location.file.c_str);
         self->ctx->this_file.clear();
         self->ctx->this_file.append_i8_vec(root->base.location.file.c_str);
 
         // create domain if not exist
-        self->ctx->create_domain_if_not_exist(self->this_file.__ptr__());
+        self->ctx->create_domain_if_not_exist(root->base.location.file.__ptr__());
 
-        var this_dm = self->ctx->get_domain(self->this_file.__ptr__());
+        var this_dm = self->ctx->get_domain(root->base.location.file.__ptr__());
         this_dm->file_name.clear();
         this_dm->file_name.append_i8_vec(root->base.location.file.c_str);
 
