@@ -3,15 +3,9 @@ use std::libc::{ free };
 use err::panic::{ panic };
 
 struct node<T> {
-    elem: T*,
+    elem: T,
     next: node<T>*,
     prev: node<T>*
-}
-
-struct primitive_node<T> {
-    elem: T,
-    next: primitive_node<T>*,
-    prev: primitive_node<T>*
 }
 
 pub struct list<T> {
@@ -26,8 +20,8 @@ pub struct list_iter<T> {
 }
 
 pub struct primitive_list<T> {
-    head: primitive_node<T>*,
-    tail: primitive_node<T>*,
+    head: node<T>*,
+    tail: node<T>*,
     size: u64
 }
 
@@ -44,7 +38,7 @@ impl list_iter<T> {
     }
 
     pub func elem(self) -> T* {
-        return self->current->elem;
+        return self->current->elem.__ptr__();
     }
 
     pub func next(self) -> list_iter<T> {
@@ -79,8 +73,7 @@ impl list<T> {
         var curr = self->head;
         while (curr != nil) {
             var next = curr->next;
-            curr->elem->delete();
-            free(curr->elem => i8*);
+            curr->elem.delete();
             free(curr => i8*);
             curr = next;
         }
@@ -102,7 +95,7 @@ impl list<T> {
         if (new_node == nil) {
             panic("failed to allocate memory");
         }
-        new_node->elem = elem->copy();
+        new_node->elem = elem->copy_instance();
         new_node->next = nil;
         new_node->prev = self->tail;
 
@@ -126,15 +119,13 @@ impl list<T> {
         }
 
         if (self->head == self->tail) {
-            self->head->elem->delete();
-            free(self->head->elem => i8*);
+            self->head->elem.delete();
             free(self->head => i8*);
             self->head = nil;
             self->tail = nil;
         } else {
             var next = self->head->next;
-            self->head->elem->delete();
-            free(self->head->elem => i8*);
+            self->head->elem.delete();
             free(self->head => i8*);
             next->prev = nil;
             self->head = next;
@@ -147,7 +138,7 @@ impl list<T> {
         if (self->head == nil) {
             panic("list is empty");
         }
-        return self->head->elem;
+        return self->head->elem.__ptr__();
     }
 
     pub func iter(self) -> list_iter<T> {
@@ -192,7 +183,7 @@ impl primitive_list<T> {
     }
 
     pub func insert(self, elem: T) {
-        var new_node = primitive_node<T>::__alloc__();
+        var new_node = node<T>::__alloc__();
         if (new_node == nil) {
             panic("failed to allocate memory");
         }

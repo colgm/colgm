@@ -12,14 +12,14 @@ impl ptr<T> {
     pub func copy(self) -> ptr<T>* {
         var res = ptr<T>::__alloc__();
         if (res == nil) {
-            panic("ptr<T>::copy: failed to allocate memory");
+            panic("failed to allocate memory");
         }
         res->data = self->data;
         return res;
     }
 
     pub func wrap(p: T*) -> ptr<T> {
-        return ptr<T>{ data: p };
+        return ptr<T> { data: p };
     }
 
     pub func unwrap(self) -> T* {
@@ -40,14 +40,19 @@ impl basic<T> {
     pub func copy(self) -> basic<T>* {
         var res = basic<T>::__alloc__();
         if (res == nil) {
-            panic("basic<T>::copy: failed to allocate memory");
+            panic("failed to allocate memory");
         }
         res->data = self->data;
         return res;
     }
 
+    // shallow copy
+    pub func copy_instance(self) -> basic<T> {
+        return basic<T> { data: self->data };
+    }
+
     pub func wrap(v: T) -> basic<T> {
-        return basic<T>{ data: v };
+        return basic<T> { data: v };
     }
 
     pub func unwrap(self) -> T {
