@@ -1,6 +1,7 @@
 use std::libc::{ streq, strlen, free, system };
 use std::io::{ readfile_into_string, io };
 use std::fs::{ fs };
+use std::str::{ str };
 
 use util::cli::*;
 use util::frontend::{ frontend };
@@ -31,18 +32,24 @@ func clang_compile(co: cli_option*) -> i32 {
     }
 
     var cmd = clang.copy_instance();
-    if (!fs::exists(co->output_file)) {
+    var ll_file = str::from(co->output_file);
+    ll_file.append_i8_vec(".ll");
+
+    if (!fs::exists(ll_file.c_str)) {
         clang.delete();
         cmd.delete();
+        ll_file.delete();
         return -1;
     }
 
     cmd.append_i8_vec(" ")->append_i8_vec(co->get_opt_level())->append_i8_vec(" ");
-    cmd.append_i8_vec(co->output_file);
+    cmd.append_i8_vec(ll_file.c_str);
     if (co->DEBUG_MODE) {
         cmd.append_i8_vec(" -g");
     }
-    cmd.append_i8_vec(" -o a.out -rdynamic -lm");
+    cmd.append_i8_vec(" -o ");
+    cmd.append_i8_vec(co->output_file);
+    cmd.append_i8_vec(" -rdynamic -lm");
     if (co->VERBOSE) {
         io::stdout().green().out("[    CLANG ] ").reset();
         io::stdout().out("Executing \"").out(cmd.c_str).out("\"\n");
@@ -85,7 +92,7 @@ func compile(option: cli_option) -> i32 {
         return -1;
     }
 
-    var cwd = fs::CWD();
+    var cwd = fs::getcwd();
     if (!cwd.empty()) {
         io::stdout().green().out("[    COLGM ] ").reset();
         io::stdout().out("In directory <").out(cwd.c_str).out(">").endln();
@@ -193,10 +200,13 @@ func compile(option: cli_option) -> i32 {
         sctx.dump(io::stdout());
     }
 
-    var file_output = io::fileout(option.output_file);
+    var ll_file = str::from(option.output_file);
+    ll_file.append_i8_vec(".ll");
+
+    var file_output = io::fileout(ll_file.c_str);
     if (option.VERBOSE) {
         io::stdout().green().out("[ SIR-PASS ] ").reset();
-        io::stdout().out("Generating \"").out(option.output_file).out("\"").endln();
+        io::stdout().out("Generating \"").out(option.output_file).out(".ll\"").endln();
     }
     sctx.dump(file_output);
     file_output.close();
@@ -212,6 +222,7 @@ func compile(option: cli_option) -> i32 {
     sctx.delete();
     ast2mir_worker.delete();
     mir2sir_worder.delete();
+    ll_file.delete();
     return ret_code;
 }
 
@@ -330,7 +341,7 @@ func main(argc: i32, argv: i8**) -> i32 {
 
     // set default output file
     if (option.output_file == nil) {
-        option.output_file = "out.ll";
+        option.output_file = "a.out";
     }
     // set default library path
     if (option.library_path == nil) {
