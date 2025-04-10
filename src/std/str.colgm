@@ -293,9 +293,15 @@ impl str {
 impl str {
     pub func hash(self) -> u64 {
         var hash: u64 = 5381;
-        for (var i: u64 = 0; i < self->size; i += 1) {
-            hash *= 31;
-            hash += self->c_str[i] => u64;
+        var u64_ptr = self->c_str => u64*;
+        var u64_str_size = self->size / 8;
+        for (var i: u64 = 0; i < u64_str_size; i += 1) {
+            hash *= 33;
+            hash ^= u64_ptr[i];
+        }
+        for (var i: u64 = u64_str_size * 8 + 1; i < self->size; i += 1) {
+            hash *= 33;
+            hash ^= self->c_str[i] => u64;
         }
         return hash;
     }
