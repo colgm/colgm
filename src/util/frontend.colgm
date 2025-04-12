@@ -10,7 +10,7 @@ pub struct frontend {
     copt: cli_option*,
     err: report*,
     pkg: package*,
-    lex: lexer*,
+    lex: lexer,
     par: parser
 }
 
@@ -18,14 +18,13 @@ impl frontend {
     pub func instance(co: cli_option*) -> frontend {
         var err = report::new();
         var pkg = package::new(err);
-        var lex = lexer::new(err);
 
         return frontend {
             copt: co,
             err: err,
             pkg: pkg,
-            lex: lex,
-            par: parser::instance(err, lex, co)
+            lex: lexer::instance(err),
+            par: parser::instance(err, co)
         };
     }
 
@@ -34,8 +33,7 @@ impl frontend {
         free(self->err => i8*);
         self->pkg->delete();
         free(self->pkg => i8*);
-        self->lex->delete();
-        free(self->lex => i8*);
+        self->lex.delete();
         self->par.delete();
     }
 }

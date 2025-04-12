@@ -110,11 +110,11 @@ impl parser {
 }
 
 impl parser {
-    pub func instance(e: report*, l: lexer*, co: cli_option*) -> parser {
+    pub func instance(e: report*, co: cli_option*) -> parser {
         return parser {
             err: e,
             co: co,
-            toks: l->toks.__ptr__(),
+            toks: nil,
             root: nil,
             index: 0
         };
@@ -1190,8 +1190,9 @@ impl parser {
 }
 
 impl parser {
-    pub func parse(self) {
+    pub func parse(self, lex: lexer*) {
         self->index = 0;
+        self->toks = lex->toks.__ptr__();
         self->root = root::new(self->this_tok_loc());
         if (self->lookahead(tok_kind::tok_eof)) {
             return;

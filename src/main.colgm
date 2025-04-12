@@ -1,4 +1,4 @@
-use std::libc::{ streq, strlen, free, system };
+use std::libc::{ streq, strlen, system };
 use std::io::{ readfile_into_string, io };
 use std::fs::{ fs };
 use std::str::{ str };
@@ -135,23 +135,23 @@ func compile(option: cli_option) -> i32 {
         io::stdout().green().out("[    LEXER ] ").reset();
         io::stdout().out("Scanning tokens for entry file").endln();
     }
-    cc.lex->scan(option.input_file);
+    cc.lex.scan(option.input_file);
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
-            cc.lex->log_dump();
+            cc.lex.log_dump();
         }
         cc.delete();
         return -1;
     }
     if (option.VIEW_TOKEN) {
-        cc.lex->dump(io::stdout());
+        cc.lex.dump(io::stdout());
     }
 
     if (option.VERBOSE) {
         io::stdout().green().out("[   PARSER ] ").reset();
         io::stdout().out("Parsing syntax").endln();
     }
-    cc.par.parse();
+    cc.par.parse(cc.lex.__ptr__());
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
             cc.par.log_dump();

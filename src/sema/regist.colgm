@@ -223,8 +223,8 @@ impl regist_pass {
         var info = self->pkg->get_package_info(name);
         info->status = p_status::analysing;
 
-        var lex = lexer::new(self->err);
-        var par = parser::instance(self->err, lex, self->co);
+        var lex = lexer::instance(self->err);
+        var par = parser::instance(self->err, self->co);
         var rp = regist_pass::instance(
             self->err,
             self->pkg,
@@ -239,12 +239,12 @@ impl regist_pass {
             self->pkg,
             self->mctx
         );
-        lex->scan(path->c_str);
+        lex.scan(path->c_str);
         if (self->err->error_count > 0) {
             return false;
         }
 
-        par.parse();
+        par.parse(lex.__ptr__());
         if (self->err->error_count > 0) {
             return false;
         }
@@ -261,11 +261,10 @@ impl regist_pass {
 
         ast2mir_worker.generate(par.root);
 
-        lex->delete();
+        lex.delete();
         par.delete();
         rp.delete();
         semantic.delete();
-        free(lex => i8*);
 
         info->status = p_status::analysed;
 

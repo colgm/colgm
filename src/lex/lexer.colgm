@@ -20,18 +20,15 @@ pub struct lexer {
 }
 
 impl lexer {
-    pub func new(e: report*) -> lexer* {
-        var res = lexer::__alloc__();
-        if (res == nil) {
-            panic("failed to allocate memory");
-        }
-        res->err = e;
-        res->toks = vec<token>::instance();
-        res->pos = 0;
-        res->filename.init();
-        res->line = 0;
-        res->column = 0;
-        return res;
+    pub func instance(e: report*) -> lexer {
+        return lexer {
+            err: e,
+            toks: vec<token>::instance(),
+            pos: 0,
+            filename: str::instance(),
+            line: 0,
+            column: 0
+        };
     }
 
     pub func delete(self) {
