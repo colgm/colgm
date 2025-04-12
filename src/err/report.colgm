@@ -1,9 +1,9 @@
-use err::span::*;
+use err::span::{ span };
 use err::panic::{ panic };
 
 use std::str::{ str };
 use std::io::{ readfile_into_string, io };
-use std::libc::{ malloc, realloc, free, itoa, strlen };
+use std::libc::{ itoa, strlen };
 use std::fs::{ fs };
 use std::vec::{ vec };
 
@@ -80,22 +80,22 @@ impl report {
         return length;
     }
 
-    func left_pad(padding: i64) -> str* {
-        var res = str::new();
-        while((res->size => i64) < padding) {
-            res->append_char(' ');
+    func left_pad(padding: i64) -> str {
+        var res = str::instance();
+        while ((res.size => i64) < padding) {
+            res.append_char(' ');
         }
         return res;
     }
 
-    func to_str(num: i64, padding: i64) -> str* {
+    func to_str(num: i64, padding: i64) -> str {
         var tmp = [i8; 256];
         itoa(num, tmp, 10);
-        var res = str::new();
+        var res = str::instance();
         for (var index = strlen(tmp); index < padding; index += 1) {
-            res->append_char(' ');
+            res.append_char(' ');
         }
-        res->append_i8_vec(tmp);
+        res.append_i8_vec(tmp);
         return res;
     }
 
@@ -104,16 +104,34 @@ impl report {
         var max_line_number_length = report::get_number_length(location->end_line + 1);
         var pad_str = report::left_pad(max_line_number_length);
 
-        io::stderr().cyan().out(pad_str->c_str).out(" | ").reset().endln();
+        io::stderr().cyan().out(pad_str.c_str).out(" | ").reset().endln();
+
+        var omit_line_printed = false;
 
         while (index <= location->end_line && (index => u64) < self->source.size) {
+            if (index > location->begin_line && index < location->end_line) {
+                if (!omit_line_printed) {
+                    io::stderr().cyan().out(pad_str.c_str).out(" | ").reset();
+                    io::stderr().out("  ...").endln();
+                    io::stderr().cyan().out(pad_str.c_str).out(" | ").reset().endln();
+                    omit_line_printed = true;
+                }
+                index += 1;
+                continue;
+            }
             var this_line = self->source.get(index => u64)->c_str;
             var len = self->source.get(index => u64)->size => i64;
+
+            // print line number, for example:
+            //
+            //     1 | <source>
+            //       | ...
+            //    12 | <source>
             var pad_num = report::to_str(index + 1, max_line_number_length);
-            io::stderr().cyan().out(pad_num->c_str).out(" | ")
+            io::stderr().cyan().out(pad_num.c_str).out(" | ")
                         .reset().out(this_line).endln();
 
-            var underline = str::new();
+            var underline = str::instance();
             if (index == location->begin_line) {
                 for (var i = 0; i < len; i += 1) {
                     if (location->begin_line==location->end_line &&
@@ -121,16 +139,16 @@ impl report {
                         break;
                     }
                     if (i < location->begin_column && this_line[i] != '\t') {
-                        underline->append_char(' ');
+                        underline.append_char(' ');
                     }
                     if (i < location->begin_column && this_line[i] == '\t') {
-                        underline->append_char('\t');
+                        underline.append_char('\t');
                     }
                     if (i >= location->begin_column && this_line[i] != '\t') {
-                        underline->append_char('^');
+                        underline.append_char('^');
                     }
                     if (i >= location->begin_column && this_line[i] == '\t') {
-                        underline->append_i8_vec("^^^^");
+                        underline.append_i8_vec("^^^^");
                     }
                 }
             } elsif (index == location->end_line) {
@@ -141,24 +159,24 @@ impl report {
                         continue;
                     }
                     if (i < location->end_column && this_line[i] != '\t') {
-                        underline->append_char('^');
+                        underline.append_char('^');
                     }
                     if (i < location->end_column && this_line[i] == '\t') {
-                        underline->append_i8_vec("^^^^");
+                        underline.append_i8_vec("^^^^");
                     }
                     if (i >= location->end_column && this_line[i] != '\t') {
-                        underline->append_char(' ');
+                        underline.append_char(' ');
                     }
                     if (i >= location->end_column && this_line[i] == '\t') {
-                        underline->append_char('\t');
+                        underline.append_char('\t');
                     }
                 }
             } else {
                 for (var i = 0; i < len; i += 1) {
                     if (this_line[i] == '\t') {
-                        underline->append_i8_vec("^^^^");
+                        underline.append_i8_vec("^^^^");
                     } elsif (this_line[i] != '\r' && this_line[i] != '\n') {
-                        underline->append_char('^');
+                        underline.append_char('^');
                     }
                 }
             }
@@ -166,25 +184,22 @@ impl report {
             index += 1;
             
             if (is_error) {
-                io::stderr().cyan().out(pad_str->c_str).out(" | ")
-                            .red().out(underline->c_str)
+                io::stderr().cyan().out(pad_str.c_str).out(" | ")
+                            .red().out(underline.c_str)
                             .reset().endln();
             } else {
-                io::stderr().cyan().out(pad_str->c_str).out(" | ")
-                            .orange().out(underline->c_str)
+                io::stderr().cyan().out(pad_str.c_str).out(" | ")
+                            .orange().out(underline.c_str)
                             .reset().endln();
             }
 
-            underline->delete();
-            free(underline => i8*);
-            pad_num->delete();
-            free(pad_num => i8*);
+            underline.delete();
+            pad_num.delete();
         }
 
         io::stderr().endln();
 
-        pad_str->delete();
-        free(pad_str => i8*);
+        pad_str.delete();
     }
 }
 

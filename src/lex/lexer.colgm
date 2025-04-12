@@ -597,10 +597,10 @@ impl lexer {
     }
 
     func generate_string(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
         var quote_type = src->get(self->pos);
         var tmp = str::instance();
@@ -662,11 +662,10 @@ impl lexer {
         }
 
         if (self->pos >= src->size) {
-            loc->end_line = self->line;
-            loc->end_column = self->column;
-            self->err->error(loc, "get <eof> when generating string.");
-            loc->delete();
-            free(loc => i8*);
+            loc.end_line = self->line;
+            loc.end_column = self->column;
+            self->err->error(loc.__ptr__(), "get <eof> when generating string.");
+            loc.delete();
             tmp.delete();
             return;
         }
@@ -675,20 +674,19 @@ impl lexer {
         self->pos += 1;
         self->column += 1;
 
-        loc->end_line = self->line;
-        loc->end_column = self->column;
+        loc.end_line = self->line;
+        loc.end_column = self->column;
 
         if (quote_type == '"') {
-            self->push_token(tok_kind::tok_str, tmp.__ptr__(), loc);
+            self->push_token(tok_kind::tok_str, tmp.__ptr__(), loc.__ptr__());
         } else {
             if (tmp.size != 1) {
-                self->err->error(loc, "should only contain one character.");
+                self->err->error(loc.__ptr__(), "should only contain one character.");
             }
-            self->push_token(tok_kind::tok_ch, tmp.__ptr__(), loc);
+            self->push_token(tok_kind::tok_ch, tmp.__ptr__(), loc.__ptr__());
         }
 
-        loc->delete();
-        free(loc => i8*);
+        loc.delete();
         tmp.delete();
     }
 

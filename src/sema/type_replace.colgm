@@ -1046,13 +1046,13 @@ impl generic_visitor {
         struct_info->generic_template.clear();
         dm->structs.insert(gn, struct_info);
 
-        var sym_info = symbol_info::new();
-        sym_info->kind = symbol_kind::struct_kind;
-        sym_info->loc_file.append_str(struct_info->location.file.__ptr__());
-        sym_info->is_public = struct_info->is_public;
-        self->ctx->global_symbol()->insert(gn, sym_info);
-        sym_info->delete();
-        free(sym_info => i8*);
+        var sym_info = symbol_info::instance(
+            symbol_kind::struct_kind,
+            struct_info->location.file.c_str,
+            struct_info->is_public,
+        );
+        self->ctx->global_symbol()->insert(gn, sym_info.__ptr__());
+        sym_info.delete();
 
         self->replace_struct_type(dm->structs.get(gn), gd);
 
@@ -1071,13 +1071,13 @@ impl generic_visitor {
         func_info->generic_template.clear();
         dm->functions.insert(gn, func_info);
 
-        var sym_info = symbol_info::new();
-        sym_info->kind = symbol_kind::func_kind;
-        sym_info->loc_file.append_str(func_info->location.file.__ptr__());
-        sym_info->is_public = func_info->is_public;
-        self->ctx->global_symbol()->insert(gn, sym_info);
-        sym_info->delete();
-        free(sym_info => i8*);
+        var sym_info = symbol_info::instance(
+            symbol_kind::func_kind,
+            func_info->location.file.c_str,
+            func_info->is_public
+        );
+        self->ctx->global_symbol()->insert(gn, sym_info.__ptr__());
+        sym_info.delete();
 
         self->replace_func_type(dm->functions.get(gn), gd);
 
