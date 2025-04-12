@@ -31,26 +31,12 @@ jobs:
           lli --version
     - name: build
       run: |
-          mkdir build
-          cd build
-          cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release
-          make -j8
-    - name: verify
+          export PATH="/opt/homebrew/opt/llvm@17/bin:$PATH"
+          python3 misc/build.py
+    - name: test
       run: |
           export PATH="/opt/homebrew/opt/llvm@17/bin:$PATH"
-          make test
-    - name: colgm-build
-      run: |
-          export PATH="/opt/homebrew/opt/llvm@17/bin:$PATH"
-          make colgm.ll
-          /opt/homebrew/opt/llvm@17/bin/clang -g -O3 -rdynamic colgm.ll -o colgm
-          ./colgm
-          ./colgm --library src src/main.colgm --verbose -g -Oz
-    - name: std-test
-      run: |
-          make test.ll
-          /opt/homebrew/opt/llvm@17/bin/clang -g -O3 -rdynamic test.ll -o colgm_test
-          ./colgm_test
+          python3 misc/test.py
     - name: release
       run: |
           zip colgm-mac-nightly.zip build/colgm
@@ -75,26 +61,12 @@ jobs:
           lli --version
     - name: build
       run: |
-          mkdir build
-          cd build
-          cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release
-          make -j8
-    - name: verify
+          export PATH="/usr/lib/llvm-14/bin:$PATH"
+          python3 misc/build.py
+    - name: test
       run: |
           export PATH="/usr/lib/llvm-14/bin:$PATH"
-          make test
-    - name: colgm-build
-      run: |
-          export PATH="/usr/lib/llvm-14/bin:$PATH"
-          make colgm.ll
-          /usr/bin/clang-14 -g -O3 -rdynamic colgm.ll -o colgm -lm
-          ./colgm
-          ./colgm --library src src/main.colgm --verbose -g -Oz
-    - name: std-test
-      run: |
-          make test.ll
-          /usr/bin/clang-14 -g -O3 -rdynamic test.ll -o colgm_test -lm
-          ./colgm_test
+          python3 misc/test.py
     - name: release
       run: |
           zip colgm-linux-x86_64-nightly.zip build/colgm
