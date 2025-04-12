@@ -112,23 +112,34 @@ func compile(option: cli_option) -> i32 {
     var mctx = mir_context::instance();
 
     // sir context
-    var sctx = sir_context::instance(cc.pkg);
-    var regpass = regist_pass::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt, mctx.__ptr__());
-    var semantic = sema::instance(cc.err, cc.pkg, ctx.__ptr__(), cc.copt);
+    var sctx = sir_context::instance(cc.pkg.__ptr__());
+    var regpass = regist_pass::instance(
+        cc.err,
+        cc.pkg.__ptr__(),
+        ctx.__ptr__(),
+        cc.copt,
+        mctx.__ptr__()
+    );
+    var semantic = sema::instance(
+        cc.err,
+        cc.pkg.__ptr__(),
+        ctx.__ptr__(),
+        cc.copt
+    );
     var ast2mir_worker = ast2mir::instance(
         cc.err,
         ctx.__ptr__(),
-        cc.pkg,
+        cc.pkg.__ptr__(),
         mctx.__ptr__()
     );
     var mir2sir_worder = mir2sir::instance(
         ctx.__ptr__(),
         sctx.__ptr__(),
-        cc.pkg
+        cc.pkg.__ptr__()
     );
 
-    cc.pkg->library_path.clear();
-    cc.pkg->library_path.append_i8_vec(option.library_path);
+    cc.pkg.library_path.clear();
+    cc.pkg.library_path.append_i8_vec(option.library_path);
 
     // do lexer scanning
     if (option.VERBOSE) {
@@ -176,7 +187,7 @@ func compile(option: cli_option) -> i32 {
     semantic.analyse(cc.par.root);
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
-            semantic.ctx->log_dump(cc.pkg);
+            semantic.ctx->log_dump(cc.pkg.__ptr__());
         }
         cc.delete();
         return -1;
@@ -185,14 +196,14 @@ func compile(option: cli_option) -> i32 {
         semantic.view_resolved_ast(io::stdout());
     }
     if (option.VIEW_SEMA) {
-        semantic.ctx->dump(io::stdout(), cc.pkg);
+        semantic.ctx->dump(io::stdout(), cc.pkg.__ptr__());
     }
 
     ast2mir_worker.generate(cc.par.root);
     mctx.adjust_posix_open(option.VERBOSE);
     mctx.add_default_func(option.VERBOSE);
     if (option.VIEW_MIR) {
-        mctx.dump(io::stdout(), cc.pkg);
+        mctx.dump(io::stdout(), cc.pkg.__ptr__());
     }
 
     mir2sir_worder.generate(mctx.__ptr__(), option.VERBOSE, option.DEBUG_MODE);

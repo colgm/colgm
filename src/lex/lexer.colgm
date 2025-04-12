@@ -1,6 +1,5 @@
 use std::str::{ str };
 use std::vec::{ vec };
-use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ readfile_into_string, io };
 use std::fs::{ fs };
 
@@ -795,38 +794,38 @@ impl lexer {
         self->filename.copy_const(filename);
         self->err->load_file_source(filename);
 
-        var src = str::new();
-        readfile_into_string(filename, src);
+        var src = str::instance();
+        readfile_into_string(filename, src.__ptr__());
 
         self->pos = 0;
         self->line = 0;
         self->column = 0;
-        while(self->pos < src->size) {
-            if (lexer::is_note(self->pos, src)) {
-                self->skip_note(src);
-            } elsif (lexer::is_identifier_head(src->get(self->pos))) {
-                self->generate_identifier(src);
-            } elsif (lexer::is_digit(src->get(self->pos))) {
-                self->generate_number(src);
-            } elsif (lexer::is_str(src->get(self->pos))) {
-                self->generate_string(src);
-            } elsif (lexer::is_arrow(self->pos, src) ||
-                     lexer::is_wide_arrow(self->pos, src)) {
+        while(self->pos < src.size) {
+            if (lexer::is_note(self->pos, src.__ptr__())) {
+                self->skip_note(src.__ptr__());
+            } elsif (lexer::is_identifier_head(src.get(self->pos))) {
+                self->generate_identifier(src.__ptr__());
+            } elsif (lexer::is_digit(src.get(self->pos))) {
+                self->generate_number(src.__ptr__());
+            } elsif (lexer::is_str(src.get(self->pos))) {
+                self->generate_string(src.__ptr__());
+            } elsif (lexer::is_arrow(self->pos, src.__ptr__()) ||
+                     lexer::is_wide_arrow(self->pos, src.__ptr__())) {
                 // need to be put before normal operator scan process
                 // otherwise `=>` will be recognized as `=` `>`
-                self->generate_arrow(src);
-            } elsif (lexer::is_single_char_token(src->get(self->pos))) {
-                self->generate_single_char_token(src);
-            } elsif (lexer::need_lookahead_eq(src->get(self->pos))) {
-                self->generate_maybe_need_eq_oprs(src);
-            } elsif (lexer::need_lookahead_other(src->get(self->pos))) {
-                self->generate_lookahead_other(src);
-            } elsif (src->get(self->pos)==':') {
-                self->generate_coloncolon(src);
-            } elsif (src->get(self->pos)=='.') {
-                self->generate_ellipsis(src);
+                self->generate_arrow(src.__ptr__());
+            } elsif (lexer::is_single_char_token(src.get(self->pos))) {
+                self->generate_single_char_token(src.__ptr__());
+            } elsif (lexer::need_lookahead_eq(src.get(self->pos))) {
+                self->generate_maybe_need_eq_oprs(src.__ptr__());
+            } elsif (lexer::need_lookahead_other(src.get(self->pos))) {
+                self->generate_lookahead_other(src.__ptr__());
+            } elsif (src.get(self->pos)==':') {
+                self->generate_coloncolon(src.__ptr__());
+            } elsif (src.get(self->pos)=='.') {
+                self->generate_ellipsis(src.__ptr__());
             } else {
-                if (src->get(self->pos)=='\n') {
+                if (src.get(self->pos)=='\n') {
                     self->line += 1;
                     self->column = 0;
                 } else {
@@ -839,8 +838,7 @@ impl lexer {
         self->generate_eof_token();
 
         // lifetime end for src
-        src->delete();
-        free(src => i8*);
+        src.delete();
     }
 
     pub func dump(self, out: io) {

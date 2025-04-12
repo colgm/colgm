@@ -9,7 +9,7 @@ use util::cli::{ cli_option };
 pub struct frontend {
     copt: cli_option*,
     err: report*,
-    pkg: package*,
+    pkg: package,
     lex: lexer,
     par: parser
 }
@@ -17,12 +17,11 @@ pub struct frontend {
 impl frontend {
     pub func instance(co: cli_option*) -> frontend {
         var err = report::new();
-        var pkg = package::new(err);
 
         return frontend {
             copt: co,
             err: err,
-            pkg: pkg,
+            pkg: package::instance(err),
             lex: lexer::instance(err),
             par: parser::instance(err, co)
         };
@@ -31,8 +30,7 @@ impl frontend {
     pub func delete(self) {
         self->err->delete();
         free(self->err => i8*);
-        self->pkg->delete();
-        free(self->pkg => i8*);
+        self->pkg.delete();
         self->lex.delete();
         self->par.delete();
     }
