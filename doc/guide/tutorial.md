@@ -1,6 +1,6 @@
 # Colgm Language Guide
 
-Content:
+## Content
 
 - [Literal](#literal)
   - [Default Literal Type](#default-literal-type)
@@ -25,6 +25,7 @@ Content:
 - [Conditional Compilation](#conditional-compilation)
 - [Tagged Union](../spec/tagged_union.md)
 - [Tuple](../spec/tuple.md)
+- [Compiler Library Reference](./library_reference.md)
 
 ## Literal
 

@@ -21,7 +21,7 @@ pub func name_of_the_function(param_1: type_1,
 }
 ```
 
-## Impl
+## Implementation
 
 ```rs
 impl name_of_this_struct {

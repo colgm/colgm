@@ -28,6 +28,13 @@ See simple language guide in [doc/guide/tutorial.md](./doc/guide/tutorial.md).
 
 ## Build and Development
 
+Before building the project, here's the requirements:
+
+- python >= 3.8
+- llvm >= 13.0
+- cmake >= 3.21
+- zip
+
 We suggest you to just follow the build script at [misc/build.py](./misc/build.py).
 
 Use this command in top level directory:
@@ -36,20 +43,27 @@ Use this command in top level directory:
 python3 misc/build.py
 ```
 
+And use another script to test:
+
+```sh
+python3 misc/test.py
+```
+
 Then it will build the bootstrap compiler and self-host compiler,
 and try to build the self-host compiler by itself
 (maybe as a test, who knows).
 
-And for development, you should follow the code style in [doc/spec/code_style.md](./doc/spec/code_style.md).
+And for development, you should follow the [code style](./doc/spec/code_style.md).
 
 ## Features and Roadmap
 
-1. support foreach/forindex:
+1. foreach/forindex:
     - forindex loop, container should have `size()` method
     - foreach loop, container should have iterator-like stuff
         - `iter()`, `next()` and `is_end()` method
-2. array type like `[i32; 128]`
+2. array type `[<base-type>; 128]`
     - syntax like `var a: [i32; 128] = [1, 2, 3];`
     - syntax like `var a: [i8*; 128] = ["foo", "bar", tmp];`
 3. feature: [tagged union](./doc/spec/tagged_union.md)
 4. feature: [tuple](./doc/spec/tuple.md)
+5. feature: RAII
