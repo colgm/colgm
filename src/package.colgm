@@ -2,7 +2,6 @@ use std::str::{ str };
 use std::io::{ io };
 use std::map::{ hashmap };
 
-use err::report::{ report };
 use err::panic::{ panic };
 
 pub enum p_status {
@@ -24,6 +23,9 @@ impl package_info {
 
     pub func copy(self) -> package_info* {
         var res = package_info::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->path = self->path.copy_instance();
         res->status = self->status;
         return res;
@@ -38,7 +40,6 @@ impl package_info {
 }
 
 pub struct package {
-    err: report*,
     library_path: str,
     file_mapper: hashmap<str, package_info>,
     file_to_module: hashmap<str, str>,
@@ -46,9 +47,8 @@ pub struct package {
 }
 
 impl package {
-    pub func instance(e: report*) -> package {
+    pub func instance() -> package {
         return package {
-            err: e,
             library_path: str::instance(),
             file_mapper: hashmap<str, package_info>::instance(),
             file_to_module: hashmap<str, str>::instance(),

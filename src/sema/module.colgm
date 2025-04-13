@@ -2,6 +2,7 @@ use std::str::{ str };
 use std::map::{ hashmap };
 use std::io::{ io };
 
+use err::panic::{ panic };
 use package::{ package };
 
 use sema::function::{ colgm_func };
@@ -52,6 +53,9 @@ impl colgm_module {
 
     pub func copy(self) -> colgm_module* {
         var res = colgm_module::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->file_name = self->file_name.copy_instance();
         res->enums = self->enums.copy_instance();
         res->structs = self->structs.copy_instance();

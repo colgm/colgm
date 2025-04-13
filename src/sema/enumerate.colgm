@@ -5,6 +5,7 @@ use std::ptr::{ basic };
 use std::io::{ io };
 
 use err::span::{ span };
+use err::panic::{ panic };
 
 pub struct colgm_enum {
     name: str,
@@ -18,6 +19,9 @@ pub struct colgm_enum {
 impl colgm_enum {
     pub func new(name: str*, loc: span*) -> colgm_enum* {
         var res = colgm_enum::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->name = name->copy_instance();
         res->location = loc->copy_instance();
         res->ordered_member = vec<str>::instance();
@@ -35,6 +39,9 @@ impl colgm_enum {
 
     pub func copy(self) -> colgm_enum* {
         var res = colgm_enum::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->name = self->name.copy_instance();
         res->location = self->location.copy_instance();
         res->ordered_member = self->ordered_member.copy_instance();

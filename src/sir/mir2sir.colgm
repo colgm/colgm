@@ -51,6 +51,9 @@ struct mir_value_t {
 impl mir_value_t {
     pub func copy(self) -> mir_value_t* {
         var res = mir_value_t::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->value_kind = self->value_kind;
         res->content = self->content.copy_instance();
         res->resolved_type = self->resolved_type.copy_instance();

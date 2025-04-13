@@ -1,5 +1,6 @@
 use err::report::{ report };
 use err::span::{ span };
+use err::panic::{ panic };
 
 use ast::ast::*;
 use util::cli::{ cli_option };
@@ -39,6 +40,9 @@ impl generic_data {
     }
     pub func new() -> generic_data* {
         var res = generic_data::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->name = str::from("");
         res->generic_type = type::instance();
         res->types = hashmap<str, type>::instance();
@@ -53,6 +57,9 @@ impl generic_data {
 
     pub func copy(self) -> generic_data* {
         var res = generic_data::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->name = self->name.copy_instance();
         res->generic_type = self->generic_type.copy_instance();
         res->types = self->types.copy_instance();

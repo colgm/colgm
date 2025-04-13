@@ -5,6 +5,8 @@ use std::map::{ hashmap };
 use std::io::{ io };
 
 use err::span::{ span };
+use err::panic::{ panic };
+
 use ast::ast::{ ast, ast_func_decl };
 use package::{ package };
 use sema::type::{ type };
@@ -27,6 +29,9 @@ pub struct colgm_func {
 impl colgm_func {
     pub func new(name: str*, loc: span*, ret_type: type*) -> colgm_func* {
         var res = colgm_func::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->name = name->copy_instance();
         res->location = loc->copy_instance();
         res->return_type = ret_type->copy_instance();
@@ -58,6 +63,9 @@ impl colgm_func {
 
     pub func copy(self) -> colgm_func* {
         var res = colgm_func::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->name = self->name.copy_instance();
         res->location = self->location.copy_instance();
         res->return_type = self->return_type.copy_instance();

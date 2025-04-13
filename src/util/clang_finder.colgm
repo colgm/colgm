@@ -1,19 +1,16 @@
 use std::fs::{ fs };
 use std::str::{ str };
 use std::vec::{ vec };
-use std::libc::{ itoa };
 
 func supported_clang_version() -> vec<str> {
     var res = vec<str>::instance();
     for (var i = 13; i <= 19; i += 1) {
-        var buffer = [i8; 128];
-        itoa(i, buffer, 10);
         var name = str::from("clang-");
-        name.append_i8_vec(buffer);
+        name.append_i64(i);
         res.push(name.__ptr__());
 
         name.clear();
-        name.append_i8_vec("clang++-")->append_i8_vec(buffer);
+        name.append_i8_vec("clang++-")->append_i64(i);
         res.push(name.__ptr__());
 
         name.delete();
