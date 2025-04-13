@@ -19,6 +19,7 @@ TEST_LIST = [
     ("test/complex_generics.colgm",        "test/test_lib", False),
     ("test/continue_break.colgm",          "test/test_lib", False),
     ("test/enum_test.colgm",               "test/test_lib", False),
+    ("test/for_iter.colgm",                "src",           False),
     ("test/for_test.colgm",                "test/test_lib", False),
     ("test/func.colgm",                    "test/test_lib", False),
     ("test/generic_array.colgm",           "test/test_lib", False),

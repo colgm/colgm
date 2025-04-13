@@ -977,6 +977,8 @@ impl parser {
             tok_kind::tok_match => return self->match_stmt_gen() => ast*;
             tok_kind::tok_while => return self->while_stmt_gen() => ast*;
             tok_kind::tok_for => return self->for_stmt_gen() => ast*;
+            tok_kind::tok_forindex => return self->forindex_stmt_gen() => ast*;
+            tok_kind::tok_foreach => return self->foreach_stmt_gen() => ast*;
             tok_kind::tok_return => return self->return_gen() => ast*;
             tok_kind::tok_continue => return self->continue_gen() => ast*;
             tok_kind::tok_break => return self->break_gen() => ast*;
@@ -1096,6 +1098,34 @@ impl parser {
         if (!self->lookahead(tok_kind::tok_rparen)) {
             res->update = self->calculation_gen();
         }
+        self->match_token(tok_kind::tok_rparen);
+        res->body = self->block_gen(true);
+        self->update_location(res => ast*);
+        return res;
+    }
+
+    func forindex_stmt_gen(self) -> ast_forindex* {
+        var res = ast_forindex::new(self->this_tok_loc());
+        self->match_token(tok_kind::tok_forindex);
+        self->match_token(tok_kind::tok_lparen);
+        self->match_token(tok_kind::tok_var);
+        res->variable = self->identifier_gen();
+        self->match_token(tok_kind::tok_semi);
+        res->container = self->call_gen();
+        self->match_token(tok_kind::tok_rparen);
+        res->body = self->block_gen(true);
+        self->update_location(res => ast*);
+        return res;
+    }
+
+    func foreach_stmt_gen(self) -> ast_foreach* {
+        var res = ast_foreach::new(self->this_tok_loc());
+        self->match_token(tok_kind::tok_foreach);
+        self->match_token(tok_kind::tok_lparen);
+        self->match_token(tok_kind::tok_var);
+        res->variable = self->identifier_gen();
+        self->match_token(tok_kind::tok_semi);
+        res->container = self->call_gen();
         self->match_token(tok_kind::tok_rparen);
         res->body = self->block_gen(true);
         self->update_location(res => ast*);

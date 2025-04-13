@@ -233,6 +233,10 @@ impl ast_dumper {
                 self->dump_while_stmt(node => ast_while_stmt*, out);
             ast_kind::ast_for_stmt =>
                 self->dump_for_stmt(node => ast_for_stmt*, out);
+            ast_kind::ast_forindex =>
+                self->dump_forindex(node => ast_forindex*, out);
+            ast_kind::ast_foreach =>
+                self->dump_foreach(node => ast_foreach*, out);
             ast_kind::ast_in_stmt_expr =>
                 self->dump_in_stmt_expr(node => ast_in_stmt_expr*, out);
             ast_kind::ast_ret_stmt =>
@@ -947,6 +951,42 @@ impl ast_dumper {
         }
         if (node->update != nil) {
             self->dump(node->update, out);
+        }
+        self->set_last();
+        self->dump_code_block(node->body, out);
+        self->pop_indent();
+    }
+
+    func dump_forindex(self, node: ast_forindex*, out: io) {
+        self->dump_indent(out);
+        out.out("[0x").out_hex(node => i64).out("] ");
+        out.out("forindex -> ");
+        node->base.location.dump(out);
+
+        self->push_indent();
+        if (node->variable != nil) {
+            self->dump_identifier(node->variable, out);
+        }
+        if (node->container != nil) {
+            self->dump_call(node->container, out);
+        }
+        self->set_last();
+        self->dump_code_block(node->body, out);
+        self->pop_indent();
+    }
+
+    func dump_foreach(self, node: ast_foreach*, out: io) {
+        self->dump_indent(out);
+        out.out("[0x").out_hex(node => i64).out("] ");
+        out.out("foreach -> ");
+        node->base.location.dump(out);
+
+        self->push_indent();
+        if (node->variable != nil) {
+            self->dump_identifier(node->variable, out);
+        }
+        if (node->container != nil) {
+            self->dump_call(node->container, out);
         }
         self->set_last();
         self->dump_code_block(node->body, out);
