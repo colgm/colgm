@@ -18,7 +18,7 @@ use sema::type_resolve::{ type_resolve };
 use mir::mir::*;
 use mir::context::{ mir_context, mir_struct, mir_func };
 
-use util::to_num::{ hex_to_u64, dec_to_u64 };
+use util::to_num::{ hex_to_u64, oct_to_u64, dec_to_u64 };
 use package::{ package };
 
 pub struct ast2mir {
@@ -62,7 +62,7 @@ impl ast2mir {
     func visit(self, a: ast*) {
         match (a->kind) {
             ast_kind::ast_null => {}
-            ast_kind::ast_root => { unreachable(); }
+            ast_kind::ast_root => unreachable();
             ast_kind::ast_unary_operator => {
                 self->visit_unary_operator(a => ast_unary_operator*);
             }
@@ -105,30 +105,16 @@ impl ast2mir {
             ast_kind::ast_initializer => {
                 self->visit_initializer(a => ast_initializer*);
             }
-            ast_kind::ast_call_path => {
-                self->visit_call_path(a => ast_call_path*);
-            }
-            ast_kind::ast_call => {
-                self->visit_call(a => ast_call*);
-            }
-            ast_kind::ast_definition => {
-                self->visit_definition(a => ast_definition*);
-            }
-            ast_kind::ast_assignment => {
-                self->visit_assignment(a => ast_assignment*);
-            }
-            ast_kind::ast_cond_stmt => {
-                self->visit_cond_stmt(a => ast_cond_stmt*);
-            }
+            ast_kind::ast_call_path => self->visit_call_path(a => ast_call_path*);
+            ast_kind::ast_call => self->visit_call(a => ast_call*);
+            ast_kind::ast_definition => self->visit_definition(a => ast_definition*);
+            ast_kind::ast_assignment => self->visit_assignment(a => ast_assignment*);
+            ast_kind::ast_cond_stmt => self->visit_cond_stmt(a => ast_cond_stmt*);
             ast_kind::ast_match_stmt => self->visit_match_stmt(a => ast_match_stmt*);
             ast_kind::ast_while_stmt => self->visit_while_stmt(a => ast_while_stmt*);
             ast_kind::ast_for_stmt => self->visit_for_stmt(a => ast_for_stmt*);
-            ast_kind::ast_in_stmt_expr => {
-                self->visit_in_stmt_expr(a => ast_in_stmt_expr*);
-            }
-            ast_kind::ast_ret_stmt => {
-                self->visit_ret_stmt(a => ast_ret_stmt*);
-            }
+            ast_kind::ast_in_stmt_expr => self->visit_in_stmt_expr(a => ast_in_stmt_expr*);
+            ast_kind::ast_ret_stmt => self->visit_ret_stmt(a => ast_ret_stmt*);
             ast_kind::ast_continue_stmt => self->visit_continue_stmt(a => ast_continue_stmt*);
             ast_kind::ast_break_stmt => self->visit_break_stmt(a => ast_break_stmt*);
             _ => {
@@ -277,6 +263,8 @@ impl ast2mir {
         var res: u64 = 0;
         if (num->size >= 2 && num->c_str[0] == '0' && num->c_str[1] == 'x') {
             res = hex_to_u64(num->c_str);
+        } else if (num->size >= 2 && num->c_str[0] == '0' && num->c_str[1] == 'o') {
+            res = oct_to_u64(num->c_str);
         } else {
             res = dec_to_u64(num->c_str);
         }

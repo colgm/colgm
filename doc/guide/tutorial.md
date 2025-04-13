@@ -1,5 +1,7 @@
 # Colgm Language Guide
 
+![just a picture](../jpg/llvm-bootstrap.jpg)
+
 ## Content
 
 - [Literal](#literal)
@@ -34,6 +36,8 @@
 Literals in colgm all have default type.
 
 - integer: `i64`
+  - integer beginning with `0x` is treated as hexadecimal integer, type `u64`
+  - integer beginning with `0o` is treated as octal integer, type `u64`
 - float: `f64`
 - boolean: `bool`, with two keyword `true` and `false`
 - constant string: `i8*`
@@ -49,6 +53,9 @@ func main() -> i32 {
     var e = [i8; 128];      // const i8*
     var f = true;           // bool
     var g = nil;            // i8*
+
+    var h = 0x7fffffff;     // u64
+    var i = 0o777;          // u64
     return 0;
 }
 ```

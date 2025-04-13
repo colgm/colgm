@@ -1,28 +1,26 @@
 use std::str::{ str };
-use std::libc::{ malloc, free, streq };
+use std::libc::{ malloc, free };
 use std::list::{ list, list_iter };
 use std::io::{ io };
 
 use err::panic::{ panic };
 
 pub struct pair<K, V> {
-    key: K*,
-    value: V*
+    key: K,
+    value: V
 }
 
 impl pair<K, V> {
     pub func instance(key: K*, value: V*) -> pair<K, V> {
         return pair<K, V> {
-            key: key->copy(),
-            value: value->copy()
+            key: key->copy_instance(),
+            value: value->copy_instance()
         };
     }
 
     pub func delete(self) {
-        self->key->delete();
-        self->value->delete();
-        free(self->key => i8*);
-        free(self->value => i8*);
+        self->key.delete();
+        self->value.delete();
     }
 
     pub func copy(self) -> pair<K, V>* {
@@ -30,15 +28,15 @@ impl pair<K, V> {
         if (res == nil) {
             panic("failed to allocate memory");
         }
-        res->key = self->key->copy();
-        res->value = self->value->copy();
+        res->key = self->key.copy_instance();
+        res->value = self->value.copy_instance();
         return res;
     }
 
     pub func copy_instance(self) -> pair<K, V> {
         return pair<K, V> {
-            key: self->key->copy(),
-            value: self->value->copy()
+            key: self->key.copy_instance(),
+            value: self->value.copy_instance()
         };
     }
 }
@@ -118,7 +116,7 @@ impl hashmap<K, V> {
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
         for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
-            if (i.elem()->key->eq(key)) {
+            if (i.elem()->key.eq(key)) {
                 return true;
             }
         }
@@ -132,8 +130,8 @@ impl hashmap<K, V> {
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
         for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
-            if (i.elem()->key->eq(key)) {
-                return i.elem()->value;
+            if (i.elem()->key.eq(key)) {
+                return i.elem()->value.__ptr__();
             }
         }
         return nil;
@@ -143,21 +141,18 @@ impl hashmap<K, V> {
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
         for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
-            if (i.elem()->key->eq(key)) {
+            if (i.elem()->key.eq(key)) {
                 var tmp = i.elem();
-                tmp->value->delete();
-                free(tmp->value => i8*);
-                tmp->value = value->copy();
+                tmp->value.delete();
+                tmp->value = value->copy_instance();
                 return;
             }
         }
         
-        var tmp_pair = pair<K, V> {
-            key: key,
-            value: value
-        };
+        var tmp_pair = pair<K, V>::instance(key, value);
         // do copy in insert method
         bucket->insert(tmp_pair.__ptr__());
+        tmp_pair.delete();
         self->size += 1;
     }
 
@@ -215,11 +210,11 @@ impl iter<K, V> {
     }
 
     pub func key(self) -> K* {
-        return self->bucket_iter.elem()->key;
+        return self->bucket_iter.elem()->key.__ptr__();
     }
 
     pub func value(self) -> V* {
-        return self->bucket_iter.elem()->value;
+        return self->bucket_iter.elem()->value.__ptr__();
     }
 }
 

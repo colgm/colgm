@@ -101,6 +101,33 @@ impl colgm_struct {
         return res;
     }
 
+    pub func copy_instance(self) -> colgm_struct {
+        var res = colgm_struct {
+            name: self->name.copy_instance(),
+            location: self->location.copy_instance(),
+            fields: self->fields.copy_instance(),
+            ordered_fields: self->ordered_fields.copy_instance(),
+            static_method: self->static_method.copy_instance(),
+            method: self->method.copy_instance(),
+            generic_template: self->generic_template.copy_instance(),
+            generic_struct_decl: nil,
+            generic_struct_impl: primitive_vec<ptr<ast_impl>>::instance(),
+            is_public: self->is_public,
+            is_extern: self->is_extern
+        };
+        if (self->generic_struct_decl != nil) {
+            res.generic_struct_decl = self->generic_struct_decl->copy();
+        }
+        for (var i: u64 = 0; i < self->generic_struct_impl.size; i += 1) {
+            res.generic_struct_impl.push(
+                ptr<ast_impl>::wrap(
+                    self->generic_struct_impl.get(i).unwrap()->copy()
+                )
+            );
+        }
+        return res;
+    }
+
     pub func field_index(self, name: str*) -> i64 {
         for (var i: u64 = 0; i < self->ordered_fields.size; i += 1) {
             if (self->ordered_fields.get(i)->name.eq(name)) {

@@ -82,6 +82,25 @@ impl colgm_func {
         res->is_extern = self->is_extern;
         return res;
     }
+
+    pub func copy_instance(self) -> colgm_func {
+        var res = colgm_func {
+            name: self->name.copy_instance(),
+            location: self->location.copy_instance(),
+            return_type: self->return_type.copy_instance(),
+            param_name: self->param_name.copy_instance(),
+            param_type: self->param_type.copy_instance(),
+            unordered_params: self->unordered_params.copy_instance(),
+            generic_template:self->generic_template.copy_instance(),
+            generic_func_decl: nil,
+            is_public: self->is_public,
+            is_extern: self->is_extern
+        };
+        if (self->generic_func_decl != nil) {
+            res.generic_func_decl = self->generic_func_decl->copy();
+        }
+        return res;
+    }
 }
 
 impl colgm_func {
