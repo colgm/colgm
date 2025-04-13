@@ -1,5 +1,6 @@
 use err::report::{ report };
 use err::panic::{ panic, unreachable };
+use err::span::{ span };
 
 use std::io::{ io };
 use std::libc::{ itoa, utoa };
@@ -814,7 +815,7 @@ impl sema {
         }
 
         if (prev->is_pointer()) {
-            var info = str::from("cannot use \".\" to get field from pointer ?\"");
+            var info = str::from("cannot use \".\" to get field from pointer \"");
             info.append_str(prev_name.__ptr__());
             info.append_i8_vec("\". use \"->\" instead");
             self->err->error(n->base.location.__ptr__(), info.c_str);
@@ -1748,26 +1749,36 @@ impl sema {
         return false;
     }
 
-    func resolve_definition(self, n: ast_definition*, func_self: colgm_func*) {
-        var name = n->name.__ptr__();
+    func check_local_variable_conflict(self, name: str*, loc: span*) -> bool {
         // check if conflicts with local variable
         if (self->ctx->find_local(name)) {
             var info = str::from("redefinition of variable \"");
             info.append_str(name);
             info.append_i8_vec("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->error(loc, info.c_str);
             info.delete();
-            return;
+            return false;
         }
 
         // check if conflicts with global symbol
-        if (self->ctx->get_domain(n->base.location.file.__ptr__())->global_symbol.has(name) ||
-            self->ctx->get_domain(n->base.location.file.__ptr__())->generic_symbol.has(name)) {
+        if (self->ctx->get_domain(loc->file.__ptr__())->global_symbol.has(name) ||
+            self->ctx->get_domain(loc->file.__ptr__())->generic_symbol.has(name)) {
             var info = str::from("variable \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with global symbol");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->error(loc, info.c_str);
             info.delete();
+            return false;
+        }
+
+        return true;
+    }
+
+    func resolve_definition(self, n: ast_definition*, func_self: colgm_func*) {
+        var name = n->name.__ptr__();
+
+        // check if conflicts with local variable
+        if (!self->check_local_variable_conflict(name, n->base.location.__ptr__())) {
             return;
         }
 
@@ -2089,6 +2100,171 @@ impl sema {
         self->ctx->pop_scope_level();
     }
 
+    func check_iterator_size_method(self, t: type*) -> bool {
+        if (t->is_error()) {
+            return false;
+        }
+
+        var dm = self->ctx->get_domain(t->loc_file.__ptr__());
+        var name_for_search = t->generic_name(self->pkg);
+        if (!dm->structs.has(name_for_search.__ptr__())) {
+            name_for_search.delete();
+            return false;
+        }
+
+        var s = dm->structs.get(name_for_search.__ptr__());
+        var method_name = str::from("iter_size");
+        if (!s->method.has(method_name.__ptr__())) {
+            name_for_search.delete();
+            method_name.delete();
+            return false;
+        }
+
+        name_for_search.delete();
+        method_name.delete();
+        return true;
+    }
+
+    func get_iterator_size_type(self, t: type*) -> type {
+        var dm = self->ctx->get_domain(t->loc_file.__ptr__());
+        var name_for_search = t->generic_name(self->pkg);
+        var s = dm->structs.get(name_for_search.__ptr__());
+        var iter_method_name = str::from("iter_size");
+        var iter_method = s->method.get(iter_method_name.__ptr__());
+
+        name_for_search.delete();
+        iter_method_name.delete();
+        return iter_method->return_type.copy_instance();
+    }
+
+    func check_iterator_return_method(self, t: type*) -> bool {
+        if (t->is_error()) {
+            return false;
+        }
+
+        var dm = self->ctx->get_domain(t->loc_file.__ptr__());
+        var name_for_search = t->generic_name(self->pkg);
+        if (!dm->structs.has(name_for_search.__ptr__())) {
+            name_for_search.delete();
+            return false;
+        }
+
+        var s = dm->structs.get(name_for_search.__ptr__());
+        var iter_method_name = str::from("iter");
+        if (!s->method.has(iter_method_name.__ptr__())) {
+            name_for_search.delete();
+            iter_method_name.delete();
+            return false;
+        }
+
+        name_for_search.delete();
+        iter_method_name.delete();
+        return true;
+    }
+
+    func get_iterator_return_type(self, t: type*) -> type {
+        var dm = self->ctx->get_domain(t->loc_file.__ptr__());
+        var name_for_search = t->generic_name(self->pkg);
+        var s = dm->structs.get(name_for_search.__ptr__());
+        var iter_method_name = str::from("iter");
+        var iter_method = s->method.get(iter_method_name.__ptr__());
+
+        name_for_search.delete();
+        iter_method_name.delete();
+        return iter_method->return_type.copy_instance();
+    }
+
+    func resolve_forindex_stmt(self, n: ast_forindex*, func_self: colgm_func*) {
+        var ty = self->resolve_expression(n->container => ast*);
+        // only accept container T, T& or T*
+        if (ty.pointer_depth > 1) {
+            var info = str::from("\"");
+            var c_name = ty.full_path_name(self->pkg, true);
+            info.append_str(c_name.__ptr__())->append_i8_vec("\"");
+            info.append_i8_vec(" is not accpted as container");
+            self->err->error(n->container->base.location.__ptr__(), info.c_str);
+            c_name.delete();
+            info.delete();
+        }
+        // T should have method size(T) -> integer
+        if (!self->check_iterator_size_method(ty.__ptr__())) {
+            self->err->error(n->container->base.location.__ptr__(),
+                             "container must have iter_size method");
+            ty.delete();
+            return;
+        }
+
+        // forindex will directly combine size method's return type to iter_type
+        var iter_ty = self->get_iterator_size_type(ty.__ptr__());
+        if (!iter_ty.is_integer()) {
+            self->err->error(n->container->base.location.__ptr__(),
+                             "iter_size method must return integer");
+            ty.delete();
+            iter_ty.delete();
+            return;
+        }
+
+        self->ctx->push_scope_level();
+        if (self->check_local_variable_conflict(
+            n->variable->content.__ptr__(),
+            n->variable->base.location.__ptr__())) {
+            self->ctx->add_local_var(
+                n->variable->content.__ptr__(),
+                iter_ty.__ptr__()
+            );
+        }
+        if (n->body != nil) {
+            self->in_loop_level += 1;
+            self->resolve_code_block(n->body, func_self);
+            self->in_loop_level -= 1;
+        }
+        self->ctx->pop_scope_level();
+        ty.delete();
+        iter_ty.delete();
+    }
+
+    func resolve_foreach_stmt(self, n: ast_foreach*, func_self: colgm_func*) {
+        var ty = self->resolve_expression(n->container => ast*);
+        // only accept container T, T& or T*
+        if (ty.pointer_depth > 1) {
+            var info = str::from("\"");
+            var c_name = ty.full_path_name(self->pkg, true);
+            info.append_str(c_name.__ptr__())->append_i8_vec("\"");
+            info.append_i8_vec(" is not accpted as container");
+            self->err->error(n->container->base.location.__ptr__(), info.c_str);
+            c_name.delete();
+            info.delete();
+        }
+        // T should have method iter(T) -> iter_type
+        if (!self->check_iterator_return_method(ty.__ptr__())) {
+            self->err->error(n->container->base.location.__ptr__(),
+                             "container must have iter method");
+            ty.delete();
+            return;
+        }
+
+        // foreach will directly combine iter_type to defined variable
+        var iter_ty = self->get_iterator_return_type(ty.__ptr__());
+
+        self->ctx->push_scope_level();
+        if (self->check_local_variable_conflict(
+            n->variable->content.__ptr__(),
+            n->variable->base.location.__ptr__())) {
+            self->ctx->add_local_var(
+                n->variable->content.__ptr__(),
+                iter_ty.__ptr__()
+            );
+        }
+        if (n->body != nil) {
+            self->in_loop_level += 1;
+            self->resolve_code_block(n->body, func_self);
+            self->in_loop_level -= 1;
+        }
+        self->ctx->pop_scope_level();
+        ty.delete();
+        iter_ty.delete();
+    }
+
     func resolve_in_stmt_expr(self, n: ast_in_stmt_expr*, func_self: colgm_func*) {
         var ty = self->resolve_expression(n->value => ast*);
         n->base.resolved_type.reset_with(ty.__ptr__());
@@ -2155,6 +2331,16 @@ impl sema {
                 self->resolve_while_stmt(n => ast_while_stmt*, func_self);
             ast_kind::ast_for_stmt =>
                 self->resolve_for_stmt(n => ast_for_stmt*, func_self);
+            ast_kind::ast_forindex => {
+                self->err->warn(n->location.__ptr__(),
+                                    "forindex statement is not supported now");
+                self->resolve_forindex_stmt(n => ast_forindex*, func_self);
+            }
+            ast_kind::ast_foreach => {
+                self->err->warn(n->location.__ptr__(),
+                                    "foreach statement is not supported now");
+                self->resolve_foreach_stmt(n => ast_foreach*, func_self);
+            }
             ast_kind::ast_in_stmt_expr =>
                 self->resolve_in_stmt_expr(n => ast_in_stmt_expr*, func_self);
             ast_kind::ast_ret_stmt =>
@@ -2170,14 +2356,6 @@ impl sema {
                     self->err->error(n->location.__ptr__(),
                                      "continue statement is not in loop");
                 }
-            }
-            ast_kind::ast_forindex => {
-                self->err->warn(n->location.__ptr__(),
-                                 "forindex statement is not supported now");
-            }
-            ast_kind::ast_foreach => {
-                self->err->warn(n->location.__ptr__(),
-                                 "foreach statement is not supported now");
             }
             // if statement only has one ';', the ast will be ast_null
             ast_kind::ast_null => {}

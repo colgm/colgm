@@ -1,15 +1,31 @@
-use std::vec::{ primitive_vec };
+use std::vec::{ vec };
+use std::str::{ str };
 use std::io::{ io };
 
 pub func main() -> i32 {
     io::stdout().out("[for_iter.colgm] testing").endln();
-    var a = primitive_vec<i32>::instance();
-    a.push(1);
-    a.push(2);
+    var a = vec<str>::instance();
+    for (var i = 0; i < 1024; i += 1) {
+        var s = str::from_i64(i);
+        a.push(s.__ptr__());
+        s.delete();
+    }
 
-    forindex (var i; a) {}
+    forindex (var i; a) {
+        io::stdout().out_u64(i).endln();
+    }
 
-    foreach (var i; a) {}
+    foreach (var i; a) {
+        io::stdout().out(i.get()->c_str).endln();
+    }
+
+    forindex (var i; a.__ptr__()) {
+        io::stdout().out_u64(i).endln();
+    }
+
+    foreach (var i; a.__ptr__()) {
+        io::stdout().out(i.get()->c_str).endln();
+    }
 
     a.delete();
     return 0;
