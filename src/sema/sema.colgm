@@ -2100,7 +2100,7 @@ impl sema {
         self->ctx->pop_scope_level();
     }
 
-    func check_iterator_size_method(self, t: type*) -> bool {
+    func check_struct_has_method(self, t: type*, m_name: i8*) -> bool {
         if (t->is_error()) {
             return false;
         }
@@ -2113,7 +2113,7 @@ impl sema {
         }
 
         var s = dm->structs.get(name_for_search.__ptr__());
-        var method_name = str::from("iter_size");
+        var method_name = str::from(m_name);
         if (!s->method.has(method_name.__ptr__())) {
             name_for_search.delete();
             method_name.delete();
@@ -2125,53 +2125,16 @@ impl sema {
         return true;
     }
 
-    func get_iterator_size_type(self, t: type*) -> type {
+    func get_struct_method_return_type(self, t: type*, m_name: i8*) -> type {
         var dm = self->ctx->get_domain(t->loc_file.__ptr__());
         var name_for_search = t->generic_name(self->pkg);
         var s = dm->structs.get(name_for_search.__ptr__());
-        var iter_method_name = str::from("iter_size");
-        var iter_method = s->method.get(iter_method_name.__ptr__());
+        var method_name = str::from(m_name);
+        var m = s->method.get(method_name.__ptr__());
 
         name_for_search.delete();
-        iter_method_name.delete();
-        return iter_method->return_type.copy_instance();
-    }
-
-    func check_iterator_return_method(self, t: type*) -> bool {
-        if (t->is_error()) {
-            return false;
-        }
-
-        var dm = self->ctx->get_domain(t->loc_file.__ptr__());
-        var name_for_search = t->generic_name(self->pkg);
-        if (!dm->structs.has(name_for_search.__ptr__())) {
-            name_for_search.delete();
-            return false;
-        }
-
-        var s = dm->structs.get(name_for_search.__ptr__());
-        var iter_method_name = str::from("iter");
-        if (!s->method.has(iter_method_name.__ptr__())) {
-            name_for_search.delete();
-            iter_method_name.delete();
-            return false;
-        }
-
-        name_for_search.delete();
-        iter_method_name.delete();
-        return true;
-    }
-
-    func get_iterator_return_type(self, t: type*) -> type {
-        var dm = self->ctx->get_domain(t->loc_file.__ptr__());
-        var name_for_search = t->generic_name(self->pkg);
-        var s = dm->structs.get(name_for_search.__ptr__());
-        var iter_method_name = str::from("iter");
-        var iter_method = s->method.get(iter_method_name.__ptr__());
-
-        name_for_search.delete();
-        iter_method_name.delete();
-        return iter_method->return_type.copy_instance();
+        method_name.delete();
+        return m->return_type.copy_instance();
     }
 
     func resolve_forindex_stmt(self, n: ast_forindex*, func_self: colgm_func*) {
@@ -2186,8 +2149,9 @@ impl sema {
             c_name.delete();
             info.delete();
         }
+
         // T should have method size(T) -> integer
-        if (!self->check_iterator_size_method(ty.__ptr__())) {
+        if (!self->check_struct_has_method(ty.__ptr__(), "iter_size")) {
             self->err->error(n->container->base.location.__ptr__(),
                              "container must have iter_size method");
             ty.delete();
@@ -2195,7 +2159,7 @@ impl sema {
         }
 
         // forindex will directly combine size method's return type to iter_type
-        var iter_ty = self->get_iterator_size_type(ty.__ptr__());
+        var iter_ty = self->get_struct_method_return_type(ty.__ptr__(), "iter_size");
         if (!iter_ty.is_integer()) {
             self->err->error(n->container->base.location.__ptr__(),
                              "iter_size method must return integer");
@@ -2236,7 +2200,7 @@ impl sema {
             info.delete();
         }
         // T should have method iter(T) -> iter_type
-        if (!self->check_iterator_return_method(ty.__ptr__())) {
+        if (!self->check_struct_has_method(ty.__ptr__(), "iter")) {
             self->err->error(n->container->base.location.__ptr__(),
                              "container must have iter method");
             ty.delete();
@@ -2244,7 +2208,45 @@ impl sema {
         }
 
         // foreach will directly combine iter_type to defined variable
-        var iter_ty = self->get_iterator_return_type(ty.__ptr__());
+        var iter_ty = self->get_struct_method_return_type(ty.__ptr__(), "iter");
+
+        // check iter.is_end() method
+        if (!self->check_struct_has_method(iter_ty.__ptr__(), "is_end")) {
+            self->err->error(n->variable->base.location.__ptr__(),
+                             "iterator must have is_end method");
+            ty.delete();
+            iter_ty.delete();
+            return;
+        } else {
+            var rt = self->get_struct_method_return_type(iter_ty.__ptr__(), "is_end");
+            if (!rt.is_bool()) {
+                self->err->error(n->variable->base.location.__ptr__(),
+                                 "is_end method must return bool type");
+                ty.delete();
+                iter_ty.delete();
+                rt.delete();
+                return;
+            }
+        }
+
+        // check iter.next() method
+        if (!self->check_struct_has_method(iter_ty.__ptr__(), "next")) {
+            self->err->error(n->variable->base.location.__ptr__(),
+                             "iterator must have next method");
+            ty.delete();
+            iter_ty.delete();
+            return;
+        } else {
+            var rt = self->get_struct_method_return_type(iter_ty.__ptr__(), "next");
+            if (!rt.eq(iter_ty.__ptr__())) {
+                self->err->error(n->variable->base.location.__ptr__(),
+                                 "next method's return type should equal to the iterator");
+                ty.delete();
+                iter_ty.delete();
+                rt.delete();
+                return;
+            }
+        }
 
         self->ctx->push_scope_level();
         if (self->check_local_variable_conflict(
