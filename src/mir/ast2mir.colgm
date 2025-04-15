@@ -113,12 +113,8 @@ impl ast2mir {
             ast_kind::ast_match_stmt => self->visit_match_stmt(a => ast_match_stmt*);
             ast_kind::ast_while_stmt => self->visit_while_stmt(a => ast_while_stmt*);
             ast_kind::ast_for_stmt => self->visit_for_stmt(a => ast_for_stmt*);
-            ast_kind::ast_forindex => {
-                // not supported
-            }
-            ast_kind::ast_foreach => {
-                // not supported
-            }
+            ast_kind::ast_forindex => self->visit_forindex(a => ast_forindex*);
+            ast_kind::ast_foreach => self->visit_foreach(a => ast_foreach*);
             ast_kind::ast_in_stmt_expr => self->visit_in_stmt_expr(a => ast_in_stmt_expr*);
             ast_kind::ast_ret_stmt => self->visit_ret_stmt(a => ast_ret_stmt*);
             ast_kind::ast_continue_stmt => self->visit_continue_stmt(a => ast_continue_stmt*);
@@ -658,6 +654,83 @@ impl ast2mir {
                 update_block
             ) => mir*
         ));
+    }
+
+    func forindex_init(self, n: ast_forindex*) -> mir_define* {
+        // generate number 0
+        var index_str = str::from("0");
+        var first_index = mir_number::new(
+            n->variable->base.location.__ptr__(),
+            index_str.__ptr__(),
+            n->variable->base.resolved_type.__ptr__()
+        );
+        index_str.delete();
+
+        // generate iter variable call
+        var var_def = mir_define::new(
+            n->variable->base.location.__ptr__(),
+            n->variable->content.__ptr__(),
+            mir_block::new(n->variable->base.location.__ptr__()),
+            n->variable->base.resolved_type.__ptr__()
+        );
+        var_def->init_value->content.push(ptr<mir>::wrap(first_index => mir*));
+
+        return var_def;
+    }
+
+    func visit_forindex(self, n: ast_forindex*) {
+        var temp = self->block;
+
+        // for top level block will keep defined variable in live range
+        // util for loop exit
+        var for_top_level = mir_block::new(n->base.location.__ptr__());
+        self->block->content.push(ptr<mir>::wrap(for_top_level => mir*));
+        
+        // generate "var iter_variable = 0"
+        for_top_level->content.push(ptr<mir>::wrap(
+            self->forindex_init(n) => mir*
+        ));
+
+        // var body_block = mir_block::new(n->body->base.location.__ptr__());
+        // self->block = body_block;
+        // for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        //     self->visit(i.get().unwrap());
+        // }
+        // self->block = temp;
+
+        // for_top_level->content.push(ptr<mir>::wrap(
+        //     mir_loop::new(
+        //         n->base.location.__ptr__(),
+        //         cond_block,
+        //         body_block,
+        //         update_block
+        //     ) => mir*
+        // ));
+    }
+
+    func visit_foreach(self, n: ast_foreach*) {
+        var temp = self->block;
+
+        // for top level block will keep defined variable in live range
+        // util for loop exit
+        var for_top_level = mir_block::new(n->base.location.__ptr__());
+        self->block->content.push(ptr<mir>::wrap(for_top_level => mir*));
+
+        // var body_block = mir_block::new(n->body->base.location.__ptr__());
+        // self->block = body_block;
+        // for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        //     self->visit(i.get().unwrap());
+        // }
+        // self->block = temp;
+
+        // for_top_level->content.push(ptr<mir>::wrap(
+        //     mir_loop::new(
+        //         n->base.location.__ptr__(),
+        //         cond_block,
+        //         body_block,
+        //         update_block
+        //     ) => mir*
+        // ));
     }
 
     func visit_in_stmt_expr(self, n: ast_in_stmt_expr*) {

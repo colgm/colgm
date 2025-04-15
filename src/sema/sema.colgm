@@ -2160,6 +2160,7 @@ impl sema {
 
         // forindex will directly combine size method's return type to iter_type
         var iter_ty = self->get_struct_method_return_type(ty.__ptr__(), "iter_size");
+        n->variable->base.resolved_type.reset_with(iter_ty.__ptr__());
         if (!iter_ty.is_integer()) {
             self->err->error(n->container->base.location.__ptr__(),
                              "iter_size method must return integer");
@@ -2209,6 +2210,7 @@ impl sema {
 
         // foreach will directly combine iter_type to defined variable
         var iter_ty = self->get_struct_method_return_type(ty.__ptr__(), "iter");
+        n->variable->base.resolved_type.reset_with(iter_ty.__ptr__());
 
         // check iter.is_end() method
         if (!self->check_struct_has_method(iter_ty.__ptr__(), "is_end")) {
