@@ -5,22 +5,27 @@ use std::io::{ io };
 pub func main() -> i32 {
     io::stdout().out("[for_iter.colgm] testing").endln();
     var a = vec<str>::instance();
-    for (var i = 0; i < 1024; i += 1) {
+    var b = a.__ptr__();
+    for (var i = 0; i < 32; i += 1) {
         var s = str::from_i64(i);
         a.push(s.__ptr__());
         s.delete();
     }
 
     forindex (var i; a) {
-        io::stdout().out_u64(i).endln();
+        io::stdout().out("forindex container ")
+            .out_u64(i).out(": ")
+            .out(a.get(i)->c_str).endln();
     }
 
     foreach (var i; a) {
         io::stdout().out(i.get()->c_str).endln();
     }
 
-    forindex (var i; a.__ptr__()) {
-        io::stdout().out_u64(i).endln();
+    forindex (var i; b) {
+        io::stdout().out("forindex container ptr ")
+            .out_u64(i).out(": ")
+            .out(b->get(i)->c_str).endln();
     }
 
     foreach (var i; a.__ptr__()) {

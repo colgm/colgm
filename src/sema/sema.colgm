@@ -2137,6 +2137,86 @@ impl sema {
         return m->return_type.copy_instance();
     }
 
+    func lowering_forindex(self, n: ast_forindex*, iter_ty: type*) {
+        // generate `var i: ty = 0;`
+        var lowered_init = ast_definition::new(
+            n->variable->base.location.__ptr__(),
+            n->variable->content.__ptr__()
+        );
+
+        lowered_init->type = ast_type_def::new(n->variable->base.location.__ptr__());
+        lowered_init->type->name = ast_identifier::new(
+            n->variable->base.location.__ptr__(),
+            iter_ty->name.__ptr__()
+        );
+
+        var zero_num = str::from("0");
+        lowered_init->value = ast_number_literal::new(
+            n->variable->base.location.__ptr__(),
+            zero_num.__ptr__()
+        ) => ast*;
+        zero_num.delete();
+
+        n->lowered_init = lowered_init;
+
+        // generate `i < container.iter_size()`
+        //
+        // generate `i`
+        var lowered_condition_lhs = ast_call::new(n->container->base.location.__ptr__());
+        lowered_condition_lhs->head = ast_call_id::new(
+            n->container->base.location.__ptr__(),
+        );
+        lowered_condition_lhs->head->id = n->variable->copy();
+        // generate `container.iter_size()`
+        var lowered_condition_rhs = n->container->copy();
+        if (n->container->base.resolved_type.is_pointer()) {
+            var m_name = str::from("iter_size");
+            lowered_condition_rhs->chain.push(ptr<ast>::wrap(ast_ptr_get_field::new(
+                n->container->base.location.__ptr__(),
+                m_name.__ptr__()
+            ) => ast*));
+            m_name.delete();
+            lowered_condition_rhs->chain.push(ptr<ast>::wrap(
+                ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+            ));
+        } else {
+            var m_name = str::from("iter_size");
+            lowered_condition_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
+                n->container->base.location.__ptr__(),
+                m_name.__ptr__()
+            ) => ast*));
+            m_name.delete();
+            lowered_condition_rhs->chain.push(ptr<ast>::wrap(
+                ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+            ));
+        }
+        // generate `i < container.iter_size()`
+        var lowered_condition = ast_binary_operator::new(
+            n->container->base.location.__ptr__(),
+            binary_kind::less
+        );
+        lowered_condition->left = lowered_condition_lhs => ast*;
+        lowered_condition->right = lowered_condition_rhs => ast*;
+        n->lowered_condition = lowered_condition => ast*;
+
+        // generate `i += 1`
+        //
+        // generate `i`
+        var lowered_update_lhs = lowered_condition_lhs->copy();
+        // generate `1`
+        var one_num = str::from("1");
+        var lowered_update_rhs = ast_number_literal::new(
+            n->container->base.location.__ptr__(),
+            one_num.__ptr__()
+        ) => ast*;
+        one_num.delete();
+        var lowered_update = ast_assignment::new(n->container->base.location.__ptr__());
+        lowered_update->kind = assignment_kind::addeq;
+        lowered_update->left = lowered_update_lhs;
+        lowered_update->right = lowered_update_rhs => ast*;
+        n->lowered_update = lowered_update => ast*;
+    }
+
     func resolve_forindex_stmt(self, n: ast_forindex*, func_self: colgm_func*) {
         var ty = self->resolve_expression(n->container => ast*);
         // only accept container T, T& or T*
@@ -2169,15 +2249,12 @@ impl sema {
             return;
         }
 
+        self->lowering_forindex(n, iter_ty.__ptr__());
+
         self->ctx->push_scope_level();
-        if (self->check_local_variable_conflict(
-            n->variable->content.__ptr__(),
-            n->variable->base.location.__ptr__())) {
-            self->ctx->add_local_var(
-                n->variable->content.__ptr__(),
-                iter_ty.__ptr__()
-            );
-        }
+        self->resolve_definition(n->lowered_init, func_self);
+        self->resolve_expression(n->lowered_condition);
+        self->resolve_expression(n->lowered_update);
         if (n->body != nil) {
             self->in_loop_level += 1;
             self->resolve_code_block(n->body, func_self);
@@ -2187,6 +2264,8 @@ impl sema {
         ty.delete();
         iter_ty.delete();
     }
+
+    func lowering_foreach(self, n: ast_foreach*) {}
 
     func resolve_foreach_stmt(self, n: ast_foreach*, func_self: colgm_func*) {
         var ty = self->resolve_expression(n->container => ast*);
@@ -2249,6 +2328,8 @@ impl sema {
                 return;
             }
         }
+
+        self->lowering_foreach(n);
 
         self->ctx->push_scope_level();
         if (self->check_local_variable_conflict(

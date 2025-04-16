@@ -2324,7 +2324,11 @@ pub struct ast_forindex {
     base: ast,
     variable: ast_identifier*,
     container: ast_call*,
-    body: ast_code_block*
+    body: ast_code_block*,
+
+    lowered_init: ast_definition*,
+    lowered_condition: ast*,
+    lowered_update: ast*
 }
 
 impl ast_forindex {
@@ -2334,6 +2338,10 @@ impl ast_forindex {
         res->variable = nil;
         res->container = nil;
         res->body = nil;
+
+        res->lowered_init = nil;
+        res->lowered_condition = nil;
+        res->lowered_update = nil;
         return res;
     }
 
@@ -2358,6 +2366,22 @@ impl ast_forindex {
         } else {
             res->body = nil;
         }
+
+        if (self->lowered_init != nil) {
+            res->lowered_init = self->lowered_init->copy();
+        } else {
+            res->lowered_init = nil;
+        }
+        if (self->lowered_condition != nil) {
+            res->lowered_condition = self->lowered_condition->copy();
+        } else {
+            res->lowered_condition = nil;
+        }
+        if (self->lowered_update != nil) {
+            res->lowered_update = self->lowered_update->copy();
+        } else {
+            res->lowered_update = nil;
+        }
         return res;
     }
 
@@ -2377,6 +2401,20 @@ impl ast_forindex {
             tmp->delete();
             free(tmp => i8*);
         }
+
+        if (self->lowered_init != nil) {
+            var tmp = self->lowered_init => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+        if (self->lowered_condition != nil) {
+            self->lowered_condition->delete();
+            free(self->lowered_condition => i8*);
+        }
+        if (self->lowered_update != nil) {
+            self->lowered_update->delete();
+            free(self->lowered_update => i8*);
+        }
     }
 }
 
@@ -2384,7 +2422,11 @@ pub struct ast_foreach {
     base: ast,
     variable: ast_identifier*,
     container: ast_call*,
-    body: ast_code_block*
+    body: ast_code_block*,
+
+    lowered_init: ast_definition*,
+    lowered_condition: ast*,
+    lowered_update: ast*
 }
 
 impl ast_foreach {
@@ -2394,6 +2436,10 @@ impl ast_foreach {
         res->variable = nil;
         res->container = nil;
         res->body = nil;
+
+        res->lowered_init = nil;
+        res->lowered_condition = nil;
+        res->lowered_update = nil;
         return res;
     }
 
@@ -2418,6 +2464,22 @@ impl ast_foreach {
         } else {
             res->body = nil;
         }
+
+        if (self->lowered_init != nil) {
+            res->lowered_init = self->lowered_init->copy();
+        } else {
+            res->lowered_init = nil;
+        }
+        if (self->lowered_condition != nil) {
+            res->lowered_condition = self->lowered_condition->copy();
+        } else {
+            res->lowered_condition = nil;
+        }
+        if (self->lowered_update != nil) {
+            res->lowered_update = self->lowered_update->copy();
+        } else {
+            res->lowered_update = nil;
+        }
         return res;
     }
 
@@ -2436,6 +2498,20 @@ impl ast_foreach {
             var tmp = self->body => ast*;
             tmp->delete();
             free(tmp => i8*);
+        }
+
+        if (self->lowered_init != nil) {
+            var tmp = self->lowered_init => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+        if (self->lowered_condition != nil) {
+            self->lowered_condition->delete();
+            free(self->lowered_condition => i8*);
+        }
+        if (self->lowered_update != nil) {
+            self->lowered_update->delete();
+            free(self->lowered_update => i8*);
         }
     }
 }
