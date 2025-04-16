@@ -357,5 +357,10 @@ func main(argc: i32, argv: i8**) -> i32 {
         option.library_path = ".";
     }
 
-    return compile(option);
+    // clang may return 256 if error ocurred
+    // when cast to u8, this may return 0, so we check the return code
+    if (compile(option) != 0) {
+        return -1;
+    }
+    return 0;
 }
