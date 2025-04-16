@@ -2265,7 +2265,101 @@ impl sema {
         iter_ty.delete();
     }
 
-    func lowering_foreach(self, n: ast_foreach*) {}
+    func lowering_foreach(self, n: ast_foreach*) {
+        // generate `var i = container.iter();`
+        var lowered_init = ast_definition::new(
+            n->variable->base.location.__ptr__(),
+            n->variable->content.__ptr__()
+        );
+        var lowered_init_rhs = n->container->copy();
+        lowered_init->value = lowered_init_rhs => ast*;
+        if (n->container->base.resolved_type.is_pointer()) {
+            var m_name = str::from("iter");
+            lowered_init_rhs->chain.push(ptr<ast>::wrap(ast_ptr_get_field::new(
+                n->container->base.location.__ptr__(),
+                m_name.__ptr__()
+            ) => ast*));
+            m_name.delete();
+            lowered_init_rhs->chain.push(ptr<ast>::wrap(
+                ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+            ));
+        } else {
+            var m_name = str::from("iter");
+            lowered_init_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
+                n->container->base.location.__ptr__(),
+                m_name.__ptr__()
+            ) => ast*));
+            m_name.delete();
+            lowered_init_rhs->chain.push(ptr<ast>::wrap(
+                ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+            ));
+        }
+
+        n->lowered_init = lowered_init;
+
+        // generate `!i.is_end()`
+        //
+        // generate `i.is_end()`
+        var lowered_condition_value = ast_call::new(
+            n->container->base.location.__ptr__()
+        );
+        lowered_condition_value->head = ast_call_id::new(
+            n->container->base.location.__ptr__(),
+        );
+        lowered_condition_value->head->id = n->variable->copy();
+        // generate `is_end`
+        var end_method = str::from("is_end");
+        lowered_condition_value->chain.push(ptr<ast>::wrap(ast_get_field::new(
+            n->container->base.location.__ptr__(),
+            end_method.__ptr__()
+        ) => ast*));
+        end_method.delete();
+        // generate `()`
+        lowered_condition_value->chain.push(ptr<ast>::wrap(
+            ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+        ));
+        // !i.is_end()
+        var lowered_condition = ast_unary_operator::new(
+            n->container->base.location.__ptr__(),
+            unary_kind::lnot
+        );
+        lowered_condition->value = lowered_condition_value => ast*;
+        n->lowered_condition = lowered_condition => ast*;
+
+        // generate `i = i.next()`
+        //
+        // generate `i`
+        var lowered_update_lhs = ast_call::new(
+            n->container->base.location.__ptr__()
+        );
+        lowered_update_lhs->head = ast_call_id::new(
+            n->container->base.location.__ptr__(),
+        );
+        lowered_update_lhs->head->id = n->variable->copy();
+        // generate `i.next()`
+        var lowered_update_rhs = ast_call::new(
+            n->container->base.location.__ptr__()
+        );
+        lowered_update_rhs->head = ast_call_id::new(
+            n->container->base.location.__ptr__(),
+        );
+        lowered_update_rhs->head->id = n->variable->copy();
+        var next_method = str::from("next");
+        lowered_update_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
+            n->container->base.location.__ptr__(),
+            next_method.__ptr__()
+        ) => ast*));
+        next_method.delete();
+        lowered_update_rhs->chain.push(ptr<ast>::wrap(
+            ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+        ));
+
+        var lowered_update = ast_assignment::new(n->container->base.location.__ptr__());
+        lowered_update->kind = assignment_kind::eq;
+        lowered_update->left = lowered_update_lhs;
+        lowered_update->right = lowered_update_rhs => ast*;
+        n->lowered_update = lowered_update => ast*;
+    }
 
     func resolve_foreach_stmt(self, n: ast_foreach*, func_self: colgm_func*) {
         var ty = self->resolve_expression(n->container => ast*);
@@ -2332,14 +2426,9 @@ impl sema {
         self->lowering_foreach(n);
 
         self->ctx->push_scope_level();
-        if (self->check_local_variable_conflict(
-            n->variable->content.__ptr__(),
-            n->variable->base.location.__ptr__())) {
-            self->ctx->add_local_var(
-                n->variable->content.__ptr__(),
-                iter_ty.__ptr__()
-            );
-        }
+        self->resolve_definition(n->lowered_init, func_self);
+        self->resolve_expression(n->lowered_condition);
+        self->resolve_expression(n->lowered_update);
         if (n->body != nil) {
             self->in_loop_level += 1;
             self->resolve_code_block(n->body, func_self);
@@ -2417,13 +2506,9 @@ impl sema {
             ast_kind::ast_for_stmt =>
                 self->resolve_for_stmt(n => ast_for_stmt*, func_self);
             ast_kind::ast_forindex => {
-                self->err->warn(n->location.__ptr__(),
-                                    "forindex statement is not supported now");
                 self->resolve_forindex_stmt(n => ast_forindex*, func_self);
             }
             ast_kind::ast_foreach => {
-                self->err->warn(n->location.__ptr__(),
-                                    "foreach statement is not supported now");
                 self->resolve_foreach_stmt(n => ast_foreach*, func_self);
             }
             ast_kind::ast_in_stmt_expr =>
