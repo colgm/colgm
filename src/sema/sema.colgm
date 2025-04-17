@@ -2176,9 +2176,6 @@ impl sema {
                 m_name.__ptr__()
             ) => ast*));
             m_name.delete();
-            lowered_condition_rhs->chain.push(ptr<ast>::wrap(
-                ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
-            ));
         } else {
             var m_name = str::from("iter_size");
             lowered_condition_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
@@ -2186,10 +2183,11 @@ impl sema {
                 m_name.__ptr__()
             ) => ast*));
             m_name.delete();
-            lowered_condition_rhs->chain.push(ptr<ast>::wrap(
-                ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
-            ));
         }
+        lowered_condition_rhs->chain.push(ptr<ast>::wrap(
+            ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+        ));
+
         // generate `i < container.iter_size()`
         var lowered_condition = ast_binary_operator::new(
             n->container->base.location.__ptr__(),
@@ -2240,6 +2238,17 @@ impl sema {
 
         // forindex will directly combine size method's return type to iter_type
         var iter_ty = self->get_struct_method_return_type(ty.__ptr__(), "iter_size");
+        var u64_type = type::u64_type();
+        if (!iter_ty.eq(u64_type.__ptr__())) {
+            self->err->error(n->container->base.location.__ptr__(),
+                             "iter_size method must return u64");
+            ty.delete();
+            iter_ty.delete();
+            u64_type.delete();
+            return;
+        }
+        u64_type.delete();
+
         n->variable->base.resolved_type.reset_with(iter_ty.__ptr__());
         if (!iter_ty.is_integer()) {
             self->err->error(n->container->base.location.__ptr__(),
@@ -2280,9 +2289,6 @@ impl sema {
                 m_name.__ptr__()
             ) => ast*));
             m_name.delete();
-            lowered_init_rhs->chain.push(ptr<ast>::wrap(
-                ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
-            ));
         } else {
             var m_name = str::from("iter");
             lowered_init_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
@@ -2290,10 +2296,10 @@ impl sema {
                 m_name.__ptr__()
             ) => ast*));
             m_name.delete();
-            lowered_init_rhs->chain.push(ptr<ast>::wrap(
-                ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
-            ));
         }
+        lowered_init_rhs->chain.push(ptr<ast>::wrap(
+            ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+        ));
 
         n->lowered_init = lowered_init;
 

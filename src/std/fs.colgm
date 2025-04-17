@@ -5,6 +5,8 @@ use std::sys::{ stat_flag, stat_info };
 use std::str::{ str };
 use std::vec::{ vec };
 
+use util::misc::{ is_windows };
+
 pub struct fs {}
 
 impl fs {
@@ -35,8 +37,13 @@ impl fs {
         var tmp = str::from("");
         var res = vec<str>::instance();
 
+        var separator = ':';
+        if (is_windows()) {
+            separator = ';';
+        }
+
         for (var i = 0; i < path_len; i += 1) {
-            if (path[i] == ':') {
+            if (path[i] == separator) {
                 res.push(tmp.__ptr__());
                 tmp.clear();
             } else {
