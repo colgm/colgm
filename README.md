@@ -63,3 +63,5 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 2. feature: [tagged union](./doc/spec/tagged_union.md)
 3. feature: [tuple](./doc/spec/tuple.md)
 4. feature: RAII
+5. feature: reference type
+6. feature: smart pointer

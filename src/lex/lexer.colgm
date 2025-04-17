@@ -372,7 +372,7 @@ impl lexer {
         loc.begin_column = self->column;
 
         var tmp = str::instance();
-        while(self->pos < src->size &&
+        while (self->pos < src->size &&
               lexer::is_identifier_body(src->get(self->pos))) {
             tmp.append_char(src->get(self->pos));
             self->pos += 1;
@@ -404,7 +404,7 @@ impl lexer {
             src->get(self->pos + 1) == 'x') {
             tmp.append_i8_vec("0x");
             self->pos += 2;
-            while(self->pos < src->size && lexer::is_hex(src->get(self->pos))) {
+            while (self->pos < src->size && lexer::is_hex(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
             }
@@ -433,7 +433,7 @@ impl lexer {
             src->get(self->pos + 1) == 'o') {
             tmp.append_i8_vec("0o");
             self->pos += 2;
-            while(self->pos < src->size && lexer::is_oct(src->get(self->pos))) {
+            while (self->pos < src->size && lexer::is_oct(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
             }
@@ -461,7 +461,7 @@ impl lexer {
         // get integer part
         tmp.append_char(src->get(self->pos));
         self->pos += 1;
-        while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+        while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
             tmp.append_char(src->get(self->pos));
             self->pos += 1;
         }
@@ -506,7 +506,7 @@ impl lexer {
 
             tmp.append_char('.');
             self->pos += 1;
-            while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+            while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
             }
@@ -536,7 +536,7 @@ impl lexer {
             if (lexer::is_digit(src->get(lookahead_pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
-                while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+                while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
                     tmp.append_char(src->get(self->pos));
                     self->pos += 1;
                 }
@@ -560,7 +560,7 @@ impl lexer {
                 tmp.append_char(src->get(self->pos));
                 tmp.append_char(src->get(self->pos + 1));
                 self->pos += 2;
-                while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+                while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
                     tmp.append_char(src->get(self->pos));
                     self->pos += 1;
                 }
@@ -604,7 +604,7 @@ impl lexer {
         self->pos += 1;
         self->column += 1;
 
-        while(self->pos < src->size && src->get(self->pos) != quote_type) {
+        while (self->pos < src->size && src->get(self->pos) != quote_type) {
             var this_ch = src->get(self->pos);
             if (this_ch=='\n') {
                 self->line += 1;
@@ -764,7 +764,7 @@ impl lexer {
     }
 
     func skip_note(self, src: str*) {
-        while(self->pos < src->size && src->get(self->pos) != '\n') {
+        while (self->pos < src->size && src->get(self->pos) != '\n') {
             self->pos += 1;
             self->column += 1;
         }
@@ -800,7 +800,7 @@ impl lexer {
         self->pos = 0;
         self->line = 0;
         self->column = 0;
-        while(self->pos < src.size) {
+        while (self->pos < src.size) {
             if (lexer::is_note(self->pos, src.__ptr__())) {
                 self->skip_note(src.__ptr__());
             } elsif (lexer::is_identifier_head(src.get(self->pos))) {
@@ -843,7 +843,7 @@ impl lexer {
 
     pub func dump(self, out: io) {
         var index: u64 = 0;
-        while(index < self->toks.size) {
+        while (index < self->toks.size) {
             var loc = self->toks.get(index)->location;
             out.out(self->toks.get(index)->tok_kind_to_str())
                .out(" [").out(loc.file.c_str)

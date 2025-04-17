@@ -10,7 +10,7 @@ use std::libc::{ free };
 func adjust_single_function(f: sir_func*) -> i64 {
     var replace_count = 0;
     var temp = primitive_vec<ptr<sir>>::instance();
-    for (var i = f->body->stmts.iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; f->body->stmts) {
         var inst = i.get().unwrap();
         if (inst->kind != sir_kind::sir_call) {
             temp.push(ptr<sir>::wrap(inst));
@@ -48,7 +48,7 @@ func adjust_single_function(f: sir_func*) -> i64 {
     }
 
     f->body->stmts.clear();
-    for (var i = temp.iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; temp) {
         f->body->stmts.push(i.get());
     }
 
@@ -58,7 +58,7 @@ func adjust_single_function(f: sir_func*) -> i64 {
 
 pub func replace_struct_ptr_call(ctx: sir_context*, verbose: bool) {
     var replace_count = 0;
-    for (var i = ctx->func_impls.iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; ctx->func_impls) {
         replace_count += adjust_single_function(i.get());
     }
     if (verbose) {

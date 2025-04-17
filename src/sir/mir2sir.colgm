@@ -355,7 +355,7 @@ impl mir2sir {
 
 impl mir2sir {
     func emit_struct(self, mctx: mir_context*) {
-        for (var i = mctx->structs.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; mctx->structs) {
             var m_stct = i.get();
 
             var s_ty = type::instance();
@@ -372,7 +372,7 @@ impl mir2sir {
             s_ty_name.delete();
             s_ty_llvm_name.delete();
 
-            for (var j = m_stct->field_type.iter(); !j.is_end(); j = j.next()) {
+            foreach (var j; m_stct->field_type) {
                 var m_field = j.get();
                 var mapped_type = self->type_mapping(m_field);
 
@@ -387,7 +387,7 @@ impl mir2sir {
     }
 
     func emit_func_decl(self, mctx: mir_context*) {
-        for (var i = mctx->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; mctx->decls) {
             var m_func = i.get();
             var s_func = sir_func::instance(m_func->name.__ptr__());
             s_func.set_attributes(m_func->attributes.__ptr__());
@@ -397,7 +397,7 @@ impl mir2sir {
             s_func.return_type.append_str(ret_type_name.__ptr__());
             ret_type_name.delete();
 
-            for (var j = m_func->params.iter(); !j.is_end(); j = j.next()) {
+            foreach (var j; m_func->params) {
                 var m_param = j.get();
                 var mapped_type = self->type_mapping(m_param->value.__ptr__());
                 var p_pair = pair<str, str>::instance(m_param->key.__ptr__(), mapped_type.__ptr__());
@@ -420,7 +420,7 @@ impl mir2sir {
     }
 
     func emit_func_impl(self, mctx: mir_context*) {
-        for (var i = mctx->impls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; mctx->impls) {
             self->process_print(i.index(), mctx->impls.size);
             var m_func = i.get();
             var m_mangled_name = mangle_function_name(m_func->name.__ptr__());

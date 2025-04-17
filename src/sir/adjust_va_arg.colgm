@@ -5,7 +5,7 @@ use std::io::{ io };
 
 func adjust_posix_open(f: sir_func*) -> i64 {
     var adjust_count = 0;
-    for (var i = f->body->stmts.iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; f->body->stmts) {
         var inst = i.get().unwrap();
         if (inst->kind != sir_kind::sir_call) {
             continue;
@@ -25,7 +25,7 @@ func adjust_posix_open(f: sir_func*) -> i64 {
 
 pub func adjust_va_arg(ctx: sir_context*, verbose: bool) {
     var adjust_count = 0;
-    for (var i = ctx->func_impls.iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; ctx->func_impls) {
         adjust_count += adjust_posix_open(i.get());
     }
     if (verbose) {

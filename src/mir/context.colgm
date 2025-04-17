@@ -122,10 +122,10 @@ impl mir_context {
     }
 
     pub func dump(self, out: io, pkg: package*) {
-        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->decls) {
             out.out("<").out(i.get()->name.c_str).out(">").endln();
         }
-        for (var i = self->impls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->impls) {
             out.out("<").out(i.get()->name.c_str).out(">:").endln();
             if (i.get()->block != nil) {
                 var m = i.get()->block => mir*;
@@ -136,7 +136,7 @@ impl mir_context {
     }
 
     pub func adjust_posix_open(self, verbose: bool) {
-        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->decls) {
             if (!i.get()->name.eq_const("open")) {
                 continue;
             }
@@ -155,7 +155,7 @@ impl mir_context {
     }
 
     func add_malloc_decl(self) {
-        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->decls) {
             if (i.get()->name.eq_const("malloc")) {
                 return;
             }
@@ -193,7 +193,7 @@ impl mir_context {
     }
 
     func add_free_decl(self) {
-        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->decls) {
             if (i.get()->name.eq_const("free")) {
                 return;
             }
@@ -231,12 +231,12 @@ impl mir_context {
     }
 
     func add_main_impl(self) {
-        for (var i = self->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->decls) {
             if (i.get()->name.eq_const("main")) {
                 return;
             }
         }
-        for (var i = self->impls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->impls) {
             if (i.get()->name.eq_const("main")) {
                 return;
             }
