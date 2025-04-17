@@ -57,13 +57,9 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 
 ## Features and Roadmap
 
-1. foreach/forindex:
-    - forindex loop, container should have `size()` method
-    - foreach loop, container should have iterator-like stuff
-        - `iter()`, `next()` and `is_end()` method
-2. array type `[<base-type>; 128]`
+1. array type `[<base-type>; 128]`
     - syntax like `var a: [i32; 128] = [1, 2, 3];`
     - syntax like `var a: [i8*; 128] = ["foo", "bar", tmp];`
-3. feature: [tagged union](./doc/spec/tagged_union.md)
-4. feature: [tuple](./doc/spec/tuple.md)
-5. feature: RAII
+2. feature: [tagged union](./doc/spec/tagged_union.md)
+3. feature: [tuple](./doc/spec/tuple.md)
+4. feature: RAII

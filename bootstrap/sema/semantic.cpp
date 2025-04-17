@@ -1469,6 +1469,165 @@ void semantic::resolve_for_stmt(for_stmt* node, const colgm_func& func_self) {
     ctx.pop_level();
 }
 
+void semantic::lowering_forindex(forindex* node) {
+    auto lowered_init = new definition(
+        node->get_variable()->get_location(),
+        node->get_variable()->get_name()
+    );
+    lowered_init->set_type(new type_def(node->get_variable()->get_location()));
+    lowered_init->get_type()->set_name(new identifier(
+        node->get_variable()->get_location(),
+        "u64"
+    ));
+    lowered_init->set_init_value(new number_literal(
+        node->get_variable()->get_location(),
+        "0"
+    ));
+    node->set_lowered_init(lowered_init);
+
+    auto lowered_condition_lhs = new call(node->get_container()->get_location());
+    lowered_condition_lhs->set_head(new call_id(node->get_container()->get_location()));
+    lowered_condition_lhs->get_head()->set_id(new identifier(
+        node->get_variable()->get_location(),
+        node->get_variable()->get_name()
+    ));
+
+    auto lowered_condition_rhs = node->get_container()->clone();
+    if (node->get_container()->get_resolve().is_pointer()) {
+        lowered_condition_rhs->add_chain(new ptr_get_field(
+            node->get_container()->get_location(),
+            "iter_size"
+        ));
+    } else {
+        lowered_condition_rhs->add_chain(new get_field(
+            node->get_container()->get_location(),
+            "iter_size"
+        ));
+    }
+    lowered_condition_rhs->add_chain(new call_func_args(node->get_container()->get_location()));
+
+    auto lowered_condition = new binary_operator(node->get_container()->get_location());
+    lowered_condition->set_opr(binary_operator::kind::less);
+    lowered_condition->set_left(lowered_condition_lhs);
+    lowered_condition->set_right(lowered_condition_rhs);
+    node->set_lowered_condition(lowered_condition);
+
+    auto lowered_update_lhs = lowered_condition_lhs->clone();
+    auto lowered_update_rhs = new number_literal(node->get_container()->get_location(), "1");
+    auto lowered_update = new assignment(node->get_container()->get_location());
+    lowered_update->set_type(assignment::kind::addeq);
+    lowered_update->set_left(lowered_update_lhs);
+    lowered_update->set_right(lowered_update_rhs);
+    node->set_lowered_update(lowered_update);
+}
+
+void semantic::resolve_forindex(forindex* node, const colgm_func& func_self) {
+    resolve_expression(node->get_container());
+    lowering_forindex(node);
+
+    ctx.push_level();
+    resolve_definition(node->get_lowered_init(), func_self);
+    resolve_expression(node->get_lowered_condition());
+    resolve_expression(node->get_lowered_update());
+    if (node->get_body()) {
+        ++in_loop_level;
+        resolve_code_block(node->get_body(), func_self);
+        --in_loop_level;
+    }
+    ctx.pop_level();
+}
+
+void semantic::lowering_foreach(foreach* node) {
+    auto lowered_init = new definition(
+        node->get_variable()->get_location(),
+        node->get_variable()->get_name()
+    );
+    auto lowered_init_rhs = node->get_container()->clone();
+    lowered_init->set_init_value(lowered_init_rhs);
+    if (node->get_container()->get_resolve().is_pointer()) {
+        lowered_init_rhs->add_chain(new ptr_get_field(
+            node->get_container()->get_location(),
+            "iter"
+        ));
+    } else {
+        lowered_init_rhs->add_chain(new get_field(
+            node->get_container()->get_location(),
+            "iter"
+        ));
+    }
+    lowered_init_rhs->add_chain(new call_func_args(
+        node->get_container()->get_location()
+    ));
+    node->set_lowered_init(lowered_init);
+
+    auto lowered_condition_value = new call(node->get_container()->get_location());
+    lowered_condition_value->set_head(new call_id(
+        node->get_container()->get_location()
+    ));
+    lowered_condition_value->get_head()->set_id(new identifier(
+        node->get_container()->get_location(),
+        node->get_variable()->get_name()
+    ));
+    lowered_condition_value->add_chain(new get_field(
+        node->get_container()->get_location(),
+        "is_end"
+    ));
+    lowered_condition_value->add_chain(new call_func_args(
+        node->get_container()->get_location()
+    ));
+    auto lowered_condition = new unary_operator(
+        node->get_container()->get_location()
+    );
+    lowered_condition->set_opr(unary_operator::kind::lnot);
+    lowered_condition->set_value(lowered_condition_value);
+    node->set_lowered_condition(lowered_condition);
+
+    auto lowered_update_lhs = new call(node->get_container()->get_location());
+    lowered_update_lhs->set_head(new call_id(
+        node->get_container()->get_location()
+    ));
+    lowered_update_lhs->get_head()->set_id(new identifier(
+        node->get_container()->get_location(),
+        node->get_variable()->get_name()
+    ));
+    auto lowered_update_rhs = new call(node->get_container()->get_location());
+    lowered_update_rhs->set_head(new call_id(
+        node->get_container()->get_location()
+    ));
+    lowered_update_rhs->get_head()->set_id(new identifier(
+        node->get_container()->get_location(),
+        node->get_variable()->get_name()
+    ));
+    lowered_update_rhs->add_chain(new get_field(
+        node->get_container()->get_location(),
+        "next"
+    ));
+    lowered_update_rhs->add_chain(new call_func_args(
+        node->get_container()->get_location()
+    ));
+    auto lowered_update = new assignment(node->get_container()->get_location());
+    lowered_update->set_type(assignment::kind::eq);
+    lowered_update->set_left(lowered_update_lhs);
+    lowered_update->set_right(lowered_update_rhs);
+    node->set_lowered_update(lowered_update);
+}
+
+void semantic::resolve_foreach(foreach* node, const colgm_func& func_self) {
+    resolve_expression(node->get_container());
+    lowering_foreach(node);
+
+    ctx.push_level();
+    resolve_definition(node->get_lowered_init(), func_self);
+    resolve_expression(node->get_lowered_condition());
+    resolve_expression(node->get_lowered_update());
+    if (node->get_body()) {
+        ++in_loop_level;
+        resolve_code_block(node->get_body(), func_self);
+        --in_loop_level;
+    }
+    ctx.pop_level();
+}
+
 void semantic::resolve_in_stmt_expr(in_stmt_expr* node, const colgm_func& func_self) {
     node->set_resolve_type(resolve_expression(node->get_expr()));
 }
@@ -1523,6 +1682,12 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
         break;
     case ast_type::ast_for_stmt:
         resolve_for_stmt(reinterpret_cast<for_stmt*>(node), func_self);
+        break;
+    case ast_type::ast_forindex:
+        resolve_forindex(reinterpret_cast<forindex*>(node), func_self);
+        break;
+    case ast_type::ast_foreach:
+        resolve_foreach(reinterpret_cast<foreach*>(node), func_self);
         break;
     case ast_type::ast_in_stmt_expr:
         resolve_in_stmt_expr(reinterpret_cast<in_stmt_expr*>(node), func_self);

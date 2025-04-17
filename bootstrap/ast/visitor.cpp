@@ -293,6 +293,28 @@ bool visitor::visit_for_stmt(for_stmt* node) {
     return true;
 }
 
+bool visitor::visit_forindex(forindex* node) {
+    if (node->get_variable()) {
+        node->get_variable()->accept(this);
+    }
+    if (node->get_container()) {
+        node->get_container()->accept(this);
+    }
+    node->get_body()->accept(this);
+    return true;
+}
+
+bool visitor::visit_foreach(foreach* node) {
+    if (node->get_variable()) {
+        node->get_variable()->accept(this);
+    }
+    if (node->get_container()) {
+        node->get_container()->accept(this);
+    }
+    node->get_body()->accept(this);
+    return true;
+}
+
 bool visitor::visit_in_stmt_expr(in_stmt_expr* node) {
     node->get_expr()->accept(this);
     return true;

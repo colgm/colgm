@@ -18,7 +18,7 @@
   - [Condition/Branch](#conditionbranch)
   - [Match](#match)
   - [For Loop](#for-loop)
-  - [Foreach/ForIndex Loop [WIP]](#foreachforindex-loop-wip)
+  - [Foreach/ForIndex Loop](#foreachforindex-loop)
 - [Type Conversion](#type-conversion)
 - [Structure](#structure)
   - [Struct Initializer](#struct-initializer)
@@ -256,19 +256,14 @@ for (var i = 0; i < 10; i += 1)  {}
 // }
 ```
 
-### Foreach/ForIndex Loop [WIP]
-
-Work in progress.
+### Foreach/ForIndex Loop
 
 ```rust
 foreach (var i; container) {}
 // same as below:
 //
-// var tmp_i = container.iter();
-// while (!tmp_i.is_end()) {
-//     var i = tmp_i;
+// for (var tmp_i = container.iter(); !tmp_i.is_end(); tmp_i = tmp_i.next()) {
 //     ...
-//     tmp_i = tmp_i.next();
 // }
 ```
 
@@ -276,10 +271,8 @@ foreach (var i; container) {}
 forindex (var i; container) {}
 // same as below:
 //
-// var tmp_i = container.iter();
-// while (!tmp_i.is_end()) {
-//     var i = tmp_i.index();
-//     tmp_i = tmp_i.next();
+// for (var tmp_i: u64 = 0; tmp_i < container.iter_size(); tmp_i += 1) {
+//     ...
 // }
 ```
 

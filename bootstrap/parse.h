@@ -167,6 +167,8 @@ private:
     match_stmt* match_stmt_gen();
     while_stmt* while_stmt_gen();
     for_stmt* for_stmt_gen();
+    forindex* forindex_gen();
+    foreach* foreach_gen();
     void add_gen_stmt(code_block*);
     code_block* block_gen(bool);
     in_stmt_expr* in_stmt_expr_gen();

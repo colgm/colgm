@@ -92,6 +92,8 @@ private:
     mir_block* generate_default(ast::match_case*);
     bool visit_while_stmt(ast::while_stmt*) override;
     bool visit_for_stmt(ast::for_stmt*) override;
+    bool visit_forindex(ast::forindex*) override;
+    bool visit_foreach(ast::foreach*) override;
     bool visit_ret_stmt(ast::ret_stmt*) override;
     bool visit_continue_stmt(ast::continue_stmt*) override;
     bool visit_break_stmt(ast::break_stmt*) override;
