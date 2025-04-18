@@ -65,7 +65,7 @@ impl hashmap<K, V> {
 
     pub func copy(self) -> hashmap<K, V>* {
         var res = hashmap<K, V>::new();
-        for (var i = self->iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self) {
             res->insert(i.key(), i.value());
         }
         return res;
@@ -73,7 +73,7 @@ impl hashmap<K, V> {
 
     pub func copy_instance(self) -> hashmap<K, V> {
         var res = hashmap<K, V>::instance();
-        for (var i = self->iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self) {
             res.insert(i.key(), i.value());
         }
         return res;
@@ -115,7 +115,7 @@ impl hashmap<K, V> {
         }
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
-        for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; bucket) {
             if (i.elem()->key.eq(key)) {
                 return true;
             }
@@ -129,7 +129,7 @@ impl hashmap<K, V> {
         }
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
-        for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; bucket) {
             if (i.elem()->key.eq(key)) {
                 return i.elem()->value.__ptr__();
             }
@@ -140,7 +140,7 @@ impl hashmap<K, V> {
     pub func insert(self, key: K*, value: V*) {
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
-        for (var i = bucket->iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; bucket) {
             if (i.elem()->key.eq(key)) {
                 var tmp = i.elem();
                 tmp->value.delete();

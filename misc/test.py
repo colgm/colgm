@@ -42,7 +42,7 @@ TEST_LIST = [
 
 for (test, lib, allow_failure) in TEST_LIST:
     ret = execute([
-        "./a.out",
+        "./build/colgm_self_host",
         test,
         "--library", lib,
         "-o", "test.out",

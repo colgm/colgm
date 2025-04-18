@@ -43,6 +43,13 @@ Use this command in top level directory:
 python3 misc/build.py
 ```
 
+The build script will generate 3 executables in the `build`
+directory:
+
+1. `build/colgm`: bootstrap compiler (compiled by gcc/clang)
+2. `build/colgm_lifted`: lifted compiler (compiled by `build/colgm`)
+3. `build/colgm_selfhost`: self-host compiler (compiled by `build/colgm_lifted`)
+
 And use another script to test:
 
 ```sh
