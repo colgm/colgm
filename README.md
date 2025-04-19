@@ -19,7 +19,7 @@ pub func main() -> i32 {
 ## Repo Content
 
 - [bootstrap](./bootstrap/README.md) : bootstrap compiler.
-- [src](./src) : self-host compiler.
+- [src](./src/main.colgm) : self-host compiler.
 - [test](./test): test cases.
 
 ## Language Guide
@@ -28,12 +28,16 @@ See simple language guide in [doc/guide/tutorial.md](./doc/guide/tutorial.md).
 
 ## Build and Development
 
+### Requirements
+
 Before building the project, here's the requirements:
 
 - python >= 3.8
 - llvm >= 13.0
 - cmake >= 3.21
 - zip
+
+### Build
 
 We suggest you to just follow the build script at [misc/build.py](./misc/build.py).
 
@@ -49,6 +53,14 @@ directory:
 1. `build/colgm`: bootstrap compiler (compiled by gcc/clang)
 2. `build/colgm_lifted`: lifted compiler (compiled by `build/colgm`)
 3. `build/colgm_selfhost`: self-host compiler (compiled by `build/colgm_lifted`)
+
+If only want to build the self-host compiler __after running the build script once__, you can use this to just build the self-host compiler:
+
+```sh
+python3 misc/build.py -self
+```
+
+### Test
 
 And use another script to test:
 
