@@ -60,7 +60,7 @@ impl sir_struct {
             out.out("{ ");
         }
 
-        for (var i = self->field_type.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->field_type) {
             if (i.index() != 0) {
                 out.out(", ");
             }
@@ -125,14 +125,14 @@ impl sir_func {
 
     pub func set_attributes(self, v: vec<str>*) {
         self->attributes.clear();
-        for (var i = v->iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; v) {
             self->attributes.push(i.get());
         }
     }
 
     func dump_attributes(self, out: io) {
         var contain_frame_pointer_attribute = false;
-        for (var i = self->attributes.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->attributes) {
             out.out(" ").out(i.get()->c_str);
             // if frame-pointer attribute is found
             // do not generate frame-pointer=non-leaf for macos
@@ -158,7 +158,7 @@ impl sir_func {
             out.out("define ");
         }
         out.out(self->return_type.c_str).out(" @").out(self->name.c_str).out("(");
-        for (var i = self->params.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->params) {
             if (i.index() != 0) {
                 out.out(", ");
             }
@@ -224,13 +224,13 @@ impl sir_context {
         self->func_decls.delete();
         self->func_impls.delete();
         self->const_strings.delete();
-        for (var i = self->named_metadata.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->named_metadata) {
             var n = i.get().unwrap() => DI_node*;
             n->delete();
             free(n => i8*);
         }
         self->named_metadata.delete();
-        for (var i = self->debug_info.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->debug_info) {
             var n = i.get().unwrap();
             n->delete();
             free(n => i8*);
@@ -262,7 +262,7 @@ impl sir_context {
     }
 
     func dump_structs(self, out: io) {
-        for (var i = self->struct_decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->struct_decls) {
             i.get()->dump(out);
         }
 
@@ -272,7 +272,7 @@ impl sir_context {
     }
 
     func dump_func_decls(self, out: io) {
-        for (var i = self->func_decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->func_decls) {
             i.get()->dump(out);
         }
 
@@ -282,7 +282,7 @@ impl sir_context {
     }
 
     func dump_func_impls(self, out: io) {
-        for (var i = self->func_impls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->func_impls) {
             i.get()->dump(out);
             out.endln();
         }
@@ -290,13 +290,13 @@ impl sir_context {
 
     func dump_const_strings(self, out: io) {
         var ordered_const_string = vec<str>::instance();
-        for (var i = self->const_strings.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->const_strings) {
             var t = str::instance();
             ordered_const_string.push(t.__ptr__());
             t.delete();
         }
 
-        for (var i = self->const_strings.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->const_strings) {
             var s_value = i.key();
             var s_index = i.value()->unwrap();
 
@@ -304,7 +304,7 @@ impl sir_context {
             s_ptr->append_str(s_value);
         }
 
-        for (var i = ordered_const_string.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; ordered_const_string) {
             out.out("@str.").out_u64(i.index());
             out.out(" = private unnamed_addr constant [");
             out.out_u64(i.get()->size + 1).out(" x i8] c\"");
@@ -322,7 +322,7 @@ impl sir_context {
     }
 
     func dump_struct_size_method(self, out: io) {
-        for (var i = self->struct_decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->struct_decls) {
             var st_name = i.get()->name.copy_instance();
             var size_func_name = str::instance();
             if (st_name.size >= 2 && st_name.get(1) == '"') {
@@ -355,7 +355,7 @@ impl sir_context {
     }
 
     func dump_struct_alloc_method(self, out: io) {
-        for (var i = self->struct_decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->struct_decls) {
             var st_name = i.get()->name.copy_instance();
             var size_func_name = str::instance();
             var alloc_func_name = str::instance();
@@ -397,7 +397,7 @@ impl sir_context {
     }
 
     func dump_named_metadata(self, out: io) {
-        for (var i = self->named_metadata.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->named_metadata) {
             i.get().unwrap()->dump(out);
             out.endln();
         }
@@ -407,7 +407,7 @@ impl sir_context {
     }
 
     func dump_debug_info(self, out: io) {
-        for (var i = self->debug_info.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->debug_info) {
             i.get().unwrap()->dump(out);
             out.endln();
         }

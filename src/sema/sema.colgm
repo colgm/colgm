@@ -911,7 +911,7 @@ impl sema {
             return;
         }
 
-        for (var i = n->args.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->args) {
             var arg = i.get().unwrap();
             var infer = self->resolve_expression(arg);
             if (infer.is_error()) {
@@ -953,7 +953,7 @@ impl sema {
             return;
         }
 
-        for (var i = n->args.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->args) {
             var arg = i.get().unwrap();
             var infer = self->resolve_expression(arg);
             if (infer.is_error()) {
@@ -1221,7 +1221,7 @@ impl sema {
         }
 
         var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
-        for (var i = n->pairs.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->pairs) {
             var tmp = i.get().unwrap() => ast_init_pair*;
             var field = tmp->field->content.__ptr__();
             if (!struct_self->fields.has(field)) {
@@ -1376,7 +1376,7 @@ impl sema {
             return infer;
         }
 
-        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->chain) {
             var c = i.get().unwrap();
             if (c->kind != ast_kind::ast_call_func_args &&
                 infer.is_function()) {
@@ -1459,7 +1459,7 @@ impl sema {
     }
 
     func check_valid_left_value(self, n: ast_call*) -> bool {
-        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->chain) {
             var tmp = i.get().unwrap();
             if (tmp->kind == ast_kind::ast_initializer) {
                 self->err->error(
@@ -1487,7 +1487,7 @@ impl sema {
 
         var seg: ast* = nil;
         var maybe_invalid_assignment = false;
-        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->chain) {
             var tmp = i.get().unwrap();
             if (tmp->kind == ast_kind::ast_call_func_args &&
                 !tmp->resolved_type.is_pointer()) {
@@ -1873,7 +1873,7 @@ impl sema {
     }
 
     func resolve_cond_stmt(self, n: ast_cond_stmt*, func_self: colgm_func*) {
-        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->stmts) {
             self->resolve_if_stmt(i.get().unwrap() => ast_if_stmt*, func_self);
         }
     }
@@ -1954,7 +1954,7 @@ impl sema {
 
         var default_found = false;
         var used_values = hashset<basic<i64>>::instance();
-        for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->cases) {
             var case_node = i.get().unwrap() => ast_match_case*;
 
             if (self->check_is_match_default(case_node->pattern)) {
@@ -2027,7 +2027,7 @@ impl sema {
         var generated_warning = str::instance();
         var unused_counter = 0;
 
-        for (var i = em->members.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; em->members) {
             if (used_values.has(i.value())) {
                 continue;
             }
@@ -2543,7 +2543,7 @@ impl sema {
 
     func resolve_code_block(self, node: ast_code_block*, func_self: colgm_func*) {
         self->ctx->push_scope_level();
-        for (var i = node->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; node->stmts) {
             var n = i.get().unwrap();
             self->resolve_statement(n, func_self);
             if (n->is(ast_kind::ast_ret_stmt) ||
@@ -2570,7 +2570,7 @@ impl sema {
         var flag_block_ended = false;
         var unreachable_statements = primitive_vec<ptr<ast>>::instance();
 
-        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->stmts) {
             var tmp = i.get().unwrap();
             if (flag_block_ended) {
                 unreachable_statements.push(ptr<ast>::wrap(tmp));
@@ -2589,7 +2589,7 @@ impl sema {
 
         var unreachable_location = unreachable_statements
                                    .get(0).unwrap()->location.copy_instance();
-        for (var i = unreachable_statements.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; unreachable_statements) {
             var tmp = i.get().unwrap();
             unreachable_location.end_column = tmp->location.end_column;
             unreachable_location.end_line = tmp->location.end_line;
@@ -2611,7 +2611,7 @@ impl sema {
                                               n: ast_code_block*,
                                               func_self: colgm_func*) {
         var flag_has_return = false;
-        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->stmts) {
             var tmp = i.get().unwrap();
             if (tmp->is(ast_kind::ast_ret_stmt)) {
                 flag_has_return = true;
@@ -2633,7 +2633,7 @@ impl sema {
     }
 
     func resolve_function_block(self, r: root*) {
-        for (var i = r->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; r->decls) {
             var n = i.get().unwrap();
             if (n->is(ast_kind::ast_impl)) {
                 self->resolve_impl(n => ast_impl*);
@@ -2669,7 +2669,7 @@ impl sema {
         var struct_self = dm->structs.get(node->name.__ptr__());
         self->impl_struct_name.clear();
         self->impl_struct_name.append_str(node->name.__ptr__());
-        for (var i = node->methods.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; node->methods) {
             var func_node = i.get().unwrap();
             self->resolve_method(func_node => ast_func_decl*, struct_self);
         }
@@ -2705,12 +2705,12 @@ impl sema {
         }
 
         self->ctx->push_scope_level();
-        for (var p = func_self->unordered_params.iter(); !p.is_end(); p = p.next()) {
+        foreach (var p; func_self->unordered_params) {
             var param_name = p.key();
             var param_type = p.value();
             self->ctx->add_local_var(param_name, param_type);
         }
-        for (var i = node->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; node->body->stmts) {
             var n = i.get().unwrap();
             self->resolve_statement(n, func_self);
             if (n->is(ast_kind::ast_ret_stmt) ||
@@ -2739,12 +2739,12 @@ impl sema {
         }
 
         self->ctx->push_scope_level();
-        for (var p = method_self->unordered_params.iter(); !p.is_end(); p = p.next()) {
+        foreach (var p; method_self->unordered_params) {
             var param_name = p.key();
             var param_type = p.value();
             self->ctx->add_local_var(param_name, param_type);
         }
-        for (var i = node->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; node->body->stmts) {
             var n = i.get().unwrap();
             self->resolve_statement(n, method_self);
             if (n->is(ast_kind::ast_ret_stmt) ||

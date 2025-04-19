@@ -437,7 +437,7 @@ impl mir2sir {
             self->locals.push();
             self->locals.local_scope_depth = 0;
 
-            for (var j = m_func->params.iter(); !j.is_end(); j = j.next()) {
+            foreach (var j; m_func->params) {
                 var m_param = j.get();
                 var mapped_type = self->type_mapping(m_param->value.__ptr__());
 
@@ -491,9 +491,9 @@ impl mir2sir {
 
 impl mir2sir {
     func generate_type_mapper(self) {
-        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->ctx->global->domain) {
             var dm = i.value();
-            for (var j = dm->enums.iter(); !j.is_end(); j = j.next()) {
+            foreach (var j; dm->enums) {
                 var e_type = type::instance();
                 e_type.name.append_str(j.value()->name.__ptr__());
                 e_type.loc_file.append_str(j.value()->location.file.__ptr__());
@@ -506,7 +506,7 @@ impl mir2sir {
                 e_type.delete();
                 e_name.delete();
             }
-            for (var j = dm->structs.iter(); !j.is_end(); j = j.next()) {
+            foreach (var j; dm->structs) {
                 var s_type = type::instance();
                 s_type.name.append_str(j.value()->name.__ptr__());
                 s_type.loc_file.append_str(j.value()->location.file.__ptr__());
@@ -597,7 +597,7 @@ impl mir2sir {
 
 impl mir2sir {
     func generate_func_impl_from_mir_func(self, m_func: mir_func*) {
-        for (var i = m_func->params.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; m_func->params) {
             var m_param = i.get();
             var mapped_type = self->type_mapping(m_param->value.__ptr__());
 
@@ -631,7 +631,7 @@ impl mir2sir {
         // push local scope
         self->locals.push();
 
-        for (var i = n->content.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->content) {
             self->visit(i.get().unwrap());
         }
 
@@ -1186,7 +1186,7 @@ impl mir2sir {
         var dm = self->ctx->get_domain(n->resolved_type.loc_file.__ptr__());
         var st = dm->structs.get(name_for_search.__ptr__());
 
-        for (var i = n->fields.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->fields) {
             var target = self->ssa_gen.create();
             var target_value = value_t::variable(target.__ptr__());
             var index = st->field_index(i.get()->name.__ptr__());
@@ -1431,7 +1431,7 @@ impl mir2sir {
             self->value_stack.pop_back();
         }
 
-        for (var i = n->args->content.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->args->content) {
             self->visit(i.get().unwrap());
             args.push(self->value_stack.back());
             self->value_stack.pop_back();
@@ -1477,7 +1477,7 @@ impl mir2sir {
         sir_function_call->debug_info_index = self->generate_DI_location(n->base.location.__ptr__());
 
         // load args
-        for (var i = args.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; args) {
             var arg = i.get();
             var arg_val = arg->to_value_t();
             var arg_ty = self->type_mapping(arg->resolved_type.__ptr__());
@@ -2059,7 +2059,7 @@ impl mir2sir {
         self->branch_jump_out.push(new_table.__ptr__());
         new_table.delete();
 
-        for (var i = n->branch.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->branch) {
             self->visit(i.get().unwrap() => mir*);
             if (i.get().unwrap()->condition != nil && i.index() == n->branch.size - 1) {
                 self->block->add_stmt(sir_br::new(self->block->stmts.size + 1) => sir*);
@@ -2067,7 +2067,7 @@ impl mir2sir {
         }
 
         // set jump out
-        for (var i = self->branch_jump_out.back()->iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->branch_jump_out.back()) {
             i.get().unwrap()->label = self->block->stmts.size;
         }
         self->branch_jump_out.pop_back();
@@ -2090,7 +2090,7 @@ impl mir2sir {
 
         var jmp_exits = primitive_vec<ptr<sir_br>>::instance();
 
-        for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->cases) {
             var case_label_index = self->block->stmts.size;
             var label_comment = str::from("switch.case ");
             label_comment.append_i64(i.get().unwrap()->value);
@@ -2139,11 +2139,11 @@ impl mir2sir {
                 "switch.end"
             ) => sir*);
 
-            for (var i = jmp_exits.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; jmp_exits) {
                 i.get().unwrap()->label = exit_label_index;
             }
         } else {
-            for (var i = jmp_exits.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; jmp_exits) {
                 i.get().unwrap()->label = default_label_index;
             }
         }
@@ -2219,7 +2219,7 @@ impl mir2sir {
         var continue_label_value = self->block->stmts.size + 1;
         self->block->add_stmt(sir_br::new(continue_label_value) => sir*);
         self->block->add_stmt(sir_label::new(continue_label_value, "loop.continue") => sir*);
-        for (var i = self->continue_inst.back()->iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->continue_inst.back()) {
             i.get().unwrap()->label = continue_label_value;
         }
 
@@ -2232,7 +2232,7 @@ impl mir2sir {
         var exit_label_index = self->block->stmts.size;
         cond_inst->label_false = exit_label_index;
         self->block->add_stmt(sir_label::new(exit_label_index, "loop.exit") => sir*);
-        for (var i = self->break_inst.back()->iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->break_inst.back()) {
             i.get().unwrap()->label = exit_label_index;
         }
 
@@ -2520,7 +2520,7 @@ impl mir2sir {
         self->dwarf_status.DI_counter += 1;
         empty_file_name.delete();
 
-        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->ctx->global->domain) {
             self->sctx->debug_info.push(ptr<DI_node>::wrap(
                 DI_file::new(
                     self->dwarf_status.DI_counter,
@@ -2705,7 +2705,7 @@ impl mir2sir {
         tmp->elements_index = self->dwarf_status.DI_counter;
         self->dwarf_status.DI_counter += 1;
 
-        for (var i = e->ordered_member.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; e->ordered_member) {
             self->sctx->debug_info.push(ptr<DI_node>::wrap(
                 DI_enumerator::new(
                     self->dwarf_status.DI_counter,
@@ -2723,8 +2723,8 @@ impl mir2sir {
     }
 
     func generate_DI_enum_type(self) {
-        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
-            for (var j = i.value()->enums.iter(); !j.is_end(); j = j.next()) {
+        foreach (var i; self->ctx->global->domain) {
+            foreach (var j; i.value()->enums) {
                 self->generate_single_DI_enum(j.value());
             }
         }
@@ -2753,8 +2753,8 @@ impl mir2sir {
     }
 
     func generate_DI_structure_type(self) {
-        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
-            for (var j = i.value()->structs.iter(); !j.is_end(); j = j.next()) {
+        foreach (var i; self->ctx->global->domain) {
+            foreach (var j; i.value()->structs) {
                 self->generate_single_DI_struct(j.value());
             }
         }
@@ -2773,7 +2773,7 @@ impl mir2sir {
         self->sctx->debug_info.push(ptr<DI_node>::wrap(element => DI_node*));
         self->dwarf_status.DI_counter += 1;
 
-        for (var i = s->ordered_fields.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; s->ordered_fields) {
             var member = i.get();
             var member_type_index = self->find_DI_type_index(member->type.__ptr__());
             var field_node = DW_TAG_member::new(
@@ -2794,8 +2794,8 @@ impl mir2sir {
     }
 
     func generate_structure_member_dwarf(self) {
-        for (var i = self->ctx->global->domain.iter(); !i.is_end(); i = i.next()) {
-            for (var j = i.value()->structs.iter(); !j.is_end(); j = j.next()) {
+        foreach (var i; self->ctx->global->domain) {
+            foreach (var j; i.value()->structs) {
                 self->generate_single_struct_member_dwarf(j.value());
             }
         }
@@ -2839,16 +2839,16 @@ impl mir2sir {
         self->dwarf_status.DI_counter += 1;
 
         ty_list->add(self->find_DI_type(f->return_type.__ptr__()));
-        for (var i = f->params.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; f->params) {
             ty_list->add(self->find_DI_type(i.get()->value.__ptr__()));
         }
     }
 
     func generate_DI_subprogram(self, mctx: mir_context*) {
-        for (var i = mctx->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; mctx->decls) {
             self->generate_single_DI_subprogram(i.get());
         }
-        for (var i = mctx->impls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; mctx->impls) {
             self->generate_single_DI_subprogram(i.get());
         }
     }
