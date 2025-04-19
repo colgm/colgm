@@ -323,7 +323,7 @@ impl ast2mir {
             n->base.location.__ptr__(),
             n->base.resolved_type.__ptr__()
         );
-        for (var i = n->pairs.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->pairs) {
             var p = i.get().unwrap() => ast_init_pair*;
             self->block = mir_block::new(p->base.location.__ptr__());
             self->visit(p->value);
@@ -365,7 +365,7 @@ impl ast2mir {
             );
             self->block->add(m => mir*);
         }
-        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->chain) {
             self->visit(i.get().unwrap());
         }
         self->block = temp;
@@ -434,7 +434,7 @@ impl ast2mir {
             var new_block = mir_block::new(n->body->base.location.__ptr__());
             var temp = self->block;
             self->block = new_block;
-            for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; n->body->stmts) {
                 self->visit(i.get().unwrap());
             }
             self->block = temp;
@@ -454,7 +454,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->body->stmts) {
             self->visit(i.get().unwrap());
         }
         self->block = temp;
@@ -468,7 +468,7 @@ impl ast2mir {
 
     func visit_cond_stmt(self, n: ast_cond_stmt*) {
        var m = mir_branch::new(n->base.location.__ptr__());
-       for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+       foreach (var i; n->stmts) {
            var c = i.get().unwrap() => ast_if_stmt*;
            var mi = self->generate_if_stmt(c);
            m->branch.push(ptr<mir_if>::wrap(mi));
@@ -493,7 +493,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->body->stmts) {
             var ds = i.get().unwrap();
             self->visit(ds);
         }
@@ -513,7 +513,7 @@ impl ast2mir {
         self->block->add(switch_block => mir*);
 
         var default_case: ast_match_case* = nil;
-        for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->cases) {
             var t = i.get().unwrap() => ast_match_case*;
             if (t->pattern->base.resolved_type.is_default_match()) {
                 default_case = t;
@@ -527,7 +527,7 @@ impl ast2mir {
         if (default_case != nil) {
             var default_block = mir_block::new(default_case->base.location.__ptr__());
             self->block = default_block;
-            for (var i = default_case->body->stmts.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; default_case->body->stmts) {
                 var ds = i.get().unwrap();
                 self->visit(ds);
             }
@@ -545,7 +545,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->body->stmts) {
             self->visit(i.get().unwrap());
         }
         self->block = temp;
@@ -621,7 +621,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->body->stmts) {
             self->visit(i.get().unwrap());
         }
         self->block = temp;
@@ -658,7 +658,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->body->stmts) {
             self->visit(i.get().unwrap());
         }
         self->block = temp;
@@ -695,7 +695,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->body->stmts) {
             self->visit(i.get().unwrap());
         }
         self->block = temp;
@@ -754,7 +754,7 @@ impl ast2mir {
         }
 
         var st = mir_struct::instance(n->name.__ptr__(), n->base.location.__ptr__());
-        for (var i = n->fields.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->fields) {
             var f = i.get().unwrap() => ast_struct_field*;
             var t = self->tr.resolve(f->type);
             st.field_type.push(t.__ptr__());
@@ -770,7 +770,7 @@ impl ast2mir {
         }
         self->impl_struct_name.clear();
         self->impl_struct_name.append_str(n->name.__ptr__());
-        for (var i = n->methods.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->methods) {
             var m = i.get().unwrap() => ast_func_decl*;
             self->visit_func_decl(m);
         }
@@ -823,7 +823,7 @@ impl ast2mir {
             ret_ty.__ptr__()
         );
 
-        for (var i = n->params->params.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->params->params) {
             var p = i.get().unwrap() => ast_param*;
             var t = self->tr.resolve(p->type);
 
@@ -849,7 +849,7 @@ impl ast2mir {
 
         self->block = mir_block::new(n->body->base.location.__ptr__());
         f.block = self->block;
-        for (var i = n->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->body->stmts) {
             var stmt = i.get().unwrap();
             self->visit(stmt);
             if (stmt->is(ast_kind::ast_ret_stmt) ||
@@ -867,7 +867,7 @@ impl ast2mir {
 
 impl ast2mir {
     pub func generate(self, r: root*) {
-        for (var i = r->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; r->decls) {
             var n = i.get().unwrap();
             match (n->kind) {
                 ast_kind::ast_enum_decl => {

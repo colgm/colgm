@@ -72,7 +72,7 @@ impl regist_pass {
 
 impl regist_pass {
     func import_all(self, node: ast_use_stmt*, dm: colgm_module*) {
-        for (var i = dm->enums.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; dm->enums) {
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::enum_kind,
@@ -82,7 +82,7 @@ impl regist_pass {
             self->ctx->global_symbol()->insert(name, info.__ptr__());
             info.delete();
         }
-        for (var i = dm->structs.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; dm->structs) {
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::struct_kind,
@@ -92,7 +92,7 @@ impl regist_pass {
             self->ctx->global_symbol()->insert(name, info.__ptr__());
             info.delete();
         }
-        for (var i = dm->functions.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; dm->functions) {
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::func_kind,
@@ -102,7 +102,7 @@ impl regist_pass {
             self->ctx->global_symbol()->insert(name, info.__ptr__());
             info.delete();
         }
-        for (var i = dm->generic_structs.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; dm->generic_structs) {
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::struct_kind,
@@ -113,7 +113,7 @@ impl regist_pass {
             self->ctx->generic_symbol()->insert(name, info.__ptr__());
             info.delete();
         }
-        for (var i = dm->generic_functions.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; dm->generic_functions) {
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::func_kind,
@@ -127,7 +127,7 @@ impl regist_pass {
     }
 
     func import_specified(self, node: ast_use_stmt*, dm: colgm_module*, path: str*) {
-        for (var i = node->import_symbol.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; node->import_symbol) {
             var name_node = i.get().unwrap() => ast_identifier*;
             var name = name_node->content.__ptr__();
 
@@ -790,7 +790,7 @@ impl regist_pass {
         struct_self_type.name.append_str(name);
         struct_self_type.loc_file.append_str(node->base.location.file.__ptr__());
         if (node->generic_types != nil) {
-            for (var i = node->generic_types->types.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; node->generic_types->types) {
                 var gt = i.get().unwrap();
                 var ty = self->tr.resolve(gt => ast_type_def*);
                 struct_self_type.generics.push(ty.__ptr__());
@@ -943,9 +943,9 @@ impl regist_pass {
         var structs = dm->structs.__ptr__();
 
         var need_check = vec<str>::instance();
-        for (var st = structs->iter(); !st.is_end(); st = st.next()) {
+        foreach (var st; structs) {
             var info = st.value();
-            for (var f = info->fields.iter(); !f.is_end(); f = f.next()) {
+            foreach (var f; info->fields) {
                 var fld_ty = f.value();
                 if (!fld_ty->is_pointer() &&
                     structs->has(fld_ty->name.__ptr__())) {
@@ -954,7 +954,7 @@ impl regist_pass {
             }
         }
 
-        for (var s = need_check.iter(); !s.is_end(); s = s.next()) {
+        foreach (var s; need_check) {
             var bfs = queue<pair<str, str>>::instance();
             var visited = hashset<str>::instance();
 
@@ -975,7 +975,7 @@ impl regist_pass {
                 }
 
                 var cur_st = structs->get(current.__ptr__());
-                for (var f = cur_st->fields.iter(); !f.is_end(); f = f.next()) {
+                foreach (var f; cur_st->fields) {
                     var fld_name = f.key();
                     var fld_type = f.value();
                     if (fld_type->is_pointer()) {
@@ -1214,7 +1214,7 @@ impl regist_pass {
     }
 
     func scan_impls(self) {
-        for (var i = self->root->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->root->decls) {
             var node = i.get().unwrap();
             if (!node->is(ast_kind::ast_impl)) {
                 continue;

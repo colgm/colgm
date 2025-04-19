@@ -173,6 +173,10 @@ impl type_replace_pass {
                 self->visit_while_stmt(n => ast_while_stmt*);
             ast_kind::ast_for_stmt =>
                 self->visit_for_stmt(n => ast_for_stmt*);
+            ast_kind::ast_forindex =>
+                self->visit_forindex(n => ast_forindex*);
+            ast_kind::ast_foreach =>
+                self->visit_foreach(n => ast_foreach*);
             ast_kind::ast_in_stmt_expr =>
                 self->visit_in_stmt_expr(n => ast_in_stmt_expr*);
             ast_kind::ast_ret_stmt =>
@@ -467,6 +471,50 @@ impl type_replace_pass {
         }
         if (n->body != nil) {
             self->visit_code_block(n->body);
+        }
+    }
+
+    func visit_forindex(self, n: ast_forindex*) {
+        if (n->variable != nil) {
+            self->visit_ast(n->variable => ast*);
+        }
+        if (n->container != nil) {
+            self->visit_call(n->container);
+        }
+        if (n->body != nil) {
+            self->visit_code_block(n->body);
+        }
+
+        if (n->lowered_init != nil) {
+            self->visit_definition(n->lowered_init);
+        }
+        if (n->lowered_condition != nil) {
+            self->visit_ast(n->lowered_condition);
+        }
+        if (n->lowered_update != nil) {
+            self->visit_ast(n->lowered_update);
+        }
+    }
+
+    func visit_foreach(self, n: ast_foreach*) {
+        if (n->variable != nil) {
+            self->visit_ast(n->variable => ast*);
+        }
+        if (n->container != nil) {
+            self->visit_call(n->container);
+        }
+        if (n->body != nil) {
+            self->visit_code_block(n->body);
+        }
+
+        if (n->lowered_init != nil) {
+            self->visit_definition(n->lowered_init);
+        }
+        if (n->lowered_condition != nil) {
+            self->visit_ast(n->lowered_condition);
+        }
+        if (n->lowered_update != nil) {
+            self->visit_ast(n->lowered_update);
         }
     }
 
@@ -769,6 +817,10 @@ impl generic_visitor {
                 self->visit_while_stmt(n => ast_while_stmt*);
             ast_kind::ast_for_stmt =>
                 self->visit_for_stmt(n => ast_for_stmt*);
+            ast_kind::ast_forindex =>
+                self->visit_forindex(n => ast_forindex*);
+            ast_kind::ast_foreach =>
+                self->visit_foreach(n => ast_foreach*);
             ast_kind::ast_in_stmt_expr =>
                 self->visit_in_stmt_expr(n => ast_in_stmt_expr*);
             ast_kind::ast_ret_stmt =>
@@ -1029,6 +1081,50 @@ impl generic_visitor {
         }
         if (n->body != nil) {
             self->visit_code_block(n->body);
+        }
+    }
+
+    func visit_forindex(self, n: ast_forindex*) {
+        if (n->variable != nil) {
+            self->visit_ast(n->variable => ast*);
+        }
+        if (n->container != nil) {
+            self->visit_call(n->container);
+        }
+        if (n->body != nil) {
+            self->visit_code_block(n->body);
+        }
+
+        if (n->lowered_init != nil) {
+            self->visit_definition(n->lowered_init);
+        }
+        if (n->lowered_condition != nil) {
+            self->visit_ast(n->lowered_condition);
+        }
+        if (n->lowered_update != nil) {
+            self->visit_ast(n->lowered_update);
+        }
+    }
+
+    func visit_foreach(self, n: ast_foreach*) {
+        if (n->variable != nil) {
+            self->visit_ast(n->variable => ast*);
+        }
+        if (n->container != nil) {
+            self->visit_call(n->container);
+        }
+        if (n->body != nil) {
+            self->visit_code_block(n->body);
+        }
+
+        if (n->lowered_init != nil) {
+            self->visit_definition(n->lowered_init);
+        }
+        if (n->lowered_condition != nil) {
+            self->visit_ast(n->lowered_condition);
+        }
+        if (n->lowered_update != nil) {
+            self->visit_ast(n->lowered_update);
         }
     }
 

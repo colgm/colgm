@@ -702,14 +702,14 @@ impl sema {
 
         if (n->generic_types != nil) {
             var types = vec<type>::instance();
-            for (var i = n->generic_types->types.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; n->generic_types->types) {
                 var ty = self->tr.resolve(i.get().unwrap() => ast_type_def*);
                 types.push(ty.__ptr__());
                 ty.delete();
             }
             var name = n->id->content.copy_instance();
             name.append_char('<');
-            for (var i = types.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; types) {
                 var full_name = i.get()->full_path_name(self->pkg, true);
                 name.append_str(full_name.__ptr__());
                 full_name.delete();
@@ -741,7 +741,9 @@ impl sema {
             } else {
                 var info = str::from("error resolving generic symbol \"");
                 info.append_str(name.__ptr__());
-                info.append_char('\"');
+                info.append_i8_vec("\" in namespace \"");
+                info.append_str(infer.loc_file.__ptr__());
+                info.append_i8_vec("\"");
                 self->err->error(n->base.location.__ptr__(), info.c_str);
                 info.delete();
             }
