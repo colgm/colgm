@@ -331,10 +331,9 @@ impl type {
         out.out(self->name.c_str).reset();
         if (self->generics.size > 0) {
             out.out("<");
-            for (var i: u64 = 0; i < self->generics.size; i += 1) {
-                var t = self->generics.get(i);
-                t->dump(out, pkg);
-                if (i != self->generics.size - 1) {
+            foreach (var i; self->generics) {
+                i.get()->dump(out, pkg);
+                if (i.index() != self->generics.size - 1) {
                     out.out(",");
                 }
             }
@@ -351,13 +350,12 @@ impl type {
         var res = str::from(self->name.c_str);
         if (self->generics.size > 0) {
             res.append_char('<');
-            for (var i: u64 = 0; i < self->generics.size; i += 1) {
-                var t = self->generics.get(i);
-                var t_fpn = t->full_path_name(pkg, true);
+            foreach (var i; self->generics) {
+                var t_fpn = i.get()->full_path_name(pkg, true);
                 res.append_i8_vec(t_fpn.c_str);
                 t_fpn.delete();
 
-                if (i != self->generics.size - 1) {
+                if (i.index() != self->generics.size - 1) {
                     res.append_char(',');
                 }
             }
@@ -375,13 +373,12 @@ impl type {
         res.append_str(self->name.__ptr__());
         if (self->generics.size > 0) {
             res.append_char('<');
-            for (var i: u64 = 0; i < self->generics.size; i += 1) {
-                var t = self->generics.get(i);
-                var t_fpn = t->full_path_name(pkg, true);
+            foreach (var i; self->generics) {
+                var t_fpn = i.get()->full_path_name(pkg, true);
                 res.append_i8_vec(t_fpn.c_str);
                 t_fpn.delete();
 
-                if (i != self->generics.size - 1) {
+                if (i.index() != self->generics.size - 1) {
                     res.append_char(',');
                 }
             }

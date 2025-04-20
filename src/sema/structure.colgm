@@ -63,8 +63,8 @@ impl colgm_struct {
             free(to_ast => i8*);
             self->generic_struct_decl = nil;
         }
-        for (var i: u64 = 0; i < self->generic_struct_impl.size; i += 1) {
-            var to_ast = self->generic_struct_impl.get(i).unwrap() => ast*;
+        foreach (var i; self->generic_struct_impl) {
+            var to_ast = i.get().unwrap() => ast*;
             to_ast->delete();
             free(to_ast => i8*);
         }
@@ -89,11 +89,9 @@ impl colgm_struct {
             res->generic_struct_decl = nil;
         }
         res->generic_struct_impl = primitive_vec<ptr<ast_impl>>::instance();
-        for (var i: u64 = 0; i < self->generic_struct_impl.size; i += 1) {
+        foreach (var i; self->generic_struct_impl) {
             res->generic_struct_impl.push(
-                ptr<ast_impl>::wrap(
-                    self->generic_struct_impl.get(i).unwrap()->copy()
-                )
+                ptr<ast_impl>::wrap(i.get().unwrap()->copy())
             );
         }
         res->is_public = self->is_public;
@@ -118,20 +116,18 @@ impl colgm_struct {
         if (self->generic_struct_decl != nil) {
             res.generic_struct_decl = self->generic_struct_decl->copy();
         }
-        for (var i: u64 = 0; i < self->generic_struct_impl.size; i += 1) {
+        foreach (var i; self->generic_struct_impl) {
             res.generic_struct_impl.push(
-                ptr<ast_impl>::wrap(
-                    self->generic_struct_impl.get(i).unwrap()->copy()
-                )
+                ptr<ast_impl>::wrap(i.get().unwrap()->copy())
             );
         }
         return res;
     }
 
     pub func field_index(self, name: str*) -> i64 {
-        for (var i: u64 = 0; i < self->ordered_fields.size; i += 1) {
-            if (self->ordered_fields.get(i)->name.eq(name)) {
-                return i => i64;
+        foreach (var i; self->ordered_fields) {
+            if (i.get()->name.eq(name)) {
+                return i.index() => i64;
             }
         }
         return -1;
@@ -153,9 +149,9 @@ impl colgm_struct {
         // print generic template
         if (self->generic_template.size > 0) {
             out.out("<");
-            for (var i: u64 = 0; i < self->generic_template.size; i += 1) {
-                out.out(self->generic_template.get(i)->c_str);
-                if (i != self->generic_template.size - 1) {
+            foreach (var i; self->generic_template) {
+                out.out(i.get()->c_str);
+                if (i.index() != self->generic_template.size - 1) {
                     out.out(", ");
                 }
             }
