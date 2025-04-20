@@ -4,6 +4,7 @@ use std::io::{ io };
 
 use sema::type::{ type };
 use package::{ package };
+use util::mangling::{ llvm_raw_string };
 
 enum indent_state {
     indent_none,
@@ -107,47 +108,6 @@ impl ast_dumper {
         }
         var name = ty->full_path_name(self->pkg, true);
         out.cyan().out("[type: ").out(name.c_str).out("] ").reset();
-    }
-}
-
-impl ast_dumper {
-    func llvm_visible_char(c: i8) -> bool {
-        if ('0' <= c && c <= '9') {
-            return true;
-        }
-        if ('a' <= c && c <= 'z') {
-            return true;
-        }
-        if ('A' <= c && c <= 'Z') {
-            return true;
-        }
-        if (c=='_' || c==':' || c==' ' || c==',' ||
-            c=='[' || c==']' || c=='(' || c==')' ||
-            c=='{' || c=='}' || c=='<' || c=='>' ||
-            c=='.' || c==';' || c=='-' || c=='+' ||
-            c=='*' || c=='/' || c=='~' || c=='?' ||
-            c=='!' || c=='=' || c=='&' || c=='|' ||
-            c=='%' || c=='^' || c=='@') {
-            return true;
-        }
-        return false;
-    }
-
-    func llvm_raw_string(s: str) -> str {
-        var num_chr_tbl = "0123456789abcdef";
-        var res = str::instance();
-        for (var i: u64 = 0; i < s.size; i += 1) {
-            var tmp = s.c_str[i];
-            if (ast_dumper::llvm_visible_char(tmp)) {
-                res.append_char(tmp);
-                continue;
-            }
-            res.append_char('\\');
-            res.append_char(num_chr_tbl[((tmp => u8)/(16 => u8)) & (0xf => u8)]);
-            res.append_char(num_chr_tbl[(tmp => u8) & (0xf => u8)]);
-        }
-        res.append_i8_vec("\\00");
-        return res;
     }
 }
 
@@ -257,17 +217,17 @@ impl ast_dumper {
         node->base.location.dump(out);
 
         self->push_indent();
-        for (var index: u64 = 0; index < node->imports.size; index += 1) {
-            if (index == node->imports.size - 1 && node->decls.empty()) {
+        foreach (var i; node->imports) {
+            if (i.index() == node->imports.size - 1 && node->decls.empty()) {
                 self->set_last();
             }
-            self->dump(node->imports.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
-        for (var index: u64 = 0; index < node->decls.size; index += 1) {
-            if (index == node->decls.size - 1) {
+        foreach (var i; node->decls) {
+            if (i.index() == node->decls.size - 1) {
                 self->set_last();
             }
-            self->dump(node->decls.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -370,7 +330,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        var tmp = ast_dumper::llvm_raw_string(node->literal);
+        var tmp = llvm_raw_string(node->literal.__ptr__());
         out.out("string-literal ")
            .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
         tmp.delete();
@@ -381,7 +341,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        var tmp = ast_dumper::llvm_raw_string(node->literal);
+        var tmp = llvm_raw_string(node->literal.__ptr__());
         out.out("char-literal: ")
            .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
         tmp.delete();
@@ -436,11 +396,11 @@ impl ast_dumper {
         node->base.location.dump(out);
 
         self->push_indent();
-        for (var index: u64 = 0; index < node->args.size; index += 1) {
-            if (index == node->args.size - 1) {
+        foreach (var i; node->args) {
+            if (i.index() == node->args.size - 1) {
                 self->set_last();
             }
-            self->dump(node->args.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -486,11 +446,11 @@ impl ast_dumper {
         node->base.location.dump(out);
 
         self->push_indent();
-        for (var index: u64 = 0; index < node->pairs.size; index += 1) {
-            if (index == node->pairs.size - 1) {
+        foreach (var i; node->pairs) {
+            if (i.index() == node->pairs.size - 1) {
                 self->set_last();
             }
-            self->dump(node->pairs.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -535,11 +495,11 @@ impl ast_dumper {
             }
             self->dump_call_id(node->head, out);
         }
-        for (var index: u64 = 0; index < node->chain.size; index += 1) {
-            if (index == node->chain.size - 1) {
+        foreach (var i; node->chain) {
+            if (i.index() == node->chain.size - 1) {
                 self->set_last();
             }
-            self->dump(node->chain.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -622,11 +582,11 @@ impl ast_dumper {
         node->base.location.dump(out);
 
         self->push_indent();
-        for (var index: u64 = 0; index < node->types.size; index += 1) {
-            if (index == node->types.size - 1) {
+        foreach (var i; node->types) {
+            if (i.index() == node->types.size - 1) {
                 self->set_last();
             }
-            self->dump(node->types.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -658,11 +618,11 @@ impl ast_dumper {
         node->base.location.dump(out);
 
         self->push_indent();
-        for (var index: u64 = 0; index < node->members.size; index += 1) {
-            if (index == node->members.size - 1) {
+        foreach (var i; node->members) {
+            if (i.index() == node->members.size - 1) {
                 self->set_last();
             }
-            self->dump(node->members.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -705,11 +665,11 @@ impl ast_dumper {
             }
             self->dump_generic_type_list(node->generic_types, out);
         }
-        for (var index: u64 = 0; index < node->fields.size; index += 1) {
-            if (index == node->fields.size - 1) {
+        foreach (var i; node->fields) {
+            if (i.index() == node->fields.size - 1) {
                 self->set_last();
             }
-            self->dump(node->fields.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -737,11 +697,11 @@ impl ast_dumper {
         node->base.location.dump(out);
 
         self->push_indent();
-        for (var index: u64 = 0; index < node->params.size; index += 1) {
-            if (index == node->params.size - 1) {
+        foreach (var i; node->params) {
+            if (i.index() == node->params.size - 1) {
                 self->set_last();
             }
-            self->dump(node->params.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -797,11 +757,11 @@ impl ast_dumper {
             }
             self->dump_generic_type_list(node->generic_types, out);
         }
-        for (var index: u64 = 0; index < node->methods.size; index += 1) {
-            if (index == node->methods.size - 1) {
+        foreach (var i; node->methods) {
+            if (i.index() == node->methods.size - 1) {
                 self->set_last();
             }
-            self->dump(node->methods.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -817,11 +777,11 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("module\n");
         self->push_indent();
-        for (var index: u64 = 0; index < node->module_path.size; index += 1) {
-            if (index == node->module_path.size - 1) {
+        foreach (var i; node->module_path) {
+            if (i.index() == node->module_path.size - 1) {
                 self->set_last();
             }
-            self->dump(node->module_path.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
 
@@ -834,11 +794,11 @@ impl ast_dumper {
             self->dump_indent(out);
             out.out("import-specified\n");
             self->push_indent();
-            for (var index: u64 = 0; index < node->import_symbol.size; index += 1) {
-                if (index == node->import_symbol.size - 1) {
+            foreach (var i; node->import_symbol) {
+                if (i.index() == node->import_symbol.size - 1) {
                     self->set_last();
                 }
-                self->dump(node->import_symbol.get(index).unwrap(), out);
+                self->dump(i.get().unwrap(), out);
             }
             self->pop_indent();
         }
@@ -869,11 +829,11 @@ impl ast_dumper {
         node->base.location.dump(out);
 
         self->push_indent();
-        for (var index: u64 = 0; index < node->stmts.size; index += 1) {
-            if (index == node->stmts.size - 1) {
+        foreach (var i; node->stmts) {
+            if (i.index() == node->stmts.size - 1) {
                 self->set_last();
             }
-            self->dump(node->stmts.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -914,11 +874,11 @@ impl ast_dumper {
 
         self->push_indent();
         self->dump(node->value, out);
-        for (var index: u64 = 0; index < node->cases.size; index += 1) {
-            if (index == node->cases.size - 1) {
+        foreach (var i; node->cases) {
+            if (i.index() == node->cases.size - 1) {
                 self->set_last();
             }
-            self->dump(node->cases.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
@@ -1040,11 +1000,11 @@ impl ast_dumper {
         node->base.location.dump(out);
 
         self->push_indent();
-        for (var index: u64 = 0; index < node->stmts.size; index += 1) {
-            if (index == node->stmts.size - 1) {
+        foreach (var i; node->stmts) {
+            if (i.index() == node->stmts.size - 1) {
                 self->set_last();
             }
-            self->dump(node->stmts.get(index).unwrap(), out);
+            self->dump(i.get().unwrap(), out);
         }
         self->pop_indent();
     }
