@@ -33,7 +33,7 @@ impl colgm_struct {
     pub func new(name: str*, loc: span*) -> colgm_struct* {
         var res = colgm_struct::__alloc__();
         if (res == nil) {
-            panic("colgm_struct::new: failed to allocate memory");
+            panic("failed to allocate memory");
         }
         res->name = name->copy_instance();
         res->location = loc->copy_instance();
@@ -63,8 +63,8 @@ impl colgm_struct {
             free(to_ast => i8*);
             self->generic_struct_decl = nil;
         }
-        for (var i: u64 = 0; i < self->generic_struct_impl.size; i += 1) {
-            var to_ast = self->generic_struct_impl.get(i).unwrap() => ast*;
+        foreach (var i; self->generic_struct_impl) {
+            var to_ast = i.get().unwrap() => ast*;
             to_ast->delete();
             free(to_ast => i8*);
         }
@@ -73,6 +73,9 @@ impl colgm_struct {
 
     pub func copy(self) -> colgm_struct* {
         var res = colgm_struct::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->name = self->name.copy_instance();
         res->location = self->location.copy_instance();
         res->fields = self->fields.copy_instance();
@@ -86,11 +89,9 @@ impl colgm_struct {
             res->generic_struct_decl = nil;
         }
         res->generic_struct_impl = primitive_vec<ptr<ast_impl>>::instance();
-        for (var i: u64 = 0; i < self->generic_struct_impl.size; i += 1) {
+        foreach (var i; self->generic_struct_impl) {
             res->generic_struct_impl.push(
-                ptr<ast_impl>::wrap(
-                    self->generic_struct_impl.get(i).unwrap()->copy()
-                )
+                ptr<ast_impl>::wrap(i.get().unwrap()->copy())
             );
         }
         res->is_public = self->is_public;
@@ -98,10 +99,35 @@ impl colgm_struct {
         return res;
     }
 
+    pub func copy_instance(self) -> colgm_struct {
+        var res = colgm_struct {
+            name: self->name.copy_instance(),
+            location: self->location.copy_instance(),
+            fields: self->fields.copy_instance(),
+            ordered_fields: self->ordered_fields.copy_instance(),
+            static_method: self->static_method.copy_instance(),
+            method: self->method.copy_instance(),
+            generic_template: self->generic_template.copy_instance(),
+            generic_struct_decl: nil,
+            generic_struct_impl: primitive_vec<ptr<ast_impl>>::instance(),
+            is_public: self->is_public,
+            is_extern: self->is_extern
+        };
+        if (self->generic_struct_decl != nil) {
+            res.generic_struct_decl = self->generic_struct_decl->copy();
+        }
+        foreach (var i; self->generic_struct_impl) {
+            res.generic_struct_impl.push(
+                ptr<ast_impl>::wrap(i.get().unwrap()->copy())
+            );
+        }
+        return res;
+    }
+
     pub func field_index(self, name: str*) -> i64 {
-        for (var i: u64 = 0; i < self->ordered_fields.size; i += 1) {
-            if (self->ordered_fields.get(i)->name.eq(name)) {
-                return i => i64;
+        foreach (var i; self->ordered_fields) {
+            if (i.get()->name.eq(name)) {
+                return i.index() => i64;
             }
         }
         return -1;
@@ -123,9 +149,9 @@ impl colgm_struct {
         // print generic template
         if (self->generic_template.size > 0) {
             out.out("<");
-            for (var i: u64 = 0; i < self->generic_template.size; i += 1) {
-                out.out(self->generic_template.get(i)->c_str);
-                if (i != self->generic_template.size - 1) {
+            foreach (var i; self->generic_template) {
+                out.out(i.get()->c_str);
+                if (i.index() != self->generic_template.size - 1) {
                     out.out(", ");
                 }
             }
@@ -139,16 +165,16 @@ impl colgm_struct {
             return;
         }
         out.out(" {\n");
-        for (var i: u64 = 0; i < self->ordered_fields.size; i += 1) {
+        forindex (var i; self->ordered_fields) {
             var field = self->ordered_fields.get(i);
             out.out("    ").out(field->name.c_str).out(": ");
             field->type.dump(out, pkg);
             out.out("\n");
         }
-        for (var i = self->method.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->method) {
             i.value()->dump(out, pkg, "  ");
         }
-        for (var i = self->static_method.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->static_method) {
             i.value()->dump(out, pkg, "  ");
         }
         out.out("  }\n");

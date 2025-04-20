@@ -76,7 +76,7 @@ impl sir {
                 var n = self => sir_alloca*;
                 n->delete();
             }
-            sir_kind::sir_temp_ptr =>{
+            sir_kind::sir_temp_ptr => {
                 var n = self => sir_temp_ptr*;
                 n->delete();
             }
@@ -124,7 +124,7 @@ impl sir {
                 var n = self => sir_sub*;
                 n->delete();
             }
-            sir_kind::sir_mul =>{
+            sir_kind::sir_mul => {
                 var n = self => sir_mul*;
                 n->delete();
             }
@@ -364,17 +364,17 @@ impl sir_block {
     }
 
     pub func delete(self) {
-        for (var i = self->allocas.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->allocas) {
             var n = i.get().unwrap() => sir*;
             n->delete();
             free(n => i8*);
         }
-        for (var i = self->move_register.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->move_register) {
             var n = i.get().unwrap() => sir*;
             n->delete();
             free(n => i8*);
         }
-        for (var i = self->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->stmts) {
             var n = i.get().unwrap();
             n->delete();
             free(n => i8*);
@@ -402,15 +402,15 @@ impl sir_block {
     }
 
     pub func dump(self, out: io) {
-        for (var i = self->allocas.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->allocas) {
             var n = i.get().unwrap() => sir*;
             n->dump(out);
         }
-        for (var i = self->move_register.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->move_register) {
             var n = i.get().unwrap() => sir*;
             n->dump(out);
         }
-        for (var i = self->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->stmts) {
             i.get().unwrap()->dump(out);
         }
     }
@@ -794,7 +794,7 @@ impl sir_call {
         }
 
         out.out(" @").out(self->name.c_str).out("(");
-        for (var i: u64 = 0; i < self->args.size; i += 1) {
+        forindex (var i; self->args) {
             out.out(self->args_type.get(i)->c_str).out(" ");
             self->args.get(i)->dump(out);
             if (i != self->args.size - 1) {
@@ -1564,7 +1564,7 @@ impl sir_switch {
         out.out("  switch i64 ");
         self->source.dump(out);
         out.out(", label %label.").out_hex(self->default_label => i64).out(" [\n");
-        for (var i: u64 = 0; i < self->case_value.size; i += 1) {
+        forindex (var i; self->case_value) {
             var value = self->case_value.get(i);
             var label = self->case_label.get(i);
             out.out("    i64 ").out_i64(value);

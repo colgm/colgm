@@ -227,7 +227,7 @@ impl DI_named_metadata {
 
     pub func delete(self) {
         self->name.delete();
-        for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->nodes) {
             var n = i.get().unwrap();
             n->delete();
             free(n => i8*);
@@ -241,7 +241,7 @@ impl DI_named_metadata {
 
     pub func dump(self, out: io) {
         out.out("!").out(self->name.c_str).out(" = !{");
-        for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->nodes) {
             i.get().unwrap()->dump(out);
             if (i.index() != self->nodes.size - 1) {
                 out.out(", ");
@@ -283,7 +283,7 @@ impl DI_list {
     }
 
     pub func delete(self) {
-        for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->nodes) {
             var n = i.get().unwrap();
             n->delete();
             free(n => i8*);
@@ -297,7 +297,7 @@ impl DI_list {
 
     pub func dump(self, out: io) {
         out.out("!{");
-        for (var i = self->nodes.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->nodes) {
             i.get().unwrap()->dump(out);
             if (i.index() != self->nodes.size - 1) {
                 out.out(", ");

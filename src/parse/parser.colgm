@@ -110,11 +110,11 @@ impl parser {
 }
 
 impl parser {
-    pub func instance(e: report*, l: lexer*, co: cli_option*) -> parser {
+    pub func instance(e: report*, co: cli_option*) -> parser {
         return parser {
             err: e,
             co: co,
-            toks: l->toks.__ptr__(),
+            toks: nil,
             root: nil,
             index: 0
         };
@@ -977,6 +977,8 @@ impl parser {
             tok_kind::tok_match => return self->match_stmt_gen() => ast*;
             tok_kind::tok_while => return self->while_stmt_gen() => ast*;
             tok_kind::tok_for => return self->for_stmt_gen() => ast*;
+            tok_kind::tok_forindex => return self->forindex_stmt_gen() => ast*;
+            tok_kind::tok_foreach => return self->foreach_stmt_gen() => ast*;
             tok_kind::tok_return => return self->return_gen() => ast*;
             tok_kind::tok_continue => return self->continue_gen() => ast*;
             tok_kind::tok_break => return self->break_gen() => ast*;
@@ -1057,7 +1059,7 @@ impl parser {
         self->match_token(tok_kind::tok_rparen);
 
         self->match_token(tok_kind::tok_lbrace);
-        while(!self->lookahead(tok_kind::tok_rbrace)) {
+        while (!self->lookahead(tok_kind::tok_rbrace)) {
             var new_case = ast_match_case::new(self->this_tok_loc());
             new_case->pattern = self->call_gen();
             self->match_token(tok_kind::tok_wide_arrow);
@@ -1096,6 +1098,34 @@ impl parser {
         if (!self->lookahead(tok_kind::tok_rparen)) {
             res->update = self->calculation_gen();
         }
+        self->match_token(tok_kind::tok_rparen);
+        res->body = self->block_gen(true);
+        self->update_location(res => ast*);
+        return res;
+    }
+
+    func forindex_stmt_gen(self) -> ast_forindex* {
+        var res = ast_forindex::new(self->this_tok_loc());
+        self->match_token(tok_kind::tok_forindex);
+        self->match_token(tok_kind::tok_lparen);
+        self->match_token(tok_kind::tok_var);
+        res->variable = self->identifier_gen();
+        self->match_token(tok_kind::tok_semi);
+        res->container = self->call_gen();
+        self->match_token(tok_kind::tok_rparen);
+        res->body = self->block_gen(true);
+        self->update_location(res => ast*);
+        return res;
+    }
+
+    func foreach_stmt_gen(self) -> ast_foreach* {
+        var res = ast_foreach::new(self->this_tok_loc());
+        self->match_token(tok_kind::tok_foreach);
+        self->match_token(tok_kind::tok_lparen);
+        self->match_token(tok_kind::tok_var);
+        res->variable = self->identifier_gen();
+        self->match_token(tok_kind::tok_semi);
+        res->container = self->call_gen();
         self->match_token(tok_kind::tok_rparen);
         res->body = self->block_gen(true);
         self->update_location(res => ast*);
@@ -1190,8 +1220,9 @@ impl parser {
 }
 
 impl parser {
-    pub func parse(self) {
+    pub func parse(self, lex: lexer*) {
         self->index = 0;
+        self->toks = lex->toks.__ptr__();
         self->root = root::new(self->this_tok_loc());
         if (self->lookahead(tok_kind::tok_eof)) {
             return;

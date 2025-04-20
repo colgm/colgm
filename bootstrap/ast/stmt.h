@@ -176,6 +176,74 @@ public:
     auto get_block() const { return block; }
 };
 
+class forindex: public stmt {
+private:
+    identifier* variable;
+    call* container;
+    code_block* body;
+
+    definition* lowered_init;
+    expr* lowered_condition;
+    expr* lowered_update;
+
+public:
+    forindex(const span& loc):
+        stmt(ast_type::ast_forindex, loc),
+        variable(nullptr), container(nullptr),
+        body(nullptr), lowered_init(nullptr),
+        lowered_condition(nullptr), lowered_update(nullptr) {}
+    ~forindex() override;
+    void accept(visitor*) override;
+    forindex* clone() const override;
+
+    void set_variable(identifier* node) { variable = node; }
+    auto get_variable() const { return variable; }
+    void set_container(call* node) { container = node; }
+    auto get_container() const { return container; }
+    void set_body(code_block* node) { body = node; }
+    auto get_body() const { return body; }
+    void set_lowered_init(definition* node) { lowered_init = node; }
+    auto get_lowered_init() const { return lowered_init; }
+    void set_lowered_condition(expr* node) { lowered_condition = node; }
+    auto get_lowered_condition() const { return lowered_condition; }
+    void set_lowered_update(expr* node) { lowered_update = node; }
+    auto get_lowered_update() const { return lowered_update; }
+};
+
+class foreach: public stmt {
+private:
+    identifier* variable;
+    call* container;
+    code_block* body;
+
+    definition* lowered_init;
+    expr* lowered_condition;
+    expr* lowered_update;
+
+public:
+    foreach(const span& loc):
+        stmt(ast_type::ast_foreach, loc),
+        variable(nullptr), container(nullptr),
+        body(nullptr), lowered_init(nullptr),
+        lowered_condition(nullptr), lowered_update(nullptr) {}
+    ~foreach() override;
+    void accept(visitor*) override;
+    foreach* clone() const override;
+
+    void set_variable(identifier* node) { variable = node; }
+    auto get_variable() const { return variable; }
+    void set_container(call* node) { container = node; }
+    auto get_container() const { return container; }
+    void set_body(code_block* node) { body = node; }
+    auto get_body() const { return body; }
+    void set_lowered_init(definition* node) { lowered_init = node; }
+    auto get_lowered_init() const { return lowered_init; }
+    void set_lowered_condition(expr* node) { lowered_condition = node; }
+    auto get_lowered_condition() const { return lowered_condition; }
+    void set_lowered_update(expr* node) { lowered_update = node; }
+    auto get_lowered_update() const { return lowered_update; }
+};
+
 class in_stmt_expr: public stmt {
 private:
     expr* calculation;

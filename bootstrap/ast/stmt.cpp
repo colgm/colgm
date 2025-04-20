@@ -179,6 +179,80 @@ for_stmt* for_stmt::clone() const {
     return ret;
 }
 
+forindex::~forindex() {
+    delete variable;
+    delete container;
+    delete body;
+    delete lowered_init;
+    delete lowered_condition;
+    delete lowered_update;
+}
+
+void forindex::accept(visitor* v) {
+    v->visit_forindex(this);
+}
+
+forindex* forindex::clone() const {
+    auto ret = new forindex(location);
+    if (variable) {
+        ret->variable = variable->clone();
+    }
+    if (container) {
+        ret->container = container->clone();
+    }
+    if (body) {
+        ret->body = body->clone();
+    }
+
+    if (lowered_init) {
+        ret->lowered_init = lowered_init->clone();
+    }
+    if (lowered_condition) {
+        ret->lowered_condition = lowered_condition->clone();
+    }
+    if (lowered_update) {
+        ret->lowered_update = lowered_update->clone();
+    }
+    return ret;
+}
+
+foreach::~foreach() {
+    delete variable;
+    delete container;
+    delete body;
+    delete lowered_init;
+    delete lowered_condition;
+    delete lowered_update;
+}
+
+void foreach::accept(visitor* v) {
+    v->visit_foreach(this);
+}
+
+foreach* foreach::clone() const {
+    auto ret = new foreach(location);
+    if (variable) {
+        ret->variable = variable->clone();
+    }
+    if (container) {
+        ret->container = container->clone();
+    }
+    if (body) {
+        ret->body = body->clone();
+    }
+
+    if (lowered_init) {
+        ret->lowered_init = lowered_init->clone();
+    }
+    if (lowered_condition) {
+        ret->lowered_condition = lowered_condition->clone();
+    }
+    if (lowered_update) {
+        ret->lowered_update = lowered_update->clone();
+    }
+    return ret;
+}
+
 in_stmt_expr::~in_stmt_expr() {
     delete calculation;
 }

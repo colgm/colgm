@@ -1,48 +1,27 @@
-import subprocess
-import os
+from util.exec import (
+    build_bootstrap_compiler,
+    lift_first_version_compiler,
+    build_self_host_compiler,
+    test_self_lift)
+import argparse
 
-def execute(cmd: list[str]) -> int:
-    print("Executing: " + " ".join(cmd), flush=True)
-    ret = subprocess.run(cmd).returncode
-    if ret != 0:
-        print("Error: " + " ".join(cmd), flush=True)
-        exit(ret)
-    return ret
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-self", "--only-self-lift", action="store_true", default=False)
+    args = parser.parse_args()
 
-def find_clang() -> str:
-    suppored_clang_version = []
-    for i in range(13, 20):
-        suppored_clang_version.append("clang-" + str(i))
-        suppored_clang_version.append("clang++-" + str(i))
-    suppored_clang_version.append("clang")
-    suppored_clang_version.append("clang++")
+    if args.only_self_lift:
+        test_self_lift()
+        exit(0)
 
-    for path in os.environ["PATH"].split(":"):
-        for clang in suppored_clang_version:
-            if os.path.exists(path + "/" + clang):
-                return path + "/" + clang
-    print("Error: clang not found", flush=True)
-    exit(1)
+    # Build bootstrap compiler (written in C++)
+    build_bootstrap_compiler()
 
-BUILD_DIRECTORY = "build"
-BOOTSTRAP_COMPILER = BUILD_DIRECTORY + "/colgm"
-SELF_HOST_COMPILER = "./colgm"
-SELF_HOST_OUT = "./a.out"
-USED_CLANG = find_clang()
+    # Lift colgm compiler (written in colgm)
+    lift_first_version_compiler()
 
-if not os.path.exists(BUILD_DIRECTORY):
-    os.mkdir(BUILD_DIRECTORY)
+    # Recompile colgm self-host compiler (written in colgm)
+    build_self_host_compiler()
 
-# Build bootstrap compiler (written in C++)
-os.chdir(BUILD_DIRECTORY)
-execute(["cmake", "../bootstrap", "-DCMAKE_BUILD_TYPE=RelWithDebInfo"])
-execute(["make", "-j6"])
-os.chdir("..")
-
-# Build colgm self-host compiler (written in colgm)
-execute(["./" + BOOTSTRAP_COMPILER, "--library", "src", "src/main.colgm", "-o", "colgm.ll", "--pass-info"])
-execute([USED_CLANG, "colgm.ll", "-o", SELF_HOST_COMPILER, "-g", "-Oz", "-rdynamic", "-lm", "--verbose"])
-
-# Test colgm self-host compiler compiling itself
-execute([SELF_HOST_COMPILER, "--library", "src", "src/main.colgm", "--verbose", "-g", "-Oz"])
-execute([SELF_HOST_OUT, "--library", "src", "src/main.colgm", "--verbose", "-g", "-Oz"])
+    # Test self-host compiler: compiling itself
+    test_self_lift()

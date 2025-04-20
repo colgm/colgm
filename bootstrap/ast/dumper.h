@@ -83,6 +83,8 @@ private:
     bool visit_match_stmt(match_stmt*) override;
     bool visit_while_stmt(while_stmt*) override;
     bool visit_for_stmt(for_stmt*) override;
+    bool visit_forindex(forindex*) override;
+    bool visit_foreach(foreach*) override;
     bool visit_in_stmt_expr(in_stmt_expr*) override;
     bool visit_ret_stmt(ret_stmt*) override;
     bool visit_continue_stmt(continue_stmt*) override;

@@ -347,7 +347,7 @@ impl mir_block {
     }
 
     pub func delete(self) {
-        for (var i = self->content.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->content) {
             var item = i.get().unwrap();
             item->delete();
             free(item => i8*);
@@ -357,10 +357,14 @@ impl mir_block {
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.out("mir_block").endln();
-        for (var i = self->content.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->content) {
             var item = i.get().unwrap();
             item->dump(out, pkg, depth + 1);
         }
+    }
+
+    pub func add(self, n: mir*) {
+        self->content.push(ptr<mir>::wrap(n));
     }
 }
 
@@ -737,7 +741,7 @@ impl mir_struct_init {
         out.out("mir_struct_init: ").out(sn.c_str).endln();
         sn.delete();
 
-        for (var i = self->fields.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->fields) {
             i.get()->dump(out, pkg, depth + 1);
         }
     }
@@ -1111,7 +1115,7 @@ impl mir_branch {
     }
 
     pub func delete(self) {
-        for (var i = self->branch.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->branch) {
             var n = i.get().unwrap() => mir*;
             n->delete();
             free(n => i8*);
@@ -1121,7 +1125,7 @@ impl mir_branch {
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.out("mir_branch").endln();
-        for (var i = self->branch.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->branch) {
             var n = i.get().unwrap() => mir*;
             n->dump(out, pkg, depth + 1);
         }
@@ -1182,7 +1186,7 @@ impl mir_switch {
             n->delete();
             free(n => i8*);
         }
-        for (var i = self->cases.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->cases) {
             var n = i.get().unwrap() => mir*;
             n->delete();
             free(n => i8*);
@@ -1201,7 +1205,7 @@ impl mir_switch {
             var t = self->condition => mir*;
             t->dump(out, pkg, depth + 1);
         }
-        for (var i = self->cases.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; self->cases) {
             var n = i.get().unwrap() => mir*;
             n->dump(out, pkg, depth + 1);
         }

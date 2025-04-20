@@ -1,6 +1,7 @@
 use err::span::{ span };
 use err::panic::{ panic, unreachable };
-use std::libc::{ malloc, realloc, free, exit };
+
+use std::libc::{ free };
 use std::io::{ io };
 use std::str::{ str };
 use std::map::{ hashmap };
@@ -51,6 +52,8 @@ pub enum ast_kind {
     ast_match_stmt,
     ast_while_stmt,
     ast_for_stmt,
+    ast_forindex,
+    ast_foreach,
     ast_in_stmt_expr,
     ast_ret_stmt,
     ast_continue_stmt,
@@ -101,6 +104,8 @@ pub func ast_kind_name(k: ast_kind) -> i8* {
         ast_kind::ast_match_stmt => return "ast_match";
         ast_kind::ast_while_stmt => return "ast_while";
         ast_kind::ast_for_stmt => return "ast_for";
+        ast_kind::ast_forindex => return "ast_forindex";
+        ast_kind::ast_foreach => return "ast_foreach";
         ast_kind::ast_in_stmt_expr => return "ast_in_stmt_expr";
         ast_kind::ast_ret_stmt => return "ast_ret";
         ast_kind::ast_continue_stmt => return "ast_continue";
@@ -157,6 +162,9 @@ pub struct ast {
 
 impl ast {
     pub func instance(k: ast_kind, loc: span*) -> ast {
+        if (loc == nil) {
+            panic("span pointer is null");
+        }
         return ast {
             kind: k,
             location: loc->copy_instance(),
@@ -333,6 +341,14 @@ impl ast {
             }
             ast_kind::ast_for_stmt => {
                 var tmp = self => ast_for_stmt*;
+                tmp->delete();
+            }
+            ast_kind::ast_forindex => {
+                var tmp = self => ast_forindex*;
+                tmp->delete();
+            }
+            ast_kind::ast_foreach => {
+                var tmp = self => ast_foreach*;
                 tmp->delete();
             }
             ast_kind::ast_in_stmt_expr => {
@@ -525,6 +541,14 @@ impl ast {
                 var tmp = self => ast_for_stmt*;
                 return tmp->copy() => ast*;
             }
+            ast_kind::ast_forindex => {
+                var tmp = self => ast_forindex*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_foreach => {
+                var tmp = self => ast_foreach*;
+                return tmp->copy() => ast*;
+            }
             ast_kind::ast_in_stmt_expr => {
                 var tmp = self => ast_in_stmt_expr*;
                 return tmp->copy() => ast*;
@@ -557,7 +581,9 @@ pub struct ast_null { base: ast }
 impl ast_null {
     pub func new() -> ast_null* {
         var res = ast_null::__alloc__();
-        res->base = ast::instance(ast_kind::ast_null, nil);
+        var null_span = span::instance();
+        res->base = ast::instance(ast_kind::ast_null, null_span.__ptr__());
+        null_span.delete();
         return res;
     }
 
@@ -588,25 +614,25 @@ impl root {
             self->base.location.__ptr__()
         );
         res->imports = primitive_vec<ptr<ast>>::instance();
-        for (var i: u64 = 0; i < self->imports.size; i += 1) {
-            res->imports.push(ptr<ast>::wrap(self->imports.get(i).unwrap()->copy()));
+        foreach (var i; self->imports) {
+            res->imports.push(ptr<ast>::wrap(i.get().unwrap()->copy()));
         }
         res->decls = primitive_vec<ptr<ast>>::instance();
-        for (var i: u64 = 0; i < self->decls.size; i += 1) {
-            res->decls.push(ptr<ast>::wrap(self->decls.get(i).unwrap()->copy()));
+        foreach (var i; self->decls) {
+            res->decls.push(ptr<ast>::wrap(i.get().unwrap()->copy()));
         }
         return res;
     }
 
     pub func delete(self) {
-        for (var i: u64 = 0; i < self->imports.size; i += 1) {
-            self->imports.get(i).unwrap()->delete();
-            free(self->imports.get(i).unwrap() => i8*);
+        foreach (var i; self->imports) {
+            i.get().unwrap()->delete();
+            free(i.get().unwrap() => i8*);
         }
         self->imports.delete();
-        for (var i: u64 = 0; i < self->decls.size; i += 1) {
-            self->decls.get(i).unwrap()->delete();
-            free(self->decls.get(i).unwrap() => i8*);
+        foreach (var i; self->decls) {
+            i.get().unwrap()->delete();
+            free(i.get().unwrap() => i8*);
         }
         self->decls.delete();
     }
@@ -741,8 +767,9 @@ impl ast_type_convert {
             free(self->from => i8*);
         }
         if (self->to != nil) {
-            self->to->delete();
-            free(self->to => i8*);
+            var n = self->to => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -929,12 +956,14 @@ impl ast_array_literal {
 
     pub func delete(self) {
         if (self->size != nil) {
-            self->size->delete();
-            free(self->size => i8*);
+            var n = self->size => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->type != nil) {
-            self->type->delete();
-            free(self->type => i8*);
+            var n = self->type => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -995,16 +1024,16 @@ impl ast_call_func_args {
             self->base.location.__ptr__()
         );
         res->args = primitive_vec<ptr<ast>>::instance();
-        for (var i: u64 = 0; i < self->args.size; i += 1) {
-            res->args.push(ptr<ast>::wrap(self->args.get(i).unwrap()->copy()));
+        foreach (var i; self->args) {
+            res->args.push(ptr<ast>::wrap(i.get().unwrap()->copy()));
         }
         return res;
     }
 
     pub func delete(self) {
-        for (var i: u64 = 0; i < self->args.size; i += 1) {
-            self->args.get(i).unwrap()->delete();
-            free(self->args.get(i).unwrap() => i8*);
+        foreach (var i; self->args) {
+            i.get().unwrap()->delete();
+            free(i.get().unwrap() => i8*);
         }
         self->args.delete();
     }
@@ -1102,8 +1131,9 @@ impl ast_init_pair {
 
     pub func delete(self) {
         if (self->field != nil) {
-            self->field->delete();
-            free(self->field => i8*);
+            var n = self->field => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->value != nil) {
             self->value->delete();
@@ -1211,12 +1241,14 @@ impl ast_call_id {
 
     pub func delete(self) {
         if (self->id != nil) {
-            self->id->delete();
-            free(self->id => i8*);
+            var n = self->id => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->generic_types != nil) {
-            self->generic_types->delete();
-            free(self->generic_types => i8*);
+            var n = self->generic_types => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -1256,8 +1288,9 @@ impl ast_call {
 
     pub func delete(self) {
         if (self->head != nil) {
-            self->head->delete();
-            free(self->head => i8*);
+            var n = self->head => ast*;
+            n->delete();
+            free(n => i8*);
         }
         for (var i: u64 = 0; i < self->chain.size; i += 1) {
             self->chain.get(i).unwrap()->delete();
@@ -1305,8 +1338,9 @@ impl ast_assignment {
 
     pub func delete(self) {
         if (self->left != nil) {
-            self->left->delete();
-            free(self->left => i8*);
+            var n = self->left => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->right != nil) {
             self->right->delete();
@@ -1406,12 +1440,14 @@ impl ast_type_def {
 
     pub func delete(self) {
         if (self->name != nil) {
-            self->name->delete();
-            free(self->name => i8*);
+            var n = self->name => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->generic_types != nil) {
-            self->generic_types->delete();
-            free(self->generic_types => i8*);
+            var n = self->generic_types => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -1487,12 +1523,14 @@ impl ast_enum_member {
 
     pub func delete(self) {
         if (self->name != nil) {
-            self->name->delete();
-            free(self->name => i8*);
+            var n = self->name => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->value != nil) {
-            self->value->delete();
-            free(self->value => i8*);
+            var n = self->value => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -1575,12 +1613,14 @@ impl ast_struct_field {
 
     pub func delete(self) {
         if (self->name != nil) {
-            self->name->delete();
-            free(self->name => i8*);
+            var n = self->name => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->type != nil) {
-            self->type->delete();
-            free(self->type => i8*);
+            var n = self->type => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -1635,8 +1675,9 @@ impl ast_struct_decl {
         self->fields.delete();
         self->name.delete();
         if (self->generic_types != nil) {
-            self->generic_types->delete();
-            free(self->generic_types => i8*);
+            var n = self->generic_types => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 
@@ -1687,12 +1728,14 @@ impl ast_param {
 
     pub func delete(self) {
         if (self->name != nil) {
-            self->name->delete();
-            free(self->name => i8*);
+            var n = self->name => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->type != nil) {
-            self->type->delete();
-            free(self->type => i8*);
+            var n = self->type => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -1792,20 +1835,24 @@ impl ast_func_decl {
     pub func delete(self) {
         self->name.delete();
         if (self->generic_types != nil) {
-            self->generic_types->delete();
-            free(self->generic_types => i8*);
+            var n = self->generic_types => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->params != nil) {
-            self->params->delete();
-            free(self->params => i8*);
+            var n = self->params => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->return_type != nil) {
-            self->return_type->delete();
-            free(self->return_type => i8*);
+            var n = self->return_type => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->body != nil) {
-            self->body->delete();
-            free(self->body => i8*);
+            var n = self->body => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 
@@ -1859,8 +1906,9 @@ impl ast_impl {
     pub func delete(self) {
         self->name.delete();
         if (self->generic_types != nil) {
-            self->generic_types->delete();
-            free(self->generic_types => i8*);
+            var n = self->generic_types => ast*;
+            n->delete();
+            free(n => i8*);
         }
         for (var i: u64 = 0; i < self->methods.size; i += 1) {
             self->methods.get(i).unwrap()->delete();
@@ -1968,8 +2016,9 @@ impl ast_definition {
     pub func delete(self) {
         self->name.delete();
         if (self->type != nil) {
-            self->type->delete();
-            free(self->type => i8*);
+            var n = self->type => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->value != nil) {
             self->value->delete();
@@ -2053,8 +2102,9 @@ impl ast_if_stmt {
             free(self->condition => i8*);
         }
         if (self->body != nil) {
-            self->body->delete();
-            free(self->body => i8*);
+            var n = self->body => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -2095,12 +2145,14 @@ impl ast_match_case {
 
     pub func delete(self) {
         if (self->pattern != nil) {
-            self->pattern->delete();
-            free(self->pattern => i8*);
+            var n = self->pattern => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->body != nil) {
-            self->body->delete();
-            free(self->body => i8*);
+            var n = self->body => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -2191,8 +2243,9 @@ impl ast_while_stmt {
             free(self->condition => i8*);
         }
         if (self->body != nil) {
-            self->body->delete();
-            free(self->body => i8*);
+            var n = self->body => ast*;
+            n->delete();
+            free(n => i8*);
         }
     }
 }
@@ -2247,8 +2300,9 @@ impl ast_for_stmt {
 
     pub func delete(self) {
         if (self->init != nil) {
-            self->init->delete();
-            free(self->init => i8*);
+            var n = self->init => ast*;
+            n->delete();
+            free(n => i8*);
         }
         if (self->condition != nil) {
             self->condition->delete();
@@ -2259,8 +2313,205 @@ impl ast_for_stmt {
             free(self->update => i8*);
         }
         if (self->body != nil) {
-            self->body->delete();
-            free(self->body => i8*);
+            var n = self->body => ast*;
+            n->delete();
+            free(n => i8*);
+        }
+    }
+}
+
+pub struct ast_forindex {
+    base: ast,
+    variable: ast_identifier*,
+    container: ast_call*,
+    body: ast_code_block*,
+
+    lowered_init: ast_definition*,
+    lowered_condition: ast*,
+    lowered_update: ast*
+}
+
+impl ast_forindex {
+    pub func new(loc: span*) -> ast_forindex* {
+        var res = ast_forindex::__alloc__();
+        res->base = ast::instance(ast_kind::ast_forindex, loc);
+        res->variable = nil;
+        res->container = nil;
+        res->body = nil;
+
+        res->lowered_init = nil;
+        res->lowered_condition = nil;
+        res->lowered_update = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_forindex* {
+        var res = ast_forindex::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_forindex,
+            self->base.location.__ptr__()
+        );
+        if (self->variable != nil) {
+            res->variable = self->variable->copy();
+        } else {
+            res->variable = nil;
+        }
+        if (self->container != nil) {
+            res->container = self->container->copy();
+        } else {
+            res->container = nil;
+        }
+        if (self->body != nil) {
+            res->body = self->body->copy();
+        } else {
+            res->body = nil;
+        }
+
+        if (self->lowered_init != nil) {
+            res->lowered_init = self->lowered_init->copy();
+        } else {
+            res->lowered_init = nil;
+        }
+        if (self->lowered_condition != nil) {
+            res->lowered_condition = self->lowered_condition->copy();
+        } else {
+            res->lowered_condition = nil;
+        }
+        if (self->lowered_update != nil) {
+            res->lowered_update = self->lowered_update->copy();
+        } else {
+            res->lowered_update = nil;
+        }
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->variable != nil) {
+            var tmp = self->variable => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+        if (self->container != nil) {
+            var tmp = self->container => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+        if (self->body != nil) {
+            var tmp = self->body => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+
+        if (self->lowered_init != nil) {
+            var tmp = self->lowered_init => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+        if (self->lowered_condition != nil) {
+            self->lowered_condition->delete();
+            free(self->lowered_condition => i8*);
+        }
+        if (self->lowered_update != nil) {
+            self->lowered_update->delete();
+            free(self->lowered_update => i8*);
+        }
+    }
+}
+
+pub struct ast_foreach {
+    base: ast,
+    variable: ast_identifier*,
+    container: ast_call*,
+    body: ast_code_block*,
+
+    lowered_init: ast_definition*,
+    lowered_condition: ast*,
+    lowered_update: ast*
+}
+
+impl ast_foreach {
+    pub func new(loc: span*) -> ast_foreach* {
+        var res = ast_foreach::__alloc__();
+        res->base = ast::instance(ast_kind::ast_foreach, loc);
+        res->variable = nil;
+        res->container = nil;
+        res->body = nil;
+
+        res->lowered_init = nil;
+        res->lowered_condition = nil;
+        res->lowered_update = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_foreach* {
+        var res = ast_foreach::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_foreach,
+            self->base.location.__ptr__()
+        );
+        if (self->variable != nil) {
+            res->variable = self->variable->copy();
+        } else {
+            res->variable = nil;
+        }
+        if (self->container != nil) {
+            res->container = self->container->copy();
+        } else {
+            res->container = nil;
+        }
+        if (self->body != nil) {
+            res->body = self->body->copy();
+        } else {
+            res->body = nil;
+        }
+
+        if (self->lowered_init != nil) {
+            res->lowered_init = self->lowered_init->copy();
+        } else {
+            res->lowered_init = nil;
+        }
+        if (self->lowered_condition != nil) {
+            res->lowered_condition = self->lowered_condition->copy();
+        } else {
+            res->lowered_condition = nil;
+        }
+        if (self->lowered_update != nil) {
+            res->lowered_update = self->lowered_update->copy();
+        } else {
+            res->lowered_update = nil;
+        }
+        return res;
+    }
+
+    pub func delete(self) {
+        if (self->variable != nil) {
+            var tmp = self->variable => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+        if (self->container != nil) {
+            var tmp = self->container => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+        if (self->body != nil) {
+            var tmp = self->body => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+
+        if (self->lowered_init != nil) {
+            var tmp = self->lowered_init => ast*;
+            tmp->delete();
+            free(tmp => i8*);
+        }
+        if (self->lowered_condition != nil) {
+            self->lowered_condition->delete();
+            free(self->lowered_condition => i8*);
+        }
+        if (self->lowered_update != nil) {
+            self->lowered_update->delete();
+            free(self->lowered_update => i8*);
         }
     }
 }

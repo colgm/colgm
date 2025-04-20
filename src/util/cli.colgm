@@ -17,7 +17,6 @@ enum opt_level {
 pub struct cli_option {
     VIEW_TOKEN: bool,
     VIEW_AST: bool,
-    VIEW_LIB: bool,
     VIEW_SEMA: bool,
     VIEW_SIR: bool,
     VIEW_MIR: bool,
@@ -38,7 +37,6 @@ impl cli_option {
         return cli_option {
             VIEW_TOKEN: false,
             VIEW_AST: false,
-            VIEW_LIB: false,
             VIEW_SEMA: false,
             VIEW_SIR: false,
             VIEW_MIR: false,
@@ -99,7 +97,7 @@ impl cli_option {
 }
 
 pub func version() -> i8* {
-    return "1.0.2";
+    return "1.0.3";
 }
 
 pub func print_version() {
@@ -111,34 +109,31 @@ pub func print_version() {
 pub func help() {
     print_version();
     io::stdout()
-    .out("\ncolgm <option>\n")
+    .out("\ncolgm [option]\n")
     .out("option:\n")
-    .out("  -h,  --help                     | get help.\n")
-    .out("  -v,  --version                  | get version.\n")
-    .out("\ncolgm [option] <file>\n")
+    .out("  -h,  --help                 | get help.\n")
+    .out("  -v,  --version              | get version.\n")
+    .out("\ncolgm [options] <input file>\n")
     .out("option:\n")
-    .out("  -g                              | debug mode.\n")
-    .out("  -o,  --output <file>            | output file, default <out.ll>.\n")
-    .out("  -l,  --lex                      | view analysed tokens.\n")
-    .out("  -a,  --ast                      | view ast.\n")
-    .out("  -s,  --sema                     | view semantic result.\n")
-    .out("       --mir                      | view mir.\n")
-    .out("       --sir                      | view sir.\n")
-    .out("       --library <path>           | specify library path, default <.>.\n")
-    .out("       --dump-lib                 | view libraries.\n")
-    .out("       --view-resolved-ast        | view resolved ast.\n")
-    .out("       --enable-type-replace-info | view type replace info.\n")
-    .out("       --arch <arch>              | specify target arch.\n")
-    .out("       --platform <platform>      | specify target platform.\n")
-    .out("  -V,  --verbose                  | verbose mode.\n")
-    .out("  -O0                             | disable optimizations.\n")
-    .out("  -O1                             | enable optimizations.\n")
-    .out("  -O2                             | enable optimizations.\n")
-    .out("  -O3                             | enable optimizations.\n")
-    .out("  -Oz                             | enable optimizations.\n")
-    .out("  -Os                             | enable optimizations.\n")
-    .out("file:\n")
-    .out("  <filename>                      | input file.\n")
+    .out("  -g                          | debug mode.\n")
+    .out("  -o,  --output <output file> | output executable, default <a.out>.\n")
+    .out("  -l,  --lex                  | view analysed tokens.\n")
+    .out("  -a,  --ast                  | view ast.\n")
+    .out("  -s,  --sema                 | view semantic result.\n")
+    .out("       --mir                  | view mir.\n")
+    .out("       --sir                  | view sir.\n")
+    .out("       --library <directory>  | specify library directory, default <.>.\n")
+    .out("       --view-resolved-ast    | view resolved ast.\n")
+    .out("       --view-type-replace    | view type replace info.\n")
+    .out("       --arch <arch>          | specify target arch.\n")
+    .out("       --platform <platform>  | specify target platform.\n")
+    .out("  -V,  --verbose              | verbose mode.\n")
+    .out("  -O0                         | disable optimizations.\n")
+    .out("  -O1                         | enable optimizations.\n")
+    .out("  -O2                         | enable optimizations.\n")
+    .out("  -O3                         | enable optimizations.\n")
+    .out("  -Oz                         | enable optimizations.\n")
+    .out("  -Os                         | enable optimizations.\n")
     .endln();
 }
 
@@ -147,20 +142,19 @@ pub func logo(executable: i8*) {
 
     io::stdout()
     .out("                __              \n")
-    .out("    _________  / /___ _____ ___ \n")
-    .out("   / ___/ __ \\/ / __ `/ __ `__ \\\n")
-    .out("  / /__/ /_/ / / /_/ / / / / / /\n")
-    .out("  \\___/\\____/_/\\__, /_/ /_/ /_/ \n")
-    .out("              /____/            \n\n")
-    .out("version : ").out(version()).out(" (self-hosted) ").out("\n")
+    .out("    _________  / //___ _____ _ \n")
+    .out("   / ___/ __ \\/ // __ `/ _ `_ \\\n")
+    .out("  / /__/ /_/ / // /_/ / // // /\n")
+    .out("  \\___/\\____/_//\\__, /_//_//_/ \n")
+    .out("  -------------/____/            \n\n")
+    .out("version : ").out(version()).out("  (selfhosted) ").out("\n")
     .out("arch    : ").out(get_platform()).out(" ").out(get_arch()).out("\n")
     .out("target  : ").out(get_target_triple()).out("\n")
     .out("repo    : https://github.com/colgm/colgm\n")
-    .out("repo    : https://gitee.com/valkmjolnir/colgm\n")
     .out("license : Apache 2.0\n");
 
     if (possible_clang.empty()) {
-        io::stdout().out("clang   : cannot find clang on this machine\n");
+        io::stdout().out("clang   : no clang found on this machine\n");
     } else {
         io::stdout().out("clang   : ").out(possible_clang.c_str).out("\n");
     }

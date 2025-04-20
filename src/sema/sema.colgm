@@ -1,8 +1,9 @@
 use err::report::{ report };
 use err::panic::{ panic, unreachable };
+use err::span::{ span };
 
 use std::io::{ io };
-use std::libc::{ free, itoa, utoa };
+use std::libc::{ itoa, utoa };
 use std::math::{ isinf, isnan };
 use std::str::{ str };
 use std::ptr::{ ptr };
@@ -64,7 +65,7 @@ impl sema {
         if (ty->loc_file.empty()) {
             return false;
         }
-        var dm = self->ctx->global->domain.get(ty->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(ty->loc_file.__ptr__());
         if (dm->enums.has(ty->name.__ptr__())) {
             return true;
         }
@@ -75,7 +76,7 @@ impl sema {
         if (ty->loc_file.empty()) {
             return false;
         }
-        var dm = self->ctx->global->domain.get(ty->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(ty->loc_file.__ptr__());
         if (dm->structs.has(ty->name.__ptr__())) {
             return true;
         }
@@ -701,14 +702,14 @@ impl sema {
 
         if (n->generic_types != nil) {
             var types = vec<type>::instance();
-            for (var i = n->generic_types->types.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; n->generic_types->types) {
                 var ty = self->tr.resolve(i.get().unwrap() => ast_type_def*);
                 types.push(ty.__ptr__());
                 ty.delete();
             }
             var name = n->id->content.copy_instance();
             name.append_char('<');
-            for (var i = types.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; types) {
                 var full_name = i.get()->full_path_name(self->pkg, true);
                 name.append_str(full_name.__ptr__());
                 full_name.delete();
@@ -730,7 +731,7 @@ impl sema {
                 return infer;
             }
 
-            var dm = self->ctx->global->domain.get(infer.loc_file.__ptr__());
+            var dm = self->ctx->get_domain(infer.loc_file.__ptr__());
             if (dm->structs.has(name.__ptr__()) ||
                 dm->functions.has(name.__ptr__())) {
                 infer.name.delete();
@@ -740,7 +741,9 @@ impl sema {
             } else {
                 var info = str::from("error resolving generic symbol \"");
                 info.append_str(name.__ptr__());
-                info.append_char('\"');
+                info.append_i8_vec("\" in namespace \"");
+                info.append_str(infer.loc_file.__ptr__());
+                info.append_i8_vec("\"");
                 self->err->error(n->base.location.__ptr__(), info.c_str);
                 info.delete();
             }
@@ -814,7 +817,7 @@ impl sema {
         }
 
         if (prev->is_pointer()) {
-            var info = str::from("cannot use \".\" to get field from pointer ?\"");
+            var info = str::from("cannot use \".\" to get field from pointer \"");
             info.append_str(prev_name.__ptr__());
             info.append_i8_vec("\". use \"->\" instead");
             self->err->error(n->base.location.__ptr__(), info.c_str);
@@ -838,7 +841,7 @@ impl sema {
             return type::error_type();
         }
 
-        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("cannot get field from \"");
             info.append_str(prev_name.__ptr__());
@@ -908,7 +911,7 @@ impl sema {
             return;
         }
 
-        for (var i = n->args.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->args) {
             var arg = i.get().unwrap();
             var infer = self->resolve_expression(arg);
             if (infer.is_error()) {
@@ -950,7 +953,7 @@ impl sema {
             return;
         }
 
-        for (var i = n->args.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->args) {
             var arg = i.get().unwrap();
             var infer = self->resolve_expression(arg);
             if (infer.is_error()) {
@@ -980,7 +983,7 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self->pkg);
         // global function call
         if (prev->is_global_func) {
-            var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+            var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
             var func_self = dm->functions.get(prev_name_for_search.__ptr__());
             self->check_static_call_args(func_self, n);
             prev_name_for_search.delete();
@@ -1004,7 +1007,7 @@ impl sema {
 
         // static method call of struct
         if (prev->stm_info.flag_is_static) {
-            var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+            var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
             var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
             var method = struct_self->static_method.get(
                 prev->stm_info.method_name.__ptr__()
@@ -1018,7 +1021,7 @@ impl sema {
 
         // normal method call of struct
         if (prev->stm_info.flag_is_normal) {
-            var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+            var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
             var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
             var method = struct_self->method.get(
                 prev->stm_info.method_name.__ptr__()
@@ -1123,7 +1126,7 @@ impl sema {
             return infer;
         }
 
-        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (dm->structs.has(prev_name_for_search.__ptr__()) &&
             prev->is_global_sym) {
             var st = dm->structs.get(prev_name_for_search.__ptr__());
@@ -1205,7 +1208,7 @@ impl sema {
             return type::error_type();
         }
 
-        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         var prev_name_for_search = prev->generic_name(self->pkg);
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("\"");
@@ -1218,7 +1221,7 @@ impl sema {
         }
 
         var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
-        for (var i = n->pairs.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->pairs) {
             var tmp = i.get().unwrap() => ast_init_pair*;
             var field = tmp->field->content.__ptr__();
             if (!struct_self->fields.has(field)) {
@@ -1313,7 +1316,7 @@ impl sema {
             return type::error_type();
         }
 
-        var dm = self->ctx->global->domain.get(prev->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("cannot get field from \"");
             info.append_str(prev_name.__ptr__());
@@ -1373,7 +1376,7 @@ impl sema {
             return infer;
         }
 
-        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->chain) {
             var c = i.get().unwrap();
             if (c->kind != ast_kind::ast_call_func_args &&
                 infer.is_function()) {
@@ -1456,7 +1459,7 @@ impl sema {
     }
 
     func check_valid_left_value(self, n: ast_call*) -> bool {
-        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->chain) {
             var tmp = i.get().unwrap();
             if (tmp->kind == ast_kind::ast_initializer) {
                 self->err->error(
@@ -1484,7 +1487,7 @@ impl sema {
 
         var seg: ast* = nil;
         var maybe_invalid_assignment = false;
-        for (var i = n->chain.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->chain) {
             var tmp = i.get().unwrap();
             if (tmp->kind == ast_kind::ast_call_func_args &&
                 !tmp->resolved_type.is_pointer()) {
@@ -1748,26 +1751,36 @@ impl sema {
         return false;
     }
 
-    func resolve_definition(self, n: ast_definition*, func_self: colgm_func*) {
-        var name = n->name.__ptr__();
+    func check_local_variable_conflict(self, name: str*, loc: span*) -> bool {
         // check if conflicts with local variable
         if (self->ctx->find_local(name)) {
             var info = str::from("redefinition of variable \"");
             info.append_str(name);
             info.append_i8_vec("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->error(loc, info.c_str);
             info.delete();
-            return;
+            return false;
         }
 
         // check if conflicts with global symbol
-        if (self->ctx->global->domain.get(n->base.location.file.__ptr__())->global_symbol.has(name) ||
-            self->ctx->global->domain.get(n->base.location.file.__ptr__())->generic_symbol.has(name)) {
+        if (self->ctx->get_domain(loc->file.__ptr__())->global_symbol.has(name) ||
+            self->ctx->get_domain(loc->file.__ptr__())->generic_symbol.has(name)) {
             var info = str::from("variable \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with global symbol");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->error(loc, info.c_str);
             info.delete();
+            return false;
+        }
+
+        return true;
+    }
+
+    func resolve_definition(self, n: ast_definition*, func_self: colgm_func*) {
+        var name = n->name.__ptr__();
+
+        // check if conflicts with local variable
+        if (!self->check_local_variable_conflict(name, n->base.location.__ptr__())) {
             return;
         }
 
@@ -1860,7 +1873,7 @@ impl sema {
     }
 
     func resolve_cond_stmt(self, n: ast_cond_stmt*, func_self: colgm_func*) {
-        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->stmts) {
             self->resolve_if_stmt(i.get().unwrap() => ast_if_stmt*, func_self);
         }
     }
@@ -1901,7 +1914,7 @@ impl sema {
             return 0xffffffffffffffff;
         }
 
-        var dm = self->ctx->global->domain.get(infer->loc_file.__ptr__());
+        var dm = self->ctx->get_domain(infer->loc_file.__ptr__());
         if (!dm->enums.has(name)) {
             return 0xffffffffffffffff;
         }
@@ -1941,7 +1954,7 @@ impl sema {
 
         var default_found = false;
         var used_values = hashset<basic<i64>>::instance();
-        for (var i = n->cases.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->cases) {
             var case_node = i.get().unwrap() => ast_match_case*;
 
             if (self->check_is_match_default(case_node->pattern)) {
@@ -2004,7 +2017,7 @@ impl sema {
             used_values.delete();
             return;
         }
-        var dm = self->ctx->global->domain.get(infer.loc_file.__ptr__());
+        var dm = self->ctx->get_domain(infer.loc_file.__ptr__());
         if (!dm->enums.has(infer.name.__ptr__())) {
             infer.delete();
             used_values.delete();
@@ -2014,7 +2027,7 @@ impl sema {
         var generated_warning = str::instance();
         var unused_counter = 0;
 
-        for (var i = em->members.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; em->members) {
             if (used_values.has(i.value())) {
                 continue;
             }
@@ -2089,6 +2102,351 @@ impl sema {
         self->ctx->pop_scope_level();
     }
 
+    func check_struct_has_method(self, t: type*, m_name: i8*) -> bool {
+        if (t->is_error()) {
+            return false;
+        }
+
+        var dm = self->ctx->get_domain(t->loc_file.__ptr__());
+        var name_for_search = t->generic_name(self->pkg);
+        if (!dm->structs.has(name_for_search.__ptr__())) {
+            name_for_search.delete();
+            return false;
+        }
+
+        var s = dm->structs.get(name_for_search.__ptr__());
+        var method_name = str::from(m_name);
+        if (!s->method.has(method_name.__ptr__())) {
+            name_for_search.delete();
+            method_name.delete();
+            return false;
+        }
+
+        name_for_search.delete();
+        method_name.delete();
+        return true;
+    }
+
+    func get_struct_method_return_type(self, t: type*, m_name: i8*) -> type {
+        var dm = self->ctx->get_domain(t->loc_file.__ptr__());
+        var name_for_search = t->generic_name(self->pkg);
+        var s = dm->structs.get(name_for_search.__ptr__());
+        var method_name = str::from(m_name);
+        var m = s->method.get(method_name.__ptr__());
+
+        name_for_search.delete();
+        method_name.delete();
+        return m->return_type.copy_instance();
+    }
+
+    func lowering_forindex(self, n: ast_forindex*, iter_ty: type*) {
+        // generate `var i: ty = 0;`
+        var lowered_init = ast_definition::new(
+            n->variable->base.location.__ptr__(),
+            n->variable->content.__ptr__()
+        );
+
+        lowered_init->type = ast_type_def::new(n->variable->base.location.__ptr__());
+        lowered_init->type->name = ast_identifier::new(
+            n->variable->base.location.__ptr__(),
+            iter_ty->name.__ptr__()
+        );
+
+        var zero_num = str::from("0");
+        lowered_init->value = ast_number_literal::new(
+            n->variable->base.location.__ptr__(),
+            zero_num.__ptr__()
+        ) => ast*;
+        zero_num.delete();
+
+        n->lowered_init = lowered_init;
+
+        // generate `i < container.iter_size()`
+        //
+        // generate `i`
+        var lowered_condition_lhs = ast_call::new(n->container->base.location.__ptr__());
+        lowered_condition_lhs->head = ast_call_id::new(
+            n->container->base.location.__ptr__(),
+        );
+        lowered_condition_lhs->head->id = n->variable->copy();
+        // generate `container.iter_size()`
+        var lowered_condition_rhs = n->container->copy();
+        if (n->container->base.resolved_type.is_pointer()) {
+            var m_name = str::from("iter_size");
+            lowered_condition_rhs->chain.push(ptr<ast>::wrap(ast_ptr_get_field::new(
+                n->container->base.location.__ptr__(),
+                m_name.__ptr__()
+            ) => ast*));
+            m_name.delete();
+        } else {
+            var m_name = str::from("iter_size");
+            lowered_condition_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
+                n->container->base.location.__ptr__(),
+                m_name.__ptr__()
+            ) => ast*));
+            m_name.delete();
+        }
+        lowered_condition_rhs->chain.push(ptr<ast>::wrap(
+            ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+        ));
+
+        // generate `i < container.iter_size()`
+        var lowered_condition = ast_binary_operator::new(
+            n->container->base.location.__ptr__(),
+            binary_kind::less
+        );
+        lowered_condition->left = lowered_condition_lhs => ast*;
+        lowered_condition->right = lowered_condition_rhs => ast*;
+        n->lowered_condition = lowered_condition => ast*;
+
+        // generate `i += 1`
+        //
+        // generate `i`
+        var lowered_update_lhs = lowered_condition_lhs->copy();
+        // generate `1`
+        var one_num = str::from("1");
+        var lowered_update_rhs = ast_number_literal::new(
+            n->container->base.location.__ptr__(),
+            one_num.__ptr__()
+        ) => ast*;
+        one_num.delete();
+        var lowered_update = ast_assignment::new(n->container->base.location.__ptr__());
+        lowered_update->kind = assignment_kind::addeq;
+        lowered_update->left = lowered_update_lhs;
+        lowered_update->right = lowered_update_rhs => ast*;
+        n->lowered_update = lowered_update => ast*;
+    }
+
+    func resolve_forindex_stmt(self, n: ast_forindex*, func_self: colgm_func*) {
+        var ty = self->resolve_expression(n->container => ast*);
+        // only accept container T, T& or T*
+        if (ty.pointer_depth > 1) {
+            var info = str::from("\"");
+            var c_name = ty.full_path_name(self->pkg, true);
+            info.append_str(c_name.__ptr__())->append_i8_vec("\"");
+            info.append_i8_vec(" is not accpted as container");
+            self->err->error(n->container->base.location.__ptr__(), info.c_str);
+            c_name.delete();
+            info.delete();
+        }
+
+        // T should have method size(T) -> integer
+        if (!self->check_struct_has_method(ty.__ptr__(), "iter_size")) {
+            self->err->error(n->container->base.location.__ptr__(),
+                             "container must have iter_size method");
+            ty.delete();
+            return;
+        }
+
+        // forindex will directly combine size method's return type to iter_type
+        var iter_ty = self->get_struct_method_return_type(ty.__ptr__(), "iter_size");
+        var u64_type = type::u64_type();
+        if (!iter_ty.eq(u64_type.__ptr__())) {
+            self->err->error(n->container->base.location.__ptr__(),
+                             "iter_size method must return u64");
+            ty.delete();
+            iter_ty.delete();
+            u64_type.delete();
+            return;
+        }
+        u64_type.delete();
+
+        n->variable->base.resolved_type.reset_with(iter_ty.__ptr__());
+        if (!iter_ty.is_integer()) {
+            self->err->error(n->container->base.location.__ptr__(),
+                             "iter_size method must return integer");
+            ty.delete();
+            iter_ty.delete();
+            return;
+        }
+
+        self->lowering_forindex(n, iter_ty.__ptr__());
+
+        self->ctx->push_scope_level();
+        self->resolve_definition(n->lowered_init, func_self);
+        self->resolve_expression(n->lowered_condition);
+        self->resolve_expression(n->lowered_update);
+        if (n->body != nil) {
+            self->in_loop_level += 1;
+            self->resolve_code_block(n->body, func_self);
+            self->in_loop_level -= 1;
+        }
+        self->ctx->pop_scope_level();
+        ty.delete();
+        iter_ty.delete();
+    }
+
+    func lowering_foreach(self, n: ast_foreach*) {
+        // generate `var i = container.iter();`
+        var lowered_init = ast_definition::new(
+            n->variable->base.location.__ptr__(),
+            n->variable->content.__ptr__()
+        );
+        var lowered_init_rhs = n->container->copy();
+        lowered_init->value = lowered_init_rhs => ast*;
+        if (n->container->base.resolved_type.is_pointer()) {
+            var m_name = str::from("iter");
+            lowered_init_rhs->chain.push(ptr<ast>::wrap(ast_ptr_get_field::new(
+                n->container->base.location.__ptr__(),
+                m_name.__ptr__()
+            ) => ast*));
+            m_name.delete();
+        } else {
+            var m_name = str::from("iter");
+            lowered_init_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
+                n->container->base.location.__ptr__(),
+                m_name.__ptr__()
+            ) => ast*));
+            m_name.delete();
+        }
+        lowered_init_rhs->chain.push(ptr<ast>::wrap(
+            ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+        ));
+
+        n->lowered_init = lowered_init;
+
+        // generate `!i.is_end()`
+        //
+        // generate `i.is_end()`
+        var lowered_condition_value = ast_call::new(
+            n->container->base.location.__ptr__()
+        );
+        lowered_condition_value->head = ast_call_id::new(
+            n->container->base.location.__ptr__(),
+        );
+        lowered_condition_value->head->id = n->variable->copy();
+        // generate `is_end`
+        var end_method = str::from("is_end");
+        lowered_condition_value->chain.push(ptr<ast>::wrap(ast_get_field::new(
+            n->container->base.location.__ptr__(),
+            end_method.__ptr__()
+        ) => ast*));
+        end_method.delete();
+        // generate `()`
+        lowered_condition_value->chain.push(ptr<ast>::wrap(
+            ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+        ));
+        // !i.is_end()
+        var lowered_condition = ast_unary_operator::new(
+            n->container->base.location.__ptr__(),
+            unary_kind::lnot
+        );
+        lowered_condition->value = lowered_condition_value => ast*;
+        n->lowered_condition = lowered_condition => ast*;
+
+        // generate `i = i.next()`
+        //
+        // generate `i`
+        var lowered_update_lhs = ast_call::new(
+            n->container->base.location.__ptr__()
+        );
+        lowered_update_lhs->head = ast_call_id::new(
+            n->container->base.location.__ptr__(),
+        );
+        lowered_update_lhs->head->id = n->variable->copy();
+        // generate `i.next()`
+        var lowered_update_rhs = ast_call::new(
+            n->container->base.location.__ptr__()
+        );
+        lowered_update_rhs->head = ast_call_id::new(
+            n->container->base.location.__ptr__(),
+        );
+        lowered_update_rhs->head->id = n->variable->copy();
+        var next_method = str::from("next");
+        lowered_update_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
+            n->container->base.location.__ptr__(),
+            next_method.__ptr__()
+        ) => ast*));
+        next_method.delete();
+        lowered_update_rhs->chain.push(ptr<ast>::wrap(
+            ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
+        ));
+
+        var lowered_update = ast_assignment::new(n->container->base.location.__ptr__());
+        lowered_update->kind = assignment_kind::eq;
+        lowered_update->left = lowered_update_lhs;
+        lowered_update->right = lowered_update_rhs => ast*;
+        n->lowered_update = lowered_update => ast*;
+    }
+
+    func resolve_foreach_stmt(self, n: ast_foreach*, func_self: colgm_func*) {
+        var ty = self->resolve_expression(n->container => ast*);
+        // only accept container T, T& or T*
+        if (ty.pointer_depth > 1) {
+            var info = str::from("\"");
+            var c_name = ty.full_path_name(self->pkg, true);
+            info.append_str(c_name.__ptr__())->append_i8_vec("\"");
+            info.append_i8_vec(" is not accpted as container");
+            self->err->error(n->container->base.location.__ptr__(), info.c_str);
+            c_name.delete();
+            info.delete();
+        }
+        // T should have method iter(T) -> iter_type
+        if (!self->check_struct_has_method(ty.__ptr__(), "iter")) {
+            self->err->error(n->container->base.location.__ptr__(),
+                             "container must have iter method");
+            ty.delete();
+            return;
+        }
+
+        // foreach will directly combine iter_type to defined variable
+        var iter_ty = self->get_struct_method_return_type(ty.__ptr__(), "iter");
+        n->variable->base.resolved_type.reset_with(iter_ty.__ptr__());
+
+        // check iter.is_end() method
+        if (!self->check_struct_has_method(iter_ty.__ptr__(), "is_end")) {
+            self->err->error(n->variable->base.location.__ptr__(),
+                             "iterator must have is_end method");
+            ty.delete();
+            iter_ty.delete();
+            return;
+        } else {
+            var rt = self->get_struct_method_return_type(iter_ty.__ptr__(), "is_end");
+            if (!rt.is_bool()) {
+                self->err->error(n->variable->base.location.__ptr__(),
+                                 "is_end method must return bool type");
+                ty.delete();
+                iter_ty.delete();
+                rt.delete();
+                return;
+            }
+        }
+
+        // check iter.next() method
+        if (!self->check_struct_has_method(iter_ty.__ptr__(), "next")) {
+            self->err->error(n->variable->base.location.__ptr__(),
+                             "iterator must have next method");
+            ty.delete();
+            iter_ty.delete();
+            return;
+        } else {
+            var rt = self->get_struct_method_return_type(iter_ty.__ptr__(), "next");
+            if (!rt.eq(iter_ty.__ptr__())) {
+                self->err->error(n->variable->base.location.__ptr__(),
+                                 "next method's return type should equal to the iterator");
+                ty.delete();
+                iter_ty.delete();
+                rt.delete();
+                return;
+            }
+        }
+
+        self->lowering_foreach(n);
+
+        self->ctx->push_scope_level();
+        self->resolve_definition(n->lowered_init, func_self);
+        self->resolve_expression(n->lowered_condition);
+        self->resolve_expression(n->lowered_update);
+        if (n->body != nil) {
+            self->in_loop_level += 1;
+            self->resolve_code_block(n->body, func_self);
+            self->in_loop_level -= 1;
+        }
+        self->ctx->pop_scope_level();
+        ty.delete();
+        iter_ty.delete();
+    }
+
     func resolve_in_stmt_expr(self, n: ast_in_stmt_expr*, func_self: colgm_func*) {
         var ty = self->resolve_expression(n->value => ast*);
         n->base.resolved_type.reset_with(ty.__ptr__());
@@ -2155,6 +2513,12 @@ impl sema {
                 self->resolve_while_stmt(n => ast_while_stmt*, func_self);
             ast_kind::ast_for_stmt =>
                 self->resolve_for_stmt(n => ast_for_stmt*, func_self);
+            ast_kind::ast_forindex => {
+                self->resolve_forindex_stmt(n => ast_forindex*, func_self);
+            }
+            ast_kind::ast_foreach => {
+                self->resolve_foreach_stmt(n => ast_foreach*, func_self);
+            }
             ast_kind::ast_in_stmt_expr =>
                 self->resolve_in_stmt_expr(n => ast_in_stmt_expr*, func_self);
             ast_kind::ast_ret_stmt =>
@@ -2179,7 +2543,7 @@ impl sema {
 
     func resolve_code_block(self, node: ast_code_block*, func_self: colgm_func*) {
         self->ctx->push_scope_level();
-        for (var i = node->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; node->stmts) {
             var n = i.get().unwrap();
             self->resolve_statement(n, func_self);
             if (n->is(ast_kind::ast_ret_stmt) ||
@@ -2206,7 +2570,7 @@ impl sema {
         var flag_block_ended = false;
         var unreachable_statements = primitive_vec<ptr<ast>>::instance();
 
-        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->stmts) {
             var tmp = i.get().unwrap();
             if (flag_block_ended) {
                 unreachable_statements.push(ptr<ast>::wrap(tmp));
@@ -2225,7 +2589,7 @@ impl sema {
 
         var unreachable_location = unreachable_statements
                                    .get(0).unwrap()->location.copy_instance();
-        for (var i = unreachable_statements.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; unreachable_statements) {
             var tmp = i.get().unwrap();
             unreachable_location.end_column = tmp->location.end_column;
             unreachable_location.end_line = tmp->location.end_line;
@@ -2247,7 +2611,7 @@ impl sema {
                                               n: ast_code_block*,
                                               func_self: colgm_func*) {
         var flag_has_return = false;
-        for (var i = n->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; n->stmts) {
             var tmp = i.get().unwrap();
             if (tmp->is(ast_kind::ast_ret_stmt)) {
                 flag_has_return = true;
@@ -2269,7 +2633,7 @@ impl sema {
     }
 
     func resolve_function_block(self, r: root*) {
-        for (var i = r->decls.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; r->decls) {
             var n = i.get().unwrap();
             if (n->is(ast_kind::ast_impl)) {
                 self->resolve_impl(n => ast_impl*);
@@ -2288,9 +2652,9 @@ impl sema {
 
         var dm: colgm_module* = nil;
         if (node->base.is_redirected()) {
-            dm = self->ctx->global->domain.get(node->base.redirect_location.__ptr__());
+            dm = self->ctx->get_domain(node->base.redirect_location.__ptr__());
         } else {
-            dm = self->ctx->global->domain.get(node->base.location.file.__ptr__());
+            dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         }
 
         if (!dm->structs.has(node->name.__ptr__())) {
@@ -2305,7 +2669,7 @@ impl sema {
         var struct_self = dm->structs.get(node->name.__ptr__());
         self->impl_struct_name.clear();
         self->impl_struct_name.append_str(node->name.__ptr__());
-        for (var i = node->methods.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; node->methods) {
             var func_node = i.get().unwrap();
             self->resolve_method(func_node => ast_func_decl*, struct_self);
         }
@@ -2318,7 +2682,7 @@ impl sema {
             return;
         }
 
-        var dm = self->ctx->global->domain.get(self->ctx->this_file.__ptr__());
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         if (!dm->functions.has(node->name.__ptr__())) {
             var info = str::from("cannot find function \"");
             info.append_str(node->name.__ptr__());
@@ -2341,12 +2705,12 @@ impl sema {
         }
 
         self->ctx->push_scope_level();
-        for (var p = func_self->unordered_params.iter(); !p.is_end(); p = p.next()) {
+        foreach (var p; func_self->unordered_params) {
             var param_name = p.key();
             var param_type = p.value();
             self->ctx->add_local_var(param_name, param_type);
         }
-        for (var i = node->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; node->body->stmts) {
             var n = i.get().unwrap();
             self->resolve_statement(n, func_self);
             if (n->is(ast_kind::ast_ret_stmt) ||
@@ -2375,12 +2739,12 @@ impl sema {
         }
 
         self->ctx->push_scope_level();
-        for (var p = method_self->unordered_params.iter(); !p.is_end(); p = p.next()) {
+        foreach (var p; method_self->unordered_params) {
             var param_name = p.key();
             var param_type = p.value();
             self->ctx->add_local_var(param_name, param_type);
         }
-        for (var i = node->body->stmts.iter(); !i.is_end(); i = i.next()) {
+        foreach (var i; node->body->stmts) {
             var n = i.get().unwrap();
             self->resolve_statement(n, method_self);
             if (n->is(ast_kind::ast_ret_stmt) ||

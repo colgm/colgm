@@ -1,4 +1,4 @@
-use libc::{ puts, malloc, free };
+use std::libc::{ puts, malloc, free };
 
 struct str {
     c_str: i8*,
@@ -8,26 +8,26 @@ struct str {
 impl str {
     pub func new(src: i8*) -> str* {
         var result: str* = str::__alloc__();
-        var index: i64 = 0;
-        while(src[index]!=(0 => i8)) {
+        var index = 0;
+        while (src[index] != 0) {
             index += 1;
         }
         result->c_str = malloc(index => u64);
         result->size = index;
         var i: i64 = 0;
-        while(i<=index) {
+        while (i<=index) {
             result->c_str[i] = src[i];
             i += 1;
         }
         return result;
     }
+
     pub func print(self) {
         puts(self->c_str);
-        return;
     }
+
     pub func free(self) {
         free(self->c_str);
-        return;
     }
 }
 
@@ -35,8 +35,12 @@ func main() -> i32 {
     var string: str* = str::new("[string.colgm] Hello World");
     string->print();
     string->free();
+    free(string => i8*);
+
     var another: str* = str::new("[string.colgm] Another String");
     another->print();
     another->free();
+    free(another => i8*);
+
     return 0;
 }

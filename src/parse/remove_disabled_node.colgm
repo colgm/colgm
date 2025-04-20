@@ -24,7 +24,7 @@ pub func check_enable_if(acc: ast_cond_compile*, co: cli_option*) -> bool {
         platform = co->platform;
     }
 
-    for (var i = acc->conds.iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; acc->conds) {
         if (!i.key()->eq(key_target_os.__ptr__()) &&
             !i.key()->eq(key_arch.__ptr__())) {
             return false;
@@ -59,8 +59,8 @@ pub func check_enable_if(acc: ast_cond_compile*, co: cli_option*) -> bool {
 pub func remove_disabled_node(node: root*, co: cli_option*) {
     var new_vec = primitive_vec<ptr<ast>>::instance();
 
-    for (var i: u64 = 0; i < node->decls.size; i += 1) {
-        var d = node->decls.get(i).unwrap();
+    foreach (var i; node->decls) {
+        var d = i.get().unwrap();
         if (!d->is(ast_kind::ast_cond_compile)) {
             new_vec.push(ptr<ast>::wrap(d));
             continue;

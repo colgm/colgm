@@ -575,6 +575,82 @@ bool ast2mir::visit_for_stmt(ast::for_stmt* node) {
     return true;
 }
 
+bool ast2mir::visit_forindex(ast::forindex* node) {
+    auto temp = block;
+
+    // for top level block will keep defined variable in live range
+    // util for loop exit
+    auto for_top_level = new mir_block(node->get_location());
+    block->add_content(for_top_level);
+
+    block = for_top_level;
+    node->get_lowered_init()->accept(this);
+    block = temp;
+
+    auto cond_block = new mir_block(node->get_lowered_condition()->get_location());
+    block = cond_block;
+    node->get_lowered_condition()->accept(this);
+    block = temp;
+
+    auto update_block = new mir_block(node->get_lowered_update()->get_location());
+    block = update_block;
+    node->get_lowered_update()->accept(this);
+    block = temp;
+
+    auto body_block = new mir_block(node->get_body()->get_location());
+    block = body_block;
+    for(auto i : node->get_body()->get_stmts()) {
+        i->accept(this);
+    }
+    block = temp;
+
+    for_top_level->add_content(new mir_loop(
+        node->get_location(),
+        cond_block,
+        body_block,
+        update_block
+    ));
+    return true;
+}
+
+bool ast2mir::visit_foreach(ast::foreach* node) {
+    auto temp = block;
+
+    // for top level block will keep defined variable in live range
+    // util for loop exit
+    auto for_top_level = new mir_block(node->get_location());
+    block->add_content(for_top_level);
+
+    block = for_top_level;
+    node->get_lowered_init()->accept(this);
+    block = temp;
+
+    auto cond_block = new mir_block(node->get_lowered_condition()->get_location());
+    block = cond_block;
+    node->get_lowered_condition()->accept(this);
+    block = temp;
+
+    auto update_block = new mir_block(node->get_lowered_update()->get_location());
+    block = update_block;
+    node->get_lowered_update()->accept(this);
+    block = temp;
+
+    auto body_block = new mir_block(node->get_body()->get_location());
+    block = body_block;
+    for(auto i : node->get_body()->get_stmts()) {
+        i->accept(this);
+    }
+    block = temp;
+
+    for_top_level->add_content(new mir_loop(
+        node->get_location(),
+        cond_block,
+        body_block,
+        update_block
+    ));
+    return true;
+}
+
 bool ast2mir::visit_ret_stmt(ast::ret_stmt* node) {
     auto value_block = new mir_block(node->get_value()?
         node->get_value()->get_location():node->get_location());

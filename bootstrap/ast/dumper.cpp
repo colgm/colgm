@@ -587,6 +587,38 @@ bool dumper::visit_for_stmt(for_stmt* node) {
     return true;
 }
 
+bool dumper::visit_forindex(forindex* node) {
+    dump_indent();
+    std::cout << "forindex" << format_location(node);
+    push_indent();
+    if (node->get_variable()) {
+        node->get_variable()->accept(this);
+    }
+    if (node->get_container()) {
+        node->get_container()->accept(this);
+    }
+    set_last();
+    node->get_body()->accept(this);
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_foreach(foreach* node) {
+    dump_indent();
+    std::cout << "foreach" << format_location(node);
+    push_indent();
+    if (node->get_variable()) {
+        node->get_variable()->accept(this);
+    }
+    if (node->get_container()) {
+        node->get_container()->accept(this);
+    }
+    set_last();
+    node->get_body()->accept(this);
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_in_stmt_expr(in_stmt_expr* node) {
     dump_indent();
     std::cout << "in_statement_expression" << format_location(node);

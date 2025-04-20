@@ -3,7 +3,9 @@ use std::list::{ list, primitive_list };
 use std::vec::{ vec, primitive_vec };
 use std::map::{ hashmap };
 use std::set::{ hashset };
+use std::queue::{ queue, primitive_queue };
 use std::str::{ str };
+use std::range::{ range };
 use std::io::{ io };
 
 func test_set() -> bool {
@@ -16,12 +18,13 @@ func test_set() -> bool {
     }
 
     var result = true;
-    for (var i = set.iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; set) {
         var n = i.elem();
         if (set.has(n)) {
-            io::stdout().green().out("[test]").reset().out(" hashset: ");
-            io::stdout().out(n->c_str).out(" found in bucket ");
-            io::stdout().out_u64(i.bucket_index).endln();
+            io::stdout().green().out("[test]").reset().out(" hashset: \"");
+            io::stdout().out(n->c_str).out("\" found in bucket ");
+            io::stdout().out_u64(i.bucket_index).out(" hash: ");
+            io::stdout().out_u64(n->hash()).endln();
         } else {
             io::stdout().red().out("[test]").reset().out(" hashset: ");
             io::stdout().out(n->c_str).out(" not found\n");
@@ -37,12 +40,12 @@ func test_hashmap() -> bool {
     var map = hashmap<str, str>::instance();
     var stored = vec<str>::instance();
 
-    for (var i = 0; i < 128; i += 1) {
+    foreach (var i; range(0, 128)) {
         var num = rand() % 4096;
         var k = str::instance();
         var v = str::instance();
         k.append_i64(num => i64);
-        v.append_i8_vec("[test hashmap<str, str> ");
+        v.append_i8_vec("[test ");
         v.append_i64(num => i64)->append_i8_vec("]");
         map.insert(k.__ptr__(), v.__ptr__());
         stored.push(k.__ptr__());
@@ -54,23 +57,23 @@ func test_hashmap() -> bool {
     for (var i = 0; i < 128; i += 1) {
         var key = stored.get(i => u64);
         if (map.has(key)) {
-            io::stdout().green().out("[test]").reset().out(" hashmap ");
-            io::stdout().out_i64(i).out(": key ");
-            io::stdout().out(key->c_str).out(" found -> ");
-            io::stdout().out(map.get(key)->c_str).endln();
+            io::stdout().green().out("[test]").reset().out(" hashmap: \"");
+            io::stdout().out(key->c_str).out("\" found -> \"");
+            io::stdout().out(map.get(key)->c_str).out("\" hash: ");
+            io::stdout().out_u64(key->hash()).endln();
         } else {
-            io::stdout().red().out("[test]").reset().out(" hashmap ");
-            io::stdout().out_i64(i).out(": ");
-            io::stdout().out(key->c_str).out(" not found\n");
+            io::stdout().red().out("[test]").reset().out(" hashmap: \"");
+            io::stdout().out(key->c_str).out("\" not found\n");
             result = false;
         }
     }
 
-    for (var i = map.iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; map) {
         io::stdout().green().out("[test]").reset();
-        io::stdout().out(" hashmap::iter ");
-        io::stdout().out(i.key()->c_str).out(" -> ").out(i.value()->c_str);
-        io::stdout().out(" in bucket ").out_u64(i.bucket_index).out("\n");
+        io::stdout().out(" hashmap::iter \"");
+        io::stdout().out(i.key()->c_str).out("\" -> \"").out(i.value()->c_str);
+        io::stdout().out("\" in bucket ").out_u64(i.bucket_index).out(" hash: ");
+        io::stdout().out_u64(i.key()->hash()).endln();
     }
 
     map.delete();
@@ -79,7 +82,7 @@ func test_hashmap() -> bool {
 }
 
 func list_dump(list: list<str>*) {
-    for (var i = list->iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; list) {
         io::stdout().green().out("[test]").reset().out(" list: ");
         io::stdout().out(i.elem()->c_str).endln();
     }
@@ -117,7 +120,7 @@ func test_list() {
 }
 
 func vec_dump(vec: vec<str>*) {
-    for (var i = vec->iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; vec) {
         io::stdout().green().out("[test]").reset().out(" vec[");
         io::stdout().out_u64(i.index()).out("]: ");
         io::stdout().out(i.get()->c_str).endln();
@@ -125,7 +128,7 @@ func vec_dump(vec: vec<str>*) {
 }
 
 func primitive_vec_dump(vec: primitive_vec<i64>*) {
-    for (var i = vec->iter(); !i.is_end(); i = i.next()) {
+    foreach (var i; vec) {
         io::stdout().green().out("[test]").reset().out(" vec[");
         io::stdout().out_u64(i.index()).out("]: ");
         io::stdout().out_i64(i.get()).endln();

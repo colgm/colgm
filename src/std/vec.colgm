@@ -18,7 +18,7 @@ impl vec<T> {
     pub func new() -> vec<T>* {
         var res = vec<T>::__alloc__();
         if (res == nil) {
-            panic("vec<T>::new: failed to allocate memory");
+            panic("failed to allocate memory");
         }
         res->size = 0;
         res->capacity = 4;
@@ -110,14 +110,14 @@ impl vec<T> {
 
     pub func back(self) -> T* {
         if (self->size == 0) {
-            panic("std::vec::back: empty vector");
+            panic("empty vector");
         }
         return self->data[self->size - 1];
     }
 
     pub func get(self, index: u64) -> T* {
         if (index >= self->size) {
-            panic("std::vec::get: index out of bounds");
+            panic("index out of bounds");
         }
         return self->data[index];
     }
@@ -125,40 +125,44 @@ impl vec<T> {
     pub func iter(self) -> iter<T> {
         return iter<T>::instance(self);
     }
+
+    pub func iter_size(self) -> u64 {
+        return self->size;
+    }
 }
 
 struct iter<T> {
-    vec: vec<T>*,
+    _vec: vec<T>*,
     _index: u64
 }
 
 impl iter<T> {
     pub func instance(v: vec<T>*) -> iter<T> {
         return iter<T> {
-            vec: v,
+            _vec: v,
             _index: 0
         };
     }
 
     pub func is_end(self) -> bool {
-        return self->_index >= self->vec->size;
+        return self->_index >= self->_vec->size;
     }
 
     pub func next(self) -> iter<T> {
-        if (self->_index >= self->vec->size) {
+        if (self->_index >= self->_vec->size) {
             return iter<T> {
-                vec: self->vec,
+                _vec: self->_vec,
                 _index: self->_index
             };
         }
         return iter<T> {
-            vec: self->vec,
+            _vec: self->_vec,
             _index: self->_index + 1
         };
     }
 
     pub func get(self) -> T* {
-        return self->vec->get(self->_index);
+        return self->_vec->get(self->_index);
     }
 
     pub func index(self) -> u64 {
@@ -170,7 +174,7 @@ impl primitive_vec<T> {
     pub func new() -> primitive_vec<T>* {
         var res = primitive_vec<T>::__alloc__();
         if (res == nil) {
-            panic("primitive_vec<T>::new: failed to allocate memory");
+            panic("failed to allocate memory");
         }
         res->size = 0;
         res->capacity = 4;
@@ -238,14 +242,14 @@ impl primitive_vec<T> {
 
     pub func back(self) -> T {
         if (self->size == 0) {
-            panic("std::primitive_vec::back: empty vector");
+            panic("empty vector");
         }
         return self->data[self->size - 1];
     }
 
     pub func pop_back(self) {
         if (self->size == 0) {
-            panic("std::primitive_vec::pop_back: empty vector");
+            panic("empty vector");
         }
         self->size -= 1;
     }
@@ -253,40 +257,44 @@ impl primitive_vec<T> {
     pub func iter(self) -> pv_iter<T> {
         return pv_iter<T>::instance(self);
     }
+
+    pub func iter_size(self) -> u64 {
+        return self->size;
+    }
 }
 
 struct pv_iter<T> {
-    vec: primitive_vec<T>*,
+    _vec: primitive_vec<T>*,
     _index: u64
 }
 
 impl pv_iter<T> {
     pub func instance(v: primitive_vec<T>*) -> pv_iter<T> {
         return pv_iter<T> {
-            vec: v,
+            _vec: v,
             _index: 0
         };
     }
 
     pub func is_end(self) -> bool {
-        return self->_index >= self->vec->size;
+        return self->_index >= self->_vec->size;
     }
 
     pub func next(self) -> pv_iter<T> {
-        if (self->_index >= self->vec->size) {
+        if (self->_index >= self->_vec->size) {
             return pv_iter<T> {
-                vec: self->vec,
+                _vec: self->_vec,
                 _index: self->_index
             };
         }
         return pv_iter<T> {
-            vec: self->vec,
+            _vec: self->_vec,
             _index: self->_index + 1
         };
     }
 
     pub func get(self) -> T {
-        return self->vec->get(self->_index);
+        return self->_vec->get(self->_index);
     }
 
     pub func index(self) -> u64 {

@@ -1,13 +1,17 @@
-# <img src="doc/colgm.svg" height="45px"/> Colgm Compiler Project
+# <img src="doc/logo/colgm.svg" height="45px"/> Colgm Compiler Project
 
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 [![nightly-build](https://github.com/colgm/colgm/actions/workflows/release.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/release.yml)
 
+- [__macos-aarch64-nightly-build__](https://github.com/colgm/colgm/releases/tag/macOS_nightly)
+- [__linux-x86_64-nightly-build__](https://github.com/colgm/colgm/releases/tag/linux_nightly)
+- [__windows-x86_64-nightly-build__ [WIP]](https://github.com/colgm/colgm/releases/tag/windows_nightly)
+
 ```rust
-use std::libc::puts;
+use std::io::io;
 
 pub func main() -> i32 {
-    puts("hello world!");
+    io::stdout().out("hello world!").endln();
     return 0;
 }
 ```
@@ -15,75 +19,83 @@ pub func main() -> i32 {
 ## Repo Content
 
 - [bootstrap](./bootstrap/README.md) : bootstrap compiler.
-- [src](./src/README.md) : self-host compiler.
+- [src](./src/main.colgm) : self-host compiler.
 - [test](./test): test cases.
 
-## Tutorial
+## Language Guide
 
-Welcome to try. See simple tutorial in [bootstrap/README.md](./bootstrap/README.md).
+See simple language guide in [doc/guide/tutorial.md](./doc/guide/tutorial.md).
 
-## Bootstrap Compiler
+## Build and Development
 
-- [macos-aarch64-nightly-build](https://github.com/colgm/colgm/releases/tag/macOS_nightly)
+### Requirements
 
-- [linux-x86_64-nightly-build](https://github.com/colgm/colgm/releases/tag/linux_nightly)
+Before building the project, here's the requirements:
 
-- [windows-x86_64-nightly-build __[WIP]__](https://github.com/colgm/colgm/releases/tag/windows_nightly)
+- python >= 3.8
+- llvm >= 13.0
+- cmake >= 3.21
+- zip
 
-Bootstrap compiler locates at `{repo_path}/bootstrap`, written by C++(`-std=c++17`):
+### Build
 
-Use these commands to build the bootstrap compiler, use `-DCMAKE_BUILD_TYPE=Debug` if want debug version:
+We suggest you to just follow the build script at [misc/build.py](./misc/build.py).
 
-```sh
-mkdir build && cd build
-cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release && make -j6
-```
-
-The executable is located as `build/colgm`.
-
-Then use this command to build self-host compiler:
+Use this command in top level directory:
 
 ```sh
-make colgm.ll
+python3 misc/build.py
 ```
 
-The self-host compiler should be `{repo_path}/colgm.ll`.
-If having `lli`(LLVM JIT interpreter), you could try this to
-execute self-host compiler:
+The build script will generate 3 executables in the `build`
+directory:
+
+1. `build/colgm`: bootstrap compiler (compiled by gcc/clang)
+2. `build/colgm_lifted`: lifted compiler (compiled by `build/colgm`)
+3. `build/colgm_selfhost`: self-host compiler (compiled by `build/colgm_lifted`)
+
+If only want to build the self-host compiler __after running the build script once__, you can use this to just build the self-host compiler:
 
 ```sh
-lli colgm.ll main.colgm --library .
+python3 misc/build.py -self
 ```
 
-LLVM JIT interpreter maybe unstable on some platforms,
-if `lli` crashed, try using `clang` to build to executable
-(suggested):
+### Test
+
+And use another script to test:
 
 ```sh
-clang colgm.ll -o colgm
+python3 misc/test.py
 ```
 
-If want to make `panic` print stack trace with function name, remember to use `-rdynamic`:
+### Code Style
 
-```sh
-clang -rdynamic colgm.ll -o colgm
-```
-
-On macOS this option is not necessary because attribute
-`frame-pointer=non-leaf` is added after function definition.
-
-## Self-Host Compiler
-
-Learn more about [Self-host compiler](./src/README.md)
+And for development, you should follow the [code style](./doc/spec/code_style.md).
 
 ## Features and Roadmap
 
-1. support foreach/forindex:
-    - forindex loop, container should have `size()` method
-    - foreach loop, container should have iterator-like stuff
-        - `iter()`, `next()` and `is_end()` method
-2. array type like `[i32; 128]`
+1. feature: array type `[<base-type>; 128]`
     - syntax like `var a: [i32; 128] = [1, 2, 3];`
     - syntax like `var a: [i8*; 128] = ["foo", "bar", tmp];`
-3. feature: [tagged union](./doc/spec/tagged_union.md)
-4. feature: [tuple](./doc/spec/tuple.md)
+2. feature: [Tagged Union](./doc/spec/tagged_union.md)
+3. feature: [Tuple](./doc/spec/tuple.md)
+4. feature: RAII
+5. feature: reference type
+6. feature: smart pointer
+7. feature: std
+    - [ ] Filesystem API (read, write, join, exists, etc)
+    - [ ] Datetime utils
+    - [ ] String and Unicode Helpers
+    - [ ] Math Utils
+    - [ ] map, filter, reduce, sort, reverse, etc
+    - [ ] JSON, TOML, YAML and other formats parsing
+    - [ ] networking (TCP Server and Client, HTTP Server on top of the TCP server)
+    - [ ] HTTP Utilities
+    - [ ] OS Utils (exec, env, args, etc)
+    - [ ] Typeof, is_type, etc
+    - [ ] Assert and Bench
+    - [ ] Logging
+    - [ ] Deprecation Marker
+    - [ ] Regex
+    - [ ] Package manager
+    - [ ] Docs generator

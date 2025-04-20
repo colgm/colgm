@@ -19,15 +19,12 @@ pub struct symbol_info {
 }
 
 impl symbol_info {
-    pub func new() -> symbol_info* {
-        var res = symbol_info::__alloc__();
-        if (res == nil) {
-            panic("symbol_info::new: failed to allocate memory");
-        }
-        res->kind = symbol_kind::error_kind;
-        res->loc_file = str::from("");
-        res->is_public = false;
-        return res;
+    pub func instance(k: symbol_kind, f: i8*, p: bool) -> symbol_info {
+        return symbol_info {
+            kind: k,
+            loc_file: str::from(f),
+            is_public: p
+        };
     }
 
     pub func delete(self) {
@@ -36,9 +33,20 @@ impl symbol_info {
 
     pub func copy(self) -> symbol_info* {
         var res = symbol_info::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->kind = self->kind;
         res->loc_file = self->loc_file.copy_instance();
         res->is_public = self->is_public;
         return res;
+    }
+
+    pub func copy_instance(self) -> symbol_info {
+        return symbol_info {
+            kind: self->kind,
+            loc_file: self->loc_file.copy_instance(),
+            is_public: self->is_public
+        };
     }
 }

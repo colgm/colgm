@@ -1,4 +1,4 @@
-use std::libc::{ open, read, write, close, strlen, itoa, utoa, malloc, free };
+use std::libc::{ open, read, write, close, strlen, itoa, utoa, free };
 use std::str::{ str };
 use err::panic::{ panic };
 
@@ -43,18 +43,15 @@ pub func readfile_into_string(filename: i8*, dst: str*) -> i64 {
         return fd => i64;
     }
 
-    var buff = [i8; 1024];
-    var readcount = read(fd, buff, 1023);
+    var buff = [i8; 4096];
+    var readcount = read(fd, buff, 4095);
+    buff[readcount] = 0;
+    dst->append_i8_vec(buff);
 
-    for (var index = 0; index < readcount; index += 1) {
-        dst->append_char(buff[index]);
-    }
-
-    while (readcount!=0) {
-        readcount = read(fd, buff, 1023);
-        for (var index = 0; index < readcount; index += 1) {
-            dst->append_char(buff[index]);
-        }
+    while (readcount != 0) {
+        readcount = read(fd, buff, 4095);
+        buff[readcount] = 0;
+        dst->append_i8_vec(buff);
     }
 
     close(fd);

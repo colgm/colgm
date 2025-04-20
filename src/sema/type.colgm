@@ -79,6 +79,9 @@ impl type {
 
     pub func copy(self) -> type* {
         var res = type::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->name = self->name.copy_instance();
         res->loc_file = self->loc_file.copy_instance();
         res->pointer_depth = self->pointer_depth;
@@ -132,9 +135,8 @@ impl type {
         if (self->pointer_depth >= 0) {
             return;
         }
-        io::stderr().out("invalid pointer depth: ")
-                   .out_i64(self->pointer_depth);
-        panic("type::check_pointer_depth(): invalid pointer depth");
+        io::stderr().out("invalid pointer depth: ").out_i64(self->pointer_depth);
+        panic("invalid pointer depth");
     }
 }
 
@@ -329,10 +331,9 @@ impl type {
         out.out(self->name.c_str).reset();
         if (self->generics.size > 0) {
             out.out("<");
-            for (var i: u64 = 0; i < self->generics.size; i += 1) {
-                var t = self->generics.get(i);
-                t->dump(out, pkg);
-                if (i != self->generics.size - 1) {
+            foreach (var i; self->generics) {
+                i.get()->dump(out, pkg);
+                if (i.index() != self->generics.size - 1) {
                     out.out(",");
                 }
             }
@@ -349,13 +350,12 @@ impl type {
         var res = str::from(self->name.c_str);
         if (self->generics.size > 0) {
             res.append_char('<');
-            for (var i: u64 = 0; i < self->generics.size; i += 1) {
-                var t = self->generics.get(i);
-                var t_fpn = t->full_path_name(pkg, true);
+            foreach (var i; self->generics) {
+                var t_fpn = i.get()->full_path_name(pkg, true);
                 res.append_i8_vec(t_fpn.c_str);
                 t_fpn.delete();
 
-                if (i != self->generics.size - 1) {
+                if (i.index() != self->generics.size - 1) {
                     res.append_char(',');
                 }
             }
@@ -373,13 +373,12 @@ impl type {
         res.append_str(self->name.__ptr__());
         if (self->generics.size > 0) {
             res.append_char('<');
-            for (var i: u64 = 0; i < self->generics.size; i += 1) {
-                var t = self->generics.get(i);
-                var t_fpn = t->full_path_name(pkg, true);
+            foreach (var i; self->generics) {
+                var t_fpn = i.get()->full_path_name(pkg, true);
                 res.append_i8_vec(t_fpn.c_str);
                 t_fpn.delete();
 
-                if (i != self->generics.size - 1) {
+                if (i.index() != self->generics.size - 1) {
                     res.append_char(',');
                 }
             }
@@ -409,6 +408,9 @@ impl symbol {
 
     pub func copy(self) -> symbol* {
         var res = symbol::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->name = self->name.copy_instance();
         res->type = self->type.copy_instance();
         res->loc = self->loc.copy_instance();

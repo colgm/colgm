@@ -1,6 +1,5 @@
 use std::str::{ str };
 use std::vec::{ vec };
-use std::libc::{ malloc, realloc, free, exit };
 use std::io::{ readfile_into_string, io };
 use std::fs::{ fs };
 
@@ -20,18 +19,15 @@ pub struct lexer {
 }
 
 impl lexer {
-    pub func new(e: report*) -> lexer* {
-        var res = lexer::__alloc__();
-        if (res == nil) {
-            panic("failed to allocate memory");
-        }
-        res->err = e;
-        res->toks = vec<token>::instance();
-        res->pos = 0;
-        res->filename.init();
-        res->line = 0;
-        res->column = 0;
-        return res;
+    pub func instance(e: report*) -> lexer {
+        return lexer {
+            err: e,
+            toks: vec<token>::instance(),
+            pos: 0,
+            filename: str::instance(),
+            line: 0,
+            column: 0
+        };
     }
 
     pub func delete(self) {
@@ -376,7 +372,7 @@ impl lexer {
         loc.begin_column = self->column;
 
         var tmp = str::instance();
-        while(self->pos < src->size &&
+        while (self->pos < src->size &&
               lexer::is_identifier_body(src->get(self->pos))) {
             tmp.append_char(src->get(self->pos));
             self->pos += 1;
@@ -408,7 +404,7 @@ impl lexer {
             src->get(self->pos + 1) == 'x') {
             tmp.append_i8_vec("0x");
             self->pos += 2;
-            while(self->pos < src->size && lexer::is_hex(src->get(self->pos))) {
+            while (self->pos < src->size && lexer::is_hex(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
             }
@@ -437,7 +433,7 @@ impl lexer {
             src->get(self->pos + 1) == 'o') {
             tmp.append_i8_vec("0o");
             self->pos += 2;
-            while(self->pos < src->size && lexer::is_oct(src->get(self->pos))) {
+            while (self->pos < src->size && lexer::is_oct(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
             }
@@ -465,7 +461,7 @@ impl lexer {
         // get integer part
         tmp.append_char(src->get(self->pos));
         self->pos += 1;
-        while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+        while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
             tmp.append_char(src->get(self->pos));
             self->pos += 1;
         }
@@ -510,7 +506,7 @@ impl lexer {
 
             tmp.append_char('.');
             self->pos += 1;
-            while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+            while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
             }
@@ -540,7 +536,7 @@ impl lexer {
             if (lexer::is_digit(src->get(lookahead_pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
-                while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+                while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
                     tmp.append_char(src->get(self->pos));
                     self->pos += 1;
                 }
@@ -564,7 +560,7 @@ impl lexer {
                 tmp.append_char(src->get(self->pos));
                 tmp.append_char(src->get(self->pos + 1));
                 self->pos += 2;
-                while(self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+                while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
                     tmp.append_char(src->get(self->pos));
                     self->pos += 1;
                 }
@@ -597,10 +593,10 @@ impl lexer {
     }
 
     func generate_string(self, src: str*) {
-        var loc = span::new();
-        loc->file.copy_const(self->filename.c_str);
-        loc->begin_line = self->line;
-        loc->begin_column = self->column;
+        var loc = span::instance();
+        loc.file.copy_const(self->filename.c_str);
+        loc.begin_line = self->line;
+        loc.begin_column = self->column;
 
         var quote_type = src->get(self->pos);
         var tmp = str::instance();
@@ -608,7 +604,7 @@ impl lexer {
         self->pos += 1;
         self->column += 1;
 
-        while(self->pos < src->size && src->get(self->pos) != quote_type) {
+        while (self->pos < src->size && src->get(self->pos) != quote_type) {
             var this_ch = src->get(self->pos);
             if (this_ch=='\n') {
                 self->line += 1;
@@ -662,11 +658,10 @@ impl lexer {
         }
 
         if (self->pos >= src->size) {
-            loc->end_line = self->line;
-            loc->end_column = self->column;
-            self->err->error(loc, "get <eof> when generating string.");
-            loc->delete();
-            free(loc => i8*);
+            loc.end_line = self->line;
+            loc.end_column = self->column;
+            self->err->error(loc.__ptr__(), "get <eof> when generating string.");
+            loc.delete();
             tmp.delete();
             return;
         }
@@ -675,20 +670,19 @@ impl lexer {
         self->pos += 1;
         self->column += 1;
 
-        loc->end_line = self->line;
-        loc->end_column = self->column;
+        loc.end_line = self->line;
+        loc.end_column = self->column;
 
         if (quote_type == '"') {
-            self->push_token(tok_kind::tok_str, tmp.__ptr__(), loc);
+            self->push_token(tok_kind::tok_str, tmp.__ptr__(), loc.__ptr__());
         } else {
             if (tmp.size != 1) {
-                self->err->error(loc, "should only contain one character.");
+                self->err->error(loc.__ptr__(), "should only contain one character.");
             }
-            self->push_token(tok_kind::tok_ch, tmp.__ptr__(), loc);
+            self->push_token(tok_kind::tok_ch, tmp.__ptr__(), loc.__ptr__());
         }
 
-        loc->delete();
-        free(loc => i8*);
+        loc.delete();
         tmp.delete();
     }
 
@@ -770,7 +764,7 @@ impl lexer {
     }
 
     func skip_note(self, src: str*) {
-        while(self->pos < src->size && src->get(self->pos) != '\n') {
+        while (self->pos < src->size && src->get(self->pos) != '\n') {
             self->pos += 1;
             self->column += 1;
         }
@@ -800,38 +794,38 @@ impl lexer {
         self->filename.copy_const(filename);
         self->err->load_file_source(filename);
 
-        var src = str::new();
-        readfile_into_string(filename, src);
+        var src = str::instance();
+        readfile_into_string(filename, src.__ptr__());
 
         self->pos = 0;
         self->line = 0;
         self->column = 0;
-        while(self->pos < src->size) {
-            if (lexer::is_note(self->pos, src)) {
-                self->skip_note(src);
-            } elsif (lexer::is_identifier_head(src->get(self->pos))) {
-                self->generate_identifier(src);
-            } elsif (lexer::is_digit(src->get(self->pos))) {
-                self->generate_number(src);
-            } elsif (lexer::is_str(src->get(self->pos))) {
-                self->generate_string(src);
-            } elsif (lexer::is_arrow(self->pos, src) ||
-                     lexer::is_wide_arrow(self->pos, src)) {
+        while (self->pos < src.size) {
+            if (lexer::is_note(self->pos, src.__ptr__())) {
+                self->skip_note(src.__ptr__());
+            } elsif (lexer::is_identifier_head(src.get(self->pos))) {
+                self->generate_identifier(src.__ptr__());
+            } elsif (lexer::is_digit(src.get(self->pos))) {
+                self->generate_number(src.__ptr__());
+            } elsif (lexer::is_str(src.get(self->pos))) {
+                self->generate_string(src.__ptr__());
+            } elsif (lexer::is_arrow(self->pos, src.__ptr__()) ||
+                     lexer::is_wide_arrow(self->pos, src.__ptr__())) {
                 // need to be put before normal operator scan process
                 // otherwise `=>` will be recognized as `=` `>`
-                self->generate_arrow(src);
-            } elsif (lexer::is_single_char_token(src->get(self->pos))) {
-                self->generate_single_char_token(src);
-            } elsif (lexer::need_lookahead_eq(src->get(self->pos))) {
-                self->generate_maybe_need_eq_oprs(src);
-            } elsif (lexer::need_lookahead_other(src->get(self->pos))) {
-                self->generate_lookahead_other(src);
-            } elsif (src->get(self->pos)==':') {
-                self->generate_coloncolon(src);
-            } elsif (src->get(self->pos)=='.') {
-                self->generate_ellipsis(src);
+                self->generate_arrow(src.__ptr__());
+            } elsif (lexer::is_single_char_token(src.get(self->pos))) {
+                self->generate_single_char_token(src.__ptr__());
+            } elsif (lexer::need_lookahead_eq(src.get(self->pos))) {
+                self->generate_maybe_need_eq_oprs(src.__ptr__());
+            } elsif (lexer::need_lookahead_other(src.get(self->pos))) {
+                self->generate_lookahead_other(src.__ptr__());
+            } elsif (src.get(self->pos)==':') {
+                self->generate_coloncolon(src.__ptr__());
+            } elsif (src.get(self->pos)=='.') {
+                self->generate_ellipsis(src.__ptr__());
             } else {
-                if (src->get(self->pos)=='\n') {
+                if (src.get(self->pos)=='\n') {
                     self->line += 1;
                     self->column = 0;
                 } else {
@@ -844,13 +838,12 @@ impl lexer {
         self->generate_eof_token();
 
         // lifetime end for src
-        src->delete();
-        free(src => i8*);
+        src.delete();
     }
 
     pub func dump(self, out: io) {
         var index: u64 = 0;
-        while(index < self->toks.size) {
+        while (index < self->toks.size) {
             var loc = self->toks.get(index)->location;
             out.out(self->toks.get(index)->tok_kind_to_str())
                .out(" [").out(loc.file.c_str)

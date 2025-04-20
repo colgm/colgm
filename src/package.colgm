@@ -2,7 +2,6 @@ use std::str::{ str };
 use std::io::{ io };
 use std::map::{ hashmap };
 
-use err::report::{ report };
 use err::panic::{ panic };
 
 pub enum p_status {
@@ -24,14 +23,23 @@ impl package_info {
 
     pub func copy(self) -> package_info* {
         var res = package_info::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->path = self->path.copy_instance();
         res->status = self->status;
         return res;
     }
+
+    pub func copy_instance(self) -> package_info {
+        return  package_info {
+            path: self->path.copy_instance(),
+            status: self->status
+        };
+    }
 }
 
 pub struct package {
-    err: report*,
     library_path: str,
     file_mapper: hashmap<str, package_info>,
     file_to_module: hashmap<str, str>,
@@ -39,17 +47,13 @@ pub struct package {
 }
 
 impl package {
-    pub func new(e: report*) -> package* {
-        var res = package::__alloc__();
-        if (res == nil) {
-            panic("package::new: failed to allocate memory");
-        }
-        res->err = e;
-        res->library_path = str::instance();
-        res->file_mapper = hashmap<str, package_info>::instance();
-        res->file_to_module = hashmap<str, str>::instance();
-        res->module_to_file = hashmap<str, str>::instance();
-        return res;
+    pub func instance() -> package {
+        return package {
+            library_path: str::instance(),
+            file_mapper: hashmap<str, package_info>::instance(),
+            file_to_module: hashmap<str, str>::instance(),
+            module_to_file: hashmap<str, str>::instance()
+        };
     }
 
     pub func delete(self) {

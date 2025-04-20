@@ -2,6 +2,7 @@ use std::str::{ str };
 use std::map::{ hashmap };
 use std::io::{ io };
 
+use err::panic::{ panic };
 use package::{ package };
 
 use sema::function::{ colgm_func };
@@ -52,6 +53,9 @@ impl colgm_module {
 
     pub func copy(self) -> colgm_module* {
         var res = colgm_module::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
         res->file_name = self->file_name.copy_instance();
         res->enums = self->enums.copy_instance();
         res->structs = self->structs.copy_instance();
@@ -61,6 +65,19 @@ impl colgm_module {
         res->global_symbol = self->global_symbol.copy_instance();
         res->generic_symbol = self->generic_symbol.copy_instance();
         return res;
+    }
+
+    pub func copy_instance(self) -> colgm_module {
+        return colgm_module {
+            file_name: self->file_name.copy_instance(),
+            enums: self->enums.copy_instance(),
+            structs: self->structs.copy_instance(),
+            functions: self->functions.copy_instance(),
+            generic_structs: self->generic_structs.copy_instance(),
+            generic_functions: self->generic_functions.copy_instance(),
+            global_symbol: self->global_symbol.copy_instance(),
+            generic_symbol: self->generic_symbol.copy_instance()
+        };
     }
 }
 
@@ -81,31 +98,31 @@ impl colgm_module {
         }
         out.out(":\n");
         if (self->enums.size > 0) {
-            for (var i = self->enums.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; self->enums) {
                 i.value()->dump(out);
             }
         }
 
         if (self->structs.size > 0) {
-            for (var i = self->structs.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; self->structs) {
                 i.value()->dump(out, pkg);
             }
         }
 
         if (self->generic_structs.size > 0) {
-            for (var i = self->generic_structs.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; self->generic_structs) {
                 i.value()->dump(out, pkg);
             }
         }
 
         if (self->functions.size > 0) {
-            for (var i = self->functions.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; self->functions) {
                 i.value()->dump(out, pkg, "");
             }
         }
 
         if (self->generic_functions.size > 0) {
-            for (var i = self->generic_functions.iter(); !i.is_end(); i = i.next()) {
+            foreach (var i; self->generic_functions) {
                 i.value()->dump(out, pkg, "");
             }
         }

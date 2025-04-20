@@ -1,0 +1,62 @@
+use std::vec::{ vec };
+use std::str::{ str };
+use std::queue::{ queue };
+use std::io::{ io };
+
+func test_generic_instantiation_in_for_iter() {
+    io::stdout().out("[for_iter.colgm] test_generic_instantiation_in_for_iter").endln();
+
+    var need_check = vec<str>::instance();
+    foreach (var s; need_check) {
+        // if generic type collector does not visit this block
+        // queue<str> will not be registered, an error will be thrown
+        var bfs = queue<str>::instance();
+        bfs.delete();
+    }
+    need_check.delete();
+}
+
+pub func main() -> i32 {
+    io::stdout().out("[for_iter.colgm] testing").endln();
+    var a = vec<str>::instance();
+    var b = a.__ptr__();
+    for (var i = 0; i < 32; i += 1) {
+        var s = str::from_i64(i);
+        a.push(s.__ptr__());
+        s.delete();
+    }
+
+    forindex (var i; a) {
+        io::stdout().out("[for_iter.colgm] forindex container ")
+            .out_u64(i).out(": ")
+            .out(a.get(i)->c_str).endln();
+    }
+    forindex (var i; a)
+        io::stdout().out("[for_iter.colgm] forindex container ")
+            .out_u64(i).out(": ")
+            .out(a.get(i)->c_str).endln();
+
+    foreach (var i; a) {
+        io::stdout().out("[for_iter.colgm] foreach container ")
+            .out(i.get()->c_str).endln();
+    }
+    foreach (var i; a)
+        io::stdout().out("[for_iter.colgm] foreach container ")
+            .out(i.get()->c_str).endln();
+
+    forindex (var i; b) {
+        io::stdout().out("[for_iter.colgm] forindex container ptr ")
+            .out_u64(i).out(": ")
+            .out(b->get(i)->c_str).endln();
+    }
+
+    foreach (var i; b) {
+        io::stdout().out("[for_iter.colgm] foreach container ptr ")
+            .out(i.get()->c_str).endln();
+    }
+
+    a.delete();
+
+    test_generic_instantiation_in_for_iter();
+    return 0;
+}

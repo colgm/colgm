@@ -1,5 +1,5 @@
 use std::str::{ str };
-use std::libc::{ malloc, free, streq };
+use std::libc::{ malloc, free };
 use std::list::{ list, list_iter };
 use std::io::{ io };
 
@@ -15,28 +15,25 @@ impl hashset<T> {
     pub func new() -> hashset<T>* {
         var res = hashset<T>::__alloc__();
         if (res == nil) {
-            panic("hashset<T>::new: failed to allocate memory");
+            panic("failed to allocate memory");
         }
-        res->size = 0;
-        res->bucket_capacity = 1024;
-        res->bucket = malloc(res->bucket_capacity * list<T>::__size__()) => list<T>*;
-        for (var i: u64 = 0; i < res->bucket_capacity; i += 1) {
-            res->bucket[i] = list<T>::instance();
-        }
+        res->init();
         return res;
     }
 
     pub func instance() -> hashset<T> {
-        var res = hashset<T> {
-            size: 0,
-            bucket_capacity: 1024,
-            bucket: nil
-        };
-        res.bucket = malloc(res.bucket_capacity * list<T>::__size__()) => list<T>*;
-        for (var i: u64 = 0; i < res.bucket_capacity; i += 1) {
-            res.bucket[i] = list<T>::instance();
-        }
+        var res = hashset<T> {};
+        res.init();
         return res;
+    }
+
+    func init(self) {
+        self->size = 0;
+        self->bucket_capacity = 512;
+        self->bucket = malloc(self->bucket_capacity * list<T>::__size__()) => list<T>*;
+        for (var i: u64 = 0; i < self->bucket_capacity; i += 1) {
+            self->bucket[i] = list<T>::instance();
+        }
     }
 
     pub func delete(self) {
@@ -63,7 +60,7 @@ impl hashset<T> {
         var bucket = self->bucket[hash].__ptr__();
         var tmp = bucket->head;
         while (tmp != nil) {
-            if (tmp->elem->eq(item)) {
+            if (tmp->elem.eq(item)) {
                 return true;
             }
             tmp = tmp->next;
@@ -82,7 +79,7 @@ impl hashset<T> {
         var bucket = self->bucket[hash].__ptr__();
         var tmp = bucket->head;
         while (tmp != nil) {
-            if (tmp->elem->eq(item)) {
+            if (tmp->elem.eq(item)) {
                 return;
             }
             tmp = tmp->next;
