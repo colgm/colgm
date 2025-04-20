@@ -68,19 +68,34 @@ And use another script to test:
 python3 misc/test.py
 ```
 
-Then it will build the bootstrap compiler and self-host compiler,
-and try to build the self-host compiler by itself
-(maybe as a test, who knows).
+### Code Style
 
 And for development, you should follow the [code style](./doc/spec/code_style.md).
 
 ## Features and Roadmap
 
-1. array type `[<base-type>; 128]`
+1. feature: array type `[<base-type>; 128]`
     - syntax like `var a: [i32; 128] = [1, 2, 3];`
     - syntax like `var a: [i8*; 128] = ["foo", "bar", tmp];`
-2. feature: [tagged union](./doc/spec/tagged_union.md)
-3. feature: [tuple](./doc/spec/tuple.md)
+2. feature: [Tagged Union](./doc/spec/tagged_union.md)
+3. feature: [Tuple](./doc/spec/tuple.md)
 4. feature: RAII
 5. feature: reference type
 6. feature: smart pointer
+7. feature: std
+    - [ ] Filesystem API (read, write, join, exists, etc)
+    - [ ] Datetime utils
+    - [ ] String and Unicode Helpers
+    - [ ] Math Utils
+    - [ ] map, filter, reduce, sort, reverse, etc
+    - [ ] JSON, TOML, YAML and other formats parsing
+    - [ ] networking (TCP Server and Client, HTTP Server on top of the TCP server)
+    - [ ] HTTP Utilities
+    - [ ] OS Utils (exec, env, args, etc)
+    - [ ] Typeof, is_type, etc
+    - [ ] Assert and Bench
+    - [ ] Logging
+    - [ ] Deprecation Marker
+    - [ ] Regex
+    - [ ] Package manager
+    - [ ] Docs generator

@@ -118,9 +118,9 @@ impl colgm_func {
         // print generic template
         if (self->generic_template.size > 0) {
             out.out("<");
-            for (var i: u64 = 0; i < self->generic_template.size; i += 1) {
-                out.out(self->generic_template.get(i)->c_str);
-                if (i != self->generic_template.size - 1) {
+            foreach (var i; self->generic_template) {
+                out.out(i.get()->c_str);
+                if (i.index() != self->generic_template.size - 1) {
                     out.out(", ");
                 }
             }
@@ -128,11 +128,10 @@ impl colgm_func {
         }
 
         out.out("(");
-        for (var i: u64 = 0; i < self->param_name.size; i += 1) {
-            var n = self->param_name.get(i);
-            out.out(n->c_str).out(": ");
-            self->param_type.get(i)->dump(out, pkg);
-            if (i != self->param_name.size - 1) {
+        foreach (var i; self->param_name) {
+            out.out(i.get()->c_str).out(": ");
+            self->param_type.get(i.index())->dump(out, pkg);
+            if (i.index() != self->param_name.size - 1) {
                 out.out(", ");
             }
         }

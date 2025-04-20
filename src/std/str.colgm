@@ -313,4 +313,40 @@ impl str {
         }
         return hash;
     }
+
+    pub func iter(self) -> str_iterator {
+        return str_iterator {
+            __src: self,
+            __pos: 0
+        };
+    }
+}
+
+struct str_iterator {
+    __src: str*,
+    __pos: u64
+}
+
+impl str_iterator {
+    pub func is_end(self) -> bool {
+        return self->__pos >= self->__src->size;
+    }
+
+    pub func next(self) -> str_iterator {
+        return str_iterator {
+            __src: self->__src,
+            __pos: self->__pos + 1
+        };
+    }
+
+    pub func get(self) -> i8 {
+        if (self->is_end()) {
+            panic("iterator out of range");
+        }
+        return self->__src->c_str[self->__pos];
+    }
+
+    pub func index(self) -> u64 {
+        return self->__pos;
+    }
 }
