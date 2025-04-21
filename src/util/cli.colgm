@@ -1,6 +1,7 @@
 use std::io::{ io };
 use std::libc::{ exit, streq };
 use std::fs::{ fs };
+use std::time::{ time_mod };
 
 use util::misc::{ get_platform, get_arch, get_target_triple };
 use util::clang_finder::{ find_clang };
@@ -139,6 +140,7 @@ pub func help() {
 
 pub func logo(executable: i8*) {
     var possible_clang = find_clang();
+    var current_time = time_mod::localtime();
 
     io::stdout()
     .out("                __              \n")
@@ -151,7 +153,9 @@ pub func logo(executable: i8*) {
     .out("arch    : ").out(get_platform()).out(" ").out(get_arch()).out("\n")
     .out("target  : ").out(get_target_triple()).out("\n")
     .out("repo    : https://github.com/colgm/colgm\n")
-    .out("license : Apache 2.0\n");
+    .out("license : Apache 2.0\n")
+    .out("now     : ").out(current_time.c_str).endln();
+    current_time.delete();
 
     if (possible_clang.empty()) {
         io::stdout().out("clang   : no clang found on this machine\n");

@@ -1,0 +1,49 @@
+use std::str::{ str };
+
+// maybe unused, only used on 32 bit platforms
+struct __time32_t { data: i32  }
+
+// used on 64 bit platforms
+pub struct time_t {
+    data: i64
+}
+
+impl time_t {
+    pub func to_u32(self) -> u32 {
+        return self->data => u32;
+    }
+}
+
+struct tm {
+    tm_sec: i32,
+    tm_min: i32,
+    tm_hour: i32,
+    tm_mday: i32,
+    tm_mon: i32,
+    tm_year: i32,
+    tm_wday: i32,
+    tm_yday: i32,
+    tm_isdst: i32
+}
+
+pub extern func time(t: time_t*) -> time_t;
+pub extern func localtime(t: time_t*) -> tm*;
+pub extern func strftime(s: i8*, max: i64, format: const i8*, tm: tm*);
+pub extern func difftime(t1: time_t, t2: time_t) -> f64;
+
+pub struct time_mod {}
+
+impl time_mod {
+    pub func timestamp() -> time_t {
+        var current_time = time_t {};
+        time(current_time.__ptr__());
+        return current_time;
+    }
+    pub func localtime() -> str {
+        var current_time = time_mod::timestamp();
+        var timeinfo = localtime(current_time.__ptr__());
+        var buffer = [i8 ; 128];
+        strftime(buffer, 127, "%Y-%m-%d %H:%M:%S", timeinfo);
+        return str::from(buffer);
+    }
+}
