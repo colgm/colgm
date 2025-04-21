@@ -130,7 +130,7 @@ impl sema {
     }
 
     func resolve_string_literal(self, n: ast_string_literal*) -> type {
-        var ty = type::i8_type(1);
+        var ty = type::const_str_literal_type();
         self->ctx->constant_string.insert(n->literal.__ptr__());
         n->base.resolved_type.reset_with(ty.__ptr__());
         return ty;
@@ -159,7 +159,7 @@ impl sema {
 
         var type_infer = self->tr.resolve(n->type);
         type_infer.pointer_depth += 1;
-        type_infer.is_immutable = true;
+        type_infer.is_array = true;
         n->base.resolved_type.reset_with(type_infer.__ptr__());
         return type_infer;
     }
@@ -1078,7 +1078,8 @@ impl sema {
 
         var infer = prev->copy_instance();
         infer.pointer_depth -= 1;
-        infer.is_immutable = false;
+        // remove array type flag to make it mutable
+        infer.is_array = false;
         n->base.resolved_type.reset_with(infer.__ptr__());
         return infer;
     }
@@ -1508,15 +1509,22 @@ impl sema {
     }
 
     func check_mutable_left_value(self, n: ast_call*, left: type*) {
-        if (!left->is_immutable) {
-            return;
-        }
-        var info = str::from("cannot assign to \"const ");
         var l_name = left->full_path_name(self->pkg, true);
-        info.append_str(l_name.__ptr__());
-        info.append_i8_vec("\"");
-        self->err->error(n->base.location.__ptr__(), info.c_str);
-        info.delete();
+        
+        if (left->is_const && !left->is_pointer()) {
+            var info = str::from("cannot assign to \"const ");
+            info.append_str(l_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location.__ptr__(), info.c_str);
+            info.delete();
+        } else if (left->is_array) {
+            var info = str::from("cannot change array \"");
+            info.append_str(l_name.__ptr__());
+            info.append_i8_vec("\"");
+            self->err->error(n->base.location.__ptr__(), info.c_str);
+            info.delete();
+        }
+
         l_name.delete();
     }
 
@@ -1840,7 +1848,7 @@ impl sema {
         }
 
         // if immutable, make sure the type is correct
-        if (real_type.is_immutable) {
+        if (real_type.is_const || real_type.is_array) {
             n->base.resolved_type.reset_with(real_type.__ptr__());
             self->ctx->add_local_var(name, real_type.__ptr__());
             self->check_defined_variable_is_void(n, real_type.__ptr__());

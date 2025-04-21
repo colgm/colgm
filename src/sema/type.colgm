@@ -43,8 +43,9 @@ pub struct type {
     pointer_depth: i64,
     is_global_sym: bool,          // global symbol
     is_global_func: bool,         // global function
-    is_enum: bool,                // enum
-    is_immutable: bool,           // immutable
+    is_enum: bool,                // enum type
+    is_array: bool,               // array type
+    is_const: bool,               // const type
     is_generic_placeholder: bool, // generic placeholder
 
     stm_info: method_info,        // struct methods
@@ -70,7 +71,8 @@ impl type {
         self->is_global_sym = t->is_global_sym;
         self->is_global_func = t->is_global_func;
         self->is_enum = t->is_enum;
-        self->is_immutable = t->is_immutable;
+        self->is_array = t->is_array;
+        self->is_const = t->is_const;
         self->is_generic_placeholder = t->is_generic_placeholder;
         self->stm_info = t->stm_info.copy_instance();
         self->prm_info = t->prm_info.copy_instance();
@@ -88,7 +90,8 @@ impl type {
         res->is_global_sym = self->is_global_sym;
         res->is_global_func = self->is_global_func;
         res->is_enum = self->is_enum;
-        res->is_immutable = self->is_immutable;
+        self->is_array = self->is_array;
+        res->is_const = self->is_const;
         res->is_generic_placeholder = self->is_generic_placeholder;
         res->stm_info = self->stm_info.copy_instance();
         res->prm_info = self->prm_info.copy_instance();
@@ -104,7 +107,8 @@ impl type {
             is_global_sym: self->is_global_sym,
             is_global_func: self->is_global_func,
             is_enum: self->is_enum,
-            is_immutable: self->is_immutable,
+            is_array: self->is_array,
+            is_const: self->is_const,
             is_generic_placeholder: self->is_generic_placeholder,
             stm_info: self->stm_info.copy_instance(),
             prm_info: self->prm_info.copy_instance(),
@@ -148,7 +152,8 @@ impl type {
         self->is_global_sym = false;
         self->is_global_func = false;
         self->is_enum = false;
-        self->is_immutable = false;
+        self->is_array = false;
+        self->is_const = false;
         self->is_generic_placeholder = false;
         self->stm_info = method_info::instance();
         self->prm_info = method_info::instance();
@@ -243,6 +248,14 @@ impl type {
     pub func default_match_type() -> type {
         var res = type::instance();
         res.name.append_i8_vec("<match-default>");
+        return res;
+    }
+
+    pub func const_str_literal_type() -> type {
+        var res = type::instance();
+        res.name.append_i8_vec("i8");
+        res.pointer_depth = 1;
+        res.is_const = true;
         return res;
     }
 

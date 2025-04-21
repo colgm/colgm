@@ -35,8 +35,9 @@ struct type {
     i64 pointer_depth = 0;
     bool is_global = false;      // global symbol
     bool is_global_func = false; // global func
-    bool is_enum = false;        // enum
-    bool is_immutable = false;   // immutable
+    bool is_enum = false;        // enum type
+    bool is_array = false;       // array type
+    bool is_const = false;       // const type
     bool is_generic_placeholder = false; // generic placeholder
 
     struct_method_info stm_info; // struct methods
@@ -89,6 +90,12 @@ public:
     static const type f32_type(i64 plvl = 0) { return {"f32", "", plvl}; }
     static const type void_type(i64 plvl = 0) { return {"void", "", plvl}; }
     static const type bool_type(i64 plvl = 0) { return {"bool", "", plvl}; }
+
+    static const type const_str_literal_type() {
+        auto t = type::i8_type(1);
+        t.is_const = true;
+        return t;
+    }
 
 public:
     bool is_error() const { return name=="<err>"; }

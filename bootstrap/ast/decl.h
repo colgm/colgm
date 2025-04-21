@@ -50,7 +50,7 @@ private:
     identifier* name;
     generic_type_list* generic_types;
     i64 pointer_depth;
-    bool is_const;
+    bool is_const; // mark if the type is const
 
 public:
     type_def(const span& loc):

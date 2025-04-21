@@ -64,7 +64,7 @@ type type_resolver::resolve(ast::type_def* node) {
 
     // if node has const flag, set it
     if (node->is_constant()) {
-        res.is_immutable = true;
+        res.is_const = true;
     }
 
     // if node has generics and we can find it, set it as the place holder

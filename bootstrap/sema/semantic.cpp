@@ -462,8 +462,8 @@ type semantic::resolve_number_literal(number_literal* node) {
 
 type semantic::resolve_string_literal(string_literal* node) {
     ctx.global.constant_string.insert(node->get_string());
-    node->set_resolve_type(type::i8_type(1));
-    return type::i8_type(1);
+    node->set_resolve_type(type::const_str_literal_type());
+    return type::const_str_literal_type();
 }
 
 type semantic::resolve_char_literal(char_literal* node) {
@@ -484,7 +484,7 @@ type semantic::resolve_array_literal(array_literal* node) {
     const auto type_infer = tr.resolve(node->get_type());
     node->set_resolve_type(type_infer.get_pointer_copy());
     auto result_type = type_infer.get_pointer_copy();
-    result_type.is_immutable = true;
+    result_type.is_array = true;
     return result_type;
 }
 
@@ -800,8 +800,9 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
     }
 
     auto result = prev.get_ref_copy();
-    if (result.is_immutable) {
-        result.is_immutable = false;
+    // array type, remove array flag to make it mutable
+    if (result.is_array) {
+        result.is_array = false;
     }
     node->set_resolve_type(result);
     return result;
@@ -1098,9 +1099,10 @@ bool semantic::check_valid_left_value(expr* node) {
 }
 
 void semantic::check_mutable_left_value(expr* node, const type& lt) {
-    if (lt.is_immutable) {
+    if (lt.is_const && !lt.is_pointer()) {
         rp.report(node, "cannot assign to \"const " + lt.to_string() + "\".");
-        return;
+    } else if (lt.is_array) {
+        rp.report(node, "cannot change array \"" + lt.to_string() + "\".");
     }
     return;
 }
@@ -1240,7 +1242,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     }
 
     // if immutable, make sure the type is correct
-    if (real_type.is_immutable) {
+    if (real_type.is_const || real_type.is_array) {
         node->set_resolve_type(real_type);
         ctx.add_local(name, real_type);
         check_defined_variable_is_void(node, real_type);

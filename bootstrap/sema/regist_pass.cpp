@@ -20,7 +20,7 @@ ast::type_def* type_replace_pass::generate_generic_type(const type& t,
     new_def->set_name(new identifier(loc, t.name));
     new_def->get_name()->set_redirect_location(t.loc_file);
     new_def->set_redirect_location(t.loc_file);
-    if (t.is_immutable) {
+    if (t.is_const) {
         new_def->set_constant();
     }
     for (i64 i = 0; i < t.pointer_depth; ++i) {
