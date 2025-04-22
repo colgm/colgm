@@ -1,7 +1,13 @@
 use std::str::{ str };
 
+use err::panic::{ panic };
+
+enum clockid_t {
+    CLOCK_REALTIME = 0
+}
+
 // maybe unused, only used on 32 bit platforms
-struct __time32_t { data: i32  }
+struct __time32_t { data: i32 }
 
 // used on 64 bit platforms
 pub struct time_t {
@@ -12,6 +18,12 @@ impl time_t {
     pub func to_u32(self) -> u32 {
         return self->data => u32;
     }
+}
+
+// used on 64 bit platforms
+pub struct timespec {
+    tv_sec: i64,
+    tv_nsec: i64
 }
 
 struct tm {
@@ -30,20 +42,53 @@ pub extern func time(t: time_t*) -> time_t;
 pub extern func localtime(t: time_t*) -> tm*;
 pub extern func strftime(s: i8*, max: i64, format: const i8*, tm: tm*);
 pub extern func difftime(t1: time_t, t2: time_t) -> f64;
+pub extern func clock_gettime(clock_id: i32, tp: timespec*) -> i32;
 
-pub struct time_mod {}
+pub struct chrono {}
 
-impl time_mod {
+impl chrono {
     pub func timestamp() -> time_t {
         var current_time = time_t {};
         time(current_time.__ptr__());
         return current_time;
     }
+
     pub func localtime() -> str {
-        var current_time = time_mod::timestamp();
+        var current_time = chrono::timestamp();
         var timeinfo = localtime(current_time.__ptr__());
         var buffer = [i8 ; 128];
         strftime(buffer, 127, "%Y-%m-%d %H:%M:%S", timeinfo);
         return str::from(buffer);
+    }
+
+    pub func high_resolution_time() -> timespec {
+        var tp = timespec {};
+        if (clock_gettime(clockid_t::CLOCK_REALTIME => i32, tp.__ptr__()) == -1) {
+            panic("clock_gettime failed");
+        }
+        return tp;
+    }
+
+    pub func duraction_ns(start: timespec, end: timespec) -> f64 {
+        var sec = end.tv_sec - start.tv_sec;
+        var nsec = end.tv_nsec - start.tv_nsec;
+        if (nsec < 0) {
+            sec -= 1;
+            nsec += 1000000000;
+        }
+
+        return (sec => f64) * 1000000000.0 + nsec => f64;
+    }
+
+    pub func duraction_us(start: timespec, end: timespec) -> f64 {
+        return chrono::duraction_ns(start, end) / 1000.0;
+    }
+
+    pub func duraction_ms(start: timespec, end: timespec) -> f64 {
+        return chrono::duraction_us(start, end) / 1000.0;
+    }
+
+    pub func duraction_s(start: timespec, end: timespec) -> f64 {
+        return chrono::duraction_ms(start, end) / 1000.0;
     }
 }
