@@ -17,7 +17,9 @@ use package::{ package, p_status };
 use ast::ast::*;
 use lex::lexer::{ lexer };
 use parse::parser::{ parser };
+
 use util::cli::{ cli_option };
+use util::timestamp::{ maketimestamp };
 use util::to_num::{ str_to_num };
 
 use sema::symbol_info::{ symbol_kind, symbol_info };
@@ -214,10 +216,8 @@ impl regist_pass {
     }
 
     func compile_module(self, name: str*, path: str*) -> bool {
-        if (self->co->VERBOSE) {
-            io::stdout().green().out("[ SEMANTIC ] ").reset();
-            io::stdout().out("Compiling module <").out(name->c_str).out(">").endln();
-        }
+        var ts = maketimestamp();
+        ts.stamp();
 
         // change package status
         var info = self->pkg->get_package_info(name);
@@ -267,6 +267,11 @@ impl regist_pass {
         semantic.delete();
 
         info->status = p_status::analysed;
+        if (self->co->VERBOSE) {
+            io::stdout().green().out("[ SEMANTIC ] ").reset();
+            io::stdout().out("Finish module <").out(name->c_str);
+            io::stdout().out("> ").out_f64(ts.elapsed_msec()).out(" ms\n");
+        }
 
         // ctx's this file maybe over-written, set it back
         self->ctx->this_file.clear();

@@ -2,6 +2,7 @@ use sir::sir::{ sir_kind, sir_call };
 use sir::context::{ sir_func, sir_context };
 
 use std::io::{ io };
+use util::timestamp::{ maketimestamp };
 
 func adjust_posix_open(f: sir_func*) -> i64 {
     var adjust_count = 0;
@@ -24,12 +25,20 @@ func adjust_posix_open(f: sir_func*) -> i64 {
 }
 
 pub func adjust_va_arg(ctx: sir_context*, verbose: bool) {
+    if (verbose) {
+        io::stdout().green().out("[ SIR-PASS ] ").reset();
+        io::stdout().out("Run adjust va_arg call: ");
+    }
+    var ts = maketimestamp();
+    ts.stamp();
+
     var adjust_count = 0;
     foreach (var i; ctx->func_impls) {
         adjust_count += adjust_posix_open(i.get());
     }
+
     if (verbose) {
-        io::stdout().green().out("[ SIR-PASS ] ").reset();
-        io::stdout().out("Run adjust va_arg call: ").out_i64(adjust_count).endln();
+        io::stdout().cyan().out_i64(adjust_count).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
     }
 }

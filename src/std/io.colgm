@@ -1,4 +1,4 @@
-use std::libc::{ open, read, write, close, strlen, itoa, utoa, free };
+use std::libc::{ open, read, write, close, strlen, itoa, utoa, gcvt, free };
 use std::str::{ str };
 use err::panic::{ panic };
 
@@ -155,6 +155,23 @@ impl io {
 
         var buff = [i8; 256];
         utoa(info, buff, 10);
+        if (self->cache == nil) {
+            write(self->fd, buff, strlen(buff));
+        } else {
+            self->cache->append_i8_vec(buff);
+            self->check_and_flush();
+        }
+        return self[0];
+    }
+
+    pub func out_f64(self, info: f64) -> io {
+        // do nothing if is stdin
+        if (self->fd == 0) {
+            return self[0];
+        }
+
+        var buff = [i8; 32];
+        gcvt(info, 6, buff);
         if (self->cache == nil) {
             write(self->fd, buff, strlen(buff));
         } else {

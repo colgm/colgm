@@ -6,6 +6,7 @@ use std::str::{ str };
 use util::cli::*;
 use util::frontend::{ frontend };
 use util::clang_finder::{ find_clang };
+use util::timestamp::{ maketimestamp };
 
 use sema::context::{ global_symbol_table, sema_context };
 use sema::regist::{ regist_pass };
@@ -20,6 +21,9 @@ use sir::context::{ sir_context };
 use sir::mir2sir::{ mir2sir };
 
 func clang_compile(co: cli_option*) -> i32 {
+    var t_stamp = maketimestamp();
+
+    t_stamp.stamp();
     var clang = find_clang();
     if (clang.empty()) {
         clang.delete();
@@ -28,7 +32,8 @@ func clang_compile(co: cli_option*) -> i32 {
         return -1;
     } else if (co->VERBOSE) {
         io::stdout().green().out("[    CLANG ] ").reset();
-        io::stdout().out("Find clang <").out(clang.c_str).out(">\n");
+        io::stdout().out("Find clang <").out(clang.c_str).out("> ");
+        io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
     }
 
     var cmd = clang.copy_instance();
@@ -57,14 +62,17 @@ func clang_compile(co: cli_option*) -> i32 {
         io::stdout().green().out("[    CLANG ] ").reset();
         io::stdout().out("Compiling...\r");
     }
+
+    t_stamp.stamp();
     var ret_code = system(cmd.c_str);
     if (ret_code == 0) {
         io::stdout().green().out("[    CLANG ] ").reset();
-        io::stdout().out("Compilation succeeded\n");
+        io::stdout().out("Compilation succeeded ");
     } else {
         io::stdout().red().out("[    CLANG ] ").reset();
-        io::stdout().out("Compilation failed\n");
+        io::stdout().out("Compilation failed ");
     }
+    io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
 
     clang.delete();
     cmd.delete();
@@ -141,12 +149,17 @@ func compile(option: cli_option) -> i32 {
     cc.pkg.library_path.clear();
     cc.pkg.library_path.append_i8_vec(option.library_path);
 
+    var t_stamp = maketimestamp();
+
     // do lexer scanning
+    t_stamp.stamp();
+    cc.lex.scan(option.input_file);
     if (option.VERBOSE) {
         io::stdout().green().out("[    LEXER ] ").reset();
-        io::stdout().out("Scanning tokens for entry file").endln();
+        io::stdout().out("Scan token ");
+        io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
     }
-    cc.lex.scan(option.input_file);
+
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
             cc.lex.log_dump();
@@ -158,11 +171,14 @@ func compile(option: cli_option) -> i32 {
         cc.lex.dump(io::stdout());
     }
 
+    t_stamp.stamp();
+    cc.par.parse(cc.lex.__ptr__());
     if (option.VERBOSE) {
         io::stdout().green().out("[   PARSER ] ").reset();
-        io::stdout().out("Parsing syntax").endln();
+        io::stdout().out("Parse syntax ");
+        io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
     }
-    cc.par.parse(cc.lex.__ptr__());
+
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
             cc.par.log_dump();
@@ -174,17 +190,18 @@ func compile(option: cli_option) -> i32 {
         cc.par.dump(io::stdout());
     }
 
-    io::stdout().green().out("[ SEMANTIC ] ").reset();
-    io::stdout().out("Scanning global symbols").endln();
+    t_stamp.stamp();
     regpass.run(cc.par.root);
     if (cc.err->error_count > 0) {
         cc.delete();
         return -1;
     }
 
-    io::stdout().green().out("[ SEMANTIC ] ").reset();
-    io::stdout().out("Compiling file <").out(option.input_file).out(">").endln();
     semantic.analyse(cc.par.root);
+    io::stdout().green().out("[ SEMANTIC ] ").reset();
+    io::stdout().out("Finish file <").out(option.input_file).out("> ");
+    io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
+
     if (cc.err->error_count > 0) {
         if (option.VERBOSE) {
             semantic.ctx->log_dump(cc.pkg.__ptr__());
@@ -217,10 +234,14 @@ func compile(option: cli_option) -> i32 {
     var file_output = io::fileout(ll_file.c_str);
     if (option.VERBOSE) {
         io::stdout().green().out("[ SIR-PASS ] ").reset();
-        io::stdout().out("Generating \"").out(option.output_file).out(".ll\"").endln();
+        io::stdout().out("Generating \"").out(option.output_file).out(".ll\" ");
     }
+    t_stamp.stamp();
     sctx.dump(file_output);
     file_output.close();
+    if (option.VERBOSE) {
+        io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
+    }
 
     var ret_code = clang_compile(option.__ptr__());
 

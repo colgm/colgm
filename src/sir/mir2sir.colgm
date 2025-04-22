@@ -29,6 +29,7 @@ use package::{ package };
 
 use util::cli::{ version };
 use util::mangling::{ mangle_struct_name, mangle_function_name };
+use util::timestamp::{ maketimestamp };
 
 enum mir_value_kind {
     null, // reserved
@@ -418,11 +419,24 @@ impl mir2sir {
             return;
         }
         io::stdout().green().out("[  MIR2SIR ] ").reset();
-        io::stdout().out("Generating function (").out_u64(curr + 1);
-        io::stdout().out("/").out_u64(total).out(")\r");
+        io::stdout().out("Generating function ");
+        io::stdout().cyan().out("(").reset();
+        if (curr + 1 != total) {
+            io::stdout().orange();
+        } else {
+            io::stdout().cyan();
+        }
+        io::stdout().out_u64(curr + 1).reset();
+        io::stdout().cyan().out("/").out_u64(total).out(")").reset();
+        if (curr + 1 != total) {
+            io::stdout().out("\r");
+        }
     }
 
     func emit_func_impl(self, mctx: mir_context*) {
+        var ts = maketimestamp();
+        ts.stamp();
+
         foreach (var i; mctx->impls) {
             self->process_print(i.index(), mctx->impls.size);
             var m_func = i.get();
@@ -488,7 +502,7 @@ impl mir2sir {
             // pop local scope
             self->locals.pop();
         }
-        io::stdout().endln();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
     }
 }
 

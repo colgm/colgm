@@ -10,6 +10,7 @@ use err::span::{ span };
 use err::panic::{ panic };
 use sema::type::{ type };
 use mir::mir::*;
+use util::timestamp::{ maketimestamp };
 
 use package::{ package };
 
@@ -136,6 +137,13 @@ impl mir_context {
     }
 
     pub func adjust_posix_open(self, verbose: bool) {
+        if (verbose) {
+            io::stdout().green().out("[ MIR-PASS ] ").reset();
+            io::stdout().out("Run adjust posix open: ");
+        }
+        var ts = maketimestamp();
+        ts.stamp();
+
         foreach (var i; self->decls) {
             if (!i.get()->name.eq_const("open")) {
                 continue;
@@ -148,9 +156,10 @@ impl mir_context {
             open_func->with_va_args = true;
             break;
         }
+
         if (verbose) {
-            io::stdout().green().out("[ MIR-PASS ] ").reset();
-            io::stdout().out("Run adjust posix open: passed\n");
+            io::stdout().cyan().out("success ").reset();
+            io::stdout().out_f64(ts.elapsed_msec()).out(" ms\n");
         }
     }
 
@@ -271,12 +280,20 @@ impl mir_context {
     }
 
     pub func add_default_func(self, verbose: bool) {
+        if (verbose) {
+            io::stdout().green().out("[ MIR-PASS ] ").reset();
+            io::stdout().out("Run add default function: ");
+        }
+        var ts = maketimestamp();
+        ts.stamp();
+
         self->add_malloc_decl();
         self->add_free_decl();
         self->add_main_impl();
+
         if (verbose) {
-            io::stdout().green().out("[ MIR-PASS ] ").reset();
-            io::stdout().out("Run add default function: passed\n");
+            io::stdout().cyan().out("success ").reset();
+            io::stdout().out_f64(ts.elapsed_msec()).out(" ms\n");
         }
     }
 }

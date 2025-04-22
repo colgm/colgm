@@ -51,7 +51,7 @@ for (test, lib, allow_failure) in TEST_LIST:
     ], allow_failure)
     if ret != 0:
         continue
-    execute(["./test.out"], allow_failure)
+    execute(["./test.out"], allow_failure, False)
 
 if os.path.exists("test.out"):
     execute(["rm", "test.out"], False, False)

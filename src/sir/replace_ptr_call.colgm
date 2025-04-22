@@ -7,6 +7,8 @@ use std::str::{ str };
 use std::io::{ io };
 use std::libc::{ free };
 
+use util::timestamp::{ maketimestamp };
+
 func adjust_single_function(f: sir_func*) -> i64 {
     var replace_count = 0;
     var temp = primitive_vec<ptr<sir>>::instance();
@@ -57,12 +59,20 @@ func adjust_single_function(f: sir_func*) -> i64 {
 }
 
 pub func replace_struct_ptr_call(ctx: sir_context*, verbose: bool) {
+    if (verbose) {
+        io::stdout().green().out("[ SIR-PASS ] ").reset();
+        io::stdout().out("Run replace __ptr__ call: ");
+    }
+    var ts = maketimestamp();
+    ts.stamp();
+
     var replace_count = 0;
     foreach (var i; ctx->func_impls) {
         replace_count += adjust_single_function(i.get());
     }
+
     if (verbose) {
-        io::stdout().green().out("[ SIR-PASS ] ").reset();
-        io::stdout().out("Run replace __ptr__ call: ").out_i64(replace_count).endln();
+        io::stdout().cyan().out_i64(replace_count).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
     }
 }
