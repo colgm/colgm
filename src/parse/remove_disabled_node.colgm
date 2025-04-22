@@ -1,13 +1,17 @@
 use ast::ast::{ ast_kind, ast, root, ast_cond_compile };
+
+use err::report::{ report };
+
 use std::str::{ str };
 use std::io::{ io };
-use util::misc::{ get_platform, get_arch };
 use std::vec::{ primitive_vec };
 use std::ptr::{ ptr };
 use std::libc::{ free };
+
+use util::misc::{ get_platform, get_arch };
 use util::cli::{ cli_option };
 
-pub func check_enable_if(acc: ast_cond_compile*, co: cli_option*) -> bool {
+func check_enable_if(err: report*, acc: ast_cond_compile*, co: cli_option*) -> bool {
     if (!acc->cond_name.eq_const("enable_if")) {
         return false;
     }
@@ -27,7 +31,11 @@ pub func check_enable_if(acc: ast_cond_compile*, co: cli_option*) -> bool {
     foreach (var i; acc->conds) {
         if (!i.key()->eq(key_target_os.__ptr__()) &&
             !i.key()->eq(key_arch.__ptr__())) {
-            return false;
+            var info = str::from("invalid enable_if condition \"");
+            info.append_str(i.key());
+            info.append_i8_vec("\", may cause this node disabled");
+            err->warn(acc->base.location.__ptr__(), info.c_str);
+            info.delete();
         }
     }
 
@@ -56,7 +64,7 @@ pub func check_enable_if(acc: ast_cond_compile*, co: cli_option*) -> bool {
     return false;
 }
 
-pub func remove_disabled_node(node: root*, co: cli_option*) {
+pub func remove_disabled_node(err: report*, node: root*, co: cli_option*) {
     var new_vec = primitive_vec<ptr<ast>>::instance();
 
     foreach (var i; node->decls) {
@@ -66,8 +74,18 @@ pub func remove_disabled_node(node: root*, co: cli_option*) {
             continue;
         }
 
-        if (check_enable_if(d => ast_cond_compile*, co)) {
-            var acc = d => ast_cond_compile*;
+        var acc = d => ast_cond_compile*;
+        if (check_enable_if(err, acc, co)) {
+            new_vec.push(ptr<ast>::wrap(acc->enabled_decl));
+
+            acc->enabled_decl = nil;
+            acc->delete();
+            free(acc => i8*);
+        } else if (!acc->cond_name.eq_const("enable_if")) {
+            err->warn(
+                acc->base.location.__ptr__(),
+                "invalid conditional compile attribute, ignored"
+            );
             new_vec.push(ptr<ast>::wrap(acc->enabled_decl));
 
             acc->enabled_decl = nil;

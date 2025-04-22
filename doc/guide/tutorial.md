@@ -40,17 +40,19 @@ Literals in colgm all have default type.
   - integer beginning with `0o` is treated as octal integer, type `u64`
 - float: `f64`
 - boolean: `bool`, with two keyword `true` and `false`
-- constant string: `i8*`
-- array: const pointer of its base type
+- constant string: `const i8*`
+- array: pointer of its base type
+  - variables with this type are immutable
+  - elements inside the array are mutable if base type is not const
 - nil: special pointer `nil` with type `i8*`
 
 ```rust
 func main() -> i32 {
     var a = 1;              // i64
     var b = 2.0;            // f64
-    var c = "hello world!"; // i8*
+    var c = "hello world!"; // const i8*
     var d = 'd';            // i8
-    var e = [i8; 128];      // const i8*
+    var e = [i8; 128];      // (array) i8*
     var f = true;           // bool
     var g = nil;            // i8*
 

@@ -58,6 +58,14 @@ void delete_disabled_node::scan(error& err, root* node) {
             new_root_decls.push_back(cc->get_enabled_decl());
             cc->set_enabled_decl(nullptr);
             delete cc;
+        } else if (cc->get_condition_name() != "enable_if") {
+            err.warn(
+                cc->get_location(),
+                "invalid conditional compile attribute, ignored"
+            );
+            new_root_decls.push_back(cc->get_enabled_decl());
+            cc->set_enabled_decl(nullptr);
+            delete cc;
         } else {
             delete cc;
         }
