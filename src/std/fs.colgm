@@ -1,9 +1,10 @@
 use std::io::{ flag };
-use std::libc::{ open, close, stat, getenv, getcwd, strlen };
+use std::libc::{ open, close, stat, getcwd, strlen };
 use std::sys::{ stat_flag, stat_info };
 
 use std::str::{ str };
 use std::vec::{ vec };
+use std::os::{ os };
 
 use util::misc::{ is_windows };
 
@@ -31,8 +32,7 @@ impl fs {
 
 impl fs {
     pub func getpath() -> vec<str> {
-        var path = getenv("PATH");
-        var path_len = strlen(path);
+        var path = os::getenv("PATH");
 
         var tmp = str::from("");
         var res = vec<str>::instance();
@@ -42,12 +42,12 @@ impl fs {
             separator = ';';
         }
 
-        for (var i = 0; i < path_len; i += 1) {
-            if (path[i] == separator) {
+        foreach (var c; path) {
+            if (c.get() == separator) {
                 res.push(tmp.__ptr__());
                 tmp.clear();
             } else {
-                tmp.append_char(path[i]);
+                tmp.append_char(c.get());
             }
         }
         if (tmp.size > 0) {
@@ -55,6 +55,7 @@ impl fs {
         }
 
         tmp.delete();
+        path.delete();
         return res;
     }
 

@@ -83,15 +83,15 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 5. feature: reference type
 6. feature: smart pointer
 7. feature: std
-    - [ ] Filesystem API (read, write, join, exists, etc)
-    - [ ] Datetime utils
+    - [x] Filesystem API (read, write, join, exists, etc)
+    - [x] Datetime utils
     - [ ] String and Unicode Helpers
-    - [ ] Math Utils
+    - [x] Math Utils
     - [ ] map, filter, reduce, sort, reverse, etc
     - [ ] JSON, TOML, YAML and other formats parsing
     - [ ] networking (TCP Server and Client, HTTP Server on top of the TCP server)
     - [ ] HTTP Utilities
-    - [ ] OS Utils (exec, env, args, etc)
+    - [x] OS Utils (exec, env, args, etc)
     - [ ] Typeof, is_type, etc
     - [ ] Assert and Bench
     - [ ] Logging
