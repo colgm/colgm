@@ -1220,6 +1220,26 @@ impl parser {
 }
 
 impl parser {
+    func report_unexpect_token_and_skip(self, tok: token*) {
+        var info = str::from("unexpected token \"");
+        info.append_i8_vec(tok->content.c_str);
+        info.append_i8_vec("\"");
+        self->err->error(tok->location.__ptr__(), info.c_str);
+        info.delete();
+
+        // do skip
+        while (!self->lookahead(tok_kind::tok_eof) &&
+               !self->lookahead(tok_kind::tok_extern) &&
+               !self->lookahead(tok_kind::tok_pub) &&
+               !self->lookahead(tok_kind::tok_struct) &&
+               !self->lookahead(tok_kind::tok_func) &&
+               !self->lookahead(tok_kind::tok_enum) &&
+               !self->lookahead(tok_kind::tok_impl) &&
+               !self->lookahead(tok_kind::tok_sharp)) {
+            self->next();
+        }
+    }
+
     pub func parse(self, lex: lexer*) {
         self->index = 0;
         self->toks = lex->toks.__ptr__();
@@ -1237,10 +1257,14 @@ impl parser {
             var flag_is_extern = false;
             var pub_loc: span* = nil;
             var extern_loc: span* = nil;
+
+            // get conditional compilation
             var cond_comp: ast_cond_compile* = nil;
             if (self->lookahead(tok_kind::tok_sharp)) {
                 cond_comp = self->conditional_compilation();
             }
+
+            // get attribute extern / pub
             while (self->lookahead(tok_kind::tok_pub) || self->lookahead(tok_kind::tok_extern)) {
                 if (self->lookahead(tok_kind::tok_pub) && !flag_is_public) {
                     flag_is_public = true;
@@ -1259,7 +1283,6 @@ impl parser {
 
             var decl_node: ast* = nil;
             match (self->this_tok()->kind) {
-                _ => {}
                 tok_kind::tok_struct => {
                     var tmp = self->struct_decl_gen();
                     tmp->is_public = flag_is_public;
@@ -1289,23 +1312,31 @@ impl parser {
                     }
                     decl_node = self->impl_gen() => ast*;
                 }
+                _ => {
+                    self->report_unexpect_token_and_skip(self->this_tok());
+                    continue;
+                }
             }
+
             // embed decl node into cond_comp node
             if (cond_comp != nil && decl_node != nil) {
                 cond_comp->enabled_decl = decl_node;
                 self->root->decls.push(ptr<ast>::wrap(cond_comp => ast*));
                 continue;
             }
+
             // error occurred, cond_comp node accepts nothing, delete it
             if (cond_comp != nil && decl_node == nil) {
                 cond_comp->delete();
                 free(cond_comp => i8*);
             }
+
             // cond_comp not used, insert directly
             if (decl_node != nil) {
                 self->root->decls.push(ptr<ast>::wrap(decl_node => ast*));
                 continue;
             }
+
             self->next();
         }
         self->update_location(self->root => ast*);

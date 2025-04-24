@@ -100,6 +100,10 @@ impl report {
     }
 
     func print_file_line(self, location: span*, is_error: bool) {
+        if (!location->file.eq_const(self->filename.c_str)) {
+            self->load_file_source(location->file.c_str);
+        }
+
         var index = location->begin_line;
         var max_line_number_length = report::get_number_length(location->end_line + 1);
         var pad_str = report::left_pad(max_line_number_length);
@@ -209,9 +213,6 @@ impl report {
     }
 
     pub func error(self, location: span*, message: i8*) {
-        if (location != nil && !location->file.eq_const(self->filename.c_str)) {
-            self->load_file_source(location->file.c_str);
-        }
         self->error_count += 1;
 
         io::stderr().red().out("Error: ").reset();
@@ -226,10 +227,6 @@ impl report {
     }
 
     pub func warn(self, location: span*, message: i8*) {
-        if (location != nil && !location->file.eq_const(self->filename.c_str)) {
-            self->load_file_source(location->file.c_str);
-        }
-
         io::stderr().orange().out("Warn: ").reset();
         io::stderr().white().out(message).reset().endln();
         if (location != nil) {
