@@ -679,6 +679,8 @@ private:
     value_t destination;
     std::string src_type;
     std::string dst_type;
+    bool src_unsigned;
+    bool dst_unsigned;
 
 private:
     std::string convert_instruction(char, int, char, int) const;
@@ -687,10 +689,13 @@ public:
     sir_type_convert(const value_t& src,
                      const value_t& dst,
                      const std::string& st,
-                     const std::string& dt):
+                     const std::string& dt,
+                     bool su,
+                     bool du):
         sir(sir_kind::sir_type_convert),
         source(src), destination(dst),
-        src_type(st), dst_type(dt) {}
+        src_type(st), dst_type(dt),
+        src_unsigned(su), dst_unsigned(du) {}
     ~sir_type_convert() override = default;
     void dump(std::ostream&) const override;
 };

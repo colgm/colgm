@@ -375,12 +375,20 @@ void sir_type_convert::dump(std::ostream& out) const {
         return;
     }
 
+    // basic type will fall through here
+    // be aware, if type is an integer, 'u8 u16 u32 u64' will be 'i8 i16 i32 i64' here
     const std::unordered_map<std::string, std::string> ft = {
         {"float", "f32"}, {"double", "f64"}
     };
 
-    const auto real_src_type = ft.count(src_type)? ft.at(src_type):src_type;
-    const auto real_dst_type = ft.count(dst_type)? ft.at(dst_type):dst_type;
+    auto real_src_type = ft.count(src_type)? ft.at(src_type):src_type;
+    auto real_dst_type = ft.count(dst_type)? ft.at(dst_type):dst_type;
+    if (real_src_type[0] == 'i' && src_unsigned) {
+        real_src_type[0] = 'u';
+    }
+    if (real_dst_type[0] == 'i' && dst_unsigned) {
+        real_dst_type[0] = 'u';
+    }
 
     const auto source_type_mark = real_src_type[0];
     const auto source_bit_size = std::stoi(real_src_type.substr(1));
@@ -389,20 +397,19 @@ void sir_type_convert::dump(std::ostream& out) const {
 
     // source type maybe the same as target type
     // because like i64 & u64 share the same llvm type `i64`
-    if (real_src_type==real_dst_type &&
-        (real_src_type[0]=='i' || real_src_type[0]=='u')) {
-        out << destination << " = bitcast " << real_src_type << " ";
-        out << source << " to " << real_dst_type;
-        out << " ; " << src_type << " -> " << dst_type << "\n";
+    // bitcast will not check if integer is signed
+    if (src_type == dst_type &&
+        (real_src_type[0] == 'i' || real_src_type[0] == 'u')) {
+        out << destination << " = bitcast ";
+        out << src_type << " " << source << " to " << dst_type;
+        out << " ; " << real_src_type << " -> " << real_dst_type << "\n";
         return;
     }
     // f32 f64 also
-    if (real_src_type==real_dst_type && real_src_type[0]=='f') {
+    if (src_type == dst_type && real_src_type[0] == 'f') {
         out << destination << " = bitcast ";
-        out << (real_src_type == "f32"? "float":"double") << " ";
-        out << source << " to ";
-        out << (real_dst_type == "f32"? "float":"double");
-        out << " ; " << src_type << " -> " << dst_type << "\n";
+        out << src_type << " " << source << " to " << dst_type;
+        out << " ; " << real_src_type << " -> " << real_dst_type << "\n";
         return;
     }
 

@@ -1580,17 +1580,24 @@ pub struct sir_type_convert {
     source: value_t,
     src_type: str,
     dst_type: str,
+    src_unsigned: bool,
+    dst_unsigned: bool,
     debug_info_index: u64
 }
 
 impl sir_type_convert {
-    pub func new(src: value_t*, tgt: value_t*, st: str*, dt: str*, dii: u64) -> sir_type_convert* {
+    pub func new(src: value_t*, tgt: value_t*,
+                 st: str*, dt: str*,
+                 su: bool, du: bool,
+                 dii: u64) -> sir_type_convert* {
         var n = sir_type_convert::__alloc__();
         n->base = sir::instance(sir_kind::sir_type_convert);
         n->target =tgt->copy_instance();
         n->source = src->copy_instance();
         n->src_type = st->copy_instance();
         n->dst_type = dt->copy_instance();
+        n->src_unsigned = su;
+        n->dst_unsigned = du;
         n->debug_info_index = dii;
         return n;
     }
@@ -1724,13 +1731,20 @@ impl sir_type_convert {
             real_dst_type.append_str(self->dst_type.__ptr__());
         }
 
+        if (real_src_type.front() == 'i' && self->src_unsigned) {
+            real_src_type.c_str[0] = 'u';
+        }
+        if (real_dst_type.front() == 'i' && self->dst_unsigned) {
+            real_dst_type.c_str[0] = 'u';
+        }
+
         var src_type_mark = real_src_type.front();
         var dst_type_mark = real_dst_type.front();
 
         // source type maybe the same as target type
         // because like i64 & u64 share the same llvm type `i64`
-        if (real_src_type.eq(real_dst_type.__ptr__()) &&
-            (src_type_mark=='i' || src_type_mark=='u')) {
+        if (self->src_type.eq(self->dst_type.__ptr__()) &&
+            (src_type_mark == 'i' || src_type_mark == 'u')) {
             out.out("  ");
             self->target.dump(out);
             out.out(" = bitcast ").out(self->src_type.c_str).out(" ");
@@ -1744,8 +1758,7 @@ impl sir_type_convert {
             return;
         }
         // f32 f64 also
-        if (real_src_type.eq(real_dst_type.__ptr__()) &&
-            src_type_mark=='f') {
+        if (self->src_type.eq(self->dst_type.__ptr__()) && src_type_mark == 'f') {
             out.out("  ");
             self->target.dump(out);
             out.out(" = bitcast ").out(self->src_type.c_str).out(" ");

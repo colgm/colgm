@@ -109,28 +109,35 @@ pub extern func inet_addr(addr: i8*) -> u32;
 pub extern func sendto(sockfd: i32, buf: i8*, len: u64, flags: i32, addr: sockaddr_in*, addrlen: u32) -> i32;
 pub extern func recvfrom(sockfd: i32, buf: i8*, len: u64, flags: i32, addr: sockaddr_in*, addrlen: u32*) -> i32;
 
+func libsock_socket(domain: af_domain, type: sock_kind, protocal: ip_proto) -> i32 {
+    var fd = socket(domain => i32, type => i32, protocal => i32);
+    if (fd < 0) {
+        io::stdout().out("error creating socket: ");
+        perror("socket");
+    }
+    return fd;
+}
+
 pub struct tcp {}
 
 impl tcp {
-    pub func server() {
+    pub func server(ip: i8*, port: u16) {
         var server_addr = sockaddr_in::instance();
         var client_addr = sockaddr_in::instance();
 
         var addr_len = [u32; 1];
         addr_len[0] = sockaddr_in::__size__() => u32;
 
-        var sockfd = socket(
-            af_domain::AF_INET => i32,
-            sock_kind::SOCK_STREAM => i32,
-            ip_proto::IPPROTO_TCP => i32
+        var sockfd = libsock_socket(
+            af_domain::AF_INET,
+            sock_kind::SOCK_STREAM,
+            ip_proto::IPPROTO_TCP
         );
         if (sockfd < 0) {
-            io::stdout().out("error creating socket: ");
-            perror("socket");
             return;
         }
 
-        server_addr.set(af_domain::AF_INET, 12345, "127.0.0.1");
+        server_addr.set(af_domain::AF_INET, port, ip);
 
         if (bind(sockfd, server_addr.__ptr__(), addr_len[0]) < 0) {
             io::stdout().out("error binding socket: ");
@@ -187,25 +194,23 @@ impl tcp {
         close(sockfd);
     }
 
-    pub func client() {
+    pub func client(ip: i8*, port: u16) {
         var server_addr = sockaddr_in::instance();
         var client_addr = sockaddr_in::instance();
 
         var addr_len = [u32; 1];
         addr_len[0] = sockaddr_in::__size__() => u32;
 
-        var sockfd = socket(
-            af_domain::AF_INET => i32,
-            sock_kind::SOCK_STREAM => i32,
-            ip_proto::IPPROTO_TCP => i32
+        var sockfd = libsock_socket(
+            af_domain::AF_INET,
+            sock_kind::SOCK_STREAM,
+            ip_proto::IPPROTO_TCP
         );
         if (sockfd < 0) {
-            io::stdout().out("error creating socket: ");
-            perror("socket");
             return;
         }
 
-        server_addr.set(af_domain::AF_INET, 12345, "127.0.0.1");
+        server_addr.set(af_domain::AF_INET, port, ip);
 
         if (connect(sockfd, server_addr.__ptr__(), addr_len[0]) < 0) {
             io::stdout().out("error connecting socket: ");
@@ -242,25 +247,23 @@ impl tcp {
 pub struct udp {}
 
 impl udp {
-    pub func server() {
+    pub func server(ip: i8*, port: u16) {
         var server_addr = sockaddr_in::instance();
         var client_addr = sockaddr_in::instance();
 
         var addr_len = [u32; 1];
         addr_len[0] = sockaddr_in::__size__() => u32;
 
-        var sockfd = socket(
-            af_domain::AF_INET => i32,
-            sock_kind::SOCK_DGRAM => i32,
-            ip_proto::IPPROTO_UDP => i32
+        var sockfd = libsock_socket(
+            af_domain::AF_INET,
+            sock_kind::SOCK_DGRAM,
+            ip_proto::IPPROTO_UDP
         );
         if (sockfd < 0) {
-            io::stdout().out("error creating socket: ");
-            perror("socket");
             return;
         }
 
-        server_addr.set(af_domain::AF_INET, 12345, "127.0.0.1");
+        server_addr.set(af_domain::AF_INET, port, ip);
 
         if (bind(sockfd, server_addr.__ptr__(), addr_len[0]) < 0) {
             io::stdout().out("error binding socket: ");
@@ -298,25 +301,23 @@ impl udp {
         close(sockfd);
     }
 
-    pub func client() {
+    pub func client(ip: i8*, port: u16) {
         var server_addr = sockaddr_in::instance();
         var client_addr = sockaddr_in::instance();
 
         var addr_len = [u32; 1];
         addr_len[0] = sockaddr_in::__size__() => u32;
 
-        var sockfd = socket(
-            af_domain::AF_INET => i32,
-            sock_kind::SOCK_DGRAM => i32,
-            ip_proto::IPPROTO_UDP => i32
+        var sockfd = libsock_socket(
+            af_domain::AF_INET,
+            sock_kind::SOCK_DGRAM,
+            ip_proto::IPPROTO_UDP
         );
         if (sockfd < 0) {
-            io::stdout().out("error creating socket: ");
-            perror("socket");
             return;
         }
 
-        server_addr.set(af_domain::AF_INET, 12345, "127.0.0.1");
+        server_addr.set(af_domain::AF_INET, port, ip);
 
         if (bind(sockfd, client_addr.__ptr__(), addr_len[0]) < 0) {
             io::stdout().out("error binding socket: ");

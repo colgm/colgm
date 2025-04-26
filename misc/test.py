@@ -3,11 +3,13 @@ import os
 
 def execute(cmd: list[str], allow_failure: bool, do_print: bool = True) -> int:
     if do_print:
-        print("Executing: " + " ".join(cmd), flush=True)
+        print("\033[92;1mExecuting:\033[0m " + " ".join(cmd), flush=True)
     ret = subprocess.run(cmd).returncode
     if ret != 0:
-        print("Error: " + " ".join(cmd), flush=True)
+        if allow_failure:
+            print("\033[91;1mError:\033[0m [ignored]" + " ".join(cmd), flush=True)
         if not allow_failure:
+            print("\033[91;1mError:\033[0m [exited]" + " ".join(cmd), flush=True)
             exit(ret)
     return ret
 

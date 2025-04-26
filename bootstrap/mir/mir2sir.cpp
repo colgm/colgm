@@ -453,7 +453,9 @@ void mir2sir::visit_mir_type_convert(mir_type_convert* node) {
         source.to_value_t(),
         value_t::variable(temp_var),
         type_mapping(source.resolve_type),
-        type_mapping(node->get_target_type())
+        type_mapping(node->get_target_type()),
+        source.resolve_type.is_unsigned(),
+        node->get_target_type().is_unsigned()
     ));
     value_stack.push_back(mir_value_t::variable(
         temp_var,

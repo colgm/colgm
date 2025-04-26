@@ -50,16 +50,15 @@ def lift_first_version_compiler():
         BOOTSTRAP_COMPILER,
         "--library", "src",
         "src/main.colgm",
-        "-o", "build/colgm_bootstrap_init.ll",
+        "-o", "build/colgm_lifted.ll",
         "--pass-info"
     ])
     execute([
         USED_CLANG,
-        "build/colgm_bootstrap_init.ll",
+        "build/colgm_lifted.ll",
         "-o", LIFTED_COMPILER,
         "-g", "-Oz",
-        "-rdynamic", "-lm",
-        "--verbose"
+        "-rdynamic", "-lm"
     ])
 
 def build_self_host_compiler():
