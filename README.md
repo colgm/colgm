@@ -24,7 +24,7 @@ pub func main() -> i32 {
 
 ## Language Guide
 
-See simple language guide in [doc/guide/tutorial.md](./doc/guide/tutorial.md).
+See simple language guide in [doc/guide/tutorial.md](./doc/guide/tutorial.md) | [中文版语言指南](./doc/guide/tutorial_zh.md).
 
 ## Build and Development
 
@@ -89,7 +89,7 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [x] Math Utils
     - [ ] map, filter, reduce, sort, reverse, etc
     - [ ] JSON, TOML, YAML and other formats parsing
-    - [ ] networking (TCP Server and Client, HTTP Server on top of the TCP server)
+    - [x] networking (socket, TCP/UDP Server and Client)
     - [ ] HTTP Utilities
     - [x] OS Utils (exec, env, args, etc)
     - [ ] Typeof, is_type, etc
