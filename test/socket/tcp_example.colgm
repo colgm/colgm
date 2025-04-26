@@ -22,6 +22,7 @@ func tcp_server_loop() {
         if (r.eq_const("quit")) {
             r.delete();
             client_name.delete();
+            break;
         }
         r.delete();
         client_name.delete();
@@ -40,15 +41,16 @@ func tcp_client_loop() {
     var client = tcp_client::create("127.0.0.1", 12345);
     while (true) {
         count += 1;
-        var s = str::from("send from client");
-        if (count == 10) {
+        var s = str::from("send from client ");
+        s.append_i64(count);
+        if (count == 5) {
             s.clear();
             s.append_i8_vec("quit");
         }
         client.send(s.__ptr__());
         io::stdout().out("send: ").out(s.c_str).endln();
         s.delete();
-        if (count == 10) {
+        if (count == 5) {
             break;
         }
 

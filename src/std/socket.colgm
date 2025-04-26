@@ -1,6 +1,7 @@
 use std::libc::{ close, strlen, perror, sleep };
-use std::io::{ io };
 use std::str::{ str };
+
+use err::panic::{ panic };
 
 pub enum af_domain {
     AF_INET = 2
@@ -122,8 +123,8 @@ pub extern func recvfrom(sockfd: i32, buf: i8*, len: u64, flags: i32, addr: sock
 pub func s_socket(domain: af_domain, type: sock_kind, protocal: ip_proto) -> i32 {
     var fd = socket(domain => i32, type => i32, protocal => i32);
     if (fd < 0) {
-        io::stderr().out("error creating socket: ");
         perror("socket");
+        panic("error creating socket");
     }
     return fd;
 }
