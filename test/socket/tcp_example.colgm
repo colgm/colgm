@@ -1,0 +1,80 @@
+use std::libc::{ streq, sleep };
+use std::io::{ io };
+use std::str::{ str };
+
+use std::udp::{ udp_server, udp_client };
+use std::tcp::{ tcp_server, tcp_client };
+
+func tcp_server_loop() {
+    var server = tcp_server::create("127.0.0.1", 12345);
+
+    var name = server.server_addr.to_str();
+    io::stdout().out("TCP server listening on ").out(name.c_str).endln();
+    name.delete();
+
+    server.accept();
+    while (true) {
+        var r = server.receive();
+        var client_name = server.client_addr.to_str();
+        io::stdout().out("from <")
+            .out(client_name.c_str).out("> receive: ")
+            .out(r.c_str).endln();
+        if (r.eq_const("quit")) {
+            r.delete();
+            client_name.delete();
+        }
+        r.delete();
+        client_name.delete();
+
+        var s = str::from("send from server");
+        server.send(s.__ptr__());
+        io::stdout().out("send: ").out(s.c_str).endln();
+        s.delete();
+    }
+    server.delete();
+}
+
+func tcp_client_loop() {
+    var count = 0;
+
+    var client = tcp_client::create("127.0.0.1", 12345);
+    while (true) {
+        count += 1;
+        var s = str::from("send from client");
+        if (count == 10) {
+            s.clear();
+            s.append_i8_vec("quit");
+        }
+        client.send(s.__ptr__());
+        io::stdout().out("send: ").out(s.c_str).endln();
+        s.delete();
+        if (count == 10) {
+            break;
+        }
+
+        var r = client.receive();
+        var server_name = client.server_addr.to_str();
+        io::stdout().out("from <")
+            .out(server_name.c_str).out("> receive: ")
+            .out(r.c_str).endln();
+        r.delete();
+        server_name.delete();
+
+        sleep(1);
+    }
+    client.delete();
+}
+
+func main(argc: i32, argv: i8**) -> i32 {
+    if (argc != 2) {
+        io::stdout().out("Usage: ./a.out <server|client>\n");
+        return -1;
+    }
+    if (streq(argv[1], "server")) {
+        tcp_server_loop();
+    }
+    if (streq(argv[1], "client")) {
+        tcp_client_loop();
+    }
+    return 0;
+}

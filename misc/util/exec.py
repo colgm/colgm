@@ -24,6 +24,14 @@ def find_clang() -> str:
     print("Error: clang not found", flush=True)
     exit(1)
 
+def find_cmake():
+    for path in os.environ["PATH"].split(":"):
+        if os.path.exists(path + "/cmake"):
+            print("CMake: found", path + "/cmake", flush=True)
+            return
+    print("Error: cmake not found", flush=True)
+    exit(1)
+
 BUILD_DIRECTORY = "build"
 BOOTSTRAP_COMPILER = "build/colgm"           # compiler written in C++
 LIFTED_COMPILER = "build/colgm_lifted"       # compiler written in colgm, but lifted by bootstrap compiler
@@ -32,6 +40,8 @@ SELF_HOST_COMPILER = "build/colgm_self_host" # compiler written in colgm, compil
 USED_CLANG = find_clang()
 
 def build_bootstrap_compiler():
+    find_cmake()
+
     if not os.path.exists(BUILD_DIRECTORY):
         os.mkdir(BUILD_DIRECTORY)
     os.chdir(BUILD_DIRECTORY)

@@ -1,5 +1,6 @@
 use std::libc::{ close, strlen, perror, sleep };
 use std::io::{ io };
+use std::str::{ str };
 
 pub enum af_domain {
     AF_INET = 2
@@ -26,7 +27,7 @@ struct in_addr {
 }
 
 #[enable_if(target_os="macos")]
-struct sockaddr_in {
+pub struct sockaddr_in {
     sin_len: u8,
     sin_family: u8,
     sin_port: u16,
@@ -48,16 +49,16 @@ impl sockaddr_in {
         };
     }
 
-    pub func set(self, domain: af_domain, port: u16, addr: i8*) {
+    pub func set(self, domain: af_domain, ip: i8*, port: u16) {
         self->sin_family = domain => u8;
         self->sin_port = htons(port);
-        self->sin_addr.s_addr = inet_addr(addr);
+        self->sin_addr.s_addr = inet_addr(ip);
         self->sin_zero = 0;
     }
 }
 
 #[enable_if(target_os="linux")]
-struct sockaddr_in {
+pub struct sockaddr_in {
     sin_family: u16,
     sin_port: u16,
     sin_addr: in_addr,
@@ -77,11 +78,20 @@ impl sockaddr_in {
         };
     }
 
-    pub func set(self, domain: af_domain, port: u16, addr: i8*) {
+    pub func set(self, domain: af_domain, ip: i8*, port: u16) {
         self->sin_family = domain => u16;
         self->sin_port = htons(port);
-        self->sin_addr.s_addr = inet_addr(addr);
+        self->sin_addr.s_addr = inet_addr(ip);
         self->sin_zero = 0;
+    }
+}
+
+impl sockaddr_in {
+    pub func to_str(self) -> str {
+        var res = str::from(inet_ntoa(self->sin_addr));
+        res.append_char(':');
+        res.append_u64(ntohs(self->sin_port) => u64);
+        return res;
     }
 }
 
@@ -109,244 +119,11 @@ pub extern func inet_addr(addr: i8*) -> u32;
 pub extern func sendto(sockfd: i32, buf: i8*, len: u64, flags: i32, addr: sockaddr_in*, addrlen: u32) -> i32;
 pub extern func recvfrom(sockfd: i32, buf: i8*, len: u64, flags: i32, addr: sockaddr_in*, addrlen: u32*) -> i32;
 
-func libsock_socket(domain: af_domain, type: sock_kind, protocal: ip_proto) -> i32 {
+pub func s_socket(domain: af_domain, type: sock_kind, protocal: ip_proto) -> i32 {
     var fd = socket(domain => i32, type => i32, protocal => i32);
     if (fd < 0) {
-        io::stdout().out("error creating socket: ");
+        io::stderr().out("error creating socket: ");
         perror("socket");
     }
     return fd;
-}
-
-pub struct tcp {}
-
-impl tcp {
-    pub func server(ip: i8*, port: u16) {
-        var server_addr = sockaddr_in::instance();
-        var client_addr = sockaddr_in::instance();
-
-        var addr_len = [u32; 1];
-        addr_len[0] = sockaddr_in::__size__() => u32;
-
-        var sockfd = libsock_socket(
-            af_domain::AF_INET,
-            sock_kind::SOCK_STREAM,
-            ip_proto::IPPROTO_TCP
-        );
-        if (sockfd < 0) {
-            return;
-        }
-
-        server_addr.set(af_domain::AF_INET, port, ip);
-
-        if (bind(sockfd, server_addr.__ptr__(), addr_len[0]) < 0) {
-            io::stdout().out("error binding socket: ");
-            perror("bind");
-            return;
-        }
-
-        if (listen(sockfd, 5) < 0) {
-            io::stdout().out("error listening on socket: ");
-            perror("listen");
-            return;
-        }
-
-        io::stdout().out("server listening on ")
-            .out(inet_ntoa(server_addr.sin_addr))
-            .out(":").out_u64(ntohs(server_addr.sin_port) => u64)
-            .endln();
-        
-        var cl_sock = accept(sockfd, client_addr.__ptr__(), addr_len);
-        if (cl_sock < 0) {
-            io::stdout().out("error accepting connection: ");
-            perror("accept");
-            return;
-        }
-
-        io::stdout().out("accepted connection from ")
-            .out(inet_ntoa(client_addr.sin_addr))
-            .out(":").out_u64(ntohs(client_addr.sin_port) => u64)
-            .endln();
-        
-        var buffer = [i8; 1024];
-        while (true) {
-            var len = recv(cl_sock, buffer, 1023, 0);
-            if (len < 0) {
-                io::stdout().out("error receiving data: ");
-                perror("recv");
-                return;
-            }
-            buffer[len] = 0;
-
-            io::stdout().out("received ").out_i64(len => i64).out(" bytes from ")
-                .out(inet_ntoa(client_addr.sin_addr))
-                .out(":").out_u64(ntohs(client_addr.sin_port) => u64)
-                .out(": ").out(buffer).endln();
-            
-            var responce = "message received";
-            if (send(cl_sock, responce, strlen(responce) => u64, 0) < 0) {
-                io::stdout().out("error sending data: ");
-                perror("send");
-                return;
-            }
-        }
-        close(cl_sock);
-        close(sockfd);
-    }
-
-    pub func client(ip: i8*, port: u16) {
-        var server_addr = sockaddr_in::instance();
-        var client_addr = sockaddr_in::instance();
-
-        var addr_len = [u32; 1];
-        addr_len[0] = sockaddr_in::__size__() => u32;
-
-        var sockfd = libsock_socket(
-            af_domain::AF_INET,
-            sock_kind::SOCK_STREAM,
-            ip_proto::IPPROTO_TCP
-        );
-        if (sockfd < 0) {
-            return;
-        }
-
-        server_addr.set(af_domain::AF_INET, port, ip);
-
-        if (connect(sockfd, server_addr.__ptr__(), addr_len[0]) < 0) {
-            io::stdout().out("error connecting socket: ");
-            perror("connect");
-            return;
-        }
-        
-        var buffer = [i8; 1024];
-        while (true) {
-            var responce = "message send from client";
-            if (send(sockfd, responce, strlen(responce) => u64, 0) < 0) {
-                io::stdout().out("error sending data: ");
-                perror("send");
-                return;
-            }
-
-            var len = recv(sockfd, buffer, 1023, 0);
-            if (len < 0) {
-                io::stdout().out("error receiving data: ");
-                perror("recv");
-                return;
-            }
-            buffer[len] = 0;
-            io::stdout().out("received ").out_i64(len => i64).out(" bytes from ")
-                .out(inet_ntoa(server_addr.sin_addr))
-                .out(":").out_u64(ntohs(server_addr.sin_port) => u64)
-                .out(": ").out(buffer).endln();
-            sleep(1);
-        }
-        close(sockfd);
-    }
-}
-
-pub struct udp {}
-
-impl udp {
-    pub func server(ip: i8*, port: u16) {
-        var server_addr = sockaddr_in::instance();
-        var client_addr = sockaddr_in::instance();
-
-        var addr_len = [u32; 1];
-        addr_len[0] = sockaddr_in::__size__() => u32;
-
-        var sockfd = libsock_socket(
-            af_domain::AF_INET,
-            sock_kind::SOCK_DGRAM,
-            ip_proto::IPPROTO_UDP
-        );
-        if (sockfd < 0) {
-            return;
-        }
-
-        server_addr.set(af_domain::AF_INET, port, ip);
-
-        if (bind(sockfd, server_addr.__ptr__(), addr_len[0]) < 0) {
-            io::stdout().out("error binding socket: ");
-            perror("bind");
-            return;
-        }
-
-        io::stdout().out("server listening on ")
-            .out(inet_ntoa(server_addr.sin_addr))
-            .out(":").out_u64(ntohs(server_addr.sin_port) => u64)
-            .endln();
-        
-        var buffer = [i8; 1024];
-        while (true) {
-            var len = recvfrom(sockfd, buffer, 1023, 0, client_addr.__ptr__(), addr_len);
-            if (len < 0) {
-                io::stdout().out("error receiving data: ");
-                perror("recvfrom");
-                return;
-            }
-            buffer[len] = 0;
-
-            io::stdout().out("received ").out_i64(len => i64).out(" bytes from ")
-                .out(inet_ntoa(client_addr.sin_addr))
-                .out(":").out_u64(ntohs(client_addr.sin_port) => u64)
-                .out(": ").out(buffer).endln();
-            
-            var responce = "message received";
-            if (sendto(sockfd, responce, strlen(responce) => u64, 0, client_addr.__ptr__(), addr_len[0]) < 0) {
-                io::stdout().out("error sending data: ");
-                perror("sendto");
-                return;
-            }
-        }
-        close(sockfd);
-    }
-
-    pub func client(ip: i8*, port: u16) {
-        var server_addr = sockaddr_in::instance();
-        var client_addr = sockaddr_in::instance();
-
-        var addr_len = [u32; 1];
-        addr_len[0] = sockaddr_in::__size__() => u32;
-
-        var sockfd = libsock_socket(
-            af_domain::AF_INET,
-            sock_kind::SOCK_DGRAM,
-            ip_proto::IPPROTO_UDP
-        );
-        if (sockfd < 0) {
-            return;
-        }
-
-        server_addr.set(af_domain::AF_INET, port, ip);
-
-        if (bind(sockfd, client_addr.__ptr__(), addr_len[0]) < 0) {
-            io::stdout().out("error binding socket: ");
-            perror("bind");
-            return;
-        }
-        
-        var buffer = [i8; 1024];
-        while (true) {
-            var responce = "message send from client";
-            if (sendto(sockfd, responce, strlen(responce) => u64, 0, server_addr.__ptr__(), addr_len[0]) < 0) {
-                io::stdout().out("error sending data: ");
-                perror("sendto");
-                return;
-            }
-
-            var len = recvfrom(sockfd, buffer, 1023, 0, server_addr.__ptr__(), addr_len);
-            if (len < 0) {
-                io::stdout().out("error receiving data: ");
-                perror("recvfrom");
-                return;
-            }
-            buffer[len] = 0;
-            io::stdout().out("received ").out_i64(len => i64).out(" bytes from ")
-                .out(inet_ntoa(server_addr.sin_addr))
-                .out(":").out_u64(ntohs(server_addr.sin_port) => u64)
-                .out(": ").out(buffer).endln();
-            sleep(1);
-        }
-        close(sockfd);
-    }
 }

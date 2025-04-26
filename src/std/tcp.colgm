@@ -1,0 +1,155 @@
+use std::socket::{
+    s_socket,
+    bind,
+    connect,
+    recv,
+    send,
+    listen,
+    accept,
+    sockaddr_in,
+    af_domain,
+    sock_kind,
+    ip_proto,
+};
+use std::str::{ str };
+use std::libc::{ close, perror };
+
+use err::panic::{ panic };
+
+pub struct tcp_server {
+    server_addr: sockaddr_in,
+    client_addr: sockaddr_in,
+    sockfd: i32,
+    client_sockfd: i32
+}
+
+impl tcp_server {
+    pub func delete(self) {
+        if (self->sockfd > 0) {
+            close(self->sockfd);
+        }
+        if (self->client_sockfd > 0) {
+            close(self->client_sockfd);
+        }
+    }
+
+    pub func create(ip: i8*, port: u16) -> tcp_server {
+        var res = tcp_server {
+            server_addr: sockaddr_in::instance(),
+            client_addr: sockaddr_in::instance(),
+            sockfd: 0,
+            client_sockfd: 0
+        };
+
+        res.sockfd = s_socket(
+            af_domain::AF_INET,
+            sock_kind::SOCK_STREAM,
+            ip_proto::IPPROTO_TCP
+        );
+        if (res.sockfd < 0) {
+            panic("failed to create socket");
+        }
+
+        res.server_addr.set(af_domain::AF_INET, ip, port);
+
+        if (bind(res.sockfd, res.server_addr.__ptr__(), sockaddr_in::__size__() => u32) < 0) {
+            perror("bind");
+            panic("error binding socket");
+        }
+
+        if (listen(res.sockfd, 5) < 0) {
+            perror("listen");
+            panic("error listening on socket");
+        }
+
+        return res;
+    }
+
+    pub func accept(self) {
+        var addr_len = [u32; 1];
+        addr_len[0] = sockaddr_in::__size__() => u32;
+
+        self->client_sockfd = accept(
+            self->sockfd,
+            self->client_addr.__ptr__(),
+            addr_len
+        );
+        if (self->client_sockfd < 0) {
+            perror("accept");
+            panic("error accepting connection");
+        }
+    }
+
+    pub func receive(self) -> str {
+        var buffer = [i8; 1024];
+        var len = recv(self->client_sockfd, buffer, 1023, 0);
+        if (len < 0) {
+            perror("recv");
+            panic("error receiving data");
+        }
+        buffer[len] = 0;
+        return str::from(buffer);
+    }
+
+    pub func send(self, msg: str*) {
+        if (send(self->client_sockfd, msg->c_str, msg->size, 0) < 0) {
+            perror("send");
+            panic("error sending data");
+        }
+    }
+}
+
+pub struct tcp_client {
+    server_addr: sockaddr_in,
+    sockfd: i32
+}
+
+impl tcp_client {
+    pub func delete(self) {
+        if (self->sockfd > 0) {
+            close(self->sockfd);
+        }
+    }
+
+    pub func create(ip: i8*, port: u16) -> tcp_client {
+        var res = tcp_client {
+            server_addr: sockaddr_in::instance(),
+            sockfd: 0
+        };
+
+        res.sockfd = s_socket(
+            af_domain::AF_INET,
+            sock_kind::SOCK_STREAM,
+            ip_proto::IPPROTO_TCP
+        );
+        if (res.sockfd < 0) {
+            panic("failed to create socket");
+        }
+
+        res.server_addr.set(af_domain::AF_INET, ip, port);
+
+        if (connect(res.sockfd, res.server_addr.__ptr__(), sockaddr_in::__size__() => u32) < 0) {
+            perror("connect");
+            panic("error connecting to server");
+        }
+        return res;
+    }
+
+    pub func receive(self) -> str {
+        var buffer = [i8; 1024];
+        var len = recv(self->sockfd, buffer, 1023, 0);
+        if (len < 0) {
+            perror("recv");
+            panic("error receiving data");
+        }
+        buffer[len] = 0;
+        return str::from(buffer);
+    }
+
+    pub func send(self, msg: str*) {
+        if (send(self->sockfd, msg->c_str, msg->size, 0) < 0) {
+            perror("send");
+            panic("error sending data");
+        }
+    }
+}

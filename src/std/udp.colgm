@@ -1,0 +1,172 @@
+use std::socket::{
+    s_socket,
+    bind,
+    recvfrom,
+    sendto,
+    sockaddr_in,
+    af_domain,
+    sock_kind,
+    ip_proto,
+};
+use std::str::{ str };
+use std::libc::{ close, perror };
+
+use err::panic::{ panic };
+
+pub struct udp_server {
+    server_addr: sockaddr_in,
+    client_addr: sockaddr_in,
+    sockfd: i32
+}
+
+impl udp_server {
+    pub func delete(self) {
+        if (self->sockfd > 0) {
+            close(self->sockfd);
+        }
+    }
+
+    pub func create(ip: i8*, port: u16) -> udp_server {
+        var udp_res = udp_server {
+            server_addr: sockaddr_in::instance(),
+            client_addr: sockaddr_in::instance(),
+            sockfd: 0
+        };
+
+        udp_res.sockfd = s_socket(
+            af_domain::AF_INET,
+            sock_kind::SOCK_DGRAM,
+            ip_proto::IPPROTO_UDP
+        );
+        if (udp_res.sockfd < 0) {
+            panic("failed to create socket");
+        }
+
+        udp_res.server_addr.set(af_domain::AF_INET, ip, port);
+
+        if (bind(udp_res.sockfd,
+                 udp_res.server_addr.__ptr__(),
+                 sockaddr_in::__size__() => u32) < 0) {
+            perror("bind");
+            panic("error binding socket");
+        }
+
+        return udp_res;
+    }
+
+    pub func receive(self) -> str {
+        var addr_len = [u32; 1];
+        addr_len[0] = sockaddr_in::__size__() => u32;
+
+        var buffer = [i8; 1024];
+        var len = recvfrom(
+            self->sockfd,
+            buffer,
+            1023,
+            0,
+            self->client_addr.__ptr__(),
+            addr_len
+        );
+        if (len < 0) {
+            perror("recvfrom");
+            panic("error receiving data");
+        }
+
+        buffer[len] = 0;
+        return str::from(buffer);
+    }
+
+    pub func send(self, data: str*) {
+        var len = sendto(
+            self->sockfd,
+            data->c_str,
+            data->size,
+            0,
+            self->client_addr.__ptr__(),
+            sockaddr_in::__size__() => u32
+        );
+        if (len < 0) {
+            perror("sendto");
+            panic("error sending data");
+        }
+    }
+}
+
+pub struct udp_client {
+    server_addr: sockaddr_in,
+    client_addr: sockaddr_in,
+    sockfd: i32
+}
+
+impl udp_client {
+    pub func delete(self) {
+        if (self->sockfd > 0) {
+            close(self->sockfd);
+        }
+    }
+
+    pub func create(ip: i8*, port: u16) -> udp_client {
+        var udp_res = udp_client {
+            server_addr: sockaddr_in::instance(),
+            client_addr: sockaddr_in::instance(),
+            sockfd: 0
+        };
+
+        udp_res.sockfd = s_socket(
+            af_domain::AF_INET,
+            sock_kind::SOCK_DGRAM,
+            ip_proto::IPPROTO_UDP
+        );
+        if (udp_res.sockfd < 0) {
+            panic("failed to create socket");
+        }
+
+        udp_res.server_addr.set(af_domain::AF_INET, ip, port);
+
+        if (bind(udp_res.sockfd,
+                 udp_res.client_addr.__ptr__(),
+                 sockaddr_in::__size__() => u32) < 0) {
+            perror("bind");
+            panic("error binding socket");
+        }
+
+        return udp_res;
+    }
+
+    pub func receive(self) -> str {
+        var addr_len = [u32; 1];
+        addr_len[0] = sockaddr_in::__size__() => u32;
+
+        var buffer = [i8; 1024];
+        var len = recvfrom(
+            self->sockfd,
+            buffer,
+            1023,
+            0,
+            self->server_addr.__ptr__(),
+            addr_len
+        );
+        if (len < 0) {
+            perror("recvfrom");
+            panic("error receiving data");
+        }
+
+        buffer[len] = 0;
+        return str::from(buffer);
+    }
+
+    pub func send(self, data: str*) {
+        var len = sendto(
+            self->sockfd,
+            data->c_str,
+            data->size,
+            0,
+            self->server_addr.__ptr__(),
+            sockaddr_in::__size__() => u32
+        );
+        if (len < 0) {
+            perror("sendto");
+            panic("error sending data");
+        }
+    }
+}
