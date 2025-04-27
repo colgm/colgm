@@ -1,7 +1,8 @@
 use err::report::{ report };
 use err::panic::{ panic };
-use ast::ast::{ ast_kind, ast_type_def };
+use ast::ast::{ ast_kind, ast_type_def, ast_number_literal };
 use package::{ package };
+use util::to_num::{ to_u64 };
 
 use sema::context::{ sema_context };
 use sema::type::{ type };
@@ -19,6 +20,36 @@ pub struct type_resolve {
 impl type_resolve {
     pub func instance(e: report*, c: sema_context*, p: package*) -> type_resolve {
         return type_resolve { err: e, ctx: c, pkg: p };
+    }
+
+    func get_array_length(self, n: ast_number_literal*) -> u64 {
+        var res: u64 = 0;
+        var to_u64_res = to_u64(n->literal.__ptr__());
+
+        if (to_u64_res.is_ok()) {
+            res = to_u64_res.unwrap();
+        } else {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "invalid number, length should be a u64 number"
+            );
+        }
+
+        if (res == 0) {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "invalid number, length should not be 0"
+            );
+        }
+
+        if (res < 0 || res > 0xffffffff) {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "invalid number, length should be in range [0, 0xffffffff]"
+            );
+        }
+
+        return res;
     }
 
     pub func resolve(self, node: ast_type_def*) -> type {
@@ -78,6 +109,11 @@ impl type_resolve {
         t.name.append_str(name);
         t.pointer_depth = node->pointer_depth;
         t.is_const = node->is_const;
+        if (node->is_array) {
+            t.is_array = node->is_array;
+            t.pointer_depth += 1;
+            t.array_length = self->get_array_length(node->array_length);
+        }
         if (GN->has(name)) {
             t.is_generic_placeholder = true;
         }

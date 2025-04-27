@@ -106,8 +106,17 @@ impl ast_dumper {
         if (self->pkg == nil || ty == nil || ty->name.empty()) {
             return;
         }
+
+        if (ty->is_array) {
+            var n = ty->full_path_name(self->pkg, false);
+            out.green().out("[real: [").out(n.c_str).out(" x ");
+            out.out_u64(ty->array_length).out("]]").reset();
+            n.delete();
+        }
+
         var name = ty->full_path_name(self->pkg, true);
         out.cyan().out("[type: ").out(name.c_str).out("] ").reset();
+        name.delete();
     }
 }
 

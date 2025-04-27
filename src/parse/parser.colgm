@@ -431,6 +431,13 @@ impl parser {
         } else {
             self->match_token(tok_kind::tok_semi);
         }
+        if (self->lookahead(tok_kind::tok_sub)) {
+            self->err->error(
+                self->this_tok_loc(),
+                "array type does not accept negative length"
+            );
+            self->match_token(tok_kind::tok_sub);
+        }
         res->size = self->number_literal_gen();
         self->match_token(tok_kind::tok_rbracket);
         self->update_location(res => ast*);
@@ -737,6 +744,13 @@ impl parser {
                 res->generic_types = self->generic_type_list_gen();
             }
             self->match_token(tok_kind::tok_semi);
+            if (self->lookahead(tok_kind::tok_sub)) {
+                self->err->error(
+                    self->this_tok_loc(),
+                    "array type does not accept negative length"
+                );
+                self->match_token(tok_kind::tok_sub);
+            }
             res->array_length = self->number_literal_gen();
             res->is_array = true;
             self->match_token(tok_kind::tok_rbracket);

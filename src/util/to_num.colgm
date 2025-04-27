@@ -1,7 +1,9 @@
 use std::math::{ nan, pow };
 use std::libc::{ strlen };
+use std::str::{ str };
+use std::result::{ result };
 
-pub func hex_to_u64(s: i8*) -> u64 {
+func hex_to_u64(s: i8*) -> result<u64> {
     var res: u64 = 0;
     var len = strlen(s);
     for (var i = 0; i < len; i += 1) {
@@ -12,36 +14,36 @@ pub func hex_to_u64(s: i8*) -> u64 {
         } else if ('A' <= s[i] && s[i] <= 'F') {
             res = res * 16 + (s[i] - 'A' + 10) => u64;
         } else {
-            return 0;
+            return result<u64>::err();
         }
     }
-    return res;
+    return result<u64>::ok(res);
 }
 
-pub func oct_to_u64(s: i8*) -> u64 {
+func oct_to_u64(s: i8*) -> result<u64> {
     var res: u64 = 0;
     var len = strlen(s);
     for (var i = 0; i < len; i += 1) {
         if ('0' <= s[i] && s[i] <= '7') {
             res = res * 8 + (s[i] - '0') => u64;
         } else {
-            return 0;
+            return result<u64>::err();
         }
     }
-    return res;
+    return result<u64>::ok(res);
 }
 
-pub func dec_to_u64(s: i8*) -> u64 {
+func dec_to_u64(s: i8*) -> result<u64> {
     var ret: u64 = 0;
     var len = strlen(s);
     for (var i = 0; i < len; i += 1) {
         if ('0' <= s[i] && s[i] <= '9') {
             ret = ret * 10 + (s[i] - '0') => u64;
         } else {
-            return 0;
+            return result<u64>::err();
         }
     }
-    return ret;
+    return result<u64>::ok(ret);
 }
 
 pub func hex_to_i64(s: i8*) -> i64 {
@@ -74,7 +76,7 @@ pub func oct_to_i64(s: i8*) -> i64 {
     return res;
 }
 
-pub func hex_to_f64(s: i8*) -> f64 {
+func hex_to_f64(s: i8*) -> f64 {
     var res: f64 = 0.0;
     var len = strlen(s);
     for (var i = 0; i < len; i += 1) {
@@ -91,7 +93,7 @@ pub func hex_to_f64(s: i8*) -> f64 {
     return res;
 }
 
-pub func oct_to_f64(s: i8*) -> f64 {
+func oct_to_f64(s: i8*) -> f64 {
     var res: f64 = 0.0;
     var len = strlen(s);
     for (var i = 0; i < len; i += 1) {
@@ -104,7 +106,7 @@ pub func oct_to_f64(s: i8*) -> f64 {
     return res;
 }
 
-pub func dec_to_f64(s: i8*) -> f64 {
+func dec_to_f64(s: i8*) -> f64 {
     var negative_exponent = false;
     var res: f64 = 0.0;
     var len = strlen(s);
@@ -172,7 +174,7 @@ pub func dec_to_f64(s: i8*) -> f64 {
     return res;
 }
 
-pub func str_to_num(s: i8*) -> f64 {
+pub func to_f64(s: i8*) -> f64 {
     var flag_is_negative = false;
     var res: f64 = 0.0;
 
@@ -203,4 +205,32 @@ pub func str_to_num(s: i8*) -> f64 {
 
     // unreachable
     return nan("");
+}
+
+pub func to_u64(s: str*) -> result<u64> {
+    if (s->contains('.')) {
+        return result<u64>::err();
+    }
+
+    var res: u64 = 0;
+    if (s->size > 2 && s->c_str[0] == '0' && s->c_str[1] == 'o') {
+        var r = oct_to_u64((s->c_str => u64 + 2) => i8*);
+        if (!r.is_ok()) {
+            return r;
+        }
+        res = r.unwrap();
+    } else if (s->size > 2 && s->c_str[0] == '0' && s->c_str[1] == 'x') {
+        var r = hex_to_u64((s->c_str => u64 + 2) => i8*);
+        if (!r.is_ok()) {
+            return r;
+        }
+        res = r.unwrap();
+    } else {
+        var r = dec_to_u64(s->c_str);
+        if (!r.is_ok()) {
+            return r;
+        }
+        res = r.unwrap();
+    }
+    return result<u64>::ok(res);
 }

@@ -36,9 +36,11 @@ struct type {
     bool is_global = false;      // global symbol
     bool is_global_func = false; // global func
     bool is_enum = false;        // enum type
-    bool is_array = false;       // array type
     bool is_const = false;       // const type
     bool is_generic_placeholder = false; // generic placeholder
+
+    u64 array_length = 0;        // array length
+    bool is_array = false;       // array type
 
     struct_method_info stm_info; // struct methods
     struct_method_info prm_info; // primitive methods

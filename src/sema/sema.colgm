@@ -3,7 +3,6 @@ use err::panic::{ panic, unreachable };
 use err::span::{ span };
 
 use std::io::{ io };
-use std::libc::{ itoa, utoa };
 use std::math::{ isinf, isnan };
 use std::str::{ str };
 use std::ptr::{ ptr };
@@ -25,7 +24,7 @@ use sema::module::{ colgm_module };
 use sema::type_resolve::{ type_resolve };
 
 use util::cli::{ cli_option };
-use util::to_num::{ str_to_num, hex_to_u64, oct_to_u64 };
+use util::to_num::{ to_f64, to_u64 };
 
 pub struct sema {
     err: report*,
@@ -92,7 +91,8 @@ impl sema {
     }
 
     func resolve_number_literal(self, n: ast_number_literal*) -> type {
-        var result = str_to_num(n->literal.c_str);
+        var result = to_f64(n->literal.c_str);
+        var to_u64_try = to_u64(n->literal.__ptr__());
         if (isinf(result) || isnan(result)) {
             var info = str::from("invalid number \"");
             info.append_str(n->literal.__ptr__());
@@ -101,29 +101,29 @@ impl sema {
             info.delete();
             return type::error_type();
         }
-        if (n->literal.contains('.') || n->literal.contains('e')) {
+
+        // result is not inf or nan, and contains '.', must be float
+        // some i64 literal may cause to_u64_try.is_ok() == true
+        // but we will check it later
+        if (n->literal.contains('.') ||
+            (!to_u64_try.is_ok() && n->literal.contains('e')) ||
+            (!to_u64_try.is_ok() && n->literal.contains('E'))) {
             var ty = type::f64_type();
             n->base.resolved_type.reset_with(ty.__ptr__());
             return ty;
         }
-        if (n->literal.size > 2 && n->literal.c_str[1] == 'o') {
-            var buff = [i8; 128];
-            utoa(oct_to_u64((n->literal.c_str => u64 + 2) => i8*), buff, 10);
+
+        // must be u64
+        if (((n->literal.size > 2 && n->literal.c_str[1] == 'o') ||
+            (n->literal.size > 2 && n->literal.c_str[1] == 'x')) &&
+            to_u64_try.is_ok()) {
             n->literal.clear();
-            n->literal.append_i8_vec(buff);
+            n->literal.append_u64(to_u64_try.unwrap());
             var ty = type::u64_type();
             n->base.resolved_type.reset_with(ty.__ptr__());
             return ty;
         }
-        if (n->literal.size > 2 && n->literal.c_str[1] == 'x') {
-            var buff = [i8; 128];
-            utoa(hex_to_u64((n->literal.c_str => u64 + 2) => i8*), buff, 10);
-            n->literal.clear();
-            n->literal.append_i8_vec(buff);
-            var ty = type::u64_type();
-            n->base.resolved_type.reset_with(ty.__ptr__());
-            return ty;
-        }
+
         var default_ty = type::i64_type();
         n->base.resolved_type.reset_with(default_ty.__ptr__());
         return default_ty;
@@ -160,6 +160,7 @@ impl sema {
         var type_infer = self->tr.resolve(n->type);
         type_infer.pointer_depth += 1;
         type_infer.is_array = true;
+        type_infer.array_length = to_u64(n->size->literal.__ptr__()).unwrap();
         n->base.resolved_type.reset_with(type_infer.__ptr__());
         return type_infer;
     }
@@ -900,12 +901,9 @@ impl sema {
                                 n: ast_call_func_args*) {
         if (func_self->unordered_params.size != n->args.size) {
             var info = str::from("expect ");
-            var buff = [i8; 256];
-            itoa(func_self->unordered_params.size => i64, buff, 10);
-            info.append_i8_vec(buff);
+            info.append_u64(func_self->unordered_params.size);
             info.append_i8_vec(" argument(s), but get ");
-            itoa(n->args.size => i64, buff, 10);
-            info.append_i8_vec(buff);
+            info.append_u64(n->args.size);
             self->err->error(n->base.location.__ptr__(), info.c_str);
             info.delete();
             return;
@@ -942,12 +940,9 @@ impl sema {
                                 n: ast_call_func_args*) {
         if (func_self->unordered_params.size != n->args.size + 1) {
             var info = str::from("expect ");
-            var buff = [i8; 256];
-            itoa((func_self->unordered_params.size - 1) => i64, buff, 10);
-            info.append_i8_vec(buff);
+            info.append_u64(func_self->unordered_params.size - 1);
             info.append_i8_vec(" argument(s), but get ");
-            itoa(n->args.size => i64, buff, 10);
-            info.append_i8_vec(buff);
+            info.append_u64(n->args.size);
             self->err->error(n->base.location.__ptr__(), info.c_str);
             info.delete();
             return;

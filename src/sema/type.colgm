@@ -44,9 +44,11 @@ pub struct type {
     is_global_sym: bool,          // global symbol
     is_global_func: bool,         // global function
     is_enum: bool,                // enum type
-    is_array: bool,               // array type
     is_const: bool,               // const type
     is_generic_placeholder: bool, // generic placeholder
+
+    array_length: u64,            // array length
+    is_array: bool,               // array type
 
     stm_info: method_info,        // struct methods
     prm_info: method_info,        // primitive type methods(intrinsic)
@@ -71,6 +73,7 @@ impl type {
         self->is_global_sym = t->is_global_sym;
         self->is_global_func = t->is_global_func;
         self->is_enum = t->is_enum;
+        self->array_length = t->array_length;
         self->is_array = t->is_array;
         self->is_const = t->is_const;
         self->is_generic_placeholder = t->is_generic_placeholder;
@@ -90,7 +93,8 @@ impl type {
         res->is_global_sym = self->is_global_sym;
         res->is_global_func = self->is_global_func;
         res->is_enum = self->is_enum;
-        self->is_array = self->is_array;
+        res->array_length = self->array_length;
+        res->is_array = self->is_array;
         res->is_const = self->is_const;
         res->is_generic_placeholder = self->is_generic_placeholder;
         res->stm_info = self->stm_info.copy_instance();
@@ -107,6 +111,7 @@ impl type {
             is_global_sym: self->is_global_sym,
             is_global_func: self->is_global_func,
             is_enum: self->is_enum,
+            array_length: self->array_length,
             is_array: self->is_array,
             is_const: self->is_const,
             is_generic_placeholder: self->is_generic_placeholder,
@@ -152,6 +157,7 @@ impl type {
         self->is_global_sym = false;
         self->is_global_func = false;
         self->is_enum = false;
+        self->array_length = 0;
         self->is_array = false;
         self->is_const = false;
         self->is_generic_placeholder = false;

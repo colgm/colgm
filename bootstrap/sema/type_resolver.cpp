@@ -20,6 +20,36 @@ bool type_resolver::is_generic(const type& t) {
     return false;
 }
 
+u64 type_resolver::get_array_length(ast::number_literal* n) {
+    const auto& literal_string = n->get_number();
+
+    if (literal_string.find(".") != std::string::npos ||
+        literal_string.find("e") != std::string::npos) {
+        rp.report(n, "invalid float number \"" + literal_string + "\", expect u64.");
+        return 0;
+    }
+
+    u64 res = 0;
+    if (literal_string.length() > 2 && literal_string[1] == 'o') {
+        res = oct_to_u64(literal_string.c_str());
+    } else if (literal_string.length() > 2 && literal_string[1] == 'x') {
+        res = hex_to_u64(literal_string.c_str());
+    } else {
+        res = dec_to_u64(literal_string.c_str());
+    }
+
+    if (res == 0) {
+        rp.report(n, "invalid number \"" + literal_string + "\", length should not be 0.");
+    }
+    if (res < 0 || res >= UINT32_MAX) {
+        rp.report(n,
+            "invalid number \"" + literal_string +
+            "\", length should be 0 ~ " + std::to_string(UINT32_MAX) + "."
+        );
+    }
+    return res;
+}
+
 type type_resolver::resolve(ast::type_def* node) {
     const auto& name = node->get_name()->get_name();
     const auto& dm = node->is_redirected()
@@ -65,6 +95,11 @@ type type_resolver::resolve(ast::type_def* node) {
     // if node has const flag, set it
     if (node->is_constant()) {
         res.is_const = true;
+    }
+    if (node->get_is_array()) {
+        res.is_array = true;
+        res.pointer_depth ++;
+        res.array_length = get_array_length(node->get_array_length());
     }
 
     // if node has generics and we can find it, set it as the place holder
