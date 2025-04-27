@@ -730,6 +730,19 @@ impl parser {
 
     func type_def_gen(self) -> ast_type_def* {
         var res = ast_type_def::new(self->this_tok_loc());
+        if (self->lookahead(tok_kind::tok_lbracket)) {
+            self->match_token(tok_kind::tok_lbracket);
+            res->name = self->identifier_gen();
+            if (self->lookahead_generic()) {
+                res->generic_types = self->generic_type_list_gen();
+            }
+            self->match_token(tok_kind::tok_semi);
+            res->array_length = self->number_literal_gen();
+            res->is_array = true;
+            self->match_token(tok_kind::tok_rbracket);
+            self->update_location(res => ast*);
+            return res;
+        }
         if (self->lookahead(tok_kind::tok_const)) {
             self->match_token(tok_kind::tok_const);
             res->is_const = true;

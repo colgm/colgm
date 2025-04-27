@@ -49,14 +49,19 @@ class type_def: public decl {
 private:
     identifier* name;
     generic_type_list* generic_types;
+
     i64 pointer_depth;
     bool is_const; // mark if the type is const
+
+    number_literal* array_length;
+    bool is_array; // mark if the type is array
 
 public:
     type_def(const span& loc):
         decl(ast_type::ast_type_def, loc),
         name(nullptr), generic_types(nullptr),
-        pointer_depth(0), is_const(false) {}
+        pointer_depth(0), is_const(false),
+        array_length(nullptr), is_array(false) {}
     ~type_def() override;
     void accept(visitor*) override;
     type_def* clone() const override;
@@ -69,6 +74,9 @@ public:
     auto get_pointer_level() { return pointer_depth; }
     void set_constant() { is_const = true; }
     bool is_constant() const { return is_const; }
+    void set_array(number_literal* len) { array_length = len; is_array = true; }
+    bool get_is_array() const { return is_array; }
+    auto get_array_length() const { return array_length; }
 };
 
 class generic_type_list: public decl {

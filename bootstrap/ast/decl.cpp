@@ -65,6 +65,8 @@ enum_decl* enum_decl::clone() const {
 type_def::~type_def() {
     delete name;
     delete generic_types;
+
+    delete array_length;
 }
 
 void type_def::accept(visitor* v) {
@@ -79,6 +81,11 @@ type_def* type_def::clone() const {
     }
     ret->pointer_depth = pointer_depth;
     ret->is_const = is_const;
+
+    if (array_length) {
+        ret->array_length = array_length->clone();
+    }
+    ret->is_array = is_array;
     return ret;
 }
 

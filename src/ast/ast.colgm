@@ -1402,8 +1402,12 @@ pub struct ast_type_def {
     base: ast,
     name: ast_identifier*,
     generic_types: ast_generic_type_list*,
+
     pointer_depth: i64,
-    is_const: bool
+    is_const: bool,
+
+    array_length: ast_number_literal*,
+    is_array: bool
 }
 
 impl ast_type_def {
@@ -1414,6 +1418,8 @@ impl ast_type_def {
         res->generic_types = nil;
         res->pointer_depth = 0;
         res->is_const = false;
+        res->array_length = nil;
+        res->is_array = false;
         return res;
     }
 
@@ -1435,6 +1441,13 @@ impl ast_type_def {
         }
         res->pointer_depth = self->pointer_depth;
         res->is_const = self->is_const;
+
+        if (self->array_length != nil) {
+            res->array_length = self->array_length->copy();
+        } else {
+            res->array_length = nil;
+        }
+        res->is_array = self->is_array;
         return res;
     }
 
@@ -1446,6 +1459,11 @@ impl ast_type_def {
         }
         if (self->generic_types != nil) {
             var n = self->generic_types => ast*;
+            n->delete();
+            free(n => i8*);
+        }
+        if (self->array_length != nil) {
+            var n = self->array_length => ast*;
             n->delete();
             free(n => i8*);
         }

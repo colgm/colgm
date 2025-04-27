@@ -34,6 +34,9 @@ bool visitor::visit_type_def(type_def* node) {
     if (node->get_generic_types()) {
         node->get_generic_types()->accept(this);
     }
+    if (node->get_array_length()) {
+        node->get_array_length()->accept(this);
+    }
     return true;
 }
 

@@ -242,7 +242,7 @@ impl ast_dumper {
             unary_kind::bnot => out.cyan().out("~").reset();
             unary_kind::lnot => out.cyan().out("!").reset();
         }
-        out.out(" -> ");
+        out.out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -274,7 +274,7 @@ impl ast_dumper {
             binary_kind::bor => out.cyan().out("|").reset();
             binary_kind::bxor => out.cyan().out("^").reset();
         }
-        out.out(" -> ");
+        out.out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -304,7 +304,7 @@ impl ast_dumper {
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("identifier ")
            .green().out(node->content.c_str).reset()
-           .out(" -> ");
+           .out(" --> ");
         node->base.location.dump(out);
     }
 
@@ -313,7 +313,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("nil-literal ")
-           .orange().out("nil").reset().out(" -> ");
+           .orange().out("nil").reset().out(" --> ");
         node->base.location.dump(out);
     }
 
@@ -322,7 +322,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("number-literal ")
-           .orange().out(node->literal.c_str).reset().out(" -> ");
+           .orange().out(node->literal.c_str).reset().out(" --> ");
         node->base.location.dump(out);
     }
 
@@ -332,7 +332,7 @@ impl ast_dumper {
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         var tmp = llvm_raw_string(node->literal.__ptr__());
         out.out("string-literal ")
-           .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
+           .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" --> ");
         tmp.delete();
         node->base.location.dump(out);
     }
@@ -343,7 +343,7 @@ impl ast_dumper {
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         var tmp = llvm_raw_string(node->literal.__ptr__());
         out.out("char-literal: ")
-           .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
+           .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" --> ");
         tmp.delete();
         node->base.location.dump(out);
     }
@@ -358,7 +358,7 @@ impl ast_dumper {
         } else {
             out.orange().out("false").reset();
         }
-        out.out(" -> ");
+        out.out(" --> ");
         node->base.location.dump(out);
     }
 
@@ -410,7 +410,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("get-field ")
-           .green().out(node->name.c_str).reset().out(" -> ");
+           .green().out(node->name.c_str).reset().out(" --> ");
         node->base.location.dump(out);
     }
 
@@ -419,7 +419,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("ptr-get-field ")
-           .green().out(node->name.c_str).reset().out(" -> ");
+           .green().out(node->name.c_str).reset().out(" --> ");
         node->base.location.dump(out);
     }
 
@@ -429,7 +429,7 @@ impl ast_dumper {
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("init-pair ");
         out.green().out(node->field->content.c_str).reset();
-        out.out(" -> ");
+        out.out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -461,7 +461,7 @@ impl ast_dumper {
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("call-path ")
            .green().out(node->name.c_str).reset()
-           .out(" -> ");
+           .out(" --> ");
         node->base.location.dump(out);
     }
 
@@ -520,7 +520,7 @@ impl ast_dumper {
             assignment_kind::xoreq => out.cyan().out("^=").reset();
             assignment_kind::oreq => out.cyan().out("|=").reset();
         }
-        out.out(" -> ");
+        out.out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -534,7 +534,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("cond-compile ");
-        out.out(node->cond_name.c_str).out(" -> ");
+        out.out(node->cond_name.c_str).out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -563,16 +563,25 @@ impl ast_dumper {
         } else {
             out.cyan().out("[const]").reset();
         }
+        if (node->is_array) {
+            out.cyan().out("[array]").reset();
+        }
         out.cyan().out("[ptr-depth=").out_i64(node->pointer_depth).out("] ").reset();
-        out.green().out(node->name->content.c_str).reset().out(" -> ");
+        out.green().out(node->name->content.c_str).reset().out(" --> ");
         node->base.location.dump(out);
 
+        self->push_indent();
         if (node->generic_types != nil) {
-            self->push_indent();
-            self->set_last();
+            if (node->array_length != nil) {
+                self->set_last();
+            }
             self->dump_generic_type_list(node->generic_types, out);
-            self->pop_indent();
         }
+        if (node->array_length != nil) {
+            self->set_last();
+            self->dump_number_literal(node->array_length, out);
+        }
+        self->pop_indent();
     }
 
     func dump_generic_type_list(self, node: ast_generic_type_list*, out: io) {
@@ -596,7 +605,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("enum-member ");
         out.green().out(node->name->content.c_str).reset();
-        out.out(" -> ");
+        out.out(" --> ");
         node->base.location.dump(out);
 
         if (node->value != nil) {
@@ -614,7 +623,7 @@ impl ast_dumper {
         if (node->is_public) {
             out.cyan().out("[pub] ").reset();
         }
-        out.green().out(node->name.c_str).reset().out(" -> ");
+        out.green().out(node->name.c_str).reset().out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -632,7 +641,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("field ");
         out.green().out(node->name->content.c_str).reset();
-        out.out(" -> ");
+        out.out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -655,7 +664,7 @@ impl ast_dumper {
             out.out(" ");
         }
         out.green().out(node->name.c_str).reset();
-        out.out(" -> ");
+        out.out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -679,7 +688,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("param ");
         out.green().out(node->name->content.c_str).reset();
-        out.out(" -> ");
+        out.out(" --> ");
         node->base.location.dump(out);
 
         if (node->type != nil) {
@@ -719,7 +728,7 @@ impl ast_dumper {
         if (node->is_public || node->is_extern) {
             out.out(" ");
         }
-        out.green().out(node->name.c_str).reset().out(" -> ");
+        out.green().out(node->name.c_str).reset().out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -810,7 +819,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("definition ")
-           .green().out(node->name.c_str).reset().out(" -> ");
+           .green().out(node->name.c_str).reset().out(" --> ");
         node->base.location.dump(out);
 
         self->push_indent();

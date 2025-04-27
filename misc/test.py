@@ -49,7 +49,7 @@ for (test, lib, allow_failure) in TEST_LIST:
         test,
         "--library", lib,
         "-o", "test.out",
-        "-g", "-O2"
+        "-O2"
     ], allow_failure)
     if ret != 0:
         continue

@@ -98,13 +98,22 @@ bool dumper::visit_cond_compile(cond_compile* node) {
 bool dumper::visit_type_def(type_def* node) {
     dump_indent();
     std::cout << "type " << (node->is_constant()? "[const]":"[mut]");
+    if (node->get_is_array()) {
+        std::cout << "[array]";
+    }
     std::cout << "[ptr " << node->get_pointer_level() << "] ";
     std::cout << node->get_name()->get_name();
     std::cout << format_location(node);
     push_indent();
     if (node->get_generic_types()) {
-        set_last();
+        if (!node->get_array_length()) {
+            set_last();
+        }
         node->get_generic_types()->accept(this);
+    }
+    if (node->get_array_length()) {
+        set_last();
+        node->get_array_length()->accept(this);
     }
     pop_indent();
     return true;
