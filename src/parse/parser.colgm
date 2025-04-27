@@ -178,17 +178,17 @@ impl parser {
         var loc = self->this_tok_loc();
         match (kind) {
             tok_kind::tok_id => {
-                self->err->error(loc, "expected identifier here.");
+                self->err->error(loc, "expected identifier here");
                 self->next();
                 return;
             }
             tok_kind::tok_num => {
-                self->err->error(loc, "expected number here.");
+                self->err->error(loc, "expected number here");
                 self->next();
                 return;
             }
             tok_kind::tok_str => {
-                self->err->error(loc, "expected string here.");
+                self->err->error(loc, "expected string here");
                 self->next();
                 return;
             }
@@ -200,7 +200,7 @@ impl parser {
                ->append_str(self->this_tok()->content.__ptr__())
                ->append_i8_vec("\" here, but expect \"")
                ->append_i8_vec(parser::tok_kind_to_content(kind))
-               ->append_i8_vec("\".");
+               ->append_i8_vec("\"");
         self->err->error(loc, message.c_str);
         message.delete();
 
@@ -755,7 +755,7 @@ impl parser {
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else if (self->lookahead(tok_kind::tok_id)) {
-                self->err->error(self->this_tok_loc(), "expected comma here.");
+                self->err->error(self->this_tok_loc(), "expected comma here");
             }
         }
         self->match_token(tok_kind::tok_grt);
@@ -957,6 +957,9 @@ impl parser {
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
             res->stmts.push(ptr<ast>::wrap(self->stmt_gen()));
+            if (self->lookahead(tok_kind::tok_eof)) {
+                break;
+            }
         }
         self->match_token(tok_kind::tok_rbrace);
         self->update_location(res => ast*);
@@ -1198,7 +1201,7 @@ impl parser {
             return res => ast*;
         }
     
-        self->err->error(self->this_tok_loc(), "expect function, struct or enum.");
+        self->err->error(self->this_tok_loc(), "expect function, struct or enum");
         return ast_null::new() => ast*;
     }
 
@@ -1214,7 +1217,7 @@ impl parser {
             res->is_extern = true;
             return res => ast*;
         }
-        self->err->error(self->this_tok_loc(), "expect function or struct.");
+        self->err->error(self->this_tok_loc(), "expect function or struct");
         return ast_null::new() => ast*;
     }
 }
@@ -1270,13 +1273,13 @@ impl parser {
                     flag_is_public = true;
                     pub_loc = self->this_tok_loc();
                 } else if (self->lookahead(tok_kind::tok_pub) && flag_is_public) {
-                    self->err->error(self->this_tok_loc(), "duplicate 'pub' modifier.");
+                    self->err->error(self->this_tok_loc(), "duplicate 'pub' modifier");
                 }
                 if (self->lookahead(tok_kind::tok_extern) && !flag_is_extern) {
                     flag_is_extern = true;
                     extern_loc = self->this_tok_loc();
                 } else if (self->lookahead(tok_kind::tok_extern) && flag_is_extern) {
-                    self->err->error(self->this_tok_loc(), "duplicate 'extern' modifier.");
+                    self->err->error(self->this_tok_loc(), "duplicate 'extern' modifier");
                 }
                 self->next();
             }
@@ -1293,7 +1296,7 @@ impl parser {
                     var tmp = self->enum_decl_gen();
                     tmp->is_public = flag_is_public;
                     if (flag_is_extern) {
-                        self->err->error(extern_loc, "extern enum not supported.");
+                        self->err->error(extern_loc, "extern enum not supported");
                     }
                     decl_node = tmp => ast*;
                 }
@@ -1305,10 +1308,10 @@ impl parser {
                 }
                 tok_kind::tok_impl => {
                     if (flag_is_public) {
-                        self->err->error(pub_loc, "cannot use 'pub' with 'impl'.");
+                        self->err->error(pub_loc, "cannot use 'pub' with 'impl'");
                     }
                     if (flag_is_extern) {
-                        self->err->error(extern_loc, "cannot use 'extern' with 'impl'.");
+                        self->err->error(extern_loc, "cannot use 'extern' with 'impl'");
                     }
                     decl_node = self->impl_gen() => ast*;
                 }
