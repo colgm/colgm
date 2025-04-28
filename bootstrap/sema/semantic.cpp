@@ -485,6 +485,7 @@ type semantic::resolve_array_literal(array_literal* node) {
     node->set_resolve_type(type_infer.get_pointer_copy());
     auto result_type = type_infer.get_pointer_copy();
     result_type.is_array = true;
+    result_type.array_length = str_to_num(node->get_size()->get_number().c_str());
     return result_type;
 }
 

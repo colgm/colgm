@@ -170,6 +170,7 @@ private:
         {"bool", "i1"}
     };
     std::string type_mapping(const type&);
+    std::string array_type_mapping(const type&);
 
 private:
     sir_context ictx;

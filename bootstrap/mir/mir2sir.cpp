@@ -60,11 +60,23 @@ std::string mir2sir::type_mapping(const type& t) {
     return copy.to_string();
 }
 
+std::string mir2sir::array_type_mapping(const type& t) {
+    assert(t.is_array);
+    auto copy = t;
+    copy.pointer_depth --;
+    copy.is_array = false;
+    return "[" + std::to_string(copy.array_length) + " x " + type_mapping(copy) + "]";
+}
+
 void mir2sir::emit_struct(const mir_context& mctx) {
     for(auto i : mctx.structs) {
         auto stct = new sir_struct(i->name, i->location);
         for(const auto& f : i->field_type) {
-            stct->add_field_type(type_mapping(f));
+            if (f.is_array) {
+                stct->add_field_type(array_type_mapping(f));
+            } else {
+                stct->add_field_type(type_mapping(f));
+            }
         }
         ictx.struct_decls.push_back(stct);
     }
@@ -641,9 +653,11 @@ void mir2sir::push_global_func(const type& t) {
 
 void mir2sir::visit_mir_call_id(mir_call_id* node) {
     if (!node->get_type().is_global) {
+        auto copy = node->get_type();
+        copy.is_array = false;
         value_stack.push_back(mir_value_t::variable(
             locals.get_local(node->get_name()),
-            node->get_type().get_pointer_copy()
+            copy.get_pointer_copy()
         ));
         return;
     }
@@ -684,11 +698,20 @@ void mir2sir::visit_mir_call_index(mir_call_index* node) {
     value_stack.pop_back();
 
     auto temp_var = ssa_gen.create();
-    block->add_stmt(new sir_load(
-        type_mapping(prev.resolve_type.get_ref_copy()),
-        prev.to_value_t(),
-        value_t::variable(temp_var)
-    ));
+    if (prev.resolve_type.is_array) {
+        block->add_stmt(new sir_array_cast(
+            prev.to_value_t(),
+            value_t::variable(temp_var),
+            type_mapping(prev.resolve_type.get_ref_copy().get_ref_copy()),
+            prev.resolve_type.array_length
+        ));
+    } else {
+        block->add_stmt(new sir_load(
+            type_mapping(prev.resolve_type.get_ref_copy()),
+            prev.to_value_t(),
+            value_t::variable(temp_var)
+        ));
+    }
 
     auto target = ssa_gen.create();
     block->add_stmt(new sir_get_index(
@@ -898,9 +921,13 @@ void mir2sir::visit_mir_define(mir_define* node) {
         name
     });
 
+    auto node_type = node->get_type();
+    if (node_type.is_array) {
+        node_type.is_array = false;
+    }
     block->add_alloca(new sir_alloca(
         name,
-        type_mapping(node->get_type())
+        type_mapping(node_type)
     ));
 
     node->get_init_value()->accept(this);
@@ -908,7 +935,7 @@ void mir2sir::visit_mir_define(mir_define* node) {
     value_stack.pop_back();
 
     block->add_stmt(new sir_store(
-        type_mapping(node->get_type()),
+        type_mapping(node_type),
         source.to_value_t(),
         value_t::variable(name)
     ));

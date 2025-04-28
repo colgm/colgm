@@ -375,11 +375,15 @@ impl mir2sir {
 
             foreach (var j; m_stct->field_type) {
                 var m_field = j.get();
-                var mapped_type = self->type_mapping(m_field);
-
-                s_stct.field_type.push(mapped_type.__ptr__());
-
-                mapped_type.delete();
+                if (m_field->is_array) {
+                    var mapped_type = self->array_type_mapping(m_field);
+                    s_stct.field_type.push(mapped_type.__ptr__());
+                    mapped_type.delete();
+                } else {
+                    var mapped_type = self->type_mapping(m_field);
+                    s_stct.field_type.push(mapped_type.__ptr__());
+                    mapped_type.delete();
+                }
             }
 
             self->sctx->struct_decls.push(s_stct.__ptr__());
@@ -541,6 +545,7 @@ impl mir2sir {
 
     func type_mapping(self, t: type*) -> str {
         var copy = t->copy_instance();
+
         // basic type mapping
         if (self->basic_type_mapper.has(copy.name.__ptr__())) {
             var replace = self->basic_type_mapper.get(copy.name.__ptr__());
@@ -609,6 +614,25 @@ impl mir2sir {
         copy.delete();
         full_name.delete();
         return res;
+    }
+
+    func array_type_mapping(self, t: type*) -> str {
+        if (!t->is_array) {
+            panic("not array type");
+        }
+
+        var copy = t->copy_instance();
+        copy.pointer_depth -= 1;
+        copy.is_array = false;
+
+        var mapped_type = self->type_mapping(copy.__ptr__());
+        var array_name = str::from("[");
+        array_name.append_u64(copy.array_length)->append_i8_vec(" x ");
+        array_name.append_str(mapped_type.__ptr__())->append_i8_vec("]");
+        mapped_type.delete();
+
+        copy.delete();
+        return array_name;
     }
 }
 
@@ -1305,6 +1329,10 @@ impl mir2sir {
         if (!n->resolved_type.is_global_sym) {
             var name = self->locals.get_local(n->name.__ptr__());
             var ty = n->resolved_type.pointer_copy();
+            // should make it to false
+            // then [4096 x i8]* can be treated as i8**
+            // which is exacty the type of local variable
+            ty.is_array = false;
             var v = mir_value_t::variable(name.__ptr__(), ty.__ptr__());
 
             self->value_stack.push(v.__ptr__());
@@ -1383,11 +1411,25 @@ impl mir2sir {
         var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
         var prev_value = prev.to_value_t();
         var temp_var_value = value_t::variable(temp_var.__ptr__());
-        self->block->add_stmt(sir_load::new(
-            prev_ref_ty.__ptr__(),
-            prev_value.__ptr__(),
-            temp_var_value.__ptr__()
-        ) => sir*);
+        if (prev.resolved_type.is_array) {
+            var prev_ref_ref = prev_ref.ref_copy();
+            var prev_ref_ref_ty = self->type_mapping(prev_ref_ref.__ptr__());
+            self->block->add_stmt(sir_array_cast::new(
+                prev_value.__ptr__(),
+                temp_var_value.__ptr__(),
+                prev_ref_ref_ty.__ptr__(),
+                prev.resolved_type.array_length,
+                self->generate_DI_location(n->base.location.__ptr__())
+            ) => sir*);
+            prev_ref_ref.delete();
+            prev_ref_ref_ty.delete();
+        } else {
+            self->block->add_stmt(sir_load::new(
+                prev_ref_ty.__ptr__(),
+                prev_value.__ptr__(),
+                temp_var_value.__ptr__()
+            ) => sir*);
+        }
 
         var target = self->ssa_gen.create();
         var target_value = value_t::variable(target.__ptr__());
@@ -1760,7 +1802,10 @@ impl mir2sir {
 
         // real name of the local variable
         self->locals.elem.back()->insert(n->name.__ptr__(), name.__ptr__());
-        var type_name = self->type_mapping(n->resolved_type.__ptr__());
+
+        var n_ty = n->resolved_type.copy_instance();
+        n_ty.is_array = false;
+        var type_name = self->type_mapping(n_ty.__ptr__());
         self->block->add_alloca(sir_alloca::new(
             name.__ptr__(),
             type_name.__ptr__()
@@ -1780,6 +1825,7 @@ impl mir2sir {
         ) => sir*);
 
         name.delete();
+        n_ty.delete();
         type_name.delete();
         source.delete();
         source_value.delete();
