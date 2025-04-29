@@ -38,18 +38,15 @@ impl ast_dumper {
             return indent_state::indent_none;
         }
         if (self->indent.c_str[s - 1] == '-' &&
-            self->indent.c_str[s - 2] == '-' &&
-            self->indent.c_str[s - 3] == '|') {
+            self->indent.c_str[s - 2] == '|') {
             return indent_state::indent_middle;
         }
         if (self->indent.c_str[s - 1] == ' ' &&
-            self->indent.c_str[s - 2] == ' ' &&
-            self->indent.c_str[s - 3] == '|') {
+            self->indent.c_str[s - 2] == '|') {
             return indent_state::indent_bar;
         }
         if (self->indent.c_str[s - 1] == '-' &&
-            self->indent.c_str[s - 2] == '-' &&
-            self->indent.c_str[s - 3] == '+') {
+            self->indent.c_str[s - 2] == '`') {
             return indent_state::indent_end;
         }
         return indent_state::indent_none;
@@ -63,30 +60,26 @@ impl ast_dumper {
                 indent_state::indent_middle => {
                     self->indent.pop_back();
                     self->indent.pop_back();
-                    self->indent.pop_back();
-                    self->indent.append_i8_vec("|  ");
+                    self->indent.append_i8_vec("| ");
                 }
                 indent_state::indent_bar => {}
                 indent_state::indent_end => {
                     self->indent.pop_back();
                     self->indent.pop_back();
-                    self->indent.pop_back();
-                    self->indent.append_i8_vec("   ");
+                    self->indent.append_i8_vec("  ");
                 }
             }
         }
-        self->indent.append_i8_vec("|--");
+        self->indent.append_i8_vec("|-");
     }
 
     func set_last(self) {
         self->indent.pop_back();
         self->indent.pop_back();
-        self->indent.pop_back();
-        self->indent.append_i8_vec("+--");
+        self->indent.append_i8_vec("`-");
     }
 
     func pop_indent(self) {
-        self->indent.pop_back();
         self->indent.pop_back();
         self->indent.pop_back();
     }
@@ -96,8 +89,7 @@ impl ast_dumper {
             self->indent_back() == indent_state::indent_bar) {
             self->indent.pop_back();
             self->indent.pop_back();
-            self->indent.pop_back();
-            self->indent.append_i8_vec("|--");
+            self->indent.append_i8_vec("|-");
         }
         out.out(self->indent.c_str);
     }
@@ -109,7 +101,7 @@ impl ast_dumper {
 
         if (ty->is_array) {
             var n = ty->full_path_name(self->pkg, false);
-            out.red().out("[real: [").out_u64(ty->array_length).out(" x ");
+            out.blue().out("[real: [").out_u64(ty->array_length).out(" x ");
             out.out(n.c_str).out("]]").reset();
             n.delete();
         }
@@ -222,7 +214,7 @@ impl ast_dumper {
     func dump_root(self, node: root*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("root -> ");
+        out.purple().out("Root").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -245,13 +237,13 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("unary-operator ");
+        out.purple().out("UnaryOperator ").reset();
         match (node->kind) {
-            unary_kind::neg => out.cyan().out("-").reset();
-            unary_kind::bnot => out.cyan().out("~").reset();
-            unary_kind::lnot => out.cyan().out("!").reset();
+            unary_kind::neg => out.green().out("-").reset();
+            unary_kind::bnot => out.green().out("~").reset();
+            unary_kind::lnot => out.green().out("!").reset();
         }
-        out.out(" --> ");
+        out.out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -264,26 +256,26 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("binary-operator ");
+        out.purple().out("BinaryOperator ").reset();
         match (node->kind) {
-            binary_kind::add => out.cyan().out("+").reset();
-            binary_kind::sub => out.cyan().out("-").reset();
-            binary_kind::mul => out.cyan().out("*").reset();
-            binary_kind::div => out.cyan().out("/").reset();
-            binary_kind::rem => out.cyan().out("%").reset();
-            binary_kind::cmpeq => out.cyan().out("==").reset();
-            binary_kind::cmpne => out.cyan().out("!=").reset();
-            binary_kind::less => out.cyan().out("<").reset();
-            binary_kind::leq => out.cyan().out("<=").reset();
-            binary_kind::grt => out.cyan().out(">").reset();
-            binary_kind::geq => out.cyan().out(">=").reset();
-            binary_kind::cmpand => out.cyan().out("&&").reset();
-            binary_kind::cmpor => out.cyan().out("||").reset();
-            binary_kind::band => out.cyan().out("&").reset();
-            binary_kind::bor => out.cyan().out("|").reset();
-            binary_kind::bxor => out.cyan().out("^").reset();
+            binary_kind::add => out.green().out("+").reset();
+            binary_kind::sub => out.green().out("-").reset();
+            binary_kind::mul => out.green().out("*").reset();
+            binary_kind::div => out.green().out("/").reset();
+            binary_kind::rem => out.green().out("%").reset();
+            binary_kind::cmpeq => out.green().out("==").reset();
+            binary_kind::cmpne => out.green().out("!=").reset();
+            binary_kind::less => out.green().out("<").reset();
+            binary_kind::leq => out.green().out("<=").reset();
+            binary_kind::grt => out.green().out(">").reset();
+            binary_kind::geq => out.green().out(">=").reset();
+            binary_kind::cmpand => out.green().out("&&").reset();
+            binary_kind::cmpor => out.green().out("||").reset();
+            binary_kind::band => out.green().out("&").reset();
+            binary_kind::bor => out.green().out("|").reset();
+            binary_kind::bxor => out.green().out("^").reset();
         }
-        out.out(" --> ");
+        out.out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -297,7 +289,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("type-convert -> ");
+        out.purple().out("TypeConvert").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -311,9 +303,8 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("identifier ")
-           .green().out(node->content.c_str).reset()
-           .out(" --> ");
+        out.purple().out("Identifier ").reset()
+           .green().out(node->content.c_str).reset().out(" -> ");
         node->base.location.dump(out);
     }
 
@@ -321,8 +312,8 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("nil-literal ")
-           .orange().out("nil").reset().out(" --> ");
+        out.purple().out("NilLiteral ").reset()
+           .green().out("nil").reset().out(" -> ");
         node->base.location.dump(out);
     }
 
@@ -330,8 +321,8 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("number-literal ")
-           .orange().out(node->literal.c_str).reset().out(" --> ");
+        out.purple().out("NumberLiteral ").reset()
+           .green().out(node->literal.c_str).reset().out(" -> ");
         node->base.location.dump(out);
     }
 
@@ -340,8 +331,8 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         var tmp = llvm_raw_string(node->literal.__ptr__());
-        out.out("string-literal ")
-           .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" --> ");
+        out.purple().out("StringLiteral ").reset()
+           .green().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
         tmp.delete();
         node->base.location.dump(out);
     }
@@ -351,8 +342,8 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         var tmp = llvm_raw_string(node->literal.__ptr__());
-        out.out("char-literal: ")
-           .orange().out("\"").out(tmp.c_str).out("\"").reset().out(" --> ");
+        out.purple().out("CharacterLiteral ").reset()
+           .green().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
         tmp.delete();
         node->base.location.dump(out);
     }
@@ -361,13 +352,13 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("bool-literal ");
+        out.purple().out("BooleanLiteral ").reset();
         if (node->flag) {
-            out.orange().out("true").reset();
+            out.green().out("true").reset();
         } else {
-            out.orange().out("false").reset();
+            out.green().out("false").reset();
         }
-        out.out(" --> ");
+        out.out(" -> ");
         node->base.location.dump(out);
     }
 
@@ -375,7 +366,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("array-literal -> ");
+        out.purple().out("Array").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -389,8 +380,9 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("call-index -> ");
+        out.purple().out("CallIndex").reset().out(" -> ");
         node->base.location.dump(out);
+
         self->push_indent();
         self->set_last();
         self->dump(node->index, out);
@@ -401,7 +393,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("call-func-args -> ");
+        out.purple().out("CallFuncArgs").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -418,8 +410,8 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("get-field ")
-           .green().out(node->name.c_str).reset().out(" --> ");
+        out.purple().out("GetField ").reset()
+           .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location.dump(out);
     }
 
@@ -427,8 +419,8 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("ptr-get-field ")
-           .green().out(node->name.c_str).reset().out(" --> ");
+        out.purple().out("PtrGetField ").reset()
+           .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location.dump(out);
     }
 
@@ -436,9 +428,9 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("init-pair ");
+        out.purple().out("InitPair ").reset();
         out.green().out(node->field->content.c_str).reset();
-        out.out(" --> ");
+        out.out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -451,7 +443,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("initializer -> ");
+        out.purple().out("Initializer").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -468,9 +460,9 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("call-path ")
+        out.purple().out("CallPath ").reset()
            .green().out(node->name.c_str).reset()
-           .out(" --> ");
+           .out(" -> ");
         node->base.location.dump(out);
     }
 
@@ -517,19 +509,19 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("assignment ");
+        out.purple().out("Assignment ").reset();
         match (node->kind) {
-            assignment_kind::eq => out.cyan().out("=").reset();
-            assignment_kind::addeq => out.cyan().out("+=").reset();
-            assignment_kind::subeq => out.cyan().out("-=").reset();
-            assignment_kind::muleq => out.cyan().out("*=").reset();
-            assignment_kind::diveq => out.cyan().out("/=").reset();
-            assignment_kind::remeq => out.cyan().out("%=").reset();
-            assignment_kind::andeq => out.cyan().out("&=").reset();
-            assignment_kind::xoreq => out.cyan().out("^=").reset();
-            assignment_kind::oreq => out.cyan().out("|=").reset();
+            assignment_kind::eq => out.green().out("=").reset();
+            assignment_kind::addeq => out.green().out("+=").reset();
+            assignment_kind::subeq => out.green().out("-=").reset();
+            assignment_kind::muleq => out.green().out("*=").reset();
+            assignment_kind::diveq => out.green().out("/=").reset();
+            assignment_kind::remeq => out.green().out("%=").reset();
+            assignment_kind::andeq => out.green().out("&=").reset();
+            assignment_kind::xoreq => out.green().out("^=").reset();
+            assignment_kind::oreq => out.green().out("|=").reset();
         }
-        out.out(" --> ");
+        out.out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -543,7 +535,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("cond-compile ");
-        out.out(node->cond_name.c_str).out(" --> ");
+        out.out(node->cond_name.c_str).out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -576,7 +568,7 @@ impl ast_dumper {
             out.cyan().out("[array]").reset();
         }
         out.cyan().out("[ptr-depth=").out_i64(node->pointer_depth).out("] ").reset();
-        out.green().out(node->name->content.c_str).reset().out(" --> ");
+        out.green().out(node->name->content.c_str).reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -614,7 +606,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("enum-member ");
         out.green().out(node->name->content.c_str).reset();
-        out.out(" --> ");
+        out.out(" -> ");
         node->base.location.dump(out);
 
         if (node->value != nil) {
@@ -632,7 +624,7 @@ impl ast_dumper {
         if (node->is_public) {
             out.cyan().out("[pub] ").reset();
         }
-        out.green().out(node->name.c_str).reset().out(" --> ");
+        out.green().out(node->name.c_str).reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -650,7 +642,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("field ");
         out.green().out(node->name->content.c_str).reset();
-        out.out(" --> ");
+        out.out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -673,7 +665,7 @@ impl ast_dumper {
             out.out(" ");
         }
         out.green().out(node->name.c_str).reset();
-        out.out(" --> ");
+        out.out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -697,7 +689,7 @@ impl ast_dumper {
         out.out("[0x").out_hex(node => i64).out("] ");
         out.out("param ");
         out.green().out(node->name->content.c_str).reset();
-        out.out(" --> ");
+        out.out(" -> ");
         node->base.location.dump(out);
 
         if (node->type != nil) {
@@ -737,7 +729,7 @@ impl ast_dumper {
         if (node->is_public || node->is_extern) {
             out.out(" ");
         }
-        out.green().out(node->name.c_str).reset().out(" --> ");
+        out.green().out(node->name.c_str).reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -793,6 +785,7 @@ impl ast_dumper {
         self->push_indent();
 
         self->dump_indent(out);
+        out.out("[0x").out_hex(node => i64).out("] ");
         out.out("module\n");
         self->push_indent();
         foreach (var i; node->module_path) {
@@ -806,10 +799,12 @@ impl ast_dumper {
         if (node->import_symbol.empty()) {
             self->set_last();
             self->dump_indent(out);
+            out.out("[0x").out_hex(node => i64).out("] ");
             out.out("import-all\n");
         } else {
             self->set_last();
             self->dump_indent(out);
+            out.out("[0x").out_hex(node => i64).out("] ");
             out.out("import-specified\n");
             self->push_indent();
             foreach (var i; node->import_symbol) {
@@ -827,8 +822,8 @@ impl ast_dumper {
     func dump_definition(self, node: ast_definition*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("definition ")
-           .green().out(node->name.c_str).reset().out(" --> ");
+        out.out("Definition ")
+           .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();

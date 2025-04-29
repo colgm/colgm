@@ -212,60 +212,79 @@ impl io {
 
 // ANSI escape sequence color
 impl io {
-    pub func red(self) -> io {
+    func color_out_core(self, color_code: i64, light: bool) -> io {
         if (!self->color_out) {
             return self[0];
         }
-        self->out("\e[91;1m");
+        var sequence = str::from("\e[");
+        sequence.append_i64(color_code);
+        if (!light) {
+            sequence.append_i8_vec(";1");
+        }
+        sequence.append_i8_vec("m");
+        self->out(sequence.c_str);
+        sequence.delete();
         return self[0];
+    }
+
+    pub func red(self) -> io {
+        return self->color_out_core(91, false);
+    }
+
+    pub func light_red(self) -> io {
+        return self->color_out_core(91, true);
     }
 
     pub func green(self) -> io {
-        if (!self->color_out) {
-            return self[0];
-        }
-        self->out("\e[92;1m");
-        return self[0];
+        return self->color_out_core(92, false);
     }
 
-    pub func cyan(self) -> io {
-        if (!self->color_out) {
-            return self[0];
-        }
-        self->out("\e[36;1m");
-        return self[0];
+    pub func light_green(self) -> io {
+        return self->color_out_core(92, true);
     }
 
     pub func orange(self) -> io {
-        if (!self->color_out) {
-            return self[0];
-        }
-        self->out("\e[93;1m");
-        return self[0];
+        return self->color_out_core(93, false);
     }
 
     pub func light_orange(self) -> io {
-        if (!self->color_out) {
-            return self[0];
-        }
-        self->out("\e[93m");
-        return self[0];
+        return self->color_out_core(93, true);
+    }
+
+    pub func blue(self) -> io {
+        return self->color_out_core(94, false);
+    }
+
+    pub func light_blue(self) -> io {
+        return self->color_out_core(94, true);
+    }
+
+    pub func purple(self) -> io {
+        return self->color_out_core(95, false);
+    }
+
+    pub func light_purple(self) -> io {
+        return self->color_out_core(95, true);
+    }
+
+    pub func cyan(self) -> io {
+        return self->color_out_core(96, false);
+    }
+
+    pub func light_cyan(self) -> io {
+        return self->color_out_core(96, true);
     }
 
     pub func white(self) -> io {
-        if (!self->color_out) {
-            return self[0];
-        }
-        self->out("\e[0m\e[1m");
-        return self[0];
+        return self->color_out_core(97, false);
+    }
+
+    pub func light_white(self) -> io {
+        return self->color_out_core(97, true);
     }
 
     pub func reset(self) -> io {
-        if (!self->color_out) {
-            return self[0];
-        }
-        self->out("\e[0m");
-        return self[0];
+        return self->color_out_core(0, true);
     }
 }
 
