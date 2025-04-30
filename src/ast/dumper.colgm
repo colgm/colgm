@@ -470,7 +470,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("call-id ");
+        out.purple().out("CallId ").reset();
         out.green().out(node->id->content.c_str).reset().out(" ");
         node->base.location.dump(out);
 
@@ -486,7 +486,7 @@ impl ast_dumper {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("call -> ");
+        out.purple().out("Call").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -534,7 +534,7 @@ impl ast_dumper {
     func dump_cond_compile(self, node: ast_cond_compile*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("cond-compile ");
+        out.purple().out("Condcompile ").reset();
         out.out(node->cond_name.c_str).out(" -> ");
         node->base.location.dump(out);
 
@@ -558,7 +558,7 @@ impl ast_dumper {
     func dump_type_def(self, node: ast_type_def*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("type ");
+        out.purple().out("TypeDef ").reset();
         if (!node->is_const) {
             out.cyan().out("[mut]").reset();
         } else {
@@ -588,7 +588,7 @@ impl ast_dumper {
     func dump_generic_type_list(self, node: ast_generic_type_list*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("generic-types -> ");
+        out.purple().out("GenericTypeList").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -604,7 +604,7 @@ impl ast_dumper {
     func dump_enum_member(self, node: ast_enum_member*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("enum-member ");
+        out.purple().out("EnumMember ").reset();
         out.green().out(node->name->content.c_str).reset();
         out.out(" -> ");
         node->base.location.dump(out);
@@ -620,7 +620,7 @@ impl ast_dumper {
     func dump_enum_decl(self, node: ast_enum_decl*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("enum ");
+        out.purple().out("Enum ").reset();
         if (node->is_public) {
             out.cyan().out("[pub] ").reset();
         }
@@ -640,7 +640,7 @@ impl ast_dumper {
     func dump_struct_field(self, node: ast_struct_field*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("field ");
+        out.purple().out("Field ").reset();
         out.green().out(node->name->content.c_str).reset();
         out.out(" -> ");
         node->base.location.dump(out);
@@ -654,7 +654,7 @@ impl ast_dumper {
     func dump_struct_decl(self, node: ast_struct_decl*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("struct ");
+        out.purple().out("Struct ").reset();
         if (node->is_public) {
             out.cyan().out("[pub]").reset();
         }
@@ -687,7 +687,7 @@ impl ast_dumper {
     func dump_param(self, node: ast_param*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("param ");
+        out.purple().out("Param ").reset();
         out.green().out(node->name->content.c_str).reset();
         out.out(" -> ");
         node->base.location.dump(out);
@@ -703,7 +703,7 @@ impl ast_dumper {
     func dump_param_list(self, node: ast_param_list*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("param-list -> ");
+        out.purple().out("ParamList").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -719,7 +719,7 @@ impl ast_dumper {
     func dump_func_decl(self, node: ast_func_decl*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("func ");
+        out.purple().out("Func ").reset();
         if (node->is_public) {
             out.cyan().out("[pub]").reset();
         }
@@ -757,7 +757,8 @@ impl ast_dumper {
     func dump_impl(self, node: ast_impl*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("impl [").out(node->name.c_str).out("] -> ");
+        out.purple().out("Impl").reset();
+        out.out(" [").out(node->name.c_str).out("] -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -779,14 +780,14 @@ impl ast_dumper {
     func dump_use_stmt(self, node: ast_use_stmt*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("use -> ");
+        out.purple().out("Use").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
 
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("module\n");
+        out.purple().out("Module").reset().out("\n");
         self->push_indent();
         foreach (var i; node->module_path) {
             if (i.index() == node->module_path.size - 1) {
@@ -800,12 +801,12 @@ impl ast_dumper {
             self->set_last();
             self->dump_indent(out);
             out.out("[0x").out_hex(node => i64).out("] ");
-            out.out("import-all\n");
+            out.purple().out("ImportAll").reset().out("\n");
         } else {
             self->set_last();
             self->dump_indent(out);
             out.out("[0x").out_hex(node => i64).out("] ");
-            out.out("import-specified\n");
+            out.purple().out("ImportSpecified").reset().out("\n");
             self->push_indent();
             foreach (var i; node->import_symbol) {
                 if (i.index() == node->import_symbol.size - 1) {
@@ -822,7 +823,7 @@ impl ast_dumper {
     func dump_definition(self, node: ast_definition*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("Definition ")
+        out.purple().out("Definition ").reset()
            .green().out(node->name.c_str).reset().out(" -> ");
         node->base.location.dump(out);
 
@@ -838,7 +839,7 @@ impl ast_dumper {
     func dump_cond_stmt(self, node: ast_cond_stmt*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("cond-stmt -> ");
+        out.purple().out("CondStmt").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -854,7 +855,7 @@ impl ast_dumper {
     func dump_if_stmt(self, node: ast_if_stmt*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("if -> ");
+        out.purple().out("If").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -869,7 +870,7 @@ impl ast_dumper {
     func dump_match_case(self, node: ast_match_case*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("match-case -> ");
+        out.purple().out("MatchCase").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -882,7 +883,7 @@ impl ast_dumper {
     func dump_match_stmt(self, node: ast_match_stmt*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("match -> ");
+        out.purple().out("Match").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -899,7 +900,7 @@ impl ast_dumper {
     func dump_while_stmt(self, node: ast_while_stmt*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("while -> ");
+        out.purple().out("While").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -912,7 +913,7 @@ impl ast_dumper {
     func dump_for_stmt(self, node: ast_for_stmt*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("for -> ");
+        out.purple().out("For").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -933,7 +934,7 @@ impl ast_dumper {
     func dump_forindex(self, node: ast_forindex*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("forindex -> ");
+        out.purple().out("Forindex").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -951,7 +952,7 @@ impl ast_dumper {
     func dump_foreach(self, node: ast_foreach*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("foreach -> ");
+        out.purple().out("Foreach").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -969,7 +970,7 @@ impl ast_dumper {
     func dump_in_stmt_expr(self, node: ast_in_stmt_expr*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("in-stmt-expr -> ");
+        out.purple().out("InStmtExpr").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
@@ -981,7 +982,7 @@ impl ast_dumper {
     func dump_ret_stmt(self, node: ast_ret_stmt*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("ret -> ");
+        out.purple().out("Ret").reset().out(" -> ");
         node->base.location.dump(out);
 
         if (node->value != nil) {
@@ -995,21 +996,21 @@ impl ast_dumper {
     func dump_continue_stmt(self, node: ast_continue_stmt*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("continue -> ");
+        out.purple().out("Continue").reset().out(" -> ");
         node->base.location.dump(out);
     }
 
     func dump_break_stmt(self, node: ast_break_stmt*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("break -> ");
+        out.purple().out("Break").reset().out(" -> ");
         node->base.location.dump(out);
     }
 
     func dump_code_block(self, node: ast_code_block*, out: io) {
         self->dump_indent(out);
         out.out("[0x").out_hex(node => i64).out("] ");
-        out.out("code-block -> ");
+        out.purple().out("CodeBlock").reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
