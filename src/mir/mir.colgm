@@ -6,7 +6,9 @@ use std::str::{ str };
 use std::vec::{ vec, primitive_vec };
 use std::ptr::{ ptr };
 use std::io::{ io };
+
 use package::{ package };
+use util::mangling::{ llvm_raw_string };
 
 use sema::type::{ type };
 
@@ -357,8 +359,8 @@ impl mir_block {
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRBlock").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset();
-        out.endln();
+        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        self->base.location.dump(out);
         foreach (var i; self->content) {
             var item = i.get().unwrap();
             item->dump(out, pkg, depth + 1);
@@ -405,7 +407,8 @@ impl mir_unary {
             mir_unary_opr::bnot => out.green().out("~").reset();
             mir_unary_opr::lnot => out.green().out("!").reset();
         }
-        out.endln();
+        out.out(" ");
+        self->base.location.dump(out);
 
         var n = self->value => mir*;
         n->dump(out, pkg, depth + 1);
@@ -471,7 +474,8 @@ impl mir_binary {
             mir_binary_opr::bor => out.green().out("|").reset();
             mir_binary_opr::bxor => out.green().out("^").reset();
         }
-        out.endln();
+        out.out(" ");
+        self->base.location.dump(out);
 
         var n = self->left => mir*;
         n->dump(out, pkg, depth + 1);
@@ -508,8 +512,11 @@ impl mir_type_convert {
         out.purple().out("MIRTypeConvert").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         var name = self->target.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(name.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(name.c_str).out("]").reset();
         name.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
 
         var n = self->source => mir*;
         n->dump(out, pkg, depth + 1);
@@ -537,8 +544,11 @@ impl mir_nil {
         out.purple().out("MIRNil").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -567,8 +577,11 @@ impl mir_number {
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         var tn = self->resolved_type.full_path_name(pkg, true);
         out.out(" ").green().out(self->value.c_str).reset();
-        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -595,7 +608,13 @@ impl mir_string {
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRString").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
-        out.green().out(" \"").out(self->value.c_str).out("\"").reset().endln();
+        
+        var tmp = llvm_raw_string(self->value.__ptr__());
+        out.green().out(" \"").out(tmp.c_str).out("\"").reset();
+        tmp.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -622,7 +641,13 @@ impl mir_char {
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRCharacter").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
-        out.green().out(" '").out(self->value.c_str).out("'").reset().endln();
+        
+        var tmp = llvm_raw_string(self->value.__ptr__());
+        out.green().out(" '").out(tmp.c_str).out("'").reset();
+        tmp.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -649,10 +674,13 @@ impl mir_bool {
         out.purple().out("MIRBoolean").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         if (self->value) {
-            out.green().out(" true").reset().endln();
+            out.green().out(" true").reset();
         } else {
-            out.green().out(" false").reset().endln();
+            out.green().out(" false").reset();
         }
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -680,8 +708,11 @@ impl mir_array {
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         var name = self->resolved_type.full_path_name(pkg, true);
         out.out(" ").out_u64(self->size);
-        out.cyan().out(" [type: ").out(name.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(name.c_str).out("]").reset();
         name.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -761,8 +792,11 @@ impl mir_struct_init {
         out.purple().out("MIRStructInitializer").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         var sn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(sn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(sn.c_str).out("]").reset();
         sn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
 
         foreach (var i; self->fields) {
             i.get()->dump(out, pkg, depth + 1);
@@ -798,8 +832,11 @@ impl mir_call {
         out.purple().out("MIRCall").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
 
         var t = self->content => mir*;
         t->dump(out, pkg, depth + 1);
@@ -832,8 +869,11 @@ impl mir_call_id {
         out.out(" ").green().out(self->name.c_str).reset();
 
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -866,8 +906,11 @@ impl mir_call_index {
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
 
         var t = self->index => mir*;
         t->dump(out, pkg, depth + 1);
@@ -903,8 +946,11 @@ impl mir_call_func {
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
 
         var t = self->args => mir*;
         t->dump(out, pkg, depth + 1);
@@ -937,8 +983,11 @@ impl mir_get_field {
         out.out(" ").green().out(self->name.c_str).reset();
 
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -968,8 +1017,11 @@ impl mir_ptr_get_field {
         out.out(" ").green().out(self->name.c_str).reset();
 
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -999,8 +1051,11 @@ impl mir_get_path {
         out.out(" ").green().out(self->name.c_str).reset();
 
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -1037,8 +1092,11 @@ impl mir_define {
         out.out(" ").green().out(self->name.c_str).reset();
         
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset().endln();
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ");
+        self->base.location.dump(out);
 
         var t = self->init_value => mir*;
         t->dump(out, pkg, depth + 1);
@@ -1094,6 +1152,7 @@ impl mir_assign {
             mir_assign_opr::xoreq => out.green().out(" ^= ").reset();
         }
         self->base.location.dump(out);
+
         var t = self->left => mir*;
         t->dump(out, pkg, depth + 1);
         t = self->right => mir*;
@@ -1132,13 +1191,13 @@ impl mir_if {
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         if (self->condition != nil) {
             out.purple().out("MIRIf").reset();
-            out.light_orange().out(" 0x").out_hex(self => i64).reset();
+            out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
             self->base.location.dump(out);
             var t = self->condition => mir*;
             t->dump(out, pkg, depth + 1);
         } else {
             out.purple().out("MIRElse").reset();
-            out.light_orange().out(" 0x").out_hex(self => i64).reset();
+            out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
             self->base.location.dump(out);
         }
 
@@ -1174,7 +1233,9 @@ impl mir_branch {
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRBranch").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
-        out.endln();
+        out.out(" ");
+        self->base.location.dump(out);
+
         foreach (var i; self->branch) {
             var n = i.get().unwrap() => mir*;
             n->dump(out, pkg, depth + 1);
@@ -1208,7 +1269,8 @@ impl mir_switch_case {
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRSwitchCase").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
-        out.green().out(" ").out_i64(self->value).reset().endln();
+        out.green().out(" ").out_i64(self->value).reset().out(" ");
+        self->base.location.dump(out);
 
         var t = self->content => mir*;
         t->dump(out, pkg, depth + 1);
@@ -1253,7 +1315,8 @@ impl mir_switch {
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRSwitch").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().endln();
+        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        self->base.location.dump(out);
 
         if (self->condition != nil) {
             var t = self->condition => mir*;
@@ -1285,7 +1348,8 @@ impl mir_break {
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRBreak").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().endln();
+        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -1304,7 +1368,8 @@ impl mir_continue {
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRContinue").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().endln();
+        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        self->base.location.dump(out);
     }
 }
 
@@ -1387,7 +1452,8 @@ impl mir_return {
 
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRRet").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().endln();
+        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        self->base.location.dump(out);
 
         if (self->value != nil) {
             var t = self->value => mir*;
