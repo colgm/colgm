@@ -42,7 +42,7 @@ protected:
 
 public:
     DI_node(DI_kind k, u64 i): kind(k), index(i) {}
-    ~DI_node() = default;
+    virtual ~DI_node() = default;
     virtual void dump(std::ostream&) const;
     bool is(DI_kind k) {
         return kind == k;
@@ -58,7 +58,7 @@ public:
     DI_named_metadata(const std::string& n):
         DI_node(DI_kind::DI_named_metadata, DI_node::DI_ERROR_INDEX),
         name(n) {}
-    ~DI_named_metadata() {
+    ~DI_named_metadata() override {
         for (auto n: nodes) {
             delete n;
         }
@@ -75,7 +75,7 @@ public:
     DI_ref_index(u64 fi):
         DI_node(DI_kind::DI_ref_index, DI_node::DI_ERROR_INDEX),
         ref_index(fi) {}
-    ~DI_ref_index() = default;
+    ~DI_ref_index() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -85,7 +85,7 @@ private:
 
 public:
     DI_list(u64 i): DI_node(DI_kind::DI_list, i) {}
-    ~DI_list() {
+    ~DI_list() override {
         for (auto n: nodes) {
             delete n;
         }
@@ -101,7 +101,7 @@ private:
 public:
     DI_i32(i32 v):
         DI_node(DI_kind::DI_i32, DI_node::DI_ERROR_INDEX), value(v) {}
-    ~DI_i32() = default;
+    ~DI_i32() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -113,7 +113,7 @@ public:
     DI_string(const std::string& v):
         DI_node(DI_kind::DI_string, DI_node::DI_ERROR_INDEX),
         value(v) {}
-    ~DI_string() = default;
+    ~DI_string() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -126,7 +126,7 @@ public:
     DI_file(u64 i, const std::string& f, const std::string& d):
         DI_node(DI_kind::DI_file, i),
         filename(f), directory(d) {}
-    ~DI_file() = default;
+    ~DI_file() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -140,7 +140,7 @@ public:
     DI_compile_unit(u64 i, const std::string& p, u64 fi):
         DI_node(DI_kind::DI_compile_unit, i),
         producer(p), file_index(fi), imports_index(DI_node::DI_ERROR_INDEX) {}
-    ~DI_compile_unit() = default;
+    ~DI_compile_unit() override = default;
     void dump(std::ostream&) const override;
     void set_imports_index(u64 i) { imports_index = i; }
 };
@@ -155,7 +155,7 @@ public:
     DI_basic_type(u64 i, const std::string& n, u64 s, const std::string& e):
         DI_node(DI_kind::DI_basic_type, i),
         name(n), size_in_bits(s), encoding(e) {}
-    ~DI_basic_type() = default;
+    ~DI_basic_type() override = default;
    void dump(std::ostream&) const override;
 };
 
@@ -172,7 +172,7 @@ public:
                       u64 fi, u64 l):
         DI_node(DI_kind::DI_structure_type, i),
         name(n), identifier(id), file_index(fi), line(l) {}
-    ~DI_structure_type() = default;
+    ~DI_structure_type() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -192,7 +192,7 @@ public:
         DI_node(DI_kind::DI_enum_type, i),
         name(n), identifier(id), file_index(fi), line(l),
         base_type_index(bti), elements_index(DI_node::DI_ERROR_INDEX) {}
-    ~DI_enum_type() = default;
+    ~DI_enum_type() override = default;
     void dump(std::ostream&) const override;
     void set_elements_index(u64 ei) { elements_index = ei; }
 };
@@ -205,7 +205,7 @@ private:
 public:
     DI_enumerator(u64 i, const std::string& n, u64 v):
         DI_node(DI_kind::DI_enumerator, i), name(n), value(v) {}
-    ~DI_enumerator() = default;
+    ~DI_enumerator() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -221,7 +221,7 @@ public:
         DI_node(DI_kind::DI_subprogram, i),
         name(n), file_index(fi), line(l),
         compile_unit_index(cui) {}
-    ~DI_subprogram() = default;
+    ~DI_subprogram() override = default;
     void dump(std::ostream&) const override;
 };
 
@@ -235,7 +235,7 @@ public:
     DI_location(u64 i, u64 l, u64 c, u64 si):
         DI_node(DI_kind::DI_location, i),
         line(l), column(c), scope_index(si) {}
-    ~DI_location() = default;
+    ~DI_location() override = default;
     void dump(std::ostream&) const override;
 };
 
