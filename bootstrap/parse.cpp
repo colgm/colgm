@@ -246,6 +246,25 @@ array_literal* parse::array_gen() {
     return result;
 }
 
+array_list* parse::array_list_gen() {
+    auto result = new array_list(toks[ptr].loc);
+    match(tok::tk_lbracket);
+    while (!look_ahead(tok::tk_rbracket)) {
+        result->add_value(calculation_gen());
+        if (look_ahead(tok::tk_eof)) {
+            break;
+        }
+        if (look_ahead(tok::tk_comma)) {
+            match(tok::tk_comma);
+        } else if (!look_ahead(tok::tk_rbracket)) {
+            err.err(toks[ptr-1].loc, "expected ',' here.");
+        }
+    }
+    match(tok::tk_rbracket);
+    update_location(result);
+    return result;
+}
+
 expr* parse::scalar_gen() {
     if (look_ahead(tok::tk_lcurve)) {
         match(tok::tk_lcurve);
@@ -268,7 +287,15 @@ expr* parse::scalar_gen() {
     } else if (look_ahead(tok::tk_true) || look_ahead(tok::tk_false)) {
         return bool_gen();
     } else if (look_ahead(tok::tk_lbracket)) {
-        return array_gen();
+        for (auto i = ptr; toks[i].type != tok::tk_eof; ++i) {
+            if (toks[i].type == tok::tk_semi) {
+                return array_gen();
+            }
+            if (toks[i].type == tok::tk_rbracket) {
+                break;
+            }
+        }
+        return array_list_gen();
     } else if (look_ahead(tok::tk_id)) {
         return call_gen();
     }

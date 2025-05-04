@@ -71,6 +71,20 @@ bool dumper::visit_array_literal(array_literal* node) {
     return true;
 }
 
+bool dumper::visit_array_list(array_list* node) {
+    dump_indent();
+    std::cout << "array_list" << format_location(node);
+    push_indent();
+    for (auto i : node->get_value()) {
+        if (i == node->get_value().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_cond_compile(cond_compile* node) {
     dump_indent();
     std::cout << "conditional_compile " << node->get_condition_name();

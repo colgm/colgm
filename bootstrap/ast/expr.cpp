@@ -95,6 +95,24 @@ array_literal* array_literal::clone() const {
     return copy;
 }
 
+array_list::~array_list() {
+    for (auto i : value) {
+        delete i;
+    }
+}
+
+void array_list::accept(visitor* v) {
+    v->visit_array_list(this);
+}
+
+array_list* array_list::clone() const {
+    auto copy = new array_list(location);
+    for (auto i : value) {
+        copy->value.push_back(i->clone());
+    }
+    return copy;
+}
+
 call_id::~call_id() {
     delete id;
     delete generic_types;
