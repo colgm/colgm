@@ -34,6 +34,7 @@ Before building the project, here's the requirements:
 
 - python >= 3.8
 - llvm >= 13.0
+- clang >= 13.0
 - cmake >= 3.21
 - zip
 
