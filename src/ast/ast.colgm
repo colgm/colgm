@@ -23,6 +23,7 @@ pub enum ast_kind {
     ast_char_literal,
     ast_bool_literal,
     ast_array_literal,
+    ast_array_list,
     ast_call_index,
     ast_call_func_args,
     ast_get_field,
@@ -75,6 +76,7 @@ pub func ast_kind_name(k: ast_kind) -> i8* {
         ast_kind::ast_char_literal => return "ast_char_literal";
         ast_kind::ast_bool_literal => return "ast_bool_literal";
         ast_kind::ast_array_literal => return "ast_array_literal";
+        ast_kind::ast_array_list => return "ast_array_list";
         ast_kind::ast_call_index => return "ast_call_index";
         ast_kind::ast_call_func_args => return "ast_call_func_args";
         ast_kind::ast_get_field => return "ast_get_field";
@@ -225,6 +227,10 @@ impl ast {
             ast_kind::ast_bool_literal => {}
             ast_kind::ast_array_literal => {
                 var tmp = self => ast_array_literal*;
+                tmp->delete();
+            }
+            ast_kind::ast_array_list => {
+                var tmp = self => ast_array_list*;
                 tmp->delete();
             }
             ast_kind::ast_call_index => {
@@ -423,6 +429,10 @@ impl ast {
             }
             ast_kind::ast_array_literal => {
                 var tmp = self => ast_array_literal*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_array_list => {
+                var tmp = self => ast_array_list*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_call_index => {
@@ -965,6 +975,41 @@ impl ast_array_literal {
             n->delete();
             free(n => i8*);
         }
+    }
+}
+
+pub struct ast_array_list {
+    base: ast,
+    value: primitive_vec<ptr<ast>>
+}
+
+impl ast_array_list {
+    pub func new(loc: span*) -> ast_array_list* {
+        var res = ast_array_list::__alloc__();
+        res->base = ast::instance(ast_kind::ast_array_list, loc);
+        res->value = primitive_vec<ptr<ast>>::instance();
+        return res;
+    }
+
+    pub func copy(self) -> ast_array_list* {
+        var res = ast_array_list::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_array_list,
+            self->base.location.__ptr__()
+        );
+        res->value = primitive_vec<ptr<ast>>::instance();
+        foreach (var i; self->value) {
+            res->value.push(ptr<ast>::wrap(i.get().unwrap()->copy()));
+        }
+        return res;
+    }
+
+    pub func delete(self) {
+        foreach (var i; self->value) {
+            i.get().unwrap()->delete();
+            free(i.get().unwrap() => i8*);
+        }
+        self->value.delete();
     }
 }
 

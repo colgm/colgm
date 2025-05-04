@@ -223,6 +223,20 @@ public:
     auto get_type() const { return type; }
 };
 
+class array_list: public expr {
+private:
+    std::vector<expr*> value;
+
+public:
+    array_list(const span& loc):
+        expr(ast_type::ast_array_list, loc) {}
+    ~array_list() override;
+    void accept(visitor*) override;
+    array_list* clone() const override;
+    void add_value(expr* v) { value.push_back(v); }
+    auto& get_value() const { return value; }
+};
+
 class call_id: public expr {
 private:
     identifier* id;

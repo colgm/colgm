@@ -163,6 +163,13 @@ bool visitor::visit_array_literal(array_literal* node) {
     return true;
 }
 
+bool visitor::visit_array_list(array_list* node) {
+    for (auto i : node->get_value()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_call_id(call_id* node) {
     node->get_id()->accept(this);
     if (node->get_generic_types()) {
