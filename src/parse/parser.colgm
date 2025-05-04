@@ -454,7 +454,7 @@ impl parser {
             res->value.push(ptr<ast>::wrap(self->calculation_gen()));
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
-            } else {
+            } else if (!self->lookahead(tok_kind::tok_rbracket)) {
                 self->err->error(self->this_tok_loc(), "expected comma here");
             }
         }
@@ -489,6 +489,9 @@ impl parser {
             for (var i = self->index; self->get_tok(i)->kind != tok_kind::tok_eof; i += 1) {
                 if (self->get_tok(i)->kind == tok_kind::tok_semi) {
                     return self->array_gen() => ast*;
+                }
+                if (self->get_tok(i)->kind == tok_kind::tok_rbracket) {
+                    break;
                 }
             }
             return self->array_list_gen() => ast*;

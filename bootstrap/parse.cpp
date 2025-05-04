@@ -256,7 +256,7 @@ array_list* parse::array_list_gen() {
         }
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
-        } else {
+        } else if (!look_ahead(tok::tk_rbracket)) {
             err.err(toks[ptr-1].loc, "expected ',' here.");
         }
     }
@@ -290,6 +290,9 @@ expr* parse::scalar_gen() {
         for (auto i = ptr; toks[i].type != tok::tk_eof; ++i) {
             if (toks[i].type == tok::tk_semi) {
                 return array_gen();
+            }
+            if (toks[i].type == tok::tk_rbracket) {
+                break;
             }
         }
         return array_list_gen();
