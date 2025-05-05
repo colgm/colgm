@@ -489,6 +489,25 @@ type semantic::resolve_array_literal(array_literal* node) {
     return result_type;
 }
 
+type semantic::resolve_array_list(array_list* node) {
+    std::vector<type> list_type;
+    for (auto i : node->get_value()) {
+        list_type.push_back(resolve_expression(i));
+    }
+    for (const auto& t : list_type) {
+        if (t.is_error()) {
+            return type::error_type();
+        }
+    }
+    if (list_type.empty()) {
+        return type::error_type();
+    }
+    auto result_type = list_type[0].get_pointer_copy();
+    result_type.is_array = true;
+    result_type.array_length = list_type.size();
+    return result_type;
+}
+
 type semantic::resolve_identifier(identifier* node) {
     const auto& name = node->get_name();
     if (ctx.find_local(name)) {
@@ -1185,6 +1204,8 @@ type semantic::resolve_expression(expr* node) {
         return resolve_bool_literal(reinterpret_cast<bool_literal*>(node));
     case ast_type::ast_array_literal:
         return resolve_array_literal(reinterpret_cast<array_literal*>(node));
+    case ast_type::ast_array_list:
+        return resolve_array_list(reinterpret_cast<array_list*>(node));
     case ast_type::ast_call:
         return resolve_call(reinterpret_cast<call*>(node));
     case ast_type::ast_assignment:
@@ -1228,7 +1249,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     if (expected_type.is_pointer() && real_type.is_pointer()) {
         if (expected_type != real_type &&
             !check_can_be_converted(node->get_init_value(), expected_type)) {
-            rp.warn(node,
+            rp.report(node,
                 "expected \"" + expected_type.to_string() +
                 "\", but get \"" + real_type.to_string() + "\"."
             );

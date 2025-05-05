@@ -143,7 +143,7 @@ func compile(option: cli_option) -> i32 {
         cc.pkg.__ptr__(),
         mctx.__ptr__()
     );
-    var mir2sir_worder = mir2sir::instance(
+    var mir2sir_worker = mir2sir::instance(
         ctx.__ptr__(),
         sctx.__ptr__(),
         cc.pkg.__ptr__()
@@ -221,13 +221,17 @@ func compile(option: cli_option) -> i32 {
     }
 
     ast2mir_worker.generate(cc.par.root);
+    if (cc.err->error_count > 0) {
+        cc.delete();
+        return -1;
+    }
     mctx.adjust_posix_open(option.VERBOSE);
     mctx.add_default_func(option.VERBOSE);
     if (option.VIEW_MIR) {
         mctx.dump(io::stdout(), cc.pkg.__ptr__());
     }
 
-    mir2sir_worder.generate(mctx.__ptr__(), option.VERBOSE, option.DEBUG_MODE);
+    mir2sir_worker.generate(mctx.__ptr__(), option.VERBOSE, option.DEBUG_MODE);
     if (option.VIEW_SIR) {
         sctx.dump(io::stdout());
     }
@@ -258,7 +262,7 @@ func compile(option: cli_option) -> i32 {
     mctx.delete();
     sctx.delete();
     ast2mir_worker.delete();
-    mir2sir_worder.delete();
+    mir2sir_worker.delete();
     ll_file.delete();
     return ret_code;
 }

@@ -585,13 +585,11 @@ impl ast_dumper {
         self->dump_indent(out);
         out.purple().out("TypeDef ").reset();
         out.light_orange().out("0x").out_hex(node => i64).reset().out(" ");
-        if (!node->is_const) {
-            out.cyan().out("[mut]").reset();
-        } else {
+        if (node->is_const) {
             out.cyan().out("[const]").reset();
         }
         if (node->is_array) {
-            out.cyan().out("[array]").reset();
+            out.blue().out("[array]").reset();
         }
         out.cyan().out("[ptr-depth=").out_i64(node->pointer_depth).out("] ").reset();
         out.green().out(node->name->content.c_str).reset().out(" -> ");
@@ -853,7 +851,9 @@ impl ast_dumper {
         self->dump_indent(out);
         out.purple().out("Definition ").reset();
         out.light_orange().out("0x").out_hex(node => i64).reset().out(" ");
-        out.green().out(node->name.c_str).reset().out(" -> ");
+        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
+        out.green().out(node->name.c_str).reset();
+        out.out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();

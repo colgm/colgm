@@ -62,6 +62,7 @@ private:
     type resolve_char_literal(char_literal*);
     type resolve_bool_literal(bool_literal*);
     type resolve_array_literal(array_literal*);
+    type resolve_array_list(array_list*);
     type resolve_identifier(identifier*);
     void check_pub_method(node*, const std::string&, const colgm_struct&);
     void check_pub_static_method(node*, const std::string&, const colgm_struct&);
