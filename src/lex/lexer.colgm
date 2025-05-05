@@ -2,6 +2,12 @@ use std::str::{ str };
 use std::vec::{ vec };
 use std::io::{ readfile_into_string, io };
 use std::fs::{ fs };
+use std::string_utils::{
+    is_alpha_letter,
+    is_digit,
+    is_hexdigit,
+    is_octdigit
+};
 
 use err::report::{ report };
 use err::span::{ span };
@@ -57,31 +63,17 @@ impl lexer {
     }
 
     func is_identifier_head(c: i8) -> bool {
-        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || (c == '_');
+        return is_alpha_letter(c) || (c == '_');
     }
 
     func is_identifier_body(c: i8) -> bool {
-        return lexer::is_identifier_head(c) || ('0' <= c && c <= '9');
+        return lexer::is_identifier_head(c) || is_digit(c);
     }
 
     func is_single_char_token(c: i8) -> bool {
         return c == '(' || c == ')' || c == '[' || c == ']' ||
                c == '{' || c == '}' || c == ';' || c == ',' ||
                c == '?' || c == '#';
-    }
-
-    func is_digit(c: i8) -> bool {
-        return '0' <= c && c <= '9';
-    }
-
-    func is_hex(c: i8) -> bool {
-        return ('a' <= c && c <= 'f') ||
-               ('A' <= c && c <= 'F') ||
-               lexer::is_digit(c);
-    }
-
-    func is_oct(c: i8) -> bool {
-        return '0' <= c && c <= '7';
     }
 
     func need_lookahead_eq(c: i8) -> bool {
@@ -404,7 +396,7 @@ impl lexer {
             src->get(self->pos + 1) == 'x') {
             tmp.append_i8_vec("0x");
             self->pos += 2;
-            while (self->pos < src->size && lexer::is_hex(src->get(self->pos))) {
+            while (self->pos < src->size && is_hexdigit(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
             }
@@ -433,7 +425,7 @@ impl lexer {
             src->get(self->pos + 1) == 'o') {
             tmp.append_i8_vec("0o");
             self->pos += 2;
-            while (self->pos < src->size && lexer::is_oct(src->get(self->pos))) {
+            while (self->pos < src->size && is_octdigit(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
             }
@@ -461,7 +453,7 @@ impl lexer {
         // get integer part
         tmp.append_char(src->get(self->pos));
         self->pos += 1;
-        while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+        while (self->pos < src->size && is_digit(src->get(self->pos))) {
             tmp.append_char(src->get(self->pos));
             self->pos += 1;
         }
@@ -489,7 +481,7 @@ impl lexer {
             var lookahead_ch = src->get(lookahead_pos);
 
             // just return, this dot is not part of number
-            if (!lexer::is_digit(lookahead_ch)) {
+            if (!is_digit(lookahead_ch)) {
                 self->column += tmp.size => i64;
                 loc.end_line = self->line;
                 loc.end_column = self->column;
@@ -506,7 +498,7 @@ impl lexer {
 
             tmp.append_char('.');
             self->pos += 1;
-            while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+            while (self->pos < src->size && is_digit(src->get(self->pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
             }
@@ -533,10 +525,10 @@ impl lexer {
 
             var lookahead_pos = self->pos + 1;
 
-            if (lexer::is_digit(src->get(lookahead_pos))) {
+            if (is_digit(src->get(lookahead_pos))) {
                 tmp.append_char(src->get(self->pos));
                 self->pos += 1;
-                while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+                while (self->pos < src->size && is_digit(src->get(self->pos))) {
                     tmp.append_char(src->get(self->pos));
                     self->pos += 1;
                 }
@@ -556,11 +548,11 @@ impl lexer {
 
             if ((src->get(lookahead_pos)=='-' || src->get(lookahead_pos)=='+') &&
                 lookahead_pos + 1 < src->size &&
-                lexer::is_digit(src->get(lookahead_pos + 1))) {
+                is_digit(src->get(lookahead_pos + 1))) {
                 tmp.append_char(src->get(self->pos));
                 tmp.append_char(src->get(self->pos + 1));
                 self->pos += 2;
-                while (self->pos < src->size && lexer::is_digit(src->get(self->pos))) {
+                while (self->pos < src->size && is_digit(src->get(self->pos))) {
                     tmp.append_char(src->get(self->pos));
                     self->pos += 1;
                 }
@@ -805,7 +797,7 @@ impl lexer {
                 self->skip_note(src.__ptr__());
             } elsif (lexer::is_identifier_head(src.get(self->pos))) {
                 self->generate_identifier(src.__ptr__());
-            } elsif (lexer::is_digit(src.get(self->pos))) {
+            } elsif (is_digit(src.get(self->pos))) {
                 self->generate_number(src.__ptr__());
             } elsif (lexer::is_str(src.get(self->pos))) {
                 self->generate_string(src.__ptr__());
