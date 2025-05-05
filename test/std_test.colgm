@@ -7,9 +7,9 @@ use std::set::{ hashset };
 use std::queue::{ queue, primitive_queue };
 use std::str::{ str };
 use std::string_utils::{
-    is_ascii_letter,
-    is_ascii_lowercase,
-    is_ascii_uppercase,
+    is_alpha_letter,
+    is_alpha_lowercase,
+    is_alpha_uppercase,
     is_digit,
     is_hexdigit,
     is_octdigit,
@@ -17,6 +17,8 @@ use std::string_utils::{
 };
 use std::range::{ range };
 use std::io::{ io };
+
+use err::panic::{ assert };
 
 func test_set() -> bool {
     var set = hashset<str>::instance();
@@ -167,25 +169,34 @@ func test_vector() {
 }
 
 func test_string_utils() {
-    is_digit('f');
-    is_digit('0');
-    is_hexdigit('0');
-    is_hexdigit('a');
-    is_octdigit('0');
+    assert(!is_digit('f'), "f is not digit");
+    assert(is_digit('0'), "0 is digit");
+
+    assert(is_hexdigit('0'), "0 is hex digit");
+    assert(is_hexdigit('a'), "a is hex digit");
+    assert(is_hexdigit('A'), "A is hex digit");
+    assert(!is_hexdigit('g'), "g is not hex digit");
+
+    assert(is_octdigit('0'), "0 is oct digit");
+    assert(!is_octdigit('8'), "8 is not oct digit");
     
-    is_ascii_letter('a');
-    is_ascii_letter('A');
+    assert(is_alpha_letter('a'), "a is alpha letter");
+    assert(is_alpha_letter('A'), "A is alpha letter");
+    assert(!is_alpha_letter(':'), ": is not alpha letter");
 
-    is_ascii_lowercase('b');
-    is_ascii_lowercase('B');
+    assert(is_alpha_lowercase('b'), "b is lowercase");
+    assert(!is_alpha_lowercase('B'), "B is not lowercase");
 
-    is_ascii_uppercase('c');
-    is_ascii_uppercase('C');
+    assert(!is_alpha_uppercase('c'), "c is not uppercase");
+    assert(is_alpha_uppercase('C'), "C is uppercase");
 
-    is_punctuation(';');
-    is_punctuation('"');
-    is_punctuation('0');
-    is_punctuation('1');
+    assert(is_punctuation(';'), "; is punctuation");
+    assert(is_punctuation('"'), "\" is punctuation");
+    assert(!is_punctuation('0'), "0 is not punctuation");
+    assert(!is_punctuation('1'), "1 is not punctuation");
+
+    io::stdout().green().out("[test] ").reset()
+        .out("string utils test passed").endln();
 }
 
 func TEST_ALL() -> bool {
