@@ -1842,7 +1842,21 @@ impl sema {
             real_type.delete();
             return;
         }
-        if (expect_type.is_pointer() && real_type.is_pointer()) {
+        if (expect_type.is_array || real_type.is_array) {
+            if (!expect_type.eq(real_type.__ptr__())) {
+                var info = str::instance();
+                var expect_type_name = expect_type.array_type_full_name(self->pkg);
+                var real_type_name = real_type.array_type_full_name(self->pkg);
+                info.append_i8_vec("expect \"");
+                info.append_i8_vec(expect_type_name.c_str);
+                info.append_i8_vec("\", but get \"");
+                info.append_i8_vec(real_type_name.c_str);
+                self->err->error(n->base.location.__ptr__(), info.c_str);
+                info.delete();
+                expect_type_name.delete();
+                real_type_name.delete();
+            }
+        } else if (expect_type.is_pointer() && real_type.is_pointer()) {
             // if is not the same type pointer and cannot be automatically converted
             // report here
             if (!expect_type.eq(real_type.__ptr__()) &&
@@ -1854,7 +1868,7 @@ impl sema {
                 info.append_i8_vec(expect_type_name.c_str);
                 info.append_i8_vec("\", but get \"");
                 info.append_i8_vec(real_type_name.c_str);
-                self->err->error(n->base.location.__ptr__(), info.c_str);
+                self->err->warn(n->base.location.__ptr__(), info.c_str);
                 info.delete();
                 expect_type_name.delete();
                 real_type_name.delete();

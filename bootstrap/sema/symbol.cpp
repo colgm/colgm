@@ -25,10 +25,22 @@ void type::check_pointer_depth() const {
 std::string type::to_string() const {
     check_pointer_depth();
     auto result = generic_name();
-    for(i64 i = 0; i<pointer_depth; ++i) {
+    for (i64 i = 0; i < pointer_depth; ++i) {
         result += "*";
     }
     return result;
+}
+
+std::string type::array_type_to_string() const {
+    if (!is_array) {
+        return to_string();
+    }
+    check_pointer_depth();
+    auto result = generic_name();
+    for (i64 i = 0; i < pointer_depth - 1; ++i) {
+        result += "*";
+    }
+    return "[" + std::to_string(array_length) + " x " + result + "]";
 }
 
 std::string type::full_path_name(bool with_generics) const {

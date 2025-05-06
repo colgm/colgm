@@ -19,25 +19,27 @@ def compile_tcp():
     subprocess.run([
         "./build/colgm_self_host",
         "--library", "src",
-        "test/socket/tcp_example.colgm"
+        "test/socket/tcp_example.colgm",
+        "-o", "tcp_udp_test.out"
     ])
 
 def compile_udp():
     subprocess.run([
         "./build/colgm_self_host",
         "--library", "src",
-        "test/socket/udp_example.colgm"
+        "test/socket/udp_example.colgm",
+        "-o", "tcp_udp_test.out"
     ])
 
 ERROR_RETURN = False
 
 def run_server():
-    if subprocess.run(["./a.out", "server"]).returncode != 0:
+    if subprocess.run(["./tcp_udp_test.out", "server"]).returncode != 0:
         global ERROR_RETURN
         ERROR_RETURN = True
 
 def run_client():
-    if subprocess.run(["./a.out", "client"]).returncode != 0:
+    if subprocess.run(["./tcp_udp_test.out", "client"]).returncode != 0:
         global ERROR_RETURN
         ERROR_RETURN = True
 
@@ -77,3 +79,7 @@ if __name__ == "__main__":
     check_required()
     test_tcp()
     test_udp()
+    if os.path.exists("tcp_udp_test.out"):
+        os.remove("tcp_udp_test.out")
+    if os.path.exists("tcp_udp_test.out.ll"):
+        os.remove("tcp_udp_test.out.ll")

@@ -1246,10 +1246,17 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     // with type declaration
     const auto expected_type = tr.resolve(node->get_type());
     const auto real_type = resolve_expression(node->get_init_value());
-    if (expected_type.is_pointer() && real_type.is_pointer()) {
+    if (expected_type.is_array || real_type.is_array) {
+        if (expected_type != real_type) {
+            rp.report(node,
+                "expected \"" + expected_type.array_type_to_string() +
+                "\", but get \"" + real_type.array_type_to_string() + "\"."
+            );
+        }
+    } else if (expected_type.is_pointer() && real_type.is_pointer()) {
         if (expected_type != real_type &&
             !check_can_be_converted(node->get_init_value(), expected_type)) {
-            rp.report(node,
+            rp.warn(node,
                 "expected \"" + expected_type.to_string() +
                 "\", but get \"" + real_type.to_string() + "\"."
             );

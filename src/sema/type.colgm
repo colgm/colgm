@@ -410,6 +410,40 @@ impl type {
         }
         return res;
     }
+
+    pub func array_type_full_name(self, pkg: package*) -> str {
+        if (!self->is_array) {
+            return self->full_path_name(pkg, true);
+        }
+
+        var res = str::instance();
+        res.append_i8_vec("[");
+        res.append_u64(self->array_length);
+        res.append_i8_vec(" x ");
+        if (pkg->has_file(self->loc_file.__ptr__())) {
+            res.append_str(pkg->get_module_name(self->loc_file.__ptr__()));
+            res.append_i8_vec("::");
+        }
+        res.append_str(self->name.__ptr__());
+        if (self->generics.size > 0) {
+            res.append_char('<');
+            foreach (var i; self->generics) {
+                var t_fpn = i.get()->full_path_name(pkg, true);
+                res.append_i8_vec(t_fpn.c_str);
+                t_fpn.delete();
+
+                if (i.index() != self->generics.size - 1) {
+                    res.append_char(',');
+                }
+            }
+            res.append_char('>');
+        }
+        for (var i = 0; i < self->pointer_depth - 1; i += 1) {
+            res.append_char('*');
+        }
+        res.append_i8_vec("]");
+        return res;
+    }
 }
 
 pub struct symbol {

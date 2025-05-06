@@ -51,6 +51,7 @@ private:
 
 public:
     std::string to_string() const;
+    std::string array_type_to_string() const;
     std::string full_path_name(bool with_generics = true) const;
     std::string full_path_name_with_pointer(bool with_generics = true) const;
     std::string generic_name() const;
