@@ -91,7 +91,7 @@ impl ast2mir {
                 self->visit_array_literal(a => ast_array_literal*);
             }
             ast_kind::ast_array_list => {
-                self->err->error(a->location.__ptr__(), "unimplemented");
+                self->visit_array_list(a => ast_array_list*);
             }
             ast_kind::ast_call_index => {
                 self->visit_call_index(a => ast_call_index*);
@@ -265,6 +265,24 @@ impl ast2mir {
             res,
             n->base.resolved_type.__ptr__()
         ) => mir*);
+    }
+
+    func visit_array_list(self, n: ast_array_list*) {
+        var new_block = mir_block::new(n->base.location.__ptr__());
+        var temp = self->block;
+        self->block = new_block;
+        foreach (var i; n->value) {
+            self->visit(i.get().unwrap());
+        }
+        self->block = temp;
+
+        var new_array = mir_array::new(
+            n->base.location.__ptr__(),
+            n->base.resolved_type.array_length,
+            n->base.resolved_type.__ptr__()
+        );
+        new_array->value = new_block;
+        self->block->add(new_array => mir*);
     }
 
     func visit_call_index(self, n: ast_call_index*) {

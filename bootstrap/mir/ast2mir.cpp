@@ -143,6 +143,25 @@ bool ast2mir::visit_array_literal(ast::array_literal* node) {
     return true;
 }
 
+bool ast2mir::visit_array_list(ast::array_list* node) {
+    auto value_block = new mir_block(node->get_location());
+    auto temp = block;
+    block = value_block;
+    for(auto i : node->get_value()) {
+        i->accept(this);
+    }
+    block = temp;
+
+    auto array = new mir_array(
+        node->get_location(),
+        node->get_resolve().array_length,
+        node->get_resolve()
+    );
+    array->set_value(value_block);
+    block->add_content(array);
+    return true;
+}
+
 bool ast2mir::visit_struct_decl(ast::struct_decl* node) {
     if (node->get_generic_types()) {
         return true;

@@ -180,12 +180,33 @@ impl sema {
         }
 
         if (list_type.empty()) {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "expect at least one element"
+            );
             list_type.delete();
             return type::error_type();
         }
 
-        var type_infer = list_type.get(0)->copy_instance();
-        type_infer.pointer_depth += 1;
+        var marked_base_type = list_type.get(0);
+        for (var i: u64 = 1; i < list_type.size; i += 1) {
+            if (!list_type.get(i)->eq(marked_base_type) &&
+                !self->check_can_be_converted(n->value.get(i).unwrap(), marked_base_type)) {
+                var info = str::from("expect \"");
+                var e_name = marked_base_type->full_path_name(self->pkg, true);
+                info.append_str(e_name.__ptr__());
+                info.append_i8_vec("\" but get \"");
+                var i_name = list_type.get(i)->full_path_name(self->pkg, true);
+                info.append_str(i_name.__ptr__());
+                info.append_i8_vec("\"");
+                self->err->error(n->base.location.__ptr__(), info.c_str);
+                info.delete();
+                e_name.delete();
+                i_name.delete();
+            }
+        }
+
+        var type_infer = marked_base_type->pointer_copy();
         type_infer.is_array = true;
         type_infer.array_length = list_type.size;
         n->base.resolved_type.reset_with(type_infer.__ptr__());
@@ -1855,6 +1876,18 @@ impl sema {
                 info.delete();
                 expect_type_name.delete();
                 real_type_name.delete();
+            } else if (expect_type.is_array &&
+                       expect_type.array_length < real_type.array_length) {
+                var info = str::from("expect at most ");
+                info.append_u64(expect_type.array_length);
+                info.append_i8_vec(" element(s), but get ");
+                info.append_u64(real_type.array_length);
+                self->err->error(n->base.location.__ptr__(), info.c_str);
+                info.delete();
+            }
+            // sync the array length
+            if (expect_type.is_array) {
+                n->value->resolved_type.reset_with(expect_type.__ptr__());
             }
         } else if (expect_type.is_pointer() && real_type.is_pointer()) {
             // if is not the same type pointer and cannot be automatically converted

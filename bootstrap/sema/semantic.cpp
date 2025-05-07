@@ -500,11 +500,25 @@ type semantic::resolve_array_list(array_list* node) {
         }
     }
     if (list_type.empty()) {
+        rp.report(node, "expect at least one element.");
         return type::error_type();
     }
-    auto result_type = list_type[0].get_pointer_copy();
+
+    const auto& marked_base_type = list_type[0];
+    for (int i = 1; i < list_type.size(); i++) {
+        if (list_type[i] != marked_base_type &&
+            !check_can_be_converted(node->get_value()[i], marked_base_type)) {
+            rp.report(node->get_value()[i],
+                "expect \"" +  marked_base_type.to_string() +
+                "\" but get \"" + list_type[i].to_string() + "\"."
+            );
+        }
+    }
+
+    auto result_type = marked_base_type.get_pointer_copy();
     result_type.is_array = true;
     result_type.array_length = list_type.size();
+    node->set_resolve_type(result_type);
     return result_type;
 }
 
@@ -1252,6 +1266,16 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
                 "expected \"" + expected_type.array_type_to_string() +
                 "\", but get \"" + real_type.array_type_to_string() + "\"."
             );
+        } else if (expected_type.is_array &&
+                   real_type.array_length > expected_type.array_length) {
+            rp.report(node,
+                "expected at most " + std::to_string(expected_type.array_length) +
+                "element(s), but get " + std::to_string(real_type.array_length) + "."
+            );
+        }
+        // sync the array length
+        if (expected_type.is_array) {
+            node->get_init_value()->set_resolve_type(expected_type);
         }
     } else if (expected_type.is_pointer() && real_type.is_pointer()) {
         if (expected_type != real_type &&

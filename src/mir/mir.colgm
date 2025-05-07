@@ -687,6 +687,7 @@ impl mir_bool {
 pub struct mir_array {
     base: mir,
     size: u64,
+    value: mir_block*,
     resolved_type: type
 }
 
@@ -695,11 +696,17 @@ impl mir_array {
         var res = mir_array::__alloc__();
         res->base = mir::instance(mir_kind::mir_array, l);
         res->size = s;
+        res->value = nil;
         res->resolved_type = t->copy_instance();
         return res;
     }
 
     pub func delete(self) {
+        if (self->value != nil) {
+            var n = self->value => mir*;
+            n->delete();
+            free(n => i8*);
+        }
         self->resolved_type.delete();
     }
 
@@ -713,6 +720,11 @@ impl mir_array {
 
         out.out(" ");
         self->base.location.dump(out);
+
+        if (self->value != nil) {
+            var n = self->value => mir*;
+            n->dump(out, pkg, depth + 1);
+        }
     }
 }
 

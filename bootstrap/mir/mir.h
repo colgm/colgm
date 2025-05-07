@@ -262,17 +262,21 @@ class mir_array: public mir {
 private:
     u64 size;
     type resolve_type;
+    mir_block* value;
 
 public:
     mir_array(const span& loc, u64 sz, const type& t):
-        mir(kind::mir_array, loc), size(sz), resolve_type(t) {}
-    ~mir_array() override = default;
+        mir(kind::mir_array, loc), size(sz), resolve_type(t),
+        value(nullptr) {}
+    ~mir_array() override;
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
 
 public:
     auto get_size() const { return size; }
     const auto& get_type() const { return resolve_type; }
+    void set_value(mir_block* v) { value = v; }
+    auto get_value() const { return value; }
 };
 
 class mir_struct_init: public mir {

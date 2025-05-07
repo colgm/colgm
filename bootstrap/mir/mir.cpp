@@ -136,9 +136,16 @@ void mir_bool::accept(visitor* v) {
     v->visit_mir_bool(this);
 }
 
+mir_array::~mir_array() {
+    delete value;
+}
+
 void mir_array::dump(const std::string& indent, std::ostream& os) {
-    os << indent << to_hex(this) << " [" << size << "x";
+    os << indent << to_hex(this) << " [" << size << " x ";
     os << resolve_type.get_ref_copy() << "] array\n";
+    if (value) {
+        value->dump(indent + " ", os);
+    }
 }
 
 void mir_array::accept(visitor* v) {
