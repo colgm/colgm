@@ -1190,6 +1190,44 @@ impl mir2sir {
         );
         self->block->add_stmt(cv => sir*);
 
+        if (n->value != nil) {
+            var i64_type = str::from("i64");
+            foreach (var i; n->value->content) {
+                var vn = i.get().unwrap();
+                var temp = self->ssa_gen.create();
+                var v_temp = value_t::variable(temp.__ptr__());
+                var index_str = str::from_u64(i.index());
+                var index_value = value_t::literal(index_str.__ptr__());
+
+                self->block->add_stmt(sir_get_index::new(
+                    v_temp_1.__ptr__(),
+                    v_temp.__ptr__(),
+                    index_value.__ptr__(),
+                    array_elem_type.__ptr__(),
+                    i64_type.__ptr__(),
+                    self->generate_DI_location(n->base.location.__ptr__())
+                ) => sir*);
+
+                self->visit(vn);
+                var res = self->value_stack.back()->copy_instance();
+                var res_value = res.to_value_t();
+                self->value_stack.pop_back();
+                self->block->add_stmt(sir_store::new(
+                    array_elem_type.__ptr__(),
+                    res_value.__ptr__(),
+                    v_temp.__ptr__()
+                ) => sir*);
+
+                temp.delete();
+                v_temp.delete();
+                index_str.delete();
+                index_value.delete();
+                res.delete();
+                res_value.delete();
+            }
+            i64_type.delete();
+        }
+
         var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
         self->value_stack.push(v.__ptr__());
 

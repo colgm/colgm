@@ -576,9 +576,10 @@ impl mir_number {
         out.purple().out("MIRNumber").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
         var tn = self->resolved_type.full_path_name(pkg, true);
-        out.out(" ").green().out(self->value.c_str).reset();
         out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
         tn.delete();
+
+        out.out(" ").green().out(self->value.c_str).reset();
 
         out.out(" ");
         self->base.location.dump(out);
@@ -608,6 +609,10 @@ impl mir_string {
     pub func dump(self, out: io, pkg: package*, depth: u32) {
         out.purple().out("MIRString").reset();
         out.light_orange().out(" 0x").out_hex(self => i64).reset();
+
+        var tn = self->resolved_type.full_path_name(pkg, true);
+        out.cyan().out(" [type: ").out(tn.c_str).out("]").reset();
+        tn.delete();
         
         var tmp = llvm_raw_string(self->value.__ptr__());
         out.green().out(" \"").out(tmp.c_str).out("\"").reset();

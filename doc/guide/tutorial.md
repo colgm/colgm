@@ -25,6 +25,7 @@
 - [Implementation](#implementation)
 - [Enumeration](#enumeration)
 - [Conditional Compilation](#conditional-compilation)
+- [Error Handling](#error-handling)
 - [Tagged Union](../spec/tagged_union.md)
 - [Tuple](../spec/tuple.md)
 - [Compiler Library Reference](./library_reference.md)
@@ -52,7 +53,7 @@ func main() -> i32 {
     var b = 2.0;            // f64
     var c = "hello world!"; // const i8*
     var d = 'd';            // i8
-    var e = [i8; 128];      // (array) i8*
+    var e = ['0', '1'];     // (array [2 x i8]) i8*
     var f = true;           // bool
     var g = nil;            // i8*
 
@@ -397,4 +398,13 @@ pub enum flag {
     O_TRUNC  = 0x200,
     O_APPEND = 0x400
 }
+```
+
+## Error Handling
+
+There are some useful functions in err::panic:
+
+```rust
+panic("error message");
+assert(condition, "error message");
 ```

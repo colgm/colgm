@@ -535,6 +535,28 @@ void mir2sir::visit_mir_array(mir_array* node) {
     );
     block->add_stmt(cv);
 
+    if (node->get_value()) {
+        auto count = 0;
+        for (auto i : node->get_value()->get_content()) {
+            auto temp = ssa_gen.create();
+            block->add_stmt(new sir_get_index(
+                value_t::variable(temp_1),
+                value_t::variable(temp),
+                value_t::literal(std::to_string(count++)),
+                array_elem_type,
+                "i64"
+            ));
+            i->accept(this);
+            auto value = value_stack.back();
+            value_stack.pop_back();
+            block->add_stmt(new sir_store(
+                array_elem_type,
+                value.to_value_t(),
+                value_t::variable(temp)
+            ));
+        }
+    }
+
     value_stack.push_back(mir_value_t::variable(temp_1, node->get_type()));
 }
 
