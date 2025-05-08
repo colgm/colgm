@@ -580,11 +580,20 @@ void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
     value_stack.pop_back();
 
     auto temp_var = ssa_gen.create();
-    block->add_stmt(new sir_load(
-        type_mapping(source.resolve_type.get_ref_copy()),
-        source.to_value_t(),
-        value_t::variable(temp_var)
-    ));
+    if (source.resolve_type.is_array) {
+        block->add_stmt(new sir_array_cast(
+            source.to_value_t(),
+            value_t::variable(temp_var),
+            type_mapping(source.resolve_type.get_ref_copy().get_ref_copy()),
+            source.resolve_type.array_length
+        ));
+    } else {
+        block->add_stmt(new sir_load(
+            type_mapping(source.resolve_type.get_ref_copy()),
+            source.to_value_t(),
+            value_t::variable(temp_var)
+        ));
+    }
 
     value_stack.push_back(mir_value_t::variable(
         temp_var,

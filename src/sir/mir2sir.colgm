@@ -1339,11 +1339,25 @@ impl mir2sir {
         var source_ref = source.resolved_type.ref_copy();
         var source_ref_ty = self->type_mapping(source_ref.__ptr__());
         var source_value = source.to_value_t();
-        self->block->add_stmt(sir_load::new(
-            source_ref_ty.__ptr__(),
-            source_value.__ptr__(),
-            temp_var_value.__ptr__()
-        ) => sir*);
+        if (source.resolved_type.is_array) {
+            var source_ref_ref = source_ref.ref_copy();
+            var source_ref_ref_ty = self->type_mapping(source_ref_ref.__ptr__());
+            self->block->add_stmt(sir_array_cast::new(
+                source_value.__ptr__(),
+                temp_var_value.__ptr__(),
+                source_ref_ref_ty.__ptr__(),
+                source.resolved_type.array_length,
+                self->generate_DI_location(n->base.location.__ptr__())
+            ) => sir*);
+            source_ref_ref.delete();
+            source_ref_ref_ty.delete();
+        } else {
+            self->block->add_stmt(sir_load::new(
+                source_ref_ty.__ptr__(),
+                source_value.__ptr__(),
+                temp_var_value.__ptr__()
+            ) => sir*);
+        }
 
         var v = mir_value_t::variable(
             temp_var.__ptr__(),

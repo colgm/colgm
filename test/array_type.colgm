@@ -1,18 +1,31 @@
 use std::io::{ io };
+use err::panic::{ assert };
 
 struct A {
     a: [i32; 12]
+}
+
+func test(a: i32*) {
+    a[0] = 114514;
 }
 
 func main() -> i32 {
     var a = A { };
     a.a[0] = 1;
     a.a[1] = 0;
+    assert(a.a[0] == 1, "a.a[0] != 1");
+    assert(a.a[1] == 0, "a.a[1] != 0");
+
+    test(a.a);
+    assert(a.a[0] == 114514, "a.a[0] != 114514");
+
     io::stdout().out("[array_type.colgm] ")
         .out_i64(a.a[0] => i64).endln();
     
     var b = A::__alloc__();
     b->a[0] = 2;
+    assert(b->a[0] == 2, "b->a[0] != 2");
+
     io::stdout().out("[array_type.colgm] ")
         .out_i64(b->a[0] => i64).endln();
 
