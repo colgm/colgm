@@ -180,12 +180,8 @@ impl sema {
         }
 
         if (list_type.empty()) {
-            self->err->error(
-                n->base.location.__ptr__(),
-                "expect at least one element"
-            );
             list_type.delete();
-            return type::error_type();
+            return type::empty_array_type();
         }
 
         var marked_base_type = list_type.get(0);
@@ -1850,6 +1846,12 @@ impl sema {
         if (n->type == nil) {
             var real_type = self->resolve_expression(n->value);
             n->base.resolved_type.reset_with(real_type.__ptr__());
+            if (real_type.is_empty_array()) {
+                self->err->error(
+                    n->value->location.__ptr__(),
+                    "expect at least one element to infer type"
+                );
+            }
             self->ctx->add_local_var(name, real_type.__ptr__());
             self->check_defined_variable_is_void(n, real_type.__ptr__());
             real_type.delete();
@@ -1865,7 +1867,7 @@ impl sema {
             return;
         }
         if (expect_type.is_array || real_type.is_array) {
-            if (!expect_type.eq(real_type.__ptr__())) {
+            if (!expect_type.eq(real_type.__ptr__()) && !real_type.is_empty_array()) {
                 var info = str::instance();
                 var expect_type_name = expect_type.array_type_full_name(self->pkg);
                 var real_type_name = real_type.array_type_full_name(self->pkg);
@@ -1923,7 +1925,7 @@ impl sema {
         }
 
         // if immutable, make sure the type is correct
-        if (real_type.is_const || real_type.is_array) {
+        if (real_type.is_const) {
             n->base.resolved_type.reset_with(real_type.__ptr__());
             self->ctx->add_local_var(name, real_type.__ptr__());
             self->check_defined_variable_is_void(n, real_type.__ptr__());

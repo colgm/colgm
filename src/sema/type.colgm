@@ -185,6 +185,10 @@ impl type {
         return self->name.eq_const("<error>");
     }
 
+    pub func is_empty_array(self) -> bool {
+        return self->name.eq_const("<empty-array>");
+    }
+
     pub func is_void(self) -> bool {
         return self->name.eq_const("void") &&
                self->pointer_depth == 0;
@@ -254,6 +258,15 @@ impl type {
     pub func default_match_type() -> type {
         var res = type::instance();
         res.name.append_i8_vec("<match-default>");
+        return res;
+    }
+
+    // empty array type
+    pub func empty_array_type() -> type {
+        var res = type::instance();
+        res.name.append_i8_vec("<empty-array>");
+        res.is_array = true;
+        res.array_length = 0;
         return res;
     }
 

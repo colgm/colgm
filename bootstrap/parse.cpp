@@ -538,9 +538,17 @@ type_def* parse::type_def_gen() {
     auto result = new type_def(toks[ptr].loc);
     if (look_ahead(tok::tk_lbracket)) {
         match(tok::tk_lbracket);
+        if (look_ahead(tok::tk_const)) {
+            result->set_constant();
+            match(tok::tk_const);
+        }
         result->set_name(identifier_gen());
         if (look_ahead_generic()) {
             result->set_generic_types(generic_type_list_gen());
+        }
+        while(look_ahead(tok::tk_mult)) {
+            result->add_pointer_level();
+            match(tok::tk_mult);
         }
         match(tok::tk_semi);
         result->set_array(number_gen());
@@ -548,6 +556,7 @@ type_def* parse::type_def_gen() {
         update_location(result);
         return result;
     }
+
     if (look_ahead(tok::tk_const)) {
         result->set_constant();
         match(tok::tk_const);

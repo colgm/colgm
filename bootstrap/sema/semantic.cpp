@@ -500,8 +500,7 @@ type semantic::resolve_array_list(array_list* node) {
         }
     }
     if (list_type.empty()) {
-        rp.report(node, "expect at least one element.");
-        return type::error_type();
+        return type::empty_array_type();
     }
 
     const auto& marked_base_type = list_type[0];
@@ -1251,6 +1250,9 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     // no type declaration
     if (!node->get_type()) {
         const auto real_type = resolve_expression(node->get_init_value());
+        if (real_type.is_empty_array()) {
+            rp.report(node, "expect at least one element to infer type.");
+        }
         node->set_resolve_type(real_type);
         ctx.add_local(name, real_type);
         check_defined_variable_is_void(node, real_type);
@@ -1261,7 +1263,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     const auto expected_type = tr.resolve(node->get_type());
     const auto real_type = resolve_expression(node->get_init_value());
     if (expected_type.is_array || real_type.is_array) {
-        if (expected_type != real_type) {
+        if (expected_type != real_type && !real_type.is_empty_array()) {
             rp.report(node,
                 "expected \"" + expected_type.array_type_to_string() +
                 "\", but get \"" + real_type.array_type_to_string() + "\"."
@@ -1295,7 +1297,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
     }
 
     // if immutable, make sure the type is correct
-    if (real_type.is_const || real_type.is_array) {
+    if (real_type.is_const) {
         node->set_resolve_type(real_type);
         ctx.add_local(name, real_type);
         check_defined_variable_is_void(node, real_type);

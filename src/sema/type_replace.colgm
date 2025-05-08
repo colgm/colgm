@@ -10,7 +10,7 @@ use std::str::{ str };
 use std::map::{ hashmap };
 use std::io::{ io };
 use std::vec::{ vec };
-use std::libc::{ free, itoa };
+use std::libc::{ free };
 use std::ptr::{ ptr };
 
 use sema::type::{ type };
@@ -572,9 +572,7 @@ impl generic_visitor {
 
     func report_recursive_generic_generation(self) {
         var info_head = str::from("template instantiation depth exceeds maximum of ");
-        var buffer = [i8; 128];
-        itoa(self->MAX_RECURSIVE_DEPTH => i64, buffer, 10);
-        info_head.append_i8_vec(buffer);
+        info_head.append_u64(self->MAX_RECURSIVE_DEPTH);
         info_head.append_i8_vec(":\n");
 
         foreach (var i; self->generic_type_map) {

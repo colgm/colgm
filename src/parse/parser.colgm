@@ -768,28 +768,45 @@ impl parser {
         return res;
     }
 
-    func type_def_gen(self) -> ast_type_def* {
+    func array_type_def_gen(self) -> ast_type_def* {
         var res = ast_type_def::new(self->this_tok_loc());
-        if (self->lookahead(tok_kind::tok_lbracket)) {
-            self->match_token(tok_kind::tok_lbracket);
-            res->name = self->identifier_gen();
-            if (self->lookahead_generic()) {
-                res->generic_types = self->generic_type_list_gen();
-            }
-            self->match_token(tok_kind::tok_semi);
-            if (self->lookahead(tok_kind::tok_sub)) {
-                self->err->error(
-                    self->this_tok_loc(),
-                    "array type does not accept negative length"
-                );
-                self->match_token(tok_kind::tok_sub);
-            }
-            res->array_length = self->number_literal_gen();
-            res->is_array = true;
-            self->match_token(tok_kind::tok_rbracket);
-            self->update_location(res => ast*);
-            return res;
+
+        self->match_token(tok_kind::tok_lbracket);
+        if (self->lookahead(tok_kind::tok_const)) {
+            self->match_token(tok_kind::tok_const);
+            res->is_const = true;
         }
+        res->name = self->identifier_gen();
+        if (self->lookahead_generic()) {
+            res->generic_types = self->generic_type_list_gen();
+        }
+        while (self->lookahead(tok_kind::tok_mul)) {
+            res->pointer_depth += 1;
+            self->match_token(tok_kind::tok_mul);
+        }
+        self->match_token(tok_kind::tok_semi);
+        if (self->lookahead(tok_kind::tok_sub)) {
+            self->err->error(
+                self->this_tok_loc(),
+                "array type does not accept negative length"
+            );
+            self->match_token(tok_kind::tok_sub);
+        }
+        res->array_length = self->number_literal_gen();
+        res->is_array = true;
+        self->match_token(tok_kind::tok_rbracket);
+        self->update_location(res => ast*);
+        return res;
+    }
+
+    func type_def_gen(self) -> ast_type_def* {
+        // resolve case like [const i8*; 1024]
+        if (self->lookahead(tok_kind::tok_lbracket)) {
+            return self->array_type_def_gen();
+        }
+
+        var res = ast_type_def::new(self->this_tok_loc());
+
         if (self->lookahead(tok_kind::tok_const)) {
             self->match_token(tok_kind::tok_const);
             res->is_const = true;

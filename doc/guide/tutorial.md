@@ -7,6 +7,7 @@
 - [Literal](#literal)
   - [Default Literal Type](#default-literal-type)
   - [Auto Type Cast](#auto-type-cast)
+  - [Array](#array)
 - [Operators](#operators)
   - [Arithmetic Operator](#arithmetic-operator)
   - [Bitwise Operator](#bitwise-operator)
@@ -133,6 +134,24 @@ func main() -> i32 {
         next: nil // i8*(nil) => Example*
     };            //
     return 0;     // i64(0)  => i32
+}
+```
+
+### Array
+
+Colgm supports arrays. Array has multiple ways to initialize.
+But be ware that empty array bind to variable without type declaration is not allowed.
+
+```rust
+func main() -> i32 {
+    var a = [1, 2, 3]; // [i64; 3]
+
+    // [i32; 1024] with first element set to 0
+    var b: [i32; 1024] = [0 => i32];
+
+    // error: cannot infer type
+    var c = [];
+    return 0;
 }
 ```
 
