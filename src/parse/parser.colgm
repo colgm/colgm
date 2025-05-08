@@ -154,6 +154,15 @@ impl parser {
         return self->this_tok()->kind == kind;
     }
 
+    func lookahead_next_n(self, n: u64, kind: tok_kind) -> bool {
+        for (var i = self->index; i < self->index + n; i += 1) {
+            if (self->get_tok(i)->kind == tok_kind::tok_eof) {
+                return false;
+            }
+        }
+        return self->get_tok(self->index + n)->kind == kind;
+    }
+
     func lookahead_generic(self) -> bool {
         var GLL = generic_list_lookahead {
             index: self->index,
@@ -204,10 +213,7 @@ impl parser {
         self->err->error(loc, message.c_str);
         message.delete();
 
-        while (self->this_tok()->kind != tok_kind::tok_eof &&
-               self->this_tok()->kind != kind) {
-            self->next();
-        }
+        self->next();
     }
 }
 
@@ -1119,7 +1125,19 @@ impl parser {
         while (!self->lookahead(tok_kind::tok_rbrace)) {
             var new_case = ast_match_case::new(self->this_tok_loc());
             new_case->pattern = self->call_gen();
-            self->match_token(tok_kind::tok_wide_arrow);
+            // cover case: = >
+            //             -^- aware of the space here
+            // expect case is: =>
+            if (self->lookahead(tok_kind::tok_eq) &&
+                self->lookahead_next_n(1, tok_kind::tok_grt)) {
+                self->match_token(tok_kind::tok_eq);
+                self->err->error(self->this_tok_loc(),
+                    "do not split \"=>\" to \"= >\" in match case"
+                );
+                self->match_token(tok_kind::tok_grt);
+            } else {
+                self->match_token(tok_kind::tok_wide_arrow);
+            }
             new_case->body = self->block_gen(true);
             res->cases.push(ptr<ast>::wrap(new_case => ast*));
         }
@@ -1223,60 +1241,6 @@ impl parser {
 }
 
 impl parser {
-    func pub_decl_gen(self) -> ast* {
-        self->match_token(tok_kind::tok_pub);
-        if (self->lookahead(tok_kind::tok_extern)) {
-            var res = self->extern_decl_gen();
-            if (res->is(ast_kind::ast_func_decl)) {
-                var tmp = res => ast_func_decl*;
-                tmp->is_public = true;
-                return tmp => ast*;
-            } elsif (res->is(ast_kind::ast_struct_decl)) {
-                var tmp = res => ast_struct_decl*;
-                tmp->is_public = true;
-                return tmp => ast*;
-            } else {
-                self->err->error(
-                    res->location.__ptr__(),
-                    "unreachable, please report bug."
-                );
-            }
-        } elsif (self->lookahead(tok_kind::tok_func)) {
-            var res = self->function_decl_gen();
-            res->is_public = true;
-            return res => ast*;
-        } elsif (self->lookahead(tok_kind::tok_struct)) {
-            var res = self->struct_decl_gen();
-            res->is_public = true;
-            return res => ast*;
-        } elsif (self->lookahead(tok_kind::tok_enum)) {
-            var res = self->enum_decl_gen();
-            res->is_public = true;
-            return res => ast*;
-        }
-    
-        self->err->error(self->this_tok_loc(), "expect function, struct or enum");
-        return ast_null::new() => ast*;
-    }
-
-    func extern_decl_gen(self) -> ast* {
-        self->match_token(tok_kind::tok_extern);
-        if (self->lookahead(tok_kind::tok_func)) {
-            var res = self->function_decl_gen();
-            res->is_extern = true;
-            return res => ast*;
-        }
-        if (self->lookahead(tok_kind::tok_struct)) {
-            var res = self->struct_decl_gen();
-            res->is_extern = true;
-            return res => ast*;
-        }
-        self->err->error(self->this_tok_loc(), "expect function or struct");
-        return ast_null::new() => ast*;
-    }
-}
-
-impl parser {
     func report_unexpect_token_and_skip(self, tok: token*) {
         var info = str::from("unexpected token \"");
         info.append_i8_vec(tok->content.c_str);
@@ -1297,18 +1261,36 @@ impl parser {
         }
     }
 
+    // if too many errors occurred, stop parsing
+    // because the code must be terribly broken.
+    func error_count_threshold_exceeded(self) -> bool {
+        if (self->err->error_count >= 8) {
+            self->err->error(nil, "too many errors, stop\n");
+            return true;
+        }
+        return false;
+    }
+
     pub func parse(self, lex: lexer*) {
         self->index = 0;
         self->toks = lex->toks.__ptr__();
         self->root = root::new(self->this_tok_loc());
+        // directy return if the first token is EOF
         if (self->lookahead(tok_kind::tok_eof)) {
             return;
         }
+
+        // parse import statements
         while (self->lookahead(tok_kind::tok_use)) {
             self->root->imports.push(
                 ptr<ast>::wrap(self->use_stmt_gen() => ast*)
             );
+            if (self->error_count_threshold_exceeded()) {
+                return;
+            }
         }
+
+        // parse declarations and definitions
         while (!self->lookahead(tok_kind::tok_eof)) {
             var flag_is_public = false;
             var flag_is_extern = false;
@@ -1335,6 +1317,9 @@ impl parser {
                 } else if (self->lookahead(tok_kind::tok_extern) && flag_is_extern) {
                     self->err->error(self->this_tok_loc(), "duplicate 'extern' modifier");
                 }
+                if (self->error_count_threshold_exceeded()) {
+                    return;
+                }
                 self->next();
             }
 
@@ -1350,7 +1335,9 @@ impl parser {
                     var tmp = self->enum_decl_gen();
                     tmp->is_public = flag_is_public;
                     if (flag_is_extern) {
-                        self->err->error(extern_loc, "extern enum not supported");
+                        self->err->error(extern_loc,
+                            "extern enum not supported"
+                        );
                     }
                     decl_node = tmp => ast*;
                 }
@@ -1362,10 +1349,14 @@ impl parser {
                 }
                 tok_kind::tok_impl => {
                     if (flag_is_public) {
-                        self->err->error(pub_loc, "cannot use 'pub' with 'impl'");
+                        self->err->warn(pub_loc,
+                            "cannot use 'pub' with 'impl', ignored"
+                        );
                     }
                     if (flag_is_extern) {
-                        self->err->error(extern_loc, "cannot use 'extern' with 'impl'");
+                        self->err->warn(extern_loc,
+                            "cannot use 'extern' with 'impl', ignored"
+                        );
                     }
                     decl_node = self->impl_gen() => ast*;
                 }
@@ -1373,6 +1364,10 @@ impl parser {
                     self->report_unexpect_token_and_skip(self->this_tok());
                     continue;
                 }
+            }
+
+            if (self->error_count_threshold_exceeded()) {
+                return;
             }
 
             // embed decl node into cond_comp node
@@ -1396,8 +1391,10 @@ impl parser {
 
             self->next();
         }
+
         self->update_location(self->root => ast*);
 
+        // scan ast and remove conditional-disabled nodes
         remove_disabled_node(self->err, self->root, self->co);
     }
 }
