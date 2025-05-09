@@ -11,7 +11,8 @@ In the top level directory, use these commands:
 
 ```sh
 mkdir -p build && cd build
-cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release && make -j6
+cmake ../bootstrap -DCMAKE_BUILD_TYPE=RelWithDebInfo
+make -j6
 ```
 
 ## Build Self-Host Compiler

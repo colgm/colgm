@@ -22,7 +22,6 @@ pub enum ast_kind {
     ast_string_literal,
     ast_char_literal,
     ast_bool_literal,
-    ast_array_literal,
     ast_array_list,
     ast_call_index,
     ast_call_func_args,
@@ -75,7 +74,6 @@ pub func ast_kind_name(k: ast_kind) -> i8* {
         ast_kind::ast_string_literal => return "ast_string_literal";
         ast_kind::ast_char_literal => return "ast_char_literal";
         ast_kind::ast_bool_literal => return "ast_bool_literal";
-        ast_kind::ast_array_literal => return "ast_array_literal";
         ast_kind::ast_array_list => return "ast_array_list";
         ast_kind::ast_call_index => return "ast_call_index";
         ast_kind::ast_call_func_args => return "ast_call_func_args";
@@ -225,10 +223,6 @@ impl ast {
                 tmp->delete();
             }
             ast_kind::ast_bool_literal => {}
-            ast_kind::ast_array_literal => {
-                var tmp = self => ast_array_literal*;
-                tmp->delete();
-            }
             ast_kind::ast_array_list => {
                 var tmp = self => ast_array_list*;
                 tmp->delete();
@@ -425,10 +419,6 @@ impl ast {
             }
             ast_kind::ast_bool_literal => {
                 var tmp = self => ast_bool_literal*;
-                return tmp->copy() => ast*;
-            }
-            ast_kind::ast_array_literal => {
-                var tmp = self => ast_array_literal*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_array_list => {
@@ -927,54 +917,6 @@ impl ast_bool_literal {
 
     pub func copy(self) -> ast_bool_literal* {
         return ast_bool_literal::new(self->base.location.__ptr__(), self->flag);
-    }
-}
-
-pub struct ast_array_literal {
-    base: ast,
-    size: ast_number_literal*,
-    type: ast_type_def*
-}
-
-impl ast_array_literal {
-    pub func new(loc: span*) -> ast_array_literal* {
-        var res = ast_array_literal::__alloc__();
-        res->base = ast::instance(ast_kind::ast_array_literal, loc);
-        res->size = nil;
-        res->type = nil;
-        return res;
-    }
-
-    pub func copy(self) -> ast_array_literal* {
-        var res = ast_array_literal::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_array_literal,
-            self->base.location.__ptr__()
-        );
-        if (self->size != nil) {
-            res->size = self->size->copy();
-        } else {
-            res->size = nil;
-        }
-        if (self->type != nil) {
-            res->type = self->type->copy();
-        } else {
-            res->type = nil;
-        }
-        return res;
-    }
-
-    pub func delete(self) {
-        if (self->size != nil) {
-            var n = self->size => ast*;
-            n->delete();
-            free(n => i8*);
-        }
-        if (self->type != nil) {
-            var n = self->type => ast*;
-            n->delete();
-            free(n => i8*);
-        }
     }
 }
 

@@ -32,7 +32,6 @@ public:
     virtual bool visit_string_literal(string_literal*);
     virtual bool visit_char_literal(char_literal*);
     virtual bool visit_bool_literal(bool_literal*);
-    virtual bool visit_array_literal(array_literal*);
     virtual bool visit_array_list(array_list*);
     virtual bool visit_call_id(call_id*);
     virtual bool visit_call_index(call_index*);

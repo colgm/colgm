@@ -424,32 +424,6 @@ impl parser {
         return res;
     }
 
-    func array_gen(self) -> ast_array_literal* {
-        var res = ast_array_literal::new(self->this_tok_loc());
-        self->match_token(tok_kind::tok_lbracket);
-        res->type = self->type_def_gen();
-        if (self->this_tok()->kind == tok_kind::tok_colon) {
-            self->err->error(
-                self->this_tok_loc(),
-                "\":\" is not allowed in array literal. maybe \";\"?"
-            );
-            self->match_token(tok_kind::tok_colon);
-        } else {
-            self->match_token(tok_kind::tok_semi);
-        }
-        if (self->lookahead(tok_kind::tok_sub)) {
-            self->err->error(
-                self->this_tok_loc(),
-                "array type does not accept negative length"
-            );
-            self->match_token(tok_kind::tok_sub);
-        }
-        res->size = self->number_literal_gen();
-        self->match_token(tok_kind::tok_rbracket);
-        self->update_location(res => ast*);
-        return res;
-    }
-
     func array_list_gen(self) -> ast_array_list* {
         var res = ast_array_list::new(self->this_tok_loc());
         self->match_token(tok_kind::tok_lbracket);
@@ -492,14 +466,6 @@ impl parser {
                  self->lookahead(tok_kind::tok_false)) {
             return self->bool_gen() => ast*;
         } elsif (self->lookahead(tok_kind::tok_lbracket)) {
-            for (var i = self->index; self->get_tok(i)->kind != tok_kind::tok_eof; i += 1) {
-                if (self->get_tok(i)->kind == tok_kind::tok_semi) {
-                    return self->array_gen() => ast*;
-                }
-                if (self->get_tok(i)->kind == tok_kind::tok_rbracket) {
-                    break;
-                }
-            }
             return self->array_list_gen() => ast*;
         } elsif (self->lookahead(tok_kind::tok_id)) {
             return self->call_gen() => ast*;
@@ -507,8 +473,9 @@ impl parser {
 
         self->err->error(
             self->this_tok_loc(),
-            "expected scalar here."
+            "expected scalar here"
         );
+        self->next();
         return ast_null::new() => ast*;
     }
 

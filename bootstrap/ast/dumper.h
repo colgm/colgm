@@ -51,7 +51,6 @@ private:
     bool visit_string_literal(string_literal*) override;
     bool visit_char_literal(char_literal*) override;
     bool visit_bool_literal(bool_literal*) override;
-    bool visit_array_literal(array_literal*) override;
     bool visit_array_list(array_list*) override;
     bool visit_cond_compile(cond_compile*) override;
     bool visit_type_def(type_def*) override;

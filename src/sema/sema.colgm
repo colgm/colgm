@@ -148,23 +148,6 @@ impl sema {
         return ty;
     }
 
-    func resolve_array_literal(self, n: ast_array_literal*) -> type {
-        var size_infer = self->resolve_number_literal(n->size);
-        if (!size_infer.is_integer()) {
-            self->err->error(n->base.location.__ptr__(), "array size must be integer");
-            size_infer.delete();
-            return type::error_type();
-        }
-        size_infer.delete();
-
-        var type_infer = self->tr.resolve(n->type);
-        type_infer.pointer_depth += 1;
-        type_infer.is_array = true;
-        type_infer.array_length = to_u64(n->size->literal.__ptr__()).unwrap();
-        n->base.resolved_type.reset_with(type_infer.__ptr__());
-        return type_infer;
-    }
-
     func resolve_array_list(self, n: ast_array_list*) -> type {
         var list_type = vec<type>::instance();
         foreach (var i; n->value) {
@@ -1695,9 +1678,6 @@ impl sema {
             }
             ast_kind::ast_bool_literal => {
                 return self->resolve_bool_literal(n => ast_bool_literal*);
-            }
-            ast_kind::ast_array_literal => {
-                return self->resolve_array_literal(n => ast_array_literal*);
             }
             ast_kind::ast_array_list => {
                 return self->resolve_array_list(n => ast_array_list*);

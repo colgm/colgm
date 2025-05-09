@@ -60,17 +60,6 @@ bool dumper::visit_bool_literal(bool_literal* node) {
     return true;
 }
 
-bool dumper::visit_array_literal(array_literal* node) {
-    dump_indent();
-    std::cout << "array" << format_location(node);
-    push_indent();
-    node->get_size()->accept(this);
-    set_last();
-    node->get_type()->accept(this);
-    pop_indent();
-    return true;
-}
-
 bool dumper::visit_array_list(array_list* node) {
     dump_indent();
     std::cout << "array_list" << format_location(node);

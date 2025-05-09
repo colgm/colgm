@@ -476,19 +476,6 @@ type semantic::resolve_bool_literal(bool_literal* node) {
     return type::bool_type();
 }
 
-type semantic::resolve_array_literal(array_literal* node) {
-    const auto size_infer = resolve_number_literal(node->get_size());
-    if (!size_infer.is_integer()) {
-        rp.report(node->get_size(), "array size must be integer.");
-    }
-    const auto type_infer = tr.resolve(node->get_type());
-    node->set_resolve_type(type_infer.get_pointer_copy());
-    auto result_type = type_infer.get_pointer_copy();
-    result_type.is_array = true;
-    result_type.array_length = str_to_num(node->get_size()->get_number().c_str());
-    return result_type;
-}
-
 type semantic::resolve_array_list(array_list* node) {
     std::vector<type> list_type;
     for (auto i : node->get_value()) {
@@ -1215,8 +1202,6 @@ type semantic::resolve_expression(expr* node) {
         return resolve_char_literal(reinterpret_cast<char_literal*>(node));
     case ast_type::ast_bool_literal:
         return resolve_bool_literal(reinterpret_cast<bool_literal*>(node));
-    case ast_type::ast_array_literal:
-        return resolve_array_literal(reinterpret_cast<array_literal*>(node));
     case ast_type::ast_array_list:
         return resolve_array_list(reinterpret_cast<array_list*>(node));
     case ast_type::ast_call:

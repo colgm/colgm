@@ -126,8 +126,8 @@ impl type_replace_pass {
                 self->visit_binary_operator(n => ast_binary_operator*);
             ast_kind::ast_type_convert =>
                 self->visit_type_convert(n => ast_type_convert*);
-            ast_kind::ast_array_literal =>
-                self->visit_array_literal(n => ast_array_literal*);
+            ast_kind::ast_array_list =>
+                self->visit_array_list(n => ast_array_list*);
             ast_kind::ast_call_index =>
                 self->visit_call_index(n => ast_call_index*);
             ast_kind::ast_call_func_args =>
@@ -231,9 +231,9 @@ impl type_replace_pass {
         self->visit_type_def(n->to);
     }
 
-    func visit_array_literal(self, n: ast_array_literal*) {
-        if (n->type != nil) {
-            self->visit_type_def(n->type);
+    func visit_array_list(self, n: ast_array_list*) {
+        foreach (var i; n->value) {
+            self->visit_ast(i.get().unwrap());
         }
     }
 
@@ -768,8 +768,8 @@ impl generic_visitor {
                 self->visit_binary_operator(n => ast_binary_operator*);
             ast_kind::ast_type_convert =>
                 self->visit_type_convert(n => ast_type_convert*);
-            ast_kind::ast_array_literal =>
-                self->visit_array_literal(n => ast_array_literal*);
+            ast_kind::ast_array_list =>
+                self->visit_array_list(n => ast_array_list*);
             ast_kind::ast_call_index =>
                 self->visit_call_index(n => ast_call_index*);
             ast_kind::ast_call_func_args =>
@@ -905,9 +905,9 @@ impl generic_visitor {
         self->visit_type_def(n->to);
     }
 
-    func visit_array_literal(self, n: ast_array_literal*) {
-        if (n->type != nil) {
-            self->visit_type_def(n->type);
+    func visit_array_list(self, n: ast_array_list*) {
+        foreach (var i; n->value) {
+            self->visit_ast(i.get().unwrap());
         }
     }
 

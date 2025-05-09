@@ -20,7 +20,6 @@ enum class ast_type {
     ast_string_literal,
     ast_char_literal,
     ast_bool_literal,
-    ast_array_literal,
     ast_array_list,
     ast_call_id,
     ast_call_index,
@@ -81,7 +80,6 @@ class identifier;
 class number_literal;
 class string_literal;
 class bool_literal;
-class array_literal;
 class array_list;
 class call_id;
 class call_index;

@@ -82,8 +82,6 @@ impl ast_dumper {
                 self->dump_char_literal(node => ast_char_literal*, out);
             ast_kind::ast_bool_literal =>
                 self->dump_bool_literal(node => ast_bool_literal*, out);
-            ast_kind::ast_array_literal =>
-                self->dump_array_literal(node => ast_array_literal*, out);
             ast_kind::ast_array_list =>
                 self->dump_array_list(node => ast_array_list*, out);
             ast_kind::ast_call_index =>
@@ -311,21 +309,6 @@ impl ast_dumper {
         }
         out.out(" -> ");
         node->base.location.dump(out);
-    }
-
-    func dump_array_literal(self, node: ast_array_literal*, out: io) {
-        self->dump_indent(out);
-        out.purple().out("Array ").reset();
-        out.light_orange().out("0x").out_hex(node => i64).reset().out(" ");
-        self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
-        out.out("-> ");
-        node->base.location.dump(out);
-
-        self->push_indent();
-        self->dump_number_literal(node->size, out);
-        self->set_last();
-        self->dump_type_def(node->type, out);
-        self->pop_indent();
     }
 
     func dump_array_list(self, node: ast_array_list*, out: io) {

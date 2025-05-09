@@ -24,7 +24,14 @@ pub func main() -> i32 {
 
 ## Language Guide
 
-See simple language guide in [doc/guide/tutorial.md](./doc/guide/tutorial.md) | [中文版语言指南](./doc/guide/tutorial_zh.md).
+See simple language guide in:
+
+- [doc/guide/tutorial.md](./doc/guide/tutorial.md)
+- [中文版语言指南](./doc/guide/tutorial_zh.md).
+
+See compiler library reference in:
+
+- [doc/guide/library_reference.md](./doc/guide/library_reference.md)
 
 ## Build and Development
 
@@ -69,21 +76,24 @@ And use another script to test:
 python3 misc/test.py
 ```
 
+Use this script to test tcp/udp utils:
+
+```sh
+python3 misc/test_tcp_udp.py
+```
+
 ### Code Style
 
 And for development, you should follow the [code style](./doc/spec/code_style.md).
 
 ## Features and Roadmap
 
-1. feature: array type `[<base-type>; 128]`
-    - syntax like `var a: [i32; 128] = [1, 2, 3];`
-    - syntax like `var a: [i8*; 128] = ["foo", "bar", tmp];`
-2. feature: [Tagged Union](./doc/spec/tagged_union.md)
-3. feature: [Tuple](./doc/spec/tuple.md)
-4. feature: RAII
-5. feature: reference type
-6. feature: smart pointer
-7. feature: std
+1. feature: RAII
+2. feature: reference type
+3. feature: [Tagged Union](./doc/spec/tagged_union.md)
+4. feature: [Tuple](./doc/spec/tuple.md)
+5. feature: smart pointer
+6. feature: std
     - [x] Filesystem API (read, write, join, exists, etc)
     - [x] Datetime utils
     - [ ] String and Unicode Helpers

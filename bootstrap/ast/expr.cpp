@@ -79,22 +79,6 @@ void bool_literal::accept(visitor* v) {
     v->visit_bool_literal(this);
 }
 
-array_literal::~array_literal() {
-    delete size;
-    delete type;
-}
-
-void array_literal::accept(visitor* v) {
-    v->visit_array_literal(this);
-}
-
-array_literal* array_literal::clone() const {
-    auto copy = new array_literal(location);
-    copy->size = size->clone();
-    copy->type = type->clone();
-    return copy;
-}
-
 array_list::~array_list() {
     for (auto i : value) {
         delete i;

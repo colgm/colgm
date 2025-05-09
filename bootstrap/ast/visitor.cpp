@@ -157,12 +157,6 @@ bool visitor::visit_bool_literal(bool_literal* node) {
     return true;
 }
 
-bool visitor::visit_array_literal(array_literal* node) {
-    node->get_size()->accept(this);
-    node->get_type()->accept(this);
-    return true;
-}
-
 bool visitor::visit_array_list(array_list* node) {
     for (auto i : node->get_value()) {
         i->accept(this);

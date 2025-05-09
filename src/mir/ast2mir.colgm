@@ -87,9 +87,6 @@ impl ast2mir {
             ast_kind::ast_bool_literal => {
                 self->visit_bool_literal(a => ast_bool_literal*);
             }
-            ast_kind::ast_array_literal => {
-                self->visit_array_literal(a => ast_array_literal*);
-            }
             ast_kind::ast_array_list => {
                 self->visit_array_list(a => ast_array_list*);
             }
@@ -252,17 +249,6 @@ impl ast2mir {
         self->block->add(mir_bool::new(
             n->base.location.__ptr__(),
             n->flag,
-            n->base.resolved_type.__ptr__()
-        ) => mir*);
-    }
-
-    func visit_array_literal(self, n: ast_array_literal*) {
-        var num = n->size->literal.__ptr__();
-        var res = to_u64(num).unwrap();
-
-        self->block->add(mir_array::new(
-            n->base.location.__ptr__(),
-            res,
             n->base.resolved_type.__ptr__()
         ) => mir*);
     }

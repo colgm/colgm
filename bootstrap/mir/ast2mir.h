@@ -72,7 +72,6 @@ private:
     bool visit_string_literal(ast::string_literal*) override;
     bool visit_char_literal(ast::char_literal*) override;
     bool visit_bool_literal(ast::bool_literal*) override;
-    bool visit_array_literal(ast::array_literal*) override;
     bool visit_array_list(ast::array_list*) override;
     bool visit_struct_decl(ast::struct_decl*) override;
     bool visit_func_decl(ast::func_decl*) override;

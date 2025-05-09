@@ -130,19 +130,6 @@ bool ast2mir::visit_bool_literal(ast::bool_literal* node) {
     return true;
 }
 
-bool ast2mir::visit_array_literal(ast::array_literal* node) {
-    const auto& num_str = node->get_size()->get_number();
-    u64 res = (num_str.size()>=2 && num_str[0]=='0' && num_str[1]=='x')
-              ? hex_to_u64(num_str.c_str())
-              : dec_to_u64(num_str.c_str());
-    block->add_content(new mir_array(
-        node->get_location(),
-        res,
-        node->get_resolve()
-    ));
-    return true;
-}
-
 bool ast2mir::visit_array_list(ast::array_list* node) {
     auto value_block = new mir_block(node->get_location());
     auto temp = block;
