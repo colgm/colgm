@@ -8,6 +8,8 @@ use std::ptr::{ ptr };
 
 use err::span::{ span };
 use err::panic::{ panic };
+
+use ast::tree_maker::{ tree_maker };
 use sema::type::{ type };
 use mir::mir::*;
 use util::timestamp::{ maketimestamp };
@@ -123,14 +125,16 @@ impl mir_context {
     }
 
     pub func dump(self, out: io, pkg: package*) {
+        var tm = tree_maker::instance();
         foreach (var i; self->impls) {
             out.blue().out("<").out(i.get()->name.c_str).out(">:").reset().endln();
             if (i.get()->block != nil) {
                 var m = i.get()->block => mir*;
-                m->dump(out, pkg, 2);
+                m->dump(out, pkg, tm.__ptr__());
             }
             out.endln();
         }
+        tm.delete();
     }
 
     pub func adjust_posix_open(self, verbose: bool) {

@@ -145,6 +145,8 @@ But be ware that empty array bind to variable without type declaration is not al
 ```rust
 func main() -> i32 {
     var a = [1, 2, 3]; // [i64; 3]
+    //       ^       => base type is determined by first element
+    //       ^^^^^^^ => array size is determined by number of elements
 
     // [i32; 1024] with first element set to 0
     var b: [i32; 1024] = [0 => i32];

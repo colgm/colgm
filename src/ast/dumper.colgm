@@ -1,4 +1,6 @@
 use ast::ast::*;
+use ast::tree_maker::{ tree_maker };
+
 use std::str::{ str };
 use std::io::{ io };
 
@@ -6,92 +8,38 @@ use sema::type::{ type };
 use package::{ package };
 use util::mangling::{ llvm_raw_string };
 
-enum indent_state {
-    indent_none,
-    indent_middle,
-    indent_bar,
-    indent_end
-}
-
 pub struct ast_dumper {
-    indent: str,
+    tm: tree_maker,
     pkg: package*
 }
 
 impl ast_dumper {
     func instance() -> ast_dumper {
         var res = ast_dumper {
-            indent: str::instance(),
+            tm: tree_maker::instance(),
             pkg: nil
         };
-        res.indent.clear();
         return res;
     }
 
     pub func delete(self) {
-        self->indent.delete();
-    }
-
-    func indent_back(self) -> indent_state {
-        var s = self->indent.size => i64;
-        if (s == 0) {
-            return indent_state::indent_none;
-        }
-        if (self->indent.c_str[s - 1] == '-' &&
-            self->indent.c_str[s - 2] == '|') {
-            return indent_state::indent_middle;
-        }
-        if (self->indent.c_str[s - 1] == ' ' &&
-            self->indent.c_str[s - 2] == '|') {
-            return indent_state::indent_bar;
-        }
-        if (self->indent.c_str[s - 1] == '-' &&
-            self->indent.c_str[s - 2] == '`') {
-            return indent_state::indent_end;
-        }
-        return indent_state::indent_none;
+        self->tm.delete();
     }
 
     func push_indent(self) {
-        if (self->indent.size > 0) {
-            var state = self->indent_back();
-            match (state) {
-                indent_state::indent_none => {}
-                indent_state::indent_middle => {
-                    self->indent.pop_back();
-                    self->indent.pop_back();
-                    self->indent.append_i8_vec("| ");
-                }
-                indent_state::indent_bar => {}
-                indent_state::indent_end => {
-                    self->indent.pop_back();
-                    self->indent.pop_back();
-                    self->indent.append_i8_vec("  ");
-                }
-            }
-        }
-        self->indent.append_i8_vec("|-");
+        self->tm.push_indent();
     }
 
     func set_last(self) {
-        self->indent.pop_back();
-        self->indent.pop_back();
-        self->indent.append_i8_vec("`-");
+        self->tm.set_last();
     }
 
     func pop_indent(self) {
-        self->indent.pop_back();
-        self->indent.pop_back();
+        self->tm.pop_indent();
     }
 
     func dump_indent(self, out: io) {
-        if (self->indent.size > 0 &&
-            self->indent_back() == indent_state::indent_bar) {
-            self->indent.pop_back();
-            self->indent.pop_back();
-            self->indent.append_i8_vec("|-");
-        }
-        out.out(self->indent.c_str);
+        self->tm.dump_indent(out);
     }
 
     func dump_resolved_type(self, out: io, ty: type*) {
@@ -100,9 +48,8 @@ impl ast_dumper {
         }
 
         if (ty->is_array) {
-            var n = ty->full_path_name(self->pkg, false);
-            out.blue().out("[real: [").out_u64(ty->array_length).out(" x ");
-            out.out(n.c_str).out("]]").reset();
+            var n = ty->array_type_full_name(self->pkg);
+            out.blue().out("[real: ").out(n.c_str).out("] ").reset();
             n.delete();
         }
 
