@@ -7,7 +7,7 @@
 - [Literal](#literal)
   - [Default Literal Type](#default-literal-type)
   - [Auto Type Cast](#auto-type-cast)
-  - [Array](#array)
+  - [Array Initialization](#array-initialization)
 - [Operators](#operators)
   - [Arithmetic Operator](#arithmetic-operator)
   - [Bitwise Operator](#bitwise-operator)
@@ -26,7 +26,6 @@
 - [Implementation](#implementation)
 - [Enumeration](#enumeration)
 - [Conditional Compilation](#conditional-compilation)
-- [Error Handling](#error-handling)
 - [Tagged Union](../spec/tagged_union.md)
 - [Tuple](../spec/tuple.md)
 - [Compiler Library Reference](./library_reference.md)
@@ -137,7 +136,7 @@ func main() -> i32 {
 }
 ```
 
-### Array
+### Array Initialization
 
 Colgm supports arrays. Array has multiple ways to initialize.
 But be ware that empty array bind to variable without type declaration is not allowed.
@@ -419,13 +418,4 @@ pub enum flag {
     O_TRUNC  = 0x200,
     O_APPEND = 0x400
 }
-```
-
-## Error Handling
-
-There are some useful functions in err::panic:
-
-```rust
-panic("error message");
-assert(condition, "error message");
 ```

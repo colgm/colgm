@@ -2,7 +2,64 @@
 
 ![just a picture](../jpg/llvm-maybe.jpg)
 
-## `list<T>`
+- [Error Handling](#error-handling)
+  - [err::panic::assert](#errpanicassert)
+  - [err::panic::panic](#errpanicpanic)
+  - [err::panic::unreachable](#errpanicunreachable)
+  - [err::panic::unimplemented](#errpanicunimplemented)
+- [Standard Containers](#standard-containers)
+  - [std::list::list](#stdlistlistt)
+  - [std::list::primitive_list](#stdlistprimitive_listt)
+  - [std::queue::queue](#stdqueuequeuet)
+  - [std::queue::primitive_queue](#stdqueueprimitive_queuet)
+  - [std::vec::vec](#stdvecvect)
+  - [std::vec::primitive_vec](#stdvecprimitive_vect)
+  - [std::set::hashset](#stdsethashsett)
+  - [std::map::hashmap](#stdmaphashmapk-v)
+- [Standard Trivial Type Wrapper](#standard-trivial-type-wrapper)
+  - [std::ptr::ptr](#stdptrptrt)
+  - [std::ptr::basic](#stdptrbasict)
+- [TCP/UDP Utils](#tcpudp-utils)
+  - [std::tcp](#stdtcp)
+  - [std::udp](#stdudp)
+
+## Error Handling
+
+### err::panic::assert
+
+If condition is false, the program will panic with the error message.
+
+```rust
+assert(condition, "error message");
+```
+
+### err::panic::panic
+
+Panic with the error message.
+
+```rust
+panic("error message");
+```
+
+### err::panic::unreachable
+
+Panic with the error message "unreachable".
+
+```rust
+unreachable();
+```
+
+### err::panic::unimplemented
+
+Panic with the error message "unimplemented".
+
+```rust
+unimplemented();
+```
+
+## Standard Containers
+
+### `std::list::list<T>`
 
 Source: [`list<T>`](../../src/std/list.colgm)
 
@@ -25,7 +82,7 @@ func main() -> i32 {
 }
 ```
 
-## `primitive_list<T>`
+### `std::list::primitive_list<T>`
 
 Source: [`primitive_list<T>`](../../src/std/list.colgm)
 
@@ -42,7 +99,7 @@ func main() -> i32 {
 }
 ```
 
-## `queue<T>`
+### `std::queue::queue<T>`
 
 Source: [`queue<T>`](../../src/std/queue.colgm)
 
@@ -66,7 +123,7 @@ func main() -> i32 {
 }
 ```
 
-## `primitive_queue<T>`
+### `std::queue::primitive_queue<T>`
 
 Source: [`primitive_queue<T>`](../../src/std/queue.colgm)
 
@@ -85,7 +142,7 @@ func main() -> i32 {
 }
 ```
 
-## `vec<T>`
+### `std::vec::vec<T>`
 
 Source: [`vec<T>`](../../src/std/vec.colgm)
 
@@ -110,7 +167,7 @@ func main() -> i32 {
 }
 ```
 
-## `primitive_vec<T>`
+### `std::vec::primitive_vec<T>`
 
 Source: [`primitive_vec<T>`](../../src/std/vec.colgm)
 
@@ -129,7 +186,7 @@ func main() -> i32 {
 }
 ```
 
-## `hashset<T>`
+### `std::set::hashset<T>`
 
 Source: [`hashset<T>`](../../src/std/set.colgm)
 
@@ -153,7 +210,7 @@ func main() -> i32 {
 }
 ```
 
-## `hashmap<K, V>`
+### `std::map::hashmap<K, V>`
 
 Source: [`hashmap<K, V>`](../../src/std/map.colgm)
 
@@ -180,7 +237,9 @@ func main() -> i32 {
 }
 ```
 
-## `ptr<T>`
+## Standard Trivial Type Wrapper
+
+### `std::ptr::ptr<T>`
 
 Source: [`ptr<T>`](../../src/std/ptr.colgm)
 
@@ -203,7 +262,7 @@ func main() -> i32 {
 }
 ```
 
-## `basic<T>`
+### `std::ptr::basic<T>`
 
 Source: [`basic<T>`](../../src/std/ptr.colgm)
 
@@ -221,3 +280,13 @@ func main() -> i32 {
     return 0;
 }
 ```
+
+## TCP/UDP Utils
+
+### std::tcp
+
+See example for `std::tcp` in [test/socket/tcp_example.colgm](../../test/socket/tcp_example.colgm)
+
+### std::udp
+
+See example for `std::udp` in [test/socket/udp_example.colgm](../../test/socket/udp_example.colgm)
