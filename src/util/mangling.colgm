@@ -1,11 +1,20 @@
 use std::str::{ str };
 
+// get name to be mangled, return the mangled name
+// all the "::" in the prefix will be replaced with ".", suffix remains the same
+// for example:
+//   std::vec::vec<std::str::str>
+// will be mangled to
+//   std.vec.vec<std::str::str>
 pub func mangle(name: str*) -> str {
     var pos = name->find('<');
 
     var prefix = name->copy_instance();
     var suffix = str::from("");
     if (pos != str::npos()) {
+        // if get name is std::vec::vec<std::str::str>
+        // the prefix will be std::vec::vec
+        // the suffix will be <std::str::str>
         var temp_prefix = name->substr(0, pos);
         var temp_suffix = name->substr(pos, name->size);
 
@@ -17,6 +26,8 @@ pub func mangle(name: str*) -> str {
         temp_suffix.delete();
     }
 
+    // if prefix is std::vec::vec
+    // the res will be std.vec.vec
     var res = str::from("");
     for (var i: u64 = 0; i < prefix.size; i += 1) {
         var ch = prefix.get(i);
@@ -28,15 +39,29 @@ pub func mangle(name: str*) -> str {
         res.append_char(ch);
     }
 
+    // concat suffix
     if (suffix.size > 0) {
         res.append_str(suffix.__ptr__());
     }
 
     prefix.delete();
     suffix.delete();
+
+    // if get name std::vec::vec<std::str::str>
+    // the res will be std.vec.vec<std::str::str>
     return res;
 }
 
+// mangle struct name
+// for example:
+//   std::vec::vec<std::str::str>
+// will be mangled to
+//   "%struct.std.vec.vec<std::str::str>"
+//   ^-------------------~---~~---~~---~^ double quote if special char in name
+// another example:
+//   std::timestamp::timestamp
+// will be mangled to
+//   %struct.std.timestamp.timestamp (without double quote)
 pub func mangle_struct_name(name: str*) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
@@ -55,6 +80,9 @@ pub func mangle_struct_name(name: str*) -> str {
     return mangled;
 }
 
+// mangle function name
+// for example: std::to_hex -> std.to_hex
+// for example: std::generic_func<i32> -> "std.generic_func<i32>"
 pub func mangle_function_name(name: str*) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
@@ -67,6 +95,7 @@ pub func mangle_function_name(name: str*) -> str {
     return mangled;
 }
 
+// mark llvm visible characters in string literal
 func llvm_visible_char(c: i8) -> bool {
     if ('0' <= c && c <= '9') {
         return true;
@@ -87,6 +116,8 @@ func llvm_visible_char(c: i8) -> bool {
            c=='%' || c=='^' || c=='@';
 }
 
+// convert string to llvm acceptable string
+// if character is not llvm visible, convert it to hexadecimal
 pub func llvm_raw_string(s: str*) -> str {
     var table = "0123456789abcdef";
     var res = str::from("");
