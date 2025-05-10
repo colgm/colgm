@@ -2653,7 +2653,7 @@ impl mir2sir {
         }
     }
 
-    func generate_llvm_dbg_cu(self) {
+    func generate_llvm_dbg_cu(self) -> DI_compile_unit* {
         var llvm_dbg_cu = DI_named_metadata::new("llvm.dbg.cu");
         self->sctx->named_metadata.push(ptr<DI_named_metadata>::wrap(llvm_dbg_cu));
 
@@ -2672,6 +2672,8 @@ impl mir2sir {
         llvm_dbg_cu->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
         self->sctx->debug_info.push(ptr<DI_node>::wrap(cu => DI_node*));
         self->dwarf_status.DI_counter += 1;
+
+        return cu;
     }
 
     func generate_basic_type(self) {
@@ -2797,7 +2799,7 @@ impl mir2sir {
         self->dwarf_status.DI_counter += 1;
     }
 
-    func generate_single_DI_enum(self, e: colgm_enum*) {
+    func generate_single_DI_enum(self, e: colgm_enum*) -> u64 {
         var ty = type::instance();
         ty.name.append_i8_vec(e->name.c_str);
         ty.loc_file.append_i8_vec(e->location.file.c_str);
@@ -2837,14 +2839,22 @@ impl mir2sir {
         ty.delete();
         id.delete();
         i64_s.delete();
+        return tmp->base.index;
     }
 
-    func generate_DI_enum_type(self) {
+    func generate_DI_enum_type(self) -> u64 {
+        var enums_list = DI_list::new(self->dwarf_status.DI_counter);
+        self->sctx->debug_info.push(ptr<DI_node>::wrap(enums_list => DI_node*));
+        self->dwarf_status.DI_counter += 1;
+
         foreach (var i; self->ctx->global->domain) {
             foreach (var j; i.value()->enums) {
-                self->generate_single_DI_enum(j.value());
+                var index = self->generate_single_DI_enum(j.value());
+                enums_list->add(DI_ref_index::new(index) => DI_node*);
             }
         }
+
+        return enums_list->base.index;
     }
 
     func generate_single_DI_struct(self, s: colgm_struct*) {
@@ -2974,11 +2984,11 @@ impl mir2sir {
         self->generate_llvm_ident();
         self->generate_llvm_module_flags();
         self->generate_DI_file();
-        self->generate_llvm_dbg_cu();
+        var cu = self->generate_llvm_dbg_cu();
 
         // generate info for base types
         self->generate_basic_type();
-        self->generate_DI_enum_type();
+        cu->enums_index = self->generate_DI_enum_type();
         self->generate_DI_structure_type();
 
         // generate after all base types are registered
@@ -2989,6 +2999,7 @@ impl mir2sir {
 
 impl mir2sir {
     pub func generate(self, mctx: mir_context*, verbose: bool, debug_mode: bool) {
+        // debug mode is enabled by '-g'
         if (debug_mode) {
             self->dwarf_status.clear();
             self->generate_DWARF(mctx);

@@ -379,7 +379,8 @@ pub struct DI_compile_unit {
     base: DI_node,
     producer: str,
     file_index: u64,
-    imports_index: u64
+    imports_index: u64,
+    enums_index: u64
 }
 
 impl DI_compile_unit {
@@ -389,6 +390,7 @@ impl DI_compile_unit {
         res->producer = str::from(p);
         res->file_index = fi;
         res->imports_index = DI_ERROR_INDEX();
+        res->enums_index = DI_ERROR_INDEX();
         return res;
     }
 
@@ -403,6 +405,9 @@ impl DI_compile_unit {
         out.out("producer: \"").out(self->producer.c_str).out("\", ");
         if (self->imports_index != DI_ERROR_INDEX()) {
             out.out("imports: !").out_u64(self->imports_index).out(", ");
+        }
+        if (self->enums_index != DI_ERROR_INDEX()) {
+            out.out("enums: !").out_u64(self->enums_index).out(", ");
         }
         out.out("isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)");
     }
