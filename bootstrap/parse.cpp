@@ -515,29 +515,38 @@ expr* parse::calculation_gen() {
     return result;
 }
 
-type_def* parse::type_def_gen() {
+type_def* parse::array_type_gen() { 
     auto result = new type_def(toks[ptr].loc);
+    match(tok::tk_lbracket);
+    if (look_ahead(tok::tk_const)) {
+        result->set_constant();
+        match(tok::tk_const);
+    }
+    result->set_name(identifier_gen());
+    if (look_ahead_generic()) {
+        result->set_generic_types(generic_type_list_gen());
+    }
+    while(look_ahead(tok::tk_mult)) {
+        result->add_pointer_level();
+        match(tok::tk_mult);
+    }
+    match(tok::tk_semi);
+    if (look_ahead(tok::tk_sub)) {
+        err.err(toks[ptr].loc, "array type does not accept negative length.");
+        match(tok::tk_sub);
+    }
+    result->set_array(number_gen());
+    match(tok::tk_rbracket);
+    update_location(result);
+    return result;
+}
+
+type_def* parse::type_def_gen() {
     if (look_ahead(tok::tk_lbracket)) {
-        match(tok::tk_lbracket);
-        if (look_ahead(tok::tk_const)) {
-            result->set_constant();
-            match(tok::tk_const);
-        }
-        result->set_name(identifier_gen());
-        if (look_ahead_generic()) {
-            result->set_generic_types(generic_type_list_gen());
-        }
-        while(look_ahead(tok::tk_mult)) {
-            result->add_pointer_level();
-            match(tok::tk_mult);
-        }
-        match(tok::tk_semi);
-        result->set_array(number_gen());
-        match(tok::tk_rbracket);
-        update_location(result);
-        return result;
+        return array_type_gen();
     }
 
+    auto result = new type_def(toks[ptr].loc);
     if (look_ahead(tok::tk_const)) {
         result->set_constant();
         match(tok::tk_const);

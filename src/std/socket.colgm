@@ -64,8 +64,7 @@ pub struct sockaddr_in {
     sin_port: u16,
     sin_addr: in_addr,
 
-    // char sin_zero[8];
-    sin_zero: u64
+    sin_zero: [i8; 8]
 }
 
 #[enable_if(target_os="linux")]
@@ -74,8 +73,8 @@ impl sockaddr_in {
         return sockaddr_in {
             sin_family: 0,
             sin_port: 0,
-            sin_addr: in_addr { s_addr: 0 },
-            sin_zero: 0
+            sin_addr: in_addr { s_addr: 0 }
+            // sin_zero should be all zero because of llvm zeroinitializer
         };
     }
 
@@ -83,7 +82,6 @@ impl sockaddr_in {
         self->sin_family = domain => u16;
         self->sin_port = htons(port);
         self->sin_addr.s_addr = inet_addr(ip);
-        self->sin_zero = 0;
     }
 }
 
@@ -100,10 +98,7 @@ struct sockaddr {
     sa_len: u8,
     sa_family: u8,
 
-    // char sa_data[14];
-    sa_data_0: u64,
-    sa_data_1: u32,
-    sa_data_2: u16
+    sa_data: [i8; 14]
 }
 
 pub extern func socket(domain: i32, type: i32, protocal: i32) -> i32;

@@ -152,6 +152,7 @@ private:
     expr* and_expression_gen();
     expr* or_expression_gen();
     expr* calculation_gen();
+    type_def* array_type_gen();
     type_def* type_def_gen();
     generic_type_list* generic_type_list_gen();
     enum_decl* enum_gen(bool, bool);
