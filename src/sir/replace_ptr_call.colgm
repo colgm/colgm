@@ -25,6 +25,8 @@ func adjust_single_function(f: sir_func*) -> i64 {
             continue;
         }
 
+        // __ptr__ call has one argument, and must return pointer type
+        // __ptr__(self: T*) -> T*
         if (call->args.size != 1 ||
             call->return_type.empty() ||
             call->return_type.back() != '*') {
@@ -33,9 +35,13 @@ func adjust_single_function(f: sir_func*) -> i64 {
         }
 
         var rtt = call->return_type.copy_instance();
-        rtt.pop_back();
+        rtt.pop_back(); // delete tail *
 
         replace_count += 1;
+        // replace
+        //   %target = call %struct.T* @T.__ptr__(%struct.T* %source)
+        // to
+        //   %target = getelementptr %struct.T, %struct.T* %source, i32 0; __ptr__ call
         var constant = sir_temp_ptr::new(
             call->target.content.__ptr__(),
             call->args.get(0)->content.__ptr__(),
