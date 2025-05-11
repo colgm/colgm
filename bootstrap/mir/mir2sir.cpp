@@ -1324,6 +1324,12 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
     node->get_content()->accept(this);
 
     auto continue_label = block->stmt_size() + 1;
+    if (block->back_is_ret_stmt()) {
+        block->add_stmt(new sir_label(
+            block->stmt_size(),
+            "loop.ret_end_avoid_error"
+        ));
+    }
     block->add_stmt(new sir_br(continue_label));
     block->add_stmt(new sir_label(continue_label, "loop.continue"));
     for(auto i : continue_inst.back()) {

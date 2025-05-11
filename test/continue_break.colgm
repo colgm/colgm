@@ -1,4 +1,30 @@
-use std::libc::puts;
+use std::libc::{ puts };
+use err::panic::{ assert };
+
+// if the last sir is ret, br behind it will let llvm generating
+// a numberic label implicitly, so we need to add a label to avoid
+// this error
+//
+// example:
+//   label.10:	; branch.end
+//     ret i32 0
+//     br label %label.13
+//
+// expect:
+//   label.10:	; branch.end
+//     ret i32 0
+//   label.12:	; loop.ret_end_avoid_error
+//     br label %label.13
+func test_ret_end_continue() -> i32 {
+    for (var i = 0; i< 1024; i += 1) {
+        if (i != 104) {
+            continue;
+        }
+        return 0; // ret generated here
+                  // continue basic block generated here
+    }
+    return -1;
+}
 
 func main() -> i32 {
     var i = 0;
@@ -31,5 +57,7 @@ func main() -> i32 {
         i += 1;
         break;
     }
+
+    assert(test_ret_end_continue() == 0, "test_ret_end_continue is not 0");
     return 0;
 }

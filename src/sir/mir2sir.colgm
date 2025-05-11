@@ -2334,6 +2334,24 @@ impl mir2sir {
         self->visit(n->content => mir*);
 
         var continue_label_value = self->block->stmts.size + 1;
+        // if the last sir is ret, br behind it will let llvm generating
+        // a numberic label implicitly, so we need to add a label to avoid
+        // this error
+        // example:
+        //   label.10:	; branch.end
+        //     ret i32 0
+        //     br label %label.13
+        // expect:
+        //   label.10:	; branch.end
+        //     ret i32 0
+        //   label.12:	; loop.ret_end_avoid_error
+        //     br label %label.13
+        if (self->block->back_is_ret_stmt()) {
+            self->block->add_stmt(sir_label::new(
+                self->block->stmts.size,
+                "loop.ret_end_avoid_error"
+            ) => sir*);
+        }
         self->block->add_stmt(sir_br::new(continue_label_value) => sir*);
         self->block->add_stmt(sir_label::new(continue_label_value, "loop.continue") => sir*);
         foreach (var i; self->continue_inst.back()) {
