@@ -141,8 +141,6 @@ impl type_replace_pass {
             ast_kind::ast_call => self->visit_call(n => ast_call*);
             ast_kind::ast_assignment =>
                 self->visit_assignment(n => ast_assignment*);
-            ast_kind::ast_cond_compile =>
-                self->visit_cond_compile(n => ast_cond_compile*);
             ast_kind::ast_type_def =>
                 self->visit_type_def(n => ast_type_def*);
             ast_kind::ast_generic_type_list =>
@@ -331,10 +329,6 @@ impl type_replace_pass {
     func visit_assignment(self, n: ast_assignment*) {
         self->visit_call(n->left);
         self->visit_ast(n->right);
-    }
-
-    func visit_cond_compile(self, n: ast_cond_compile*) {
-        self->visit_ast(n->enabled_decl);
     }
 
     func visit_type_def(self, n: ast_type_def*) {
@@ -783,8 +777,6 @@ impl generic_visitor {
             ast_kind::ast_call => self->visit_call(n => ast_call*);
             ast_kind::ast_assignment =>
                 self->visit_assignment(n => ast_assignment*);
-            ast_kind::ast_cond_compile =>
-                self->visit_cond_compile(n => ast_cond_compile*);
             ast_kind::ast_type_def =>
                 self->visit_type_def(n => ast_type_def*);
             ast_kind::ast_generic_type_list =>
@@ -843,9 +835,6 @@ impl generic_visitor {
                 }
                 ast_kind::ast_impl => {
                     self->visit_impl(d => ast_impl*);
-                }
-                ast_kind::ast_cond_compile => {
-                    self->visit_cond_compile(d => ast_cond_compile*);
                 }
                 _ => {}
             }
@@ -987,10 +976,6 @@ impl generic_visitor {
     func visit_assignment(self, n: ast_assignment*) {
         self->visit_call(n->left);
         self->visit_ast(n->right);
-    }
-
-    func visit_cond_compile(self, n: ast_cond_compile*) {
-        self->visit_ast(n->enabled_decl);
     }
 
     func visit_type_def(self, n: ast_type_def*) {

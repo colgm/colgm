@@ -1341,8 +1341,7 @@ impl ast_assignment {
 pub struct ast_cond_compile {
     base: ast,
     cond_name: str,
-    conds: hashmap<str, str>,
-    enabled_decl: ast*
+    conds: hashmap<str, str>
 }
 
 impl ast_cond_compile {
@@ -1351,7 +1350,6 @@ impl ast_cond_compile {
         res->base = ast::instance(ast_kind::ast_cond_compile, loc);
         res->cond_name = cond_name->copy_instance();
         res->conds = hashmap<str, str>::instance();
-        res->enabled_decl = nil;
         return res;
     }
 
@@ -1363,21 +1361,12 @@ impl ast_cond_compile {
         );
         res->cond_name = self->cond_name.copy_instance();
         res->conds = self->conds.copy_instance();
-        if (self->enabled_decl != nil) {
-            res->enabled_decl = self->enabled_decl->copy();
-        } else {
-            res->enabled_decl = nil;
-        }
         return res;
     }
 
     pub func delete(self) {
         self->cond_name.delete();
         self->conds.delete();
-        if (self->enabled_decl != nil) {
-            self->enabled_decl->delete();
-            free(self->enabled_decl => i8*);
-        }
     }
 
     pub func add_condition(self, key: str*, value: str*) {
@@ -1544,6 +1533,7 @@ pub struct ast_enum_decl {
     base: ast,
     members: primitive_vec<ptr<ast>>,
     name: str,
+    conds: primitive_vec<ptr<ast_cond_compile>>,
     is_public: bool
 }
 
@@ -1553,6 +1543,7 @@ impl ast_enum_decl {
         res->base = ast::instance(ast_kind::ast_enum_decl, loc);
         res->members = primitive_vec<ptr<ast>>::instance();
         res->name = name->copy_instance();
+        res->conds = primitive_vec<ptr<ast_cond_compile>>::instance();
         res->is_public = false;
         return res;
     }
@@ -1567,6 +1558,10 @@ impl ast_enum_decl {
         foreach (var i; self->members) {
             res->members.push(ptr<ast>::wrap(i.get().unwrap()->copy()));
         }
+        res->conds = primitive_vec<ptr<ast_cond_compile>>::instance();
+        foreach (var i; self->conds) {
+            res->conds.push(ptr<ast_cond_compile>::wrap(i.get().unwrap()->copy()));
+        }
         res->name = self->name.copy_instance();
         res->is_public = self->is_public;
         return res;
@@ -1577,8 +1572,20 @@ impl ast_enum_decl {
             i.get().unwrap()->delete();
             free(i.get().unwrap() => i8*);
         }
+        foreach (var i; self->conds) {
+            var n = i.get().unwrap() => ast*;
+            n->delete();
+            free(n => i8*);
+        }
         self->members.delete();
+        self->conds.delete();
         self->name.delete();
+    }
+
+    pub func set_conds(self, conds: primitive_vec<ptr<ast_cond_compile>>*) {
+        foreach (var i; conds) {
+            self->conds.push(i.get());
+        }
     }
 }
 
@@ -1635,6 +1642,7 @@ pub struct ast_struct_decl {
     fields: primitive_vec<ptr<ast>>,
     name: str,
     generic_types: ast_generic_type_list*,
+    conds: primitive_vec<ptr<ast_cond_compile>>,
     is_public: bool,
     is_extern: bool
 }
@@ -1646,6 +1654,7 @@ impl ast_struct_decl {
         res->fields = primitive_vec<ptr<ast>>::instance();
         res->name = name->copy_instance();
         res->generic_types = nil;
+        res->conds = primitive_vec<ptr<ast_cond_compile>>::instance();
         res->is_public = false;
         res->is_extern = false;
         return res;
@@ -1667,6 +1676,10 @@ impl ast_struct_decl {
         } else {
             res->generic_types = nil;
         }
+        res->conds = primitive_vec<ptr<ast_cond_compile>>::instance();
+        foreach (var i; self->conds) {
+            res->conds.push(ptr<ast_cond_compile>::wrap(i.get().unwrap()->copy()));
+        }
         res->is_public = self->is_public;
         res->is_extern = self->is_extern;
         return res;
@@ -1678,6 +1691,12 @@ impl ast_struct_decl {
             free(i.get().unwrap() => i8*);
         }
         self->fields.delete();
+        foreach (var i; self->conds) {
+            var n = i.get().unwrap() => ast*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->conds.delete();
         self->name.delete();
         if (self->generic_types != nil) {
             var n = self->generic_types => ast*;
@@ -1694,6 +1713,12 @@ impl ast_struct_decl {
         to_ast->delete();
         free(to_ast => i8*);
         self->generic_types = nil;
+    }
+
+    pub func set_conds(self, conds: primitive_vec<ptr<ast_cond_compile>>*) {
+        foreach (var i; conds) {
+            self->conds.push(i.get());
+        }
     }
 }
 
@@ -1787,6 +1812,7 @@ pub struct ast_func_decl {
     params: ast_param_list*,
     return_type: ast_type_def*,
     body: ast_code_block*,
+    conds: primitive_vec<ptr<ast_cond_compile>>,
     is_public: bool,
     is_extern: bool
 }
@@ -1800,6 +1826,7 @@ impl ast_func_decl {
         res->params = nil;
         res->return_type = nil;
         res->body = nil;
+        res->conds = primitive_vec<ptr<ast_cond_compile>>::instance();
         res->is_public = false;
         res->is_extern = false;
         return res;
@@ -1832,6 +1859,10 @@ impl ast_func_decl {
         } else {
             res->body = nil;
         }
+        res->conds = primitive_vec<ptr<ast_cond_compile>>::instance();
+        foreach (var i; self->conds) {
+            res->conds.push(ptr<ast_cond_compile>::wrap(i.get().unwrap()->copy()));
+        }
         res->is_public = self->is_public;
         res->is_extern = self->is_extern;
         return res;
@@ -1859,6 +1890,11 @@ impl ast_func_decl {
             n->delete();
             free(n => i8*);
         }
+        foreach (var i; self->conds) {
+            i.get().unwrap()->delete();
+            free(i.get().unwrap() => i8*);
+        }
+        self->conds.delete();
     }
 
     pub func clear_generic_types(self) {
@@ -1870,13 +1906,20 @@ impl ast_func_decl {
         free(to_ast => i8*);
         self->generic_types = nil;
     }
+
+    pub func set_conds(self, conds: primitive_vec<ptr<ast_cond_compile>>*) {
+        foreach (var i; conds) {
+            self->conds.push(i.get());
+        }
+    }
 }
 
 pub struct ast_impl {
     base: ast,
     name: str,
     generic_types: ast_generic_type_list*,
-    methods: primitive_vec<ptr<ast>>
+    methods: primitive_vec<ptr<ast>>,
+    conds: primitive_vec<ptr<ast_cond_compile>>
 }
 
 impl ast_impl {
@@ -1886,6 +1929,7 @@ impl ast_impl {
         res->name = name->copy_instance();
         res->generic_types = nil;
         res->methods = primitive_vec<ptr<ast>>::instance();
+        res->conds = primitive_vec<ptr<ast_cond_compile>>::instance();
         return res;
     }
 
@@ -1905,6 +1949,10 @@ impl ast_impl {
         foreach (var i; self->methods) {
             res->methods.push(ptr<ast>::wrap(i.get().unwrap()->copy()));
         }
+        res->conds = primitive_vec<ptr<ast_cond_compile>>::instance();
+        foreach (var i; self->conds) {
+            res->conds.push(ptr<ast_cond_compile>::wrap(i.get().unwrap()->copy()));
+        }
         return res;
     }
 
@@ -1920,6 +1968,12 @@ impl ast_impl {
             free(i.get().unwrap() => i8*);
         }
         self->methods.delete();
+        foreach (var i; self->conds) {
+            var n = i.get().unwrap() => ast*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->conds.delete();
     }
 
     pub func clear_generic_types(self) {
@@ -1930,6 +1984,12 @@ impl ast_impl {
         to_ast->delete();
         free(to_ast => i8*);
         self->generic_types = nil;
+    }
+
+    pub func set_conds(self, conds: primitive_vec<ptr<ast_cond_compile>>*) {
+        foreach (var i; conds) {
+            self->conds.push(i.get());
+        }
     }
 }
 

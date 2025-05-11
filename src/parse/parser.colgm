@@ -11,7 +11,7 @@ use lex::token::{ token, tok_kind };
 use std::libc::{ free, streq };
 use std::io::{ io };
 use std::str::{ str };
-use std::vec::{ vec };
+use std::vec::{ vec, primitive_vec };
 use std::ptr::{ ptr };
 
 use util::cli::{ cli_option };
@@ -231,10 +231,16 @@ impl parser {
         while (!self->lookahead(tok_kind::tok_rparen)) {
             var key = self->this_tok()->content.__ptr__();
             self->match_token(tok_kind::tok_id);
-            self->match_token(tok_kind::tok_eq);
-            var value = self->this_tok()->content.__ptr__();
-            self->match_token(tok_kind::tok_str);
-            res->add_condition(key, value);
+            if (self->lookahead(tok_kind::tok_eq)) {
+                self->match_token(tok_kind::tok_eq);
+                var value = self->this_tok()->content.__ptr__();
+                self->match_token(tok_kind::tok_str);
+                res->add_condition(key, value);
+            } else {
+                var empty_value = str::from("");
+                res->add_condition(key, empty_value.__ptr__());
+                empty_value.delete();
+            }
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
@@ -995,17 +1001,26 @@ impl parser {
                 break;
             }
 
+            var conds = primitive_vec<ptr<ast_cond_compile>>::instance();
+            while (self->lookahead(tok_kind::tok_sharp)) {
+                conds.push(ptr<ast_cond_compile>::wrap(self->conditional_compilation()));
+            }
+
             var is_pub = false;
             if (self->lookahead(tok_kind::tok_pub)) {
                 self->match_token(tok_kind::tok_pub);
                 is_pub = true;
             } else if (!self->lookahead(tok_kind::tok_func)) {
                 self->impl_block_invalid_first_token();
+                conds.delete();
                 continue;
             }
             var tmp = self->function_decl_gen();
+            tmp->set_conds(conds.__ptr__());
             tmp->is_public = is_pub;
             res->methods.push(ptr<ast>::wrap(tmp => ast*));
+
+            conds.delete();
         }
         self->match_token(tok_kind::tok_rbrace);
         self->update_location(res => ast*);
@@ -1305,9 +1320,9 @@ impl parser {
             var extern_loc: span* = nil;
 
             // get conditional compilation
-            var cond_comp: ast_cond_compile* = nil;
+            var conds = primitive_vec<ptr<ast_cond_compile>>::instance();
             if (self->lookahead(tok_kind::tok_sharp)) {
-                cond_comp = self->conditional_compilation();
+                conds.push(ptr<ast_cond_compile>::wrap(self->conditional_compilation()));
             }
 
             // get attribute extern / pub
@@ -1330,29 +1345,37 @@ impl parser {
                 self->next();
             }
 
-            var decl_node: ast* = nil;
             match (self->this_tok()->kind) {
                 tok_kind::tok_struct => {
                     var tmp = self->struct_decl_gen();
+                    tmp->set_conds(conds.__ptr__());
                     tmp->is_public = flag_is_public;
                     tmp->is_extern = flag_is_extern;
-                    decl_node = tmp => ast*;
+                    self->root->decls.push(ptr<ast>::wrap(tmp => ast*));
+                    conds.delete();
+                    continue;
                 }
                 tok_kind::tok_enum => {
                     var tmp = self->enum_decl_gen();
+                    tmp->set_conds(conds.__ptr__());
                     tmp->is_public = flag_is_public;
                     if (flag_is_extern) {
                         self->err->error(extern_loc,
                             "extern enum not supported"
                         );
                     }
-                    decl_node = tmp => ast*;
+                    self->root->decls.push(ptr<ast>::wrap(tmp => ast*));
+                    conds.delete();
+                    continue;
                 }
                 tok_kind::tok_func => {
                     var tmp = self->function_decl_gen();
+                    tmp->set_conds(conds.__ptr__());
                     tmp->is_public = flag_is_public;
                     tmp->is_extern = flag_is_extern;
-                    decl_node = tmp => ast*;
+                    self->root->decls.push(ptr<ast>::wrap(tmp => ast*));
+                    conds.delete();
+                    continue;
                 }
                 tok_kind::tok_impl => {
                     if (flag_is_public) {
@@ -1365,35 +1388,26 @@ impl parser {
                             "cannot use 'extern' with 'impl', ignored"
                         );
                     }
-                    decl_node = self->impl_gen() => ast*;
+                    var tmp = self->impl_gen();
+                    tmp->set_conds(conds.__ptr__());
+                    self->root->decls.push(ptr<ast>::wrap(tmp => ast*));
+                    conds.delete();
+                    continue;
                 }
                 _ => {
                     self->report_unexpect_token_and_skip(self->this_tok());
+                    foreach (var i; conds) {
+                        var n = i.get().unwrap() => ast*;
+                        n->delete();
+                        free(n => i8*);
+                    }
+                    conds.delete();
                     continue;
                 }
             }
 
             if (self->error_count_threshold_exceeded()) {
                 return;
-            }
-
-            // embed decl node into cond_comp node
-            if (cond_comp != nil && decl_node != nil) {
-                cond_comp->enabled_decl = decl_node;
-                self->root->decls.push(ptr<ast>::wrap(cond_comp => ast*));
-                continue;
-            }
-
-            // error occurred, cond_comp node accepts nothing, delete it
-            if (cond_comp != nil && decl_node == nil) {
-                cond_comp->delete();
-                free(cond_comp => i8*);
-            }
-
-            // cond_comp not used, insert directly
-            if (decl_node != nil) {
-                self->root->decls.push(ptr<ast>::wrap(decl_node => ast*));
-                continue;
             }
 
             self->next();

@@ -497,16 +497,15 @@ impl ast_dumper {
         self->push_indent();
         var count: u64 = 0;
         foreach (var i; node->conds) {
-            if (count == node->conds.size - 1 && node->enabled_decl == nil) {
+            if (count == node->conds.size - 1) {
                 self->set_last();
             }
             self->dump_indent(out);
-            out.out(i.key()->c_str).out(": ").out(i.value()->c_str).out("\n");
+            out.purple().out("ConditionPair ").reset();
+            out.green().out("\"").out(i.key()->c_str).out("\"").reset();
+            out.out(" = ");
+            out.cyan().out("\"").out(i.value()->c_str).out("\"\n").reset();
             count += 1;
-        }
-        if (node->enabled_decl != nil) {
-            self->set_last();
-            self->dump(node->enabled_decl, out);
         }
         self->pop_indent();
     }
@@ -583,6 +582,12 @@ impl ast_dumper {
         node->base.location.dump(out);
 
         self->push_indent();
+        foreach (var i; node->conds) {
+            if (i.index() == node->conds.size - 1 && node->members.empty()) {
+                self->set_last();
+            }
+            self->dump(i.get().unwrap() => ast*, out);
+        }
         foreach (var i; node->members) {
             if (i.index() == node->members.size - 1) {
                 self->set_last();
@@ -625,10 +630,16 @@ impl ast_dumper {
 
         self->push_indent();
         if (node->generic_types != nil) {
-            if (node->fields.empty()) {
+            if (node->fields.empty() && node->conds.empty()) {
                 self->set_last();
             }
             self->dump_generic_type_list(node->generic_types, out);
+        }
+        foreach (var i; node->conds) {
+            if (i.index() == node->conds.size - 1 && node->fields.empty()) {
+                self->set_last();
+            }
+            self->dump(i.get().unwrap() => ast*, out);
         }
         foreach (var i; node->fields) {
             if (i.index() == node->fields.size - 1) {
@@ -692,6 +703,9 @@ impl ast_dumper {
         if (node->generic_types != nil) {
             self->dump_generic_type_list(node->generic_types, out);
         }
+        foreach (var i; node->conds) {
+            self->dump(i.get().unwrap() => ast*, out);
+        }
         if (node->return_type == nil &&
             node->body == nil) {
             self->set_last();
@@ -712,17 +726,23 @@ impl ast_dumper {
 
     func dump_impl(self, node: ast_impl*, out: io) {
         self->dump_indent(out);
-        out.purple().out("Impl").reset();
+        out.purple().out("Impl ").reset();
         out.light_orange().out("0x").out_hex(node => i64).reset().out(" ");
-        out.out(" [").out(node->name.c_str).out("] -> ");
+        out.green().out(node->name.c_str).reset().out(" -> ");
         node->base.location.dump(out);
 
         self->push_indent();
         if (node->generic_types != nil) {
-            if (node->methods.empty()) {
+            if (node->methods.empty() && node->conds.empty()) {
                 self->set_last();
             }
             self->dump_generic_type_list(node->generic_types, out);
+        }
+        foreach (var i; node->conds) {
+            if (i.index() == node->conds.size - 1 && node->methods.empty()) {
+                self->set_last();
+            }
+            self->dump(i.get().unwrap() => ast*, out);
         }
         foreach (var i; node->methods) {
             if (i.index() == node->methods.size - 1) {
