@@ -84,15 +84,11 @@ bool dumper::visit_cond_compile(cond_compile* node) {
         keys.push_back(i);
     }
     for(const auto& i : keys) {
-        if (i.first == keys.back().first && !node->get_enabled_decl()) {
+        if (i.first == keys.back().first) {
             set_last();
         }
         dump_indent();
         std::cout << i.first << ": " << i.second << std::endl;
-    }
-    if (node->get_enabled_decl()) {
-        set_last();
-        node->get_enabled_decl()->accept(this);
     }
     pop_indent();
     return true;

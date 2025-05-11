@@ -39,6 +39,12 @@ SELF_HOST_COMPILER = "build/colgm_self_host" # compiler written in colgm, compil
                                              # at this time we have the self host compiler
 USED_CLANG = find_clang()
 
+def get_used_cpu_count():
+    count = os.cpu_count()
+    if count is not None and count > 1:
+        return count // 2
+    return 1
+
 def build_bootstrap_compiler():
     find_cmake()
 
@@ -50,7 +56,7 @@ def build_bootstrap_compiler():
         "../bootstrap",
         "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
     ])
-    execute(["make", "-j6"])
+    execute(["make", "-j{}".format(get_used_cpu_count())])
     os.chdir("..")
 
 def lift_first_version_compiler():

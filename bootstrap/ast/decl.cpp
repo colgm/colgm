@@ -13,11 +13,8 @@ void cond_compile::accept(visitor* v) {
 
 cond_compile* cond_compile::clone() const {
     auto ret = new cond_compile(location, condition_name);
-    for(const auto& i : conds) {
+    for (const auto& i : conds) {
         ret->add_condition(i.first, i.second);
-    }
-    if (enabled_decl) {
-        ret->enabled_decl = enabled_decl->clone();
     }
     return ret;
 }
@@ -42,9 +39,12 @@ generic_type_list* generic_type_list::clone() const {
 
 enum_decl::~enum_decl() {
     delete name;
-    for(const auto& i : member) {
+    for (const auto& i : member) {
         delete i.name;
         delete i.value;
+    }
+    for (auto i : conds) {
+        delete i;
     }
 }
 
@@ -55,8 +55,11 @@ void enum_decl::accept(visitor* v) {
 enum_decl* enum_decl::clone() const {
     auto ret = new enum_decl(location);
     ret->name = name->clone();
-    for(const auto& i : member) {
+    for (const auto& i : member) {
         ret->add_member(i.name->clone(), i.value? i.value->clone():nullptr);
+    }
+    for (auto i : conds) {
+        ret->add_cond(i->clone());
     }
     ret->is_public = is_public;
     return ret;
@@ -107,7 +110,10 @@ struct_field* struct_field::clone() const {
 
 struct_decl::~struct_decl() {
     delete generic_types;
-    for(auto i : fields) {
+    for (auto i : fields) {
+        delete i;
+    }
+    for (auto i : conds) {
         delete i;
     }
 }
@@ -122,8 +128,11 @@ struct_decl* struct_decl::clone() const {
     if (generic_types) {
         ret->generic_types = generic_types->clone();
     }
-    for(auto i : fields) {
+    for (auto i : fields) {
         ret->add_field(i->clone());
+    }
+    for (auto i : conds) {
+        ret->add_cond(i->clone());
     }
     ret->is_public = is_public;
     ret->is_extern = is_extern;
@@ -171,6 +180,9 @@ func_decl::~func_decl() {
     delete parameters;
     delete return_type;
     delete block;
+    for (auto i : conds) {
+        delete i;
+    }
 }
 
 void func_decl::accept(visitor* v) {
@@ -190,6 +202,9 @@ func_decl* func_decl::clone() const {
     if (block) {
         ret->block = block->clone();
     }
+    for (auto i : conds) {
+        ret->add_cond(i->clone());
+    }
     ret->is_public = is_public;
     ret->is_extern = is_extern;
     return ret;
@@ -197,7 +212,10 @@ func_decl* func_decl::clone() const {
 
 impl_struct::~impl_struct() {
     delete generic_types;
-    for(auto i : methods) {
+    for (auto i : methods) {
+        delete i;
+    }
+    for (auto i : conds) {
         delete i;
     }
 }
@@ -211,8 +229,11 @@ impl_struct* impl_struct::clone() const {
     if (generic_types) {
         ret->generic_types = generic_types->clone();
     }
-    for(auto i : methods) {
+    for (auto i : methods) {
         ret->add_method(i->clone());
+    }
+    for (auto i : conds) {
+        ret->add_cond(i->clone());
     }
     return ret;
 }

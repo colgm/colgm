@@ -45,29 +45,52 @@ bool delete_disabled_node::check_enable_if(error& err, cond_compile* cc) {
     return false;
 }
 
+bool delete_disabled_node::check_conds(error& err,
+                                       const std::vector<cond_compile*>& conds) {
+    for (auto i : conds) {
+        if (i->get_condition_name() != "enable_if") {
+            continue;
+        }
+        return check_enable_if(err, i);
+    }
+    return true;
+}
+
 void delete_disabled_node::scan(error& err, root* node) {
     std::vector<decl*> new_root_decls;
     for(auto i : node->get_decls()) {
-        if (!i->is(ast_type::ast_cond_compile)) {
-            new_root_decls.push_back(i);
-            continue;
-        }
-        auto cc = static_cast<cond_compile*>(i);
-        // should be enabled
-        if (check_enable_if(err, cc)) {
-            new_root_decls.push_back(cc->get_enabled_decl());
-            cc->set_enabled_decl(nullptr);
-            delete cc;
-        } else if (cc->get_condition_name() != "enable_if") {
-            err.warn(
-                cc->get_location(),
-                "invalid conditional compile attribute, ignored"
-            );
-            new_root_decls.push_back(cc->get_enabled_decl());
-            cc->set_enabled_decl(nullptr);
-            delete cc;
-        } else {
-            delete cc;
+        switch (i->get_ast_type()) {
+            case ast_type::ast_enum_decl:
+                if (check_conds(err, static_cast<enum_decl*>(i)->get_conds())) {
+                    new_root_decls.push_back(i);
+                } else {
+                    delete i;
+                }
+                break;
+            case ast_type::ast_struct_decl:
+                if (check_conds(err, static_cast<struct_decl*>(i)->get_conds())) {
+                    new_root_decls.push_back(i);
+                } else {
+                    delete i;
+                }
+                break;
+            case ast_type::ast_func_decl:
+                if (check_conds(err, static_cast<func_decl*>(i)->get_conds())) {
+                    new_root_decls.push_back(i);
+                } else {
+                    delete i;
+                }
+                break;
+            case ast_type::ast_impl:
+                if (check_conds(err, static_cast<impl_struct*>(i)->get_conds())) {
+                    new_root_decls.push_back(i);
+                } else {
+                    delete i;
+                }
+                break;
+            default:
+                new_root_decls.push_back(i);
+                break;
         }
     }
     node->reset_decls(new_root_decls);

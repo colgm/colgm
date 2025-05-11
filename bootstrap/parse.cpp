@@ -95,10 +95,14 @@ cond_compile* parse::conditional_compile() {
     while (!look_ahead(tok::tk_rcurve)) {
         auto key = toks[ptr].str;
         match(tok::tk_id);
-        match(tok::tk_eq);
-        auto value = toks[ptr].str;
-        match(tok::tk_str);
-        result->add_condition(key, value);
+        if (!look_ahead(tok::tk_eq)) {
+            result->add_condition(key, "");
+        } else {
+            match(tok::tk_eq);
+            auto value = toks[ptr].str;
+            match(tok::tk_str);
+            result->add_condition(key, value);
+        }
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else {
@@ -587,8 +591,13 @@ generic_type_list* parse::generic_type_list_gen() {
     return result;
 }
 
-enum_decl* parse::enum_gen(bool flag_is_public, bool flag_is_extern) {
+enum_decl* parse::enum_gen(std::vector<cond_compile*>& conds,
+                           bool flag_is_public,
+                           bool flag_is_extern) {
     auto result = new enum_decl(toks[ptr].loc);
+    for (auto i : conds) {
+        result->add_cond(i);
+    }
     if (flag_is_public) {
         result->set_public(true);
     }
@@ -627,8 +636,13 @@ struct_field* parse::struct_field_gen() {
     return result;
 }
 
-struct_decl* parse::struct_gen(bool flag_is_public, bool flag_is_extern) {
+struct_decl* parse::struct_gen(std::vector<cond_compile*>& conds,
+                               bool flag_is_public,
+                               bool flag_is_extern) {
     auto result = new struct_decl(toks[ptr].loc);
+    for (auto i : conds) {
+        result->add_cond(i);
+    }
     if (flag_is_public) {
         result->set_public(true);
     }
@@ -684,8 +698,13 @@ param_list* parse::param_list_gen() {
     return result;
 }
 
-func_decl* parse::function_gen(bool flag_is_public, bool flag_is_extern) {
+func_decl* parse::function_gen(std::vector<cond_compile*>& conds,
+                               bool flag_is_public,
+                               bool flag_is_extern) {
     auto result = new func_decl(toks[ptr].loc);
+    for (auto i : conds) {
+        result->add_cond(i);
+    }
     if (flag_is_public) {
         result->set_public(true);
     }
@@ -718,7 +737,9 @@ func_decl* parse::function_gen(bool flag_is_public, bool flag_is_extern) {
     return result;
 }
 
-impl_struct* parse::impl_gen(bool flag_is_public, bool flag_is_extern) {
+impl_struct* parse::impl_gen(std::vector<cond_compile*>& conds,
+                             bool flag_is_public,
+                             bool flag_is_extern) {
     if (flag_is_public) {
         err.err(toks[ptr].loc, "\"pub\" is not used for impl struct.");
     }
@@ -727,18 +748,27 @@ impl_struct* parse::impl_gen(bool flag_is_public, bool flag_is_extern) {
     }
     match(tok::tk_impl);
     auto result = new impl_struct(toks[ptr].loc, toks[ptr].str);
+    for (auto i : conds) {
+        result->add_cond(i);
+    }
     match(tok::tk_id);
     if (look_ahead_generic()) {
         result->set_generic_types(generic_type_list_gen());
     }
     match(tok::tk_lbrace);
-    while(look_ahead(tok::tk_func) || look_ahead(tok::tk_pub)) {
+    while (look_ahead(tok::tk_sharp) ||
+           look_ahead(tok::tk_func) ||
+           look_ahead(tok::tk_pub)) {
+        std::vector<cond_compile*> func_conds;
+        while (look_ahead(tok::tk_sharp)) {
+            func_conds.push_back(conditional_compile());
+        }
         bool is_pub = false;
         if (look_ahead(tok::tk_pub)) {
             match(tok::tk_pub);
             is_pub = true;
         }
-        auto func = function_gen(is_pub, false);
+        auto func = function_gen(func_conds, is_pub, false);
         result->add_method(func);
     }
     match(tok::tk_rbrace);
@@ -1007,10 +1037,13 @@ const error& parse::analyse(const std::vector<token>& token_list) {
     while (!look_ahead(tok::tk_eof)) {
         bool flag_is_public = false;
         bool flag_is_extern = false;
-        cond_compile* cond_comp = nullptr;
-        if (look_ahead(tok::tk_sharp)) {
-            cond_comp = conditional_compile();
+
+        // generate conditional compile
+        std::vector<cond_compile*> conds;
+        while (look_ahead(tok::tk_sharp)) {
+            conds.push_back(conditional_compile());
         }
+
         while (look_ahead(tok::tk_pub) || look_ahead(tok::tk_extern)) {
             if (look_ahead(tok::tk_pub) && !flag_is_public) {
                 flag_is_public = true;
@@ -1029,28 +1062,25 @@ const error& parse::analyse(const std::vector<token>& token_list) {
             match(toks[ptr].type);
         }
 
-        decl* new_decl = nullptr;
         switch(toks[ptr].type) {
-            case tok::tk_func: new_decl = function_gen(flag_is_public, flag_is_extern); break;
-            case tok::tk_stct: new_decl = struct_gen(flag_is_public, flag_is_extern); break;
-            case tok::tk_impl: new_decl = impl_gen(flag_is_public, flag_is_extern); break;
-            case tok::tk_enum: new_decl = enum_gen(flag_is_public, flag_is_extern); break;
+            case tok::tk_func:
+                result->add_decl(function_gen(conds, flag_is_public, flag_is_extern));
+                break;
+            case tok::tk_stct:
+                result->add_decl(struct_gen(conds, flag_is_public, flag_is_extern));
+                break;
+            case tok::tk_impl:
+                result->add_decl(impl_gen(conds, flag_is_public, flag_is_extern));
+                break;
+            case tok::tk_enum:
+                result->add_decl(enum_gen(conds, flag_is_public, flag_is_extern));
+                break;
             default:
                 err.err(toks[ptr].loc,
                     "unexpected token \"" + toks[ptr].str + "\"."
                 );
                 match(toks[ptr].type);
                 break;
-        }
-
-        // if conditional compilation is not used, add the decl to the root
-        if (!cond_comp && new_decl) {
-            result->add_decl(new_decl);
-        }
-        // if conditional compilation is used, add the decl to the comment node
-        if (cond_comp) {
-            cond_comp->set_enabled_decl(new_decl);
-            result->add_decl(cond_comp);
         }
     }
     update_location(result);

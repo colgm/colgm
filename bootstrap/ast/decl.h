@@ -24,25 +24,22 @@ class cond_compile: public decl {
 public:
     std::string condition_name;
     std::unordered_map<std::string, std::string> conds;
-    decl* enabled_decl;
 
 public:
     cond_compile(const span& loc, const std::string& n):
         decl(ast_type::ast_cond_compile, loc),
-        condition_name(n), enabled_decl(nullptr) {}
+        condition_name(n) {}
     
-    ~cond_compile() override { delete enabled_decl; }
+    ~cond_compile() override = default;
     void accept(visitor*) override;
     cond_compile* clone() const override;
 
     void add_condition(const std::string& key, const std::string& value) {
        conds[key] = value;
     }
-    void set_enabled_decl(decl* node) { enabled_decl = node; }
 
     const auto& get_condition_name() const { return condition_name; }
     const auto& get_conds() const { return conds; }
-    auto get_enabled_decl() const { return enabled_decl; }
 };
 
 class type_def: public decl {
@@ -104,6 +101,11 @@ public:
 private:
     identifier* name;
     std::vector<member> member;
+
+    // conditional compile attribute
+    std::vector<cond_compile*> conds;
+
+    // flags
     bool is_public;
 
 public:
@@ -123,6 +125,10 @@ public:
     const auto& get_member() const { return member; }
     void set_public(bool b) { is_public = b; }
     bool is_public_enum() const { return is_public; }
+
+public:
+    void add_cond(cond_compile* node) { conds.push_back(node); }
+    const auto& get_conds() const { return conds; }
 };
 
 class struct_field: public decl {
@@ -149,6 +155,11 @@ private:
     std::vector<struct_field*> fields;
     std::string name;
     generic_type_list* generic_types;
+
+    // conditional compile attribute
+    std::vector<cond_compile*> conds;
+
+    // flags
     bool is_public;
     bool is_extern;
 
@@ -176,6 +187,10 @@ public:
     bool is_public_struct() const { return is_public; }
     void set_extern(bool b) { is_extern = b; }
     bool is_extern_struct() const { return is_extern; }
+
+public:
+    void add_cond(cond_compile* node) { conds.push_back(node); }
+    const auto& get_conds() const { return conds; }
 };
 
 class param: public decl {
@@ -219,6 +234,11 @@ private:
     param_list* parameters;
     type_def* return_type;
     code_block* block;
+
+    // conditional compile attribute
+    std::vector<cond_compile*> conds;
+
+    // flags
     bool is_public;
     bool is_extern;
 
@@ -234,8 +254,18 @@ public:
 
     void set_name(const std::string& n) { name = n; }
     const auto& get_name() const { return name; }
+
+public:
     void set_generic_types(generic_type_list* node) { generic_types = node; }
     auto get_generic_types() const { return generic_types; }
+    void clear_generic_types() {
+        if (generic_types) {
+            delete generic_types;
+            generic_types = nullptr;
+        }
+    }
+
+public:
     void set_params(param_list* node) { parameters = node; }
     auto get_params() { return parameters; }
     void set_return_type(type_def* node) { return_type = node; }
@@ -246,12 +276,10 @@ public:
     bool is_public_func() const { return is_public; }
     void set_extern(bool b) { is_extern = b; }
     bool is_extern_func() const { return is_extern; }
-    void clear_generic_types() {
-        if (generic_types) {
-            delete generic_types;
-            generic_types = nullptr;
-        }
-    }
+
+public:
+    void add_cond(cond_compile* node) { conds.push_back(node); }
+    const auto& get_conds() const { return conds; }
 };
 
 class impl_struct: public decl {
@@ -259,6 +287,9 @@ private:
     std::string struct_name;
     generic_type_list* generic_types;
     std::vector<func_decl*> methods;
+
+    // conditional compile attribute
+    std::vector<cond_compile*> conds;
 
 public:
     impl_struct(const span& loc, const std::string& sn):
@@ -280,6 +311,10 @@ public:
             generic_types = nullptr;
         }
     }
+
+public:
+    void add_cond(cond_compile* node) { conds.push_back(node); }
+    const auto& get_conds() const { return conds; }
 };
 
 }

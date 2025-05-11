@@ -23,9 +23,6 @@ bool visitor::visit_decl(decl* node) {
 }
 
 bool visitor::visit_cond_compile(cond_compile* node) {
-    if (node->get_enabled_decl()) {
-        node->get_enabled_decl()->accept(this);
-    }
     return true;
 }
 

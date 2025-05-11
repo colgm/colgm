@@ -962,6 +962,22 @@ impl parser {
         return res;
     }
 
+    func impl_block_invalid_first_token(self) {
+        self->err->error(self->this_tok_loc(),
+            "expected function declaration"
+        );
+
+        // skip until find expect token
+        while (!self->lookahead(tok_kind::tok_rbrace) &&
+               !self->lookahead(tok_kind::tok_pub) &&
+               !self->lookahead(tok_kind::tok_func)) {
+            self->next();
+            if (self->lookahead(tok_kind::tok_eof)) {
+                break;
+            }
+        }
+    }
+
     func impl_gen(self) -> ast_impl* {
         var begin_loc = self->this_tok_loc();
         self->match_token(tok_kind::tok_impl);
@@ -975,10 +991,17 @@ impl parser {
         }
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
+            if (self->lookahead(tok_kind::tok_eof)) {
+                break;
+            }
+
             var is_pub = false;
             if (self->lookahead(tok_kind::tok_pub)) {
                 self->match_token(tok_kind::tok_pub);
                 is_pub = true;
+            } else if (!self->lookahead(tok_kind::tok_func)) {
+                self->impl_block_invalid_first_token();
+                continue;
             }
             var tmp = self->function_decl_gen();
             tmp->is_public = is_pub;
