@@ -426,8 +426,7 @@ u64 generic_visitor::insert_into_symbol_table() {
                 .is_public = dm.structs.at(generic_name).is_public
             });
             replace_struct_type(dm.structs.at(generic_name), i.second);
-        }
-        if (dm.generic_functions.count(data.name)) {
+        } else if (dm.generic_functions.count(data.name)) {
             // no need to load again, otherwise will cause redefine error
             if (dm.functions.count(generic_name)) {
                 continue;

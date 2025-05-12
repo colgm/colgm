@@ -690,13 +690,16 @@ impl generic_visitor {
             }
 
             var dm = self->ctx->get_domain(domain_file);
-            if (dm->generic_structs.has(g_data->generic_type.name.__ptr__()) &&
-                !dm->structs.has(generic_name.__ptr__())) {
+            if (dm->generic_structs.has(g_data->generic_type.name.__ptr__())) {
+                if (dm->structs.has(generic_name.__ptr__())) {
+                    continue;
+                }
                 insert_count += 1;
                 self->insert_struct(dm, g_data, generic_name.__ptr__());
-            }
-            if (dm->generic_functions.has(g_data->generic_type.name.__ptr__()) &&
-                !dm->functions.has(generic_name.__ptr__())) {
+            } else if (dm->generic_functions.has(g_data->generic_type.name.__ptr__())) {
+                if (dm->functions.has(generic_name.__ptr__())) {
+                    continue;
+                }
                 insert_count += 1;
                 self->insert_function(dm, g_data, generic_name.__ptr__());
             }
