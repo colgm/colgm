@@ -49,11 +49,33 @@ bool delete_disabled_node::check_conds(error& err,
                                        const std::vector<cond_compile*>& conds) {
     for (auto i : conds) {
         if (i->get_condition_name() != "enable_if") {
+            err.err(
+                i->get_location(),
+                "this compile condition is not supported."
+            );
             continue;
         }
         return check_enable_if(err, i);
     }
     return true;
+}
+
+void delete_disabled_node::report_not_supported_condition(error& err,
+                                                          impl_struct* node) {
+    static const std::unordered_set<std::string> valid_conditions = {
+        "is_trivial", "is_non_trivial"
+    };
+    for (auto i : node->get_methods()) {
+        for (auto j : i->get_conds()) {
+            if (valid_conditions.count(j->get_condition_name())) {
+                continue;
+            }
+            err.err(
+                j->get_location(),
+                "this compile condition is not supported."
+            );
+        }
+    }
 }
 
 void delete_disabled_node::scan(error& err, root* node) {
@@ -84,6 +106,7 @@ void delete_disabled_node::scan(error& err, root* node) {
             case ast_type::ast_impl:
                 if (check_conds(err, static_cast<impl_struct*>(i)->get_conds())) {
                     new_root_decls.push_back(i);
+                    report_not_supported_condition(err, static_cast<impl_struct*>(i));
                 } else {
                     delete i;
                 }

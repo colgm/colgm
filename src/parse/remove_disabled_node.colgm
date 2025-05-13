@@ -74,16 +74,32 @@ func check_conds(err: report*,
                  co: cli_option*) -> bool {
     foreach (var i; conds) {
         var acc = i.get().unwrap();
-        if (acc->cond_name.eq_const("enable_if")) {
-            return check_enable_if(err, acc, co);
+        if (!acc->cond_name.eq_const("enable_if")) {
+            err->error(
+                acc->base.location.__ptr__(),
+                "this compile condition is not supported"
+            );
+            continue;
         }
-        // TODO: fix llvm compile error for this:
-        // if (!acc->cond_name.eq_const("enable_if")) {
-        //     continue;
-        // }
-        // return check_enable_if(err, acc, co);
+        return check_enable_if(err, acc, co);
     }
     return true;
+}
+
+func report_not_supported_condition(err: report*, node: ast_impl*) {
+    foreach (var i; node->methods) {
+        var mn = i.get().unwrap() => ast_func_decl*;
+        foreach (var j; mn->conds) {
+            var acc = j.get().unwrap();
+            if (!acc->cond_name.eq_const("is_trivial") &&
+                !acc->cond_name.eq_const("is_non_trivial")) {
+                err->error(
+                    acc->base.location.__ptr__(),
+                    "this compile condition is not supported"
+                );
+            }
+        }
+    }
 }
 
 pub func remove_disabled_node(err: report*, node: root*, co: cli_option*) {
@@ -123,6 +139,7 @@ pub func remove_disabled_node(err: report*, node: root*, co: cli_option*) {
                 var n = d => ast_impl*;
                 if (check_conds(err, n->conds.__ptr__(), co)) {
                     new_vec.push(ptr<ast>::wrap(d));
+                    report_not_supported_condition(err, n);
                 } else {
                     d->delete();
                     free(d => i8*);

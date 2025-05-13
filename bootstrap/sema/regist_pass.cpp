@@ -1176,7 +1176,7 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
             rp.report(i, "conflict with field \"" + i->get_name() + "\".");
             continue;
         }
-        if (stct.method.count(i->get_name())) {
+        if (stct.method.count(i->get_name()) || stct.static_method.count(i->get_name())) {
             rp.report(i, "method \"" + i->get_name() + "\" already exists.");
             continue;
         }
