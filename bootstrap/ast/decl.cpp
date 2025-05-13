@@ -210,6 +210,16 @@ func_decl* func_decl::clone() const {
     return ret;
 }
 
+bool func_decl::contain_trivial_cond() const {
+    for (auto i : conds) {
+        if (i->condition_name == "is_trivial" ||
+            i->condition_name == "is_non_trivial") {
+            return true;
+        }
+    }
+    return false;
+}
+
 impl_struct::~impl_struct() {
     delete generic_types;
     for (auto i : methods) {

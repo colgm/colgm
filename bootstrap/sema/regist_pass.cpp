@@ -1172,6 +1172,10 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
         ctx.generics.insert(i);
     }
     for(auto i : node->get_methods()) {
+        if (i->contain_trivial_cond()) {
+            rp.warn(i, "work in progress.");
+            continue;
+        }
         if (stct.field.count(i->get_name())) {
             rp.report(i, "conflict with field \"" + i->get_name() + "\".");
             continue;

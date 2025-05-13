@@ -1844,6 +1844,10 @@ void semantic::resolve_impl(impl_struct* node) {
     const auto& struct_self = domain.structs.at(node->get_struct_name());
     impl_struct_name = node->get_struct_name();
     for(auto i : node->get_methods()) {
+        if (i->contain_trivial_cond()) {
+            rp.warn(i, "work in progress.");
+            continue;
+        }
         resolve_method(i, struct_self);
     }
     impl_struct_name = "";

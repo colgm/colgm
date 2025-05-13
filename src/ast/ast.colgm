@@ -1912,6 +1912,17 @@ impl ast_func_decl {
             self->conds.push(i.get());
         }
     }
+
+    pub func contain_trivial_cond(self) -> bool {
+        foreach (var i; self->conds) {
+            var c = i.get().unwrap();
+            if (c->cond_name.eq_const("is_trivial") ||
+                c->cond_name.eq_const("is_non_trivial")) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 pub struct ast_impl {

@@ -276,6 +276,7 @@ public:
     bool is_public_func() const { return is_public; }
     void set_extern(bool b) { is_extern = b; }
     bool is_extern_func() const { return is_extern; }
+    bool contain_trivial_cond() const;
 
 public:
     void add_cond(cond_compile* node) { conds.push_back(node); }
