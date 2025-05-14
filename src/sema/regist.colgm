@@ -1242,28 +1242,53 @@ impl regist_pass {
         this_dm->file_name.clear();
         this_dm->file_name.append_i8_vec(root->base.location.file.c_str);
 
+        // load primitive types:
+        // i8, i16, i32, i64,
+        // u8, u16, u32, u64,
+        // f32, f64, bool
+        // and load their methods
         self->regist_primitives();
+
+        // load import symbols from module
+        // if the module is not compiled, directly compile it here
+        // and then fetch the symbols
         self->scan_imports();
         if (self->err->error_count > 0) {
             return;
         }
 
+        // collect all enums defined in this file
+        // also collect their members
         self->scan_enums();
+
+        // collect all structs defined in this file
+        // in this process, struct's fields will be collected too
         self->scan_structs();
         if (self->err->error_count > 0) {
             return;
         }
 
+        // collect all global functions defined in this file
         self->scan_global_funcs();
         if (self->err->error_count > 0) {
             return;
         }
 
+        // collect all impls defined in this file
+        // in this process, structs' methods will be collected
         self->scan_impls();
         if (self->err->error_count > 0) {
             return;
         }
 
+        // generic visitor, scan all the possible generic types
+        // and insert them into the global symbol table
+        // also do the type generation
+        // type generation includes multiple steps:
+        // 1. instantiate generic type (create a new type)
+        // 2. replace generic symbol with specified type in struct fields, methods and functions
+        // 3. scan possible generic types in the generated functions, and repeat step 1
+        // if step 3 does not collect any new generic types, stop the process
         self->gnv.scan_and_insert(root);
     }
 }
