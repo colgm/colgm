@@ -37,25 +37,26 @@ pub enum flag {
     O_BINARY = 0x8000
 }
 
-pub func readfile_into_string(filename: i8*, dst: str*) -> i64 {
+pub func readfile(filename: i8*) -> str {
     var fd = open(filename, flag::O_RDONLY => i32, 0);
     if (fd < 0) {
-        return fd => i64;
+        return str::from("");
     }
 
-    var buff: [i8; 4096] = [];
-    var readcount = read(fd, buff, 4095);
+    var dst = str::instance();
+    var buff: [i8; 8192] = [];
+    var readcount = read(fd, buff, 8191);
     buff[readcount] = 0;
-    dst->append_i8_vec(buff);
+    dst.append_i8_vec(buff);
 
     while (readcount != 0) {
-        readcount = read(fd, buff, 4095);
+        readcount = read(fd, buff, 8191);
         buff[readcount] = 0;
-        dst->append_i8_vec(buff);
+        dst.append_i8_vec(buff);
     }
 
     close(fd);
-    return 0;
+    return dst;
 }
 
 pub struct io {
@@ -91,8 +92,8 @@ impl io {
         if (self->cache == nil) {
             return;
         }
-        // 8k threshold
-        if (self->cache->size < 8192) {
+        // 16k threshold
+        if (self->cache->size < 16384) {
             return;
         }
         self->force_flush();

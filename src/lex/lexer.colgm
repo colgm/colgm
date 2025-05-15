@@ -1,6 +1,6 @@
 use std::str::{ str };
 use std::vec::{ vec };
-use std::io::{ readfile_into_string, io };
+use std::io::{ readfile, io };
 use std::fs::{ fs };
 use std::string_utils::{
     is_alpha_letter,
@@ -786,8 +786,7 @@ impl lexer {
         self->filename.copy_const(filename);
         self->err->load_file_source(filename);
 
-        var src = str::instance();
-        readfile_into_string(filename, src.__ptr__());
+        var src = readfile(filename);
 
         self->pos = 0;
         self->line = 0;
@@ -834,10 +833,9 @@ impl lexer {
     }
 
     pub func dump(self, out: io) {
-        var index: u64 = 0;
-        while (index < self->toks.size) {
-            var loc = self->toks.get(index)->location;
-            out.out(self->toks.get(index)->tok_kind_to_str())
+        foreach (var i; self->toks) {
+            var loc = i.get()->location;
+            out.out(i.get()->tok_kind_to_str())
                .out(" [").out(loc.file.c_str)
                .out(":").out_i64(loc.begin_line + 1)
                .out(":").out_i64(loc.begin_column + 1)
@@ -845,10 +843,9 @@ impl lexer {
                .out(":").out_i64(loc.end_line + 1)
                .out(":").out_i64(loc.end_column + 1)
                .out("] \"")
-               .out(self->toks.get(index)->content.c_str)
+               .out(i.get()->content.c_str)
                .out("\"")
                .endln();
-            index += 1;
         }
     }
 

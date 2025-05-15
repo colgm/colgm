@@ -2,7 +2,7 @@ use err::span::{ span };
 use err::panic::{ panic };
 
 use std::str::{ str };
-use std::io::{ readfile_into_string, io };
+use std::io::{ readfile, io };
 use std::libc::{ itoa, strlen };
 use std::fs::{ fs };
 use std::vec::{ vec };
@@ -45,8 +45,7 @@ impl report {
         self->filename.append_i8_vec(filename);
         self->source.clear();
 
-        var source = str::instance();
-        readfile_into_string(filename, source.__ptr__());
+        var source = readfile(filename);
 
         var tmp = str::instance();
         foreach (var ch; source) {
