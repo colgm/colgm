@@ -1172,22 +1172,19 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
         ctx.generics.insert(i);
     }
     for(auto i : node->get_methods()) {
-        if (i->contain_trivial_cond()) {
-            rp.warn(i, "work in progress.");
+        const auto name = i->get_monomorphic_name();
+        if (stct.field.count(name)) {
+            rp.report(i, "conflict with field \"" + name + "\".");
             continue;
         }
-        if (stct.field.count(i->get_name())) {
-            rp.report(i, "conflict with field \"" + i->get_name() + "\".");
-            continue;
-        }
-        if (stct.method.count(i->get_name()) || stct.static_method.count(i->get_name())) {
-            rp.report(i, "method \"" + i->get_name() + "\" already exists.");
+        if (stct.method.count(name) || stct.static_method.count(name)) {
+            rp.report(i, "method \"" + name + "\" already exists.");
             continue;
         }
 
         // generic methods are not allowed
         if (i->get_generic_types()) {
-            rp.report(i, "method \"" + i->get_name() + "\" cannot be generic.");
+            rp.report(i, "method \"" + name + "\" cannot be generic.");
         }
         auto func = generate_method(i, stct);
         if (i->is_public_func()) {
@@ -1197,9 +1194,9 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
             rp.report(i, "extern method is not supported.");
         }
         if (func.parameters.size() && func.parameters[0].name=="self") {
-            stct.method.insert({i->get_name(), func});
+            stct.method.insert({name, func});
         } else {
-            stct.static_method.insert({i->get_name(), func});
+            stct.static_method.insert({name, func});
         }
     }
 
@@ -1230,7 +1227,7 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
 colgm_func regist_pass::generate_method(ast::func_decl* node,
                                         const colgm_struct& stct) {
     auto func_self = colgm_func();
-    func_self.name = node->get_name();
+    func_self.name = node->get_monomorphic_name();
     func_self.location = node->get_location();
     generate_method_parameter_list(node->get_params(), func_self, stct);
     generate_return_type(node->get_return_type(), func_self);

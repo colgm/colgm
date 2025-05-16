@@ -5,7 +5,7 @@ use std::libc::{ free };
 use std::io::{ io };
 use std::str::{ str };
 use std::map::{ hashmap };
-use std::vec::{ primitive_vec };
+use std::vec::{ vec, primitive_vec };
 use std::ptr::{ ptr };
 
 use sema::type::{ type };
@@ -1341,6 +1341,7 @@ impl ast_assignment {
 pub struct ast_cond_compile {
     base: ast,
     cond_name: str,
+    ordered_conds: vec<str>,
     conds: hashmap<str, str>
 }
 
@@ -1349,6 +1350,7 @@ impl ast_cond_compile {
         var res = ast_cond_compile::__alloc__();
         res->base = ast::instance(ast_kind::ast_cond_compile, loc);
         res->cond_name = cond_name->copy_instance();
+        res->ordered_conds = vec<str>::instance();
         res->conds = hashmap<str, str>::instance();
         return res;
     }
@@ -1360,17 +1362,38 @@ impl ast_cond_compile {
             self->base.location.__ptr__()
         );
         res->cond_name = self->cond_name.copy_instance();
+        res->ordered_conds = self->ordered_conds.copy_instance();
         res->conds = self->conds.copy_instance();
         return res;
     }
 
     pub func delete(self) {
         self->cond_name.delete();
+        self->ordered_conds.delete();
         self->conds.delete();
     }
 
     pub func add_condition(self, key: str*, value: str*) {
+        self->ordered_conds.push(key);
         self->conds.insert(key, value);
+    }
+
+    pub func get_text(self) -> str {
+        var text = str::from("#[");
+        text.append_str(self->cond_name.__ptr__())->append_char('(');
+        foreach (var i; self->ordered_conds) {
+            text.append_str(i.get());
+            if (!self->conds.get(i.get())->empty()) {
+                text.append_i8_vec(" = ");
+                text.append_str(self->conds.get(i.get()));
+            }
+            text.append_char(',');
+        }
+        if (text.back() == ',') {
+            text.pop_back();
+        }
+        text.append_i8_vec(")]");
+        return text;
     }
 }
 
@@ -1808,6 +1831,7 @@ impl ast_param_list {
 pub struct ast_func_decl {
     base: ast,
     name: str,
+    monomorphic_name: str,
     generic_types: ast_generic_type_list*,
     params: ast_param_list*,
     return_type: ast_type_def*,
@@ -1822,6 +1846,7 @@ impl ast_func_decl {
         var res = ast_func_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_func_decl, loc);
         res->name = name->copy_instance();
+        res->monomorphic_name = str::from("");
         res->generic_types = nil;
         res->params = nil;
         res->return_type = nil;
@@ -1839,6 +1864,7 @@ impl ast_func_decl {
             self->base.location.__ptr__()
         );
         res->name = self->name.copy_instance();
+        res->monomorphic_name = str::from("");
         if (self->generic_types != nil) {
             res->generic_types = self->generic_types->copy();
         } else {
@@ -1870,6 +1896,7 @@ impl ast_func_decl {
 
     pub func delete(self) {
         self->name.delete();
+        self->monomorphic_name.delete();
         if (self->generic_types != nil) {
             var n = self->generic_types => ast*;
             n->delete();
@@ -1922,6 +1949,38 @@ impl ast_func_decl {
             }
         }
         return false;
+    }
+
+    pub func get_monomorphic_name(self) -> str* {
+        if (!self->monomorphic_name.empty()) {
+            return self->monomorphic_name.__ptr__();
+        }
+        var trivial_cond = str::from("");
+        var non_trivial_cond = str::from("");
+        foreach (var i; self->conds) {
+            var c = i.get().unwrap();
+            if (c->cond_name.eq_const("is_trivial")) {
+                var tmp = c->get_text();
+                trivial_cond.append_str(tmp.__ptr__());
+                tmp.delete();
+            } else if (c->cond_name.eq_const("is_non_trivial")) {
+                var tmp = c->get_text();
+                non_trivial_cond.append_str(tmp.__ptr__());
+                tmp.delete();
+            }
+        }
+
+        if (!trivial_cond.empty()) {
+            self->monomorphic_name.append_str(trivial_cond.__ptr__());
+            self->monomorphic_name.append_char(' ');
+        }
+        if (!non_trivial_cond.empty()) {
+            self->monomorphic_name.append_str(non_trivial_cond.__ptr__());
+            self->monomorphic_name.append_char(' ');
+        }
+        self->monomorphic_name.append_str(self->name.__ptr__());
+
+        return self->monomorphic_name.__ptr__();
     }
 }
 

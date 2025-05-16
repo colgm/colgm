@@ -23,6 +23,7 @@ public:
 class cond_compile: public decl {
 public:
     std::string condition_name;
+    std::vector<std::string> ordered_cond_name;
     std::unordered_map<std::string, std::string> conds;
 
 public:
@@ -36,10 +37,25 @@ public:
 
     void add_condition(const std::string& key, const std::string& value) {
        conds[key] = value;
+       ordered_cond_name.push_back(key);
     }
 
     const auto& get_condition_name() const { return condition_name; }
     const auto& get_conds() const { return conds; }
+    auto get_text() const {
+        auto text = "#[" + condition_name + "(";
+        for (const auto& i : ordered_cond_name) {
+            text += i;
+            if (!conds.at(i).empty()) {
+                text += " = " + conds.at(i);
+            }
+            text += ",";
+        }
+        if (text.back() == ',') {
+            text.pop_back();
+        }
+        return text + ")]";
+    }
 };
 
 class type_def: public decl {
@@ -254,6 +270,7 @@ public:
 
     void set_name(const std::string& n) { name = n; }
     const auto& get_name() const { return name; }
+    std::string get_monomorphic_name() const;
 
 public:
     void set_generic_types(generic_type_list* node) { generic_types = node; }

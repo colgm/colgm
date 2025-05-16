@@ -210,6 +210,26 @@ func_decl* func_decl::clone() const {
     return ret;
 }
 
+std::string func_decl::get_monomorphic_name() const {
+    std::string trivial_cond = "";
+    std::string non_trivial_cond = "";
+    for (auto i : conds) {
+        if (i->condition_name == "is_trivial") {
+            trivial_cond = i->get_text();
+        } else if (i->condition_name == "is_non_trivial") {
+            non_trivial_cond = i->get_text();
+        }
+    }
+    auto res = name;
+    if (!trivial_cond.empty()) {
+        res = trivial_cond + " " + res;
+    }
+    if (!non_trivial_cond.empty()) {
+        res = non_trivial_cond + " " + res;
+    }
+    return res;
+}
+
 bool func_decl::contain_trivial_cond() const {
     for (auto i : conds) {
         if (i->condition_name == "is_trivial" ||

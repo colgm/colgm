@@ -49,7 +49,7 @@ public:
 
 class generic_visitor: public ast::visitor {
 private:
-    const u64 MAX_RECURSIVE_DEPTH = 32;
+    const u64 MAX_RECURSIVE_DEPTH = 16;
 
 private:
     error& err;

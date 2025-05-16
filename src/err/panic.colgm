@@ -1,4 +1,4 @@
-use std::libc::{ write, exit, strlen, free, itoa };
+use std::libc::{ write, strlen, free, itoa, abort };
 use std::execinfo::{ backtrace, backtrace_symbols };
 
 pub func print_backtrace() {
@@ -32,7 +32,10 @@ pub func panic(info: i8*) {
     write(2, "\n", 1);
 
     print_backtrace();
-    exit(-1);
+
+    // directly raise SIGABRT
+    // then user could use gdb or lldb to debug
+    abort();
 }
 
 pub func unreachable() {
