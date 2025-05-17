@@ -77,6 +77,9 @@ private:
 
 private:
     void replace_type(type&, const generic_data&);
+    bool check_is_trivial(ast::cond_compile*, const generic_data&);
+    bool check_is_non_trivial(ast::cond_compile*, const generic_data&);
+    void remove_cond_compile_method(colgm_struct&, const generic_data&);
     void replace_struct_type(colgm_struct&, const generic_data&);
     void replace_func_type(colgm_func&, const generic_data&);
 

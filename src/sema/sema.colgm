@@ -2731,12 +2731,7 @@ impl sema {
         self->impl_struct_name.clear();
         self->impl_struct_name.append_str(node->name.__ptr__());
         foreach (var i; node->methods) {
-            var func_node = i.get().unwrap() => ast_func_decl*;
-            if (func_node->contain_trivial_cond()) {
-                self->err->warn(func_node->base.location.__ptr__(), "work in progress");
-                continue;
-            }
-            self->resolve_method(func_node, struct_self);
+            self->resolve_method(i.get().unwrap() => ast_func_decl*, struct_self);
         }
         self->impl_struct_name.clear();
     }

@@ -13,8 +13,8 @@ void cond_compile::accept(visitor* v) {
 
 cond_compile* cond_compile::clone() const {
     auto ret = new cond_compile(location, condition_name);
-    for (const auto& i : conds) {
-        ret->add_condition(i.first, i.second);
+    for (const auto& i : ordered_cond_name) {
+        ret->add_condition(i, conds.at(i));
     }
     return ret;
 }
@@ -214,9 +214,9 @@ std::string func_decl::get_monomorphic_name() const {
     std::string trivial_cond = "";
     std::string non_trivial_cond = "";
     for (auto i : conds) {
-        if (i->condition_name == "is_trivial") {
+        if (i->get_condition_name() == "is_trivial") {
             trivial_cond = i->get_text();
-        } else if (i->condition_name == "is_non_trivial") {
+        } else if (i->get_condition_name() == "is_non_trivial") {
             non_trivial_cond = i->get_text();
         }
     }
@@ -232,12 +232,30 @@ std::string func_decl::get_monomorphic_name() const {
 
 bool func_decl::contain_trivial_cond() const {
     for (auto i : conds) {
-        if (i->condition_name == "is_trivial" ||
-            i->condition_name == "is_non_trivial") {
+        if (i->get_condition_name() == "is_trivial" ||
+            i->get_condition_name() == "is_non_trivial") {
             return true;
         }
     }
     return false;
+}
+
+cond_compile* func_decl::get_trivial_cond() const { 
+    for (auto i : conds) {
+        if (i->get_condition_name() == "is_trivial") {
+            return i;
+        }
+    }
+    return nullptr;
+}
+
+cond_compile* func_decl::get_non_trivial_cond() const { 
+    for (auto i : conds) {
+        if (i->get_condition_name() == "is_non_trivial") {
+            return i;
+        }
+    }
+    return nullptr;
 }
 
 impl_struct::~impl_struct() {

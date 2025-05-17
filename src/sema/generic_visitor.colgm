@@ -8,7 +8,7 @@ use util::package::{ package };
 use std::str::{ str };
 use std::map::{ hashmap };
 use std::io::{ io };
-use std::vec::{ vec };
+use std::vec::{ vec, primitive_vec };
 use std::ptr::{ ptr };
 use std::libc::{ free };
 
@@ -733,6 +733,174 @@ impl generic_visitor {
         }
     }
 
+    func check_is_trivial(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
+        foreach (var i; n->ordered_conds) {
+            var cond = i.get();
+            if (!n->conds.get(cond)->empty()) {
+                self->err->warn(
+                    n->base.location.__ptr__(),
+                    "condition value is ignored"
+                );
+            }
+            if (!g_data->types.has(cond)) {
+                var info = str::from("generic type \"");
+                info.append_str(cond);
+                info.append_i8_vec("\" is not defined");
+                self->err->warn(
+                    n->base.location.__ptr__(),
+                    info.c_str
+                );
+                info.delete();
+                return false;
+            }
+
+            var t = g_data->types.get(cond);
+            if (t->loc_file.empty()) {
+                // primitive type, is trivial
+                continue;
+            }
+
+            var domain = self->ctx->global->domain.get(t->loc_file.__ptr__());
+            var t_name = t->full_path_name(self->pkg, false);
+            if (!domain->structs.has(t_name.__ptr__())) {
+                t_name.delete();
+                continue;
+            }
+
+            var s = domain->structs.get(t_name.__ptr__());
+            var delete_func = str::from("delete");
+            // with delete methopd, it's non-trivial
+            if (s->method.has(delete_func.__ptr__())) {
+                t_name.delete();
+                delete_func.delete();
+                return false;
+            }
+
+            t_name.delete();
+            delete_func.delete();
+        }
+        return true;
+    }
+
+    func check_is_non_trivial(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
+        foreach (var i; n->ordered_conds) {
+            var cond = i.get();
+            if (!n->conds.get(cond)->empty()) {
+                self->err->warn(
+                    n->base.location.__ptr__(),
+                    "condition value is ignored"
+                );
+            }
+            if (!g_data->types.has(cond)) {
+                var info = str::from("generic type \"");
+                info.append_str(cond);
+                info.append_i8_vec("\" is not defined");
+                self->err->warn(
+                    n->base.location.__ptr__(),
+                    info.c_str
+                );
+                info.delete();
+                return false;
+            }
+
+            var t = g_data->types.get(cond);
+            if (t->loc_file.empty()) {
+                // primitive type, is trivial
+                return false;
+            }
+
+            var domain = self->ctx->global->domain.get(t->loc_file.__ptr__());
+            var t_name = t->full_path_name(self->pkg, false);
+            if (!domain->structs.has(t_name.__ptr__())) {
+                t_name.delete();
+                return false;
+            }
+
+            var s = domain->structs.get(t_name.__ptr__());
+            var delete_func = str::from("delete");
+            // without delete methopd, it's trivial
+            if (!s->method.has(delete_func.__ptr__())) {
+                t_name.delete();
+                delete_func.delete();
+                return false;
+            }
+
+            t_name.delete();
+            delete_func.delete();
+        }
+        return true;
+    }
+
+    func remove_cond_compile_method(self, s: colgm_struct*, g_data: generic_data*) {
+        foreach (var i; s->generic_struct_impl) {
+            var impl_node = i.get().unwrap();
+            var new_vec = primitive_vec<ptr<ast>>::instance();
+            foreach (var j; impl_node->methods) {
+                var func_node = j.get().unwrap() => ast_func_decl*;
+                if (!func_node->contain_trivial_cond()) {
+                    new_vec.push(ptr<ast>::wrap(func_node => ast*));
+                    continue;
+                }
+                var trivial_cond = func_node->get_trivial_cond();
+                var non_trivial_cond = func_node->get_non_trivial_cond();
+                var monomorphic_name = func_node->get_monomorphic_name();
+                if (trivial_cond != nil && !self->check_is_trivial(trivial_cond, g_data)) {
+                    var n = func_node => ast*;
+                    n->delete();
+                    free(n => i8*);
+                    continue;
+                }
+                if (non_trivial_cond != nil && !self->check_is_non_trivial(non_trivial_cond, g_data)) {
+                    var n = func_node => ast*;
+                    n->delete();
+                    free(n => i8*);
+                    continue;
+                }
+
+                if (s->method.has(monomorphic_name)) {
+                    if (s->fields.has(func_node->name.__ptr__()) ||
+                        s->method.has(func_node->name.__ptr__()) ||
+                        s->static_method.has(func_node->name.__ptr__())) {
+                        self->err->error(
+                            func_node->base.location.__ptr__(),
+                            "method name conflicts"
+                        );
+                    } else {
+                        s->method.insert(
+                            func_node->name.__ptr__(),
+                            s->method.get(monomorphic_name)
+                        );
+                        var f = s->method.get(func_node->name.__ptr__())->name.__ptr__();
+                        f->clear();
+                        f->append_str(func_node->name.__ptr__());
+                    }
+                } else if (s->static_method.has(monomorphic_name)) {
+                    if (s->fields.has(func_node->name.__ptr__()) ||
+                        s->method.has(func_node->name.__ptr__()) ||
+                        s->static_method.has(func_node->name.__ptr__())) {
+                        self->err->error(
+                            func_node->base.location.__ptr__(),
+                            "method name conflicts"
+                        );
+                    } else {
+                        s->static_method.insert(
+                            func_node->name.__ptr__(),
+                            s->static_method.get(monomorphic_name)
+                        );
+                        var f = s->static_method.get(func_node->name.__ptr__())->name.__ptr__();
+                        f->clear();
+                        f->append_str(func_node->name.__ptr__());
+                    }
+                }
+                new_vec.push(ptr<ast>::wrap(func_node => ast*));
+            }
+            if (new_vec.size != impl_node->methods.size) {
+                impl_node->reset_methods(new_vec.__ptr__());
+            }
+            new_vec.delete();
+        }
+    }
+
     func replace_struct_type(self, s: colgm_struct*, g_data: generic_data*) {
         foreach (var i; s->fields) {
             var field = i.value();
@@ -742,6 +910,12 @@ impl generic_visitor {
             var field = i.get();
             self->replace_type(field->type.__ptr__(), g_data);
         }
+
+        // remove method by conditonal compile config like
+        // #[is_trivial(T, K)]
+        // #[is_non_trivial(T, K)]
+        self->remove_cond_compile_method(s, g_data);
+
         foreach (var i; s->static_method) {
             var method = i.value();
             self->replace_func_type(method, g_data);

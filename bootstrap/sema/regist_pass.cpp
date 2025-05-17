@@ -292,6 +292,122 @@ void generic_visitor::replace_type(type& t, const generic_data& data) {
     }
 }
 
+bool generic_visitor::check_is_trivial(ast::cond_compile* node,
+                                       const generic_data& data) {
+    for (const auto& i : node->get_ordered_cond_name()) {
+        if (!node->get_conds().at(i).empty()) {
+            err.warn(node->get_location(), "condition value is ignored.");
+        }
+        if (!data.types.count(i)) {
+            err.err(node->get_location(), "generic type '" + i + "' is not defined.");
+            return false;
+        }
+        const auto& t = data.types.at(i);
+        if (t.loc_file.empty()) {
+            // primitive type, is trivial
+            continue;
+        }
+        const auto& domain = ctx.global.domain.at(t.loc_file);
+        // not a struct, must be trivial
+        if (!domain.structs.count(t.full_path_name())) {
+            continue;
+        }
+        const auto& s = domain.structs.at(t.full_path_name());
+        // with delete method, it's non-trivial
+        if (s.method.count("delete")) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool generic_visitor::check_is_non_trivial(ast::cond_compile* node,
+                                           const generic_data& data) {
+    for (const auto& i : node->get_ordered_cond_name()) {
+        if (!node->get_conds().at(i).empty()) {
+            err.warn(node->get_location(), "condition value is ignored.");
+        }
+        if (!data.types.count(i)) {
+            err.err(node->get_location(), "generic type '" + i + "' is not defined.");
+            return false;
+        }
+        const auto& t = data.types.at(i);
+        if (t.loc_file.empty()) {
+            // primitive type, is trivial
+            return false;
+        }
+        const auto& domain = ctx.global.domain.at(t.loc_file);
+        if (!domain.structs.count(t.full_path_name())) {
+            return false;
+        }
+        const auto& s = domain.structs.at(t.full_path_name());
+        // without delete method, it's trivial
+        if (!s.method.count("delete")) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void generic_visitor::remove_cond_compile_method(colgm_struct& s,
+                                                 const generic_data& data) {
+    for (auto i : s.generic_struct_impl) {
+        std::vector<ast::func_decl*> new_vec;
+        for (auto j : i->get_methods()) {
+            if (!j->contain_trivial_cond()) {
+                new_vec.push_back(j);
+                continue;
+            }
+            auto trivial_cond = j->get_trivial_cond();
+            auto non_trivial_cond = j->get_non_trivial_cond();
+            auto monomorphic_name = j->get_monomorphic_name();
+            if (trivial_cond && !check_is_trivial(trivial_cond, data)) {
+                delete j;
+                if (s.method.count(monomorphic_name)) {
+                    s.method.erase(monomorphic_name);
+                } else if (s.static_method.count(monomorphic_name)) {
+                    s.static_method.erase(monomorphic_name);
+                }
+                continue;
+            }
+            if (non_trivial_cond && !check_is_non_trivial(non_trivial_cond, data)) {
+                delete j;
+                if (s.method.count(monomorphic_name)) {
+                    s.method.erase(monomorphic_name);
+                } else if (s.static_method.count(monomorphic_name)) {
+                    s.static_method.erase(monomorphic_name);
+                }
+                continue;
+            }
+            if (s.method.count(monomorphic_name)) {
+                if (s.field.count(j->get_name()) ||
+                    s.method.count(j->get_name()) ||
+                    s.static_method.count(j->get_name())) {
+                    err.err(j->get_location(), "method name conflicts.");
+                } else {
+                    s.method[j->get_name()] = s.method.at(monomorphic_name);
+                    s.method.at(j->get_name()).name = j->get_name();
+                }
+                s.method.erase(monomorphic_name);
+            } else if (s.static_method.count(monomorphic_name)) {
+                if (s.field.count(j->get_name()) ||
+                    s.method.count(j->get_name()) ||
+                    s.static_method.count(j->get_name())) {
+                    err.err(j->get_location(), "static method name conflicts.");
+                } else {
+                    s.static_method[j->get_name()] = s.static_method.at(monomorphic_name);
+                    s.static_method.at(j->get_name()).name = j->get_name();
+                }
+                s.static_method.erase(monomorphic_name);
+            }
+            new_vec.push_back(j);
+        }
+        if (new_vec.size() != i->get_methods().size()) {
+            i->reset_methods(new_vec);
+        }
+    }
+}
+
 void generic_visitor::replace_struct_type(colgm_struct& s,
                                           const generic_data& data) {
     for(auto& i : s.field) {
@@ -300,6 +416,11 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     for(auto& i : s.ordered_field) {
         replace_type(i.symbol_type, data);
     }
+
+    // remove method by conditonal compile config like
+    // #[is_trivial(T, K)]
+    // #[is_non_trivial(T, K)]
+    remove_cond_compile_method(s, data);
 
     for(auto& i : s.method) {
         replace_func_type(i.second, data);

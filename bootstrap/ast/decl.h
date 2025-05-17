@@ -21,7 +21,7 @@ public:
 };
 
 class cond_compile: public decl {
-public:
+private:
     std::string condition_name;
     std::vector<std::string> ordered_cond_name;
     std::unordered_map<std::string, std::string> conds;
@@ -42,6 +42,7 @@ public:
 
     const auto& get_condition_name() const { return condition_name; }
     const auto& get_conds() const { return conds; }
+    const auto& get_ordered_cond_name() const { return ordered_cond_name; }
     auto get_text() const {
         auto text = "#[" + condition_name + "(";
         for (const auto& i : ordered_cond_name) {
@@ -293,11 +294,13 @@ public:
     bool is_public_func() const { return is_public; }
     void set_extern(bool b) { is_extern = b; }
     bool is_extern_func() const { return is_extern; }
-    bool contain_trivial_cond() const;
 
 public:
     void add_cond(cond_compile* node) { conds.push_back(node); }
     const auto& get_conds() const { return conds; }
+    bool contain_trivial_cond() const;
+    cond_compile* get_trivial_cond() const;
+    cond_compile* get_non_trivial_cond() const;
 };
 
 class impl_struct: public decl {
@@ -323,6 +326,9 @@ public:
     auto get_generic_types() const { return generic_types; }
     void add_method(func_decl* node) { methods.push_back(node); }
     const auto& get_methods() const { return methods; }
+    void reset_methods(std::vector<func_decl*>& m) {
+        methods = m;
+    }
     void clear_generic_types() {
         if (generic_types) {
             delete generic_types;
