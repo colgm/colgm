@@ -1,10 +1,10 @@
 use std::libc::{ srand, rand };
 use std::time::{ time };
-use std::list::{ list, primitive_list };
+use std::list::{ list };
 use std::vec::{ vec, primitive_vec };
 use std::map::{ hashmap };
 use std::set::{ hashset };
-use std::queue::{ queue, primitive_queue };
+use std::queue::{ queue };
 use std::str::{ str };
 use std::string_utils::{
     is_alpha_letter,
@@ -95,24 +95,22 @@ func test_hashmap() -> bool {
 
 func list_dump(list: list<str>*) {
     foreach (var i; list) {
-        io::stdout().green().out("[test]").reset().out(" list: ");
+        io::stdout().green().out("[test]").reset().out(" list<str>: ");
         io::stdout().out(i.elem()->c_str).endln();
     }
 }
 
-func primitive_list_dump(list: primitive_list<i64>*) {
-    var temp = list->head;
-    while (temp != nil) {
-        io::stdout().green().out("[test]").reset().out(" list: ");
-        io::stdout().out_i64(temp->elem).endln();
-        temp = temp->next;
+func primitive_list_dump(list: list<i64>*) {
+    foreach (var i; list) {
+        io::stdout().green().out("[test]").reset().out(" list<i64>: ");
+        io::stdout().out_i64(i.elem()).endln();
     }
 }
 
 func test_list() {
     var s = str::instance();
     var str_list = list<str>::instance();
-    var int_list = primitive_list<i64>::instance();
+    var int_list = list<i64>::instance();
 
     for (var i = 0; i < 32; i += 1) {
         var num = rand() % 4096;
@@ -129,6 +127,41 @@ func test_list() {
     s.delete();
     str_list.delete();
     int_list.delete();
+}
+
+func queue_dump(q: queue<str>*) {
+    while (!q->empty()) {
+        io::stdout().out("[test] queue<str>: ").out(q->front()->c_str).endln();
+        q->pop();
+    }
+}
+
+func primitive_queue_dump(q: queue<i64>*) {
+    while (!q->empty()) {
+        io::stdout().out("[test] queue<i64>: ").out_i64(q->front()).endln();
+        q->pop();
+    }
+}
+
+func test_queue() {
+    var str_queue = queue<str>::instance();
+    var int_queue = queue<i64>::instance();
+
+    for (var i = 0; i < 32; i += 1) {
+        var num = rand() % 4096;
+        var s = str::from("test queue<str> ");
+        s.append_i64(num => i64);
+        str_queue.push(s.__ptr__());
+        int_queue.push(num => i64);
+
+        s.delete();
+    }
+
+    queue_dump(str_queue.__ptr__());
+    primitive_queue_dump(int_queue.__ptr__());
+
+    str_queue.delete();
+    int_queue.delete();
 }
 
 func vec_dump(vec: vec<str>*) {
@@ -207,6 +240,7 @@ func TEST_ALL() -> bool {
         result = false;
     }
     test_list();
+    test_queue();
     test_vector();
     if (!test_set()) {
         result = false;

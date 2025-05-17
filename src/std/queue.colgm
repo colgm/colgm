@@ -1,4 +1,4 @@
-use std::list::{ list, primitive_list };
+use std::list::{ list };
 
 pub struct queue<T> {
     _elem: list<T>
@@ -13,6 +13,12 @@ impl queue<T> {
         self->_elem.delete();
     }
 
+    #[is_trivial(T)]
+    pub func push(self, elem: T) {
+        self->_elem.push_back(elem);
+    }
+
+    #[is_non_trivial(T)]
     pub func push(self, elem: T*) {
         self->_elem.push_back(elem);
     }
@@ -21,34 +27,14 @@ impl queue<T> {
         self->_elem.pop_front();
     }
 
-    pub func front(self) -> T* {
+    #[is_trivial(T)]
+    pub func front(self) -> T {
         return self->_elem.front();
     }
 
-    pub func empty(self) -> bool {
-        return self->_elem.empty();
-    }
-}
-
-pub struct primitive_queue<T> {
-    _elem: primitive_list<T>
-}
-
-impl primitive_queue<T> {
-    pub func instance() -> primitive_queue<T> {
-        return primitive_queue<T> { _elem: primitive_list<T>::instance() };
-    }
-
-    pub func delete(self) {
-        self->_elem.delete();
-    }
-
-    pub func push(self, elem: T) {
-        self._elem.push_back(elem);
-    }
-
-    pub func pop(self) {
-        self._elem.pop_front();
+    #[is_non_trivial(T)]
+    pub func front(self) -> T* {
+        return self->_elem.front();
     }
 
     pub func empty(self) -> bool {

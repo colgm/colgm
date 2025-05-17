@@ -309,10 +309,10 @@ bool generic_visitor::check_is_trivial(ast::cond_compile* node,
         }
         const auto& domain = ctx.global.domain.at(t.loc_file);
         // not a struct, must be trivial
-        if (!domain.structs.count(t.full_path_name())) {
+        if (!domain.structs.count(t.generic_name())) {
             continue;
         }
-        const auto& s = domain.structs.at(t.full_path_name());
+        const auto& s = domain.structs.at(t.generic_name());
         // with delete method, it's non-trivial
         if (s.method.count("delete")) {
             return false;
@@ -337,10 +337,10 @@ bool generic_visitor::check_is_non_trivial(ast::cond_compile* node,
             return false;
         }
         const auto& domain = ctx.global.domain.at(t.loc_file);
-        if (!domain.structs.count(t.full_path_name())) {
+        if (!domain.structs.count(t.generic_name())) {
             return false;
         }
-        const auto& s = domain.structs.at(t.full_path_name());
+        const auto& s = domain.structs.at(t.generic_name());
         // without delete method, it's trivial
         if (!s.method.count("delete")) {
             return false;
