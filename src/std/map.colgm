@@ -18,9 +18,25 @@ impl pair<K, V> {
         };
     }
 
-    pub func delete(self) {
+    #[is_non_trivial(K)]
+    func key_delete(self) {
         self->key.delete();
+    }
+
+    #[is_trivial(K)]
+    func key_delete(self) {}
+
+    #[is_non_trivial(V)]
+    func value_delete(self) {
         self->value.delete();
+    }
+
+    #[is_trivial(V)]
+    func value_delete(self) {}
+
+    pub func delete(self) {
+        self->key_delete();
+        self->value_delete();
     }
 
     pub func copy(self) -> pair<K, V>* {

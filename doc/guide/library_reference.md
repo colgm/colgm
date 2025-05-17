@@ -9,9 +9,7 @@
   - [err::panic::unimplemented](#errpanicunimplemented)
 - [Standard Containers](#standard-containers)
   - [std::list::list](#stdlistlistt)
-  - [std::list::primitive_list](#stdlistprimitive_listt)
   - [std::queue::queue](#stdqueuequeuet)
-  - [std::queue::primitive_queue](#stdqueueprimitive_queuet)
   - [std::vec::vec](#stdvecvect)
   - [std::vec::primitive_vec](#stdvecprimitive_vect)
   - [std::set::hashset](#stdsethashsett)
@@ -63,38 +61,27 @@ unimplemented();
 
 Source: [`list<T>`](../../src/std/list.colgm)
 
-Linked list, `T` accepts types with these methods:
+Linked list that accepts both trivial and non-trivial types.
 
-- `func copy_instance(self) -> T`
-- `func delete(self)`
+- If `T` is non-trivial type, it accepts types with these methods:
+  - `func copy_instance(self) -> T`
+  - `func delete(self)`
+- If `T` is trivial type, it could be used directly.
 
 Example:
 
 ```rs
 func main() -> i32 {
     var a = list<str>::instance();
+    var b = list<i64>::instance();
+
     var s = str::from("hello world!");
     a.push_back(s.__ptr__()); // s will do copy here
+    b.push_back(123);         // do not need pointer type
 
     a.delete();
+    b.delete();
     s.delete();
-    return 0;
-}
-```
-
-### `std::list::primitive_list<T>`
-
-Source: [`primitive_list<T>`](../../src/std/list.colgm)
-
-Linked list, `T` accepts primitive types and trivially copyable types.
-
-Example:
-
-```rs
-func main() -> i32 {
-    var a = primitive_list<i32>::instance();
-    a.push_back(1);
-    a.delete();
     return 0;
 }
 ```
@@ -103,41 +90,28 @@ func main() -> i32 {
 
 Source: [`queue<T>`](../../src/std/queue.colgm)
 
-Queue, `T` accepts types with these methods:
+Queue that accepts both trivial and non-trivial types.
 
-- `func copy_instance(self) -> T`
-- `func delete(self)`
+- If `T` is non-trivial type, it accepts types with these methods:
+  - `func copy_instance(self) -> T`
+  - `func delete(self)`
+- If `T` is trivial type, it could be used directly.
 
 Example:
 
 ```rs
 func main() -> i32 {
     var a = queue<str>::instance();
+    var b = queue<i32>::instance();
     var s = str::from("hello world!");
     a.push(s.__ptr__());
     a.pop();
+    b.push(123);
+    b.pop();
 
     a.delete();
+    b.delete();
     s.delete();
-    return 0;
-}
-```
-
-### `std::queue::primitive_queue<T>`
-
-Source: [`primitive_queue<T>`](../../src/std/queue.colgm)
-
-Queue, `T` accepts primitive types and trivially copyable types.
-
-Example:
-
-```rs
-func main() -> i32 {
-    var a = primitive_queue<i32>::instance();
-    a.push(1);
-    a.pop();
-
-    a.delete();
     return 0;
 }
 ```

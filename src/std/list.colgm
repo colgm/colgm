@@ -83,6 +83,19 @@ impl list<T> {
         self->size = 0;
     }
 
+    #[is_trivial(T)]
+    pub func delete(self) {
+        var curr = self->head;
+        while (curr != nil) {
+            var next = curr->next;
+            free(curr => i8*);
+            curr = next;
+        }
+        self->head = nil;
+        self->tail = nil;
+        self->size = 0;
+    }
+
     pub func clear(self) {
         self->delete();
     }
@@ -111,58 +124,6 @@ impl list<T> {
         self->size += 1;
     }
 
-    #[is_non_trivial(T)]
-    pub func push_back(self, elem: T*) {
-        self->insert(elem);
-    }
-
-    #[is_non_trivial(T)]
-    pub func pop_front(self) {
-        if (self->head == nil) {
-            return;
-        }
-
-        if (self->head == self->tail) {
-            self->head->elem.delete();
-            free(self->head => i8*);
-            self->head = nil;
-            self->tail = nil;
-        } else {
-            var next = self->head->next;
-            self->head->elem.delete();
-            free(self->head => i8*);
-            next->prev = nil;
-            self->head = next;
-        }
-
-        self->size -= 1;
-    }
-
-    #[is_non_trivial(T)]
-    pub func front(self) -> T* {
-        if (self->head == nil) {
-            panic("list is empty");
-        }
-        return self->head->elem.__ptr__();
-    }
-
-    pub func iter(self) -> list_iter<T> {
-        return list_iter<T>::instance(self);
-    }
-
-    #[is_trivial(T)]
-    pub func delete(self) {
-        var curr = self->head;
-        while (curr != nil) {
-            var next = curr->next;
-            free(curr => i8*);
-            curr = next;
-        }
-        self->head = nil;
-        self->tail = nil;
-        self->size = 0;
-    }
-
     #[is_trivial(T)]
     pub func insert(self, elem: T) {
         var new_node = node<T>::__alloc__();
@@ -184,9 +145,36 @@ impl list<T> {
         return;
     }
 
+    #[is_non_trivial(T)]
+    pub func push_back(self, elem: T*) {
+        self->insert(elem);
+    }
+
     #[is_trivial(T)]
     pub func push_back(self, elem: T) {
         self->insert(elem);
+    }
+
+    #[is_non_trivial(T)]
+    pub func pop_front(self) {
+        if (self->head == nil) {
+            return;
+        }
+
+        if (self->head == self->tail) {
+            self->head->elem.delete();
+            free(self->head => i8*);
+            self->head = nil;
+            self->tail = nil;
+        } else {
+            var next = self->head->next;
+            self->head->elem.delete();
+            free(self->head => i8*);
+            next->prev = nil;
+            self->head = next;
+        }
+
+        self->size -= 1;
     }
 
     #[is_trivial(T)]
@@ -209,11 +197,23 @@ impl list<T> {
         self->size -= 1;
     }
 
+    #[is_non_trivial(T)]
+    pub func front(self) -> T* {
+        if (self->head == nil) {
+            panic("list is empty");
+        }
+        return self->head->elem.__ptr__();
+    }
+
     #[is_trivial(T)]
     pub func front(self) -> T {
         if (self->head == nil) {
             panic("list is empty");
         }
         return self->head->elem;
+    }
+
+    pub func iter(self) -> list_iter<T> {
+        return list_iter<T>::instance(self);
     }
 }

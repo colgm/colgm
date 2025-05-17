@@ -88,13 +88,12 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 
 ## Features and Roadmap
 
-1. feature: SFINAE
-2. feature: RAII
-3. feature: reference type
-4. feature: [Tagged Union](./doc/spec/tagged_union.md)
-5. feature: [Tuple](./doc/spec/tuple.md)
-6. feature: smart pointer
-7. feature: std
+1. feature: RAII
+2. feature: reference type
+3. feature: [Tagged Union](./doc/spec/tagged_union.md)
+4. feature: [Tuple](./doc/spec/tuple.md)
+5. feature: smart pointer
+6. feature: std
     - [x] Filesystem API (read, write, join, exists, etc)
     - [x] Datetime utils
     - [ ] String and Unicode Helpers

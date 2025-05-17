@@ -185,31 +185,32 @@ impl parser {
             return;
         }
         var loc = self->this_tok_loc();
+        var message = str::from("expected ");
         match (kind) {
             tok_kind::tok_id => {
-                self->err->error(loc, "expected identifier here");
-                self->next();
-                return;
+                message.append_i8_vec("an identifier");
             }
             tok_kind::tok_num => {
-                self->err->error(loc, "expected number here");
-                self->next();
-                return;
+                message.append_i8_vec("a number");
             }
             tok_kind::tok_str => {
-                self->err->error(loc, "expected string here");
-                self->next();
-                return;
+                message.append_i8_vec("a string");
             }
-            _ => {}
+            _ => {
+                message.append_i8_vec("\"");
+                message.append_i8_vec(parser::tok_kind_to_content(kind));
+                message.append_i8_vec("\"");
+            }
         }
 
-        var message = str::instance();
-        message.append_i8_vec("get \"")
-               ->append_str(self->this_tok()->content.__ptr__())
-               ->append_i8_vec("\" here, but expect \"")
-               ->append_i8_vec(parser::tok_kind_to_content(kind))
-               ->append_i8_vec("\"");
+        message.append_i8_vec(" here, but ");
+        if (self->this_tok()->kind == tok_kind::tok_eof) {
+            message.append_i8_vec("reached end of file");
+        } else {
+            message.append_i8_vec("got \"");
+            message.append_str(self->this_tok()->content.__ptr__());
+            message.append_i8_vec("\"");
+        }
         self->err->error(loc, message.c_str);
         message.delete();
 
