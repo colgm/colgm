@@ -6,7 +6,6 @@ use util::cli::{ cli_option };
 use util::package::{ package };
 
 use std::str::{ str };
-use std::map::{ hashmap };
 use std::io::{ io };
 use std::vec::{ vec, primitive_vec };
 use std::ptr::{ ptr };
@@ -29,10 +28,10 @@ pub struct generic_visitor {
     root: root*,
     tr: type_resolve,
     co: cli_option*,
-    generic_type_map: hashmap<str, generic_data>,
-    // avoid too deep template instantiation
-    visit_count: u64,
-    MAX_RECURSIVE_DEPTH: u64
+
+    insert_count: i64,
+    need_to_be_inserted: primitive_vec<ptr<ast>>,
+    MAX_RECURSIVE_DEPTH: i64
 }
 
 impl generic_visitor {
@@ -47,72 +46,68 @@ impl generic_visitor {
             root: nil,
             tr: type_resolve::instance(e, c, p),
             co: co,
-            generic_type_map: hashmap<str, generic_data>::instance(),
-            visit_count: 0,
+            insert_count: 0,
+            need_to_be_inserted: primitive_vec<ptr<ast>>::instance(),
             MAX_RECURSIVE_DEPTH: 16
         };
     }
 
     pub func delete(self) {
-        self->generic_type_map.delete();
+        self->need_to_be_inserted.delete();
     }
 
-    func report_recursive_generic_generation(self) {
-        var info_head = str::from("template instantiation depth exceeds maximum of ");
-        info_head.append_u64(self->MAX_RECURSIVE_DEPTH);
-        info_head.append_i8_vec(":\n");
-
-        foreach (var i; self->generic_type_map) {
-            var gd = i.value();
-            var generic_name = gd->generic_type.generic_name(self->pkg);
-            
-            var domain_file = gd->generic_type.loc_file.__ptr__();
-            if (!self->ctx->has_domain(domain_file)) {
-                generic_name.delete();
-                continue;
-            }
-
-            var dm = self->ctx->get_domain(domain_file);
-            if (dm->structs.has(generic_name.__ptr__()) ||
-                dm->functions.has(generic_name.__ptr__())) {
-                generic_name.delete();
-                continue;
-            }
-
-            var loc: span* = nil;
-            if (dm->generic_structs.has(gd->generic_type.name.__ptr__())) {
-                loc = dm->generic_structs
-                        .get(gd->generic_type.name.__ptr__())
-                        ->location.__ptr__();
-            } else if (dm->generic_functions.has(gd->generic_type.name.__ptr__())) {
-                loc = dm->generic_functions
-                        .get(gd->generic_type.name.__ptr__())
-                        ->location.__ptr__();
-            }
-
-            var info = info_head.copy_instance();
-            info.append_i8_vec("  --> ");
-            info.append_str(generic_name.__ptr__());
-            self->err->error(loc, info.c_str);
-
+    func report_recursive_generic_generation(self, ty: type*) {
+        var generic_name = ty->generic_name(self->pkg);
+        
+        var domain_file = ty->loc_file.__ptr__();
+        if (!self->ctx->has_domain(domain_file)) {
             generic_name.delete();
-            info.delete();
+            return;
         }
 
-        info_head.delete();
+        var dm = self->ctx->get_domain(domain_file);
+        if (dm->structs.has(generic_name.__ptr__()) ||
+            dm->functions.has(generic_name.__ptr__())) {
+            generic_name.delete();
+            return;
+        }
+
+        var loc: span* = nil;
+        if (dm->generic_structs.has(ty->name.__ptr__())) {
+            loc = dm->generic_structs.get(ty->name.__ptr__())->location.__ptr__();
+        } else if (dm->generic_functions.has(ty->name.__ptr__())) {
+            loc = dm->generic_functions.get(ty->name.__ptr__())->location.__ptr__();
+        }
+
+        var info = str::from("template instantiation depth exceeds maximum of ");
+        info.append_i64(self->MAX_RECURSIVE_DEPTH);
+        info.append_i8_vec(":\n  --> ");
+        info.append_str(generic_name.__ptr__());
+        self->err->error(loc, info.c_str);
+
+        generic_name.delete();
+        info.delete();
     }
 
     pub func scan_and_insert(self, n: root*) {
         self->root = n;
-        self->visit_count = 0;
 
         var scan_count = 0;
-        self->generic_type_map.clear();
+        self->insert_count = 0;
+        self->need_to_be_inserted.clear();
         self->visit_root(n);
-        while (self->insert_into_symbol_table() != 0) {
+        foreach (var i; self->need_to_be_inserted) {
+            self->root->decls.push(i.get());
+        }
+
+        while (self->insert_count != 0) {
             scan_count += 1;
-            self->generic_type_map.clear();
+            self->insert_count = 0;
+            self->need_to_be_inserted.clear();
             self->visit_root(n);
+            foreach (var i; self->need_to_be_inserted) {
+                self->root->decls.push(i.get());
+            }
         }
 
         if (scan_count > 0 && self->co->VIEW_TYPE_REPLACE_INFO) {
@@ -216,15 +211,6 @@ impl generic_visitor {
             return;
         }
 
-        // insert data, use symbols location file to avoid duplication of name
-        var unique_name = sym->loc_file.copy_instance();
-        unique_name.append_i8_vec("|")->append_str(ss.__ptr__());
-        if (self->generic_type_map.has(unique_name.__ptr__())) {
-            ss.delete();
-            unique_name.delete();
-            return;
-        }
-
         // load useful data into generic_data
         var g_data = generic_data::instance();
         g_data.name.append_str(ss.__ptr__());
@@ -237,10 +223,9 @@ impl generic_visitor {
             g_data.types.insert(generic_template->get(i.index()), r_type.__ptr__());
         }
 
-        self->generic_type_map.insert(unique_name.__ptr__(), g_data.__ptr__());
+        self->insert_count += self->insert_generic_type(g_data.__ptr__());
 
         ss.delete();
-        unique_name.delete();
         g_data.delete();
         return;
     }
@@ -473,6 +458,8 @@ impl generic_visitor {
 
     func visit_type_def(self, n: ast_type_def*) {
         if (n->generic_types != nil) {
+            // dfs try to initialize generic input types first
+            // then try to initialize the outside type
             self->visit_generic_type_list(n->generic_types);
             self->scan_generic_type(n);
         }
@@ -672,41 +659,35 @@ impl generic_visitor {
         free(func_info => i8*);
     }
 
-    func insert_into_symbol_table(self) -> u64 {
-        self->visit_count += 1;
-        if (self->visit_count > self->MAX_RECURSIVE_DEPTH) {
-            self->report_recursive_generic_generation();
+    func insert_generic_type(self, g_data: generic_data*) -> i64 {
+        if (g_data->generic_type.generic_depth() > self->MAX_RECURSIVE_DEPTH) {
+            self->report_recursive_generic_generation(g_data->generic_type.__ptr__());
             return 0;
         }
-        var insert_count: u64 = 0;
-        foreach (var i; self->generic_type_map) {
-            var g_data = i.value();
-            var generic_name = g_data->generic_type.generic_name(self->pkg);
+
+        var generic_name = g_data->generic_type.generic_name(self->pkg);
             
-            var domain_file = g_data->generic_type.loc_file.__ptr__();
-            if (!self->ctx->has_domain(domain_file)) {
-                generic_name.delete();
-                continue;
-            }
-
-            var dm = self->ctx->get_domain(domain_file);
-            if (dm->generic_structs.has(g_data->generic_type.name.__ptr__())) {
-                if (dm->structs.has(generic_name.__ptr__())) {
-                    continue;
-                }
-                insert_count += 1;
-                self->insert_struct(dm, g_data, generic_name.__ptr__());
-            } else if (dm->generic_functions.has(g_data->generic_type.name.__ptr__())) {
-                if (dm->functions.has(generic_name.__ptr__())) {
-                    continue;
-                }
-                insert_count += 1;
-                self->insert_function(dm, g_data, generic_name.__ptr__());
-            }
-
+        var domain_file = g_data->generic_type.loc_file.__ptr__();
+        if (!self->ctx->has_domain(domain_file)) {
             generic_name.delete();
+            return 0;
         }
-        return insert_count;
+
+        var dm = self->ctx->get_domain(domain_file);
+        if (dm->generic_structs.has(g_data->generic_type.name.__ptr__())) {
+            if (dm->structs.has(generic_name.__ptr__())) {
+                return 0;
+            }
+            self->insert_struct(dm, g_data, generic_name.__ptr__());
+        } else if (dm->generic_functions.has(g_data->generic_type.name.__ptr__())) {
+            if (dm->functions.has(generic_name.__ptr__())) {
+                return 0;
+            }
+            self->insert_function(dm, g_data, generic_name.__ptr__());
+        }
+
+        generic_name.delete();
+        return 1;
     }
 
     func replace_type(self, t: type*, g_data: generic_data*) {
@@ -874,6 +855,7 @@ impl generic_visitor {
                         f->clear();
                         f->append_str(func_node->name.__ptr__());
                     }
+                    // TODO: remove method with monomorphic name
                 } else if (s->static_method.has(monomorphic_name)) {
                     if (s->fields.has(func_node->name.__ptr__()) ||
                         s->method.has(func_node->name.__ptr__()) ||
@@ -891,6 +873,7 @@ impl generic_visitor {
                         f->clear();
                         f->append_str(func_node->name.__ptr__());
                     }
+                    // TODO: remove static_method with monomorphic name
                 }
                 new_vec.push(ptr<ast>::wrap(func_node => ast*));
             }
@@ -934,7 +917,7 @@ impl generic_visitor {
         };
         if (s->generic_struct_decl != nil) {
             trp.replace_struct(s->generic_struct_decl);
-            self->root->decls.push(ptr<ast>::wrap(s->generic_struct_decl => ast*));
+            self->need_to_be_inserted.push(ptr<ast>::wrap(s->generic_struct_decl => ast*));
             // s.name is generated with generic
             // for example original name is "foo",
             // but now it should be replaced with "foo<int, bool>"
@@ -946,7 +929,7 @@ impl generic_visitor {
         foreach (var i; s->generic_struct_impl) {
             var i_n = i.get().unwrap();
             trp.replace_impl(i_n);
-            self->root->decls.push(ptr<ast>::wrap(i_n => ast*));
+            self->need_to_be_inserted.push(ptr<ast>::wrap(i_n => ast*));
             // s.name is generated with generic
             // for example original name is "foo",
             // but now it should be replaced with "foo<int, bool>"
@@ -977,7 +960,7 @@ impl generic_visitor {
                 g_data: g_data
             };
             trp.replace_func(f->generic_func_decl);
-            self->root->decls.push(ptr<ast>::wrap(f->generic_func_decl => ast*));
+            self->need_to_be_inserted.push(ptr<ast>::wrap(f->generic_func_decl => ast*));
             f->generic_func_decl->name.clear();
             f->generic_func_decl->name.append_str(f->name.__ptr__());
             f->generic_func_decl->clear_generic_types();

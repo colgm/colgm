@@ -55,6 +55,7 @@ public:
     std::string full_path_name(bool with_generics = true) const;
     std::string full_path_name_with_pointer(bool with_generics = true) const;
     std::string generic_name() const;
+    u64 generic_depth() const;
     // return name for symbol table search
     // normal type: .name
     // generic type: .generic_name()

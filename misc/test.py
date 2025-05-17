@@ -27,7 +27,6 @@ TEST_LIST = [
     ("test/for_iter.colgm",                "src", False),
     ("test/for_test.colgm",                "src", False),
     ("test/func.colgm",                    "src", False),
-    ("test/generic_array.colgm",           "src", False),
     ("test/generic_embed.colgm",           "src", False),
     ("test/hello.colgm",                   "src", False),
     ("test/initializer.colgm",             "src", False),

@@ -170,12 +170,8 @@ void generic_visitor::check_generic_type(
     }
 
     // insert data, use symbols location file to avoid duplication of name
-    auto unique_name = sym.loc_file + "|" + ss.str();
-    if (generic_type_map.count(unique_name)) {
-        return;
-    }
-    generic_type_map.insert({unique_name, {}});
-    auto& rec = generic_type_map.at(unique_name);
+
+    auto rec = generic_data {};
     rec.name = ss.str();
     rec.generic_type.name = type_name;
     rec.generic_type.loc_file = sym.loc_file;
@@ -186,6 +182,8 @@ void generic_visitor::check_generic_type(
         rec.generic_type.generics.push_back(resolved_type);
         rec.types.insert({generic_template[i], resolved_type});
     }
+
+    insert_count += insert_generic_data(rec);
 }
 
 bool generic_visitor::visit_struct_decl(struct_decl* node) {
@@ -267,6 +265,8 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
 
 bool generic_visitor::visit_type_def(ast::type_def* node) {
     if (node->get_generic_types()) {
+        // dfs try to initialize generic input types first
+        // then try to initialize the outside type
         node->get_generic_types()->accept(this);
         scan_generic_type(node);
     }
@@ -432,7 +432,7 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     type_replace_pass trp(err, ctx, data);
     if (s.generic_struct_decl) {
         trp.visit_struct(s.generic_struct_decl);
-        root->add_decl(s.generic_struct_decl);
+        need_to_be_inserted.push_back(s.generic_struct_decl);
         // s.name is generated with generic
         // for example original name is "foo",
         // but now it should be replaced with "foo<int, bool>"
@@ -442,7 +442,7 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     }
     for(auto i : s.generic_struct_impl) {
         trp.visit_impl(i);
-        root->add_decl(i);
+        need_to_be_inserted.push_back(i);
         // s.name is generated with generic
         // for example original name is "foo",
         // but now it should be replaced with "foo<int, bool>"
@@ -466,7 +466,7 @@ void generic_visitor::replace_func_type(colgm_func& f,
     if (f.generic_func_decl) {
         type_replace_pass trp(err, ctx, data);
         trp.visit_func(f.generic_func_decl);
-        root->add_decl(f.generic_func_decl);
+        need_to_be_inserted.push_back(f.generic_func_decl);
         // f.name is generated with generic
         // for example original name is "foo",
         // but now it should be replaced with "foo<int, bool>"
@@ -476,98 +476,79 @@ void generic_visitor::replace_func_type(colgm_func& f,
     f.generic_func_decl = nullptr;
 }
 
-void generic_visitor::report_recursive_generic_generation() {
-    for(const auto& i : generic_type_map) {
-        const auto& data = i.second.generic_type;
-        if (!ctx.global.domain.count(data.loc_file)) {
-            continue;
-        }
-        const auto& dm = ctx.global.domain.at(data.loc_file);
-        const auto generic_name = data.generic_name();
-        if (dm.structs.count(generic_name) || dm.functions.count(generic_name)) {
-            continue;
-        }
-
-        const auto& loc = dm.generic_structs.count(data.name)
-            ? dm.generic_structs.at(data.name).location
-            : dm.generic_functions.at(data.name).location;
-
-        auto info = std::string("template instantiation depth exceeds maximum of ");
-        info += std::to_string(MAX_RECURSIVE_DEPTH) + ":\n";
-        info += "  --> " + generic_name;
-        err.err(loc, info);
+void generic_visitor::report_recursive_generic_generation(const type& data) {
+    if (!ctx.global.domain.count(data.loc_file)) {
+        return;
     }
+    const auto& dm = ctx.global.domain.at(data.loc_file);
+    const auto generic_name = data.generic_name();
+    if (dm.structs.count(generic_name) || dm.functions.count(generic_name)) {
+        return;
+    }
+
+    const auto& loc = dm.generic_structs.count(data.name)
+        ? dm.generic_structs.at(data.name).location
+        : dm.generic_functions.at(data.name).location;
+
+    auto info = std::string("template instantiation depth exceeds maximum of ");
+    info += std::to_string(MAX_RECURSIVE_DEPTH) + ":\n";
+    info += "  --> " + generic_name;
+    err.err(loc, info);
 }
 
-void generic_visitor::dump() const {
-    for(const auto& i : generic_type_map) {
-        std::cout << i.second.generic_type.full_path_name();
-        std::cout << ": " << i.second.generic_type.loc_file << "\n";
-        for(const auto& real : i.second.generic_type.generics) {
-            std::cout << "  ";
-            std::cout << real.full_path_name() << " ";
-            std::cout << real.loc_file << "\n";
-        }
-        std::cout << "\n";
-    }
-}
-
-u64 generic_visitor::insert_into_symbol_table() {
-    ++visit_count;
-    if (visit_count > MAX_RECURSIVE_DEPTH) {
-        report_recursive_generic_generation();
+u64 generic_visitor::insert_generic_data(const generic_data& gd) {
+    if (gd.generic_type.generic_depth() > MAX_RECURSIVE_DEPTH) {
+        report_recursive_generic_generation(gd.generic_type);
         return 0;
     }
-    u64 insert_count = 0;
-    for(const auto& i : generic_type_map) {
-        const auto& data = i.second.generic_type;
-        // not full path name
-        const auto generic_name = data.generic_name();
 
-        if (!ctx.global.domain.count(data.loc_file)) {
-            continue;
-        }
+    const auto& data = gd.generic_type;
+    const auto generic_name = data.generic_name();
 
-        auto& dm = ctx.global.domain.at(data.loc_file);
-        if (dm.generic_structs.count(data.name)) {
-            // no need to load again, otherwise will cause redefine error
-            if (dm.structs.count(generic_name)) {
-                continue;
-            }
-            ++insert_count;
-            dm.structs.insert({
-                generic_name,
-                dm.generic_structs.at(data.name)
-            });
-            dm.structs.at(generic_name).name = generic_name;
-            dm.structs.at(generic_name).generic_template.clear();
-            ctx.insert(generic_name, symbol_info {
-                .kind = sym_kind::struct_kind,
-                .loc_file = data.loc_file,
-                .is_public = dm.structs.at(generic_name).is_public
-            });
-            replace_struct_type(dm.structs.at(generic_name), i.second);
-        } else if (dm.generic_functions.count(data.name)) {
-            // no need to load again, otherwise will cause redefine error
-            if (dm.functions.count(generic_name)) {
-                continue;
-            }
-            ++insert_count;
-            dm.functions.insert({
-                generic_name,
-                dm.generic_functions.at(data.name)
-            });
-            dm.functions.at(generic_name).name = generic_name;
-            dm.functions.at(generic_name).generic_template.clear();
-            ctx.insert(generic_name, symbol_info {
-                .kind = sym_kind::func_kind,
-                .loc_file = data.loc_file,
-                .is_public = dm.functions.at(generic_name).is_public
-            });
-            replace_func_type(dm.functions.at(generic_name), i.second);
-        }
+    if (!ctx.global.domain.count(data.loc_file)) {
+        return 0;
     }
-    return insert_count;
+
+    auto& dm = ctx.global.domain.at(data.loc_file);
+    if (dm.generic_structs.count(data.name)) {
+        // no need to load again, otherwise will cause redefine error
+        if (dm.structs.count(generic_name)) {
+            return 0;
+        }
+
+        dm.structs.insert({
+            generic_name,
+            dm.generic_structs.at(data.name)
+        });
+        dm.structs.at(generic_name).name = generic_name;
+        dm.structs.at(generic_name).generic_template.clear();
+        ctx.insert(generic_name, symbol_info {
+            .kind = sym_kind::struct_kind,
+            .loc_file = data.loc_file,
+            .is_public = dm.structs.at(generic_name).is_public
+        });
+        replace_struct_type(dm.structs.at(generic_name), gd);
+    } else if (dm.generic_functions.count(data.name)) {
+        // no need to load again, otherwise will cause redefine error
+        if (dm.functions.count(generic_name)) {
+            return 0;
+        }
+
+        dm.functions.insert({
+            generic_name,
+            dm.generic_functions.at(data.name)
+        });
+        dm.functions.at(generic_name).name = generic_name;
+        dm.functions.at(generic_name).generic_template.clear();
+        ctx.insert(generic_name, symbol_info {
+            .kind = sym_kind::func_kind,
+            .loc_file = data.loc_file,
+            .is_public = dm.functions.at(generic_name).is_public
+        });
+        replace_func_type(dm.functions.at(generic_name), gd);
+    }
+
+    return 1;
 }
 
 bool regist_pass::check_is_public_struct(ast::identifier* node,

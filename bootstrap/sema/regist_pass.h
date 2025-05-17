@@ -57,8 +57,9 @@ private:
     reporter rp;
     type_resolver tr;
     ast::root* root;
-    std::unordered_map<std::string, generic_data> generic_type_map;
-    u64 visit_count;
+
+    u64 insert_count;
+    std::vector<ast::decl*> need_to_be_inserted;
 
 private:
     void scan_generic_type(ast::type_def*);
@@ -85,22 +86,29 @@ private:
 
 private:
     void visit(ast::root* n) {
-        generic_type_map = {};
         root = n;
         n->accept(this);
     }
-    u64 insert_into_symbol_table();
-    void report_recursive_generic_generation();
+    u64 insert_generic_data(const generic_data&);
+    void report_recursive_generic_generation(const type&);
 
 public:
     generic_visitor(error& e, sema_context& c):
         err(e), ctx(c), rp(e), tr(e, ctx), root(nullptr) {}
-    void dump() const;
     void scan_and_insert(ast::root* n) {
-        visit_count = 0;
+        insert_count = 0;
+        need_to_be_inserted.clear();
         visit(n);
-        while (insert_into_symbol_table()) {
+        for (auto n: need_to_be_inserted) {
+            root->add_decl(n);
+        }
+        while (insert_count) {
+            insert_count = 0;
+            need_to_be_inserted.clear();
             visit(n);
+            for (auto n: need_to_be_inserted) {
+                root->add_decl(n);
+            }
         }
     }
 };

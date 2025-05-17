@@ -396,6 +396,21 @@ impl type {
         return res;
     }
 
+    pub func generic_depth(self) -> i64 {
+        if (self->generics.empty()) {
+            return 0;
+        }
+        var result = 1;
+        var max_depth = 0;
+        foreach (var i; self->generics) {
+            var depth = i.get()->generic_depth();
+            if (depth > max_depth) {
+                max_depth = depth;
+            }
+        }
+        return result + max_depth;
+    }
+
     pub func full_path_name(self, pkg: package*, with_pointer: bool) -> str {
         var res = str::instance();
         if (pkg->has_file(self->loc_file.__ptr__())) {

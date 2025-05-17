@@ -80,6 +80,21 @@ std::string type::generic_name() const {
     return result;
 }
 
+u64 type::generic_depth() const {
+    if (generics.empty()) {
+        return 0;
+    }
+    u64 result = 1;
+    u64 max_depth = 0;
+    for(const auto& g: generics) {
+        auto depth = g.generic_depth();
+        if (depth > max_depth) {
+            max_depth = depth;
+        }
+    }
+    return result + max_depth;
+}
+
 std::ostream& operator<<(std::ostream& out, const type& t) {
     t.check_pointer_depth();
     out << t.full_path_name();

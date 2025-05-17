@@ -1,4 +1,5 @@
-use std::libc::puts;
+use std::libc::{ puts, malloc, free };
+use err::panic::{ assert };
 
 struct A<T> {
     a_t: T
@@ -8,9 +9,102 @@ struct B<T> {
     b_t: T
 }
 
+struct trivial_t {
+    a: i32
+}
+
+impl trivial_t {
+    pub func instance() -> trivial_t {
+        return trivial_t { a: 0 };
+    }
+}
+
+struct non_trivial_t {
+    a: i32*
+}
+
+impl non_trivial_t {
+    pub func instance() -> non_trivial_t {
+        return non_trivial_t { a: malloc(1024) => i32* };
+    }
+
+    pub func delete(self) {
+        if (self->a != nil) {
+            free(self->a => i8*);
+            self->a = nil;
+        }
+    }
+}
+
+struct test<T, K> {
+    a: T,
+    b: K
+}
+
+impl test<T, K> {
+    pub func instance() -> test<T, K> {
+        return test<T, K> {
+            a: T::instance(),
+            b: K::instance()
+        };
+    }
+
+    #[is_trivial(T, K)]
+    pub func delete(self) {
+        // do nothing
+        puts("[generic_embed.colgm] is_trivial(T, K) delete");
+    }
+
+    #[is_non_trivial(T, K)]
+    pub func delete(self) {
+        self->a.delete();
+        self->b.delete();
+        puts("[generic_embed.colgm] is_non_trivial(T, K) delete");
+    }
+
+    #[is_trivial(T, K)]
+    pub func get(self) -> T {
+        puts("[generic_embed.colgm] is_trivial(T, K) get");
+        return self->a;
+    }
+
+    #[is_non_trivial(T, K)]
+    pub func get(self) -> T* {
+        puts("[generic_embed.colgm] is_non_trivial(T, K) get");
+        return self->a.__ptr__();
+    }
+}
+
+func array_test() {
+    var buff: [A<i32>; 128] = [
+        A<i32> { a_t: 0 },
+        A<i32> { a_t: 114 },
+        A<i32> { a_t: -514 },
+    ];
+    assert(buff[0].a_t == 0, "buff[0].a_t != 0");
+    assert(buff[1].a_t == 114, "buff[1].a_t != 114");
+    assert(buff[2].a_t == -514, "buff[2].a_t != -514");
+
+    puts("[generic_embed.colgm] generic array passed");
+}
+
 func main() -> i32 {
     var a: B<A<i32>> = B<A<i32>> { b_t: A<i32> { a_t: 42 } };
     var b: B<A<i32*>> = B<A<i32*>> { b_t: A<i32*> { a_t: nil } };
     puts("[generic_embed.colgm] passed");
+
+    var ta = test<trivial_t, trivial_t>::instance();
+    var tb = test<non_trivial_t, test<trivial_t, trivial_t>>::instance();
+    var tc = test<test<trivial_t, trivial_t>, test<trivial_t, trivial_t>>::instance();
+    ta.get();
+    tb.get();
+    tc.get();
+    ta.delete();
+    tb.delete();
+    tc.delete();
+    puts("[generic_embed.colgm] cond compile passed");
+
+    array_test();
+
     return a.b_t.a_t - 42;
 }
