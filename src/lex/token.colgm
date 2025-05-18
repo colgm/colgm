@@ -95,15 +95,12 @@ impl token {
         };
     }
 
-    pub func copy(self) -> token* {
-        var res = token::__alloc__();
-        if (res == nil) {
-            panic("failed to allocate memory");
-        }
-        res->kind = self->kind;
-        res->content = self->content.copy_instance();
-        res->location = self->location.copy_instance();
-        return res;
+    pub func copy_instance(self) -> token {
+        return token {
+            kind: self->kind,
+            content: self->content.copy_instance(),
+            location: self->location.copy_instance()
+        };
     }
 
     pub func delete(self) {

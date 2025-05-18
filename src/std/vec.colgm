@@ -3,7 +3,7 @@ use std::ptr::{ ptr_size };
 use err::panic::{ panic };
 
 pub struct vec<T> {
-    data: T**,
+    data: T*,
     size: u64,
     capacity: u64
 }
@@ -22,10 +22,7 @@ impl vec<T> {
         }
         res->size = 0;
         res->capacity = 4;
-        res->data = malloc(res->capacity * ptr_size()) => T**;
-        for (var i: u64 = 0; i < res->capacity; i += 1) {
-            res->data[i] = nil;
-        }
+        res->data = malloc(res->capacity * T::__size__()) => T*;
         return res;
     }
 
@@ -35,17 +32,14 @@ impl vec<T> {
             capacity: 4,
             data: nil
         };
-        res.data = malloc(res.capacity * ptr_size()) => T**;
-        for (var i: u64 = 0; i < res.capacity; i += 1) {
-            res.data[i] = nil;
-        }
+        res.data = malloc(res.capacity * T::__size__()) => T*;
         return res;
     }
 
     pub func copy(self) -> vec<T>* {
         var res = vec<T>::new();
         for (var i: u64 = 0; i < self->size; i += 1) {
-            res->push(self->data[i]);
+            res->push(self->data[i].__ptr__());
         }
         return res;
     }
@@ -53,24 +47,21 @@ impl vec<T> {
     pub func copy_instance(self) -> vec<T> {
         var res = vec<T>::instance();
         for (var i: u64 = 0; i < self->size; i += 1) {
-            res.push(self->data[i]);
+            res.push(self->data[i].__ptr__());
         }
         return res;
     }
 
     pub func clear(self) {
         for (var i: u64 = 0; i < self->size; i += 1) {
-            self->data[i]->delete();
-            free(self->data[i] => i8*);
-            self->data[i] = nil;
+            self->data[i].delete();
         }
         self->size = 0;
     }
 
     pub func delete(self) {
         for (var i: u64 = 0; i < self->size; i += 1) {
-            self->data[i]->delete();
-            free(self->data[i] => i8*);
+            self->data[i].delete();
         }
         free(self->data => i8*);
         self->data = nil;
@@ -86,15 +77,15 @@ impl vec<T> {
         self->capacity *= 2;
         self->data = realloc(
             self->data => i8*,
-            self->capacity * ptr_size()
-        ) => T**;
+            self->capacity * T::__size__()
+        ) => T*;
     }
 
     pub func push(self, item: T*) {
         if (self->size >= self->capacity) {
             self->extend_capacity();
         }
-        self->data[self->size] = item->copy();
+        self->data[self->size] = item->copy_instance();
         self->size += 1;
     }
 
@@ -103,23 +94,21 @@ impl vec<T> {
             return;
         }
         self->size -= 1;
-        self->data[self->size]->delete();
-        free(self->data[self->size] => i8*);
-        self->data[self->size] = nil;
+        self->data[self->size].delete();
     }
 
     pub func back(self) -> T* {
         if (self->size == 0) {
             panic("empty vector");
         }
-        return self->data[self->size - 1];
+        return self->data[self->size - 1].__ptr__();
     }
 
     pub func get(self, index: u64) -> T* {
         if (index >= self->size) {
             panic("index out of bounds");
         }
-        return self->data[index];
+        return self->data[index].__ptr__();
     }
 
     pub func iter(self) -> iter<T> {

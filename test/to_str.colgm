@@ -1,31 +1,36 @@
-use std::libc::{ puts, memcpy, malloc, itoa };
+use std::libc::{ puts, memcpy, malloc, itoa, streq };
+use err::panic::{ assert };
+
+func test_convert() {
+    var buff: [i8; 256] = [];
+    itoa(114514, buff, 2);
+    assert(streq(buff, "11011111101010010"), "114514 == 0b11011111101010010");
+    itoa(114514, buff, 8);
+    assert(streq(buff, "337522"), "11514 == 0o337522");
+    itoa(114514, buff, 10);
+    assert(streq(buff, "114514"), "114514 == 114514");
+    itoa(114514, buff, 16);
+    assert(streq(buff, "1bf52"), "114514 == 0x1bf52");
+
+    itoa(2147483647, buff, 2);
+    assert(streq(buff, "1111111111111111111111111111111"), "2147483647 == 0b1111111111111111111111111111111");
+    itoa(2147483647, buff, 8);
+    assert(streq(buff, "17777777777"), "2147483647 == 0o17777777777");
+    itoa(2147483647, buff, 10);
+    assert(streq(buff, "2147483647"), "2147483647 == 2147483647");
+    itoa(2147483647, buff, 16);
+    assert(streq(buff, "7fffffff"), "2147483647 == 0x7fffffff");
+}
 
 func main() -> i32 {
+    test_convert();
+
     var result: [i8; 256] = [];
     memcpy(result, "[to_str.colgm] ", 15);
 
     var buff_begin = ((result => u64) + 15) => i8*;
-
-    itoa(114514, buff_begin, 2);
-    puts(result);
-    itoa(114514, buff_begin, 8);
-    puts(result);
-    itoa(114514, buff_begin, 10);
-    puts(result);
-    itoa(114514, buff_begin, 16);
-    puts(result);
-
     for (var index = 0; index <= 2147483647; index += 1) {
-        if (index % 10000000 == 0 and index > 0) {
-            itoa(index, buff_begin, 2);
-            puts(result);
-            itoa(index, buff_begin, 8);
-            puts(result);
-            itoa(index, buff_begin, 10);
-            puts(result);
-            itoa(index, buff_begin, 16);
-            puts(result);
-        } elsif (index == 2147483647 and index > 0) {
+        if (index % 50000000 == 0 and index > 0) {
             itoa(index, buff_begin, 2);
             puts(result);
             itoa(index, buff_begin, 8);
