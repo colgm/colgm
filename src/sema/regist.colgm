@@ -470,15 +470,14 @@ impl regist_pass {
         
         for (var i: u64 = 0; i < v->size; i += 1) {
             var n_ast = v->get(i).unwrap() => ast_enum_member*;
-            var value = basic<i64>::wrap(i => i64);
+            var value = i => i64;
             var member_name = n_ast->name->content.__ptr__();
             if (n_ast->value != nil) {
                 var nl = n_ast->value => ast_number_literal*;
-                var res = to_f64(nl->literal.c_str) => i64;
-                value = basic<i64>::wrap(res);
+                value = to_f64(nl->literal.c_str) => i64;
             }
             e->ordered_member.push(member_name);
-            e->members.insert(member_name, value.__ptr__());
+            e->members.insert(member_name, value);
         }
     }
 

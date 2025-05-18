@@ -1,7 +1,7 @@
 use std::pair::{ pair };
 use std::map::{ hashmap };
 use std::str::{ str };
-use std::ptr::{ ptr, basic };
+use std::ptr::{ ptr };
 use std::io::{ io };
 use std::vec::{ vec, primitive_vec };
 
@@ -196,7 +196,7 @@ pub struct mir2sir {
     ctx: sema_context*,
     sctx: sir_context*,
     pkg: package*,
-    type_mapper: hashmap<str, basic<symbol_kind>>,
+    type_mapper: hashmap<str, symbol_kind>,
     basic_type_mapper: hashmap<str, str>,
     primitive_methods: hashmap<str, str>,
 
@@ -223,7 +223,7 @@ impl mir2sir {
             ctx: ctx,
             sctx: sctx,
             pkg: pkg,
-            type_mapper: hashmap<str, basic<symbol_kind>>::instance(),
+            type_mapper: hashmap<str, symbol_kind>::instance(),
             basic_type_mapper: hashmap<str, str>::instance(),
             primitive_methods: hashmap<str, str>::instance(),
             block: nil,
@@ -486,8 +486,7 @@ impl mir2sir {
             if (self->dwarf_status.impl_debug_info.has(m_func->name.__ptr__())) {
                 self->dwarf_status.scope_index = self->dwarf_status
                                                      .impl_debug_info
-                                                     .get(m_func->name.__ptr__())
-                                                     ->unwrap();
+                                                     .get(m_func->name.__ptr__());
                 s_func.debug_info_index = self->dwarf_status.scope_index;
             } else {
                 self->dwarf_status.scope_index = DI_ERROR_INDEX();
@@ -521,9 +520,7 @@ impl mir2sir {
                 e_type.loc_file.append_str(j.value()->location.file.__ptr__());
                 
                 var e_name = e_type.full_path_name(self->pkg, false);
-                var e_kind = basic<symbol_kind>::wrap(symbol_kind::enum_kind);
-
-                self->type_mapper.insert(e_name.__ptr__(), e_kind.__ptr__());
+                self->type_mapper.insert(e_name.__ptr__(), symbol_kind::enum_kind);
                 
                 e_type.delete();
                 e_name.delete();
@@ -534,9 +531,7 @@ impl mir2sir {
                 s_type.loc_file.append_str(j.value()->location.file.__ptr__());
                 
                 var s_name = s_type.full_path_name(self->pkg, false);
-                var s_kind = basic<symbol_kind>::wrap(symbol_kind::struct_kind);
-
-                self->type_mapper.insert(s_name.__ptr__(), s_kind.__ptr__());
+                self->type_mapper.insert(s_name.__ptr__(), symbol_kind::struct_kind);
                 
                 s_type.delete();
                 s_name.delete();
@@ -568,7 +563,7 @@ impl mir2sir {
             info.delete();
         }
 
-        match (self->type_mapper.get(full_name.__ptr__())->unwrap()) {
+        match (self->type_mapper.get(full_name.__ptr__())) {
             symbol_kind::struct_kind => {
                 var new_name = mangle_struct_name(full_name.__ptr__());
                 copy.name.clear();
@@ -1835,7 +1830,7 @@ impl mir2sir {
             mir_value_kind::enum_symbol => {
                 var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
                 var em = dm->enums.get(prev.resolved_type.name.__ptr__());
-                var index = em->members.get(n->name.__ptr__())->unwrap();
+                var index = em->members.get(n->name.__ptr__());
                 var index_str = str::from_i64(index);
                 var v = mir_value_t::literal(
                     index_str.__ptr__(),
@@ -2850,7 +2845,7 @@ impl mir2sir {
                 DI_enumerator::new(
                     self->dwarf_status.DI_counter,
                     i.get()->c_str,
-                    e->members.get(i.get())->unwrap()
+                    e->members.get(i.get())
                 ) => DI_node*
             ));
             enum_list->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
@@ -2967,7 +2962,7 @@ impl mir2sir {
         if (f->block != nil) {
             self->dwarf_status.impl_debug_info.insert(
                 f->name.__ptr__(),
-                basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+                self->dwarf_status.DI_counter
             );
         }
         self->dwarf_status.DI_counter += 1;

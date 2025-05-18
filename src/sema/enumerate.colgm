@@ -1,7 +1,6 @@
 use std::str::{ str };
 use std::vec::{ vec };
 use std::map::{ hashmap };
-use std::ptr::{ basic };
 use std::io::{ io };
 
 use err::span::{ span };
@@ -11,7 +10,7 @@ pub struct colgm_enum {
     name: str,
     location: span,
     ordered_member: vec<str>,
-    members: hashmap<str, basic<i64>>,
+    members: hashmap<str, i64>,
     // mark whether the enum is public or not
     is_public: bool
 }
@@ -25,7 +24,7 @@ impl colgm_enum {
         res->name = name->copy_instance();
         res->location = loc->copy_instance();
         res->ordered_member = vec<str>::instance();
-        res->members = hashmap<str, basic<i64>>::instance();
+        res->members = hashmap<str, i64>::instance();
         res->is_public = false;
         return res;
     }
@@ -77,7 +76,7 @@ impl colgm_enum {
         foreach (var i; self->ordered_member) {
             out.out("    ").out(i.get()->c_str).out(": ");
             var v = self->members.get(i.get());
-            out.orange().out_i64(v->data).reset().out("\n");
+            out.orange().out_i64(v).reset().out("\n");
         }
         out.out("  }\n");
     }
