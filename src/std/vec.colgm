@@ -36,6 +36,7 @@ impl vec<T> {
         return res;
     }
 
+    #[is_non_trivial(T)]
     pub func copy(self) -> vec<T>* {
         var res = vec<T>::new();
         for (var i: u64 = 0; i < self->size; i += 1) {
@@ -44,6 +45,16 @@ impl vec<T> {
         return res;
     }
 
+    #[is_trivial(T)]
+    pub func copy(self) -> vec<T>* {
+        var res = vec<T>::new();
+        for (var i: u64 = 0; i < self->size; i += 1) {
+            res->push(self->data[i]);
+        }
+        return res;
+    }
+
+    #[is_non_trivial(T)]
     pub func copy_instance(self) -> vec<T> {
         var res = vec<T>::instance();
         for (var i: u64 = 0; i < self->size; i += 1) {
@@ -52,6 +63,16 @@ impl vec<T> {
         return res;
     }
 
+    #[is_trivial(T)]
+    pub func copy_instance(self) -> vec<T> {
+        var res = vec<T>::instance();
+        for (var i: u64 = 0; i < self->size; i += 1) {
+            res.push(self->data[i]);
+        }
+        return res;
+    }
+
+    #[is_non_trivial(T)]
     pub func clear(self) {
         for (var i: u64 = 0; i < self->size; i += 1) {
             self->data[i].delete();
@@ -59,10 +80,24 @@ impl vec<T> {
         self->size = 0;
     }
 
+    #[is_trivial(T)]
+    pub func clear(self) {
+        self->size = 0;
+    }
+
+    #[is_non_trivial(T)]
     pub func delete(self) {
         for (var i: u64 = 0; i < self->size; i += 1) {
             self->data[i].delete();
         }
+        free(self->data => i8*);
+        self->data = nil;
+        self->size = 0;
+        self->capacity = 0;
+    }
+
+    #[is_trivial(T)]
+    pub func delete(self) {
         free(self->data => i8*);
         self->data = nil;
         self->size = 0;
@@ -81,6 +116,7 @@ impl vec<T> {
         ) => T*;
     }
 
+    #[is_non_trivial(T)]
     pub func push(self, item: T*) {
         if (self->size >= self->capacity) {
             self->extend_capacity();
@@ -89,6 +125,16 @@ impl vec<T> {
         self->size += 1;
     }
 
+    #[is_trivial(T)]
+    pub func push(self, item: T) {
+        if (self->size >= self->capacity) {
+            self->extend_capacity();
+        }
+        self->data[self->size] = item;
+        self->size += 1;
+    }
+
+    #[is_non_trivial(T)]
     pub func pop_back(self) {
         if (self->size == 0) {
             return;
@@ -97,6 +143,15 @@ impl vec<T> {
         self->data[self->size].delete();
     }
 
+    #[is_trivial(T)]
+    pub func pop_back(self) {
+        if (self->size == 0) {
+            panic("empty vector");
+        }
+        self->size -= 1;
+    }
+
+    #[is_non_trivial(T)]
     pub func back(self) -> T* {
         if (self->size == 0) {
             panic("empty vector");
@@ -104,11 +159,28 @@ impl vec<T> {
         return self->data[self->size - 1].__ptr__();
     }
 
+    #[is_trivial(T)]
+    pub func back(self) -> T {
+        if (self->size == 0) {
+            panic("empty vector");
+        }
+        return self->data[self->size - 1];
+    }
+
+    #[is_non_trivial(T)]
     pub func get(self, index: u64) -> T* {
         if (index >= self->size) {
             panic("index out of bounds");
         }
         return self->data[index].__ptr__();
+    }
+
+    #[is_trivial(T)]
+    pub func get(self, index: u64) -> T {
+        if (index >= self->size) {
+            panic("index out of bounds");
+        }
+        return self->data[index];
     }
 
     pub func iter(self) -> iter<T> {
@@ -150,7 +222,13 @@ impl iter<T> {
         };
     }
 
+    #[is_non_trivial(T)]
     pub func get(self) -> T* {
+        return self->_vec->get(self->_index);
+    }
+
+    #[is_trivial(T)]
+    pub func get(self) -> T {
         return self->_vec->get(self->_index);
     }
 

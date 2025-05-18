@@ -2,60 +2,9 @@ use std::str::{ str };
 use std::libc::{ malloc, free };
 use std::list::{ list, list_iter };
 use std::io::{ io };
+use std::pair::{ pair };
 
 use err::panic::{ panic };
-
-pub struct pair<K, V> {
-    key: K,
-    value: V
-}
-
-impl pair<K, V> {
-    pub func instance(key: K*, value: V*) -> pair<K, V> {
-        return pair<K, V> {
-            key: key->copy_instance(),
-            value: value->copy_instance()
-        };
-    }
-
-    #[is_non_trivial(K)]
-    func key_delete(self) {
-        self->key.delete();
-    }
-
-    #[is_trivial(K)]
-    func key_delete(self) {}
-
-    #[is_non_trivial(V)]
-    func value_delete(self) {
-        self->value.delete();
-    }
-
-    #[is_trivial(V)]
-    func value_delete(self) {}
-
-    pub func delete(self) {
-        self->key_delete();
-        self->value_delete();
-    }
-
-    pub func copy(self) -> pair<K, V>* {
-        var res = pair<K, V>::__alloc__();
-        if (res == nil) {
-            panic("failed to allocate memory");
-        }
-        res->key = self->key.copy_instance();
-        res->value = self->value.copy_instance();
-        return res;
-    }
-
-    pub func copy_instance(self) -> pair<K, V> {
-        return pair<K, V> {
-            key: self->key.copy_instance(),
-            value: self->value.copy_instance()
-        };
-    }
-}
 
 pub struct hashmap<K, V> {
     size: u64,

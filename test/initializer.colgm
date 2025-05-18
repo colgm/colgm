@@ -1,4 +1,4 @@
-use std::libc::{ puts, strlen, memcpy, malloc, free, itoa };
+use std::io::{ io };
 
 struct Test {
     field_a: i64,
@@ -6,19 +6,8 @@ struct Test {
 }
 
 func put_info(test: Test) {
-    var info_field_a = "[initializer.colgm] field_a: ";
-    var info_field_b = "[initializer.colgm] field_b: ";
-
-    var buff: [i8; 256] = [];
-    memcpy(buff, info_field_a, strlen(info_field_a) => u64);
-    var buff_num_begin = (buff => u64 + strlen(info_field_a) => u64) => i8*;
-    itoa(test.field_a, buff_num_begin, 10);
-    puts(buff);
-
-    memcpy(buff, info_field_b, strlen(info_field_b) => u64);
-    buff_num_begin = (buff => u64 + strlen(info_field_b) => u64) => i8*;
-    itoa(test.field_b, buff_num_begin, 10);
-    puts(buff);
+    io::stdout().out("[initializer.colgm] field_a: ").out_i64(test.field_a).endln();
+    io::stdout().out("[initializer.colgm] field_b: ").out_i64(test.field_b).endln();
 }
 
 func main() -> i32 {

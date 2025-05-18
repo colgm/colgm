@@ -1,0 +1,104 @@
+use err::panic::{ panic };
+
+pub struct pair<K, V> {
+    key: K,
+    value: V
+}
+
+impl pair<K, V> {
+    #[is_non_trivial(K, V)]
+    pub func instance(key: K*, value: V*) -> pair<K, V> {
+        return pair<K, V> {
+            key: key->copy_instance(),
+            value: value->copy_instance()
+        };
+    }
+
+    #[is_non_trivial(K)]
+    #[is_trivial(V)]
+    pub func instance(key: K*, value: V) -> pair<K, V> {
+        return pair<K, V> {
+            key: key->copy_instance(),
+            value: value
+        };
+    }
+
+    #[is_trivial(K)]
+    #[is_non_trivial(V)]
+    pub func instance(key: K, value: V*) -> pair<K, V> {
+        return pair<K, V> {
+            key: key,
+            value: value->copy_instance()
+        };
+    }
+
+    #[is_trivial(K, V)]
+    pub func instance(key: K, value: V) -> pair<K, V> {
+        return pair<K, V> {
+            key: key,
+            value: value
+        };
+    }
+}
+
+impl pair<K, V> {
+    #[is_non_trivial(K)]
+    func key_delete(self) {
+        self->key.delete();
+    }
+
+    #[is_trivial(K)]
+    func key_delete(self) {}
+
+    #[is_non_trivial(V)]
+    func value_delete(self) {
+        self->value.delete();
+    }
+
+    #[is_trivial(V)]
+    func value_delete(self) {}
+
+    pub func delete(self) {
+        self->key_delete();
+        self->value_delete();
+    }
+}
+
+impl pair<K, V> {
+    #[is_non_trivial(K)]
+    func copy_key(self) -> K {
+        return self->key.copy_instance();
+    }
+    
+    #[is_trivial(K)]
+    func copy_key(self) -> K {
+        return self->key;
+    }
+
+    #[is_non_trivial(V)]
+    func copy_value(self) -> V {
+        return self->value.copy_instance();
+    }
+
+    #[is_trivial(V)]
+    func copy_value(self) -> V {
+        return self->value;
+    }
+
+    pub func copy(self) -> pair<K, V>* {
+        var res = pair<K, V>::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
+        res->key = self->copy_key();
+        res->value = self->copy_value();
+        return res;
+    }
+
+    pub func copy_instance(self) -> pair<K, V> {
+        return pair<K, V> {
+            key: self->copy_key(),
+            value: self->copy_value()
+        };
+    }
+}

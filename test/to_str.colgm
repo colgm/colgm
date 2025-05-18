@@ -1,4 +1,5 @@
-use std::libc::{ puts, memcpy, malloc, itoa, streq };
+use std::libc::{ malloc, itoa, streq };
+use std::io::{ io };
 use err::panic::{ assert };
 
 func test_convert() {
@@ -25,20 +26,17 @@ func test_convert() {
 func main() -> i32 {
     test_convert();
 
-    var result: [i8; 256] = [];
-    memcpy(result, "[to_str.colgm] ", 15);
-
-    var buff_begin = ((result => u64) + 15) => i8*;
+    var buff: [i8; 256] = [];
     for (var index = 0; index <= 2147483647; index += 1) {
         if (index % 50000000 == 0 and index > 0) {
-            itoa(index, buff_begin, 2);
-            puts(result);
-            itoa(index, buff_begin, 8);
-            puts(result);
-            itoa(index, buff_begin, 10);
-            puts(result);
-            itoa(index, buff_begin, 16);
-            puts(result);
+            itoa(index, buff, 2);
+            io::stdout().out("[to_str.colgm] ").out(buff).out("\t| ");
+            itoa(index, buff, 8);
+            io::stdout().out("0o").out(buff).out("\t| ");
+            itoa(index, buff, 10);
+            io::stdout().out(buff).out("\t| ");
+            itoa(index, buff, 16);
+            io::stdout().out("0x").out(buff).out("\n");
         }
     }
     return 0;
