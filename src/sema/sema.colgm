@@ -76,9 +76,12 @@ impl sema {
             return false;
         }
         var dm = self->ctx->get_domain(ty->loc_file.__ptr__());
-        if (dm->structs.has(ty->name.__ptr__())) {
+        var n = ty->generic_name(self->pkg);
+        if (dm->structs.has(n.__ptr__())) {
+            n.delete();
             return true;
         }
+        n.delete();
         return false;
     }
 }
@@ -630,8 +633,9 @@ impl sema {
             var info = str::from("cannot cast floating point number to pointer: \"");
             var r_name = res.full_path_name(self->pkg, true);
             var t_name = type_res.full_path_name(self->pkg, true);
-            info.append_str(r_name.__ptr__())->append_i8_vec("\" => \")");
+            info.append_str(r_name.__ptr__())->append_i8_vec("\" => \"");
             info.append_str(t_name.__ptr__());
+            info.append_i8_vec("\"");
             self->err->error(n->to->base.location.__ptr__(), info.c_str);
             info.delete();
             r_name.delete();
@@ -646,8 +650,9 @@ impl sema {
             var info = str::from("cannot cast struct \"");
             var r_name = res.full_path_name(self->pkg, true);
             var t_name = type_res.full_path_name(self->pkg, true);
-            info.append_str(r_name.__ptr__())->append_i8_vec("\" to \")");
+            info.append_str(r_name.__ptr__())->append_i8_vec("\" to \"");
             info.append_str(t_name.__ptr__());
+            info.append_i8_vec("\"");
             self->err->error(n->to->base.location.__ptr__(), info.c_str);
             info.delete();
             r_name.delete();
@@ -661,8 +666,9 @@ impl sema {
             var info = str::from("cannot cast \"");
             var r_name = res.full_path_name(self->pkg, true);
             var t_name = type_res.full_path_name(self->pkg, true);
-            info.append_str(r_name.__ptr__())->append_i8_vec("\" to struct \")");
+            info.append_str(r_name.__ptr__())->append_i8_vec("\" to struct \"");
             info.append_str(t_name.__ptr__());
+            info.append_i8_vec("\"");
             self->err->error(n->to->base.location.__ptr__(), info.c_str);
             info.delete();
             r_name.delete();
