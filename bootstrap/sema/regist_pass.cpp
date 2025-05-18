@@ -332,6 +332,9 @@ bool generic_visitor::check_is_non_trivial(ast::cond_compile* node,
             return false;
         }
         const auto& t = data.types.at(i);
+        if (t.is_pointer()) {
+            return false;
+        }
         if (t.loc_file.empty()) {
             // primitive type, is trivial
             return false;

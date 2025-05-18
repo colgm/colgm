@@ -173,8 +173,22 @@ impl type {
     }
 
     pub func eq(self, t: type*) -> bool {
-        return self->name.eq(t->name.__ptr__()) &&
-               self->pointer_depth == t->pointer_depth;
+        if (!self->name.eq(t->name.__ptr__())) {
+            return false;
+        }
+        if (self->pointer_depth != t->pointer_depth) {
+            return false;
+        }
+        if (self->generics.size != t->generics.size) {
+            return false;
+        }
+        foreach (var i; self->generics) {
+            var t_g = t->generics.get(i.index());
+            if (!i.get()->eq(t_g)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     pub func is_pointer(self) -> bool {

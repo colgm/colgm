@@ -8,7 +8,6 @@ use std::io::{ io };
 use std::ptr::{ ptr };
 
 use err::span::{ span };
-use err::panic::{ panic };
 use sir::sir::*;
 
 use sema::type::{ type };
@@ -187,12 +186,12 @@ pub struct sir_context {
     struct_decls: vec<sir_struct>,
     func_decls: vec<sir_func>,
     func_impls: vec<sir_func>,
-    const_strings: hashmap<str, basic<u64>>,
+    const_strings: hashmap<str, u64>,
 
     named_metadata: primitive_vec<ptr<DI_named_metadata>>,
     debug_info: primitive_vec<ptr<DI_node>>,
-    DI_file_map: hashmap<str, basic<u64>>,
-    DI_type_map: hashmap<str, basic<u64>>,
+    DI_file_map: hashmap<str, u64>,
+    DI_type_map: hashmap<str, u64>,
     DI_struct_map: hashmap<str, ptr<DI_structure_type>>,
 
     pkg: package*
@@ -204,11 +203,11 @@ impl sir_context {
             struct_decls: vec<sir_struct>::instance(),
             func_decls: vec<sir_func>::instance(),
             func_impls: vec<sir_func>::instance(),
-            const_strings: hashmap<str, basic<u64>>::instance(),
+            const_strings: hashmap<str, u64>::instance(),
             named_metadata: primitive_vec<ptr<DI_named_metadata>>::instance(),
             debug_info: primitive_vec<ptr<DI_node>>::instance(),
-            DI_file_map: hashmap<str, basic<u64>>::instance(),
-            DI_type_map: hashmap<str, basic<u64>>::instance(),
+            DI_file_map: hashmap<str, u64>::instance(),
+            DI_type_map: hashmap<str, u64>::instance(),
             DI_struct_map: hashmap<str, ptr<DI_structure_type>>::instance(),
             pkg: pkg
         };
@@ -240,13 +239,16 @@ impl sir_context {
 impl sir_context {
     pub func add_DI_type(self, name: i8*, index: u64) {
         var temp = str::from(name);
-        self->DI_type_map.insert(temp.__ptr__(), basic<u64>::wrap(index).__ptr__());
+        self->DI_type_map.insert(temp.__ptr__(), index);
         temp.delete();
     }
 
     pub func add_DI_struct(self, name: i8*, node: DI_structure_type*) {
         var temp = str::from(name);
-        self->DI_struct_map.insert(temp.__ptr__(), ptr<DI_structure_type>::wrap(node).__ptr__());
+        self->DI_struct_map.insert(
+            temp.__ptr__(),
+            ptr<DI_structure_type>::wrap(node).__ptr__()
+        );
         temp.delete();
     }
 }
@@ -293,7 +295,7 @@ impl sir_context {
 
         foreach (var i; self->const_strings) {
             var s_value = i.key();
-            var s_index = i.value()->unwrap();
+            var s_index = i.value();
 
             var s_ptr = ordered_const_string.get(s_index);
             s_ptr->append_str(s_value);

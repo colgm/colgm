@@ -90,6 +90,7 @@ impl hashmap<K, V> {
         return false;
     }
 
+    #[is_non_trivial(V)]
     pub func get(self, key: K*) -> V* {
         if (self->bucket_capacity == 0) {
             panic("capacity is 0");
@@ -104,6 +105,23 @@ impl hashmap<K, V> {
         return nil;
     }
 
+    #[is_trivial(V)]
+    pub func get(self, key: K*) -> V {
+        if (self->bucket_capacity == 0) {
+            panic("capacity is 0");
+        }
+        var hash = key->hash() % self->bucket_capacity;
+        var bucket = self->bucket[hash].__ptr__();
+        foreach (var i; bucket) {
+            if (i.elem()->key.eq(key)) {
+                return i.elem()->value;
+            }
+        }
+        // TODO: need panic here
+        return 0;
+    }
+
+    #[is_non_trivial(V)]
     pub func insert(self, key: K*, value: V*) {
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
@@ -112,6 +130,24 @@ impl hashmap<K, V> {
                 var tmp = i.elem();
                 tmp->value.delete();
                 tmp->value = value->copy_instance();
+                return;
+            }
+        }
+        
+        var tmp_pair = pair<K, V>::instance(key, value);
+        // do copy in insert method
+        bucket->insert(tmp_pair.__ptr__());
+        tmp_pair.delete();
+        self->size += 1;
+    }
+
+    #[is_trivial(V)]
+    pub func insert(self, key: K*, value: V) {
+        var hash = key->hash() % self->bucket_capacity;
+        var bucket = self->bucket[hash].__ptr__();
+        foreach (var i; bucket) {
+            if (i.elem()->key.eq(key)) {
+                i.elem()->value = value;
                 return;
             }
         }
@@ -180,8 +216,14 @@ impl iter<K, V> {
         return self->bucket_iter.elem()->key.__ptr__();
     }
 
+    #[is_non_trivial(V)]
     pub func value(self) -> V* {
         return self->bucket_iter.elem()->value.__ptr__();
+    }
+
+    #[is_trivial(V)]
+    pub func value(self) -> V {
+        return self->bucket_iter.elem()->value;
     }
 }
 

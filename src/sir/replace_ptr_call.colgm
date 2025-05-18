@@ -1,7 +1,7 @@
 use sir::sir::*;
 use sir::context::{ sir_func, sir_context };
 
-use std::vec::{ primitive_vec };
+use std::vec::{ vec };
 use std::ptr::{ ptr };
 use std::str::{ str };
 use std::io::{ io };
@@ -11,17 +11,17 @@ use util::timestamp::{ maketimestamp };
 
 func adjust_single_function(f: sir_func*) -> i64 {
     var replace_count = 0;
-    var temp = primitive_vec<ptr<sir>>::instance();
+    var temp = vec<ptr<sir>>::instance();
     foreach (var i; f->body->stmts) {
         var inst = i.get().unwrap();
         if (inst->kind != sir_kind::sir_call) {
-            temp.push(ptr<sir>::wrap(inst));
+            temp.push(ptr<sir>::wrap(inst).__ptr__());
             continue;
         }
 
         var call = inst => sir_call*;
         if (call->name.find_i8_vec(".__ptr__") == str::npos()) {
-            temp.push(ptr<sir>::wrap(inst));
+            temp.push(ptr<sir>::wrap(inst).__ptr__());
             continue;
         }
 
@@ -30,7 +30,7 @@ func adjust_single_function(f: sir_func*) -> i64 {
         if (call->args.size != 1 ||
             call->return_type.empty() ||
             call->return_type.back() != '*') {
-            temp.push(ptr<sir>::wrap(inst));
+            temp.push(ptr<sir>::wrap(inst).__ptr__());
             continue;
         }
 
@@ -48,7 +48,7 @@ func adjust_single_function(f: sir_func*) -> i64 {
             rtt.__ptr__(),
             "__ptr__ call"
         );
-        temp.push(ptr<sir>::wrap(constant => sir*));
+        temp.push(ptr<sir>::wrap(constant => sir*).__ptr__());
 
         rtt.delete();
         inst->delete();
@@ -57,7 +57,7 @@ func adjust_single_function(f: sir_func*) -> i64 {
 
     f->body->stmts.clear();
     foreach (var i; temp) {
-        f->body->stmts.push(i.get());
+        f->body->stmts.push(i.get()[0]);
     }
 
     temp.delete();
@@ -75,7 +75,7 @@ pub func replace_struct_ptr_call(ctx: sir_context*, verbose: bool) {
 
     if (verbose) {
         io::stdout().green().out("[ SIR-PASS ] ").reset();
-        io::stdout().out("Run replace __ptr__ call: ");
+        io::stdout().out("Replace __ptr__ call: ");
         io::stdout().light_cyan().out_i64(replace_count).reset();
         io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
     }

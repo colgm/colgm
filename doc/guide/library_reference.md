@@ -13,6 +13,7 @@
   - [std::vec::vec](#stdvecvect)
   - [std::vec::primitive_vec](#stdvecprimitive_vect)
   - [std::set::hashset](#stdsethashsett)
+  - [std::pair::pair](#stdpairpairk-v)
   - [std::map::hashmap](#stdmaphashmapk-v)
 - [Standard Trivial Type Wrapper](#standard-trivial-type-wrapper)
   - [std::ptr::ptr](#stdptrptrt)
@@ -180,6 +181,30 @@ func main() -> i32 {
     a.insert(s.__ptr__());
     a.delete();
     s.delete();
+    return 0;
+}
+```
+
+### `std::pair::pair<K, V>`
+
+Source: [`pair<K, V>`](../../src/std/pair.colgm)
+
+Pair, `K` and `V` accept both trivial and non-tribial types.
+
+Example:
+
+```rs
+func main() -> i32 {
+    var a = pair<str, i32>::instance(s.__ptr__(), 123);
+    var b = pair<i32, str>::instance(123, s.__ptr__());
+    var c = pair<i32, i32>::instance(123, 456);
+    var d = pair<str, str>::instance(s.__ptr__(), s.__ptr__());
+
+    s.delete();
+    a.delete();
+    b.delete();
+    c.delete();
+    d.delete();
     return 0;
 }
 ```

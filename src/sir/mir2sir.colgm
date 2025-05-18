@@ -1119,11 +1119,13 @@ impl mir2sir {
         var temp = self->ssa_gen.create();
         var v = value_t::variable(temp.__ptr__());
         if (!self->sctx->const_strings.has(n->value.__ptr__())) {
-            var index = basic<u64>::wrap(self->sctx->const_strings.size);
-            self->sctx->const_strings.insert(n->value.__ptr__(), index.__ptr__());
+            self->sctx->const_strings.insert(
+                n->value.__ptr__(),
+                self->sctx->const_strings.size
+            );
         }
         self->block->add_stmt(sir_str::new(
-            self->sctx->const_strings.get(n->value.__ptr__())->unwrap(),
+            self->sctx->const_strings.get(n->value.__ptr__()),
             n->value.size + 1,
             v.__ptr__(),
             self->generate_DI_location(n->base.location.__ptr__())
@@ -2506,7 +2508,7 @@ impl mir2sir {
         var p: DW_TAG_pointer_type* = nil;
         while (temp.back() == '*') {
             if (self->sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
-                p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__())->unwrap();
+                p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__());
                 break;
             }
             if (p != nil) {
@@ -2525,7 +2527,7 @@ impl mir2sir {
         }
 
         if (self->sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
-            p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__())->unwrap();
+            p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__());
         } else {
             var info = str::from("cannot generate DI_type for \"");
             info.append_i8_vec(n->c_str)->append_i8_vec("\"");
@@ -2543,7 +2545,7 @@ impl mir2sir {
         if (!self->sctx->DI_type_map.has(n.__ptr__())) {
             self->generate_DI_type_if_not_exists(n.__ptr__());
         }
-        var index = self->sctx->DI_type_map.get(n.__ptr__())->unwrap();
+        var index = self->sctx->DI_type_map.get(n.__ptr__());
         n.delete();
         return DI_ref_index::new(index) => DI_node*;
     }
@@ -2557,7 +2559,7 @@ impl mir2sir {
         if (!self->sctx->DI_type_map.has(n.__ptr__())) {
             self->generate_DI_type_if_not_exists(n.__ptr__());
         }
-        var index = self->sctx->DI_type_map.get(n.__ptr__())->unwrap();
+        var index = self->sctx->DI_type_map.get(n.__ptr__());
         n.delete();
         return index;
     }
@@ -2651,7 +2653,7 @@ impl mir2sir {
         ));
         self->sctx->DI_file_map.insert(
             empty_file_name.__ptr__(),
-            basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+            self->dwarf_status.DI_counter
         );
         self->dwarf_status.DI_counter += 1;
         empty_file_name.delete();
@@ -2666,7 +2668,7 @@ impl mir2sir {
             ));
             self->sctx->DI_file_map.insert(
                 i.key(),
-                basic<u64>::wrap(self->dwarf_status.DI_counter).__ptr__()
+                self->dwarf_status.DI_counter
             );
             self->dwarf_status.DI_counter += 1;
         }
@@ -2678,7 +2680,7 @@ impl mir2sir {
 
         var main_input_file_index = self->sctx->DI_file_map.get(
             self->ctx->global->main_input_file.__ptr__()
-        )->unwrap();
+        );
         self->dwarf_status.compile_unit_index = self->dwarf_status.DI_counter;
         
         var version_str = str::from("colgm compiler version ");
@@ -2830,9 +2832,9 @@ impl mir2sir {
             self->dwarf_status.DI_counter,
             e->name.c_str,
             id.c_str,
-            self->sctx->DI_file_map.get(e->location.file.__ptr__())->unwrap(),
+            self->sctx->DI_file_map.get(e->location.file.__ptr__()),
             e->location.begin_line,
-            self->sctx->DI_type_map.get(i64_s.__ptr__())->unwrap()
+            self->sctx->DI_type_map.get(i64_s.__ptr__())
         );
         self->sctx->add_DI_type(id.c_str, self->dwarf_status.DI_counter);
         self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
@@ -2886,7 +2888,7 @@ impl mir2sir {
             self->dwarf_status.DI_counter,
             s->name.c_str,
             id.c_str,
-            self->sctx->DI_file_map.get(s->location.file.__ptr__())->unwrap(),
+            self->sctx->DI_file_map.get(s->location.file.__ptr__()),
             s->location.begin_line
         );
         self->sctx->add_DI_type(id.c_str, self->dwarf_status.DI_counter);
@@ -2926,7 +2928,7 @@ impl mir2sir {
                 self->dwarf_status.DI_counter,
                 member->name.c_str,
                 s_node->base.index,
-                self->sctx->DI_file_map.get(member->loc.file.__ptr__())->unwrap(),
+                self->sctx->DI_file_map.get(member->loc.file.__ptr__()),
                 member->loc.begin_line + 1,
                 member_type_index
             );
@@ -2956,7 +2958,7 @@ impl mir2sir {
         var tmp = DI_subprogram::new(
             self->dwarf_status.DI_counter,
             f->name.c_str,
-            self->sctx->DI_file_map.get(f->location.file.__ptr__())->unwrap(),
+            self->sctx->DI_file_map.get(f->location.file.__ptr__()),
             f->location.begin_line,
             self->dwarf_status.DI_counter + 1,    // `type` field, DISubroutineType
             self->dwarf_status.compile_unit_index // `unit` field, DICompileUnit
