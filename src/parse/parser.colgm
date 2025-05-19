@@ -1002,9 +1002,9 @@ impl parser {
                 break;
             }
 
-            var conds = primitive_vec<ptr<ast_cond_compile>>::instance();
+            var conds = vec<ast_cond_compile*>::instance();
             while (self->lookahead(tok_kind::tok_sharp)) {
-                conds.push(ptr<ast_cond_compile>::wrap(self->conditional_compilation()));
+                conds.push(self->conditional_compilation());
             }
 
             var is_pub = false;
@@ -1319,9 +1319,9 @@ impl parser {
             var extern_loc: span* = nil;
 
             // get conditional compilation
-            var conds = primitive_vec<ptr<ast_cond_compile>>::instance();
+            var conds = vec<ast_cond_compile*>::instance();
             if (self->lookahead(tok_kind::tok_sharp)) {
-                conds.push(ptr<ast_cond_compile>::wrap(self->conditional_compilation()));
+                conds.push(self->conditional_compilation());
             }
 
             // get attribute extern / pub
@@ -1396,7 +1396,7 @@ impl parser {
                 _ => {
                     self->report_unexpect_token_and_skip(self->this_tok());
                     foreach (var i; conds) {
-                        var n = i.get().unwrap() => ast*;
+                        var n = i.get() => ast*;
                         n->delete();
                         free(n => i8*);
                     }
