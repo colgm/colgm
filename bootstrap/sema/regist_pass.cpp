@@ -352,18 +352,55 @@ bool generic_visitor::check_is_non_trivial(ast::cond_compile* node,
     return true;
 }
 
+bool generic_visitor::check_is_pointer(ast::cond_compile* node,
+                                       const generic_data& data) {
+    for (const auto& i : node->get_ordered_cond_name()) {
+        if (!node->get_conds().at(i).empty()) {
+            err.warn(node->get_location(), "condition value is ignored.");
+        }
+        if (!data.types.count(i)) {
+            err.err(node->get_location(), "generic type '" + i + "' is not defined.");
+            return false;
+        }
+        const auto& t = data.types.at(i);
+        if (!t.is_pointer()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool generic_visitor::check_is_non_pointer(ast::cond_compile* node,
+                                           const generic_data& data) {
+    for (const auto& i : node->get_ordered_cond_name()) {
+        if (!node->get_conds().at(i).empty()) {
+            err.warn(node->get_location(), "condition value is ignored.");
+        }
+        if (!data.types.count(i)) {
+            err.err(node->get_location(), "generic type '" + i + "' is not defined.");
+            return false;
+        }
+        const auto& t = data.types.at(i);
+        if (t.is_pointer()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void generic_visitor::remove_cond_compile_method(colgm_struct& s,
                                                  const generic_data& data) {
     for (auto i : s.generic_struct_impl) {
         std::vector<ast::func_decl*> new_vec;
         for (auto j : i->get_methods()) {
-            if (!j->contain_trivial_cond()) {
+            if (!j->contain_cond()) {
                 new_vec.push_back(j);
                 continue;
             }
-            auto trivial_cond = j->get_trivial_cond();
-            auto non_trivial_cond = j->get_non_trivial_cond();
+
             auto monomorphic_name = j->get_monomorphic_name();
+
+            auto trivial_cond = j->get_trivial_cond();
             if (trivial_cond && !check_is_trivial(trivial_cond, data)) {
                 delete j;
                 if (s.method.count(monomorphic_name)) {
@@ -373,6 +410,8 @@ void generic_visitor::remove_cond_compile_method(colgm_struct& s,
                 }
                 continue;
             }
+
+            auto non_trivial_cond = j->get_non_trivial_cond();
             if (non_trivial_cond && !check_is_non_trivial(non_trivial_cond, data)) {
                 delete j;
                 if (s.method.count(monomorphic_name)) {
@@ -382,6 +421,29 @@ void generic_visitor::remove_cond_compile_method(colgm_struct& s,
                 }
                 continue;
             }
+
+            auto is_pointer_cond = j->get_is_pointer_cond();
+            if (is_pointer_cond && !check_is_pointer(is_pointer_cond, data)) {
+                delete j;
+                if (s.method.count(monomorphic_name)) {
+                    s.method.erase(monomorphic_name);
+                } else if (s.static_method.count(monomorphic_name)) {
+                    s.static_method.erase(monomorphic_name);
+                }
+                continue;
+            }
+
+            auto is_non_pointer_cond = j->get_is_non_pointer_cond();
+            if (is_non_pointer_cond && !check_is_non_pointer(is_non_pointer_cond, data)) {
+                delete j;
+                if (s.method.count(monomorphic_name)) {
+                    s.method.erase(monomorphic_name);
+                } else if (s.static_method.count(monomorphic_name)) {
+                    s.static_method.erase(monomorphic_name);
+                }
+                continue;
+            }
+
             if (s.method.count(monomorphic_name)) {
                 if (s.field.count(j->get_name()) ||
                     s.method.count(j->get_name()) ||

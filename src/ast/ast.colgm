@@ -594,7 +594,7 @@ impl ast_null {
 
 pub struct root {
     base: ast,
-    imports: primitive_vec<ptr<ast>>,
+    imports: vec<ast*>,
     decls: primitive_vec<ptr<ast>>
 }
 
@@ -602,7 +602,7 @@ impl root {
     pub func new(loc: span*) -> root* {
         var res = root::__alloc__();
         res->base = ast::instance(ast_kind::ast_root, loc);
-        res->imports = primitive_vec<ptr<ast>>::instance();
+        res->imports = vec<ast*>::instance();
         res->decls = primitive_vec<ptr<ast>>::instance();
         return res;
     }
@@ -613,9 +613,9 @@ impl root {
             ast_kind::ast_root,
             self->base.location.__ptr__()
         );
-        res->imports = primitive_vec<ptr<ast>>::instance();
+        res->imports = vec<ast*>::instance();
         foreach (var i; self->imports) {
-            res->imports.push(ptr<ast>::wrap(i.get().unwrap()->copy()));
+            res->imports.push(i.get()->copy());
         }
         res->decls = primitive_vec<ptr<ast>>::instance();
         foreach (var i; self->decls) {
@@ -626,8 +626,8 @@ impl root {
 
     pub func delete(self) {
         foreach (var i; self->imports) {
-            i.get().unwrap()->delete();
-            free(i.get().unwrap() => i8*);
+            i.get()->delete();
+            free(i.get() => i8*);
         }
         self->imports.delete();
         foreach (var i; self->decls) {
@@ -1940,11 +1940,13 @@ impl ast_func_decl {
         }
     }
 
-    pub func contain_trivial_cond(self) -> bool {
+    pub func contain_cond(self) -> bool {
         foreach (var i; self->conds) {
             var c = i.get().unwrap();
             if (c->cond_name.eq_const("is_trivial") ||
-                c->cond_name.eq_const("is_non_trivial")) {
+                c->cond_name.eq_const("is_non_trivial") ||
+                c->cond_name.eq_const("is_pointer") ||
+                c->cond_name.eq_const("is_non_pointer")) {
                 return true;
             }
         }
@@ -1971,12 +1973,34 @@ impl ast_func_decl {
         return nil;
     }
 
+    pub func get_is_pointer_cond(self) -> ast_cond_compile* {
+        foreach (var i; self->conds) {
+            var c = i.get().unwrap();
+            if (c->cond_name.eq_const("is_pointer")) {
+                return c;
+            }
+        }
+        return nil;
+    }
+
+    pub func get_is_non_pointer_cond(self) -> ast_cond_compile* {
+        foreach (var i; self->conds) {
+            var c = i.get().unwrap();
+            if (c->cond_name.eq_const("is_non_pointer")) {
+                return c;
+            }
+        }
+        return nil;
+    }
+
     pub func get_monomorphic_name(self) -> str* {
         if (!self->monomorphic_name.empty()) {
             return self->monomorphic_name.__ptr__();
         }
         var trivial_cond = str::from("");
         var non_trivial_cond = str::from("");
+        var is_pointer_cond = str::from("");
+        var is_non_pointer_cond = str::from("");
         foreach (var i; self->conds) {
             var c = i.get().unwrap();
             if (c->cond_name.eq_const("is_trivial")) {
@@ -1987,6 +2011,14 @@ impl ast_func_decl {
                 var tmp = c->get_text();
                 non_trivial_cond.append_str(tmp.__ptr__());
                 tmp.delete();
+            } else if (c->cond_name.eq_const("is_pointer")) {
+                var tmp = c->get_text();
+                is_pointer_cond.append_str(tmp.__ptr__());
+                tmp.delete();
+            } else if (c->cond_name.eq_const("is_non_pointer")) {
+                var tmp = c->get_text();
+                is_non_pointer_cond.append_str(tmp.__ptr__());
+                tmp.delete();
             }
         }
 
@@ -1996,6 +2028,14 @@ impl ast_func_decl {
         }
         if (!non_trivial_cond.empty()) {
             self->monomorphic_name.append_str(non_trivial_cond.__ptr__());
+            self->monomorphic_name.append_char(' ');
+        }
+        if (!is_pointer_cond.empty()) {
+            self->monomorphic_name.append_str(is_pointer_cond.__ptr__());
+            self->monomorphic_name.append_char(' ');
+        }
+        if (!is_non_pointer_cond.empty()) {
+            self->monomorphic_name.append_str(is_non_pointer_cond.__ptr__());
             self->monomorphic_name.append_char(' ');
         }
         self->monomorphic_name.append_str(self->name.__ptr__());

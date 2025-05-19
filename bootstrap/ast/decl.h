@@ -298,9 +298,11 @@ public:
 public:
     void add_cond(cond_compile* node) { conds.push_back(node); }
     const auto& get_conds() const { return conds; }
-    bool contain_trivial_cond() const;
+    bool contain_cond() const;
     cond_compile* get_trivial_cond() const;
     cond_compile* get_non_trivial_cond() const;
+    cond_compile* get_is_pointer_cond() const;
+    cond_compile* get_is_non_pointer_cond() const;
 };
 
 class impl_struct: public decl {

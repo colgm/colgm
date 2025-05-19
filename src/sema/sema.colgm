@@ -2058,15 +2058,16 @@ impl sema {
             }
 
             if (!self->check_is_enum_literal(case_node->pattern)) {
-                self->err->error(case_node->pattern->base.location.__ptr__(),
-                                "match value must be enum literal");
+                self->err->error(
+                    case_node->pattern->base.location.__ptr__(),
+                    "match value must be enum literal"
+                );
                 case_type.delete();
                 continue;
             } else {
                 var value = self->get_enum_literal_value(case_node->pattern, infer.__ptr__());
                 if (value != 0xffffffffffffffff) {
-                    var tmp = basic<i64>::wrap(value);
-                    used_values.insert(tmp.__ptr__());
+                    used_values.insert(basic<i64>::wrap(value).__ptr__());
                 }
             }
 
@@ -2132,8 +2133,10 @@ impl sema {
     func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func*) {
         var infer = self->resolve_expression(n->condition => ast*);
         if (!infer.is_bool() && !infer.is_error()) {
-            self->err->error(n->condition->location.__ptr__(),
-                            "condition must be bool");
+            self->err->error(
+                n->condition->location.__ptr__(),
+                "condition must be bool"
+            );
         }
         infer.delete();
 

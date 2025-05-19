@@ -213,11 +213,17 @@ func_decl* func_decl::clone() const {
 std::string func_decl::get_monomorphic_name() const {
     std::string trivial_cond = "";
     std::string non_trivial_cond = "";
+    std::string is_pointer_cond = "";
+    std::string is_non_pointer_cond = "";
     for (auto i : conds) {
         if (i->get_condition_name() == "is_trivial") {
             trivial_cond = i->get_text();
         } else if (i->get_condition_name() == "is_non_trivial") {
             non_trivial_cond = i->get_text();
+        } else if (i->get_condition_name() == "is_pointer") {
+            is_pointer_cond = i->get_text();
+        } else if (i->get_condition_name() == "is_non_pointer") {
+            is_non_pointer_cond = i->get_text();
         }
     }
     auto res = name;
@@ -227,13 +233,21 @@ std::string func_decl::get_monomorphic_name() const {
     if (!non_trivial_cond.empty()) {
         res = non_trivial_cond + " " + res;
     }
+    if (!is_pointer_cond.empty()) {
+        res = is_pointer_cond + " " + res;
+    }
+    if (!is_non_pointer_cond.empty()) {
+        res = is_non_pointer_cond + " " + res;
+    }
     return res;
 }
 
-bool func_decl::contain_trivial_cond() const {
+bool func_decl::contain_cond() const {
     for (auto i : conds) {
         if (i->get_condition_name() == "is_trivial" ||
-            i->get_condition_name() == "is_non_trivial") {
+            i->get_condition_name() == "is_non_trivial" ||
+            i->get_condition_name() == "is_pointer" ||
+            i->get_condition_name() == "is_non_pointer") {
             return true;
         }
     }
@@ -252,6 +266,24 @@ cond_compile* func_decl::get_trivial_cond() const {
 cond_compile* func_decl::get_non_trivial_cond() const { 
     for (auto i : conds) {
         if (i->get_condition_name() == "is_non_trivial") {
+            return i;
+        }
+    }
+    return nullptr;
+}
+
+cond_compile* func_decl::get_is_pointer_cond() const { 
+    for (auto i : conds) {
+        if (i->get_condition_name() == "is_pointer") {
+            return i;
+        }
+    }
+    return nullptr;
+}
+
+cond_compile* func_decl::get_is_non_pointer_cond() const { 
+    for (auto i : conds) {
+        if (i->get_condition_name() == "is_non_pointer") {
             return i;
         }
     }

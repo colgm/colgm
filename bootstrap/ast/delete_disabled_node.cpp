@@ -63,7 +63,7 @@ bool delete_disabled_node::check_conds(error& err,
 void delete_disabled_node::report_not_supported_condition(error& err,
                                                           impl_struct* node) {
     static const std::unordered_set<std::string> valid_conditions = {
-        "is_trivial", "is_non_trivial"
+        "is_trivial", "is_non_trivial", "is_pointer", "is_non_pointer"
     };
     for (auto i : node->get_methods()) {
         for (auto j : i->get_conds()) {

@@ -815,26 +815,104 @@ impl generic_visitor {
         return true;
     }
 
+    func check_is_pointer(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
+        foreach (var i; n->ordered_conds) {
+            var cond = i.get();
+            if (!n->conds.get(cond)->empty()) {
+                self->err->warn(
+                    n->base.location.__ptr__(),
+                    "condition value is ignored"
+                );
+            }
+            if (!g_data->types.has(cond)) {
+                var info = str::from("generic type \"");
+                info.append_str(cond);
+                info.append_i8_vec("\" is not defined");
+                self->err->warn(
+                    n->base.location.__ptr__(),
+                    info.c_str
+                );
+                info.delete();
+                return false;
+            }
+
+            if (!g_data->types.get(cond)->is_pointer()) {
+                return false;
+            }
+
+        }
+        return true;
+    }
+
+    func check_is_non_pointer(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
+        foreach (var i; n->ordered_conds) {
+            var cond = i.get();
+            if (!n->conds.get(cond)->empty()) {
+                self->err->warn(
+                    n->base.location.__ptr__(),
+                    "condition value is ignored"
+                );
+            }
+            if (!g_data->types.has(cond)) {
+                var info = str::from("generic type \"");
+                info.append_str(cond);
+                info.append_i8_vec("\" is not defined");
+                self->err->warn(
+                    n->base.location.__ptr__(),
+                    info.c_str
+                );
+                info.delete();
+                return false;
+            }
+
+            if (g_data->types.get(cond)->is_pointer()) {
+                return false;
+            }
+
+        }
+        return true;
+    }
+
+
     func remove_cond_compile_method(self, s: colgm_struct*, g_data: generic_data*) {
         foreach (var i; s->generic_struct_impl) {
             var impl_node = i.get().unwrap();
             var new_vec = primitive_vec<ptr<ast>>::instance();
             foreach (var j; impl_node->methods) {
                 var func_node = j.get().unwrap() => ast_func_decl*;
-                if (!func_node->contain_trivial_cond()) {
+                if (!func_node->contain_cond()) {
                     new_vec.push(ptr<ast>::wrap(func_node => ast*));
                     continue;
                 }
-                var trivial_cond = func_node->get_trivial_cond();
-                var non_trivial_cond = func_node->get_non_trivial_cond();
+
                 var monomorphic_name = func_node->get_monomorphic_name();
+
+                var trivial_cond = func_node->get_trivial_cond();
                 if (trivial_cond != nil && !self->check_is_trivial(trivial_cond, g_data)) {
                     var n = func_node => ast*;
                     n->delete();
                     free(n => i8*);
                     continue;
                 }
+
+                var non_trivial_cond = func_node->get_non_trivial_cond();
                 if (non_trivial_cond != nil && !self->check_is_non_trivial(non_trivial_cond, g_data)) {
+                    var n = func_node => ast*;
+                    n->delete();
+                    free(n => i8*);
+                    continue;
+                }
+
+                var is_pointer_cond = func_node->get_is_pointer_cond();
+                if (is_pointer_cond != nil && !self->check_is_pointer(is_pointer_cond, g_data)) {
+                    var n = func_node => ast*;
+                    n->delete();
+                    free(n => i8*);
+                    continue;
+                }
+
+                var is_non_pointer_cond = func_node->get_is_non_pointer_cond();
+                if (is_non_pointer_cond != nil && !self->check_is_non_pointer(is_non_pointer_cond, g_data)) {
                     var n = func_node => ast*;
                     n->delete();
                     free(n => i8*);

@@ -1,5 +1,5 @@
 use std::libc::{ malloc, realloc, free };
-use std::ptr::{ ptr_size };
+use std::ptr::{ __ptr_size };
 use err::panic::{ panic };
 
 pub struct vec<T> {
@@ -15,6 +15,7 @@ pub struct primitive_vec<T> {
 }
 
 impl vec<T> {
+    #[is_non_pointer(T)]
     pub func new() -> vec<T>* {
         var res = vec<T>::__alloc__();
         if (res == nil) {
@@ -26,6 +27,19 @@ impl vec<T> {
         return res;
     }
 
+    #[is_pointer(T)]
+    pub func new() -> vec<T>* {
+        var res = vec<T>::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
+        res->size = 0;
+        res->capacity = 4;
+        res->data = malloc(res->capacity * __ptr_size()) => T*;
+        return res;
+    }
+
+    #[is_non_pointer(T)]
     pub func instance() -> vec<T> {
         var res = vec<T> {
             size: 0,
@@ -33,6 +47,17 @@ impl vec<T> {
             data: nil
         };
         res.data = malloc(res.capacity * T::__size__()) => T*;
+        return res;
+    }
+
+    #[is_pointer(T)]
+    pub func instance() -> vec<T> {
+        var res = vec<T> {
+            size: 0,
+            capacity: 4,
+            data: nil
+        };
+        res.data = malloc(res.capacity * __ptr_size()) => T*;
         return res;
     }
 
@@ -46,6 +71,15 @@ impl vec<T> {
     }
 
     #[is_trivial(T)]
+    pub func copy(self) -> vec<T>* {
+        var res = vec<T>::new();
+        for (var i: u64 = 0; i < self->size; i += 1) {
+            res->push(self->data[i]);
+        }
+        return res;
+    }
+
+    #[is_pointer(T)]
     pub func copy(self) -> vec<T>* {
         var res = vec<T>::new();
         for (var i: u64 = 0; i < self->size; i += 1) {
@@ -72,6 +106,15 @@ impl vec<T> {
         return res;
     }
 
+    #[is_pointer(T)]
+    pub func copy_instance(self) -> vec<T> {
+        var res = vec<T>::instance();
+        for (var i: u64 = 0; i < self->size; i += 1) {
+            res.push(self->data[i]);
+        }
+        return res;
+    }
+
     #[is_non_trivial(T)]
     pub func clear(self) {
         for (var i: u64 = 0; i < self->size; i += 1) {
@@ -81,6 +124,11 @@ impl vec<T> {
     }
 
     #[is_trivial(T)]
+    pub func clear(self) {
+        self->size = 0;
+    }
+
+    #[is_pointer(T)]
     pub func clear(self) {
         self->size = 0;
     }
@@ -97,6 +145,14 @@ impl vec<T> {
     }
 
     #[is_trivial(T)]
+    pub func delete(self) {
+        free(self->data => i8*);
+        self->data = nil;
+        self->size = 0;
+        self->capacity = 0;
+    }
+
+    #[is_pointer(T)]
     pub func delete(self) {
         free(self->data => i8*);
         self->data = nil;
@@ -108,11 +164,21 @@ impl vec<T> {
         return self->size == 0;
     }
 
+    #[is_non_pointer(T)]
     func extend_capacity(self) {
         self->capacity *= 2;
         self->data = realloc(
             self->data => i8*,
             self->capacity * T::__size__()
+        ) => T*;
+    }
+
+    #[is_pointer(T)]
+    func extend_capacity(self) {
+        self->capacity *= 2;
+        self->data = realloc(
+            self->data => i8*,
+            self->capacity * __ptr_size()
         ) => T*;
     }
 
@@ -126,6 +192,15 @@ impl vec<T> {
     }
 
     #[is_trivial(T)]
+    pub func push(self, item: T) {
+        if (self->size >= self->capacity) {
+            self->extend_capacity();
+        }
+        self->data[self->size] = item;
+        self->size += 1;
+    }
+
+    #[is_pointer(T)]
     pub func push(self, item: T) {
         if (self->size >= self->capacity) {
             self->extend_capacity();
@@ -151,6 +226,14 @@ impl vec<T> {
         self->size -= 1;
     }
 
+    #[is_pointer(T)]
+    pub func pop_back(self) {
+        if (self->size == 0) {
+            panic("empty vector");
+        }
+        self->size -= 1;
+    }
+
     #[is_non_trivial(T)]
     pub func back(self) -> T* {
         if (self->size == 0) {
@@ -167,6 +250,14 @@ impl vec<T> {
         return self->data[self->size - 1];
     }
 
+    #[is_pointer(T)]
+    pub func back(self) -> T {
+        if (self->size == 0) {
+            panic("empty vector");
+        }
+        return self->data[self->size - 1];
+    }
+
     #[is_non_trivial(T)]
     pub func get(self, index: u64) -> T* {
         if (index >= self->size) {
@@ -176,6 +267,14 @@ impl vec<T> {
     }
 
     #[is_trivial(T)]
+    pub func get(self, index: u64) -> T {
+        if (index >= self->size) {
+            panic("index out of bounds");
+        }
+        return self->data[index];
+    }
+
+    #[is_pointer(T)]
     pub func get(self, index: u64) -> T {
         if (index >= self->size) {
             panic("index out of bounds");
@@ -228,6 +327,11 @@ impl iter<T> {
     }
 
     #[is_trivial(T)]
+    pub func get(self) -> T {
+        return self->_vec->get(self->_index);
+    }
+
+    #[is_pointer(T)]
     pub func get(self) -> T {
         return self->_vec->get(self->_index);
     }
