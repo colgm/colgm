@@ -13,7 +13,7 @@ func adjust_single_function(f: sir_func*) -> i64 {
     var replace_count = 0;
     var temp = vec<sir*>::instance();
     foreach (var i; f->body->stmts) {
-        var inst = i.get().unwrap();
+        var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
             temp.push(inst);
             continue;
@@ -57,7 +57,7 @@ func adjust_single_function(f: sir_func*) -> i64 {
 
     f->body->stmts.clear();
     foreach (var i; temp) {
-        f->body->stmts.push(ptr<sir>::wrap(i.get()));
+        f->body->stmts.push(i.get());
     }
 
     temp.delete();

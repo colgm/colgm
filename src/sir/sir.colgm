@@ -1,6 +1,6 @@
 use std::str::{ str };
 use std::ptr::{ ptr };
-use std::vec::{ primitive_vec, vec };
+use std::vec::{ vec };
 use std::libc::{ free };
 use std::io::{ io };
 
@@ -348,34 +348,34 @@ impl sir_nop {
 
 pub struct sir_block {
     base: sir,
-    allocas: primitive_vec<ptr<sir_alloca>>,
-    move_register: primitive_vec<ptr<sir_alloca>>,
-    stmts: primitive_vec<ptr<sir>>
+    allocas: vec<sir_alloca*>,
+    move_register: vec<sir_alloca*>,
+    stmts: vec<sir*>
 }
 
 impl sir_block {
     pub func new() -> sir_block* {
         var n = sir_block::__alloc__();
         n->base = sir::instance(sir_kind::sir_block);
-        n->allocas = primitive_vec<ptr<sir_alloca>>::instance();
-        n->move_register = primitive_vec<ptr<sir_alloca>>::instance();
-        n->stmts = primitive_vec<ptr<sir>>::instance();
+        n->allocas = vec<sir_alloca*>::instance();
+        n->move_register = vec<sir_alloca*>::instance();
+        n->stmts = vec<sir*>::instance();
         return n;
     }
 
     pub func delete(self) {
         foreach (var i; self->allocas) {
-            var n = i.get().unwrap() => sir*;
+            var n = i.get() => sir*;
             n->delete();
             free(n => i8*);
         }
         foreach (var i; self->move_register) {
-            var n = i.get().unwrap() => sir*;
+            var n = i.get() => sir*;
             n->delete();
             free(n => i8*);
         }
         foreach (var i; self->stmts) {
-            var n = i.get().unwrap();
+            var n = i.get();
             n->delete();
             free(n => i8*);
         }
@@ -385,33 +385,33 @@ impl sir_block {
     }
 
     pub func add_alloca(self, s: sir_alloca*) {
-        self->allocas.push(ptr<sir_alloca>::wrap(s));
+        self->allocas.push(s);
     }
 
     pub func add_move_register(self, s: sir_alloca*) {
-        self->move_register.push(ptr<sir_alloca>::wrap(s));
+        self->move_register.push(s);
     }
 
     pub func add_stmt(self, s: sir*) {
-        self->stmts.push(ptr<sir>::wrap(s));
+        self->stmts.push(s);
     }
 
     pub func back_is_ret_stmt(self) -> bool {
         return self->stmts.size > 0 &&
-               self->stmts.back().unwrap()->kind == sir_kind::sir_ret;
+               self->stmts.back()->kind == sir_kind::sir_ret;
     }
 
     pub func dump(self, out: io) {
         foreach (var i; self->allocas) {
-            var n = i.get().unwrap() => sir*;
+            var n = i.get() => sir*;
             n->dump(out);
         }
         foreach (var i; self->move_register) {
-            var n = i.get().unwrap() => sir*;
+            var n = i.get() => sir*;
             n->dump(out);
         }
         foreach (var i; self->stmts) {
-            i.get().unwrap()->dump(out);
+            i.get()->dump(out);
         }
     }
 }

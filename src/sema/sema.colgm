@@ -2067,7 +2067,7 @@ impl sema {
             } else {
                 var value = self->get_enum_literal_value(case_node->pattern, infer.__ptr__());
                 if (value != 0xffffffffffffffff) {
-                    used_values.insert(basic<i64>::wrap(value).__ptr__());
+                    used_values.insert(basic<i64>::wrap(value));
                 }
             }
 
@@ -2097,7 +2097,7 @@ impl sema {
         var unused_counter = 0;
 
         foreach (var i; em->members) {
-            if (used_values.has(basic<i64>::wrap(i.value()).__ptr__())) {
+            if (used_values.has(basic<i64>::wrap(i.value()))) {
                 continue;
             }
             if (generated_warning.size > 0) {
@@ -2705,7 +2705,7 @@ impl sema {
 
     func resolve_function_block(self, r: root*) {
         foreach (var i; r->decls) {
-            var n = i.get().unwrap();
+            var n = i.get();
             if (n->is(ast_kind::ast_impl)) {
                 self->resolve_impl(n => ast_impl*);
             } else if (n->is(ast_kind::ast_func_decl)) {

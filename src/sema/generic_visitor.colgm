@@ -97,7 +97,7 @@ impl generic_visitor {
         self->need_to_be_inserted.clear();
         self->visit_root(n);
         foreach (var i; self->need_to_be_inserted) {
-            self->root->decls.push(i.get());
+            self->root->decls.push(i.get().unwrap());
         }
 
         while (self->insert_count != 0) {
@@ -106,7 +106,7 @@ impl generic_visitor {
             self->need_to_be_inserted.clear();
             self->visit_root(n);
             foreach (var i; self->need_to_be_inserted) {
-                self->root->decls.push(i.get());
+                self->root->decls.push(i.get().unwrap());
             }
         }
 
@@ -303,7 +303,7 @@ impl generic_visitor {
 impl generic_visitor {
     func visit_root(self, n: root*) {
         foreach (var i; n->decls) {
-            var d = i.get().unwrap();
+            var d = i.get();
             match (d->kind) {
                 ast_kind::ast_struct_decl => {
                     self->visit_struct_decl(d => ast_struct_decl*);

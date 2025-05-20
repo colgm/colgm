@@ -97,12 +97,19 @@ impl hashmap<K, V> {
         }
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
+
+        var elem: pair<K, V>* = nil;
         foreach (var i; bucket) {
             if (i.elem()->key.eq(key)) {
-                return i.elem()->value.__ptr__();
+                elem = i.elem();
+                break;
             }
         }
-        return nil;
+
+        if (elem == nil) {
+            panic("key not found");
+        }
+        return elem->value.__ptr__();
     }
 
     #[is_trivial(V)]
@@ -112,13 +119,19 @@ impl hashmap<K, V> {
         }
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
+
+        var elem: pair<K, V>* = nil;
         foreach (var i; bucket) {
             if (i.elem()->key.eq(key)) {
-                return i.elem()->value;
+                elem = i.elem();
+                break;
             }
         }
-        // TODO: need panic here
-        return 0 => V;
+
+        if (elem == nil) {
+            panic("key not found");
+        }
+        return elem->value;
     }
 
     #[is_non_trivial(V)]

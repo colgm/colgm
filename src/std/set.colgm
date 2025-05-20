@@ -55,8 +55,23 @@ impl hashset<T> {
 }
 
 impl hashset<T> {
+    #[is_non_trivial(T)]
     pub func has(self, item: T*) -> bool {
         var hash = item->hash() % self->bucket_capacity;
+        var bucket = self->bucket[hash].__ptr__();
+        var tmp = bucket->head;
+        while (tmp != nil) {
+            if (tmp->elem.eq(item)) {
+                return true;
+            }
+            tmp = tmp->next;
+        }
+        return false;
+    }
+
+    #[is_trivial(T)]
+    pub func has(self, item: T) -> bool {
+        var hash = item.hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
         var tmp = bucket->head;
         while (tmp != nil) {
@@ -72,8 +87,26 @@ impl hashset<T> {
         return self->size == 0;
     }
 
+    #[is_non_trivial(T)]
     pub func insert(self, item: T*) {
         var hash = item->hash() % self->bucket_capacity;
+        // must use pointer/reference, otherwise changes will not
+        // be reflected in the hashset
+        var bucket = self->bucket[hash].__ptr__();
+        var tmp = bucket->head;
+        while (tmp != nil) {
+            if (tmp->elem.eq(item)) {
+                return;
+            }
+            tmp = tmp->next;
+        }
+        bucket->insert(item);
+        self->size += 1;
+    }
+
+    #[is_trivial(T)]
+    pub func insert(self, item: T) {
+        var hash = item.hash() % self->bucket_capacity;
         // must use pointer/reference, otherwise changes will not
         // be reflected in the hashset
         var bucket = self->bucket[hash].__ptr__();

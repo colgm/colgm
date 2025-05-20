@@ -595,7 +595,7 @@ impl ast_null {
 pub struct root {
     base: ast,
     imports: vec<ast*>,
-    decls: primitive_vec<ptr<ast>>
+    decls: vec<ast*>
 }
 
 impl root {
@@ -603,7 +603,7 @@ impl root {
         var res = root::__alloc__();
         res->base = ast::instance(ast_kind::ast_root, loc);
         res->imports = vec<ast*>::instance();
-        res->decls = primitive_vec<ptr<ast>>::instance();
+        res->decls = vec<ast*>::instance();
         return res;
     }
 
@@ -617,9 +617,9 @@ impl root {
         foreach (var i; self->imports) {
             res->imports.push(i.get()->copy());
         }
-        res->decls = primitive_vec<ptr<ast>>::instance();
+        res->decls = vec<ast*>::instance();
         foreach (var i; self->decls) {
-            res->decls.push(ptr<ast>::wrap(i.get().unwrap()->copy()));
+            res->decls.push(i.get()->copy());
         }
         return res;
     }
@@ -631,8 +631,8 @@ impl root {
         }
         self->imports.delete();
         foreach (var i; self->decls) {
-            i.get().unwrap()->delete();
-            free(i.get().unwrap() => i8*);
+            i.get()->delete();
+            free(i.get() => i8*);
         }
         self->decls.delete();
     }

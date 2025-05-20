@@ -13,7 +13,7 @@ use err::report::{ report };
 
 use std::str::{ str };
 use std::io::{ io };
-use std::vec::{ primitive_vec };
+use std::vec::{ vec, primitive_vec };
 use std::ptr::{ ptr };
 use std::libc::{ free };
 
@@ -105,15 +105,15 @@ func report_not_supported_condition(err: report*, node: ast_impl*) {
 }
 
 pub func remove_disabled_node(err: report*, node: root*, co: cli_option*) {
-    var new_vec = primitive_vec<ptr<ast>>::instance();
+    var new_vec = vec<ast*>::instance();
 
     foreach (var i; node->decls) {
-        var d = i.get().unwrap();
+        var d = i.get();
         match (d->kind) {
             ast_kind::ast_enum_decl => {
                 var n = d => ast_enum_decl*;
                 if (check_conds(err, n->conds.__ptr__(), co)) {
-                    new_vec.push(ptr<ast>::wrap(d));
+                    new_vec.push(d);
                 } else {
                     d->delete();
                     free(d => i8*);
@@ -122,7 +122,7 @@ pub func remove_disabled_node(err: report*, node: root*, co: cli_option*) {
             ast_kind::ast_struct_decl => {
                 var n = d => ast_struct_decl*;
                 if (check_conds(err, n->conds.__ptr__(), co)) {
-                    new_vec.push(ptr<ast>::wrap(d));
+                    new_vec.push(d);
                 } else {
                     d->delete();
                     free(d => i8*);
@@ -131,7 +131,7 @@ pub func remove_disabled_node(err: report*, node: root*, co: cli_option*) {
             ast_kind::ast_func_decl => {
                 var n = d => ast_func_decl*;
                 if (check_conds(err, n->conds.__ptr__(), co)) {
-                    new_vec.push(ptr<ast>::wrap(d));
+                    new_vec.push(d);
                 } else {
                     d->delete();
                     free(d => i8*);
@@ -140,7 +140,7 @@ pub func remove_disabled_node(err: report*, node: root*, co: cli_option*) {
             ast_kind::ast_impl => {
                 var n = d => ast_impl*;
                 if (check_conds(err, n->conds.__ptr__(), co)) {
-                    new_vec.push(ptr<ast>::wrap(d));
+                    new_vec.push(d);
                     report_not_supported_condition(err, n);
                 } else {
                     d->delete();
@@ -148,7 +148,7 @@ pub func remove_disabled_node(err: report*, node: root*, co: cli_option*) {
                 }
             }
             _ => {
-                new_vec.push(ptr<ast>::wrap(d));
+                new_vec.push(d);
             }
         }
     }
