@@ -48,9 +48,9 @@ impl type_replace_pass {
         if (t->generics.size > 0) {
             new_def->generic_types = ast_generic_type_list::new(loc);
             foreach (var i; t->generics) {
-                new_def->generic_types->types.push(ptr<ast>::wrap(
+                new_def->generic_types->types.push(
                     self->generate_generic_type(i.get(), loc) => ast*
-                ));
+                );
             }
         }
         return new_def;
@@ -127,7 +127,7 @@ impl type_replace_pass {
 
     func visit_struct_decl(self, n: ast_struct_decl*) {
         foreach (var i; n->fields) {
-            var f = i.get().unwrap();
+            var f = i.get();
             if (!f->is(ast_kind::ast_struct_field)) {
                 continue;
             }
@@ -191,7 +191,7 @@ impl type_replace_pass {
 
     func visit_initializer(self, n: ast_initializer*) {
         foreach (var i; n->pairs) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -236,9 +236,10 @@ impl type_replace_pass {
                 n->generic_types == nil) {
                 n->generic_types = ast_generic_type_list::new(n->base.location.__ptr__());
                 foreach (var i; select_type->generics) {
-                    n->generic_types->types.push(ptr<ast>::wrap(
-                        self->generate_generic_type(i.get(), n->base.location.__ptr__()) => ast*
-                    ));
+                    n->generic_types->types.push(self->generate_generic_type(
+                        i.get(),
+                        n->base.location.__ptr__()
+                    ) => ast*);
                 }
             }
 
@@ -262,7 +263,7 @@ impl type_replace_pass {
     func visit_call(self, n: ast_call*) {
         self->visit_call_id(n->head);
         foreach (var i; n->chain) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -303,9 +304,10 @@ impl type_replace_pass {
                 n->generic_types == nil) {
                 n->generic_types = ast_generic_type_list::new(n->base.location.__ptr__());
                 foreach (var i; select_type->generics) {
-                    n->generic_types->types.push(ptr<ast>::wrap(
-                        self->generate_generic_type(i.get(), n->base.location.__ptr__()) => ast*
-                    ));
+                    n->generic_types->types.push(self->generate_generic_type(
+                        i.get(),
+                        n->base.location.__ptr__()
+                    ) => ast*);
                 }
             }
 
@@ -328,7 +330,7 @@ impl type_replace_pass {
 
     func visit_generic_type_list(self, n: ast_generic_type_list*) {
         foreach (var i; n->types) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -344,7 +346,7 @@ impl type_replace_pass {
 
     func visit_param_list(self, n: ast_param_list*) {
         foreach (var i; n->params) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -357,7 +359,7 @@ impl type_replace_pass {
 
     func visit_cond_stmt(self, n: ast_cond_stmt*) {
         foreach (var i; n->stmts) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -380,7 +382,7 @@ impl type_replace_pass {
     func visit_match_stmt(self, n: ast_match_stmt*) {
         self->visit_ast(n->value);
         foreach (var i; n->cases) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -464,7 +466,7 @@ impl type_replace_pass {
 
     func visit_code_block(self, n: ast_code_block*) {
         foreach (var i; n->stmts) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 }

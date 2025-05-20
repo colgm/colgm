@@ -273,7 +273,7 @@ impl parser {
             self->match_token(tok_kind::tok_colon);
             pair_node->value = self->calculation_gen();
             self->update_location(pair_node => ast*);
-            res->pairs.push(ptr<ast>::wrap(pair_node => ast*));
+            res->pairs.push(pair_node => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
@@ -331,13 +331,13 @@ impl parser {
                self->lookahead(tok_kind::tok_coloncolon)) {
             match (self->this_tok()->kind) {
                 tok_kind::tok_lparen => {
-                    res->chain.push(ptr<ast>::wrap(self->call_args_gen() => ast*));
+                    res->chain.push(self->call_args_gen() => ast*);
                 }
                 tok_kind::tok_lbracket => {
-                    res->chain.push(ptr<ast>::wrap(self->call_index_gen() => ast*));
+                    res->chain.push(self->call_index_gen() => ast*);
                 }
                 tok_kind::tok_lbrace => {
-                    res->chain.push(ptr<ast>::wrap(self->initializer_gen() => ast*));
+                    res->chain.push(self->initializer_gen() => ast*);
                 }
                 tok_kind::tok_dot => {
                     self->match_token(tok_kind::tok_dot);
@@ -346,7 +346,7 @@ impl parser {
                         self->this_tok()->content.__ptr__()
                     );
                     self->match_token(tok_kind::tok_id);
-                    res->chain.push(ptr<ast>::wrap(get_field => ast*));
+                    res->chain.push(get_field => ast*);
                 }
                 tok_kind::tok_arrow => {
                     self->match_token(tok_kind::tok_arrow);
@@ -355,7 +355,7 @@ impl parser {
                         self->this_tok()->content.__ptr__()
                     );
                     self->match_token(tok_kind::tok_id);
-                    res->chain.push(ptr<ast>::wrap(ptr_get_field => ast*));
+                    res->chain.push(ptr_get_field => ast*);
                 }
                 tok_kind::tok_coloncolon => {
                     self->match_token(tok_kind::tok_coloncolon);
@@ -364,7 +364,7 @@ impl parser {
                         self->this_tok()->content.__ptr__()
                     );
                     self->match_token(tok_kind::tok_id);
-                    res->chain.push(ptr<ast>::wrap(call_path => ast*));
+                    res->chain.push(call_path => ast*);
                 }
                 _ => { unreachable(); }
             }
@@ -800,7 +800,7 @@ impl parser {
         self->match_token(tok_kind::tok_less);
         while (self->lookahead(tok_kind::tok_id)) {
             var type_node = self->type_def_gen();
-            res->types.push(ptr<ast>::wrap(type_node => ast*));
+            res->types.push(type_node => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else if (self->lookahead(tok_kind::tok_id)) {
@@ -834,7 +834,7 @@ impl parser {
         }
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
-            res->fields.push(ptr<ast>::wrap(self->struct_field_gen() => ast*));
+            res->fields.push(self->struct_field_gen() => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
@@ -867,7 +867,7 @@ impl parser {
         self->match_token(tok_kind::tok_id);
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
-            res->members.push(ptr<ast>::wrap(self->enum_member_gen() => ast*));
+            res->members.push(self->enum_member_gen() => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
@@ -882,19 +882,19 @@ impl parser {
     func use_stmt_gen(self) -> ast_use_stmt* {
         var res = ast_use_stmt::new(self->this_tok_loc());
         self->match_token(tok_kind::tok_use);
-        res->module_path.push(ptr<ast>::wrap(self->identifier_gen() => ast*));
+        res->module_path.push(self->identifier_gen() => ast*);
         while (self->lookahead(tok_kind::tok_coloncolon)) {
             self->match_token(tok_kind::tok_coloncolon);
             if (self->lookahead(tok_kind::tok_lbrace) ||
                 self->lookahead(tok_kind::tok_mul)) {
                 break;
             }
-            res->module_path.push(ptr<ast>::wrap(self->identifier_gen() => ast*));
+            res->module_path.push(self->identifier_gen() => ast*);
         }
         if (self->lookahead(tok_kind::tok_lbrace)) {
             self->match_token(tok_kind::tok_lbrace);
             while (self->lookahead(tok_kind::tok_id)) {
-                res->import_symbol.push(ptr<ast>::wrap(self->identifier_gen() => ast*));
+                res->import_symbol.push(self->identifier_gen() => ast*);
                 if (self->lookahead(tok_kind::tok_comma)) {
                     self->match_token(tok_kind::tok_comma);
                 } else {
@@ -929,7 +929,7 @@ impl parser {
         var res = ast_param_list::new(self->this_tok_loc());
         self->match_token(tok_kind::tok_lparen);
         while (!self->lookahead(tok_kind::tok_rparen)) {
-            res->params.push(ptr<ast>::wrap(self->param_gen() => ast*));
+            res->params.push(self->param_gen() => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
@@ -1030,14 +1030,14 @@ impl parser {
         var res = ast_code_block::new(self->this_tok_loc());
         if (flag_allow_single_stmt_without_brace &&
             !self->lookahead(tok_kind::tok_lbrace)) {
-            res->stmts.push(ptr<ast>::wrap(self->stmt_gen()));
+            res->stmts.push(self->stmt_gen());
             self->update_location(res => ast*);
             return res;
         }
         
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
-            res->stmts.push(ptr<ast>::wrap(self->stmt_gen()));
+            res->stmts.push(self->stmt_gen());
             if (self->lookahead(tok_kind::tok_eof)) {
                 break;
             }
@@ -1110,7 +1110,7 @@ impl parser {
         self->match_token(tok_kind::tok_rparen);
         new_if->body = self->block_gen(true);
         self->update_location(new_if => ast*);
-        res->stmts.push(ptr<ast>::wrap(new_if => ast*));
+        res->stmts.push(new_if => ast*);
 
         while (self->lookahead(tok_kind::tok_elsif)) {
             var new_elsif = ast_if_stmt::new(self->this_tok_loc());
@@ -1120,7 +1120,7 @@ impl parser {
             self->match_token(tok_kind::tok_rparen);
             new_elsif->body = self->block_gen(true);
             self->update_location(new_elsif => ast*);
-            res->stmts.push(ptr<ast>::wrap(new_elsif => ast*));
+            res->stmts.push(new_elsif => ast*);
         }
 
         if (self->lookahead(tok_kind::tok_else)) {
@@ -1128,7 +1128,7 @@ impl parser {
             self->match_token(tok_kind::tok_else);
             new_else->body = self->block_gen(true);
             self->update_location(new_else => ast*);
-            res->stmts.push(ptr<ast>::wrap(new_else => ast*));
+            res->stmts.push(new_else => ast*);
         }
 
         self->update_location(res => ast*);
@@ -1160,7 +1160,7 @@ impl parser {
                 self->match_token(tok_kind::tok_wide_arrow);
             }
             new_case->body = self->block_gen(true);
-            res->cases.push(ptr<ast>::wrap(new_case => ast*));
+            res->cases.push(new_case => ast*);
         }
         self->match_token(tok_kind::tok_rbrace);
         self->update_location(res => ast*);

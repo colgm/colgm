@@ -740,7 +740,7 @@ impl sema {
         if (n->generic_types != nil) {
             var types = vec<type>::instance();
             foreach (var i; n->generic_types->types) {
-                var ty = self->tr.resolve(i.get().unwrap() => ast_type_def*);
+                var ty = self->tr.resolve(i.get() => ast_type_def*);
                 types.push(ty.__ptr__());
                 ty.delete();
             }
@@ -1252,7 +1252,7 @@ impl sema {
 
         var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
         foreach (var i; n->pairs) {
-            var tmp = i.get().unwrap() => ast_init_pair*;
+            var tmp = i.get() => ast_init_pair*;
             var field = tmp->field->content.__ptr__();
             if (!struct_self->fields.has(field)) {
                 var info = str::from("cannot find field \"");
@@ -1403,7 +1403,7 @@ impl sema {
         }
 
         foreach (var i; n->chain) {
-            var c = i.get().unwrap();
+            var c = i.get();
             if (c->kind != ast_kind::ast_call_func_args &&
                 infer.is_function()) {
                 self->err->error(c->location.__ptr__(), "function should be called before");
@@ -1486,7 +1486,7 @@ impl sema {
 
     func check_valid_left_value(self, n: ast_call*) -> bool {
         foreach (var i; n->chain) {
-            var tmp = i.get().unwrap();
+            var tmp = i.get();
             if (tmp->kind == ast_kind::ast_initializer) {
                 self->err->error(
                     tmp->location.__ptr__(),
@@ -1514,7 +1514,7 @@ impl sema {
         var seg: ast* = nil;
         var maybe_invalid_assignment = false;
         foreach (var i; n->chain) {
-            var tmp = i.get().unwrap();
+            var tmp = i.get();
             if (tmp->kind == ast_kind::ast_call_func_args &&
                 !tmp->resolved_type.is_pointer()) {
                 seg = tmp;
@@ -1936,7 +1936,7 @@ impl sema {
 
     func resolve_cond_stmt(self, n: ast_cond_stmt*, func_self: colgm_func*) {
         foreach (var i; n->stmts) {
-            self->resolve_if_stmt(i.get().unwrap() => ast_if_stmt*, func_self);
+            self->resolve_if_stmt(i.get() => ast_if_stmt*, func_self);
         }
     }
 
@@ -1963,7 +1963,7 @@ impl sema {
             return false;
         }
 
-        var call_node = n->chain.get(0).unwrap();
+        var call_node = n->chain.get(0);
         if (call_node->kind != ast_kind::ast_call_path) {
             return false;
         }
@@ -1982,7 +1982,7 @@ impl sema {
         }
 
         var em = dm->enums.get(name);
-        var call_node = n->chain.get(0).unwrap() => ast_call_path*;
+        var call_node = n->chain.get(0) => ast_call_path*;
         var e_name = call_node->name.__ptr__();
         if (!em->members.has(e_name)) {
             return 0xffffffffffffffff;
@@ -2017,7 +2017,7 @@ impl sema {
         var default_found = false;
         var used_values = hashset<basic<i64>>::instance();
         foreach (var i; n->cases) {
-            var case_node = i.get().unwrap() => ast_match_case*;
+            var case_node = i.get() => ast_match_case*;
 
             if (self->check_is_match_default(case_node->pattern)) {
                 var case_type = type::default_match_type();
@@ -2238,22 +2238,22 @@ impl sema {
         var lowered_condition_rhs = n->container->copy();
         if (n->container->base.resolved_type.is_pointer()) {
             var m_name = str::from("iter_size");
-            lowered_condition_rhs->chain.push(ptr<ast>::wrap(ast_ptr_get_field::new(
+            lowered_condition_rhs->chain.push(ast_ptr_get_field::new(
                 n->container->base.location.__ptr__(),
                 m_name.__ptr__()
-            ) => ast*));
+            ) => ast*);
             m_name.delete();
         } else {
             var m_name = str::from("iter_size");
-            lowered_condition_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
+            lowered_condition_rhs->chain.push(ast_get_field::new(
                 n->container->base.location.__ptr__(),
                 m_name.__ptr__()
-            ) => ast*));
+            ) => ast*);
             m_name.delete();
         }
-        lowered_condition_rhs->chain.push(ptr<ast>::wrap(
+        lowered_condition_rhs->chain.push(
             ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
-        ));
+        );
 
         // generate `i < container.iter_size()`
         var lowered_condition = ast_binary_operator::new(
@@ -2351,22 +2351,22 @@ impl sema {
         lowered_init->value = lowered_init_rhs => ast*;
         if (n->container->base.resolved_type.is_pointer()) {
             var m_name = str::from("iter");
-            lowered_init_rhs->chain.push(ptr<ast>::wrap(ast_ptr_get_field::new(
+            lowered_init_rhs->chain.push(ast_ptr_get_field::new(
                 n->container->base.location.__ptr__(),
                 m_name.__ptr__()
-            ) => ast*));
+            ) => ast*);
             m_name.delete();
         } else {
             var m_name = str::from("iter");
-            lowered_init_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
+            lowered_init_rhs->chain.push(ast_get_field::new(
                 n->container->base.location.__ptr__(),
                 m_name.__ptr__()
-            ) => ast*));
+            ) => ast*);
             m_name.delete();
         }
-        lowered_init_rhs->chain.push(ptr<ast>::wrap(
+        lowered_init_rhs->chain.push(
             ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
-        ));
+        );
 
         n->lowered_init = lowered_init;
 
@@ -2382,15 +2382,15 @@ impl sema {
         lowered_condition_value->head->id = n->variable->copy();
         // generate `is_end`
         var end_method = str::from("is_end");
-        lowered_condition_value->chain.push(ptr<ast>::wrap(ast_get_field::new(
+        lowered_condition_value->chain.push(ast_get_field::new(
             n->container->base.location.__ptr__(),
             end_method.__ptr__()
-        ) => ast*));
+        ) => ast*);
         end_method.delete();
         // generate `()`
-        lowered_condition_value->chain.push(ptr<ast>::wrap(
+        lowered_condition_value->chain.push(
             ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
-        ));
+        );
         // !i.is_end()
         var lowered_condition = ast_unary_operator::new(
             n->container->base.location.__ptr__(),
@@ -2418,14 +2418,14 @@ impl sema {
         );
         lowered_update_rhs->head->id = n->variable->copy();
         var next_method = str::from("next");
-        lowered_update_rhs->chain.push(ptr<ast>::wrap(ast_get_field::new(
+        lowered_update_rhs->chain.push(ast_get_field::new(
             n->container->base.location.__ptr__(),
             next_method.__ptr__()
-        ) => ast*));
+        ) => ast*);
         next_method.delete();
-        lowered_update_rhs->chain.push(ptr<ast>::wrap(
+        lowered_update_rhs->chain.push(
             ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
-        ));
+        );
 
         var lowered_update = ast_assignment::new(n->container->base.location.__ptr__());
         lowered_update->kind = assignment_kind::eq;
@@ -2609,7 +2609,7 @@ impl sema {
     func resolve_code_block(self, node: ast_code_block*, func_self: colgm_func*) {
         self->ctx->push_scope_level();
         foreach (var i; node->stmts) {
-            var n = i.get().unwrap();
+            var n = i.get();
             self->resolve_statement(n, func_self);
             if (n->is(ast_kind::ast_ret_stmt) ||
                 n->is(ast_kind::ast_break_stmt) ||
@@ -2636,7 +2636,7 @@ impl sema {
         var unreachable_statements = vec<ast*>::instance();
 
         foreach (var i; n->stmts) {
-            var tmp = i.get().unwrap();
+            var tmp = i.get();
             if (flag_block_ended) {
                 unreachable_statements.push(tmp);
             }
@@ -2677,7 +2677,7 @@ impl sema {
                                               func_self: colgm_func*) {
         var flag_has_return = false;
         foreach (var i; n->stmts) {
-            var tmp = i.get().unwrap();
+            var tmp = i.get();
             if (tmp->is(ast_kind::ast_ret_stmt)) {
                 flag_has_return = true;
                 break;
@@ -2690,7 +2690,7 @@ impl sema {
 
         if (func_self->return_type.is_void()) {
             var rs = ast_ret_stmt::new(n->base.location.__ptr__());
-            n->stmts.push(ptr<ast>::wrap(rs => ast*));
+            n->stmts.push(rs => ast*);
             return;
         }
 
@@ -2774,7 +2774,7 @@ impl sema {
             self->ctx->add_local_var(param_name, param_type);
         }
         foreach (var i; node->body->stmts) {
-            var n = i.get().unwrap();
+            var n = i.get();
             self->resolve_statement(n, func_self);
             if (n->is(ast_kind::ast_ret_stmt) ||
                 n->is(ast_kind::ast_break_stmt) ||
@@ -2808,7 +2808,7 @@ impl sema {
             self->ctx->add_local_var(param_name, param_type);
         }
         foreach (var i; node->body->stmts) {
-            var n = i.get().unwrap();
+            var n = i.get();
             self->resolve_statement(n, method_self);
             if (n->is(ast_kind::ast_ret_stmt) ||
                 n->is(ast_kind::ast_break_stmt) ||

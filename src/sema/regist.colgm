@@ -130,7 +130,7 @@ impl regist_pass {
 
     func import_specified(self, node: ast_use_stmt*, dm: colgm_module*, path: str*) {
         foreach (var i; node->import_symbol) {
-            var name_node = i.get().unwrap() => ast_identifier*;
+            var name_node = i.get() => ast_identifier*;
             var name = name_node->content.__ptr__();
 
             var is_public = false;
@@ -291,7 +291,7 @@ impl regist_pass {
 
         // generate expect path
         foreach (var i; node->module_path) {
-            var name = i.get().unwrap();
+            var name = i.get();
             if (!name->is(ast_kind::ast_identifier)) {
                 self->err->error(name->location.__ptr__(), "invalid module path");
                 expect_name.delete();
@@ -445,7 +445,7 @@ impl regist_pass {
         var has_non_specified_value = false;
         var v = node->members.__ptr__();
         for (var i: u64 = 0; i < v->size; i += 1) {
-            var n = v->get(i).unwrap();
+            var n = v->get(i);
             if (!n->is(ast_kind::ast_enum_member)) {
                 self->err->error(n->location.__ptr__(),
                     "invalid ast node, expect enum member"
@@ -469,7 +469,7 @@ impl regist_pass {
         }
         
         for (var i: u64 = 0; i < v->size; i += 1) {
-            var n_ast = v->get(i).unwrap() => ast_enum_member*;
+            var n_ast = v->get(i) => ast_enum_member*;
             var value = i => i64;
             var member_name = n_ast->name->content.__ptr__();
             if (n_ast->value != nil) {
@@ -537,7 +537,7 @@ impl regist_pass {
 
         var v = node->params->params.__ptr__();
         for (var i: u64 = 0; i < v->size; i += 1) {
-            var n = v->get(i).unwrap();
+            var n = v->get(i);
             if (!n->is(ast_kind::ast_param)) {
                 self->err->error(n->location.__ptr__(),
                     "invalid ast node, expect param"
@@ -602,7 +602,7 @@ impl regist_pass {
             self->ctx->generics.clear();
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).unwrap();
+                var gt = gtv->get(i);
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"
@@ -637,7 +637,7 @@ impl regist_pass {
         if (node->generic_types != nil) {
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).unwrap();
+                var gt = gtv->get(i);
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"
@@ -705,7 +705,7 @@ impl regist_pass {
             self->ctx->generics.clear();
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).unwrap();
+                var gt = gtv->get(i);
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"
@@ -731,7 +731,7 @@ impl regist_pass {
             struct_info = dm->generic_structs.get(name);
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).unwrap();
+                var gt = gtv->get(i);
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"
@@ -745,7 +745,7 @@ impl regist_pass {
         }
 
         foreach (var i; node->fields) {
-            var fld = i.get().unwrap() ;
+            var fld = i.get() ;
             if (!fld->is(ast_kind::ast_struct_field)) {
                 continue;
             }
@@ -775,7 +775,7 @@ impl regist_pass {
         struct_self_type.loc_file.append_str(node->base.location.file.__ptr__());
         if (node->generic_types != nil) {
             foreach (var i; node->generic_types->types) {
-                var gt = i.get().unwrap();
+                var gt = i.get();
                 var ty = self->tr.resolve(gt => ast_type_def*);
                 struct_self_type.generics.push(ty.__ptr__());
                 ty.delete();
@@ -1002,7 +1002,7 @@ impl regist_pass {
             return false;
         }
 
-        var first_param = pms->get(0).unwrap();
+        var first_param = pms->get(0);
         if (!first_param->is(ast_kind::ast_param)) {
             return false;
         }
@@ -1032,7 +1032,7 @@ impl regist_pass {
                                  struct_info: colgm_struct*,
                                  node: ast_func_decl*) {
         var pms = node->params->params.__ptr__();
-        var first_param = pms->get(0).unwrap() => ast_param*;
+        var first_param = pms->get(0) => ast_param*;
         if (first_param->type != nil) {
             panic("unreachable");
             return;
@@ -1050,7 +1050,7 @@ impl regist_pass {
                 var g = GT->get(i);
                 var tmp = ast_type_def::new(loc);
                 tmp->name = ast_identifier::new(loc, g);
-                tn->generic_types->types.push(ptr<ast>::wrap(tmp => ast*));
+                tn->generic_types->types.push(tmp => ast*);
             }
         }
         first_param->type = tn;
@@ -1143,7 +1143,7 @@ impl regist_pass {
             self->ctx->generics.clear();
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
-                var gt = gtv->get(i).unwrap();
+                var gt = gtv->get(i);
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self->err->error(gt->location.__ptr__(),
                         "invalid ast node, expect type def"

@@ -196,7 +196,7 @@ impl generic_visitor {
         var ss = str::from("");
         ss.append_str(type_name)->append_char('<');
         foreach (var i; type_list) {
-            var r_type = self->tr.resolve(i.get().unwrap() => ast_type_def*);
+            var r_type = self->tr.resolve(i.get() => ast_type_def*);
             var r_type_fpn = r_type.full_path_name(self->pkg, true);
             ss.append_str(r_type_fpn.__ptr__());
             r_type_fpn.delete();
@@ -218,7 +218,7 @@ impl generic_visitor {
         g_data.generic_type.loc_file.append_str(sym->loc_file.__ptr__());
 
         foreach (var i; type_list) {
-            var r_type = self->tr.resolve(i.get().unwrap() => ast_type_def*);
+            var r_type = self->tr.resolve(i.get() => ast_type_def*);
             g_data.generic_type.generics.push(r_type.__ptr__());
             g_data.types.insert(generic_template->get(i.index()), r_type.__ptr__());
         }
@@ -324,7 +324,7 @@ impl generic_visitor {
             return;
         }
         foreach (var i; n->fields) {
-            var f = i.get().unwrap();
+            var f = i.get();
             if (!f->is(ast_kind::ast_struct_field)) {
                 continue;
             }
@@ -394,7 +394,7 @@ impl generic_visitor {
 
     func visit_initializer(self, n: ast_initializer*) {
         foreach (var i; n->pairs) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -447,7 +447,7 @@ impl generic_visitor {
     func visit_call(self, n: ast_call*) {
         self->visit_call_id(n->head);
         foreach (var i; n->chain) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -467,7 +467,7 @@ impl generic_visitor {
 
     func visit_generic_type_list(self, n: ast_generic_type_list*) {
         foreach (var i; n->types) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -483,7 +483,7 @@ impl generic_visitor {
 
     func visit_param_list(self, n: ast_param_list*) {
         foreach (var i; n->params) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -496,7 +496,7 @@ impl generic_visitor {
 
     func visit_cond_stmt(self, n: ast_cond_stmt*) {
         foreach (var i; n->stmts) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -519,7 +519,7 @@ impl generic_visitor {
     func visit_match_stmt(self, n: ast_match_stmt*) {
         self->visit_ast(n->value);
         foreach (var i; n->cases) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -603,7 +603,7 @@ impl generic_visitor {
 
     func visit_code_block(self, n: ast_code_block*) {
         foreach (var i; n->stmts) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 }
