@@ -154,7 +154,7 @@ impl sema {
     func resolve_array_list(self, n: ast_array_list*) -> type {
         var list_type = vec<type>::instance();
         foreach (var i; n->value) {
-            var t = self->resolve_expression(i.get().unwrap());
+            var t = self->resolve_expression(i.get());
             list_type.push(t.__ptr__());
             t.delete();
         }
@@ -172,7 +172,7 @@ impl sema {
 
         var marked_base_type = list_type.get(0);
         for (var i: u64 = 1; i < list_type.size; i += 1) {
-            var this_node = n->value.get(i).unwrap();
+            var this_node = n->value.get(i);
             if (!list_type.get(i)->eq(marked_base_type) &&
                 !self->check_can_be_converted(this_node, marked_base_type)) {
                 var info = str::from("expect \"");

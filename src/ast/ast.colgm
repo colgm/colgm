@@ -922,14 +922,14 @@ impl ast_bool_literal {
 
 pub struct ast_array_list {
     base: ast,
-    value: primitive_vec<ptr<ast>>
+    value: vec<ast*>
 }
 
 impl ast_array_list {
     pub func new(loc: span*) -> ast_array_list* {
         var res = ast_array_list::__alloc__();
         res->base = ast::instance(ast_kind::ast_array_list, loc);
-        res->value = primitive_vec<ptr<ast>>::instance();
+        res->value = vec<ast*>::instance();
         return res;
     }
 
@@ -939,17 +939,17 @@ impl ast_array_list {
             ast_kind::ast_array_list,
             self->base.location.__ptr__()
         );
-        res->value = primitive_vec<ptr<ast>>::instance();
+        res->value = vec<ast*>::instance();
         foreach (var i; self->value) {
-            res->value.push(ptr<ast>::wrap(i.get().unwrap()->copy()));
+            res->value.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
         foreach (var i; self->value) {
-            i.get().unwrap()->delete();
-            free(i.get().unwrap() => i8*);
+            i.get()->delete();
+            free(i.get() => i8*);
         }
         self->value.delete();
     }

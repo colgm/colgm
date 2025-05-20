@@ -188,8 +188,8 @@ pub struct sir_context {
     func_impls: vec<sir_func>,
     const_strings: hashmap<str, u64>,
 
-    named_metadata: primitive_vec<ptr<DI_named_metadata>>,
-    debug_info: primitive_vec<ptr<DI_node>>,
+    named_metadata: vec<DI_named_metadata*>,
+    debug_info: vec<DI_node*>,
     DI_file_map: hashmap<str, u64>,
     DI_type_map: hashmap<str, u64>,
     DI_struct_map: hashmap<str, DI_structure_type*>,
@@ -204,8 +204,8 @@ impl sir_context {
             func_decls: vec<sir_func>::instance(),
             func_impls: vec<sir_func>::instance(),
             const_strings: hashmap<str, u64>::instance(),
-            named_metadata: primitive_vec<ptr<DI_named_metadata>>::instance(),
-            debug_info: primitive_vec<ptr<DI_node>>::instance(),
+            named_metadata: vec<DI_named_metadata*>::instance(),
+            debug_info: vec<DI_node*>::instance(),
             DI_file_map: hashmap<str, u64>::instance(),
             DI_type_map: hashmap<str, u64>::instance(),
             DI_struct_map: hashmap<str, DI_structure_type*>::instance(),
@@ -219,13 +219,13 @@ impl sir_context {
         self->func_impls.delete();
         self->const_strings.delete();
         foreach (var i; self->named_metadata) {
-            var n = i.get().unwrap() => DI_node*;
+            var n = i.get() => DI_node*;
             n->delete();
             free(n => i8*);
         }
         self->named_metadata.delete();
         foreach (var i; self->debug_info) {
-            var n = i.get().unwrap();
+            var n = i.get();
             n->delete();
             free(n => i8*);
         }
@@ -395,7 +395,7 @@ impl sir_context {
 
     func dump_named_metadata(self, out: io) {
         foreach (var i; self->named_metadata) {
-            i.get().unwrap()->dump(out);
+            i.get()->dump(out);
             out.endln();
         }
         if (self->named_metadata.size > 0) {
@@ -405,7 +405,7 @@ impl sir_context {
 
     func dump_debug_info(self, out: io) {
         foreach (var i; self->debug_info) {
-            i.get().unwrap()->dump(out);
+            i.get()->dump(out);
             out.endln();
         }
     }

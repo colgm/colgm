@@ -2515,7 +2515,7 @@ impl mir2sir {
                 64,
                 temp.c_str
             );
-            self->sctx->debug_info.push(ptr<DI_node>::wrap(p => DI_node*));
+            self->sctx->debug_info.push(p => DI_node*);
             self->sctx->add_DI_type(temp.c_str, self->dwarf_status.DI_counter);
             self->dwarf_status.DI_counter += 1;
             temp.pop_back();
@@ -2572,14 +2572,14 @@ impl mir2sir {
             loc->begin_column,
             self->dwarf_status.scope_index
         );
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(DI_loc => DI_node*));
+        self->sctx->debug_info.push(DI_loc => DI_node*);
         self->dwarf_status.DI_counter += 1;
         return index;
     }
 
     func generate_llvm_ident(self) {
         var ident = DI_named_metadata::new("llvm.ident");
-        self->sctx->named_metadata.push(ptr<DI_named_metadata>::wrap(ident));
+        self->sctx->named_metadata.push(ident);
         
         var version_str = str::from("colgm compiler version ");
         version_str.append_i8_vec(version());
@@ -2587,7 +2587,7 @@ impl mir2sir {
         var ver_list = DI_list::new(self->dwarf_status.DI_counter);
         ver_list->add(DI_string::new(version_str.c_str) => DI_node*);
         ident->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(ver_list => DI_node*));
+        self->sctx->debug_info.push(ver_list => DI_node*);
 
         self->dwarf_status.DI_counter += 1;
         version_str.delete();
@@ -2595,13 +2595,13 @@ impl mir2sir {
 
     func generate_llvm_module_flags(self) {
         var module_flags = DI_named_metadata::new("llvm.module.flags");
-        self->sctx->named_metadata.push(ptr<DI_named_metadata>::wrap(module_flags));
+        self->sctx->named_metadata.push(module_flags);
 
         var dwarf_version = DI_list::new(self->dwarf_status.DI_counter);
         dwarf_version->add(DI_i32::new(7) => DI_node*);
         dwarf_version->add(DI_string::new("Dwarf Version") => DI_node*);
         dwarf_version->add(DI_i32::new(4) => DI_node*);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(dwarf_version => DI_node*));
+        self->sctx->debug_info.push(dwarf_version => DI_node*);
         module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
@@ -2609,7 +2609,7 @@ impl mir2sir {
         debug_info_version->add(DI_i32::new(2) => DI_node*);
         debug_info_version->add(DI_string::new("Debug Info Version") => DI_node*);
         debug_info_version->add(DI_i32::new(3) => DI_node*);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(debug_info_version => DI_node*));
+        self->sctx->debug_info.push(debug_info_version => DI_node*);
         module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
@@ -2617,7 +2617,7 @@ impl mir2sir {
         wchar_size->add(DI_i32::new(1) => DI_node*);
         wchar_size->add(DI_string::new("wchar_size") => DI_node*);
         wchar_size->add(DI_i32::new(4) => DI_node*);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(wchar_size => DI_node*));
+        self->sctx->debug_info.push(wchar_size => DI_node*);
         module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
@@ -2625,7 +2625,7 @@ impl mir2sir {
         uwtable->add(DI_i32::new(7) => DI_node*);
         uwtable->add(DI_string::new("uwtable") => DI_node*);
         uwtable->add(DI_i32::new(1) => DI_node*);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(uwtable => DI_node*));
+        self->sctx->debug_info.push(uwtable => DI_node*);
         module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
@@ -2633,7 +2633,7 @@ impl mir2sir {
         frame_pointer->add(DI_i32::new(7) => DI_node*);
         frame_pointer->add(DI_string::new("frame-pointer") => DI_node*);
         frame_pointer->add(DI_i32::new(2) => DI_node*);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(frame_pointer => DI_node*));
+        self->sctx->debug_info.push(frame_pointer => DI_node*);
         module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
         self->dwarf_status.DI_counter += 1;
     }
@@ -2643,9 +2643,9 @@ impl mir2sir {
 
         // empty file name maybe used for auto-generated functions
         var empty_file_name = str::from("");
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
+        self->sctx->debug_info.push(
             DI_file::new(self->dwarf_status.DI_counter, "", "") => DI_node*
-        ));
+        );
         self->sctx->DI_file_map.insert(
             empty_file_name.__ptr__(),
             self->dwarf_status.DI_counter
@@ -2654,13 +2654,11 @@ impl mir2sir {
         empty_file_name.delete();
 
         foreach (var i; self->ctx->global->domain) {
-            self->sctx->debug_info.push(ptr<DI_node>::wrap(
-                DI_file::new(
-                    self->dwarf_status.DI_counter,
-                    i.key()->c_str,
-                    ""
-                ) => DI_node*
-            ));
+            self->sctx->debug_info.push(DI_file::new(
+                self->dwarf_status.DI_counter,
+                i.key()->c_str,
+                ""
+            ) => DI_node*);
             self->sctx->DI_file_map.insert(
                 i.key(),
                 self->dwarf_status.DI_counter
@@ -2671,7 +2669,7 @@ impl mir2sir {
 
     func generate_llvm_dbg_cu(self) -> DI_compile_unit* {
         var llvm_dbg_cu = DI_named_metadata::new("llvm.dbg.cu");
-        self->sctx->named_metadata.push(ptr<DI_named_metadata>::wrap(llvm_dbg_cu));
+        self->sctx->named_metadata.push(llvm_dbg_cu);
 
         var main_input_file_index = self->sctx->DI_file_map.get(
             self->ctx->global->main_input_file.__ptr__()
@@ -2686,131 +2684,109 @@ impl mir2sir {
             main_input_file_index
         );
         llvm_dbg_cu->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(cu => DI_node*));
+        self->sctx->debug_info.push(cu => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
         return cu;
     }
 
     func generate_basic_type(self) {
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "i8",
-                8,
-                "DW_ATE_signed"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "i8",
+            8,
+            "DW_ATE_signed"
+        ) => DI_node*);
         self->sctx->add_DI_type("i8", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "i16",
-                16,
-                "DW_ATE_signed"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "i16",
+            16,
+            "DW_ATE_signed"
+        ) => DI_node*);
         self->sctx->add_DI_type("i16", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "i32",
-                32,
-                "DW_ATE_signed"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "i32",
+            32,
+            "DW_ATE_signed"
+        ) => DI_node*);
         self->sctx->add_DI_type("i32", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "i64",
-                64,
-                "DW_ATE_signed"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "i64",
+            64,
+            "DW_ATE_signed"
+        ) => DI_node*);
         self->sctx->add_DI_type("i64", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "u8",
-                8,
-                "DW_ATE_unsigned"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "u8",
+            8,
+            "DW_ATE_unsigned"
+        ) => DI_node*);
         self->sctx->add_DI_type("u8", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "u16",
-                16,
-                "DW_ATE_unsigned"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "u16",
+            16,
+            "DW_ATE_unsigned"
+        ) => DI_node*);
         self->sctx->add_DI_type("u16", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "u32",
-                32,
-                "DW_ATE_unsigned"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "u32",
+            32,
+            "DW_ATE_unsigned"
+        ) => DI_node*);
         self->sctx->add_DI_type("u32", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "u64",
-                64,
-                "DW_ATE_unsigned"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "u64",
+            64,
+            "DW_ATE_unsigned"
+        ) => DI_node*);
         self->sctx->add_DI_type("u64", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "f32",
-                32,
-                "DW_ATE_float"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "f32",
+            32,
+            "DW_ATE_float"
+        ) => DI_node*);
         self->sctx->add_DI_type("f32", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "f64",
-                64,
-                "DW_ATE_float"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "f64",
+            64,
+            "DW_ATE_float"
+        ) => DI_node*);
         self->sctx->add_DI_type("f64", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
 
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(
-            DI_basic_type::new(
-                self->dwarf_status.DI_counter,
-                "bool",
-                1,
-                "DW_ATE_boolean"
-            ) => DI_node*
-        ));
+        self->sctx->debug_info.push(DI_basic_type::new(
+            self->dwarf_status.DI_counter,
+            "bool",
+            1,
+            "DW_ATE_boolean"
+        ) => DI_node*);
         self->sctx->add_DI_type("bool", self->dwarf_status.DI_counter);
         self->dwarf_status.DI_counter += 1;
     }
@@ -2832,22 +2808,20 @@ impl mir2sir {
             self->sctx->DI_type_map.get(i64_s.__ptr__())
         );
         self->sctx->add_DI_type(id.c_str, self->dwarf_status.DI_counter);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
+        self->sctx->debug_info.push(tmp => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
         var enum_list = DI_list::new(self->dwarf_status.DI_counter);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(enum_list => DI_node*));
+        self->sctx->debug_info.push(enum_list => DI_node*);
         tmp->elements_index = self->dwarf_status.DI_counter;
         self->dwarf_status.DI_counter += 1;
 
         foreach (var i; e->ordered_member) {
-            self->sctx->debug_info.push(ptr<DI_node>::wrap(
-                DI_enumerator::new(
-                    self->dwarf_status.DI_counter,
-                    i.get()->c_str,
-                    e->members.get(i.get())
-                ) => DI_node*
-            ));
+            self->sctx->debug_info.push(DI_enumerator::new(
+                self->dwarf_status.DI_counter,
+                i.get()->c_str,
+                e->members.get(i.get())
+            ) => DI_node*);
             enum_list->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
             self->dwarf_status.DI_counter += 1;
         }
@@ -2860,7 +2834,7 @@ impl mir2sir {
 
     func generate_DI_enum_type(self) -> u64 {
         var enums_list = DI_list::new(self->dwarf_status.DI_counter);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(enums_list => DI_node*));
+        self->sctx->debug_info.push(enums_list => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
         foreach (var i; self->ctx->global->domain) {
@@ -2888,7 +2862,7 @@ impl mir2sir {
         );
         self->sctx->add_DI_type(id.c_str, self->dwarf_status.DI_counter);
         self->sctx->add_DI_struct(id.c_str, tmp);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
+        self->sctx->debug_info.push(tmp => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
         ty.delete();
@@ -2913,7 +2887,7 @@ impl mir2sir {
 
         var element = DI_list::new(self->dwarf_status.DI_counter);
         s_node->elements = self->dwarf_status.DI_counter;
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(element => DI_node*));
+        self->sctx->debug_info.push(element => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
         foreach (var i; s->ordered_fields) {
@@ -2927,7 +2901,7 @@ impl mir2sir {
                 member->loc.begin_line + 1,
                 member_type_index
             );
-            self->sctx->debug_info.push(ptr<DI_node>::wrap(field_node => DI_node*));
+            self->sctx->debug_info.push(field_node => DI_node*);
             element->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
             self->dwarf_status.DI_counter += 1;
         }
@@ -2958,7 +2932,7 @@ impl mir2sir {
             self->dwarf_status.DI_counter + 1,    // `type` field, DISubroutineType
             self->dwarf_status.compile_unit_index // `unit` field, DICompileUnit
         );
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(tmp => DI_node*));
+        self->sctx->debug_info.push(tmp => DI_node*);
         if (f->block != nil) {
             self->dwarf_status.impl_debug_info.insert(
                 f->name.__ptr__(),
@@ -2974,11 +2948,11 @@ impl mir2sir {
             self->dwarf_status.DI_counter,    // self index
             self->dwarf_status.DI_counter + 1 // DI_list index
         );
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(subroutine => DI_node*));
+        self->sctx->debug_info.push(subroutine => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
         var ty_list = DI_list::new(self->dwarf_status.DI_counter);
-        self->sctx->debug_info.push(ptr<DI_node>::wrap(ty_list => DI_node*));
+        self->sctx->debug_info.push(ty_list => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
         ty_list->add(self->find_DI_type(f->return_type.__ptr__()));
