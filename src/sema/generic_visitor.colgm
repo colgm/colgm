@@ -350,7 +350,7 @@ impl generic_visitor {
             return;
         }
         foreach (var i; n->methods) {
-            var f = i.get().unwrap();
+            var f = i.get();
             if (!f->is(ast_kind::ast_func_decl)) {
                 continue;
             }
@@ -384,7 +384,7 @@ impl generic_visitor {
 
     func visit_call_func_args(self, n: ast_call_func_args*) {
         foreach (var i; n->args) {
-            self->visit_ast(i.get().unwrap());
+            self->visit_ast(i.get());
         }
     }
 
@@ -877,11 +877,11 @@ impl generic_visitor {
     func remove_cond_compile_method(self, s: colgm_struct*, g_data: generic_data*) {
         foreach (var i; s->generic_struct_impl) {
             var impl_node = i.get();
-            var new_vec = primitive_vec<ptr<ast>>::instance();
+            var new_vec = vec<ast*>::instance();
             foreach (var j; impl_node->methods) {
-                var func_node = j.get().unwrap() => ast_func_decl*;
+                var func_node = j.get() => ast_func_decl*;
                 if (!func_node->contain_cond()) {
-                    new_vec.push(ptr<ast>::wrap(func_node => ast*));
+                    new_vec.push(func_node => ast*);
                     continue;
                 }
 
@@ -956,7 +956,7 @@ impl generic_visitor {
                     }
                     // TODO: remove static_method with monomorphic name
                 }
-                new_vec.push(ptr<ast>::wrap(func_node => ast*));
+                new_vec.push(func_node => ast*);
             }
             if (new_vec.size != impl_node->methods.size) {
                 impl_node->reset_methods(new_vec.__ptr__());

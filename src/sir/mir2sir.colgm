@@ -3,7 +3,7 @@ use std::map::{ hashmap };
 use std::str::{ str };
 use std::ptr::{ ptr };
 use std::io::{ io };
-use std::vec::{ vec, primitive_vec };
+use std::vec::{ vec };
 
 use mir::mir::*;
 use mir::context::{ mir_context, mir_func };
@@ -208,9 +208,9 @@ pub struct mir2sir {
 
     locals: local_table,
 
-    continue_inst: vec<primitive_vec<ptr<sir_br>>>,
-    break_inst: vec<primitive_vec<ptr<sir_br>>>,
-    branch_jump_out: vec<primitive_vec<ptr<sir_br>>>,
+    continue_inst: vec<vec<sir_br*>>,
+    break_inst: vec<vec<sir_br*>>,
+    branch_jump_out: vec<vec<sir_br*>>,
 
     dwarf_status: DWARF_status
 }
@@ -231,9 +231,9 @@ impl mir2sir {
             array_ssa_gen: ssa_generator::instance(),
             value_stack: vec<mir_value_t>::instance(),
             locals: local_table::instance(),
-            continue_inst: vec<primitive_vec<ptr<sir_br>>>::instance(),
-            break_inst: vec<primitive_vec<ptr<sir_br>>>::instance(),
-            branch_jump_out: vec<primitive_vec<ptr<sir_br>>>::instance(),
+            continue_inst: vec<vec<sir_br*>>::instance(),
+            break_inst: vec<vec<sir_br*>>::instance(),
+            branch_jump_out: vec<vec<sir_br*>>::instance(),
             dwarf_status: DWARF_status::instance()
         };
         res.init_basic_type_mapper();
@@ -2161,7 +2161,7 @@ impl mir2sir {
 
         var jump_out = sir_br::new(0);
         self->block->add_stmt(jump_out => sir*);
-        self->branch_jump_out.back()->push(ptr<sir_br>::wrap(jump_out));
+        self->branch_jump_out.back()->push(jump_out);
 
         if (br_cond != nil) {
             br_cond->label_false = self->block->stmts.size;
@@ -2170,20 +2170,20 @@ impl mir2sir {
     }
 
     func visit_mir_branch(self, n: mir_branch*) {
-        var new_table = primitive_vec<ptr<sir_br>>::instance();
+        var new_table = vec<sir_br*>::instance();
         self->branch_jump_out.push(new_table.__ptr__());
         new_table.delete();
 
         foreach (var i; n->branch) {
-            self->visit(i.get().unwrap() => mir*);
-            if (i.get().unwrap()->condition != nil && i.index() == n->branch.size - 1) {
+            self->visit(i.get() => mir*);
+            if (i.get()->condition != nil && i.index() == n->branch.size - 1) {
                 self->block->add_stmt(sir_br::new(self->block->stmts.size + 1) => sir*);
             }
         }
 
         // set jump out
         foreach (var i; self->branch_jump_out.back()) {
-            i.get().unwrap()->label = self->block->stmts.size;
+            i.get()->label = self->block->stmts.size;
         }
         self->branch_jump_out.pop_back();
 
@@ -2203,12 +2203,12 @@ impl mir2sir {
         var switch_inst = sir_switch::new(value_val.__ptr__());
         self->block->add_stmt(switch_inst => sir*);
 
-        var jmp_exits = primitive_vec<ptr<sir_br>>::instance();
+        var jmp_exits = vec<sir_br*>::instance();
 
         foreach (var i; n->cases) {
             var case_label_index = self->block->stmts.size;
             var label_comment = str::from("switch.case ");
-            label_comment.append_i64(i.get().unwrap()->value);
+            label_comment.append_i64(i.get()->value);
 
             var label = sir_label::new(
                 case_label_index,
@@ -2217,9 +2217,9 @@ impl mir2sir {
             label_comment.delete();
 
             self->block->add_stmt(label => sir*);
-            switch_inst->add_case(i.get().unwrap()->value, case_label_index);
+            switch_inst->add_case(i.get()->value, case_label_index);
 
-            self->visit(i.get().unwrap()->content => mir*);
+            self->visit(i.get()->content => mir*);
 
             // if block ends with ret instruction, do not generate
             // switch jump exit instruction
@@ -2229,7 +2229,7 @@ impl mir2sir {
 
             var jmp_exit = sir_br::new(0);
             self->block->add_stmt(jmp_exit => sir*);
-            jmp_exits.push(ptr<sir_br>::wrap(jmp_exit));
+            jmp_exits.push(jmp_exit);
         }
 
         var default_label_index = self->block->stmts.size;
@@ -2245,7 +2245,7 @@ impl mir2sir {
             if (!self->block->back_is_ret_stmt()) {
                 var jmp_exit = sir_br::new(0);
                 self->block->add_stmt(jmp_exit => sir*);
-                jmp_exits.push(ptr<sir_br>::wrap(jmp_exit));
+                jmp_exits.push(jmp_exit);
             }
 
             var exit_label_index = self->block->stmts.size;
@@ -2255,11 +2255,11 @@ impl mir2sir {
             ) => sir*);
 
             foreach (var i; jmp_exits) {
-                i.get().unwrap()->label = exit_label_index;
+                i.get()->label = exit_label_index;
             }
         } else {
             foreach (var i; jmp_exits) {
-                i.get().unwrap()->label = default_label_index;
+                i.get()->label = default_label_index;
             }
         }
 
@@ -2270,7 +2270,7 @@ impl mir2sir {
 
     func visit_mir_break(self, n: mir_break*) {
         var break_br = sir_br::new(0);
-        self->break_inst.back()->push(ptr<sir_br>::wrap(break_br));
+        self->break_inst.back()->push(break_br);
 
         self->block->add_stmt(break_br => sir*);
         self->block->add_stmt(sir_label::new(
@@ -2281,7 +2281,7 @@ impl mir2sir {
 
     func visit_mir_continue(self, n: mir_continue*) {
         var continue_br = sir_br::new(0);
-        self->continue_inst.back()->push(ptr<sir_br>::wrap(continue_br));
+        self->continue_inst.back()->push(continue_br);
 
         self->block->add_stmt(continue_br => sir*);
         self->block->add_stmt(sir_label::new(
@@ -2291,7 +2291,7 @@ impl mir2sir {
     }
 
     func visit_mir_loop(self, n: mir_loop*) {
-        var new_break_continue_table = primitive_vec<ptr<sir_br>>::instance();
+        var new_break_continue_table = vec<sir_br*>::instance();
         self->continue_inst.push(new_break_continue_table.__ptr__());
         self->break_inst.push(new_break_continue_table.__ptr__());
         new_break_continue_table.delete();
@@ -2353,7 +2353,7 @@ impl mir2sir {
         self->block->add_stmt(sir_br::new(continue_label_value) => sir*);
         self->block->add_stmt(sir_label::new(continue_label_value, "loop.continue") => sir*);
         foreach (var i; self->continue_inst.back()) {
-            i.get().unwrap()->label = continue_label_value;
+            i.get()->label = continue_label_value;
         }
 
         if (n->update != nil) {
@@ -2366,7 +2366,7 @@ impl mir2sir {
         cond_inst->label_false = exit_label_index;
         self->block->add_stmt(sir_label::new(exit_label_index, "loop.exit") => sir*);
         foreach (var i; self->break_inst.back()) {
-            i.get().unwrap()->label = exit_label_index;
+            i.get()->label = exit_label_index;
         }
 
         cond.delete();

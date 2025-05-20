@@ -3,7 +3,7 @@ use err::panic::{ unreachable };
 
 use std::libc::{ free };
 use std::str::{ str };
-use std::vec::{ vec, primitive_vec };
+use std::vec::{ vec };
 use std::ptr::{ ptr };
 use std::io::{ io };
 
@@ -1232,20 +1232,20 @@ impl mir_if {
 
 pub struct mir_branch {
     base: mir,
-    branch: primitive_vec<ptr<mir_if>>
+    branch: vec<mir_if*>
 }
 
 impl mir_branch {
     pub func new(l: span*) -> mir_branch* {
         var res = mir_branch::__alloc__();
         res->base = mir::instance(mir_kind::mir_branch, l);
-        res->branch = primitive_vec<ptr<mir_if>>::instance();
+        res->branch = vec<mir_if*>::instance();
         return res;
     }
 
     pub func delete(self) {
         foreach (var i; self->branch) {
-            var n = i.get().unwrap() => mir*;
+            var n = i.get() => mir*;
             n->delete();
             free(n => i8*);
         }
@@ -1264,7 +1264,7 @@ impl mir_branch {
             if (i.index() == self->branch.size - 1) {
                 tm->set_last();
             }
-            i.get().unwrap()->dump(out, pkg, tm);
+            i.get()->dump(out, pkg, tm);
         }
         tm->pop_indent();
     }
@@ -1310,7 +1310,7 @@ impl mir_switch_case {
 pub struct mir_switch {
     base: mir,
     condition: mir_block*,
-    cases: primitive_vec<ptr<mir_switch_case>>,
+    cases: vec<mir_switch_case*>,
     default_case: mir_block*
 }
 
@@ -1319,7 +1319,7 @@ impl mir_switch {
         var res = mir_switch::__alloc__();
         res->base = mir::instance(mir_kind::mir_switch, l);
         res->condition = cond;
-        res->cases = primitive_vec<ptr<mir_switch_case>>::instance();
+        res->cases = vec<mir_switch_case*>::instance();
         res->default_case = nil;
         return res;
     }
@@ -1331,7 +1331,7 @@ impl mir_switch {
             free(n => i8*);
         }
         foreach (var i; self->cases) {
-            var n = i.get().unwrap() => mir*;
+            var n = i.get() => mir*;
             n->delete();
             free(n => i8*);
         }
@@ -1360,7 +1360,7 @@ impl mir_switch {
             if (i.index() == self->cases.size - 1 && self->default_case == nil) {
                 tm->set_last();
             }
-            i.get().unwrap()->dump(out, pkg, tm);
+            i.get()->dump(out, pkg, tm);
         }
         if (self->default_case != nil) {
             tm->set_last();

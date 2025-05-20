@@ -290,7 +290,7 @@ impl ast2mir {
         var temp = self->block;
         self->block = new_block;
         foreach (var i; n->args) {
-            self->visit(i.get().unwrap());
+            self->visit(i.get());
         }
         self->block = temp;
 
@@ -470,8 +470,7 @@ impl ast2mir {
        var m = mir_branch::new(n->base.location.__ptr__());
        foreach (var i; n->stmts) {
            var c = i.get().unwrap() => ast_if_stmt*;
-           var mi = self->generate_if_stmt(c);
-           m->branch.push(ptr<mir_if>::wrap(mi));
+           m->branch.push(self->generate_if_stmt(c));
        }
        self->block->add(m => mir*);
     }
@@ -519,9 +518,7 @@ impl ast2mir {
                 default_case = t;
                 continue;
             }
-            switch_block->cases.push(
-                ptr<mir_switch_case>::wrap(self->generate_match_case(t))
-            );
+            switch_block->cases.push(self->generate_match_case(t));
         }
 
         if (default_case != nil) {
@@ -771,7 +768,7 @@ impl ast2mir {
         self->impl_struct_name.clear();
         self->impl_struct_name.append_str(n->name.__ptr__());
         foreach (var i; n->methods) {
-            var m = i.get().unwrap() => ast_func_decl*;
+            var m = i.get() => ast_func_decl*;
             self->visit_func_decl(m);
         }
         self->impl_struct_name.clear();

@@ -70,10 +70,10 @@ func check_enable_if(err: report*, acc: ast_cond_compile*, co: cli_option*) -> b
 }
 
 func check_conds(err: report*,
-                 conds: primitive_vec<ptr<ast_cond_compile>>*,
+                 conds: vec<ast_cond_compile*>*,
                  co: cli_option*) -> bool {
     foreach (var i; conds) {
-        var acc = i.get().unwrap();
+        var acc = i.get();
         if (!acc->cond_name.eq_const("enable_if")) {
             err->error(
                 acc->base.location.__ptr__(),
@@ -88,9 +88,9 @@ func check_conds(err: report*,
 
 func report_not_supported_condition(err: report*, node: ast_impl*) {
     foreach (var i; node->methods) {
-        var mn = i.get().unwrap() => ast_func_decl*;
+        var mn = i.get() => ast_func_decl*;
         foreach (var j; mn->conds) {
-            var acc = j.get().unwrap();
+            var acc = j.get();
             if (!acc->cond_name.eq_const("is_trivial") &&
                 !acc->cond_name.eq_const("is_non_trivial") &&
                 !acc->cond_name.eq_const("is_pointer") &&

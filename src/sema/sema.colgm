@@ -6,7 +6,7 @@ use std::io::{ io };
 use std::math::{ isinf, isnan };
 use std::str::{ str };
 use std::ptr::{ ptr };
-use std::vec::{ vec, primitive_vec };
+use std::vec::{ vec };
 use std::set::{ hashset };
 use std::ptr::{ basic };
 
@@ -859,9 +859,7 @@ impl sema {
             info.append_i8_vec("\". use \"->\" instead");
             self->err->error(n->base.location.__ptr__(), info.c_str);
             info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
-            return type::error_type();
+            // report but continue resolving
         }
 
         // loc_file is empty means prev is native type
@@ -880,9 +878,9 @@ impl sema {
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
-            var info = str::from("cannot get field from \"");
+            var info = str::from("cannot get field from undefined struct \"");
             info.append_str(prev_name.__ptr__());
-            info.append_i8_vec("\", struct not found");
+            info.append_i8_vec("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
             info.delete();
             prev_name.delete();
@@ -920,7 +918,7 @@ impl sema {
             return type::error_type();
         }
 
-        var info = str::from("cannot find field \"");
+        var info = str::from("cannot find field or method \"");
         info.append_str(n->name.__ptr__());
         info.append_i8_vec("\" in \"");
         info.append_str(prev_name_for_search.__ptr__());
@@ -946,7 +944,7 @@ impl sema {
         }
 
         foreach (var i; n->args) {
-            var arg = i.get().unwrap();
+            var arg = i.get();
             var infer = self->resolve_expression(arg);
             if (infer.is_error()) {
                 infer.delete();
@@ -985,7 +983,7 @@ impl sema {
         }
 
         foreach (var i; n->args) {
-            var arg = i.get().unwrap();
+            var arg = i.get();
             var infer = self->resolve_expression(arg);
             if (infer.is_error()) {
                 infer.delete();
@@ -1320,18 +1318,14 @@ impl sema {
             info.append_i8_vec("\", use \".\" instead");
             self->err->error(n->base.location.__ptr__(), info.c_str);
             info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
-            return type::error_type();
+            // report but continue resolving
         } else if (prev->pointer_depth > 1) {
             var info = str::from("cannot use \"->\" to get field from pointer \"");
             info.append_str(prev_name.__ptr__());
             info.append_i8_vec("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
             info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
-            return type::error_type();
+            // report but continue resolving
         }
 
         // loc_file is empty means prev is native type
@@ -1350,7 +1344,7 @@ impl sema {
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
-            var info = str::from("cannot get field from \"");
+            var info = str::from("cannot get field from undefined struct \"");
             info.append_str(prev_name.__ptr__());
             info.append_i8_vec("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
@@ -1390,7 +1384,7 @@ impl sema {
             return type::error_type();
         }
 
-        var info = str::from("cannot find field \"");
+        var info = str::from("cannot find field or method \"");
         info.append_str(n->name.__ptr__());
         info.append_i8_vec("\" in \"");
         info.append_str(prev_name_for_search.__ptr__());
@@ -2740,7 +2734,7 @@ impl sema {
         self->impl_struct_name.clear();
         self->impl_struct_name.append_str(node->name.__ptr__());
         foreach (var i; node->methods) {
-            self->resolve_method(i.get().unwrap() => ast_func_decl*, struct_self);
+            self->resolve_method(i.get() => ast_func_decl*, struct_self);
         }
         self->impl_struct_name.clear();
     }
