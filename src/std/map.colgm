@@ -134,6 +134,28 @@ impl hashmap<K, V> {
         return elem->value;
     }
 
+    #[is_pointer(V)]
+    pub func get(self, key: K*) -> V {
+        if (self->bucket_capacity == 0) {
+            panic("capacity is 0");
+        }
+        var hash = key->hash() % self->bucket_capacity;
+        var bucket = self->bucket[hash].__ptr__();
+
+        var elem: pair<K, V>* = nil;
+        foreach (var i; bucket) {
+            if (i.elem()->key.eq(key)) {
+                elem = i.elem();
+                break;
+            }
+        }
+
+        if (elem == nil) {
+            panic("key not found");
+        }
+        return elem->value;
+    }
+
     #[is_non_trivial(V)]
     pub func insert(self, key: K*, value: V*) {
         var hash = key->hash() % self->bucket_capacity;
@@ -155,6 +177,24 @@ impl hashmap<K, V> {
     }
 
     #[is_trivial(V)]
+    pub func insert(self, key: K*, value: V) {
+        var hash = key->hash() % self->bucket_capacity;
+        var bucket = self->bucket[hash].__ptr__();
+        foreach (var i; bucket) {
+            if (i.elem()->key.eq(key)) {
+                i.elem()->value = value;
+                return;
+            }
+        }
+        
+        var tmp_pair = pair<K, V>::instance(key, value);
+        // do copy in insert method
+        bucket->insert(tmp_pair.__ptr__());
+        tmp_pair.delete();
+        self->size += 1;
+    }
+
+    #[is_pointer(V)]
     pub func insert(self, key: K*, value: V) {
         var hash = key->hash() % self->bucket_capacity;
         var bucket = self->bucket[hash].__ptr__();
@@ -235,6 +275,11 @@ impl iter<K, V> {
     }
 
     #[is_trivial(V)]
+    pub func value(self) -> V {
+        return self->bucket_iter.elem()->value;
+    }
+
+    #[is_pointer(V)]
     pub func value(self) -> V {
         return self->bucket_iter.elem()->value;
     }

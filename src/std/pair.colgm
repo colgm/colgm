@@ -23,6 +23,15 @@ impl pair<K, V> {
         };
     }
 
+    #[is_non_trivial(K)]
+    #[is_pointer(V)]
+    pub func instance(key: K*, value: V) -> pair<K, V> {
+        return pair<K, V> {
+            key: key->copy_instance(),
+            value: value
+        };
+    }
+
     #[is_trivial(K)]
     #[is_non_trivial(V)]
     pub func instance(key: K, value: V*) -> pair<K, V> {
@@ -58,6 +67,9 @@ impl pair<K, V> {
     #[is_trivial(V)]
     func value_delete(self) {}
 
+    #[is_pointer(V)]
+    func value_delete(self) {}
+
     pub func delete(self) {
         self->key_delete();
         self->value_delete();
@@ -81,6 +93,11 @@ impl pair<K, V> {
     }
 
     #[is_trivial(V)]
+    func copy_value(self) -> V {
+        return self->value;
+    }
+
+    #[is_pointer(V)]
     func copy_value(self) -> V {
         return self->value;
     }

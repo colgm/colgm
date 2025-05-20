@@ -192,7 +192,7 @@ pub struct sir_context {
     debug_info: primitive_vec<ptr<DI_node>>,
     DI_file_map: hashmap<str, u64>,
     DI_type_map: hashmap<str, u64>,
-    DI_struct_map: hashmap<str, ptr<DI_structure_type>>,
+    DI_struct_map: hashmap<str, DI_structure_type*>,
 
     pkg: package*
 }
@@ -208,7 +208,7 @@ impl sir_context {
             debug_info: primitive_vec<ptr<DI_node>>::instance(),
             DI_file_map: hashmap<str, u64>::instance(),
             DI_type_map: hashmap<str, u64>::instance(),
-            DI_struct_map: hashmap<str, ptr<DI_structure_type>>::instance(),
+            DI_struct_map: hashmap<str, DI_structure_type*>::instance(),
             pkg: pkg
         };
     }
@@ -247,7 +247,7 @@ impl sir_context {
         var temp = str::from(name);
         self->DI_struct_map.insert(
             temp.__ptr__(),
-            ptr<DI_structure_type>::wrap(node).__ptr__()
+            node
         );
         temp.delete();
     }
