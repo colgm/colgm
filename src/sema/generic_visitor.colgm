@@ -30,7 +30,7 @@ pub struct generic_visitor {
     co: cli_option*,
 
     insert_count: i64,
-    need_to_be_inserted: primitive_vec<ptr<ast>>,
+    need_to_be_inserted: vec<ast*>,
     MAX_RECURSIVE_DEPTH: i64
 }
 
@@ -47,7 +47,7 @@ impl generic_visitor {
             tr: type_resolve::instance(e, c, p),
             co: co,
             insert_count: 0,
-            need_to_be_inserted: primitive_vec<ptr<ast>>::instance(),
+            need_to_be_inserted: vec<ast*>::instance(),
             MAX_RECURSIVE_DEPTH: 16
         };
     }
@@ -97,7 +97,7 @@ impl generic_visitor {
         self->need_to_be_inserted.clear();
         self->visit_root(n);
         foreach (var i; self->need_to_be_inserted) {
-            self->root->decls.push(i.get().unwrap());
+            self->root->decls.push(i.get());
         }
 
         while (self->insert_count != 0) {
@@ -106,7 +106,7 @@ impl generic_visitor {
             self->need_to_be_inserted.clear();
             self->visit_root(n);
             foreach (var i; self->need_to_be_inserted) {
-                self->root->decls.push(i.get().unwrap());
+                self->root->decls.push(i.get());
             }
         }
 
@@ -876,7 +876,7 @@ impl generic_visitor {
 
     func remove_cond_compile_method(self, s: colgm_struct*, g_data: generic_data*) {
         foreach (var i; s->generic_struct_impl) {
-            var impl_node = i.get().unwrap();
+            var impl_node = i.get();
             var new_vec = primitive_vec<ptr<ast>>::instance();
             foreach (var j; impl_node->methods) {
                 var func_node = j.get().unwrap() => ast_func_decl*;
@@ -998,7 +998,7 @@ impl generic_visitor {
         };
         if (s->generic_struct_decl != nil) {
             trp.replace_struct(s->generic_struct_decl);
-            self->need_to_be_inserted.push(ptr<ast>::wrap(s->generic_struct_decl => ast*));
+            self->need_to_be_inserted.push(s->generic_struct_decl => ast*);
             // s.name is generated with generic
             // for example original name is "foo",
             // but now it should be replaced with "foo<int, bool>"
@@ -1008,9 +1008,9 @@ impl generic_visitor {
             s->generic_struct_decl = nil;
         }
         foreach (var i; s->generic_struct_impl) {
-            var i_n = i.get().unwrap();
+            var i_n = i.get();
             trp.replace_impl(i_n);
-            self->need_to_be_inserted.push(ptr<ast>::wrap(i_n => ast*));
+            self->need_to_be_inserted.push(i_n => ast*);
             // s.name is generated with generic
             // for example original name is "foo",
             // but now it should be replaced with "foo<int, bool>"
@@ -1041,7 +1041,7 @@ impl generic_visitor {
                 g_data: g_data
             };
             trp.replace_func(f->generic_func_decl);
-            self->need_to_be_inserted.push(ptr<ast>::wrap(f->generic_func_decl => ast*));
+            self->need_to_be_inserted.push(f->generic_func_decl => ast*);
             f->generic_func_decl->name.clear();
             f->generic_func_decl->name.append_str(f->name.__ptr__());
             f->generic_func_decl->clear_generic_types();

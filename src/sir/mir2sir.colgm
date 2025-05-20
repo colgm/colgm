@@ -669,7 +669,7 @@ impl mir2sir {
         self->locals.push();
 
         foreach (var i; n->content) {
-            self->visit(i.get().unwrap());
+            self->visit(i.get());
         }
 
         // pop local scope
@@ -1191,7 +1191,7 @@ impl mir2sir {
         if (n->value != nil) {
             var i64_type = str::from("i64");
             foreach (var i; n->value->content) {
-                var vn = i.get().unwrap();
+                var vn = i.get();
                 var temp = self->ssa_gen.create();
                 var v_temp = value_t::variable(temp.__ptr__());
                 var index_str = str::from_u64(i.index());
@@ -1543,7 +1543,7 @@ impl mir2sir {
         }
 
         foreach (var i; n->args->content) {
-            self->visit(i.get().unwrap());
+            self->visit(i.get());
             args.push(self->value_stack.back());
             self->value_stack.pop_back();
         }
@@ -1884,7 +1884,7 @@ impl mir2sir {
 
     func visit_mir_assign(self, n: mir_assign*) {
         self->call_expr_gen(
-            n->left->content.get(0).unwrap() => mir_call*,
+            n->left->content.get(0) => mir_call*,
             true
         );
         var left = self->value_stack.back()->copy_instance();

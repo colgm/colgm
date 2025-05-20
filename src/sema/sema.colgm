@@ -2639,12 +2639,12 @@ impl sema {
 
     func report_unreachable_statements(self, n: ast_code_block*) {
         var flag_block_ended = false;
-        var unreachable_statements = primitive_vec<ptr<ast>>::instance();
+        var unreachable_statements = vec<ast*>::instance();
 
         foreach (var i; n->stmts) {
             var tmp = i.get().unwrap();
             if (flag_block_ended) {
-                unreachable_statements.push(ptr<ast>::wrap(tmp));
+                unreachable_statements.push(tmp);
             }
             if (tmp->is(ast_kind::ast_ret_stmt) ||
                 tmp->is(ast_kind::ast_break_stmt) ||
@@ -2659,9 +2659,9 @@ impl sema {
         }
 
         var unreachable_location = unreachable_statements
-                                   .get(0).unwrap()->location.copy_instance();
+                                   .get(0)->location.copy_instance();
         foreach (var i; unreachable_statements) {
-            var tmp = i.get().unwrap();
+            var tmp = i.get();
             unreachable_location.end_column = tmp->location.end_column;
             unreachable_location.end_line = tmp->location.end_line;
         }

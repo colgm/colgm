@@ -350,20 +350,20 @@ impl mir {
 
 pub struct mir_block {
     base: mir,
-    content: primitive_vec<ptr<mir>>
+    content: vec<mir*>
 }
 
 impl mir_block {
     pub func new(l: span*) -> mir_block* {
         var res = mir_block::__alloc__();
         res->base = mir::instance(mir_kind::mir_block, l);
-        res->content = primitive_vec<ptr<mir>>::instance();
+        res->content = vec<mir*>::instance();
         return res;
     }
 
     pub func delete(self) {
         foreach (var i; self->content) {
-            var item = i.get().unwrap();
+            var item = i.get();
             item->delete();
             free(item => i8*);
         }
@@ -381,13 +381,13 @@ impl mir_block {
             if (i.index() == self->content.size - 1) {
                 tm->set_last();
             }
-            i.get().unwrap()->dump(out, pkg, tm);
+            i.get()->dump(out, pkg, tm);
         }
         tm->pop_indent();
     }
 
     pub func add(self, n: mir*) {
-        self->content.push(ptr<mir>::wrap(n));
+        self->content.push(n);
     }
 }
 
