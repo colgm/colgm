@@ -85,15 +85,28 @@ func check_conds(err: report*,
     return true;
 }
 
+func check_is_supported_condition(name: str*) -> bool {
+    var supported_cond = [
+        "is_trivial",
+        "is_non_trivial",
+        "is_pointer",
+        "is_non_pointer",
+        nil
+    ];
+    for (var i = 0; supported_cond[i] != nil; i += 1) {
+        if (name->eq_const(supported_cond[i])) {
+            return true;
+        }
+    }
+    return false;
+}
+
 func report_not_supported_condition(err: report*, node: ast_impl*) {
     foreach (var i; node->methods) {
         var mn = i.get() => ast_func_decl*;
         foreach (var j; mn->conds) {
             var acc = j.get();
-            if (!acc->cond_name.eq_const("is_trivial") &&
-                !acc->cond_name.eq_const("is_non_trivial") &&
-                !acc->cond_name.eq_const("is_pointer") &&
-                !acc->cond_name.eq_const("is_non_pointer")) {
+            if (!check_is_supported_condition(acc->cond_name.__ptr__())) {
                 err->error(
                     acc->base.location.__ptr__(),
                     "this compile condition is not supported"

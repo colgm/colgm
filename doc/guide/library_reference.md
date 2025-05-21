@@ -11,13 +11,11 @@
   - [std::list::list](#stdlistlistt)
   - [std::queue::queue](#stdqueuequeuet)
   - [std::vec::vec](#stdvecvect)
-  - [std::vec::primitive_vec](#stdvecprimitive_vect)
   - [std::set::hashset](#stdsethashsett)
   - [std::pair::pair](#stdpairpairk-v)
   - [std::map::hashmap](#stdmaphashmapk-v)
 - [Standard Trivial Type Wrapper](#standard-trivial-type-wrapper)
-  - [std::ptr::ptr](#stdptrptrt)
-  - [std::ptr::basic](#stdptrbasict)
+  - [std::basic::basic](#stdbasicbasict)
 - [TCP/UDP Utils](#tcpudp-utils)
   - [std::tcp](#stdtcp)
   - [std::udp](#stdudp)
@@ -121,11 +119,13 @@ func main() -> i32 {
 
 Source: [`vec<T>`](../../src/std/vec.colgm)
 
-Vector, `T` accepts types with these methods:
+Vector that accepts both trivial and non-trivial types.
 
-- `func copy(self) -> T*`
-- `func copy_instance(self) -> T`
-- `func delete(self)`
+- If `T` is non-trivial type, it accepts types with these methods:
+  - `func copy(self) -> T*`
+  - `func copy_instance(self) -> T`
+  - `func delete(self)`
+- If `T` is trivial type, it could be used directly.
 
 Example:
 
@@ -136,27 +136,12 @@ func main() -> i32 {
     a.push_back(s.__ptr__());
     a.pop_back();
 
+    var b = vec<i32>::instance();
+    b.push_back(123);
+
     a.delete();
     s.delete();
-    return 0;
-}
-```
-
-### `std::vec::primitive_vec<T>`
-
-Source: [`primitive_vec<T>`](../../src/std/vec.colgm)
-
-Vector, `T` accepts primitive types and trivially copyable types.
-
-Example:
-
-```rs
-func main() -> i32 {
-    var a = primitive_vec<i32>::instance();
-    a.push_back(1);
-    a.pop_back();
-
-    a.delete();
+    b.delete();
     return 0;
 }
 ```
@@ -238,43 +223,21 @@ func main() -> i32 {
 
 ## Standard Trivial Type Wrapper
 
-### `std::ptr::ptr<T>`
-
-Source: [`ptr<T>`](../../src/std/ptr.colgm)
-
-Pointer to `T`, trivially copyable.
-Pointer needs to be freeed by user manually.
-This wrapper could make pointers able to be used
-in `list`, `vec`, `hashset`, `hashmap`, etc.
-
-Example:
-
-```rs
-func main() -> i32 {
-    var p = malloc(i32::__size__()) => i32*;
-    var a = vec<ptr<i32>>::instance();
-    a.push_back(ptr<i32>::wrap(p).__ptr__());
-    
-    free(p => i8*); // free manually
-    a.delete();
-    return 0;
-}
-```
-
-### `std::ptr::basic<T>`
+### `std::basic::basic<T>`
 
 Source: [`basic<T>`](../../src/std/ptr.colgm)
 
-Basic type, `T` accepts primitive types and trivially copyable types.
-This wrapper could make basic types able to be used
-in `list`, `vec`, `hashset`, `hashmap`, etc.
+Basic type, `T` accepts primitive types.
+This wrapper could make basic types able to be used in `hashset` and `hashmap`.
+Because `hashset` and `hashmap` now need the key type with the method
+`func hash(self) -> u64`.
 
 Example:
 
 ```rs
 func main() -> i32 {
-    var a = vec<basic<i32>>::instance();
-    a.push_back(basic<i32>::wrap(1).__ptr__());
+    var a = hashset<basic<i32>>::instance();
+    a.insert(basic<i32>::wrap(1));
     a.delete();
     return 0;
 }

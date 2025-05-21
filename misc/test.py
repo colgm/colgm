@@ -40,6 +40,7 @@ TEST_LIST = [
     ("test/string.colgm",                  "src", False),
     ("test/to_str.colgm",                  "src", False),
     ("test/type_convert.colgm",            "src", False),
+    ("test/unreachable.colgm",             "src", False),
     ("test/void_return.colgm",             "src", False),
     ("test/warn_on_left_call.colgm",       "src", False)
 ]

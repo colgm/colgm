@@ -97,6 +97,7 @@ private:
     bool visit_ret_stmt(ast::ret_stmt*) override;
     bool visit_continue_stmt(ast::continue_stmt*) override;
     bool visit_break_stmt(ast::break_stmt*) override;
+    void generate_code_block(ast::code_block*);
     bool visit_code_block(ast::code_block*) override;
 
 private:

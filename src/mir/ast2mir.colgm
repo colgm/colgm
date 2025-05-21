@@ -433,9 +433,7 @@ impl ast2mir {
             var new_block = mir_block::new(n->body->base.location.__ptr__());
             var temp = self->block;
             self->block = new_block;
-            foreach (var i; n->body->stmts) {
-                self->visit(i.get());
-            }
+            self->generate_code_block(n->body);
             self->block = temp;
 
             return mir_if::new(
@@ -453,9 +451,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        foreach (var i; n->body->stmts) {
-            self->visit(i.get());
-        }
+        self->generate_code_block(n->body);
         self->block = temp;
 
         return mir_if::new(
@@ -491,10 +487,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        foreach (var i; n->body->stmts) {
-            var ds = i.get();
-            self->visit(ds);
-        }
+        self->generate_code_block(n->body);
         self->block = temp;
         
         return mir_switch_case::new(n->base.location.__ptr__(), index, body_block);
@@ -523,10 +516,7 @@ impl ast2mir {
         if (default_case != nil) {
             var default_block = mir_block::new(default_case->base.location.__ptr__());
             self->block = default_block;
-            foreach (var i; default_case->body->stmts) {
-                var ds = i.get();
-                self->visit(ds);
-            }
+            self->generate_code_block(default_case->body);
             self->block = temp;
             switch_block->default_case = default_block;
         }
@@ -541,9 +531,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        foreach (var i; n->body->stmts) {
-            self->visit(i.get());
-        }
+        self->generate_code_block(n->body);
         self->block = temp;
 
         self->block->add(mir_loop::new(
@@ -617,9 +605,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        foreach (var i; n->body->stmts) {
-            self->visit(i.get());
-        }
+        self->generate_code_block(n->body);
         self->block = temp;
 
         for_top_level->add(mir_loop::new(
@@ -654,9 +640,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        foreach (var i; n->body->stmts) {
-            self->visit(i.get());
-        }
+        self->generate_code_block(n->body);
         self->block = temp;
 
         for_top_level->add(mir_loop::new(
@@ -691,9 +675,7 @@ impl ast2mir {
 
         var body_block = mir_block::new(n->body->base.location.__ptr__());
         self->block = body_block;
-        foreach (var i; n->body->stmts) {
-            self->visit(i.get());
-        }
+        self->generate_code_block(n->body);
         self->block = temp;
 
         for_top_level->add(mir_loop::new(
@@ -845,7 +827,15 @@ impl ast2mir {
 
         self->block = mir_block::new(n->body->base.location.__ptr__());
         f.block = self->block;
-        foreach (var i; n->body->stmts) {
+        self->generate_code_block(n->body);
+        self->block = nil;
+
+        self->mctx->impls.push(f.__ptr__());
+        f.delete();
+    }
+
+    func generate_code_block(self, n: ast_code_block*) {
+        foreach (var i; n->stmts) {
             var stmt = i.get();
             self->visit(stmt);
             if (stmt->is(ast_kind::ast_ret_stmt) ||
@@ -854,10 +844,6 @@ impl ast2mir {
                 break;
             }
         }
-        self->block = nil;
-
-        self->mctx->impls.push(f.__ptr__());
-        f.delete();
     }
 }
 

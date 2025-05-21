@@ -395,9 +395,7 @@ mir_if* ast2mir::generate_if_stmt(ast::if_stmt* node) {
         auto body_block = new mir_block(node->get_block()->get_location());
         auto temp = block;
         block = body_block;
-        for(auto i : node->get_block()->get_stmts()) {
-            i->accept(this);
-        }
+        generate_code_block(node->get_block());
         block = temp;
 
         return new mir_if(
@@ -413,9 +411,7 @@ mir_if* ast2mir::generate_if_stmt(ast::if_stmt* node) {
 
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
-    for(auto i : node->get_block()->get_stmts()) {
-        i->accept(this);
-    }
+    generate_code_block(node->get_block());
     block = temp;
 
     return new mir_if(
@@ -470,9 +466,7 @@ mir_switch_case* ast2mir::generate_match_case(ast::match_case* node) {
     const auto index = em.members.at(em_name);
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
-    for(auto i : node->get_block()->get_stmts()) {
-        i->accept(this);
-    }
+    generate_code_block(node->get_block());
     block = temp;
 
     return new mir_switch_case(
@@ -486,9 +480,7 @@ mir_block* ast2mir::generate_default(ast::match_case* node) {
     auto temp = block;
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
-    for(auto i : node->get_block()->get_stmts()) {
-        i->accept(this);
-    }
+    generate_code_block(node->get_block());
     block = temp;
     return body_block;
 }
@@ -500,9 +492,7 @@ bool ast2mir::visit_while_stmt(ast::while_stmt* node) {
     node->get_condition()->accept(this);
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
-    for(auto i : node->get_block()->get_stmts()) {
-        i->accept(this);
-    }
+    generate_code_block(node->get_block());
     block = temp;
 
     block->add_content(new mir_loop(
@@ -567,9 +557,7 @@ bool ast2mir::visit_for_stmt(ast::for_stmt* node) {
 
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
-    for(auto i : node->get_block()->get_stmts()) {
-        i->accept(this);
-    }
+    generate_code_block(node->get_block());
     block = temp;
 
     for_top_level->add_content(new mir_loop(
@@ -684,12 +672,7 @@ bool ast2mir::visit_break_stmt(ast::break_stmt* node) {
     return true;
 }
 
-bool ast2mir::visit_code_block(ast::code_block* node) {
-    auto new_block = new mir_block(node->get_location());
-    block->add_content(new_block);
-
-    auto temp = block;
-    block = new_block;
+void ast2mir::generate_code_block(ast::code_block* node) {
     for(auto i : node->get_stmts()) {
         i->accept(this);
         if (i->is(ast::ast_type::ast_ret_stmt) ||
@@ -698,6 +681,15 @@ bool ast2mir::visit_code_block(ast::code_block* node) {
             break;
         }
     }
+}
+
+bool ast2mir::visit_code_block(ast::code_block* node) {
+    auto new_block = new mir_block(node->get_location());
+    block->add_content(new_block);
+
+    auto temp = block;
+    block = new_block;
+    generate_code_block(node);
     block = temp;
     return true;
 }
