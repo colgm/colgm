@@ -405,10 +405,9 @@ enum EnumSpecified {
 Conditional compilation is a feature
 that allows you to compile code based on certain conditions.
 For example cross platform issues can be solved by conditional compilation.
-Now only support `enable_if`, later more conditions will be supported.
 
 ```rust
-#[enable_if(target_os="linux")]
+#[enable_if(target_os = "linux")]
 pub enum flag {
     O_RDONLY = 0x000,
     O_WRONLY = 0x001,
@@ -419,3 +418,13 @@ pub enum flag {
     O_APPEND = 0x400
 }
 ```
+
+Supported conditions:
+
+- `#[enable_if(target_os = "xx", arch = "xx)]`
+  - `target_os`: `linux", "windows", "macos"
+  - `arch`: `x86_64", "aarch64"
+- `#[is_trivial(T)]`
+- `#[is_non_trivial(T)]`
+- `#[is_pointer(T)]`
+- `#[is_non_pointer(T)]`

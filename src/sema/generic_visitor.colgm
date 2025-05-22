@@ -735,8 +735,12 @@ impl generic_visitor {
             }
 
             var t = g_data->types.get(cond);
+            // pointer type is trivial
+            if (t->is_pointer()) {
+                continue;
+            }
+            // primitive type is trivial
             if (t->loc_file.empty()) {
-                // primitive type, is trivial
                 continue;
             }
 
@@ -935,7 +939,7 @@ impl generic_visitor {
                         f->clear();
                         f->append_str(func_node->name.__ptr__());
                     }
-                    // TODO: remove method with monomorphic name
+                    s->method.remove(monomorphic_name);
                 } else if (s->static_method.has(monomorphic_name)) {
                     if (s->fields.has(func_node->name.__ptr__()) ||
                         s->method.has(func_node->name.__ptr__()) ||
@@ -953,7 +957,7 @@ impl generic_visitor {
                         f->clear();
                         f->append_str(func_node->name.__ptr__());
                     }
-                    // TODO: remove static_method with monomorphic name
+                    s->static_method.remove(monomorphic_name);
                 }
                 new_vec.push(func_node => ast*);
             }

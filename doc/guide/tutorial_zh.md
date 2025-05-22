@@ -384,10 +384,9 @@ enum EnumSpecified {
 条件编译是一种特性，
 允许您根据特定条件编译代码。
 例如，跨平台问题可以通过条件编译解决。
-目前仅支持 `enable_if`，稍后将支持更多条件。
 
 ```rust
-#[enable_if(target_os="linux")]
+#[enable_if(target_os = "linux")]
 pub enum flag {
     O_RDONLY = 0x000,
     O_WRONLY = 0x001,
@@ -398,3 +397,13 @@ pub enum flag {
     O_APPEND = 0x400
 }
 ```
+
+目前支持的条件编译选项：
+
+- `#[enable_if(target_os = "xx", arch = "xx)]`
+  - `target_os`: `linux", "windows", "macos"
+  - `arch`: `x86_64", "aarch64"
+- `#[is_trivial(T)]`
+- `#[is_non_trivial(T)]`
+- `#[is_pointer(T)]`
+- `#[is_non_pointer(T)]`

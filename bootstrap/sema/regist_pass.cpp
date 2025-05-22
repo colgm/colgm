@@ -303,8 +303,12 @@ bool generic_visitor::check_is_trivial(ast::cond_compile* node,
             return false;
         }
         const auto& t = data.types.at(i);
+        // pointer type is trivial
+        if (t.is_pointer()) {
+            continue;
+        }
+        // primitive type is trivial
         if (t.loc_file.empty()) {
-            // primitive type, is trivial
             continue;
         }
         const auto& domain = ctx.global.domain.at(t.loc_file);
