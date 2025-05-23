@@ -16,7 +16,7 @@ pub struct timespec {
 }
 
 #[enable_if(target_os = "macos", arch = "aarch64")]
-pub struct stat_info {
+pub struct stat_info_t {
     st_dev: i32,
     st_mode: u16,
     st_nlink: u16,
@@ -39,7 +39,7 @@ pub struct stat_info {
 }
 
 #[enable_if(target_os = "linux", arch = "x86_64")]
-pub struct stat_info {
+pub struct stat_info_t {
     st_dev: u64,
     st_ino: u64,
     st_nlink: u64,
@@ -59,7 +59,7 @@ pub struct stat_info {
 }
 
 #[enable_if(target_os = "linux", arch = "aarch64")]
-pub struct stat_info {
+pub struct stat_info_t {
     st_dev: u64,
     st_ino: u64,
     st_mode: u32,
@@ -78,3 +78,5 @@ pub struct stat_info {
     // reserved
     __glibc_reserved: [i32; 2]
 }
+
+pub extern func stat(filename: i8*, stat_ptr: stat_info_t*) -> i32;

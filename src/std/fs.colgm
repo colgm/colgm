@@ -1,6 +1,6 @@
 use std::io::{ flag };
-use std::libc::{ open, close, stat, getcwd, strlen };
-use std::sys::{ stat_flag, stat_info };
+use std::libc::{ open, close, getcwd, strlen };
+use std::sys::{ stat_flag, stat_info_t, stat };
 
 use std::str::{ str };
 use std::vec::{ vec };
@@ -21,8 +21,8 @@ impl fs {
     }
 
     pub func is_dir(filename: i8*) -> bool {
-        var info = stat_info {};
-        if (stat(filename, info.__ptr__() => i8*) == -1) {
+        var info = stat_info_t {};
+        if (stat(filename, info.__ptr__()) == -1) {
             return false;
         }
         var ifmt = (info.st_mode => u32) & (stat_flag::S_IFMT => u32);
