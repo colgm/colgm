@@ -25,6 +25,7 @@
   - [Struct Initializer](#struct-initializer)
 - [Implementation](#implementation)
 - [Enumeration](#enumeration)
+- [Builtin Functions](#builtin-functions)
 - [Conditional Compilation](#conditional-compilation)
 - [Tagged Union](../spec/tagged_union.md)
 - [Tuple](../spec/tuple.md)
@@ -399,6 +400,25 @@ enum EnumSpecified {
     kind_c = 0x300
 }
 ```
+
+## Builtin Functions
+
+It's not easy to write code for some special cases, for example,
+it you need the time of when the program is compiled, we need a static string
+to store the time.
+
+```rust
+use std::io::{ io };
+
+fn main() -> i32 {
+    io::stdout().out(__time__()).endln();
+    return 0;
+}
+```
+
+Now colgm supports these builtin functions:
+
+- `__time__`
 
 ## Conditional Compilation
 

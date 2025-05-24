@@ -122,8 +122,8 @@ void sir_context::dump_builtin_time(std::ostream& out) const {
 
     out << "define i8* @__time__() alwaysinline nounwind {\n";
     out << "label.entry:\n";
-    out << "  %0 = bitcast [" << time_str.length() + 1 << " x i8]* @str.__time__ to i8*\n";
-    out << "  ret i8* %0\n";
+    out << "  ret i8* bitcast ([" << time_str.length() + 1;
+    out << " x i8]* @str.__time__ to i8*)\n";
     out << "}\n\n";
 }
 
