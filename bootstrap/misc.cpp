@@ -11,6 +11,8 @@
 #endif
 #include <sys/stat.h>
 
+#include <time.h>
+
 namespace colgm {
 
 bool is_windows() {
@@ -339,6 +341,15 @@ std::string llvm_raw_string(const std::string& str) {
     }
     ss << "\\00";
     return ss.str();
+}
+
+std::string local_time_str() {
+    time_t t;
+    time(&t);
+
+    char buffer[128];
+    strftime(buffer, 127, "%Y-%m-%d %H:%M:%S", localtime(&t));
+    return std::string(buffer);
 }
 
 }

@@ -96,11 +96,11 @@ void sir_context::dump_const_string(std::ostream& out) const {
     // make sure constant strings are in order
     std::vector<std::string> ordered_const_string;
     ordered_const_string.resize(const_strings.size());
-    for(const auto& i : const_strings) {
+    for (const auto& i : const_strings) {
         ordered_const_string[i.second] = i.first;
     }
 
-    for(usize i = 0; i<ordered_const_string.size(); ++i) {
+    for (usize i = 0; i<ordered_const_string.size(); ++i) {
         out << "@str." << i;
         out << " = private unnamed_addr constant [";
         out << ordered_const_string[i].length() + 1 << " x i8] c\"";
@@ -111,6 +111,20 @@ void sir_context::dump_const_string(std::ostream& out) const {
     if (ordered_const_string.size()) {
         out << "\n";
     }
+}
+
+void sir_context::dump_builtin_time(std::ostream& out) const {
+    const auto time_str = local_time_str();
+    out << "@str.__time__ = private unnamed_addr constant [";
+    out << time_str.length() + 1 << " x i8] c\"";
+    out << llvm_raw_string(time_str);
+    out << "\"\n";
+
+    out << "define i8* @__time__() alwaysinline nounwind {\n";
+    out << "label.entry:\n";
+    out << "  %0 = bitcast [" << time_str.length() + 1 << " x i8]* @str.__time__ to i8*\n";
+    out << "  ret i8* %0\n";
+    out << "}\n\n";
 }
 
 void sir_context::dump_struct_size_method(std::ostream& out) const {
@@ -167,6 +181,7 @@ void sir_context::dump_code(std::ostream& out) {
 
     // generate constant strings
     dump_const_string(out);
+    dump_builtin_time(out);
 
     // generate builtin methods for structs
     dump_struct_size_method(out);

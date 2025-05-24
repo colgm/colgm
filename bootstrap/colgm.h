@@ -76,4 +76,6 @@ std::string mangle(const std::string&);
 bool llvm_visible_char(char c);
 std::string llvm_raw_string(const std::string&);
 
+std::string local_time_str();
+
 }

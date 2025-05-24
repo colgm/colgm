@@ -793,6 +793,26 @@ colgm_func regist_pass::generate_primitive_size_method() {
     return func;
 }
 
+void regist_pass::regist_builtin_funcs() {
+    // insert into symbol table
+    ctx.insert(
+        "__time__",
+        {sym_kind::func_kind, ctx.this_file, true},
+        false
+    );
+
+    auto time_func = colgm_func();
+    time_func.name = "__time__";
+    time_func.location = span::null();
+    time_func.return_type = type::i8_type(1);
+    time_func.return_type.is_const = true;
+    time_func.is_public = false;
+    time_func.is_extern = true;
+
+    auto& this_domain = ctx.global.domain.at(ctx.this_file);
+    this_domain.functions.insert({"__time__", time_func});
+}
+
 void regist_pass::regist_single_import(ast::use_stmt* node) {
     if (node->get_module_path().empty()) {
         rp.report(node, "must import at least one symbol from this module.");
@@ -854,30 +874,45 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
     const auto& domain = ctx.global.domain.at(file);
     if (node->get_import_symbol().empty()) {
         for(const auto& i : domain.structs) {
+            if (!i.second.is_public) {
+                continue;
+            }
             import_global_symbol(node, i.second.name,
                 {sym_kind::struct_kind, file, i.second.is_public},
                 false
             );
         }
         for(const auto& i : domain.generic_structs) {
+            if (!i.second.is_public) {
+                continue;
+            }
             import_global_symbol(node, i.second.name,
                 {sym_kind::struct_kind, file, i.second.is_public},
                 true
             );
         }
         for(const auto& i : domain.functions) {
+            if (!i.second.is_public) {
+                continue;
+            }
             import_global_symbol(node, i.second.name,
                 {sym_kind::func_kind, file, i.second.is_public},
                 false
             );
         }
         for(const auto& i : domain.generic_functions) {
+            if (!i.second.is_public) {
+                continue;
+            }
             import_global_symbol(node, i.second.name,
                 {sym_kind::func_kind, file, i.second.is_public},
                 true
             );
         }
         for(const auto& i : domain.enums) {
+            if (!i.second.is_public) {
+                continue;
+            }
             import_global_symbol(node, i.second.name,
                 {sym_kind::enum_kind, file, i.second.is_public},
                 false
@@ -889,23 +924,32 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
     for(auto i : node->get_import_symbol()) {
         if (domain.structs.count(i->get_name()) ||
             domain.generic_structs.count(i->get_name())) {
+            if (!check_is_public_struct(i, domain)) {
+                continue;
+            }
             import_global_symbol(i, i->get_name(),
-                {sym_kind::struct_kind, file, check_is_public_struct(i, domain)},
+                {sym_kind::struct_kind, file, true},
                 domain.generic_structs.count(i->get_name())
             );
             continue;
         }
         if (domain.functions.count(i->get_name()) ||
             domain.generic_functions.count(i->get_name())) {
+            if (!check_is_public_func(i, domain)) {
+                continue;
+            }
             import_global_symbol(i, i->get_name(),
-                {sym_kind::func_kind, file, check_is_public_func(i, domain)},
+                {sym_kind::func_kind, file, true},
                 domain.generic_functions.count(i->get_name())
             );
             continue;
         }
         if (domain.enums.count(i->get_name())) {
+            if (!check_is_public_enum(i, domain)) {
+                continue;
+            }
             import_global_symbol(i, i->get_name(),
-                {sym_kind::enum_kind, file, check_is_public_enum(i, domain)},
+                {sym_kind::enum_kind, file, true},
                 false
             );
             continue;
@@ -1463,16 +1507,18 @@ void regist_pass::generate_method_parameter_list(param_list* node,
 
 void regist_pass::run(ast::root* ast_root) {
     regist_primitive_types();
-    regist_imported_types(ast_root);
-    if (err.geterr()) {
-        return;
-    }
 
     ctx.global.domain.at(ctx.this_file).enums.clear();
     ctx.global.domain.at(ctx.this_file).structs.clear();
     ctx.global.domain.at(ctx.this_file).generic_structs.clear();
     ctx.global.domain.at(ctx.this_file).functions.clear();
     ctx.global.domain.at(ctx.this_file).generic_functions.clear();
+
+    regist_builtin_funcs();
+    regist_imported_types(ast_root);
+    if (err.geterr()) {
+        return;
+    }
 
     regist_enums(ast_root);
     regist_structs(ast_root);

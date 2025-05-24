@@ -74,6 +74,9 @@ impl regist_pass {
 impl regist_pass {
     func import_all(self, node: ast_use_stmt*, dm: colgm_module*) {
         foreach (var i; dm->enums) {
+            if (!i.value()->is_public) {
+                continue;
+            }
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::enum_kind,
@@ -84,6 +87,9 @@ impl regist_pass {
             info.delete();
         }
         foreach (var i; dm->structs) {
+            if (!i.value()->is_public) {
+                continue;
+            }
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::struct_kind,
@@ -94,6 +100,9 @@ impl regist_pass {
             info.delete();
         }
         foreach (var i; dm->functions) {
+            if (!i.value()->is_public) {
+                continue;
+            }
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::func_kind,
@@ -104,6 +113,9 @@ impl regist_pass {
             info.delete();
         }
         foreach (var i; dm->generic_structs) {
+            if (!i.value()->is_public) {
+                continue;
+            }
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::struct_kind,
@@ -115,6 +127,9 @@ impl regist_pass {
             info.delete();
         }
         foreach (var i; dm->generic_functions) {
+            if (!i.value()->is_public) {
+                continue;
+            }
             var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::func_kind,
@@ -415,6 +430,36 @@ impl regist_pass {
         name.delete();
         loc.delete();
         ret.delete();
+    }
+
+    func regist_builtin_funcs(self, root: root*) {
+        var time_func_name = str::from("__time__");
+        var null_loc = span::instance();
+        var ret_type = type::const_str_literal_type();
+
+        var func_info = colgm_func::new(
+            time_func_name.__ptr__(),
+            null_loc.__ptr__(),
+            ret_type.__ptr__()
+        );
+        func_info->is_extern = true;
+
+        var dm = self->ctx->get_domain(root->base.location.file.__ptr__());
+        dm->functions.insert(time_func_name.__ptr__(), func_info);
+
+        var sym_info = symbol_info::instance(
+            symbol_kind::func_kind,
+            root->base.location.file.c_str,
+            true // true for selves' domain
+        );
+        self->ctx->global_symbol()->insert(time_func_name.__ptr__(), sym_info.__ptr__());
+
+        time_func_name.delete();
+        null_loc.delete();
+        ret_type.delete();
+        func_info->delete();
+        free(func_info => i8*);
+        sym_info.delete();
     }
 }
 
@@ -1225,6 +1270,7 @@ impl regist_pass {
         // f32, f64, bool
         // and load their methods
         self->regist_primitives();
+        self->regist_builtin_funcs(root);
 
         // load import symbols from module
         // if the module is not compiled, directly compile it here

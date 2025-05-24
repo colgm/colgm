@@ -4,6 +4,7 @@ use std::map::{ hashmap };
 use std::str::{ str };
 use std::libc::{ free, streq };
 use std::io::{ io };
+use std::time::{ chrono };
 
 use err::span::{ span };
 use sir::sir::*;
@@ -316,6 +317,23 @@ impl sir_context {
         ordered_const_string.delete();
     }
 
+    func dump_builtin_time(self, out: io) {
+        var time_str = chrono::localtime();
+        out.out("@str.__time__ = private unnamed_addr constant [");
+        out.out_u64(time_str.size + 1).out(" x i8] c\"");
+        var time_raw = llvm_raw_string(time_str.__ptr__());
+        out.out(time_raw.c_str).out("\"\n");
+
+        out.out("define i8* @__time__() alwaysinline nounwind {\n");
+        out.out("label.entry:\n");
+        out.out("  %0 = bitcast [");
+        out.out_u64(time_str.size + 1).out(" x i8]* @str.__time__ to i8*\n");
+        out.out("  ret i8* %0\n}\n\n");
+
+        time_str.delete();
+        time_raw.delete();
+    }
+
     func dump_struct_size_method(self, out: io) {
         foreach (var i; self->struct_decls) {
             var st_name = i.get()->name.copy_instance();
@@ -413,6 +431,7 @@ impl sir_context {
         self->dump_structs(out);
         self->dump_func_decls(out);
         self->dump_const_strings(out);
+        self->dump_builtin_time(out);
         self->dump_struct_size_method(out);
         self->dump_struct_alloc_method(out);
         self->dump_func_impls(out);
