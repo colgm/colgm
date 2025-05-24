@@ -18,6 +18,7 @@ public:
     virtual bool visit_enum_decl(enum_decl*);
     virtual bool visit_field_pair(field_pair*);
     virtual bool visit_struct_decl(struct_decl*);
+    virtual bool visit_tagged_union_decl(tagged_union_decl*);
     virtual bool visit_param(param*);
     virtual bool visit_param_list(param_list*);
     virtual bool visit_func_decl(func_decl*);

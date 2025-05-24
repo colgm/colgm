@@ -88,9 +88,9 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 
 ## Features and Roadmap
 
-1. feature: RAII
-2. feature: reference type
-3. feature: [Tagged Union](./doc/spec/tagged_union.md)
+1. feature: [Tagged Union](./doc/spec/tagged_union.md)
+2. feature: RAII
+3. feature: reference type
 4. feature: [Tuple](./doc/spec/tuple.md)
 5. feature: smart pointer
 6. feature: std

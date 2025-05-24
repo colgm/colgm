@@ -20,6 +20,7 @@ enum class tok:u32 {
     tk_false,        // keyword false
     tk_use,          // keyword use
     tk_enum,         // keyword enum
+    tk_union,        // keyword union
     tk_for,          // loop keyword for
     tk_forindex,     // loop keyword forindex
     tk_foreach,      // loop keyword foreach
@@ -111,6 +112,7 @@ private:
     const std::unordered_map<std::string, tok> type_table = {
         {"use"     , tok::tk_use         },
         {"enum"    , tok::tk_enum        },
+        {"union"   , tok::tk_union       },
         {"impl"    , tok::tk_impl        },
         {"true"    , tok::tk_true        },
         {"false"   , tok::tk_false       },

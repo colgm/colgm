@@ -627,7 +627,7 @@ enum_decl* parse::enum_gen(std::vector<cond_compile*>& conds,
     return result;
 }
 
-field_pair* parse::struct_field_gen() {
+field_pair* parse::field_pair_gen() {
     auto result = new field_pair(toks[ptr].loc);
     result->set_name(identifier_gen());
     match(tok::tk_colon);
@@ -657,7 +657,50 @@ struct_decl* parse::struct_gen(std::vector<cond_compile*>& conds,
     }
     match(tok::tk_lbrace);
     while(!look_ahead(tok::tk_rbrace)) {
-        result->add_field(struct_field_gen());
+        result->add_field(field_pair_gen());
+        if (look_ahead(tok::tk_comma)) {
+            match(tok::tk_comma);
+        } else if (look_ahead(tok::tk_id)) {
+            err.err(toks[ptr-1].loc, "expected ',' here.");
+        } else {
+            break;
+        }
+    }
+    match(tok::tk_rbrace);
+    update_location(result);
+    return result;
+}
+
+tagged_union_decl* parse::tagged_union_gen(std::vector<cond_compile*>& conds,
+                                                bool flag_is_public,
+                                                bool flag_is_extern) { 
+    auto result = new tagged_union_decl(toks[ptr].loc);
+    for (auto i : conds) {
+        result->add_cond(i);
+    }
+    if (flag_is_public) {
+        result->set_public(true);
+    }
+    if (flag_is_extern) {
+        result->set_extern(true);
+    }
+
+    match(tok::tk_union);
+    match(tok::tk_lcurve);
+    if (look_ahead(tok::tk_enum)) {
+        match(tok::tk_enum);
+    } else {
+        result->set_ref_enum_name(toks[ptr].str);
+        match(tok::tk_id);
+    }
+    match(tok::tk_rcurve);
+
+    result->set_name(toks[ptr].str);
+    match(tok::tk_id);
+
+    match(tok::tk_lbrace);
+    while(!look_ahead(tok::tk_rbrace)) {
+        result->add_member(field_pair_gen());
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {
@@ -1068,6 +1111,9 @@ const error& parse::analyse(const std::vector<token>& token_list) {
                 break;
             case tok::tk_stct:
                 result->add_decl(struct_gen(conds, flag_is_public, flag_is_extern));
+                break;
+            case tok::tk_union:
+                result->add_decl(tagged_union_gen(conds, flag_is_public, flag_is_extern));
                 break;
             case tok::tk_impl:
                 result->add_decl(impl_gen(conds, flag_is_public, flag_is_extern));

@@ -139,6 +139,34 @@ struct_decl* struct_decl::clone() const {
     return ret;
 }
 
+tagged_union_decl::~tagged_union_decl() {
+    for (auto i : fields) {
+        delete i;
+    }
+    for (auto i : conds) {
+        delete i;
+    }
+}
+
+void tagged_union_decl::accept(visitor* v) {
+    v->visit_tagged_union_decl(this);
+}
+
+tagged_union_decl* tagged_union_decl::clone() const { 
+    auto ret = new tagged_union_decl(location);
+    ret->name = name;
+    ret->ref_enum_name = ref_enum_name;
+    for (auto i : fields) {
+        ret->add_member(i->clone());
+    }
+    for (auto i : conds) {
+        ret->add_cond(i->clone());
+    }
+    ret->is_public = is_public;
+    ret->is_extern = is_extern;
+    return ret;
+}
+
 param::~param() {
     delete name;
     delete type;

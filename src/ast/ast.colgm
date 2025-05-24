@@ -39,6 +39,7 @@ pub enum ast_kind {
     ast_enum_decl,
     ast_field_pair,
     ast_struct_decl,
+    ast_tagged_union_decl,
     ast_param,
     ast_param_list,
     ast_func_decl,
@@ -91,6 +92,7 @@ pub func ast_kind_name(k: ast_kind) -> i8* {
         ast_kind::ast_enum_decl => return "ast_enum_decl";
         ast_kind::ast_field_pair => return "ast_field_pair";
         ast_kind::ast_struct_decl => return "ast_struct_decl";
+        ast_kind::ast_tagged_union_decl => return "ast_tagged_union_decl";
         ast_kind::ast_param => return "ast_param";
         ast_kind::ast_param_list => return "ast_param_list";
         ast_kind::ast_func_decl => return "ast_func_decl";
@@ -294,6 +296,10 @@ impl ast {
                 var tmp = self => ast_struct_decl*;
                 tmp->delete();
             }
+            ast_kind::ast_tagged_union_decl => {
+                var tmp = self => ast_tagged_union_decl*;
+                tmp->delete();
+            }
             ast_kind::ast_param => {
                 var tmp = self => ast_param*;
                 tmp->delete();
@@ -490,6 +496,10 @@ impl ast {
             }
             ast_kind::ast_struct_decl => {
                 var tmp = self => ast_struct_decl*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_tagged_union_decl => {
+                var tmp = self => ast_tagged_union_decl*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_param => {
@@ -1735,6 +1745,73 @@ impl ast_struct_decl {
         to_ast->delete();
         free(to_ast => i8*);
         self->generic_types = nil;
+    }
+
+    pub func set_conds(self, conds: vec<ast_cond_compile*>*) {
+        foreach (var i; conds) {
+            self->conds.push(i.get());
+        }
+    }
+}
+
+pub struct ast_tagged_union_decl {
+    base: ast,
+    members: vec<ast*>,
+    name: str,
+    ref_enum_name: str,
+    conds: vec<ast_cond_compile*>,
+    is_public: bool,
+    is_extern: bool
+}
+
+impl ast_tagged_union_decl {
+    pub func new(loc: span*) -> ast_tagged_union_decl* {
+        var res = ast_tagged_union_decl::__alloc__();
+        res->base = ast::instance(ast_kind::ast_tagged_union_decl, loc);
+        res->members = vec<ast*>::instance();
+        res->name = str::from("");
+        res->ref_enum_name = str::from("");
+        res->conds = vec<ast_cond_compile*>::instance();
+        res->is_public = false;
+        res->is_extern = false;
+        return res;
+    }
+
+    pub func copy(self) -> ast_tagged_union_decl* {
+        var res = ast_tagged_union_decl::__alloc__();
+        res->base = ast::instance(
+            ast_kind::ast_tagged_union_decl,
+            self->base.location.__ptr__()
+        );
+        res->members = vec<ast*>::instance();
+        foreach (var i; self->members) {
+            res->members.push(i.get()->copy());
+        }
+        res->name = self->name.copy_instance();
+        res->ref_enum_name = self->ref_enum_name.copy_instance();
+        res->conds = vec<ast_cond_compile*>::instance();
+        foreach (var i; self->conds) {
+            res->conds.push(i.get()->copy());
+        }
+        res->is_public = self->is_public;
+        res->is_extern = self->is_extern;
+        return res;
+    }
+
+    pub func delete(self) {
+        foreach (var i; self->members) {
+            i.get()->delete();
+            free(i.get() => i8*);
+        }
+        self->members.delete();
+        foreach (var i; self->conds) {
+            var n = i.get() => ast*;
+            n->delete();
+            free(n => i8*);
+        }
+        self->conds.delete();
+        self->name.delete();
+        self->ref_enum_name.delete();
     }
 
     pub func set_conds(self, conds: vec<ast_cond_compile*>*) {

@@ -117,6 +117,8 @@ impl ast_dumper {
                 self->dump_field_pair(node => ast_field_pair*, out);
             ast_kind::ast_struct_decl =>
                 self->dump_struct_decl(node => ast_struct_decl*, out);
+            ast_kind::ast_tagged_union_decl =>
+                self->dump_tagged_union_decl(node => ast_tagged_union_decl*, out);
             ast_kind::ast_param =>
                 self->dump_param(node => ast_param*, out);
             ast_kind::ast_param_list =>
@@ -643,6 +645,44 @@ impl ast_dumper {
         }
         foreach (var i; node->fields) {
             if (i.index() == node->fields.size - 1) {
+                self->set_last();
+            }
+            self->dump(i.get(), out);
+        }
+        self->pop_indent();
+    }
+
+    func dump_tagged_union_decl(self, node: ast_tagged_union_decl*, out: io) {
+        self->dump_indent(out);
+        out.purple().out("Tagged Union ").reset();
+        if (node->ref_enum_name.empty()) {
+            out.green().out("(enum) ").reset();
+        } else {
+            out.green().out("(").out(node->ref_enum_name.c_str).out(") ").reset();
+        }
+        out.light_orange().out("0x").out_hex(node => i64).reset().out(" ");
+        if (node->is_public) {
+            out.cyan().out("[pub]").reset();
+        }
+        if (node->is_extern) {
+            out.cyan().out("[extern]").reset();
+        }
+        if (node->is_public || node->is_extern) {
+            out.out(" ");
+        }
+        out.green().out(node->name.c_str).reset();
+        out.out(" -> ");
+        node->base.location.dump(out);
+
+        self->push_indent();
+        foreach (var i; node->conds) {
+            if (i.index() == node->conds.size - 1 && node->members.empty()) {
+                self->set_last();
+            }
+            self->dump(i.get() => ast*, out);
+        }
+        foreach (var i; node->members) {
+            if (i.index() == node->members.size - 1) {
                 self->set_last();
             }
             self->dump(i.get(), out);

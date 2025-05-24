@@ -71,6 +71,13 @@ bool visitor::visit_struct_decl(struct_decl* node) {
     return true;
 }
 
+bool visitor::visit_tagged_union_decl(tagged_union_decl* node) {
+    for(auto i : node->get_members()) {
+        i->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_param(param* node) {
     node->get_name()->accept(this);
     if (node->get_type()) {

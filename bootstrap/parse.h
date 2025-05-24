@@ -44,6 +44,7 @@ private:
     const std::unordered_map<tok, std::string> tokname = {
         {tok::tk_use         , "use"     },
         {tok::tk_enum        , "enum"    },
+        {tok::tk_union       , "union"   },
         {tok::tk_impl        , "impl"    },
         {tok::tk_true        , "true"    },
         {tok::tk_false       , "false"   },
@@ -156,8 +157,9 @@ private:
     type_def* type_def_gen();
     generic_type_list* generic_type_list_gen();
     enum_decl* enum_gen(std::vector<cond_compile*>&, bool, bool);
-    field_pair* struct_field_gen();
+    field_pair* field_pair_gen();
     struct_decl* struct_gen(std::vector<cond_compile*>&, bool, bool);
+    tagged_union_decl* tagged_union_gen(std::vector<cond_compile*>&, bool, bool);
     param* param_gen();
     param_list* param_list_gen();
     func_decl* function_gen(std::vector<cond_compile*>&, bool, bool);

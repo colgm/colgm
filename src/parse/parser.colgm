@@ -811,7 +811,7 @@ impl parser {
         return res;
     }
 
-    func struct_field_gen(self) -> ast_field_pair* {
+    func field_pair_gen(self) -> ast_field_pair* {
         var res = ast_field_pair::new(self->this_tok_loc());
         res->name = self->identifier_gen();
         self->match_token(tok_kind::tok_colon);
@@ -833,7 +833,38 @@ impl parser {
         }
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
-            res->fields.push(self->struct_field_gen() => ast*);
+            res->fields.push(self->field_pair_gen() => ast*);
+            if (self->lookahead(tok_kind::tok_comma)) {
+                self->match_token(tok_kind::tok_comma);
+            } else {
+                break;
+            }
+        }
+        self->match_token(tok_kind::tok_rbrace);
+        self->update_location(res => ast*);
+        return res;
+    }
+
+    func tagged_union_gen(self) -> ast_tagged_union_decl* {
+        var begin_loc = self->this_tok_loc();
+        self->match_token(tok_kind::tok_union);
+        var res = ast_tagged_union_decl::new(begin_loc);
+
+        self->match_token(tok_kind::tok_lparen);
+        if (self->lookahead(tok_kind::tok_enum)) {
+            self->match_token(tok_kind::tok_enum);
+        } else {
+            res->ref_enum_name.append_i8_vec(self->this_tok()->content.c_str);
+            self->match_token(tok_kind::tok_id);
+        }
+        self->match_token(tok_kind::tok_rparen);
+
+        res->name.append_i8_vec(self->this_tok()->content.c_str);
+        self->match_token(tok_kind::tok_id);
+
+        self->match_token(tok_kind::tok_lbrace);
+        while (!self->lookahead(tok_kind::tok_rbrace)) {
+            res->members.push(self->field_pair_gen() => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
             } else {
@@ -1344,6 +1375,15 @@ impl parser {
             match (self->this_tok()->kind) {
                 tok_kind::tok_struct => {
                     var tmp = self->struct_decl_gen();
+                    tmp->set_conds(conds.__ptr__());
+                    tmp->is_public = flag_is_public;
+                    tmp->is_extern = flag_is_extern;
+                    self->root->decls.push(tmp => ast*);
+                    conds.delete();
+                    continue;
+                }
+                tok_kind::tok_union => {
+                    var tmp = self->tagged_union_gen();
                     tmp->set_conds(conds.__ptr__());
                     tmp->is_public = flag_is_public;
                     tmp->is_extern = flag_is_extern;

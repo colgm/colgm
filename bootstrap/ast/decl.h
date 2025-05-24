@@ -210,6 +210,43 @@ public:
     const auto& get_conds() const { return conds; }
 };
 
+class tagged_union_decl: public decl { 
+private:
+    std::vector<field_pair*> fields;
+    std::string name;
+    std::string ref_enum_name;
+
+    // conditional compile attribute
+    std::vector<cond_compile*> conds;
+
+    // flags
+    bool is_public;
+    bool is_extern;
+
+public:
+    tagged_union_decl(const span& loc):
+        decl(ast_type::ast_tagged_union_decl, loc),
+        ref_enum_name(""), is_public(false), is_extern(false) {}
+    ~tagged_union_decl() override;
+    void accept(visitor*) override;
+    tagged_union_decl* clone() const override;
+
+    void set_public(bool f) { is_public = f; }
+    void set_extern(bool f) { is_extern = f; }
+
+    auto is_public_union() const { return is_public; }
+    auto is_extern_union() const { return is_extern; }
+    void set_name(const std::string& n) { name = n; }
+    const auto& get_name() const { return name; }
+    void set_ref_enum_name(const std::string& n) { ref_enum_name = n; }
+    const auto& get_ref_enum_name() const { return ref_enum_name; }
+
+    void add_member(field_pair* node) { fields.push_back(node); }
+    const auto& get_members() const { return fields; }
+    void add_cond(cond_compile* node) { conds.push_back(node); }
+    const auto& get_conds() const { return conds; }
+};
+
 class param: public decl {
 private:
     identifier* name;

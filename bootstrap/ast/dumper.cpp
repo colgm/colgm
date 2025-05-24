@@ -136,7 +136,7 @@ bool dumper::visit_enum_decl(enum_decl* node) {
     dump_indent();
     std::cout << "enum ";
     if (node->is_public_enum()) {
-        std::cout << "[pub]";
+        std::cout << "[pub] ";
     }
     std::cout << node->get_name()->get_name() << format_location(node);
     push_indent();
@@ -192,6 +192,35 @@ bool dumper::visit_struct_decl(struct_decl* node) {
     }
     for(auto i : node->get_fields()) {
         if (i==node->get_fields().back()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    pop_indent();
+    return true;
+}
+
+bool dumper::visit_tagged_union_decl(tagged_union_decl* node) { 
+    dump_indent();
+    std::cout << "tagged_union ";
+    if (!node->get_ref_enum_name().empty()) {
+        std::cout << "(" << node->get_ref_enum_name() << ") ";
+    } else {
+        std::cout << "(enum) ";
+    }
+    if (node->is_public_union()) {
+        std::cout << "[pub]";
+    }
+    if (node->is_extern_union()) {
+        std::cout << "[extern]";
+    }
+    if (node->is_public_union() || node->is_extern_union()) {
+        std::cout << " ";
+    }
+    std::cout << node->get_name() << format_location(node);
+    push_indent();
+    for(auto i : node->get_members()) {
+        if (i==node->get_members().back()) {
             set_last();
         }
         i->accept(this);
