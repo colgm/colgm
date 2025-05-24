@@ -156,7 +156,7 @@ private:
     type_def* type_def_gen();
     generic_type_list* generic_type_list_gen();
     enum_decl* enum_gen(std::vector<cond_compile*>&, bool, bool);
-    struct_field* struct_field_gen();
+    field_pair* struct_field_gen();
     struct_decl* struct_gen(std::vector<cond_compile*>&, bool, bool);
     param* param_gen();
     param_list* param_list_gen();

@@ -159,7 +159,7 @@ bool dumper::visit_enum_decl(enum_decl* node) {
     return true;
 }
 
-bool dumper::visit_struct_field(struct_field* node) {
+bool dumper::visit_field_pair(field_pair* node) {
     dump_indent();
     std::cout << "field" << format_location(node);
     push_indent();

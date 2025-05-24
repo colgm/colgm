@@ -92,17 +92,17 @@ type_def* type_def::clone() const {
     return ret;
 }
 
-struct_field::~struct_field() {
+field_pair::~field_pair() {
     delete name;
     delete type;
 }
 
-void struct_field::accept(visitor* v) {
-    v->visit_struct_field(this);
+void field_pair::accept(visitor* v) {
+    v->visit_field_pair(this);
 }
 
-struct_field* struct_field::clone() const {
-    auto ret = new struct_field(location);
+field_pair* field_pair::clone() const {
+    auto ret = new field_pair(location);
     ret->name = name->clone();
     ret->type = type->clone();
     return ret;

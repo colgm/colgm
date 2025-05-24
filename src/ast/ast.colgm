@@ -37,7 +37,7 @@ pub enum ast_kind {
     ast_generic_type_list,
     ast_enum_member,
     ast_enum_decl,
-    ast_struct_field,
+    ast_field_pair,
     ast_struct_decl,
     ast_param,
     ast_param_list,
@@ -89,7 +89,7 @@ pub func ast_kind_name(k: ast_kind) -> i8* {
         ast_kind::ast_generic_type_list => return "ast_generic_type_list";
         ast_kind::ast_enum_member => return "ast_enum_member";
         ast_kind::ast_enum_decl => return "ast_enum_decl";
-        ast_kind::ast_struct_field => return "ast_struct_field";
+        ast_kind::ast_field_pair => return "ast_field_pair";
         ast_kind::ast_struct_decl => return "ast_struct_decl";
         ast_kind::ast_param => return "ast_param";
         ast_kind::ast_param_list => return "ast_param_list";
@@ -286,8 +286,8 @@ impl ast {
                 var tmp = self => ast_enum_decl*;
                 tmp->delete();
             }
-            ast_kind::ast_struct_field => {
-                var tmp = self =>ast_struct_field*;
+            ast_kind::ast_field_pair => {
+                var tmp = self =>ast_field_pair*;
                 tmp->delete();
             }
             ast_kind::ast_struct_decl => {
@@ -484,8 +484,8 @@ impl ast {
                 var tmp = self => ast_enum_decl*;
                 return tmp->copy() => ast*;
             }
-            ast_kind::ast_struct_field => {
-                var tmp = self =>ast_struct_field*;
+            ast_kind::ast_field_pair => {
+                var tmp = self =>ast_field_pair*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_struct_decl => {
@@ -1611,25 +1611,25 @@ impl ast_enum_decl {
     }
 }
 
-pub struct ast_struct_field {
+pub struct ast_field_pair {
     base: ast,
     name: ast_identifier*,
     type: ast_type_def*
 }
 
-impl ast_struct_field {
-    pub func new(loc: span*) -> ast_struct_field* {
-        var res = ast_struct_field::__alloc__();
-        res->base = ast::instance(ast_kind::ast_struct_field, loc);
+impl ast_field_pair {
+    pub func new(loc: span*) -> ast_field_pair* {
+        var res = ast_field_pair::__alloc__();
+        res->base = ast::instance(ast_kind::ast_field_pair, loc);
         res->name = nil;
         res->type = nil;
         return res;
     }
 
-    pub func copy(self) -> ast_struct_field* {
-        var res = ast_struct_field::__alloc__();
+    pub func copy(self) -> ast_field_pair* {
+        var res = ast_field_pair::__alloc__();
         res->base = ast::instance(
-            ast_kind::ast_struct_field,
+            ast_kind::ast_field_pair,
             self->base.location.__ptr__()
         );
         if (self->name != nil) {

@@ -55,7 +55,7 @@ bool visitor::visit_enum_decl(enum_decl* node) {
     return true;
 }
 
-bool visitor::visit_struct_field(struct_field* node) {
+bool visitor::visit_field_pair(field_pair* node) {
     node->get_name()->accept(this);
     node->get_type()->accept(this);
     return true;

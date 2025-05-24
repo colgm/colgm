@@ -56,7 +56,7 @@ private:
     bool visit_type_def(type_def*) override;
     bool visit_generic_type_list(generic_type_list*) override;
     bool visit_enum_decl(enum_decl*) override;
-    bool visit_struct_field(struct_field*) override;
+    bool visit_field_pair(field_pair*) override;
     bool visit_struct_decl(struct_decl*) override;
     bool visit_param(param*) override;
     bool visit_param_list(param_list*) override;

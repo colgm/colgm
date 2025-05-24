@@ -148,18 +148,18 @@ public:
     const auto& get_conds() const { return conds; }
 };
 
-class struct_field: public decl {
+class field_pair: public decl {
 private:
     identifier* name;
     type_def* type;
 
 public:
-    struct_field(const span& loc):
-        decl(ast_type::ast_struct_field, loc),
+    field_pair(const span& loc):
+        decl(ast_type::ast_field_pair, loc),
         name(nullptr), type(nullptr) {}
-    ~struct_field() override;
+    ~field_pair() override;
     void accept(visitor*) override;
-    struct_field* clone() const override;
+    field_pair* clone() const override;
 
     void set_name(identifier* node) { name = node; }
     auto get_name() { return name; }
@@ -169,7 +169,7 @@ public:
 
 class struct_decl: public decl {
 private:
-    std::vector<struct_field*> fields;
+    std::vector<field_pair*> fields;
     std::string name;
     generic_type_list* generic_types;
 
@@ -188,7 +188,7 @@ public:
     void accept(visitor*) override;
     struct_decl* clone() const override;
 
-    void add_field(struct_field* node) { fields.push_back(node); }
+    void add_field(field_pair* node) { fields.push_back(node); }
     const auto& get_fields() const { return fields; }
     void set_name(const std::string& n) { name = n; }
     const auto& get_name() const { return name; }

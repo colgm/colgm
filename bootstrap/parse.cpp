@@ -627,8 +627,8 @@ enum_decl* parse::enum_gen(std::vector<cond_compile*>& conds,
     return result;
 }
 
-struct_field* parse::struct_field_gen() {
-    auto result = new struct_field(toks[ptr].loc);
+field_pair* parse::struct_field_gen() {
+    auto result = new field_pair(toks[ptr].loc);
     result->set_name(identifier_gen());
     match(tok::tk_colon);
     result->set_type(type_def_gen());

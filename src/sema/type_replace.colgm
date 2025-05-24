@@ -84,8 +84,8 @@ impl type_replace_pass {
                 self->visit_type_def(n => ast_type_def*);
             ast_kind::ast_generic_type_list =>
                 self->visit_generic_type_list(n => ast_generic_type_list*);
-            ast_kind::ast_struct_field =>
-                self->visit_struct_field(n => ast_struct_field*);
+            ast_kind::ast_field_pair =>
+                self->visit_field_pair(n => ast_field_pair*);
             ast_kind::ast_struct_decl =>
                 self->visit_struct_decl(n => ast_struct_decl*);
             ast_kind::ast_param =>
@@ -127,10 +127,10 @@ impl type_replace_pass {
     func visit_struct_decl(self, n: ast_struct_decl*) {
         foreach (var i; n->fields) {
             var f = i.get();
-            if (!f->is(ast_kind::ast_struct_field)) {
+            if (!f->is(ast_kind::ast_field_pair)) {
                 continue;
             }
-            self->visit_struct_field(f => ast_struct_field*);
+            self->visit_field_pair(f => ast_field_pair*);
         }
     }
 
@@ -333,7 +333,7 @@ impl type_replace_pass {
         }
     }
 
-    func visit_struct_field(self, n: ast_struct_field*) {
+    func visit_field_pair(self, n: ast_field_pair*) {
         self->visit_type_def(n->type);
     }
 
