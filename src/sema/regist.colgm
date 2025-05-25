@@ -24,6 +24,7 @@ use util::to_num::{ to_f64 };
 use sema::symbol_info::{ symbol_kind, symbol_info };
 use sema::enumerate::{ colgm_enum };
 use sema::structure::{ colgm_struct };
+use sema::tagged_union::{ colgm_tagged_union };
 use sema::function::{ colgm_func };
 use sema::module::{ colgm_module };
 use sema::context::{ sema_context };
@@ -787,13 +788,8 @@ impl regist_pass {
         }
 
         foreach (var i; node->fields) {
-            var fld = i.get() ;
-            if (!fld->is(ast_kind::ast_field_pair)) {
-                continue;
-            }
-
-            var fld_ast = fld => ast_field_pair*;
-            var fld_name = fld_ast->name->content.__ptr__();
+            var fld = i.get();
+            var fld_name = fld->name->content.__ptr__();
             if (struct_info->fields.has(fld_name)) {
                 var info = str::from("field \"");
                 info.append_str(fld_name);
@@ -804,8 +800,8 @@ impl regist_pass {
             }
             var sym = symbol {
                 name: fld_name->copy_instance(),
-                type: self->tr.resolve(fld_ast->type),
-                loc: fld->location.copy_instance(),
+                type: self->tr.resolve(fld->type),
+                loc: fld->base.location.copy_instance(),
             };
             struct_info->fields.insert(sym.name.__ptr__(), sym.type.__ptr__());
             struct_info->ordered_fields.push(sym.__ptr__());
@@ -937,25 +933,101 @@ impl regist_pass {
         sym_info.delete();
     }
 
-    func scan_structs(self) {
+    func regist_single_tagged_union_member(self, node: ast_tagged_union_decl*) {
+        var name = node->name.__ptr__();
+        if (!self->ctx->global_symbol()->has(name)) {
+            var info = str::from("cannot find symbol \"");
+            info.append_str(name);
+            info.append_i8_vec("\"");
+            self->err->error(node->base.location.__ptr__(), info.c_str);
+            info.delete();
+            return;
+        }
+
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
+        var union_info = dm->tagged_unions.get(name);
+
+        foreach (var i; node->members) {
+            var member = i.get() ;
+            var member_name = member->name->content.__ptr__();
+            if (union_info->members.has(member_name)) {
+                var info = str::from("member \"");
+                info.append_str(member_name);
+                info.append_i8_vec("\" conflicts with exist member");
+                self->err->error(node->base.location.__ptr__(), info.c_str);
+                info.delete();
+                continue;
+            }
+
+            var sym = symbol {
+                name: member_name->copy_instance(),
+                type: self->tr.resolve(member->type),
+                loc: member->base.location.copy_instance(),
+            };
+            union_info->members.insert(sym.name.__ptr__(), sym.type.__ptr__());
+            union_info->ordered_members.push(sym.__ptr__());
+            sym.delete();
+        }
+    }
+
+    func regist_single_tagged_union_symbol(self, node: ast_tagged_union_decl*) {
+        var name = node->name.__ptr__();
+        if (self->ctx->global_symbol()->has(name)) {
+            var info = str::from("struct \"");
+            info.append_str(name);
+            info.append_i8_vec("\" conflicts with exist symbol");
+            self->err->error(node->base.location.__ptr__(), info.c_str);
+            info.delete();
+            return;
+        }
+
+        // allocate struct info
+        var union_info = colgm_tagged_union::new(name, node->base.location.__ptr__());
+        if (node->is_extern) {
+            union_info->is_extern = true;
+        }
+        if (node->is_public) {
+            union_info->is_public = true;
+        }
+
+        // insert to domain
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());        
+        dm->tagged_unions.insert(name, union_info);
+        union_info->delete();
+        free(union_info => i8*);
+
+        var sym_info = symbol_info::instance(
+            symbol_kind::tagged_union_kind,
+            node->base.location.file.c_str,
+            true // true for selves's domain
+        );
+        self->ctx->global_symbol()->insert(name, sym_info.__ptr__());
+        sym_info.delete();
+    }
+
+    func scan_complex_structs(self) {
         // regist symbol into symbol table first
         foreach (var i; self->root->decls) {
             var node = i.get();
-            if (!node->is(ast_kind::ast_struct_decl)) {
-                continue;
+            if (node->is(ast_kind::ast_struct_decl)) {
+                var struct_node = node => ast_struct_decl*;
+                self->regist_single_struct_symbol(struct_node);
+            } else if (node->is(ast_kind::ast_tagged_union_decl)) {
+                var union_node = node => ast_tagged_union_decl*;
+                self->regist_single_tagged_union_symbol(union_node);
             }
-            var struct_node = node => ast_struct_decl*;
-            self->regist_single_struct_symbol(struct_node);
         }
 
         // load field into struct info
         foreach (var i; self->root->decls) {
             var node = i.get();
-            if (!node->is(ast_kind::ast_struct_decl)) {
-                continue;
+            if (node->is(ast_kind::ast_struct_decl)) {
+                var struct_node = node => ast_struct_decl*;
+                self->regist_single_struct_field(struct_node);
+            } else if (node->is(ast_kind::ast_tagged_union_decl)) {
+                var union_node = node => ast_tagged_union_decl*;
+                self->regist_single_tagged_union_member(union_node);
             }
-            var struct_node = node => ast_struct_decl*;
-            self->regist_single_struct_field(struct_node);
         }
 
         // do self reference check
@@ -1283,7 +1355,7 @@ impl regist_pass {
 
         // collect all structs defined in this file
         // in this process, struct's fields will be collected too
-        self->scan_structs();
+        self->scan_complex_structs();
         if (self->err->error_count > 0) {
             return;
         }
