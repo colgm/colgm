@@ -790,7 +790,7 @@ void regist_pass::regist_builtin_funcs() {
     // insert into symbol table
     ctx.insert(
         "__time__",
-        {sym_kind::func_kind, ctx.this_file, true},
+        symbol_info {sym_kind::func_kind, ctx.this_file, true},
         false
     );
 
@@ -977,7 +977,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
     }
 
     ctx.get_domain(ctx.this_file).enums.insert({name, {}});
-    ctx.insert(name, {sym_kind::enum_kind, ctx.this_file, true}, false);
+    ctx.insert(name, symbol_info {sym_kind::enum_kind, ctx.this_file, true}, false);
 
     auto& self = ctx.get_domain(ctx.this_file).enums.at(name);
     self.name = name;
@@ -1063,7 +1063,7 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
     // insert to global symbol table and domain
     ctx.insert(
         name,
-        {sym_kind::struct_kind, ctx.this_file, true},
+        symbol_info {sym_kind::struct_kind, ctx.this_file, true},
         node->get_generic_types()
     );
     if (node->get_generic_types()) {
@@ -1222,9 +1222,58 @@ void regist_pass::check_struct_self_reference() {
 }
 
 void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node) {
+    const auto& name = node->get_name();
+    if (ctx.global_symbol().count(name)) {
+        rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
+        return;
+    }
+
+    auto& this_domain = ctx.get_domain(ctx.this_file);
+
+    // insert to global symbol table and domain
+    ctx.insert(
+        name,
+        symbol_info {sym_kind::tagged_union_kind, ctx.this_file, true},
+        false
+    );
+    this_domain.tagged_unions.insert({name, {}});
+
+    auto& self = this_domain.tagged_unions.at(name);
+    self.name = name;
+    self.location = node->get_location();
+    if (node->is_public_union()) {
+        self.is_public = true;
+    }
+    if (node->is_extern_union()) {
+        self.is_extern = true;
+    }
 }
 
 void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node) {
+    const auto& name = node->get_name();
+    auto& this_domain = ctx.get_domain(ctx.this_file);
+    if (!this_domain.tagged_unions.count(name)) {
+        // this branch means the symbol is not loaded successfully
+        return;
+    }
+
+    auto& self = this_domain.tagged_unions.at(name);
+    // load members
+    for(auto i : node->get_members()) {
+        auto type_node = i->get_type();
+        auto member_type = symbol {
+            .name = i->get_name()->get_name(),
+            .symbol_type = tr.resolve(type_node)
+        };
+        if (member_type.symbol_type.is_error()) {
+            continue;
+        }
+        if (self.member.count(i->get_name()->get_name())) {
+            rp.report(i, "member name already exists");
+        }
+        self.member.insert({i->get_name()->get_name(), member_type});
+        self.ordered_member.push_back(member_type);
+    }
 }
 
 void regist_pass::regist_global_funcs(ast::root* node) {
@@ -1253,7 +1302,7 @@ void regist_pass::regist_single_global_func(ast::func_decl* node) {
     // insert into symbol table
     ctx.insert(
         name,
-        {sym_kind::func_kind, ctx.this_file, true},
+        symbol_info {sym_kind::func_kind, ctx.this_file, true},
         node->get_generic_types()
     );
 

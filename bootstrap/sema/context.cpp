@@ -48,9 +48,11 @@ void sema_context::dump_structs() const {
         for(const auto& i : domain.second.structs) {
             dump_single_struct(i.second);
         }
-        std::cout << "\ninfo of " << domain.first << " [generic]:\n";
-        for(const auto& i : domain.second.generic_structs) {
-            dump_single_struct(i.second);
+        if (!domain.second.generic_structs.empty()) {
+            std::cout << "\ninfo of " << domain.first << " [generic]:\n";
+            for(const auto& i : domain.second.generic_structs) {
+                dump_single_struct(i.second);
+            }
         }
     }
 }
@@ -82,6 +84,30 @@ void sema_context::dump_single_struct(const colgm_struct& st) const {
     std::cout << "  }\n";
 }
 
+void sema_context::dump_tagged_unions() const {
+    for(const auto& domain : global.domain) {
+        if (domain.second.tagged_unions.empty()) {
+            continue;
+        }
+        std::cout << "\ninfo of " << domain.first << ":\n";
+        for(const auto& i : domain.second.tagged_unions) {
+            dump_single_tagged_union(i.second);
+        }
+    }
+}
+
+void sema_context::dump_single_tagged_union(const colgm_tagged_union& u) const {
+    std::cout << "  tagged union " << u.name << " {\n";
+    for(const auto& member : u.ordered_member) {
+        std::cout << "    " << member.name << ": " << member.symbol_type;
+        if (member.name != u.ordered_member.back().name) {
+            std::cout << ",";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "  }\n";
+}
+
 void sema_context::dump_enums() const {
     for(const auto& domain : global.domain) {
         if (domain.second.enums.empty()) {
@@ -109,9 +135,11 @@ void sema_context::dump_functions() const {
         for(const auto& func : domain.second.functions) {
             dump_single_function(func.second, "");
         }
-        std::cout << "\ninfo of " << domain.first << " [generic]:\n";
-        for(const auto& func : domain.second.generic_functions) {
-            dump_single_function(func.second, "");
+        if (!domain.second.generic_functions.empty()) {
+            std::cout << "\ninfo of " << domain.first << " [generic]:\n";
+            for(const auto& func : domain.second.generic_functions) {
+                dump_single_function(func.second, "");
+            }
         }
     }
 }

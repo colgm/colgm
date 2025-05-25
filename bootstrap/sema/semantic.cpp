@@ -1878,6 +1878,7 @@ const error& semantic::analyse(root* ast_root) {
 void semantic::dump() {
     ctx.dump_enums();
     ctx.dump_structs();
+    ctx.dump_tagged_unions();
     ctx.dump_functions();
 }
 
