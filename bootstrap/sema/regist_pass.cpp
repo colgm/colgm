@@ -115,8 +115,8 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
 void generic_visitor::scan_generic_type(type_def* type_node) {
     const auto& type_name = type_node->get_name()->get_name();
     const auto& dm = type_node->is_redirected()
-        ? ctx.global.domain.at(type_node->get_redirect_location())
-        : ctx.global.domain.at(type_node->get_file());
+        ? ctx.get_domain(type_node->get_redirect_location())
+        : ctx.get_domain(type_node->get_file());
 
     if (!dm.global_symbol.count(type_name)) {
         rp.report(type_node, "unknown type \"" + type_name + "\".");
@@ -130,7 +130,7 @@ void generic_visitor::scan_generic_type(type_def* type_node) {
     }
 
     const auto& sym = dm.global_symbol.at(type_name);
-    const auto& sdm = ctx.global.domain.at(sym.loc_file);
+    const auto& sdm = ctx.get_domain(sym.loc_file);
     if (sym.kind != sym_kind::struct_kind) {
         rp.report(type_node, "\"" + type_name + "\" is not a struct type.");
         return;
@@ -240,8 +240,8 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
 
     const auto& type_name = node->get_id()->get_name();
     const auto& dm = node->is_redirected()
-        ? ctx.global.domain.at(node->get_redirect_location())
-        : ctx.global.domain.at(node->get_file());
+        ? ctx.get_domain(node->get_redirect_location())
+        : ctx.get_domain(node->get_file());
     if (!dm.global_symbol.count(type_name)) {
         rp.report(node, "unknown type \"" + type_name + "\".");
         return true;
@@ -254,7 +254,7 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
     }
 
     const auto& sym = dm.global_symbol.at(type_name);
-    const auto& sdm = ctx.global.domain.at(sym.loc_file);
+    const auto& sdm = ctx.get_domain(sym.loc_file);
     const auto& generic_template = sym.kind == sym_kind::struct_kind
         ? sdm.generic_structs.at(type_name).generic_template
         : sdm.generic_functions.at(type_name).generic_template;
@@ -311,7 +311,7 @@ bool generic_visitor::check_is_trivial(ast::cond_compile* node,
         if (t.loc_file.empty()) {
             continue;
         }
-        const auto& domain = ctx.global.domain.at(t.loc_file);
+        const auto& domain = ctx.get_domain(t.loc_file);
         // not a struct, must be trivial
         if (!domain.structs.count(t.generic_name())) {
             continue;
@@ -343,7 +343,7 @@ bool generic_visitor::check_is_non_trivial(ast::cond_compile* node,
             // primitive type, is trivial
             return false;
         }
-        const auto& domain = ctx.global.domain.at(t.loc_file);
+        const auto& domain = ctx.get_domain(t.loc_file);
         if (!domain.structs.count(t.generic_name())) {
             return false;
         }
@@ -549,7 +549,7 @@ void generic_visitor::report_recursive_generic_generation(const type& data) {
     if (!ctx.global.domain.count(data.loc_file)) {
         return;
     }
-    const auto& dm = ctx.global.domain.at(data.loc_file);
+    const auto& dm = ctx.get_domain(data.loc_file);
     const auto generic_name = data.generic_name();
     if (dm.structs.count(generic_name) || dm.functions.count(generic_name)) {
         return;
@@ -578,7 +578,7 @@ u64 generic_visitor::insert_generic_data(const generic_data& gd) {
         return 0;
     }
 
-    auto& dm = ctx.global.domain.at(data.loc_file);
+    auto& dm = ctx.get_domain(data.loc_file);
     if (dm.generic_structs.count(data.name)) {
         // no need to load again, otherwise will cause redefine error
         if (dm.structs.count(generic_name)) {
@@ -809,7 +809,7 @@ void regist_pass::regist_builtin_funcs() {
     time_func.is_public = false;
     time_func.is_extern = true;
 
-    auto& this_domain = ctx.global.domain.at(ctx.this_file);
+    auto& this_domain = ctx.get_domain(ctx.this_file);
     this_domain.functions.insert({"__time__", time_func});
 }
 
@@ -871,7 +871,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
         return;
     }
 
-    const auto& domain = ctx.global.domain.at(file);
+    const auto& domain = ctx.get_domain(file);
     if (node->get_import_symbol().empty()) {
         for(const auto& i : domain.structs) {
             if (!i.second.is_public) {
@@ -982,14 +982,14 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
         rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
-    if (ctx.global.domain.at(ctx.this_file).enums.count(name)) {
+    if (ctx.get_domain(ctx.this_file).enums.count(name)) {
         rp.report(node, "enum \"" + name + "\" conflicts with exist symbol.");
         return;
     }
-    ctx.global.domain.at(ctx.this_file).enums.insert({name, {}});
+    ctx.get_domain(ctx.this_file).enums.insert({name, {}});
     ctx.insert(name, {sym_kind::enum_kind, ctx.this_file, true}, false);
 
-    auto& self = ctx.global.domain.at(ctx.this_file).enums.at(name);
+    auto& self = ctx.get_domain(ctx.this_file).enums.at(name);
     self.name = name;
     self.location = node->get_location();
     if (node->is_public_enum()) {
@@ -1064,7 +1064,7 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
         return;
     }
 
-    auto& this_domain = ctx.global.domain.at(ctx.this_file);
+    auto& this_domain = ctx.get_domain(ctx.this_file);
     if (this_domain.structs.count(name) ||
         this_domain.generic_structs.count(name)) {
         rp.report(node, "struct \"" + name + "\" conflicts with exist symbol.");
@@ -1121,7 +1121,7 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
 
 void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
     const auto& name = node->get_name();
-    auto& this_domain = ctx.global.domain.at(ctx.this_file);
+    auto& this_domain = ctx.get_domain(ctx.this_file);
     if (!this_domain.structs.count(name) &&
         !this_domain.generic_structs.count(name)) {
         // this branch means the symbol is not loaded successfully
@@ -1188,7 +1188,7 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
 }
 
 void regist_pass::check_struct_self_reference() {
-    const auto& structs = ctx.global.domain.at(ctx.this_file).structs;
+    const auto& structs = ctx.get_domain(ctx.this_file).structs;
 
     std::vector<std::string> need_check = {};
     for(const auto& st : structs) {
@@ -1231,6 +1231,31 @@ void regist_pass::check_struct_self_reference() {
     }
 }
 
+void regist_pass::regist_tagged_unions(ast::root* node) {
+    // regist symbol into symbol table first
+    for(auto i : node->get_decls()) {
+        if (!i->is(ast_type::ast_tagged_union_decl)) {
+            continue;
+        }
+        auto union_decl_node = reinterpret_cast<ast::tagged_union_decl*>(i);
+        regist_single_tagged_union_symbol(union_decl_node);
+    }
+    // load field into struct
+    for(auto i : node->get_decls()) {
+        if (!i->is(ast_type::ast_tagged_union_decl)) {
+            continue;
+        }
+        auto union_decl_node = reinterpret_cast<ast::tagged_union_decl*>(i);
+        regist_single_tagged_union_member(union_decl_node);
+    }
+}
+
+void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node) {
+}
+
+void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node) {
+}
+
 void regist_pass::regist_global_funcs(ast::root* node) {
     for (auto i : node->get_decls()) {
         if (i->get_ast_type() != ast_type::ast_func_decl) {
@@ -1248,7 +1273,7 @@ void regist_pass::regist_single_global_func(ast::func_decl* node) {
         return;
     }
 
-    auto& this_domain = ctx.global.domain.at(ctx.this_file);
+    auto& this_domain = ctx.get_domain(ctx.this_file);
     if (this_domain.functions.count(name)) {
         rp.report(node, "function \"" + name + "\" conflicts with exist symbol.");
         return;
@@ -1372,7 +1397,7 @@ void regist_pass::regist_impls(ast::root* node) {
 }
 
 void regist_pass::regist_single_impl(ast::impl_struct* node) {
-    auto& dm = ctx.global.domain.at(ctx.this_file);
+    auto& dm = ctx.get_domain(ctx.this_file);
     if (!dm.structs.count(node->get_struct_name()) &&
         !dm.generic_structs.count(node->get_struct_name())) {
         rp.report(node, "undefined struct \"" + node->get_struct_name() + "\".");
@@ -1508,11 +1533,12 @@ void regist_pass::generate_method_parameter_list(param_list* node,
 void regist_pass::run(ast::root* ast_root) {
     regist_primitive_types();
 
-    ctx.global.domain.at(ctx.this_file).enums.clear();
-    ctx.global.domain.at(ctx.this_file).structs.clear();
-    ctx.global.domain.at(ctx.this_file).generic_structs.clear();
-    ctx.global.domain.at(ctx.this_file).functions.clear();
-    ctx.global.domain.at(ctx.this_file).generic_functions.clear();
+    ctx.get_domain(ctx.this_file).enums.clear();
+    ctx.get_domain(ctx.this_file).structs.clear();
+    ctx.get_domain(ctx.this_file).tagged_unions.clear();
+    ctx.get_domain(ctx.this_file).generic_structs.clear();
+    ctx.get_domain(ctx.this_file).functions.clear();
+    ctx.get_domain(ctx.this_file).generic_functions.clear();
 
     regist_builtin_funcs();
     regist_imported_types(ast_root);

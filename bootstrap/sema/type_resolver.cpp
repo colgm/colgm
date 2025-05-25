@@ -53,8 +53,8 @@ u64 type_resolver::get_array_length(ast::number_literal* n) {
 type type_resolver::resolve(ast::type_def* node) {
     const auto& name = node->get_name()->get_name();
     const auto& dm = node->is_redirected()
-        ? ctx.global.domain.at(node->get_redirect_location())
-        : ctx.global.domain.at(node->get_file());
+        ? ctx.get_domain(node->get_redirect_location())
+        : ctx.get_domain(node->get_file());
 
     // cannot find type
     if (!dm.global_symbol.count(name) &&

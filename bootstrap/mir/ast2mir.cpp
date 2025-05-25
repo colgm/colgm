@@ -456,7 +456,7 @@ mir_switch_case* ast2mir::generate_match_case(ast::match_case* node) {
         return nullptr;
     }
 
-    const auto& dm = ctx.global.domain.at(enum_ty.loc_file);
+    const auto& dm = ctx.get_domain(enum_ty.loc_file);
     const auto& em = dm.enums.at(enum_ty.name);
 
     auto value_node = reinterpret_cast<ast::call*>(node->get_value());

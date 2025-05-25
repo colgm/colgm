@@ -592,7 +592,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
         return type::error_type();
     }
 
-    const auto& domain = ctx.global.domain.at(prev.loc_file);
+    const auto& domain = ctx.get_domain(prev.loc_file);
     if (!domain.structs.count(prev.name_for_search())) {
         rp.report(node,
             "cannot get field from \"" +
@@ -718,7 +718,7 @@ type semantic::resolve_call_id(call_id* node) {
             return infer;
         }
 
-        const auto& dm = ctx.global.domain.at(infer.loc_file);
+        const auto& dm = ctx.get_domain(infer.loc_file);
         if (dm.structs.count(name) || dm.functions.count(name)) {
             infer.name = node->get_id()->get_name();
             infer.generics = types;
@@ -734,7 +734,7 @@ type semantic::resolve_call_id(call_id* node) {
 type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // global function call
     if (prev.is_global_func) {
-        const auto& domain = ctx.global.domain.at(prev.loc_file);
+        const auto& domain = ctx.get_domain(prev.loc_file);
         if (!domain.functions.count(prev.name_for_search())) {
             rp.report(node,
                 "cannot find function \"" + prev.name_for_search() + "\"."
@@ -763,7 +763,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     }
     // static method call of struct
     if (prev.stm_info.flag_is_static) {
-        const auto& domain = ctx.global.domain.at(prev.loc_file);
+        const auto& domain = ctx.get_domain(prev.loc_file);
         if (!domain.structs.count(prev.name_for_search())) {
             rp.report(node,
                 "cannot find struct \"" + prev.name_for_search() + "\"."
@@ -778,7 +778,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     }
     // method call of struct
     if (prev.stm_info.flag_is_normal) {
-        const auto& domain = ctx.global.domain.at(prev.loc_file);
+        const auto& domain = ctx.get_domain(prev.loc_file);
         if (!domain.structs.count(prev.name_for_search())) {
             rp.report(node,
                 "cannot find struct \"" + prev.name_for_search() + "\"."
@@ -839,7 +839,7 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
         return type::error_type();
     }
 
-    const auto& domain = ctx.global.domain.at(prev.loc_file);
+    const auto& domain = ctx.get_domain(prev.loc_file);
     if (!domain.structs.count(prev.name_for_search())) {
         rp.report(node,
             "\"" + prev.name_for_search() +
@@ -917,7 +917,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         return infer;
     }
 
-    const auto& domain = ctx.global.domain.at(prev.loc_file);
+    const auto& domain = ctx.get_domain(prev.loc_file);
     if (domain.structs.count(prev.name_for_search()) && prev.is_global) {
         const auto& st = domain.structs.at(prev.name_for_search());
         if (st.static_method.count(node->get_name())) {
@@ -983,7 +983,7 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
         return type::error_type();
     }
 
-    const auto& domain = ctx.global.domain.at(prev.loc_file);
+    const auto& domain = ctx.get_domain(prev.loc_file);
     if (!domain.structs.count(prev.name_for_search())) {
         rp.report(node, "cannot get field from \"" + prev.full_path_name() + "\".");
         return type::error_type();
@@ -1366,7 +1366,7 @@ size_t semantic::get_enum_literal_value(expr* node, const type& infer) {
         return SIZE_MAX;
     }
 
-    const auto& dm = ctx.global.domain.at(infer.loc_file);
+    const auto& dm = ctx.get_domain(infer.loc_file);
     if (!dm.enums.count(name)) {
         return SIZE_MAX;
     }
@@ -1440,7 +1440,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
     if (!ctx.global.domain.count(infer.loc_file)) {
         return;
     }
-    const auto& dm = ctx.global.domain.at(infer.loc_file);
+    const auto& dm = ctx.get_domain(infer.loc_file);
     if (!dm.enums.count(infer.name)) {
         return;
     }
@@ -1768,7 +1768,7 @@ void semantic::resolve_global_func(func_decl* node) {
     if (node->get_generic_types()) {
         return; // do not resolve generic impl
     }
-    const auto& domain = ctx.global.domain.at(ctx.this_file);
+    const auto& domain = ctx.get_domain(ctx.this_file);
     if (!domain.functions.count(node->get_name())) {
         rp.report(node, "cannot find function \"" + node->get_name() + "\".");
         return;
@@ -1831,8 +1831,8 @@ void semantic::resolve_impl(impl_struct* node) {
     }
 
     const auto& domain = node->is_redirected()
-        ? ctx.global.domain.at(node->get_redirect_location())
-        : ctx.global.domain.at(node->get_file());
+        ? ctx.get_domain(node->get_redirect_location())
+        : ctx.get_domain(node->get_file());
     if (!domain.structs.count(node->get_struct_name())) {
         rp.report(node,
             "cannot implement \"" + node->get_struct_name() +

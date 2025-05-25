@@ -5,6 +5,7 @@
 #include "sema/func.h"
 #include "sema/struct.h"
 #include "sema/enum.h"
+#include "sema/tagged_union.h"
 
 #include <cstring>
 #include <sstream>
@@ -24,6 +25,7 @@ struct colgm_module {
     std::string file_name;
     std::unordered_map<std::string, colgm_enum> enums;
     std::unordered_map<std::string, colgm_struct> structs;
+    std::unordered_map<std::string, colgm_tagged_union> tagged_unions;
     std::unordered_map<std::string, colgm_func> functions;
     std::unordered_map<std::string, colgm_struct> generic_structs;
     std::unordered_map<std::string, colgm_func> generic_functions;

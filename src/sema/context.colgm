@@ -98,21 +98,13 @@ impl sema_context {
 
 impl sema_context {
     pub func global_symbol(self) -> hashmap<str, symbol_info>* {
-        if (!self->global->domain.has(self->this_file.__ptr__())) {
-            panic("domain does not exist");
-        }
-        return self->global->domain
-                   .get(self->this_file.__ptr__())
+        return self->get_domain(self->this_file.__ptr__())
                    ->global_symbol
                    .__ptr__();
     }
 
     pub func generic_symbol(self) -> hashmap<str, symbol_info>* {
-        if (!self->global->domain.has(self->this_file.__ptr__())) {
-            panic("domain does not exist");
-        }
-        return self->global->domain
-                   .get(self->this_file.__ptr__())
+        return self->get_domain(self->this_file.__ptr__())
                    ->generic_symbol
                    .__ptr__();
     }
@@ -168,7 +160,7 @@ impl sema_context {
     }
 
     pub func get_domain(self, name: str*) -> colgm_module* {
-        if (self->global->domain.has(name)) {
+        if (self->has_domain(name)) {
             return self->global->domain.get(name);
         }
 

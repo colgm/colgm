@@ -161,6 +161,11 @@ private: // structs
     void regist_single_struct_field(ast::struct_decl*);
     void check_struct_self_reference();
 
+private: // tagged unions
+    void regist_tagged_unions(ast::root*);
+    void regist_single_tagged_union_symbol(ast::tagged_union_decl*);
+    void regist_single_tagged_union_member(ast::tagged_union_decl*);
+
 private: // global functions
     void regist_global_funcs(ast::root*);
     void regist_single_global_func(ast::func_decl*);

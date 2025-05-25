@@ -621,7 +621,7 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
         type_mapping(node->get_type())
     ));
 
-    const auto& dm = ctx.global.domain.at(node->get_type().loc_file);
+    const auto& dm = ctx.get_domain(node->get_type().loc_file);
     const auto& st = dm.structs.at(node->get_type().name_for_search());
     for(const auto& i : node->get_fields()) {
         const auto target = ssa_gen.create();
@@ -654,7 +654,7 @@ void mir2sir::push_global_func(const type& t) {
         value_stack.push_back(mir_value_t::func_kind(t.name, t));
         return;
     }
-    const auto& dm = ctx.global.domain.at(t.loc_file);
+    const auto& dm = ctx.get_domain(t.loc_file);
 
     // avoid out of range error
     if (!dm.functions.count(t.name_for_search())) {
@@ -844,7 +844,7 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
     auto prev = value_stack.back();
     value_stack.pop_back();
 
-    const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
+    const auto& dm = ctx.get_domain(prev.resolve_type.loc_file);
     const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
 
     // get method
@@ -886,7 +886,7 @@ void mir2sir::visit_mir_get_path(mir_get_path* node) {
             ));
             break;
         case mir_value_t::kind::enum_symbol: {
-            const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
+            const auto& dm = ctx.get_domain(prev.resolve_type.loc_file);
             const auto& em = dm.enums.at(prev.resolve_type.name);
             value_stack.push_back(mir_value_t::literal(
                 std::to_string(em.members.at(node->get_name())),
@@ -901,7 +901,7 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
     auto prev = value_stack.back();
     value_stack.pop_back();
 
-    const auto& dm = ctx.global.domain.at(prev.resolve_type.loc_file);
+    const auto& dm = ctx.get_domain(prev.resolve_type.loc_file);
     const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
 
     // get method
