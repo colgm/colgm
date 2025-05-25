@@ -155,14 +155,11 @@ private: // enums
     void regist_enums(ast::root*);
     void regist_single_enum(ast::enum_decl*);
 
-private: // structs
-    void regist_structs(ast::root*);
+private: // structs and tagged unions
+    void regist_complex_structs(ast::root*);
     void regist_single_struct_symbol(ast::struct_decl*);
     void regist_single_struct_field(ast::struct_decl*);
     void check_struct_self_reference();
-
-private: // tagged unions
-    void regist_tagged_unions(ast::root*);
     void regist_single_tagged_union_symbol(ast::tagged_union_decl*);
     void regist_single_tagged_union_member(ast::tagged_union_decl*);
 

@@ -1222,8 +1222,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         rp.report(node, "redefinition of variable \"" + name + "\".");
         return;
     }
-    if (ctx.get_domain(node->get_file()).global_symbol.count(name) ||
-        ctx.get_domain(node->get_file()).generic_symbol.count(name)) {
+    if (ctx.get_domain(node->get_file()).global_symbol.count(name)) {
         rp.report(node, "variable \"" + name + "\" conflicts with global symbol.");
         return;
     }

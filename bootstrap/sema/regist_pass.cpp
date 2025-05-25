@@ -695,14 +695,7 @@ void regist_pass::import_global_symbol(ast::node* n,
         );
         return;
     }
-    if (ctx.generic_symbol().count(name)) {
-        const auto& info = ctx.generic_symbol().at(name);
-        rp.report(n, "\"" + name +
-            "\" conflicts, another declaration is in \"" +
-            info.loc_file + "\"."
-        );
-        return;
-    }
+
     ctx.insert(name, sym, is_generic);
 }
 
@@ -982,10 +975,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
         rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
         return;
     }
-    if (ctx.get_domain(ctx.this_file).enums.count(name)) {
-        rp.report(node, "enum \"" + name + "\" conflicts with exist symbol.");
-        return;
-    }
+
     ctx.get_domain(ctx.this_file).enums.insert({name, {}});
     ctx.insert(name, {sym_kind::enum_kind, ctx.this_file, true}, false);
 
@@ -1036,22 +1026,26 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
     }
 }
 
-void regist_pass::regist_structs(ast::root* node) {
+void regist_pass::regist_complex_structs(ast::root* node) {
     // regist symbol into symbol table first
     for(auto i : node->get_decls()) {
-        if (!i->is(ast_type::ast_struct_decl)) {
-            continue;
+        if (i->is(ast_type::ast_struct_decl)) {
+            auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);
+            regist_single_struct_symbol(struct_decl_node);
+        } else if (i->is(ast_type::ast_tagged_union_decl)) {
+            auto union_decl_node = reinterpret_cast<ast::tagged_union_decl*>(i);
+            regist_single_tagged_union_symbol(union_decl_node);
         }
-        auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);
-        regist_single_struct_symbol(struct_decl_node);
     }
     // load field into struct
     for(auto i : node->get_decls()) {
-        if (!i->is(ast_type::ast_struct_decl)) {
-            continue;
+        if (i->is(ast_type::ast_struct_decl)) {
+            auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);
+            regist_single_struct_field(struct_decl_node);
+        } else if (i->is(ast_type::ast_tagged_union_decl)) {
+            auto union_decl_node = reinterpret_cast<ast::tagged_union_decl*>(i);
+            regist_single_tagged_union_member(union_decl_node);
         }
-        auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);
-        regist_single_struct_field(struct_decl_node);
     }
     // do self reference check
     check_struct_self_reference();
@@ -1065,10 +1059,6 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
     }
 
     auto& this_domain = ctx.get_domain(ctx.this_file);
-    if (this_domain.structs.count(name) ||
-        this_domain.generic_structs.count(name)) {
-        rp.report(node, "struct \"" + name + "\" conflicts with exist symbol.");
-    }
 
     // insert to global symbol table and domain
     ctx.insert(
@@ -1228,25 +1218,6 @@ void regist_pass::check_struct_self_reference() {
                 }
             }
         }
-    }
-}
-
-void regist_pass::regist_tagged_unions(ast::root* node) {
-    // regist symbol into symbol table first
-    for(auto i : node->get_decls()) {
-        if (!i->is(ast_type::ast_tagged_union_decl)) {
-            continue;
-        }
-        auto union_decl_node = reinterpret_cast<ast::tagged_union_decl*>(i);
-        regist_single_tagged_union_symbol(union_decl_node);
-    }
-    // load field into struct
-    for(auto i : node->get_decls()) {
-        if (!i->is(ast_type::ast_tagged_union_decl)) {
-            continue;
-        }
-        auto union_decl_node = reinterpret_cast<ast::tagged_union_decl*>(i);
-        regist_single_tagged_union_member(union_decl_node);
     }
 }
 
@@ -1547,7 +1518,7 @@ void regist_pass::run(ast::root* ast_root) {
     }
 
     regist_enums(ast_root);
-    regist_structs(ast_root);
+    regist_complex_structs(ast_root);
     if (err.geterr()) {
         return;
     }

@@ -57,9 +57,7 @@ type type_resolver::resolve(ast::type_def* node) {
         : ctx.get_domain(node->get_file());
 
     // cannot find type
-    if (!dm.global_symbol.count(name) &&
-        !dm.generic_symbol.count(name) &&
-        !ctx.generics.count(name)) {
+    if (!dm.global_symbol.count(name) && !ctx.generics.count(name)) {
         rp.report(node->get_name(),
             "undefined type \"" + name + "\"."
         );

@@ -527,8 +527,7 @@ impl regist_pass {
 
     func regist_single_enum(self, node: ast_enum_decl*) {
         var name = node->name.__ptr__();
-        if (self->ctx->global_symbol()->has(name) ||
-            self->ctx->generic_symbol()->has(name)) {
+        if (self->ctx->global_symbol()->has(name)) {
             var info = str::from("enum \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist symbol");
@@ -632,8 +631,7 @@ impl regist_pass {
 
     func regist_single_global_func(self, node: ast_func_decl*) {
         var name = node->name.__ptr__();
-        if (self->ctx->global_symbol()->has(name) ||
-            self->ctx->generic_symbol()->has(name)) {
+        if (self->ctx->global_symbol()->has(name)) {
             var info = str::from("\"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist symbol");
@@ -733,10 +731,9 @@ impl regist_pass {
 }
 
 impl regist_pass {
-    func regist_single_struct(self, node: ast_struct_decl*) {
+    func regist_single_struct_field(self, node: ast_struct_decl*) {
         var name = node->name.__ptr__();
-        if (!self->ctx->global_symbol()->has(name) &&
-            !self->ctx->generic_symbol()->has(name)) {
+        if (!self->ctx->global_symbol()->has(name)) {
             var info = str::from("cannot find symbol \"");
             info.append_str(name);
             info.append_i8_vec("\"");
@@ -900,8 +897,7 @@ impl regist_pass {
 
     func regist_single_struct_symbol(self, node: ast_struct_decl*) {
         var name = node->name.__ptr__();
-        if (self->ctx->global_symbol()->has(name) ||
-            self->ctx->generic_symbol()->has(name)) {
+        if (self->ctx->global_symbol()->has(name)) {
             var info = str::from("struct \"");
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist symbol");
@@ -958,7 +954,7 @@ impl regist_pass {
                 continue;
             }
             var struct_node = node => ast_struct_decl*;
-            self->regist_single_struct(struct_node);
+            self->regist_single_struct_field(struct_node);
         }
 
         // do self reference check

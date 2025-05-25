@@ -32,9 +32,11 @@ struct colgm_module {
 
     // store global symbols used in current scope
     // both normal and generic symbols are stored
+    // so if want to check if symbol exists, it's enough to just use this
     std::unordered_map<std::string, symbol_info> global_symbol;
 
     // only store generics in current scope
+    // for type resolver to check if a symbol is generic
     std::unordered_map<std::string, symbol_info> generic_symbol;
 };
 
