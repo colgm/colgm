@@ -70,7 +70,7 @@ std::string mir2sir::array_type_mapping(const type& t) {
 
 void mir2sir::emit_struct(const mir_context& mctx) {
     for(auto i : mctx.structs) {
-        auto stct = new sir_struct(i->name, i->location);
+        auto stct = new sir_struct(i->name, i->location, i->size);
         for(const auto& f : i->field_type) {
             if (f.is_array) {
                 stct->add_field_type(array_type_mapping(f));
@@ -1604,10 +1604,97 @@ void mir2sir::generate_DWARF(const mir_context& mctx) {
     generate_DI_subprogram(mctx);
 }
 
+void mir2sir::calculate_single_struct_size(mir_struct* s) {
+    if (s->size_calculated) {
+        return;
+    }
+
+    u64 offset = 0;
+    u64 struct_alignment = 0;
+
+    for (auto i : s->field_type) {
+        const auto name = i.full_path_name();
+        u64 field_size = 0;
+        u64 alignment = 1;
+        if (i.is_pointer() && !i.is_array) {
+            field_size = 8;
+            alignment = 8;
+        } else if (i.pointer_depth >= 2 && i.is_array) {
+            field_size = 8;
+            alignment = 8;
+        } else if (struct_mapper.count(name)) {
+            auto t = struct_mapper.at(name);
+            if (!t->size_calculated) {
+                calculate_single_struct_size(t);
+            }
+            field_size = t->size;
+            alignment = t->alignment;
+        } else if (i.is_boolean()) {
+            field_size = 1;
+            alignment = 1;
+        } else if (i.is_integer()) {
+            if (i.name == "u8" || i.name == "i8") {
+                field_size = 1;
+                alignment = 1;
+            } else if (i.name == "u16" || i.name == "i16") {
+                field_size = 2;
+                alignment = 2;
+            } else if (i.name == "u32" || i.name == "i32") {
+                field_size = 4;
+                alignment = 4;
+            } else if (i.name == "u64" || i.name == "i64") {
+                field_size = 8;
+                alignment = 8;
+            } else {
+                // enum -> i64
+                field_size = 8;
+                alignment = 8;
+            }
+        } else if (i.is_float()) {
+            field_size = i.name == "f32" ? 4 : 8;
+            alignment = i.name == "f32" ? 4 : 8;
+        }
+
+        if (i.is_array) {
+            field_size *= i.array_length;
+        }
+
+        if (struct_alignment < alignment) {
+            struct_alignment = alignment;
+        }
+
+        while (offset % alignment != 0) {
+            offset++;
+        }
+        offset += field_size;
+    }
+
+    s->size = offset;
+    s->alignment = struct_alignment;
+    s->size_calculated = true;
+}
+
+void mir2sir::calculate_struct_size(const mir_context& mctx) {
+    struct_mapper.clear();
+    for (auto i : mctx.structs) {
+        const auto ty = type {
+            .name = i->name,
+            .loc_file = i->location.file
+        };
+        struct_mapper.insert({ty.full_path_name(), i});
+    }
+
+    for (auto i : mctx.structs) {
+        calculate_single_struct_size(i);
+    }
+}
+
 const error& mir2sir::generate(const mir_context& mctx) {
     generate_DWARF(mctx);
 
     generate_type_mapper();
+
+    calculate_struct_size(mctx);
     emit_struct(mctx);
     emit_func_decl(mctx);
     emit_func_impl(mctx);

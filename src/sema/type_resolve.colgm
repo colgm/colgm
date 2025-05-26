@@ -107,6 +107,12 @@ impl type_resolve {
         t.name.append_str(name);
         t.pointer_depth = node->pointer_depth;
         t.is_const = node->is_const;
+
+        if (DM->global_symbol.has(name) &&
+            DM->global_symbol.get(name)->kind == symbol_kind::enum_kind) {
+            t.is_enum = true;
+        }
+
         if (node->is_array) {
             t.is_array = node->is_array;
             t.pointer_depth += 1;

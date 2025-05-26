@@ -18,9 +18,11 @@ private:
     std::string name;
     span location;
     std::vector<std::string> field_type;
+    u64 size;
 
 public:
-    sir_struct(const std::string& n, const span& loc): name(n), location(loc) {}
+    sir_struct(const std::string& n, const span& loc, u64 s):
+        name(n), location(loc), size(s) {}
     const auto get_mangled_name() const;
     void dump(std::ostream&) const;
     const auto& get_name() const { return name; }
@@ -29,6 +31,7 @@ public:
 
     void add_field_type(const std::string& type) { field_type.push_back(type); }
     const auto& get_field_type() const { return field_type; }
+    auto get_size() const { return size; }
 };
 
 class sir_func {

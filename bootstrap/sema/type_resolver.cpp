@@ -90,6 +90,11 @@ type type_resolver::resolve(ast::type_def* node) {
         .pointer_depth = node->get_pointer_level()
     };
 
+    if (dm.global_symbol.count(name) &&
+        dm.global_symbol.at(name).kind == sym_kind::enum_kind) {
+        res.is_enum = true;
+    }
+
     // if node has const flag, set it
     if (node->is_constant()) {
         res.is_const = true;

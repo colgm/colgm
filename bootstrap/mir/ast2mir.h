@@ -18,6 +18,10 @@ struct mir_struct {
     std::string name;
     span location;
     std::vector<type> field_type;
+
+    bool size_calculated = false;
+    u64 size = 0;
+    u64 alignment = 0;
 };
 
 struct mir_func {

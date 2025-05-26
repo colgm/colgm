@@ -188,6 +188,8 @@ private:
 
     DWARF_status dwarf_status;
 
+    std::unordered_map<std::string, mir_struct*> struct_mapper;
+
 private:
     void unimplemented(mir* node) {
         std::stringstream ss;
@@ -239,7 +241,7 @@ private:
     void visit_mir_loop(mir_loop*) override;
     void visit_mir_return(mir_return*) override;
 
-public:
+private:
     void generate_llvm_ident();
     void generate_llvm_module_flags();
     void generate_llvm_dbg_cu();
@@ -249,6 +251,10 @@ public:
     void generate_DI_structure_type(const mir_context&);
     void generate_DI_subprogram(const mir_context&);
     void generate_DWARF(const mir_context&);
+
+private:
+    void calculate_single_struct_size(mir_struct*);
+    void calculate_struct_size(const mir_context&);
 
 public:
     mir2sir(const sema_context& c):
