@@ -15,6 +15,7 @@ def execute(cmd: list[str], allow_failure: bool, do_print: bool = True) -> int:
 
 TEST_LIST = [
     # file name                | library path   | allowed to fail
+    ("test/align.colgm",                   "src", False),
     ("test/array_type.colgm",              "src", False),
     ("test/array.colgm",                   "src", False),
     ("test/assign.colgm",                  "src", False),

@@ -137,12 +137,7 @@ void sir_context::dump_struct_size_method(std::ostream& out) const {
         const auto st_real_name = quoted_name("%struct." + st_name);
         const auto size_func_name = quoted_name(st_name + ".__size__");
         out << "define i64 @" << size_func_name << "() alwaysinline {\n";
-        out << "label.entry:\n";
-        // out << "  ret i64 ptrtoint (" << st_real_name;
-        // out << "* getelementptr (" << st_real_name << ", ";
-        // out << st_real_name << "* null, i64 1) to i64)\n";
-        out << "  ret i64 " << st->get_size() << "\n";
-        out << "}\n";
+        out << "label.entry:\n  ret i64 " << st->get_size() << "\n}\n";
     }
 }
 

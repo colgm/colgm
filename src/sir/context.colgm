@@ -20,15 +20,17 @@ use util::package::{ package };
 pub struct sir_struct {
     name: str,
     location: span,
-    field_type: vec<str>
+    field_type: vec<str>,
+    size: u64
 }
 
 impl sir_struct {
-    pub func instance(n: str*, loc: span*) -> sir_struct {
+    pub func instance(n: str*, loc: span*, s: u64) -> sir_struct {
         return sir_struct {
             name: n->copy_instance(),
             location: loc->copy_instance(),
-            field_type: vec<str>::instance()
+            field_type: vec<str>::instance(),
+            size: s
         };
     }
 
@@ -43,6 +45,7 @@ impl sir_struct {
         res.name = self->name.copy_instance();
         res.location = self->location.copy_instance();
         res.field_type = self->field_type.copy_instance();
+        res.size = self->size;
         return res;
     }
 
@@ -357,9 +360,7 @@ impl sir_context {
             out.out("define i64 @").out(size_func_name.c_str);
             out.out("() alwaysinline {\n");
             out.out("label.entry:\n");
-            out.out("  ret i64 ptrtoint (").out(st_name.c_str);
-            out.out("* getelementptr (").out(st_name.c_str).out(", ");
-            out.out(st_name.c_str).out("* null, i64 1) to i64)\n}\n\n");
+            out.out("  ret i64 ").out_u64(i.get()->size).out("\n}\n");
 
             st_name.delete();
             size_func_name.delete();

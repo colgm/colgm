@@ -1669,6 +1669,12 @@ void mir2sir::calculate_single_struct_size(mir_struct* s) {
         offset += field_size;
     }
 
+    if (struct_alignment != 0) {
+        while (offset % struct_alignment != 0) {
+            offset++;
+        }
+    }
+
     s->size = offset;
     s->alignment = struct_alignment;
     s->size_calculated = true;

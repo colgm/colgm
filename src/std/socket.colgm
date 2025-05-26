@@ -29,14 +29,13 @@ struct in_addr {
 
 #[enable_if(target_os="macos")]
 pub struct sockaddr_in {
-    sin_len: u8,
-    sin_family: u8,
-    sin_port: u16,
-    sin_addr: in_addr,
+    sin_len: u8,       // 1 align 1
+    sin_family: u8,    // 1 align 1
+    sin_port: u16,     // 2 align 2
+    sin_addr: in_addr, // 4 align 4
 
-    // char sin_zero[8];
-    sin_zero: u64
-}
+    sin_zero: [i8; 8]  // 8 align 1
+} // 16 align 4
 
 #[enable_if(target_os="macos")]
 impl sockaddr_in {
@@ -60,12 +59,12 @@ impl sockaddr_in {
 
 #[enable_if(target_os="linux")]
 pub struct sockaddr_in {
-    sin_family: u16,
-    sin_port: u16,
-    sin_addr: in_addr,
+    sin_family: u16,   // 2 align 2
+    sin_port: u16,     // 2 align 2
+    sin_addr: in_addr, // 4 align 4
 
-    sin_zero: [i8; 8]
-}
+    sin_zero: [i8; 8]  // 8 align 1
+} // 16 align 4
 
 #[enable_if(target_os="linux")]
 impl sockaddr_in {
@@ -95,11 +94,11 @@ impl sockaddr_in {
 }
 
 struct sockaddr {
-    sa_len: u8,
-    sa_family: u8,
+    sa_len: u8,       // 1 align 1
+    sa_family: u8,    // 1 align 1
 
-    sa_data: [i8; 14]
-}
+    sa_data: [i8; 14] // 14 align 1
+} // 16 align 1
 
 pub extern func socket(domain: i32, type: i32, protocal: i32) -> i32;
 pub extern func bind(sockfd: i32, addr: sockaddr_in*, len: u32) -> i32;
@@ -115,8 +114,8 @@ pub extern func inet_addr(addr: i8*) -> u32;
 pub extern func sendto(sockfd: i32, buf: i8*, len: u64, flags: i32, addr: sockaddr_in*, addrlen: u32) -> i32;
 pub extern func recvfrom(sockfd: i32, buf: i8*, len: u64, flags: i32, addr: sockaddr_in*, addrlen: u32*) -> i32;
 
-pub func s_socket(domain: af_domain, type: sock_kind, protocal: ip_proto) -> i32 {
-    var fd = socket(domain => i32, type => i32, protocal => i32);
+pub func s_socket(domain: af_domain, type: sock_kind, protocol: ip_proto) -> i32 {
+    var fd = socket(domain => i32, type => i32, protocol => i32);
     if (fd < 0) {
         perror("socket");
         panic("error creating socket");

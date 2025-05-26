@@ -1,0 +1,60 @@
+use err::panic::{ assert };
+
+struct A {
+    a: i8,  // 1 align 1
+            // 1
+    b: i16, // 2 align 2
+    c: i32  // 4 align 4
+} // 8 align 4
+
+struct B {
+    a: i32, // 4 align 4
+    b: i16, // 2 align 2
+    c: i8   // 1 align 1
+            // 1
+} // 8 align 4
+
+struct C {
+    a: i8,  // 1 align 1
+            // 1
+    b: i16, // 2 align 2
+            // 4
+    c: i64  // 8 align 8
+} // 16 align 8
+
+struct D {
+    a: i64, // 8 align 8
+    b: i32, // 4 align 4
+    d: i8   // 1 align 1
+            // 3
+} // 16 align 8
+
+struct __in_addr {
+    s_addr: u32 // 4 align 4
+} // 4 align 4
+
+struct __sockaddr {
+    sa_len: u8,       // 1 align 1
+    sa_family: u8,    // 1 align 1
+
+    sa_data: [i8; 14] // 14 align 1
+} // 16 align 1
+
+pub struct __sockaddr_in {
+    sin_family: u16,     // 2 align 2
+    sin_port: u16,       // 2 align 2
+    sin_addr: __in_addr, // 4 align 4
+
+    sin_zero: [i8; 8]    // 8 align 1
+} // 16 align 4
+
+func main() -> i32 {
+    assert(A::__size__() == 8, "A::__size__() != 8");
+    assert(B::__size__() == 8, "B::__size__() != 8");
+    assert(C::__size__() == 16, "C::__size__() != 16");
+    assert(D::__size__() == 16, "D::__size__() != 16");
+    assert(__in_addr::__size__() == 4, "__in_addr::__size__() != 4");
+    assert(__sockaddr::__size__() == 16, "__sockaddr::__size__() != 16");
+    assert(__sockaddr_in::__size__() == 16, "__sockaddr_in::__size__() != 16");
+    return 0;
+}

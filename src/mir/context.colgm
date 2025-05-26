@@ -16,7 +16,11 @@ use util::package::{ package };
 pub struct mir_struct {
     name: str,
     location: span,
-    field_type: vec<type>
+    field_type: vec<type>,
+
+    size_calculated: bool,
+    size: u64,
+    align: u64
 }
 
 impl mir_struct {
@@ -24,7 +28,10 @@ impl mir_struct {
         return mir_struct {
             name: name->copy_instance(),
             location: loc->copy_instance(),
-            field_type: vec<type>::instance()
+            field_type: vec<type>::instance(),
+            size_calculated: false,
+            size: 0,
+            align: 0
         };
     }
 
@@ -33,6 +40,9 @@ impl mir_struct {
         res.name = self->name.copy_instance();
         res.location = self->location.copy_instance();
         res.field_type = self->field_type.copy_instance();
+        res.size_calculated = self->size_calculated;
+        res.size = self->size;
+        res.align = self->align;
         return res;
     }
 
