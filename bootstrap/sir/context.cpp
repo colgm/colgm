@@ -137,12 +137,12 @@ void sir_context::dump_struct_size_method(std::ostream& out) const {
         const auto st_real_name = quoted_name("%struct." + st_name);
         const auto size_func_name = quoted_name(st_name + ".__size__");
         out << "define i64 @" << size_func_name << "() alwaysinline {\n";
-        out << "label.entry:\n  ret i64 " << st->get_size() << "\n}\n";
+        out << "  ret i64 " << st->get_size() << "\n}\n";
     }
 }
 
 void sir_context::dump_struct_alloc_method(std::ostream& out) const {
-    for(const auto& st: struct_decls) {
+    for(const auto st: struct_decls) {
         const auto st_type = type {
             .name = st->get_name(),
             .loc_file = st->get_file()
@@ -150,15 +150,13 @@ void sir_context::dump_struct_alloc_method(std::ostream& out) const {
         const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = quoted_name("%struct." + st_name);
         const auto alloc_func_name = quoted_name(st_name + ".__alloc__");
-        const auto size_func_name = quoted_name(st_name + ".__size__");
         out << "define " << st_real_name << "* ";
         out << "@" << alloc_func_name;
         out << "() alwaysinline {\n";
         out << "label.entry:\n";
-        out << "  %0 = call i64 @" << size_func_name << "()\n";
-        out << "  %1 = call i8* @malloc(i64 %0)\n";
-        out << "  %2 = bitcast i8* %1 to " << st_real_name << "*\n";
-        out << "  ret " << st_real_name << "* %2\n";
+        out << "  %0 = call i8* @malloc(i64 " << st->get_size() << ")\n";
+        out << "  %1 = bitcast i8* %0 to " << st_real_name << "*\n";
+        out << "  ret " << st_real_name << "* %1\n";
         out << "}\n";
     }
 }

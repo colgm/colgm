@@ -344,22 +344,18 @@ impl sir_context {
                 var temp = st_name.substr_from(9);
                 size_func_name.append_i8_vec("\"");
                 size_func_name.append_str(temp.__ptr__());
+                size_func_name.pop_back();
+                size_func_name.append_i8_vec(".__size__\"");
                 temp.delete();
             } else {
                 var temp = st_name.substr_from(8);
                 size_func_name.append_str(temp.__ptr__());
-                temp.delete();
-            }
-            if (size_func_name.back() == '"') {
-                size_func_name.pop_back();
-                size_func_name.append_i8_vec(".__size__\"");
-            } else {
                 size_func_name.append_i8_vec(".__size__");
+                temp.delete();
             }
 
             out.out("define i64 @").out(size_func_name.c_str);
             out.out("() alwaysinline {\n");
-            out.out("label.entry:\n");
             out.out("  ret i64 ").out_u64(i.get()->size).out("\n}\n");
 
             st_name.delete();
@@ -370,41 +366,31 @@ impl sir_context {
     func dump_struct_alloc_method(self, out: io) {
         foreach (var i; self->struct_decls) {
             var st_name = i.get()->name.copy_instance();
-            var size_func_name = str::instance();
             var alloc_func_name = str::instance();
             if (st_name.size >= 2 && st_name.get(1) == '"') {
+                // delete prefix `"%struct.`
                 var temp = st_name.substr_from(9);
-                size_func_name.append_i8_vec("\"");
-                size_func_name.append_str(temp.__ptr__());
                 alloc_func_name.append_i8_vec("\"");
                 alloc_func_name.append_str(temp.__ptr__());
-                temp.delete();
-            } else {
-                var temp = st_name.substr_from(8);
-                size_func_name.append_str(temp.__ptr__());
-                alloc_func_name.append_str(temp.__ptr__());
-                temp.delete();
-            }
-            if (size_func_name.back() == '"') {
-                size_func_name.pop_back();
-                size_func_name.append_i8_vec(".__size__\"");
                 alloc_func_name.pop_back();
                 alloc_func_name.append_i8_vec(".__alloc__\"");
+                temp.delete();
             } else {
-                size_func_name.append_i8_vec(".__size__");
+                // delete prefix `%struct.`
+                var temp = st_name.substr_from(8);
+                alloc_func_name.append_str(temp.__ptr__());
                 alloc_func_name.append_i8_vec(".__alloc__");
+                temp.delete();
             }
 
             out.out("define ").out(st_name.c_str).out("* @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
             out.out("label.entry:\n");
-            out.out("  %0 = call i64 @").out(size_func_name.c_str).out("()\n");
-            out.out("  %1 = call i8* @malloc(i64 %0)\n");
-            out.out("  %2 = bitcast i8* %1 to ").out(st_name.c_str).out("*\n");
-            out.out("  ret ").out(st_name.c_str).out("* %2\n}\n\n");
+            out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get()->size).out(")\n");
+            out.out("  %1 = bitcast i8* %0 to ").out(st_name.c_str).out("*\n");
+            out.out("  ret ").out(st_name.c_str).out("* %1\n}\n");
 
             st_name.delete();
-            size_func_name.delete();
             alloc_func_name.delete();
         }
     }
