@@ -1,0 +1,173 @@
+use std::map::{ hashmap };
+use std::str::{ str };
+use std::ptr::{ __ptr_size };
+use std::io::{ io };
+
+use sema::type::{ type };
+
+use mir::context::{ mir_struct, mir_context };
+
+use util::package::{ package };
+use util::timestamp::{ maketimestamp };
+
+struct size_align_info {
+    size: u64,
+    align: u64
+}
+
+struct size_calc {
+    pkg: package*,
+    struct_mapper: hashmap<str, mir_struct*>
+}
+
+impl size_calc {
+    pub func instance(pkg: package*) -> size_calc {
+        return size_calc {
+            pkg: pkg,
+            struct_mapper: hashmap<str, mir_struct*>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->struct_mapper.delete();
+    }
+}
+
+impl size_calc {
+    func get_size_align(self, t: type*) -> size_align_info {
+        var name = t->full_path_name(self->pkg, false);
+
+        var field_size: u64 = 0;
+        var alignment: u64 = 1;
+
+        if (t->is_pointer() && !t->is_array) {
+            // pointer but not array
+            field_size = __ptr_size();
+            alignment = __ptr_size();
+        } else if (t->pointer_depth >= 2 && t->is_array) {
+            // pointer array, set base size here
+            field_size = __ptr_size();
+            alignment = __ptr_size();
+        } else if (self->struct_mapper.has(name.__ptr__())) {
+            var st = self->struct_mapper.get(name.__ptr__());
+            if (!st->size_calculated) {
+                self->calculate_single_struct_size(st);
+            }
+            field_size = st->size;
+            alignment = st->align;
+        } else if (t->is_bool_base()) {
+            field_size = 1;
+            alignment = 1;
+        } else if (t->is_integer_base()) {
+            if (t->name.eq_const("u8") || t->name.eq_const("i8")) {
+                field_size = 1;
+                alignment = 1;
+            } else if (t->name.eq_const("u16") || t->name.eq_const("i16")) {
+                field_size = 2;
+                alignment = 2;
+            } else if (t->name.eq_const("u32") || t->name.eq_const("i32")) {
+                field_size = 4;
+                alignment = 4;
+            } else if (t->name.eq_const("u64") || t->name.eq_const("i64")) {
+                field_size = 8;
+                alignment = 8;
+            } else {
+                // enum -> i64
+                field_size = 8;
+                alignment = 8;
+            }
+        } else if (t->is_float_base()) {
+            if (t->name.eq_const("f32")) {
+                field_size = 4;
+                alignment = 4;
+            } else {
+                field_size = 8;
+                alignment = 8;
+            }
+        }
+
+        // array size
+        if (t->is_array) {
+            field_size *= t->array_length;
+        }
+
+        name.delete();
+
+        return size_align_info {
+            size: field_size,
+            align: alignment
+        };
+    }
+}
+
+impl size_calc {
+    func calculate_single_struct_size(self, s: mir_struct*) {
+        if (s->size_calculated) {
+            return;
+        }
+
+        if (s->field_type.empty()) {
+            s->size = 1;
+            s->align = 1;
+            s->size_calculated = true;
+            return;
+        }
+
+        var offset: u64 = 0;
+        var struct_alignment: u64 = 0;
+        foreach (var i; s->field_type) {
+            var size_align_pair = self->get_size_align(i.get());
+
+            if (size_align_pair.align > struct_alignment) {
+                struct_alignment = size_align_pair.align;
+            }
+
+            while (offset % size_align_pair.align != 0) {
+                offset += 1;
+            }
+            offset += size_align_pair.size;
+        }
+
+        if (struct_alignment != 0) {
+            while (offset % struct_alignment != 0) {
+                offset += 1;
+            }
+        }
+
+        s->size = offset;
+        s->align = struct_alignment;
+        s->size_calculated = true;
+    }
+
+    pub func calculate_struct_size(self, mctx: mir_context*) {
+        self->struct_mapper.clear();
+        foreach (var i; mctx->structs) {
+            var s_ty = type::instance();
+            s_ty.name.append_str(i.get()->name.__ptr__());
+            s_ty.loc_file.append_str(i.get()->location.file.__ptr__());
+            var s_full_name = s_ty.full_path_name(self->pkg, false);
+            self->struct_mapper.insert(s_full_name.__ptr__(), i.get());
+            s_ty.delete();
+            s_full_name.delete();
+        }
+        foreach (var i; mctx->structs) {
+            self->calculate_single_struct_size(i.get());
+        }
+    }
+}
+
+pub func calculate_size(mctx: mir_context*, pkg: package*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+    
+    var sc = size_calc::instance(pkg);
+    sc.calculate_struct_size(mctx);
+    sc.delete();
+
+    if (verbose) {
+        io::stdout().green().out("[  MIR2SIR ] ").reset();
+        io::stdout().out("Calculate struct size: ");
+        io::stdout().light_cyan().out_u64(mctx->structs.size).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}

@@ -3,10 +3,9 @@ use std::map::{ hashmap };
 use std::str::{ str };
 use std::io::{ io };
 use std::vec::{ vec };
-use std::ptr::{ __ptr_size };
 
 use mir::mir::*;
-use mir::context::{ mir_context, mir_struct, mir_func };
+use mir::context::{ mir_context, mir_func };
 use sir::ssa_name_gen::{ ssa_generator };
 use sir::local_scope::{ local_table };
 use sir::sir::*;
@@ -14,6 +13,7 @@ use sir::context::{ sir_struct, sir_func, sir_context };
 use sir::value::{ value_t };
 use sir::adjust_va_arg::{ adjust_va_arg };
 use sir::replace_ptr_call::{ replace_struct_ptr_call };
+use sir::size_calc::{ calculate_size };
 
 use dwarf::dwarf::*;
 use dwarf::status::{ DWARF_status };
@@ -212,9 +212,7 @@ pub struct mir2sir {
     break_inst: vec<vec<sir_br*>>,
     branch_jump_out: vec<vec<sir_br*>>,
 
-    dwarf_status: DWARF_status,
-
-    struct_mapper: hashmap<str, mir_struct*>,
+    dwarf_status: DWARF_status
 }
 
 impl mir2sir {
@@ -236,8 +234,7 @@ impl mir2sir {
             continue_inst: vec<vec<sir_br*>>::instance(),
             break_inst: vec<vec<sir_br*>>::instance(),
             branch_jump_out: vec<vec<sir_br*>>::instance(),
-            dwarf_status: DWARF_status::instance(),
-            struct_mapper: hashmap<str, mir_struct*>::instance()
+            dwarf_status: DWARF_status::instance()
         };
         res.init_basic_type_mapper();
         res.init_primitive__size_methods();
@@ -258,7 +255,6 @@ impl mir2sir {
         self->branch_jump_out.delete();
 
         self->dwarf_status.delete();
-        self->struct_mapper.delete();
     }
 
     func init_basic_type_mapper(self) {
@@ -2993,115 +2989,6 @@ impl mir2sir {
 }
 
 impl mir2sir {
-    func calculate_single_struct_size(self, s: mir_struct*) {
-        if (s->size_calculated) {
-            return;
-        }
-
-        if (s->field_type.empty()) {
-            s->size = 1;
-            s->align = 1;
-            s->size_calculated = true;
-            return;
-        }
-
-        var offset: u64 = 0;
-        var struct_alignment: u64 = 0;
-        foreach (var i; s->field_type) {
-            var name = i.get()->full_path_name(self->pkg, false);
-            var field_size: u64 = 0;
-            var alignment: u64 = 1;
-            if (i.get()->is_pointer() && !i.get()->is_array) {
-                // pointer but not array
-                field_size = __ptr_size();
-                alignment = __ptr_size();
-            } else if (i.get()->pointer_depth >= 2 && i.get()->is_array) {
-                // pointer array, set base size here
-                field_size = __ptr_size();
-                alignment = __ptr_size();
-            } else if (self->struct_mapper.has(name.__ptr__())) {
-                var t = self->struct_mapper.get(name.__ptr__());
-                if (!t->size_calculated) {
-                    self->calculate_single_struct_size(t);
-                }
-                field_size = t->size;
-                alignment = t->align;
-            } else if (i.get()->is_bool_base()) {
-                field_size = 1;
-                alignment = 1;
-            } else if (i.get()->is_integer_base()) {
-                if (i.get()->name.eq_const("u8") || i.get()->name.eq_const("i8")) {
-                    field_size = 1;
-                    alignment = 1;
-                } else if (i.get()->name.eq_const("u16") || i.get()->name.eq_const("i16")) {
-                    field_size = 2;
-                    alignment = 2;
-                } else if (i.get()->name.eq_const("u32") || i.get()->name.eq_const("i32")) {
-                    field_size = 4;
-                    alignment = 4;
-                } else if (i.get()->name.eq_const("u64") || i.get()->name.eq_const("i64")) {
-                    field_size = 8;
-                    alignment = 8;
-                } else {
-                    // enum -> i64
-                    field_size = 8;
-                    alignment = 8;
-                }
-            } else if (i.get()->is_float_base()) {
-                if (i.get()->name.eq_const("f32")) {
-                    field_size = 4;
-                    alignment = 4;
-                } else {
-                    field_size = 8;
-                    alignment = 8;
-                }
-            }
-
-            // array size
-            if (i.get()->is_array) {
-                field_size *= i.get()->array_length;
-            }
-
-            if (alignment > struct_alignment) {
-                struct_alignment = alignment;
-            }
-
-            while (offset % alignment != 0) {
-                offset += 1;
-            }
-            offset += field_size;
-            name.delete();
-        }
-
-        if (struct_alignment != 0) {
-            while (offset % struct_alignment != 0) {
-                offset += 1;
-            }
-        }
-
-        s->size = offset;
-        s->align = struct_alignment;
-        s->size_calculated = true;
-    }
-
-    func calculate_struct_size(self, mctx: mir_context*) {
-        self->struct_mapper.clear();
-        foreach (var i; mctx->structs) {
-            var s_ty = type::instance();
-            s_ty.name.append_str(i.get()->name.__ptr__());
-            s_ty.loc_file.append_str(i.get()->location.file.__ptr__());
-            var s_full_name = s_ty.full_path_name(self->pkg, false);
-            self->struct_mapper.insert(s_full_name.__ptr__(), i.get());
-            s_ty.delete();
-            s_full_name.delete();
-        }
-        foreach (var i; mctx->structs) {
-            self->calculate_single_struct_size(i.get());
-        }
-    }
-}
-
-impl mir2sir {
     pub func generate(self, mctx: mir_context*, verbose: bool, debug_mode: bool) {
         // debug mode is enabled by '-g'
         if (debug_mode) {
@@ -3110,7 +2997,7 @@ impl mir2sir {
         }
 
         self->generate_type_mapper();
-        self->calculate_struct_size(mctx);
+        calculate_size(mctx, self->pkg, verbose);
         self->emit_struct(mctx);
         self->emit_func_decl(mctx);
         self->emit_func_impl(mctx);
