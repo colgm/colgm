@@ -933,6 +933,58 @@ impl regist_pass {
         sym_info.delete();
     }
 
+    func check_ref_enum(self, node: ast_tagged_union_decl*, un: colgm_tagged_union*) {
+        if (node->ref_enum_name.empty()) {
+            return;
+        }
+        if (!self->ctx->global_symbol()->has(node->ref_enum_name.__ptr__())) {
+            var info = str::from("enum \"");
+            info.append_str(node->ref_enum_name.__ptr__());
+            info.append_i8_vec("\" not found, make sure it is defined or imported");
+            self->err->error(node->base.location.__ptr__(), info.c_str);
+            info.delete();
+            return;
+        }
+
+        var enum_info = self->ctx->global_symbol()->get(node->ref_enum_name.__ptr__());
+        if (enum_info->kind != symbol_kind::enum_kind) {
+            var info = str::from("\"");
+            info.append_str(node->ref_enum_name.__ptr__());
+            info.append_i8_vec("\" is not enum");
+            self->err->error(node->base.location.__ptr__(), info.c_str);
+            info.delete();
+            return;
+        }
+
+        var ty = type::instance();
+        ty.name.append_str(node->ref_enum_name.__ptr__());
+        ty.loc_file.append_str(enum_info->loc_file.__ptr__());
+        ty.is_enum = true;
+
+        un->ref_enum_type.reset_with(ty.__ptr__());
+
+        var dm = self->ctx->get_domain(enum_info->loc_file.__ptr__());
+        var em = dm->enums.get(node->ref_enum_name.__ptr__());
+        foreach (var i; node->members) {
+            if (em->members.has(i.get()->name->content.__ptr__())) {
+                continue;
+            }
+            var info = str::from("member \"");
+            info.append_str(i.get()->name->content.__ptr__());
+            info.append_i8_vec("\" not found in enum \"");
+
+            var full_name = ty.full_path_name(self->pkg, false);
+            info.append_str(full_name.__ptr__());
+            full_name.delete();
+
+            info.append_i8_vec("\"");
+            self->err->error(i.get()->base.location.__ptr__(), info.c_str);
+            info.delete();
+        }
+
+        ty.delete();
+    }
+
     func regist_single_tagged_union_member(self, node: ast_tagged_union_decl*) {
         var name = node->name.__ptr__();
         if (!self->ctx->global_symbol()->has(name)) {
@@ -989,6 +1041,7 @@ impl regist_pass {
         if (node->is_public) {
             union_info->is_public = true;
         }
+        self->check_ref_enum(node, union_info);
 
         // insert to domain
         var dm = self->ctx->get_domain(node->base.location.file.__ptr__());        

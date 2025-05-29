@@ -14,6 +14,7 @@ namespace colgm {
 struct colgm_tagged_union {
 public:
     std::string name;
+    type ref_enum_type;
     span location;
     std::unordered_map<std::string, symbol> member;
     std::vector<symbol> ordered_member;

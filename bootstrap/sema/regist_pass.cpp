@@ -1221,6 +1221,45 @@ void regist_pass::check_struct_self_reference() {
     }
 }
 
+void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
+                                 colgm_tagged_union& un) {
+    if (node->get_ref_enum_name().empty()) {
+        return;
+    }
+    if (!ctx.global_symbol().count(node->get_ref_enum_name())) {
+        rp.report(node, "enum \"" + node->get_ref_enum_name() +
+            "\" does not exist, make sure the enum is defined or imported."
+        );
+        return;
+    }
+
+    const auto& info = ctx.global_symbol().at(node->get_ref_enum_name());
+    if (info.kind != sym_kind::enum_kind) {
+        rp.report(node, "\"" + node->get_ref_enum_name() +
+            "\" is not enum."
+        );
+        return;
+    }
+
+    auto ty = type {
+        .name = node->get_ref_enum_name(),
+        .loc_file = info.loc_file
+    };
+    ty.is_enum = true;
+    un.ref_enum_type = ty;
+
+    const auto& dm = ctx.get_domain(info.loc_file);
+    const auto& em = dm.enums.at(node->get_ref_enum_name());
+
+    for (auto i : node->get_members()) {
+        if (!em.members.count(i->get_name()->get_name())) {
+            rp.report(i, "enum \"" + ty.full_path_name() +
+                "\" does not have member \"" + i->get_name()->get_name() + "\"."
+            );
+        }
+    }
+}
+
 void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol().count(name)) {
@@ -1247,6 +1286,7 @@ void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node
     if (node->is_extern_union()) {
         self.is_extern = true;
     }
+    check_ref_enum(node, self);
 }
 
 void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node) {

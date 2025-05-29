@@ -12,6 +12,7 @@ use sema::symbol::{ symbol };
 
 pub struct colgm_tagged_union {
     name: str,
+    ref_enum_type: type,
     location: span,
 
     members: hashmap<str, type>,
@@ -28,6 +29,7 @@ impl colgm_tagged_union {
             panic("failed to allocate memory");
         }
         res->name = name->copy_instance();
+        res->ref_enum_type = type::instance();
         res->location = loc->copy_instance();
         res->members = hashmap<str, type>::instance();
         res->ordered_members = vec<symbol>::instance();
@@ -38,6 +40,7 @@ impl colgm_tagged_union {
 
     pub func delete(self) {
         self->name.delete();
+        self->ref_enum_type.delete();
         self->location.delete();
         self->members.delete();
         self->ordered_members.delete();
@@ -49,6 +52,7 @@ impl colgm_tagged_union {
             panic("failed to allocate memory");
         }
         res->name = self->name.copy_instance();
+        res->ref_enum_type = self->ref_enum_type.copy_instance();
         res->location = self->location.copy_instance();
         res->members = self->members.copy_instance();
         res->ordered_members = self->ordered_members.copy_instance();
@@ -60,6 +64,7 @@ impl colgm_tagged_union {
     pub func copy_instance(self) -> colgm_tagged_union {
         return colgm_tagged_union {
             name: self->name.copy_instance(),
+            ref_enum_type: self->ref_enum_type.copy_instance(),
             location: self->location.copy_instance(),
             members: self->members.copy_instance(),
             ordered_members: self->ordered_members.copy_instance(),
@@ -70,6 +75,10 @@ impl colgm_tagged_union {
 }
 
 impl colgm_tagged_union {
+    pub func has_ref_enum(self) -> bool {
+        return !self->ref_enum_type.name.empty();
+    }
+
     pub func dump(self, out: io, pkg: package*) {
         out.out("  ");
         if (self->is_extern) {
@@ -79,6 +88,11 @@ impl colgm_tagged_union {
             out.green().out("pub ").reset();
         }
         out.cyan().out("union ").reset();
+        if (self->has_ref_enum()) {
+            out.light_orange().out("(").reset();
+            self->ref_enum_type.dump(out, pkg);
+            out.light_orange().out(") ").reset();
+        }
         out.white().out(self->name.c_str).reset();
 
         if (self->ordered_members.empty()) {
