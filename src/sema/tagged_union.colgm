@@ -16,6 +16,7 @@ pub struct colgm_tagged_union {
     location: span,
 
     members: hashmap<str, type>,
+    member_int_map: hashmap<str, i64>,
     ordered_members: vec<symbol>,
 
     is_public: bool,
@@ -32,6 +33,7 @@ impl colgm_tagged_union {
         res->ref_enum_type = type::instance();
         res->location = loc->copy_instance();
         res->members = hashmap<str, type>::instance();
+        res->member_int_map = hashmap<str, i64>::instance();
         res->ordered_members = vec<symbol>::instance();
         res->is_public = false;
         res->is_extern = false;
@@ -43,6 +45,7 @@ impl colgm_tagged_union {
         self->ref_enum_type.delete();
         self->location.delete();
         self->members.delete();
+        self->member_int_map.delete();
         self->ordered_members.delete();
     }
 
@@ -55,6 +58,7 @@ impl colgm_tagged_union {
         res->ref_enum_type = self->ref_enum_type.copy_instance();
         res->location = self->location.copy_instance();
         res->members = self->members.copy_instance();
+        res->member_int_map = self->member_int_map.copy_instance();
         res->ordered_members = self->ordered_members.copy_instance();
         res->is_public = self->is_public;
         res->is_extern = self->is_extern;
@@ -67,6 +71,7 @@ impl colgm_tagged_union {
             ref_enum_type: self->ref_enum_type.copy_instance(),
             location: self->location.copy_instance(),
             members: self->members.copy_instance(),
+            member_int_map: self->member_int_map.copy_instance(),
             ordered_members: self->ordered_members.copy_instance(),
             is_public: self->is_public,
             is_extern: self->is_extern
@@ -102,8 +107,14 @@ impl colgm_tagged_union {
         out.out(" {\n");
         forindex (var i; self->ordered_members) {
             var member = self->ordered_members.get(i);
-            out.out("    ").out(member->name.c_str).out(": ");
+            out.out("    ").out(member->name.c_str);
+            out.light_green().out(" (").out_i64(self->member_int_map.get(member->name.__ptr__()));
+            out.out(")").reset().out(":");
             member->type.dump(out, pkg);
+            if (self->member_int_map.has(member->name.__ptr__())) {
+                out.out(" ");
+                out.out_i64(self->member_int_map.get(member->name.__ptr__()));
+            }
             out.out("\n");
         }
         out.out("  }\n");

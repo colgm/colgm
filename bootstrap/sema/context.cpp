@@ -99,7 +99,9 @@ void sema_context::dump_tagged_unions() const {
 void sema_context::dump_single_tagged_union(const colgm_tagged_union& u) const {
     std::cout << "  tagged union " << u.name << " {\n";
     for(const auto& member : u.ordered_member) {
-        std::cout << "    " << member.name << ": " << member.symbol_type;
+        std::cout << "    " << member.name;
+        std::cout << " (" << u.member_int_map.at(member.name) << ")";
+        std::cout << ": " << member.symbol_type;
         if (member.name != u.ordered_member.back().name) {
             std::cout << ",";
         }

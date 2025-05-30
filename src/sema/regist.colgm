@@ -937,6 +937,7 @@ impl regist_pass {
         if (node->ref_enum_name.empty()) {
             return;
         }
+
         if (!self->ctx->global_symbol()->has(node->ref_enum_name.__ptr__())) {
             var info = str::from("enum \"");
             info.append_str(node->ref_enum_name.__ptr__());
@@ -985,6 +986,39 @@ impl regist_pass {
         ty.delete();
     }
 
+    func load_tagged_union_member_map(self, node: ast_tagged_union_decl*, un: colgm_tagged_union*) {
+        if (node->ref_enum_name.empty()) {
+            foreach (var i; un->ordered_members) {
+                un->member_int_map.insert(
+                    i.get()->name.__ptr__(),
+                    un->member_int_map.size => i64
+                );
+            }
+            return;
+        }
+
+        if (!self->ctx->global_symbol()->has(node->ref_enum_name.__ptr__())) {
+            return;
+        }
+
+        var enum_info = self->ctx->global_symbol()->get(node->ref_enum_name.__ptr__());
+        if (enum_info->kind != symbol_kind::enum_kind) {
+            return;
+        }
+
+        var dm = self->ctx->get_domain(enum_info->loc_file.__ptr__());
+        var em = dm->enums.get(node->ref_enum_name.__ptr__());
+        foreach (var i; node->members) {
+            if (em->members.has(i.get()->name->content.__ptr__())) {
+                un->member_int_map.insert(
+                    i.get()->name->content.__ptr__(),
+                    em->members.get(i.get()->name->content.__ptr__())
+                );
+                continue;
+            }
+        }
+    }
+
     func regist_single_tagged_union_member(self, node: ast_tagged_union_decl*) {
         var name = node->name.__ptr__();
         if (!self->ctx->global_symbol()->has(name)) {
@@ -1020,6 +1054,7 @@ impl regist_pass {
             union_info->ordered_members.push(sym.__ptr__());
             sym.delete();
         }
+        self->load_tagged_union_member_map(node, union_info);
     }
 
     func regist_single_tagged_union_symbol(self, node: ast_tagged_union_decl*) {

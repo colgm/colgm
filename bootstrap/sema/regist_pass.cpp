@@ -1226,6 +1226,7 @@ void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
     if (node->get_ref_enum_name().empty()) {
         return;
     }
+
     if (!ctx.global_symbol().count(node->get_ref_enum_name())) {
         rp.report(node, "enum \"" + node->get_ref_enum_name() +
             "\" does not exist, make sure the enum is defined or imported."
@@ -1257,6 +1258,38 @@ void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
                 "\" does not have member \"" + i->get_name()->get_name() + "\"."
             );
         }
+    }
+}
+
+void regist_pass::load_tagged_union_member_map(ast::tagged_union_decl* node,
+                                               colgm_tagged_union& un) {
+    if (node->get_ref_enum_name().empty()) {
+        for (auto& m : un.ordered_member) {
+            un.member_int_map.insert({m.name, un.member_int_map.size()});
+        }
+        return;
+    }
+
+    if (!ctx.global_symbol().count(node->get_ref_enum_name())) {
+        return;
+    }
+
+    const auto& info = ctx.global_symbol().at(node->get_ref_enum_name());
+    if (info.kind != sym_kind::enum_kind) {
+        return;
+    }
+
+    const auto& dm = ctx.get_domain(info.loc_file);
+    const auto& em = dm.enums.at(node->get_ref_enum_name());
+
+    for (auto i : node->get_members()) {
+        if (!em.members.count(i->get_name()->get_name())) {
+            continue;
+        }
+        un.member_int_map.insert({
+            i->get_name()->get_name(),
+            em.members.at(i->get_name()->get_name())
+        });
     }
 }
 
@@ -1310,10 +1343,12 @@ void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node
         }
         if (self.member.count(i->get_name()->get_name())) {
             rp.report(i, "member name already exists");
+            continue;
         }
         self.member.insert({i->get_name()->get_name(), member_type});
         self.ordered_member.push_back(member_type);
     }
+    load_tagged_union_member_map(node, self);
 }
 
 void regist_pass::regist_global_funcs(ast::root* node) {
