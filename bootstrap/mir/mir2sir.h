@@ -189,6 +189,7 @@ private:
     DWARF_status dwarf_status;
 
     std::unordered_map<std::string, mir_struct*> struct_mapper;
+    std::unordered_map<std::string, mir_tagged_union*> tagged_union_mapper;
 
 private:
     void unimplemented(mir* node) {
@@ -252,9 +253,17 @@ private:
     void generate_DI_subprogram(const mir_context&);
     void generate_DWARF(const mir_context&);
 
+public:
+    struct size_align_pair {
+        u64 size;
+        u64 align;
+    };
+
 private:
+    size_align_pair calculate_size_and_align(const type&);
+    void calculate_single_tagged_union_size(mir_tagged_union*);
     void calculate_single_struct_size(mir_struct*);
-    void calculate_struct_size(const mir_context&);
+    void calculate_size(const mir_context&);
 
 public:
     mir2sir(const sema_context& c):

@@ -1604,6 +1604,110 @@ void mir2sir::generate_DWARF(const mir_context& mctx) {
     generate_DI_subprogram(mctx);
 }
 
+mir2sir::size_align_pair mir2sir::calculate_size_and_align(const type& ty) {
+    const auto name = ty.full_path_name();
+    u64 field_size = 0;
+    u64 alignment = 1;
+    if (ty.is_pointer() && !ty.is_array) {
+        field_size = 8;
+        alignment = 8;
+    } else if (ty.pointer_depth >= 2 && ty.is_array) {
+        field_size = 8;
+        alignment = 8;
+    } else if (struct_mapper.count(name)) {
+        auto t = struct_mapper.at(name);
+        if (!t->size_calculated) {
+            calculate_single_struct_size(t);
+        }
+        field_size = t->size;
+        alignment = t->alignment;
+    } else if (tagged_union_mapper.count(name)) {
+        auto u = tagged_union_mapper.at(name);
+        if (!u->size_calculated) {
+            calculate_single_tagged_union_size(u);
+        }
+        field_size = u->size;
+        alignment = u->alignment;
+    } else if (ty.is_boolean()) {
+        field_size = 1;
+        alignment = 1;
+    } else if (ty.is_integer()) {
+        if (ty.name == "u8" || ty.name == "i8") {
+            field_size = 1;
+            alignment = 1;
+        } else if (ty.name == "u16" || ty.name == "i16") {
+            field_size = 2;
+            alignment = 2;
+        } else if (ty.name == "u32" || ty.name == "i32") {
+            field_size = 4;
+            alignment = 4;
+        } else if (ty.name == "u64" || ty.name == "i64") {
+            field_size = 8;
+            alignment = 8;
+        } else {
+            // enum -> i64
+            field_size = 8;
+            alignment = 8;
+        }
+    } else if (ty.is_float()) {
+        field_size = ty.name == "f32" ? 4 : 8;
+        alignment = ty.name == "f32" ? 4 : 8;
+    }
+
+    if (ty.is_array) {
+        field_size *= ty.array_length;
+    }
+
+    return mir2sir::size_align_pair {
+        .size = field_size,
+        .align = alignment
+    };
+}
+
+void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
+    if (u->size_calculated) {
+        return;
+    }
+
+    if (u->member_type.empty()) {
+        // tagged union must have a field with i64 type
+        u->size = 8;
+        u->alignment = 8;
+        u->size_calculated = true;
+        return;
+    }
+
+    u64 offset = 8;
+
+    u64 size = 0;
+    u64 align = 1;
+    for (const auto& i : u->member_type) {
+        auto res = calculate_size_and_align(i);
+        if (size < res.size) {
+            size = res.size;
+        }
+        if (align < res.align) {
+            align = res.align;
+        }
+    }
+
+    if (align != 0) {
+        // align union member
+        while (offset % align != 0) {
+            offset++;
+        }
+        offset += size;
+        // align union itself
+        while (offset % align != 0) {
+            offset++;
+        }
+    }
+
+    u->size = offset;
+    u->alignment = align;
+    u->size_calculated = true;
+}
+
 void mir2sir::calculate_single_struct_size(mir_struct* s) {
     if (s->size_calculated) {
         return;
@@ -1617,84 +1721,48 @@ void mir2sir::calculate_single_struct_size(mir_struct* s) {
     }
 
     u64 offset = 0;
-    u64 struct_alignment = 0;
+    u64 align = 0;
 
-    for (auto i : s->field_type) {
-        const auto name = i.full_path_name();
-        u64 field_size = 0;
-        u64 alignment = 1;
-        if (i.is_pointer() && !i.is_array) {
-            field_size = 8;
-            alignment = 8;
-        } else if (i.pointer_depth >= 2 && i.is_array) {
-            field_size = 8;
-            alignment = 8;
-        } else if (struct_mapper.count(name)) {
-            auto t = struct_mapper.at(name);
-            if (!t->size_calculated) {
-                calculate_single_struct_size(t);
-            }
-            field_size = t->size;
-            alignment = t->alignment;
-        } else if (i.is_boolean()) {
-            field_size = 1;
-            alignment = 1;
-        } else if (i.is_integer()) {
-            if (i.name == "u8" || i.name == "i8") {
-                field_size = 1;
-                alignment = 1;
-            } else if (i.name == "u16" || i.name == "i16") {
-                field_size = 2;
-                alignment = 2;
-            } else if (i.name == "u32" || i.name == "i32") {
-                field_size = 4;
-                alignment = 4;
-            } else if (i.name == "u64" || i.name == "i64") {
-                field_size = 8;
-                alignment = 8;
-            } else {
-                // enum -> i64
-                field_size = 8;
-                alignment = 8;
-            }
-        } else if (i.is_float()) {
-            field_size = i.name == "f32" ? 4 : 8;
-            alignment = i.name == "f32" ? 4 : 8;
+    for (const auto& i : s->field_type) {
+        auto res = calculate_size_and_align(i);
+
+        if (align < res.align) {
+            align = res.align;
         }
 
-        if (i.is_array) {
-            field_size *= i.array_length;
-        }
-
-        if (struct_alignment < alignment) {
-            struct_alignment = alignment;
-        }
-
-        while (offset % alignment != 0) {
+        while (offset % res.align != 0) {
             offset++;
         }
-        offset += field_size;
+        offset += res.size;
     }
 
-    if (struct_alignment != 0) {
-        while (offset % struct_alignment != 0) {
+    if (align != 0) {
+        while (offset % align != 0) {
             offset++;
         }
     }
 
     s->size = offset;
-    s->alignment = struct_alignment;
+    s->alignment = align;
     s->size_calculated = true;
 }
 
-void mir2sir::calculate_struct_size(const mir_context& mctx) {
+void mir2sir::calculate_size(const mir_context& mctx) {
     struct_mapper.clear();
+    tagged_union_mapper.clear();
     for (auto i : mctx.structs) {
         const auto ty = type {
             .name = i->name,
             .loc_file = i->location.file
         };
         struct_mapper.insert({ty.full_path_name(), i});
+    }
+    for (auto i : mctx.tagged_unions) {
+         const auto ty = type {
+            .name = i->name,
+            .loc_file = i->location.file
+        };
+         tagged_union_mapper.insert({ty.full_path_name(), i});
     }
 
     for (auto i : mctx.structs) {
@@ -1707,7 +1775,7 @@ const error& mir2sir::generate(const mir_context& mctx) {
 
     generate_type_mapper();
 
-    calculate_struct_size(mctx);
+    calculate_size(mctx);
     emit_struct(mctx);
     emit_func_decl(mctx);
     emit_func_impl(mctx);

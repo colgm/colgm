@@ -5,36 +5,39 @@ use std::io::{ io };
 
 use sema::type::{ type };
 
-use mir::context::{ mir_struct, mir_context };
+use mir::context::{ mir_struct, mir_tagged_union, mir_context };
 
 use util::package::{ package };
 use util::timestamp::{ maketimestamp };
 
-struct size_align_info {
+struct size_align_pair {
     size: u64,
     align: u64
 }
 
 struct size_calc {
     pkg: package*,
-    struct_mapper: hashmap<str, mir_struct*>
+    struct_mapper: hashmap<str, mir_struct*>,
+    tagged_union_mapper: hashmap<str, mir_tagged_union*>,
 }
 
 impl size_calc {
     pub func instance(pkg: package*) -> size_calc {
         return size_calc {
             pkg: pkg,
-            struct_mapper: hashmap<str, mir_struct*>::instance()
+            struct_mapper: hashmap<str, mir_struct*>::instance(),
+            tagged_union_mapper: hashmap<str, mir_tagged_union*>::instance()
         };
     }
 
     pub func delete(self) {
         self->struct_mapper.delete();
+        self->tagged_union_mapper.delete();
     }
 }
 
 impl size_calc {
-    func get_size_align(self, t: type*) -> size_align_info {
+    func get_size_align(self, t: type*) -> size_align_pair {
         var name = t->full_path_name(self->pkg, false);
 
         var field_size: u64 = 0;
@@ -55,6 +58,13 @@ impl size_calc {
             }
             field_size = st->size;
             alignment = st->align;
+        } else if (self->tagged_union_mapper.has(name.__ptr__())) {
+            var un = self->tagged_union_mapper.get(name.__ptr__());
+            if (!un->size_calculated) {
+                self->calculate_single_tagged_union_size(un);
+            }
+            field_size = un->size;
+            alignment = un->align;
         } else if (t->is_bool_base()) {
             field_size = 1;
             alignment = 1;
@@ -93,7 +103,7 @@ impl size_calc {
 
         name.delete();
 
-        return size_align_info {
+        return size_align_pair {
             size: field_size,
             align: alignment
         };
@@ -106,6 +116,7 @@ impl size_calc {
             return;
         }
 
+        // empty struct should have size 1 and alignment 1
         if (s->field_type.empty()) {
             s->size = 1;
             s->align = 1;
@@ -114,33 +125,80 @@ impl size_calc {
         }
 
         var offset: u64 = 0;
-        var struct_alignment: u64 = 0;
+        var max_align: u64 = 1;
         foreach (var i; s->field_type) {
-            var size_align_pair = self->get_size_align(i.get());
+            var res = self->get_size_align(i.get());
 
-            if (size_align_pair.align > struct_alignment) {
-                struct_alignment = size_align_pair.align;
+            if (res.align > max_align) {
+                max_align = res.align;
             }
 
-            while (offset % size_align_pair.align != 0) {
+            while (offset % res.align != 0) {
                 offset += 1;
             }
-            offset += size_align_pair.size;
+            offset += res.size;
         }
 
-        if (struct_alignment != 0) {
-            while (offset % struct_alignment != 0) {
+        if (max_align != 0) {
+            while (offset % max_align != 0) {
                 offset += 1;
             }
         }
 
         s->size = offset;
-        s->align = struct_alignment;
+        s->align = max_align;
         s->size_calculated = true;
     }
 
-    pub func calculate_struct_size(self, mctx: mir_context*) {
+    func calculate_single_tagged_union_size(self, u: mir_tagged_union*) {
+        if (u->size_calculated) {
+            return;
+        }
+
+        if (u->member_type.empty()) {
+            // tagged union must have a field with i64 type
+            u->size = 8;
+            u->align = 8;
+            u->size_calculated = true;
+            return;
+        }
+
+        var offset: u64 = 8;
+
+        // get max size and max alignment of all members
+        var max_size: u64 = 0;
+        var max_align: u64 = 1;
+        foreach (var i; u->member_type) {
+            var res = self->get_size_align(i.get());
+
+            if (res.align > max_align) {
+                max_align = res.align;
+            }
+            if (res.size > max_size) {
+                max_size = res.size;
+            }
+        }
+
+        if (max_align != 0) {
+            // align union member
+            while (offset % max_align != 0) {
+                offset += 1;
+            }
+            offset += max_size;
+            // align union ifself
+            while (offset % max_align != 0) {
+                offset += 1;
+            }
+        }
+
+        u->size = offset;
+        u->align = max_align;
+        u->size_calculated = true;
+    }
+
+    pub func calculate(self, mctx: mir_context*) {
         self->struct_mapper.clear();
+        self->tagged_union_mapper.clear();
         foreach (var i; mctx->structs) {
             var s_ty = type::instance();
             s_ty.name.append_str(i.get()->name.__ptr__());
@@ -150,8 +208,21 @@ impl size_calc {
             s_ty.delete();
             s_full_name.delete();
         }
+        foreach (var i; mctx->tagged_unions) {
+            var s_ty = type::instance();
+            s_ty.name.append_str(i.get()->name.__ptr__());
+            s_ty.loc_file.append_str(i.get()->location.file.__ptr__());
+            var s_full_name = s_ty.full_path_name(self->pkg, false);
+            self->tagged_union_mapper.insert(s_full_name.__ptr__(), i.get());
+            s_ty.delete();
+            s_full_name.delete();
+        }
+
         foreach (var i; mctx->structs) {
             self->calculate_single_struct_size(i.get());
+        }
+        foreach (var i; mctx->tagged_unions) {
+            self->calculate_single_tagged_union_size(i.get());
         }
     }
 }
@@ -161,7 +232,7 @@ pub func calculate_size(mctx: mir_context*, pkg: package*, verbose: bool) {
     ts.stamp();
     
     var sc = size_calc::instance(pkg);
-    sc.calculate_struct_size(mctx);
+    sc.calculate(mctx);
     sc.delete();
 
     if (verbose) {
