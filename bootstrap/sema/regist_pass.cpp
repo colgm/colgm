@@ -480,10 +480,7 @@ void generic_visitor::remove_cond_compile_method(colgm_struct& s,
 void generic_visitor::replace_struct_type(colgm_struct& s,
                                           const generic_data& data) {
     for(auto& i : s.field) {
-        replace_type(i.second.symbol_type, data);
-    }
-    for(auto& i : s.ordered_field) {
-        replace_type(i.symbol_type, data);
+        replace_type(i.second, data);
     }
 
     // remove method by conditonal compile config like
@@ -528,8 +525,8 @@ void generic_visitor::replace_func_type(colgm_func& f,
     replace_type(f.return_type, data);
 
     // replace parameter type
-    for(auto& i : f.ordered_params) {
-        replace_type(i.symbol_type, data);
+    for(auto& i : f.params) {
+        replace_type(i.second, data);
     }
 
     if (f.generic_func_decl) {
@@ -1133,18 +1130,15 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
     // load fields
     for(auto i : node->get_fields()) {
         auto type_node = i->get_type();
-        auto field_type = symbol {
-            .name = i->get_name()->get_name(),
-            .symbol_type = tr.resolve(type_node)
-        };
-        if (field_type.symbol_type.is_error()) {
+        auto field_type = tr.resolve(type_node);
+        if (field_type.is_error()) {
             continue;
         }
         if (self.field.count(i->get_name()->get_name())) {
             rp.report(i, "field name already exists");
         }
         self.field.insert({i->get_name()->get_name(), field_type});
-        self.ordered_field.push_back(field_type);
+        self.ordered_field.push_back(i->get_name()->get_name());
     }
 
     auto struct_self_type = type {
@@ -1183,8 +1177,8 @@ void regist_pass::check_struct_self_reference() {
     std::vector<std::string> need_check = {};
     for(const auto& st : structs) {
         for(const auto& field : st.second.field) {
-            if (!field.second.symbol_type.is_pointer() &&
-                structs.count(field.second.symbol_type.name)) {
+            if (!field.second.is_pointer() &&
+                structs.count(field.second.name)) {
                 need_check.push_back(st.first);
                 break;
             }
@@ -1204,10 +1198,10 @@ void regist_pass::check_struct_self_reference() {
             }
 
             for (const auto& field : structs.at(cur).field) {
-                if (field.second.symbol_type.is_pointer()) {
+                if (field.second.is_pointer()) {
                     continue;
                 }
-                const auto& type_name = field.second.symbol_type.name;
+                const auto& type_name = field.second.name;
                 auto new_path = path + "::" + field.first + " -> " + type_name;
                 if (type_name == st) {
                     rp.report(structs.at(st).location,
@@ -1525,7 +1519,7 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
         if (i->is_extern_func()) {
             rp.report(i, "extern method is not supported.");
         }
-        if (func.ordered_params.size() && func.ordered_params[0].name == "self") {
+        if (func.ordered_params.size() && func.ordered_params.front() == "self") {
             stct.method.insert({name, func});
         } else {
             stct.static_method.insert({name, func});
@@ -1605,16 +1599,16 @@ void regist_pass::generate_method_parameter_list(param_list* node,
     }
 
     if (self.ordered_params.empty() ||
-        self.ordered_params.front().name != "self") {
+        self.ordered_params.front() != "self") {
         return;
     }
 
     // we still need to check self type, for user may specify a wrong type
     // check self type is the pointer of implemented struct
-    const auto& self_type = self.ordered_params.front().symbol_type;
-    if (self_type.name!=stct.name ||
-        self_type.loc_file!=stct.location.file ||
-        self_type.pointer_depth!=1) {
+    const auto& self_type = self.params.at(self.ordered_params.front());
+    if (self_type.name != stct.name ||
+        self_type.loc_file != stct.location.file ||
+        self_type.pointer_depth != 1) {
         rp.report(node->get_params().front(),
             "\"self\" should be \"" + stct.name + "*\", but get \"" +
             self_type.to_string() + "\"."

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "report.h"
-#include "sema/symbol.h"
+#include "sema/type.h"
 #include "sema/func.h"
 #include "sema/struct.h"
 #include "sema/enum.h"

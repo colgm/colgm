@@ -13,8 +13,8 @@ bool colgm_func::find_parameter(const std::string& name) {
 }
 
 void colgm_func::add_parameter(const std::string& name, const type& t) {
-    ordered_params.push_back({name, t});
-    params.insert({name, {name, t}});
+    ordered_params.push_back(name);
+    params.insert({name, t});
 }
 
 }

@@ -1,7 +1,7 @@
 #pragma once 
 
 #include "colgm.h"
-#include "sema/symbol.h"
+#include "sema/type.h"
 #include "sir/sir.h"
 #include "sir/debug_info.h"
 

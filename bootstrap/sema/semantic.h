@@ -5,7 +5,7 @@
 #include "ast/stmt.h"
 #include "sir/sir.h"
 #include "ast/visitor.h"
-#include "sema/symbol.h"
+#include "sema/type.h"
 #include "sema/func.h"
 #include "sema/struct.h"
 #include "package/package.h"

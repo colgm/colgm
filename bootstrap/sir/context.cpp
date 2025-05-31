@@ -1,5 +1,5 @@
 #include "colgm.h"
-#include "sema/symbol.h"
+#include "sema/type.h"
 #include "sir/context.h"
 
 #include <iomanip>

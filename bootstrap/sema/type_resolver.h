@@ -4,7 +4,7 @@
 #include "ast/ast.h"
 #include "ast/decl.h"
 #include "sema/context.h"
-#include "sema/symbol.h"
+#include "sema/type.h"
 #include "sema/reporter.h"
 
 namespace colgm {

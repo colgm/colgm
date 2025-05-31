@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sema/symbol.h"
+#include "sema/type.h"
 #include "report.h"
 
 #include <iostream>

@@ -17,8 +17,8 @@ struct colgm_struct {
 public:
     std::string name;
     span location;
-    std::unordered_map<std::string, symbol> field;
-    std::vector<symbol> ordered_field;
+    std::unordered_map<std::string, type> field;
+    std::vector<std::string> ordered_field;
     std::unordered_map<std::string, colgm_func> static_method;
     std::unordered_map<std::string, colgm_func> method;
 

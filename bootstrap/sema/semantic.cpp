@@ -604,8 +604,8 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
 
     const auto& struct_self = domain.structs.at(prev.name_for_search());
     if (struct_self.field.count(node->get_name())) {
-        node->set_resolve_type(struct_self.field.at(node->get_name()).symbol_type);
-        return struct_self.field.at(node->get_name()).symbol_type;
+        node->set_resolve_type(struct_self.field.at(node->get_name()));
+        return struct_self.field.at(node->get_name());
     }
     if (struct_self.method.count(node->get_name())) {
         check_pub_method(node, node->get_name(), struct_self);
@@ -640,7 +640,7 @@ void semantic::check_static_call_args(const colgm_func& func,
     size_t index = 0;
     for(auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
-        const auto& param = func.ordered_params[index].symbol_type;
+        const auto& param = func.params.at(func.ordered_params[index]);
         // do not report if infer is error, because it must be reported before
         if (infer != param && !infer.is_error()) {
             if (!check_can_be_converted(i, param)) {
@@ -669,7 +669,7 @@ void semantic::check_method_call_args(const colgm_func& func,
     size_t index = 1;
     for(auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
-        const auto& param = func.ordered_params[index].symbol_type;
+        const auto& param = func.params.at(func.ordered_params[index]);
         // do not report if infer is error, because it must be reported before
         if (infer != param && !infer.is_error()) {
             if (!check_can_be_converted(i, param)) {
@@ -861,7 +861,7 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
 
         const auto infer = resolve_expression(i->get_value());
         i->get_value()->set_resolve_type(infer);
-        const auto& expect = st.field.at(field).symbol_type;
+        const auto& expect = st.field.at(field);
         // error type means the related error is reported before
         if (infer.is_error()) {
             continue;
@@ -991,8 +991,8 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
 
     const auto& struct_self = domain.structs.at(prev.name_for_search());
     if (struct_self.field.count(node->get_name())) {
-        node->set_resolve_type(struct_self.field.at(node->get_name()).symbol_type);
-        return struct_self.field.at(node->get_name()).symbol_type;
+        node->set_resolve_type(struct_self.field.at(node->get_name()));
+        return struct_self.field.at(node->get_name());
     }
     if (struct_self.method.count(node->get_name())) {
         check_pub_method(node, node->get_name(), struct_self);
@@ -1784,7 +1784,7 @@ void semantic::resolve_global_func(func_decl* node) {
     }
     ctx.push_level();
     for (const auto& p : func_self.ordered_params) {
-        ctx.add_local(p.name, p.symbol_type);
+        ctx.add_local(p, func_self.params.at(p));
     }
     for (auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, func_self);
@@ -1809,7 +1809,7 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
         ? struct_self.method.at(node->get_name())
         : struct_self.static_method.at(node->get_name());
     for(const auto& p : method_self.ordered_params) {
-        ctx.add_local(p.name, p.symbol_type);
+        ctx.add_local(p, method_self.params.at(p));
     }
     for(auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, method_self);

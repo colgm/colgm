@@ -62,8 +62,8 @@ void sema_context::dump_single_struct(const colgm_struct& st) const {
     dump_generics(st.generic_template);
     std::cout << " {\n";
     for(const auto& field : st.ordered_field) {
-        std::cout << "    " << field.name << ": " << field.symbol_type;
-        if (field.name != st.ordered_field.back().name) {
+        std::cout << "    " << field << ": " << st.field.at(field);
+        if (field != st.ordered_field.back()) {
             std::cout << ",";
         }
         std::cout << "\n";
@@ -152,8 +152,8 @@ void sema_context::dump_single_function(const colgm_func& func,
     dump_generics(func.generic_template);
     std::cout << "(";
     for(const auto& param : func.ordered_params) {
-        std::cout << param.name << ": " << param.symbol_type;
-        if (param.name != func.ordered_params.back().name) {
+        std::cout << param << ": " << func.params.at(param);
+        if (param != func.ordered_params.back()) {
             std::cout << ", ";
         }
     }

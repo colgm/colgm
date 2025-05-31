@@ -12,8 +12,8 @@ colgm_struct::~colgm_struct() {
 }
 
 usize colgm_struct::field_index(const std::string& name) const {
-    for(usize i = 0; i<ordered_field.size(); ++i) {
-        if (ordered_field[i].name == name) {
+    for(usize i = 0; i < ordered_field.size(); ++i) {
+        if (ordered_field[i] == name) {
             return i;
         }
     }

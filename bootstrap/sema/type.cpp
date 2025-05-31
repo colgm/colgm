@@ -1,6 +1,6 @@
 #include "colgm.h"
 #include "report.h"
-#include "sema/symbol.h"
+#include "sema/type.h"
 #include "package/package.h"
 #include "ast/decl.h"
 

@@ -165,9 +165,4 @@ public:
     void dump(const std::string& end = "\n") const;
 };
 
-struct symbol {
-    std::string name; // symbol name
-    type symbol_type; // symbol type
-};
-
 }

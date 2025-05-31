@@ -7,7 +7,7 @@
 
 
 #include "report.h"
-#include "symbol.h"
+#include "type.h"
 #include "ast/ast.h"
 #include "ast/decl.h"
 
@@ -18,8 +18,8 @@ public:
     std::string name;
     span location;
     type return_type;
-    std::vector<symbol> ordered_params;
-    std::unordered_map<std::string, symbol> params;
+    std::vector<std::string> ordered_params;
+    std::unordered_map<std::string, type> params;
 
 public:
     std::vector<std::string> generic_template;

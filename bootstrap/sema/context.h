@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sema/primitive.h"
-#include "sema/symbol.h"
+#include "sema/type.h"
 #include "package/package.h"
 
 #include <cassert>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "report.h"
-#include "sema/symbol.h"
+#include "sema/type.h"
 #include "sema/context.h"
 #include "mir/visitor.h"
 #include "mir/ast2mir.h"
