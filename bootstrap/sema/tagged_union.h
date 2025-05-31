@@ -16,9 +16,9 @@ public:
     std::string name;
     type ref_enum_type;
     span location;
-    std::unordered_map<std::string, symbol> member;
+    std::unordered_map<std::string, type> member;
     std::unordered_map<std::string, i64> member_int_map;
-    std::vector<symbol> ordered_member;
+    std::vector<std::string> ordered_member;
 
 public:
     bool is_public = false;

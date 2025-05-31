@@ -990,7 +990,7 @@ impl regist_pass {
         if (node->ref_enum_name.empty()) {
             foreach (var i; un->ordered_members) {
                 un->member_int_map.insert(
-                    i.get()->name.__ptr__(),
+                    i.get(),
                     un->member_int_map.size => i64
                 );
             }
@@ -1045,14 +1045,10 @@ impl regist_pass {
                 continue;
             }
 
-            var sym = symbol {
-                name: member_name->copy_instance(),
-                type: self->tr.resolve(member->type),
-                loc: member->base.location.copy_instance(),
-            };
-            union_info->members.insert(sym.name.__ptr__(), sym.type.__ptr__());
-            union_info->ordered_members.push(sym.__ptr__());
-            sym.delete();
+            var member_type = self->tr.resolve(member->type);
+            union_info->members.insert(member_name, member_type.__ptr__());
+            union_info->ordered_members.push(member_name);
+            member_type.delete();
         }
         self->load_tagged_union_member_map(node, union_info);
     }

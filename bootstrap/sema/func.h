@@ -18,8 +18,8 @@ public:
     std::string name;
     span location;
     type return_type;
-    std::vector<symbol> parameters;
-    std::unordered_map<std::string, symbol> unordered_params;
+    std::vector<symbol> ordered_params;
+    std::unordered_map<std::string, symbol> params;
 
 public:
     std::vector<std::string> generic_template;
@@ -32,9 +32,8 @@ public:
 public:
     colgm_func() = default;
     colgm_func(const colgm_func& f):
-        name(f.name), location(f.location),
-        return_type(f.return_type), parameters(f.parameters),
-        unordered_params(f.unordered_params),
+        name(f.name), location(f.location), return_type(f.return_type),
+        ordered_params(f.ordered_params), params(f.params),
         generic_template(f.generic_template),
         generic_func_decl(nullptr),
         is_public(f.is_public), is_extern(f.is_extern) {

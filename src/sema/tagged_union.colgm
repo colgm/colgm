@@ -8,7 +8,6 @@ use err::panic::{ panic };
 use util::package::{ package };
 
 use sema::type::{ type };
-use sema::symbol::{ symbol };
 
 pub struct colgm_tagged_union {
     name: str,
@@ -17,7 +16,7 @@ pub struct colgm_tagged_union {
 
     members: hashmap<str, type>,
     member_int_map: hashmap<str, i64>,
-    ordered_members: vec<symbol>,
+    ordered_members: vec<str>,
 
     is_public: bool,
     is_extern: bool
@@ -34,7 +33,7 @@ impl colgm_tagged_union {
         res->location = loc->copy_instance();
         res->members = hashmap<str, type>::instance();
         res->member_int_map = hashmap<str, i64>::instance();
-        res->ordered_members = vec<symbol>::instance();
+        res->ordered_members = vec<str>::instance();
         res->is_public = false;
         res->is_extern = false;
         return res;
@@ -107,14 +106,12 @@ impl colgm_tagged_union {
         out.out(" {\n");
         forindex (var i; self->ordered_members) {
             var member = self->ordered_members.get(i);
-            out.out("    ").out(member->name.c_str);
-            out.light_green().out(" (").out_i64(self->member_int_map.get(member->name.__ptr__()));
-            out.out(")").reset().out(":");
-            member->type.dump(out, pkg);
-            if (self->member_int_map.has(member->name.__ptr__())) {
-                out.out(" ");
-                out.out_i64(self->member_int_map.get(member->name.__ptr__()));
-            }
+            out.out("    ").out(member->c_str);
+            // dump mapped int
+            out.light_green().out("(").out_i64(self->member_int_map.get(member));
+            out.out(")").reset().out(": ");
+            // dump type
+            self->members.get(member)->dump(out, pkg);
             out.out("\n");
         }
         out.out("  }\n");

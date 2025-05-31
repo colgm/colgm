@@ -99,10 +99,10 @@ void sema_context::dump_tagged_unions() const {
 void sema_context::dump_single_tagged_union(const colgm_tagged_union& u) const {
     std::cout << "  tagged union " << u.name << " {\n";
     for(const auto& member : u.ordered_member) {
-        std::cout << "    " << member.name;
-        std::cout << " (" << u.member_int_map.at(member.name) << ")";
-        std::cout << ": " << member.symbol_type;
-        if (member.name != u.ordered_member.back().name) {
+        std::cout << "    " << member;
+        std::cout << " (" << u.member_int_map.at(member) << ")";
+        std::cout << ": " << u.member.at(member);
+        if (member != u.ordered_member.back()) {
             std::cout << ",";
         }
         std::cout << "\n";
@@ -151,9 +151,9 @@ void sema_context::dump_single_function(const colgm_func& func,
     std::cout << indent << "  func " << func.name;
     dump_generics(func.generic_template);
     std::cout << "(";
-    for(const auto& param : func.parameters) {
+    for(const auto& param : func.ordered_params) {
         std::cout << param.name << ": " << param.symbol_type;
-        if (param.name!=func.parameters.back().name) {
+        if (param.name != func.ordered_params.back().name) {
             std::cout << ", ";
         }
     }

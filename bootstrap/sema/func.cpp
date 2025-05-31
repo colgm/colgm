@@ -9,12 +9,12 @@ colgm_func::~colgm_func() {
 }
 
 bool colgm_func::find_parameter(const std::string& name) {
-    return unordered_params.count(name);
+    return params.count(name);
 }
 
 void colgm_func::add_parameter(const std::string& name, const type& t) {
-    parameters.push_back({name, t});
-    unordered_params.insert({name, {name, t}});
+    ordered_params.push_back({name, t});
+    params.insert({name, {name, t}});
 }
 
 }

@@ -629,9 +629,9 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
 
 void semantic::check_static_call_args(const colgm_func& func,
                                       call_func_args* node) {
-    if (func.parameters.size()!=node->get_args().size()) {
+    if (func.ordered_params.size() != node->get_args().size()) {
         rp.report(node,
-            "expect " + std::to_string(func.parameters.size()) +
+            "expect " + std::to_string(func.ordered_params.size()) +
             " argument(s) but get " + std::to_string(node->get_args().size()) +
             "."
         );
@@ -640,7 +640,7 @@ void semantic::check_static_call_args(const colgm_func& func,
     size_t index = 0;
     for(auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
-        const auto& param = func.parameters[index].symbol_type;
+        const auto& param = func.ordered_params[index].symbol_type;
         // do not report if infer is error, because it must be reported before
         if (infer != param && !infer.is_error()) {
             if (!check_can_be_converted(i, param)) {
@@ -656,9 +656,9 @@ void semantic::check_static_call_args(const colgm_func& func,
 
 void semantic::check_method_call_args(const colgm_func& func,
                                       call_func_args* node) {
-    if (func.parameters.size()!=node->get_args().size()+1) {
+    if (func.ordered_params.size() != node->get_args().size() + 1) {
         rp.report(node,
-            "expect " + std::to_string(func.parameters.size()-1) +
+            "expect " + std::to_string(func.ordered_params.size() - 1) +
             " argument(s) but get " + std::to_string(node->get_args().size()) +
             "."
         );
@@ -669,7 +669,7 @@ void semantic::check_method_call_args(const colgm_func& func,
     size_t index = 1;
     for(auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
-        const auto& param = func.parameters[index].symbol_type;
+        const auto& param = func.ordered_params[index].symbol_type;
         // do not report if infer is error, because it must be reported before
         if (infer != param && !infer.is_error()) {
             if (!check_can_be_converted(i, param)) {
@@ -1783,7 +1783,7 @@ void semantic::resolve_global_func(func_decl* node) {
         return;
     }
     ctx.push_level();
-    for (const auto& p : func_self.parameters) {
+    for (const auto& p : func_self.ordered_params) {
         ctx.add_local(p.name, p.symbol_type);
     }
     for (auto i : node->get_code_block()->get_stmts()) {
@@ -1808,7 +1808,7 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
     const auto& method_self = struct_self.method.count(node->get_name())
         ? struct_self.method.at(node->get_name())
         : struct_self.static_method.at(node->get_name());
-    for(const auto& p : method_self.parameters) {
+    for(const auto& p : method_self.ordered_params) {
         ctx.add_local(p.name, p.symbol_type);
     }
     for(auto i : node->get_code_block()->get_stmts()) {

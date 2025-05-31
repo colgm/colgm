@@ -528,7 +528,7 @@ void generic_visitor::replace_func_type(colgm_func& f,
     replace_type(f.return_type, data);
 
     // replace parameter type
-    for(auto& i : f.parameters) {
+    for(auto& i : f.ordered_params) {
         replace_type(i.symbol_type, data);
     }
 
@@ -737,7 +737,7 @@ colgm_func regist_pass::builtin_struct_ptr(const span& loc, const type& ty) {
     auto func = colgm_func();
     func.name = "__ptr__";
     func.location = loc;
-    func.parameters.push_back(symbol {.name = "self", .symbol_type = ty});
+    func.add_parameter("self", ty);
     func.return_type = ty;
     func.is_public = true;
     return func;
@@ -1265,7 +1265,7 @@ void regist_pass::load_tagged_union_member_map(ast::tagged_union_decl* node,
                                                colgm_tagged_union& un) {
     if (node->get_ref_enum_name().empty()) {
         for (auto& m : un.ordered_member) {
-            un.member_int_map.insert({m.name, un.member_int_map.size()});
+            un.member_int_map.insert({m, un.member_int_map.size()});
         }
         return;
     }
@@ -1334,11 +1334,8 @@ void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node
     // load members
     for(auto i : node->get_members()) {
         auto type_node = i->get_type();
-        auto member_type = symbol {
-            .name = i->get_name()->get_name(),
-            .symbol_type = tr.resolve(type_node)
-        };
-        if (member_type.symbol_type.is_error()) {
+        auto member_type = tr.resolve(type_node);
+        if (member_type.is_error()) {
             continue;
         }
         if (self.member.count(i->get_name()->get_name())) {
@@ -1346,7 +1343,7 @@ void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node
             continue;
         }
         self.member.insert({i->get_name()->get_name(), member_type});
-        self.ordered_member.push_back(member_type);
+        self.ordered_member.push_back(i->get_name()->get_name());
     }
     load_tagged_union_member_map(node, self);
 }
@@ -1528,7 +1525,7 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
         if (i->is_extern_func()) {
             rp.report(i, "extern method is not supported.");
         }
-        if (func.parameters.size() && func.parameters[0].name=="self") {
+        if (func.ordered_params.size() && func.ordered_params[0].name == "self") {
             stct.method.insert({name, func});
         } else {
             stct.static_method.insert({name, func});
@@ -1607,14 +1604,14 @@ void regist_pass::generate_method_parameter_list(param_list* node,
         generate_parameter(i, self);
     }
 
-    if (self.parameters.empty() ||
-        self.parameters.front().name!="self") {
+    if (self.ordered_params.empty() ||
+        self.ordered_params.front().name != "self") {
         return;
     }
 
     // we still need to check self type, for user may specify a wrong type
     // check self type is the pointer of implemented struct
-    const auto& self_type = self.parameters.front().symbol_type;
+    const auto& self_type = self.ordered_params.front().symbol_type;
     if (self_type.name!=stct.name ||
         self_type.loc_file!=stct.location.file ||
         self_type.pointer_depth!=1) {
