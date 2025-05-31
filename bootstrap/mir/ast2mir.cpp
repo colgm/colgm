@@ -157,10 +157,24 @@ bool ast2mir::visit_struct_decl(ast::struct_decl* node) {
     new_struct->name = node->get_name();
     new_struct->location = node->get_location();
 
-    for(auto i : node->get_fields()) {
+    for (auto i : node->get_fields()) {
         new_struct->field_type.push_back(generate_type(i->get_type()));
     }
+
     mctx.structs.push_back(new_struct);
+    return true;
+}
+
+bool ast2mir::visit_tagged_union_decl(ast::tagged_union_decl* node) {
+    auto new_tagged_union = new mir_tagged_union;
+    new_tagged_union->name = node->get_name();
+    new_tagged_union->location = node->get_location();
+
+    for (auto i : node->get_members()) {
+        new_tagged_union->member_type.push_back(generate_type(i->get_type()));
+    }
+
+    mctx.tagged_unions.push_back(new_tagged_union);
     return true;
 }
 

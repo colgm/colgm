@@ -24,6 +24,16 @@ struct mir_struct {
     u64 alignment = 0;
 };
 
+struct mir_tagged_union {
+    std::string name;
+    span location;
+    std::vector<type> member_type;
+
+    bool size_calculated = false;
+     u64 size = 0;
+     u64 alignment = 0;
+};
+
 struct mir_func {
     std::string name;
     span location;
@@ -39,17 +49,21 @@ struct mir_func {
 
 struct mir_context {
     std::vector<mir_struct*> structs;
+    std::vector<mir_tagged_union*> tagged_unions;
     std::vector<mir_func*> decls;
     std::vector<mir_func*> impls;
 
     ~mir_context() {
-        for(auto i : structs) {
+        for (auto i : structs) {
             delete i;
         }
-        for(auto i : decls) {
+        for (auto i : tagged_unions) {
             delete i;
         }
-        for(auto i : impls) {
+        for (auto i : decls) {
+            delete i;
+        }
+        for (auto i : impls) {
             delete i;
         }
     }
@@ -78,6 +92,7 @@ private:
     bool visit_bool_literal(ast::bool_literal*) override;
     bool visit_array_list(ast::array_list*) override;
     bool visit_struct_decl(ast::struct_decl*) override;
+    bool visit_tagged_union_decl(ast::tagged_union_decl*) override;
     bool visit_func_decl(ast::func_decl*) override;
     bool visit_impl_struct(ast::impl_struct*) override;
     bool visit_call_index(ast::call_index*) override;

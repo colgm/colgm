@@ -10,14 +10,14 @@ use ast::ast::{ ast, ast_struct_decl, ast_impl };
 use util::package::{ package };
 
 use sema::type::{ type };
-use sema::symbol::{ symbol };
 use sema::function::{ colgm_func };
 
 pub struct colgm_struct {
     name: str,
     location: span,
     fields: hashmap<str, type>,
-    ordered_fields: vec<symbol>,
+    ordered_fields: vec<str>,
+    fields_span: vec<span>,
     static_method: hashmap<str, colgm_func>,
     method: hashmap<str, colgm_func>,
 
@@ -38,7 +38,8 @@ impl colgm_struct {
         res->name = name->copy_instance();
         res->location = loc->copy_instance();
         res->fields = hashmap<str, type>::instance();
-        res->ordered_fields = vec<symbol>::instance();
+        res->ordered_fields = vec<str>::instance();
+        res->fields_span = vec<span>::instance();
         res->static_method = hashmap<str, colgm_func>::instance();
         res->method = hashmap<str, colgm_func>::instance();
         res->generic_template = vec<str>::instance();
@@ -54,6 +55,7 @@ impl colgm_struct {
         self->location.delete();
         self->fields.delete();
         self->ordered_fields.delete();
+        self->fields_span.delete();
         self->static_method.delete();
         self->method.delete();
         self->generic_template.delete();
@@ -80,6 +82,7 @@ impl colgm_struct {
         res->location = self->location.copy_instance();
         res->fields = self->fields.copy_instance();
         res->ordered_fields = self->ordered_fields.copy_instance();
+        res->fields_span = self->fields_span.copy_instance();
         res->static_method = self->static_method.copy_instance();
         res->method = self->method.copy_instance();
         res->generic_template = self->generic_template.copy_instance();
@@ -103,6 +106,7 @@ impl colgm_struct {
             location: self->location.copy_instance(),
             fields: self->fields.copy_instance(),
             ordered_fields: self->ordered_fields.copy_instance(),
+            fields_span: self->fields_span.copy_instance(),
             static_method: self->static_method.copy_instance(),
             method: self->method.copy_instance(),
             generic_template: self->generic_template.copy_instance(),
@@ -122,7 +126,7 @@ impl colgm_struct {
 
     pub func field_index(self, name: str*) -> i64 {
         foreach (var i; self->ordered_fields) {
-            if (i.get()->name.eq(name)) {
+            if (i.get()->eq(name)) {
                 return i.index() => i64;
             }
         }
@@ -163,8 +167,8 @@ impl colgm_struct {
         out.out(" {\n");
         forindex (var i; self->ordered_fields) {
             var field = self->ordered_fields.get(i);
-            out.out("    ").out(field->name.c_str).out(": ");
-            field->type.dump(out, pkg);
+            out.out("    ").out(field->c_str).out(": ");
+            self->fields.get(field)->dump(out, pkg);
             out.out("\n");
         }
         foreach (var i; self->method) {

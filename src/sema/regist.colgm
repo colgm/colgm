@@ -30,7 +30,6 @@ use sema::module::{ colgm_module };
 use sema::context::{ sema_context };
 use sema::primitive::{ colgm_primitive };
 use sema::type::{ type };
-use sema::symbol::{ symbol };
 use sema::generic_visitor::{ generic_visitor };
 use sema::type_resolve::{ type_resolve };
 use sema::sema::{ sema };
@@ -798,14 +797,11 @@ impl regist_pass {
                 info.delete();
                 continue;
             }
-            var sym = symbol {
-                name: fld_name->copy_instance(),
-                type: self->tr.resolve(fld->type),
-                loc: fld->base.location.copy_instance(),
-            };
-            struct_info->fields.insert(sym.name.__ptr__(), sym.type.__ptr__());
-            struct_info->ordered_fields.push(sym.__ptr__());
-            sym.delete();
+            var sym_type = self->tr.resolve(fld->type);
+            struct_info->fields.insert(fld_name, sym_type.__ptr__());
+            struct_info->ordered_fields.push(fld_name);
+            struct_info->fields_span.push(fld->base.location.__ptr__());
+            sym_type.delete();
         }
 
         var struct_self_type = type::instance();
