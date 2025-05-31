@@ -1424,6 +1424,12 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
         } else {
             const auto value = get_enum_literal_value(case_node, infer);
             if (value != SIZE_MAX) {
+                if (used_values.count(value)) {
+                    rp.report(
+                        case_node,
+                        "duplicate enum literal value."
+                    );
+                }
                 used_values.insert(value);
             }
         }

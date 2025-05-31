@@ -2059,6 +2059,12 @@ impl sema {
             } else {
                 var value = self->get_enum_literal_value(case_node->pattern, infer.__ptr__());
                 if (value != 0xffffffffffffffff) {
+                    if (used_values.has(basic<i64>::wrap(value))) {
+                         self->err->error(
+                            case_node->pattern->base.location.__ptr__(),
+                            "enum literal value is already used"
+                        );
+                    }
                     used_values.insert(basic<i64>::wrap(value));
                 }
             }

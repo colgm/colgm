@@ -15,7 +15,12 @@ use sema::context::{ sema_context };
 use sema::type_resolve::{ type_resolve };
 
 use mir::mir::*;
-use mir::context::{ mir_context, mir_struct, mir_func };
+use mir::context::{
+    mir_context,
+    mir_struct,
+    mir_tagged_union,
+    mir_func
+};
 
 use util::to_num::{ to_u64 };
 use util::package::{ package };
@@ -733,13 +738,23 @@ impl ast2mir {
 
         var st = mir_struct::instance(n->name.__ptr__(), n->base.location.__ptr__());
         foreach (var i; n->fields) {
-            var f = i.get() => ast_field_pair*;
-            var t = self->tr.resolve(f->type);
+            var t = self->tr.resolve(i.get()->type);
             st.field_type.push(t.__ptr__());
             t.delete();
         }
         self->mctx->structs.push(st.__ptr__());
         st.delete();
+    }
+
+    func visit_tagged_union_decl(self, n: ast_tagged_union_decl*) {
+        var un = mir_tagged_union::instance(n->name.__ptr__(), n->base.location.__ptr__());
+        foreach (var i; n->members) {
+            var t = self->tr.resolve(i.get()->type);
+            un.member_type.push(t.__ptr__());
+            t.delete();
+        }
+        self->mctx->tagged_unions.push(un.__ptr__());
+        un.delete();
     }
 
     func visit_impl(self, n: ast_impl*) {
@@ -858,14 +873,14 @@ impl ast2mir {
                 ast_kind::ast_struct_decl => {
                     self->visit_struct_decl(n => ast_struct_decl*);
                 }
+                ast_kind::ast_tagged_union_decl => {
+                    self->visit_tagged_union_decl(n => ast_tagged_union_decl*);
+                }
                 ast_kind::ast_impl => {
                     self->visit_impl(n => ast_impl*);
                 }
                 ast_kind::ast_func_decl => {
                     self->visit_func_decl(n => ast_func_decl*);
-                }
-                ast_kind::ast_tagged_union_decl => {
-                    self->err->warn(n->location.__ptr__(), "tagged unions are not supported now");
                 }
                 _ => { unreachable(); }
             }
