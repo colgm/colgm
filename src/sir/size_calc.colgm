@@ -63,7 +63,7 @@ impl size_calc {
             if (!un->size_calculated) {
                 self->calculate_single_tagged_union_size(un);
             }
-            field_size = un->size;
+            field_size = un->total_size;
             alignment = un->align;
         } else if (t->is_bool_base()) {
             field_size = 1;
@@ -157,13 +157,15 @@ impl size_calc {
 
         if (u->member_type.empty()) {
             // tagged union must have a field with i64 type
-            u->size = 8;
+            u->total_size = 8;
+            u->union_size = 8;
             u->align = 8;
             u->size_calculated = true;
             return;
         }
 
         var offset: u64 = 8;
+        var tagged_union_align: u64 = 8;
 
         // get max size and max alignment of all members
         var max_size: u64 = 0;
@@ -181,20 +183,25 @@ impl size_calc {
             }
         }
 
+        if (max_align > tagged_union_align) {
+            tagged_union_align = max_align;
+        }
+
         if (max_align != 0) {
             // align union member
             while (offset % max_align != 0) {
                 offset += 1;
             }
             offset += max_size;
-            // align union ifself
-            while (offset % max_align != 0) {
-                offset += 1;
-            }
+        }
+        // align union ifself
+        while (offset % tagged_union_align != 0) {
+            offset += 1;
         }
 
-        u->size = offset;
-        u->align = max_align;
+        u->total_size = offset;
+        u->union_size = max_size;
+        u->align = tagged_union_align;
         u->size_calculated = true;
     }
 

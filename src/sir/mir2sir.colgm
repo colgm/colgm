@@ -9,7 +9,7 @@ use mir::context::{ mir_context, mir_func };
 use sir::ssa_name_gen::{ ssa_generator };
 use sir::local_scope::{ local_table };
 use sir::sir::*;
-use sir::context::{ sir_struct, sir_func, sir_context };
+use sir::context::{ sir_tagged_union, sir_struct, sir_func, sir_context };
 use sir::value::{ value_t };
 use sir::adjust_va_arg::{ adjust_va_arg };
 use sir::replace_ptr_call::{ replace_struct_ptr_call };
@@ -29,7 +29,11 @@ use err::span::{ span };
 use util::package::{ package };
 
 use util::cli::{ version };
-use util::mangling::{ mangle_struct_name, mangle_function_name };
+use util::mangling::{
+    mangle_struct_name,
+    mangle_tagged_union_name,
+    mangle_function_name
+};
 use util::timestamp::{ maketimestamp };
 
 enum mir_value_kind {
@@ -356,6 +360,54 @@ impl mir2sir {
 }
 
 impl mir2sir {
+    func emit_tagged_union(self, mctx: mir_context*) {
+        foreach (var i; mctx->tagged_unions) {
+            var m_un = i.get();
+
+            var s_ty = type::instance();
+            s_ty.name.append_str(m_un->name.__ptr__());
+            s_ty.loc_file.append_str(m_un->location.file.__ptr__());
+            
+            var s_ty_name = s_ty.full_path_name(self->pkg, false);
+            var s_ty_llvm_name = mangle_tagged_union_name(s_ty_name.__ptr__());
+
+            var s_un = sir_tagged_union::instance(
+                s_ty_llvm_name.__ptr__(),
+                m_un->location.__ptr__(),
+                m_un->total_size,
+                m_un->align
+            );
+            s_ty_name.delete();
+            s_ty_llvm_name.delete();
+
+            if (m_un->max_align_type.is_array) {
+                var mapped_type = self->array_type_mapping(
+                    m_un->max_align_type.__ptr__()
+                );
+                s_un.member_type.push(mapped_type.__ptr__());
+                mapped_type.delete();
+            } else {
+                var mapped_type = self->type_mapping(
+                    m_un->max_align_type.__ptr__()
+                );
+                s_un.member_type.push(mapped_type.__ptr__());
+                mapped_type.delete();
+            }
+
+            if (m_un->union_size > m_un->max_align_type_size) {
+                var char_arr_size =  m_un->union_size - m_un->max_align_type_size;
+                var char_arr_ty = str::from("[");
+                char_arr_ty.append_u64(char_arr_size);
+                char_arr_ty.append_i8_vec(" x i8]");
+                s_un.member_type.push(char_arr_ty.__ptr__());
+                char_arr_ty.delete();
+            }
+
+            self->sctx->tagged_union_decls.push(s_un.__ptr__());
+            s_un.delete();
+        }
+    }
+
     func emit_struct(self, mctx: mir_context*) {
         foreach (var i; mctx->structs) {
             var m_stct = i.get();
@@ -370,7 +422,8 @@ impl mir2sir {
             var s_stct = sir_struct::instance(
                 s_ty_llvm_name.__ptr__(),
                 m_stct->location.__ptr__(),
-                m_stct->size
+                m_stct->size,
+                m_stct->align
             );
             s_ty_name.delete();
             s_ty_llvm_name.delete();
@@ -3000,6 +3053,7 @@ impl mir2sir {
 
         self->generate_type_mapper();
         calculate_size(mctx, self->pkg, verbose);
+        self->emit_tagged_union(mctx);
         self->emit_struct(mctx);
         self->emit_func_decl(mctx);
         self->emit_func_impl(mctx);

@@ -70,12 +70,19 @@ std::string mir2sir::array_type_mapping(const type& t) {
 
 void mir2sir::emit_tagged_union(const mir_context& mctx) {
     for (auto i : mctx.tagged_unions) {
-        auto tud = new sir_tagged_union(i->name, i->location, i->size);
+        auto tud = new sir_tagged_union(
+            i->name,
+            i->location,
+            i->total_size,
+            i->align
+        );
         if (!i->max_align_type.name.empty()) {
             tud->add_member_type(type_mapping(i->max_align_type));
         }
-        if (i->size > i->max_align_type_size) {
-            tud->add_member_type("[" + std::to_string(i->size - i->max_align_type_size) + " x i8]");
+        if (i->union_size > i->max_align_type_size) {
+            tud->add_member_type(
+                "[" + std::to_string(i->union_size - i->max_align_type_size) + " x i8]"
+            );
         }
         ictx.tagged_union_decls.push_back(tud);
     }
@@ -83,7 +90,7 @@ void mir2sir::emit_tagged_union(const mir_context& mctx) {
 
 void mir2sir::emit_struct(const mir_context& mctx) {
     for (auto i : mctx.structs) {
-        auto stct = new sir_struct(i->name, i->location, i->size);
+        auto stct = new sir_struct(i->name, i->location, i->size, i->align);
         for (const auto& f : i->field_type) {
             if (f.is_array) {
                 stct->add_field_type(array_type_mapping(f));
@@ -1639,7 +1646,7 @@ mir2sir::size_align_pair mir2sir::calculate_size_and_align(const type& ty) {
         if (!u->size_calculated) {
             calculate_single_tagged_union_size(u);
         }
-        field_size = u->size;
+        field_size = u->total_size;
         alignment = u->align;
     } else if (ty.is_boolean()) {
         field_size = 1;
@@ -1684,7 +1691,8 @@ void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
 
     if (u->member_type.empty()) {
         // tagged union must have a field with i64 type
-        u->size = 8;
+        u->total_size = 8;
+        u->union_size = 8;
         u->align = 8;
         u->size_calculated = true;
         return;
@@ -1693,34 +1701,40 @@ void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
     u64 offset = 8;
     u64 tagged_union_align = 8;
 
-    u64 size = 0;
-    u64 align = 1;
+    u64 union_size = 0;
+    u64 union_align = 1;
     for (const auto& i : u->member_type) {
         auto res = calculate_size_and_align(i);
-        if (size < res.size) {
-            size = res.size;
+        if (union_size < res.size) {
+            union_size = res.size;
         }
-        if (align < res.align) {
-            align = res.align;
+        if (union_align < res.align) {
+            union_align = res.align;
             u->max_align_type = i;
             u->max_align_type_size = res.size;
         }
     }
 
-    if (align != 0) {
-        // align union member
-        while (offset % tagged_union_align != 0) {
-            offset++;
-        }
-        offset += size;
-        // align union itself
-        while (offset % align != 0) {
-            offset++;
-        }
+    if (tagged_union_align < union_align) {
+        tagged_union_align = union_align;
     }
 
-    u->size = offset;
-    u->align = align;
+    if (union_align != 0) {
+        // align union member
+        while (offset % union_align != 0) {
+            offset++;
+        }
+        offset += union_size;
+    }
+
+    // align union itself
+    while (offset % tagged_union_align != 0) {
+        offset++;
+    }
+
+    u->total_size = offset;
+    u->union_size = union_size;
+    u->align = tagged_union_align;
     u->size_calculated = true;
 }
 

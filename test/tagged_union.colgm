@@ -1,12 +1,23 @@
 struct mir_block {
-    a: u8,
-    b: u16,
-    c: u64
+    a: u8,  // 1 align 1
+            // 1
+    b: u16, // 2 align 2
+            // 4
+    c: u64  // 8 align 8
+} // 16 align 8
+
+struct mir_num {
+    a: [u8; 127]
 }
 
-struct mir_num {}
 struct mir_str {}
 
+// type {
+//     i64,           // 8 align 8
+//     mir_block      // 16 align 8
+//     [u8; 127 - 16] // 111 align 1
+//                    // 1 for alignment
+// }                  // 136 align 8
 pub union(enum) mir {
     m_block: mir_block,
     m_num: mir_num,

@@ -30,7 +30,8 @@ struct mir_tagged_union {
     std::vector<type> member_type;
 
     bool size_calculated = false;
-    u64 size = 0;
+    u64 total_size = 0;
+    u64 union_size = 0;
     u64 align = 0;
 
     type max_align_type;

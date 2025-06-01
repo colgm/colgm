@@ -17,7 +17,7 @@ const auto sir_struct::get_mangled_name() const {
 void sir_struct::dump(std::ostream& out) const {
     out << "%" << get_mangled_name();
     if (field_type.empty()) {
-        out << " = type {}\n";
+        out << " = type {} ; size " << size << " align " << align << "\n";
         return;
     }
     out << " = type { ";
@@ -27,7 +27,7 @@ void sir_struct::dump(std::ostream& out) const {
             out << ", ";
         }
     }
-    out << " }\n";
+    out << " } ; size " << size << " align " << align << "\n";
 }
 
 const auto sir_tagged_union::get_mangled_name() const {
@@ -41,7 +41,7 @@ const auto sir_tagged_union::get_mangled_name() const {
 void sir_tagged_union::dump(std::ostream& out) const {
     out << "%" << get_mangled_name();
     if (member_type.empty()) {
-        out << " = type { i64 }\n";
+        out << " = type { i64 } ; size " << size << " align " << align << "\n";
         return;
     }
     out << " = type { i64, ";
@@ -51,7 +51,7 @@ void sir_tagged_union::dump(std::ostream& out) const {
             out << ", ";
         }
     }
-    out << " }\n";
+    out << " } ; size " << size << " align " << align << "\n";
 }
 
 void sir_func::dump_attributes(std::ostream& out) const {

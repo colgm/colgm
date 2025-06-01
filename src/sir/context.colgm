@@ -21,16 +21,18 @@ pub struct sir_struct {
     name: str,
     location: span,
     field_type: vec<str>,
-    size: u64
+    size: u64,
+    align: u64
 }
 
 impl sir_struct {
-    pub func instance(n: str*, loc: span*, s: u64) -> sir_struct {
+    pub func instance(n: str*, loc: span*, s: u64, a: u64) -> sir_struct {
         return sir_struct {
             name: n->copy_instance(),
             location: loc->copy_instance(),
             field_type: vec<str>::instance(),
-            size: s
+            size: s,
+            align: a
         };
     }
 
@@ -46,6 +48,7 @@ impl sir_struct {
         res.location = self->location.copy_instance();
         res.field_type = self->field_type.copy_instance();
         res.size = self->size;
+        res.align = self->align;
         return res;
     }
 
@@ -53,7 +56,8 @@ impl sir_struct {
         out.out(self->name.c_str).out(" = type ");
 
         if (self->field_type.empty()) {
-            out.out("{}\n");
+            out.out("{} ; size ").out_u64(self->size);
+            out.out(" align ").out_u64(self->align).endln();
             return;
         } else {
             out.out("{ ");
@@ -66,7 +70,66 @@ impl sir_struct {
             out.out(i.get()->c_str);
         }
 
-        out.out(" }\n");
+        out.out(" } ; size ").out_u64(self->size);
+        out.out(" align ").out_u64(self->align).endln();
+    }
+}
+
+pub struct sir_tagged_union {
+    name: str,
+    location: span,
+    member_type: vec<str>,
+    size: u64,
+    align: u64
+}
+
+impl sir_tagged_union {
+    pub func instance(n: str*, loc: span*, s: u64, a: u64) -> sir_tagged_union {
+        return sir_tagged_union {
+            name: n->copy_instance(),
+            location: loc->copy_instance(),
+            member_type: vec<str>::instance(),
+            size: s,
+            align: a
+        };
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->location.delete();
+        self->member_type.delete();
+    }
+
+    pub func copy_instance(self) -> sir_tagged_union {
+        var res = sir_tagged_union {};
+        res.name = self->name.copy_instance();
+        res.location = self->location.copy_instance();
+        res.member_type = self->member_type.copy_instance();
+        res.size = self->size;
+        res.align = self->align;
+        return res;
+    }
+
+    pub func dump(self, out: io) {
+        out.out(self->name.c_str).out(" = type ");
+
+        if (self->member_type.empty()) {
+            out.out("{ i64 } ; size ").out_u64(self->size);
+            out.out(" align ").out_u64(self->align).endln();
+            return;
+        } else {
+            out.out("{ i64, ");
+        }
+
+        foreach (var i; self->member_type) {
+            if (i.index() != 0) {
+                out.out(", ");
+            }
+            out.out(i.get()->c_str);
+        }
+
+        out.out(" } ; size ").out_u64(self->size);
+        out.out(" align ").out_u64(self->align).endln();
     }
 }
 
@@ -185,6 +248,7 @@ impl sir_func {
 }
 
 pub struct sir_context {
+    tagged_union_decls: vec<sir_tagged_union>,
     struct_decls: vec<sir_struct>,
     func_decls: vec<sir_func>,
     func_impls: vec<sir_func>,
@@ -202,6 +266,7 @@ pub struct sir_context {
 impl sir_context {
     pub func instance(pkg: package*) -> sir_context {
         return sir_context {
+            tagged_union_decls: vec<sir_tagged_union>::instance(),
             struct_decls: vec<sir_struct>::instance(),
             func_decls: vec<sir_func>::instance(),
             func_impls: vec<sir_func>::instance(),
@@ -216,6 +281,7 @@ impl sir_context {
     }
 
     pub func delete(self) {
+        self->tagged_union_decls.delete();
         self->struct_decls.delete();
         self->func_decls.delete();
         self->func_impls.delete();
@@ -258,6 +324,16 @@ impl sir_context {
 impl sir_context {
     func dump_target_tripple(self, out: io) {
         out.out("target triple = \"").out(get_target_triple()).out("\"\n\n");
+    }
+
+    func dump_tagged_unions(self, out: io) {
+        foreach (var i; self->tagged_union_decls) {
+            i.get()->dump(out);
+        }
+
+        if (self->tagged_union_decls.size > 0) {
+            out.out("\n");
+        }
     }
 
     func dump_structs(self, out: io) {
@@ -414,6 +490,7 @@ impl sir_context {
 
     pub func dump(self, out: io) {
         self->dump_target_tripple(out);
+        self->dump_tagged_unions(out);
         self->dump_structs(out);
         self->dump_func_decls(out);
         self->dump_const_strings(out);

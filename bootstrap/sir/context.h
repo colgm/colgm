@@ -19,10 +19,11 @@ private:
     span location;
     std::vector<std::string> field_type;
     u64 size;
+    u64 align;
 
 public:
-    sir_struct(const std::string& n, const span& loc, u64 s):
-        name(n), location(loc), size(s) {}
+    sir_struct(const std::string& n, const span& loc, u64 s, u64 a):
+        name(n), location(loc), size(s), align(a) {}
     const auto get_mangled_name() const;
     void dump(std::ostream&) const;
     const auto& get_name() const { return name; }
@@ -40,10 +41,14 @@ private:
     span location;
     std::vector<std::string> member_type;
     u64 size;
+    u64 align;
 
 public:
-    sir_tagged_union(const std::string& n, const span& loc, u64 s):
-        name(n), location(loc), size(s) {}
+    sir_tagged_union(const std::string& n,
+                     const span& loc,
+                     u64 s,
+                     u64 a):
+        name(n), location(loc), size(s), align(a) {}
     const auto get_mangled_name() const;
     void dump(std::ostream&) const;
     const auto& get_name() const { return name; }
