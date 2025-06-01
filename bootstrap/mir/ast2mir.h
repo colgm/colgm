@@ -21,7 +21,7 @@ struct mir_struct {
 
     bool size_calculated = false;
     u64 size = 0;
-    u64 alignment = 0;
+    u64 align = 0;
 };
 
 struct mir_tagged_union {
@@ -30,8 +30,11 @@ struct mir_tagged_union {
     std::vector<type> member_type;
 
     bool size_calculated = false;
-     u64 size = 0;
-     u64 alignment = 0;
+    u64 size = 0;
+    u64 align = 0;
+
+    type max_align_type;
+    u64 max_align_type_size = 0;
 };
 
 struct mir_func {

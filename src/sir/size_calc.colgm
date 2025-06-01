@@ -171,11 +171,13 @@ impl size_calc {
         foreach (var i; u->member_type) {
             var res = self->get_size_align(i.get());
 
-            if (res.align > max_align) {
-                max_align = res.align;
-            }
             if (res.size > max_size) {
                 max_size = res.size;
+            }
+            if (res.align > max_align) {
+                max_align = res.align;
+                u->max_align_type.reset_with(i.get());
+                u->max_align_type_size = res.size;
             }
         }
 

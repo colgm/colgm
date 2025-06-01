@@ -60,7 +60,10 @@ pub struct mir_tagged_union {
 
     size_calculated: bool,
     size: u64,
-    align: u64
+    align: u64,
+
+    max_align_type: type,
+    max_align_type_size: u64
 }
 
 impl mir_tagged_union {
@@ -71,7 +74,9 @@ impl mir_tagged_union {
             member_type: vec<type>::instance(),
             size_calculated: false,
             size: 0,
-            align: 0
+            align: 0,
+            max_align_type: type::instance(),
+            max_align_type_size: 0
         };
     }
 
@@ -82,7 +87,9 @@ impl mir_tagged_union {
             member_type: self->member_type.copy_instance(),
             size_calculated: self->size_calculated,
             size: self->size,
-            align: self->align
+            align: self->align,
+            max_align_type: self->max_align_type.copy_instance(),
+            max_align_type_size: self->max_align_type_size
         };
     }
 
@@ -90,6 +97,7 @@ impl mir_tagged_union {
         self->name.delete();
         self->location.delete();
         self->member_type.delete();
+        self->max_align_type.delete();
     }
 }
 

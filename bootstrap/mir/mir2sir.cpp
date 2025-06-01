@@ -1620,14 +1620,14 @@ mir2sir::size_align_pair mir2sir::calculate_size_and_align(const type& ty) {
             calculate_single_struct_size(t);
         }
         field_size = t->size;
-        alignment = t->alignment;
+        alignment = t->align;
     } else if (tagged_union_mapper.count(name)) {
         auto u = tagged_union_mapper.at(name);
         if (!u->size_calculated) {
             calculate_single_tagged_union_size(u);
         }
         field_size = u->size;
-        alignment = u->alignment;
+        alignment = u->align;
     } else if (ty.is_boolean()) {
         field_size = 1;
         alignment = 1;
@@ -1672,7 +1672,7 @@ void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
     if (u->member_type.empty()) {
         // tagged union must have a field with i64 type
         u->size = 8;
-        u->alignment = 8;
+        u->align = 8;
         u->size_calculated = true;
         return;
     }
@@ -1688,6 +1688,8 @@ void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
         }
         if (align < res.align) {
             align = res.align;
+            u->max_align_type = i;
+            u->max_align_type_size = res.size;
         }
     }
 
@@ -1704,7 +1706,7 @@ void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
     }
 
     u->size = offset;
-    u->alignment = align;
+    u->align = align;
     u->size_calculated = true;
 }
 
@@ -1715,7 +1717,7 @@ void mir2sir::calculate_single_struct_size(mir_struct* s) {
 
     if (s->field_type.empty()) {
         s->size = 1;
-        s->alignment = 1;
+        s->align = 1;
         s->size_calculated = true;
         return;
     }
@@ -1743,7 +1745,7 @@ void mir2sir::calculate_single_struct_size(mir_struct* s) {
     }
 
     s->size = offset;
-    s->alignment = align;
+    s->align = align;
     s->size_calculated = true;
 }
 
