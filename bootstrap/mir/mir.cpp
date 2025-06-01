@@ -23,7 +23,7 @@ void mir_block::dump(const std::string& indent, std::ostream& os) {
     }
 
     os << "\n";
-    for(auto i : content) {
+    for (auto i : content) {
         i->dump(indent + " ", os);
     }
     os << indent << ")\n";
@@ -153,14 +153,14 @@ void mir_array::accept(visitor* v) {
 }
 
 mir_struct_init::~mir_struct_init() {
-    for(const auto& i : fields) {
+    for (const auto& i : fields) {
         delete i.content;
     }
 }
 
 void mir_struct_init::dump(const std::string& indent, std::ostream& os) {
     os << indent << to_hex(this) << " [" << resolve_type << "] struct (\n";
-    for(const auto& i : fields) {
+    for (const auto& i : fields) {
         os << indent << "  [" << i.resolve_type << "] " << i.name << " : (\n";
         i.content->dump(indent + "    ", os);
         os << indent << "  )\n";
@@ -174,7 +174,7 @@ void mir_struct_init::accept(visitor* v) {
 
 void mir_call::dump(const std::string& indent, std::ostream& os) {
     os << indent << to_hex(this) << " [" << resolve_type << "] call (\n";
-    for(auto i : content->get_content()) {
+    for (auto i : content->get_content()) {
         i->dump(indent + " ", os);
     }
     os << indent << ")\n";
@@ -252,7 +252,7 @@ void mir_get_path::accept(visitor* v) {
 void mir_define::dump(const std::string& indent, std::ostream& os) {
     os << indent << to_hex(this) << " [" << resolve_type << "]";
     os << " definition: " << name << " (\n";
-    for(auto i : init_value->get_content()) {
+    for (auto i : init_value->get_content()) {
         i->dump(indent + " ", os);
     }
     os << indent << ")\n";
@@ -300,7 +300,7 @@ void mir_if::accept(visitor* v) {
 
 void mir_branch::dump(const std::string& indent, std::ostream& os) {
     os << indent << to_hex(this) << " branch (\n";
-    for(auto i : branch) {
+    for (auto i : branch) {
         i->dump(indent + " ", os);
     }
     os << indent << ")\n";
@@ -323,7 +323,7 @@ void mir_switch_case::accept(visitor* v) {
 void mir_switch::dump(const std::string& indent, std::ostream& os) {
     os << indent << to_hex(this) << " switch (\n";
     condition->dump(indent + " ", os);
-    for(auto i : cases) {
+    for (auto i : cases) {
         i->dump(indent + " ", os);
     }
     if (default_case) {

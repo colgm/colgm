@@ -44,7 +44,7 @@ public:
         if (s.generic_struct_decl) {
             generic_struct_decl = s.generic_struct_decl->clone();
         }
-        for(auto i : s.generic_struct_impl) {
+        for (auto i : s.generic_struct_impl) {
             generic_struct_impl.push_back(i->clone());
         }
     }

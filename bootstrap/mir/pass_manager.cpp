@@ -9,7 +9,7 @@
 namespace colgm::mir {
 
 pass_manager::~pass_manager() {
-    for(auto i : work_list) {
+    for (auto i : work_list) {
         delete i;
     }
 }
@@ -19,7 +19,7 @@ void pass_manager::execute(mir_context* mctx, bool verbose) {
     work_list.push_back(new adjust_va_arg_func);
     work_list.push_back(new type_cast_number);
 
-    for(auto i : work_list) {
+    for (auto i : work_list) {
         if (!i->run(mctx)) {
             break;
         }

@@ -20,7 +20,7 @@ cond_compile* cond_compile::clone() const {
 }
 
 generic_type_list::~generic_type_list() {
-    for(auto i : types) {
+    for (auto i : types) {
         delete i;
     }
 }
@@ -31,7 +31,7 @@ void generic_type_list::accept(visitor* v) {
 
 generic_type_list* generic_type_list::clone() const {
     auto ret = new generic_type_list(location);
-    for(auto i : types) {
+    for (auto i : types) {
         ret->add_type(i->clone());
     }
     return ret;
@@ -186,7 +186,7 @@ param* param::clone() const {
 }
 
 param_list::~param_list() {
-    for(auto i : params) {
+    for (auto i : params) {
         delete i;
     }
 }
@@ -197,7 +197,7 @@ void param_list::accept(visitor* v) {
 
 param_list* param_list::clone() const {
     auto ret = new param_list(location);
-    for(auto i : params) {
+    for (auto i : params) {
         ret->add_param(i->clone());
     }
     return ret;

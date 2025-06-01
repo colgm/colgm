@@ -10,7 +10,7 @@ namespace colgm {
 void remove_alloca::do_remove(sir_block* node) {
     std::unordered_map<std::string, std::string> register_map = {};
     std::unordered_set<sir_alloca*> to_remove = {};
-    for(auto i : node->get_move_register()) {
+    for (auto i : node->get_move_register()) {
         if (register_map.count(i->get_type_name())) {
             to_remove.insert(i);
             continue;
@@ -19,7 +19,7 @@ void remove_alloca::do_remove(sir_block* node) {
     }
 
     std::vector<sir_alloca*> after_remove = {};
-    for(auto i : node->get_move_register()) {
+    for (auto i : node->get_move_register()) {
         if (to_remove.count(i)) {
             ++removed_count;
             delete i;
@@ -29,7 +29,7 @@ void remove_alloca::do_remove(sir_block* node) {
     }
 
     node->get_mut_move_register() = after_remove;
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         if (i->get_ir_type()!=sir_kind::sir_temp_ptr) {
             continue;
         }
@@ -39,7 +39,7 @@ void remove_alloca::do_remove(sir_block* node) {
 }
 
 bool remove_alloca::run(sir_context* ctx) {
-    for(auto i : ctx->func_impls) {
+    for (auto i : ctx->func_impls) {
         do_remove(i->get_code_block());
     }
     return true;

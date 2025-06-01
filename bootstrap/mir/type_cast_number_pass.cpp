@@ -30,7 +30,7 @@ bool type_cast_number::cast_const_number(mir_type_convert* node) {
 }
 
 void type_cast_number::visit_mir_block(mir_block* node) {
-    for(auto& i : node->get_mutable_content()) {
+    for (auto& i : node->get_mutable_content()) {
         i->accept(this);
         if (i->get_kind()==kind::mir_type_convert &&
             cast_const_number(reinterpret_cast<mir_type_convert*>(i))) {
@@ -43,7 +43,7 @@ void type_cast_number::visit_mir_block(mir_block* node) {
 }
 
 bool type_cast_number::run(mir_context* mctx) {
-    for(auto i : mctx->impls) {
+    for (auto i : mctx->impls) {
         i->block->accept(this);
     }
     return true;

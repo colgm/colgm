@@ -99,7 +99,7 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
         if (!select_type.generics.empty() &&
             !node->get_generic_types()) {
             node->set_generic_types(new generic_type_list(node->get_location()));
-            for(const auto& i : select_type.generics) {
+            for (const auto& i : select_type.generics) {
                 node->get_generic_types()->add_type(
                     generate_generic_type(i, node->get_location())
                 );
@@ -176,7 +176,7 @@ void generic_visitor::check_generic_type(
     rec.generic_type.name = type_name;
     rec.generic_type.loc_file = sym.loc_file;
 
-    for(i64 i = 0; i < generic_template.size(); ++i) {
+    for (i64 i = 0; i < generic_template.size(); ++i) {
         auto t = type_list[i];
         const auto resolved_type = tr.resolve(t);
         rec.generic_type.generics.push_back(resolved_type);
@@ -191,7 +191,7 @@ bool generic_visitor::visit_struct_decl(struct_decl* node) {
     if (node->get_generic_types()) {
         return true;
     }
-    for(auto i : node->get_fields()) {
+    for (auto i : node->get_fields()) {
         if (!i->get_type() || !i->get_type()->get_generic_types()) {
             continue;
         }
@@ -205,7 +205,7 @@ bool generic_visitor::visit_func_decl(func_decl* node) {
     if (node->get_generic_types()) {
         return true;
     }
-    for(auto i : node->get_params()->get_params()) {
+    for (auto i : node->get_params()->get_params()) {
         i->accept(this);
         if (!i->get_type() || !i->get_type()->get_generic_types()) {
             continue;
@@ -226,7 +226,7 @@ bool generic_visitor::visit_impl_struct(ast::impl_struct* node) {
     if (node->get_generic_types()) {
         return true;
     }
-    for(auto i : node->get_methods()) {
+    for (auto i : node->get_methods()) {
         i->accept(this);
     }
     return true;
@@ -287,7 +287,7 @@ void generic_visitor::replace_type(type& t, const generic_data& data) {
     if (t.generics.empty()) {
         return;
     }
-    for(auto& g : t.generics) {
+    for (auto& g : t.generics) {
         replace_type(g, data);
     }
 }
@@ -479,7 +479,7 @@ void generic_visitor::remove_cond_compile_method(colgm_struct& s,
 
 void generic_visitor::replace_struct_type(colgm_struct& s,
                                           const generic_data& data) {
-    for(auto& i : s.field) {
+    for (auto& i : s.field) {
         replace_type(i.second, data);
     }
 
@@ -488,10 +488,10 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
     // #[is_non_trivial(T, K)]
     remove_cond_compile_method(s, data);
 
-    for(auto& i : s.method) {
+    for (auto& i : s.method) {
         replace_func_type(i.second, data);
     }
-    for(auto& i : s.static_method) {
+    for (auto& i : s.static_method) {
         replace_func_type(i.second, data);
     }
 
@@ -506,7 +506,7 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
         s.generic_struct_decl->clear_generic_types();
         s.generic_struct_decl = nullptr;
     }
-    for(auto i : s.generic_struct_impl) {
+    for (auto i : s.generic_struct_impl) {
         trp.visit_impl(i);
         need_to_be_inserted.push_back(i);
         // s.name is generated with generic
@@ -525,7 +525,7 @@ void generic_visitor::replace_func_type(colgm_func& f,
     replace_type(f.return_type, data);
 
     // replace parameter type
-    for(auto& i : f.params) {
+    for (auto& i : f.params) {
         replace_type(i.second, data);
     }
 
@@ -751,12 +751,12 @@ void regist_pass::regist_primitive_types() {
     ctx.global_symbol().clear();
 
     // load symbol info
-    for(auto i : primitives) {
+    for (auto i : primitives) {
         ctx.global_symbol().insert({i, {sym_kind::basic_kind, "", true}});
     }
 
     // load default methods
-    for(auto i : primitives) {
+    for (auto i : primitives) {
         if (std::string(i) == "void") {
             continue;
         }
@@ -809,7 +809,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
         return;
     }
     auto mp = std::string("");
-    for(auto i : node->get_module_path()) {
+    for (auto i : node->get_module_path()) {
         mp += i->get_name();
         if (i!=node->get_module_path().back()) {
             mp += "::";
@@ -863,7 +863,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
 
     const auto& domain = ctx.get_domain(file);
     if (node->get_import_symbol().empty()) {
-        for(const auto& i : domain.structs) {
+        for (const auto& i : domain.structs) {
             if (!i.second.is_public) {
                 continue;
             }
@@ -872,7 +872,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
                 false
             );
         }
-        for(const auto& i : domain.generic_structs) {
+        for (const auto& i : domain.generic_structs) {
             if (!i.second.is_public) {
                 continue;
             }
@@ -881,7 +881,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
                 true
             );
         }
-        for(const auto& i : domain.functions) {
+        for (const auto& i : domain.functions) {
             if (!i.second.is_public) {
                 continue;
             }
@@ -890,7 +890,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
                 false
             );
         }
-        for(const auto& i : domain.generic_functions) {
+        for (const auto& i : domain.generic_functions) {
             if (!i.second.is_public) {
                 continue;
             }
@@ -899,7 +899,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
                 true
             );
         }
-        for(const auto& i : domain.enums) {
+        for (const auto& i : domain.enums) {
             if (!i.second.is_public) {
                 continue;
             }
@@ -911,7 +911,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
         return;
     }
     // specified import
-    for(auto i : node->get_import_symbol()) {
+    for (auto i : node->get_import_symbol()) {
         if (domain.structs.count(i->get_name()) ||
             domain.generic_structs.count(i->get_name())) {
             if (!check_is_public_struct(i, domain)) {
@@ -951,13 +951,13 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
 }
 
 void regist_pass::regist_imported_types(ast::root* node) {
-    for(auto i : node->get_use_stmts()) {
+    for (auto i : node->get_use_stmts()) {
         regist_single_import(i);
     }
 }
 
 void regist_pass::regist_enums(ast::root* node) {
-    for(auto i : node->get_decls()) {
+    for (auto i : node->get_decls()) {
         if (!i->is(ast_type::ast_enum_decl)) {
             continue;
         }
@@ -986,7 +986,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
     // with specified member with number or not
     bool has_specified_member = false;
     bool has_non_specified_member = false;
-    for(const auto& i : node->get_member()) {
+    for (const auto& i : node->get_member()) {
         if (!i.value) {
             has_non_specified_member = true;
         } else {
@@ -998,7 +998,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
         return;
     }
 
-    for(const auto& i : node->get_member()) {
+    for (const auto& i : node->get_member()) {
         if (!i.value) {
             continue;
         }
@@ -1008,7 +1008,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
         }
     }
 
-    for(const auto& i : node->get_member()) {
+    for (const auto& i : node->get_member()) {
         if (self.members.count(i.name->get_name())) {
             rp.report(i.name, "enum member already exists");
             continue;
@@ -1025,7 +1025,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
 
 void regist_pass::regist_complex_structs(ast::root* node) {
     // regist symbol into symbol table first
-    for(auto i : node->get_decls()) {
+    for (auto i : node->get_decls()) {
         if (i->is(ast_type::ast_struct_decl)) {
             auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);
             regist_single_struct_symbol(struct_decl_node);
@@ -1035,7 +1035,7 @@ void regist_pass::regist_complex_structs(ast::root* node) {
         }
     }
     // load field into struct
-    for(auto i : node->get_decls()) {
+    for (auto i : node->get_decls()) {
         if (i->is(ast_type::ast_struct_decl)) {
             auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);
             regist_single_struct_field(struct_decl_node);
@@ -1087,7 +1087,7 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
             );
         }
         std::unordered_set<std::string> used_generic;
-        for(auto i : node->get_generic_types()->get_types()) {
+        for (auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
             if (ctx.global_symbol().count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
@@ -1122,13 +1122,13 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
     // initializer generic if needed for field analysis
     ctx.generics = {};
     if (node->get_generic_types()) {
-        for(auto i : node->get_generic_types()->get_types()) {
+        for (auto i : node->get_generic_types()->get_types()) {
             ctx.generics.insert(i->get_name()->get_name());
         }
     }
 
     // load fields
-    for(auto i : node->get_fields()) {
+    for (auto i : node->get_fields()) {
         auto type_node = i->get_type();
         auto field_type = tr.resolve(type_node);
         if (field_type.is_error()) {
@@ -1147,7 +1147,7 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
     };
     if (node->get_generic_types()) {
         auto& g = struct_self_type.generics;
-        for(auto i : node->get_generic_types()->get_types()) {
+        for (auto i : node->get_generic_types()->get_types()) {
             g.push_back(tr.resolve(i));
         }
     }
@@ -1175,8 +1175,8 @@ void regist_pass::check_struct_self_reference() {
     const auto& structs = ctx.get_domain(ctx.this_file).structs;
 
     std::vector<std::string> need_check = {};
-    for(const auto& st : structs) {
-        for(const auto& field : st.second.field) {
+    for (const auto& st : structs) {
+        for (const auto& field : st.second.field) {
             if (!field.second.is_pointer() &&
                 structs.count(field.second.name)) {
                 need_check.push_back(st.first);
@@ -1326,7 +1326,7 @@ void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node
 
     auto& self = this_domain.tagged_unions.at(name);
     // load members
-    for(auto i : node->get_members()) {
+    for (auto i : node->get_members()) {
         auto type_node = i->get_type();
         auto member_type = tr.resolve(type_node);
         if (member_type.is_error()) {
@@ -1406,7 +1406,7 @@ void regist_pass::regist_single_global_func(ast::func_decl* node) {
             );
         }
         std::unordered_set<std::string> used_generic;
-        for(auto i : node->get_generic_types()->get_types()) {
+        for (auto i : node->get_generic_types()->get_types()) {
             const auto& generic_name = i->get_name()->get_name();
             if (ctx.global_symbol().count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
@@ -1434,7 +1434,7 @@ colgm_func regist_pass::generate_single_global_func(func_decl* node) {
     // create generic temporary table
     ctx.generics = {};
     if (node->get_generic_types()) {
-        for(auto i : node->get_generic_types()->get_types()) {
+        for (auto i : node->get_generic_types()->get_types()) {
             ctx.generics.insert(i->get_name()->get_name());
         }
     }
@@ -1452,7 +1452,7 @@ colgm_func regist_pass::generate_single_global_func(func_decl* node) {
 }
 
 void regist_pass::generate_parameter_list(param_list* node, colgm_func& self) {
-    for(auto i : node->get_params()) {
+    for (auto i : node->get_params()) {
         generate_parameter(i, self);
     }
 }
@@ -1473,7 +1473,7 @@ void regist_pass::generate_return_type(type_def* node, colgm_func& self) {
 }
 
 void regist_pass::regist_impls(ast::root* node) {
-    for(auto i : node->get_decls()) {
+    for (auto i : node->get_decls()) {
         if (i->get_ast_type() != ast_type::ast_impl) {
             continue;
         }
@@ -1494,10 +1494,10 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
         : dm.generic_structs.at(node->get_struct_name());
 
     ctx.generics = {};
-    for(const auto& i : stct.generic_template) {
+    for (const auto& i : stct.generic_template) {
         ctx.generics.insert(i);
     }
-    for(auto i : node->get_methods()) {
+    for (auto i : node->get_methods()) {
         const auto name = i->get_monomorphic_name();
         if (stct.field.count(name)) {
             rp.report(i, "conflict with field \"" + name + "\".");
@@ -1536,7 +1536,7 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
             rp.report(node, "generic type count does not match.");
             return;
         }
-        for(u64 i = 0; i < stct.generic_template.size(); ++i) {
+        for (u64 i = 0; i < stct.generic_template.size(); ++i) {
             const auto& name = impl_generic_vec[i]->get_name()->get_name();
             if (stct.generic_template[i] != name) {
                 rp.report(impl_generic_vec[i], "generic type \"" + name +
@@ -1571,7 +1571,7 @@ void regist_pass::generate_self_parameter(ast::param* node,
         new_type_def->set_generic_types(
             new generic_type_list(node->get_location())
         );
-        for(auto& i : stct.generic_template) {
+        for (auto& i : stct.generic_template) {
             auto t = new type_def(node->get_location());
             t->set_name(new identifier(node->get_location(), i));
             new_type_def->get_generic_types()->add_type(t);
@@ -1584,7 +1584,7 @@ void regist_pass::generate_self_parameter(ast::param* node,
 void regist_pass::generate_method_parameter_list(param_list* node,
                                                  colgm_func& self,
                                                  const colgm_struct& stct) {
-    for(auto i : node->get_params()) {
+    for (auto i : node->get_params()) {
         bool is_self = i->get_name()->get_name()=="self";
         if (is_self && i!=node->get_params().front()) {
             rp.report(i->get_name(), "\"self\" must be the first parameter.");

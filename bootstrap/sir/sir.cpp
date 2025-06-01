@@ -53,24 +53,24 @@ void sir_alloca::dump(std::ostream& out) const {
 }
 
 sir_block::~sir_block() {
-    for(auto i : allocas) {
+    for (auto i : allocas) {
         delete i;
     }
-    for(auto i : stmts) {
+    for (auto i : stmts) {
         delete i;
     }
 }
 
 void sir_block::dump(std::ostream& out) const {
-    for(auto i : allocas) {
+    for (auto i : allocas) {
         out << "  ";
         i->dump(out);
     }
-    for(auto i : move_register) {
+    for (auto i : move_register) {
         out << "  ";
         i->dump(out);
     }
-    for(auto i : stmts) {
+    for (auto i : stmts) {
         if (i->get_ir_type()!=sir_kind::sir_label) {
             out << "  ";
         } else {
@@ -127,14 +127,14 @@ void sir_call::dump(std::ostream& out) const {
 
     if (with_va_args) {
         out << "(";
-        for(usize i = 0; i < with_va_args_real_param_size; ++i) {
+        for (usize i = 0; i < with_va_args_real_param_size; ++i) {
             out << quoted_name(args_type[i]) << ", ";
         }
         out << "...)";
     }
 
     out << " @" << quoted_name(name) << "(";
-    for(usize i = 0; i<args.size(); ++i) {
+    for (usize i = 0; i<args.size(); ++i) {
         out << quoted_name(args_type[i]) << " " << args[i];
         if (i != args.size()-1) {
             out << ", ";
@@ -293,7 +293,7 @@ std::string sir_switch::get_default_label() const {
 
 std::vector<std::string> sir_switch::get_case_labels() const {
     std::vector<std::string> labels;
-    for(auto& c : label_cases) {
+    for (auto& c : label_cases) {
         std::stringstream ss;
         ss << "label." << std::hex << c.second << std::dec;
         labels.push_back(ss.str());
@@ -304,7 +304,7 @@ std::vector<std::string> sir_switch::get_case_labels() const {
 void sir_switch::dump(std::ostream& out) const {
     out << "switch i64 " << source << ", ";
     out << "label %" << get_default_label() << " [\n";
-    for(auto& c : label_cases) {
+    for (auto& c : label_cases) {
         out << "    i64 " << c.first << ", ";
         out << "label %label." << std::hex << c.second << std::dec << "\n";
     }

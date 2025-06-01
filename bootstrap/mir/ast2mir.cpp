@@ -134,7 +134,7 @@ bool ast2mir::visit_array_list(ast::array_list* node) {
     auto value_block = new mir_block(node->get_location());
     auto temp = block;
     block = value_block;
-    for(auto i : node->get_value()) {
+    for (auto i : node->get_value()) {
         i->accept(this);
     }
     block = temp;
@@ -203,7 +203,7 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
     func->name = name;
     func->location = node->get_location();
     func->return_type = generate_type(node->get_return_type());
-    for(auto i : node->get_params()->get_params()) {
+    for (auto i : node->get_params()->get_params()) {
         func->params.push_back({
             i->get_name()->get_name(),
             generate_type(i->get_type())
@@ -217,7 +217,7 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
     }
 
     block = func->block = new mir_block(node->get_code_block()->get_location());
-    for(auto i : node->get_code_block()->get_stmts()) {
+    for (auto i : node->get_code_block()->get_stmts()) {
         i->accept(this);
         if (i->is(ast::ast_type::ast_ret_stmt) ||
             i->is(ast::ast_type::ast_break_stmt) ||
@@ -235,7 +235,7 @@ bool ast2mir::visit_impl_struct(ast::impl_struct* node) {
         return true;
     }
     impl_struct_name = node->get_struct_name();
-    for(auto i : node->get_methods()) {
+    for (auto i : node->get_methods()) {
         i->accept(this);
     }
     impl_struct_name = "";
@@ -261,7 +261,7 @@ bool ast2mir::visit_call_func_args(ast::call_func_args* node) {
     auto args_block = new mir_block(node->get_location());
     auto temp = block;
     block = args_block;
-    for(auto i : node->get_args()) {
+    for (auto i : node->get_args()) {
         i->accept(this);
     }
     block = temp;
@@ -298,7 +298,7 @@ bool ast2mir::visit_initializer(ast::initializer* node) {
         node->get_location(),
         node->get_resolve()
     );
-    for(auto i : node->get_pairs()) {
+    for (auto i : node->get_pairs()) {
         block = new mir_block(i->get_location());
         i->get_value()->accept(this);
         struct_init->add_field(
@@ -338,7 +338,7 @@ bool ast2mir::visit_call(ast::call* node) {
             node->get_head()->get_resolve()
         ));
     }
-    for(auto i : node->get_chain()) {
+    for (auto i : node->get_chain()) {
         i->accept(this);
     }
     block = temp;
@@ -396,7 +396,7 @@ bool ast2mir::visit_assignment(ast::assignment* node) {
 
 bool ast2mir::visit_cond_stmt(ast::cond_stmt* node) {
     auto cond = new mir_branch(node->get_location());
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         cond->add(generate_if_stmt(i));
     }
     block->add_content(cond);
@@ -446,7 +446,7 @@ bool ast2mir::visit_match_stmt(ast::match_stmt* node) {
     switch_block->set_condition(cond_block);
 
     ast::match_case* default_case = nullptr;
-    for(auto i : node->get_cases()) {
+    for (auto i : node->get_cases()) {
         if (i->get_value()->get_resolve().is_default_match()) {
             default_case = i;
             continue;
@@ -607,7 +607,7 @@ bool ast2mir::visit_forindex(ast::forindex* node) {
 
     auto body_block = new mir_block(node->get_body()->get_location());
     block = body_block;
-    for(auto i : node->get_body()->get_stmts()) {
+    for (auto i : node->get_body()->get_stmts()) {
         i->accept(this);
     }
     block = temp;
@@ -645,7 +645,7 @@ bool ast2mir::visit_foreach(ast::foreach* node) {
 
     auto body_block = new mir_block(node->get_body()->get_location());
     block = body_block;
-    for(auto i : node->get_body()->get_stmts()) {
+    for (auto i : node->get_body()->get_stmts()) {
         i->accept(this);
     }
     block = temp;
@@ -687,7 +687,7 @@ bool ast2mir::visit_break_stmt(ast::break_stmt* node) {
 }
 
 void ast2mir::generate_code_block(ast::code_block* node) {
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         i->accept(this);
         if (i->is(ast::ast_type::ast_ret_stmt) ||
             i->is(ast::ast_type::ast_break_stmt) ||
@@ -713,10 +713,10 @@ type ast2mir::generate_type(ast::type_def* node) {
 }
 
 void ast2mir::dump(std::ostream& os) {
-    for(const auto i : mctx.structs) {
+    for (const auto i : mctx.structs) {
         os << i->name << " {";
         size_t count = 0;
-        for(const auto& f : i->field_type) {
+        for (const auto& f : i->field_type) {
             os << f;
             ++count;
             if (count!=i->field_type.size()) {
@@ -729,9 +729,9 @@ void ast2mir::dump(std::ostream& os) {
         os << "\n";
     }
 
-    for(const auto i : mctx.decls) {
+    for (const auto i : mctx.decls) {
         os << i->name << "(";
-        for(const auto& p : i->params) {
+        for (const auto& p : i->params) {
             os << p.first << ": " << p.second;
             if (p.first!=i->params.back().first) {
                 os << ", ";
@@ -743,9 +743,9 @@ void ast2mir::dump(std::ostream& os) {
         os << "\n";
     }
 
-    for(const auto i : mctx.impls) {
+    for (const auto i : mctx.impls) {
         os << i->name << "(";
-        for(const auto& p : i->params) {
+        for (const auto& p : i->params) {
             os << p.first << ": " << p.second;
             if (p.first!=i->params.back().first) {
                 os << ", ";
@@ -754,7 +754,7 @@ void ast2mir::dump(std::ostream& os) {
         os << ") -> " << i->return_type;
         if (i->block) {
             os << " {\n";
-            for(auto ir : i->block->get_content()) {
+            for (auto ir : i->block->get_content()) {
                 ir->dump(" ", os);
             }
             os << "}\n";

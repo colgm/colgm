@@ -7,15 +7,15 @@ namespace colgm::mir {
 
 void mir2sir::generate_type_mapper() {
     type_mapper = {};
-    for(const auto& dm : ctx.global.domain) {
-        for(const auto& i : dm.second.enums) {
+    for (const auto& dm : ctx.global.domain) {
+        for (const auto& i : dm.second.enums) {
             const auto tp = type {
                 .name = i.second.name,
                 .loc_file = i.second.location.file
             };
             type_mapper.insert({tp.full_path_name(), sym_kind::enum_kind});
         }
-        for(const auto& i : dm.second.structs) {
+        for (const auto& i : dm.second.structs) {
             const auto tp = type {
                 .name = i.second.name,
                 .loc_file = i.second.location.file
@@ -68,10 +68,23 @@ std::string mir2sir::array_type_mapping(const type& t) {
     return "[" + std::to_string(copy.array_length) + " x " + type_mapping(copy) + "]";
 }
 
+void mir2sir::emit_tagged_union(const mir_context& mctx) {
+    for (auto i : mctx.tagged_unions) {
+        auto tud = new sir_tagged_union(i->name, i->location, i->size);
+        if (!i->max_align_type.name.empty()) {
+            tud->add_member_type(type_mapping(i->max_align_type));
+        }
+        if (i->size > i->max_align_type_size) {
+            tud->add_member_type("[" + std::to_string(i->size - i->max_align_type_size) + " x i8]");
+        }
+        ictx.tagged_union_decls.push_back(tud);
+    }
+}
+
 void mir2sir::emit_struct(const mir_context& mctx) {
-    for(auto i : mctx.structs) {
+    for (auto i : mctx.structs) {
         auto stct = new sir_struct(i->name, i->location, i->size);
-        for(const auto& f : i->field_type) {
+        for (const auto& f : i->field_type) {
             if (f.is_array) {
                 stct->add_field_type(array_type_mapping(f));
             } else {
@@ -83,11 +96,11 @@ void mir2sir::emit_struct(const mir_context& mctx) {
 }
 
 void mir2sir::emit_func_decl(const mir_context& mctx) {
-    for(auto i : mctx.decls) {
+    for (auto i : mctx.decls) {
         auto func = new sir_func(i->name);
         func->set_attributes(i->attributes);
         func->set_return_type(type_mapping(i->return_type));
-        for(const auto& j : i->params) {
+        for (const auto& j : i->params) {
             func->add_param(j.first + ".param", type_mapping(j.second));
         }
         func->set_with_va_args(i->with_va_args);
@@ -96,7 +109,7 @@ void mir2sir::emit_func_decl(const mir_context& mctx) {
 }
 
 void mir2sir::emit_func_impl(const mir_context& mctx) {
-    for(auto i : mctx.impls) {
+    for (auto i : mctx.impls) {
         auto func = new sir_func(i->name);
         func->set_attributes(i->attributes);
         func->set_return_type(type_mapping(i->return_type));
@@ -104,7 +117,7 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         locals.push();
         locals.local_scope_counter = 0;
         // load parameters and locals
-        for(const auto& j : i->params) {
+        for (const auto& j : i->params) {
             func->add_param(j.first + ".param", type_mapping(j.second));
             locals.elem.back().insert({j.first, j.first});
         }
@@ -127,7 +140,7 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         value_stack.clear();
 
         block = func->get_code_block();
-        for(const auto& j : i->params) {
+        for (const auto& j : i->params) {
             block->add_alloca(new sir_alloca(j.first, type_mapping(j.second)));
             block->add_stmt(new sir_store(
                 type_mapping(j.second),
@@ -249,7 +262,7 @@ void mir2sir::generate_or(mir_binary* node) {
 void mir2sir::visit_mir_block(mir_block* node) {
     // push local scope
     locals.push();
-    for(auto i : node->get_content()) {
+    for (auto i : node->get_content()) {
         i->accept(this);
     }
     // pop local scope
@@ -623,7 +636,7 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
 
     const auto& dm = ctx.get_domain(node->get_type().loc_file);
     const auto& st = dm.structs.at(node->get_type().name_for_search());
-    for(const auto& i : node->get_fields()) {
+    for (const auto& i : node->get_fields()) {
         const auto target = ssa_gen.create();
         const auto index = st.field_index(i.name);
         block->add_stmt(new sir_get_field(
@@ -769,7 +782,7 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
         value_stack.pop_back();
     }
 
-    for(auto i : node->get_args()->get_content()) {
+    for (auto i : node->get_args()->get_content()) {
         i->accept(this);
         args.push_back(value_stack.back());
         value_stack.pop_back();        
@@ -806,7 +819,7 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
     }
 
     // load args
-    for(const auto& i : args) {
+    for (const auto& i : args) {
         sir_function_call->add_arg(i.to_value_t());
         sir_function_call->add_arg_type(type_mapping(i.resolve_type));
     }
@@ -1197,14 +1210,14 @@ void mir2sir::visit_mir_if(mir_if* node) {
 void mir2sir::visit_mir_branch(mir_branch* node) {
     branch_jump_out.push_back({});
 
-    for(auto i : node->get_branch()) {
+    for (auto i : node->get_branch()) {
         i->accept(this);
         if (i->get_condition() && i==node->get_branch().back()) {
             block->add_stmt(new sir_br(block->stmt_size()+1));
         }
     }
 
-    for(auto i : branch_jump_out.back()) {
+    for (auto i : branch_jump_out.back()) {
         i->set_label(block->stmt_size());
     }
     branch_jump_out.pop_back();
@@ -1332,7 +1345,7 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
     }
     block->add_stmt(new sir_br(continue_label));
     block->add_stmt(new sir_label(continue_label, "loop.continue"));
-    for(auto i : continue_inst.back()) {
+    for (auto i : continue_inst.back()) {
         i->set_label(continue_label);
     }
     if (node->get_update()) {
@@ -1343,7 +1356,7 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
     auto exit_label = block->stmt_size();
     cond_ir->set_false_label(exit_label);
     block->add_stmt(new sir_label(exit_label, "loop.exit"));
-    for(auto i : break_inst.back()) {
+    for (auto i : break_inst.back()) {
         i->set_label(exit_label);
     }
 
@@ -1678,6 +1691,7 @@ void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
     }
 
     u64 offset = 8;
+    u64 tagged_union_align = 8;
 
     u64 size = 0;
     u64 align = 1;
@@ -1695,7 +1709,7 @@ void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
 
     if (align != 0) {
         // align union member
-        while (offset % align != 0) {
+        while (offset % tagged_union_align != 0) {
             offset++;
         }
         offset += size;
@@ -1770,6 +1784,9 @@ void mir2sir::calculate_size(const mir_context& mctx) {
     for (auto i : mctx.structs) {
         calculate_single_struct_size(i);
     }
+    for (auto i : mctx.tagged_unions) {
+        calculate_single_tagged_union_size(i);
+    }
 }
 
 const error& mir2sir::generate(const mir_context& mctx) {
@@ -1778,6 +1795,7 @@ const error& mir2sir::generate(const mir_context& mctx) {
     generate_type_mapper();
 
     calculate_size(mctx);
+    emit_tagged_union(mctx);
     emit_struct(mctx);
     emit_func_decl(mctx);
     emit_func_impl(mctx);

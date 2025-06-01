@@ -66,7 +66,7 @@ private:
 public:
     mir_block(const span& loc): mir(kind::mir_block, loc) {}
     ~mir_block() override {
-        for(auto i : content) {
+        for (auto i : content) {
             delete i;
         }
     }
@@ -518,7 +518,7 @@ public:
     mir_branch(const span& loc):
         mir(kind::mir_branch, loc) {}
     ~mir_branch() override {
-        for(auto i : branch) {
+        for (auto i : branch) {
             delete i;
         }
     }
@@ -560,7 +560,7 @@ public:
         mir(kind::mir_switch, loc), condition(nullptr), default_case(nullptr) {}
     ~mir_switch() override {
         delete condition;
-        for(auto i : cases) {
+        for (auto i : cases) {
             delete i;
         }
         delete default_case;

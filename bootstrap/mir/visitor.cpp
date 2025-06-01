@@ -3,7 +3,7 @@
 namespace colgm::mir {
 
 void visitor::visit_mir_block(mir_block* node) {
-    for(auto i : node->get_content()) {
+    for (auto i : node->get_content()) {
         i->accept(this);
     }
 }
@@ -28,7 +28,7 @@ void visitor::visit_mir_array(mir_array* node) {
 }
 
 void visitor::visit_mir_struct_init(mir_struct_init* node) {
-    for(const auto& i : node->get_fields()) {
+    for (const auto& i : node->get_fields()) {
         i.content->accept(this);
     }
 }
@@ -62,7 +62,7 @@ void visitor::visit_mir_if(mir_if* node) {
 }
 
 void visitor::visit_mir_branch(mir_branch* node) {
-    for(auto i : node->get_branch()) {
+    for (auto i : node->get_branch()) {
         i->accept(this);
     }
 }
@@ -75,7 +75,7 @@ void visitor::visit_mir_switch(mir_switch* node) {
     if (node->get_condition()) {
         node->get_condition()->accept(this);
     }
-    for(auto i : node->get_cases()) {
+    for (auto i : node->get_cases()) {
         i->accept(this);
     }
     if (node->get_default_case()) {

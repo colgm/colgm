@@ -330,7 +330,7 @@ public:
     initializer(const span& loc):
         expr(ast_type::ast_initializer, loc) {}
     ~initializer() override {
-        for(auto i : pairs) {
+        for (auto i : pairs) {
             delete i;
         }
     }

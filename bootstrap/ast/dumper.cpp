@@ -6,13 +6,13 @@ bool dumper::visit_root(root* node) {
     dump_indent();
     std::cout << "root" << format_location(node);
     push_indent();
-    for(auto i : node->get_use_stmts()) {
+    for (auto i : node->get_use_stmts()) {
         if (i==node->get_use_stmts().back() && node->get_decls().empty()) {
             set_last();
         }
         i->accept(this);
     }
-    for(auto i : node->get_decls()) {
+    for (auto i : node->get_decls()) {
         if (i==node->get_decls().back()) {
             set_last();
         }
@@ -80,10 +80,10 @@ bool dumper::visit_cond_compile(cond_compile* node) {
     std::cout << format_location(node);
     push_indent();
     std::vector<std::pair<std::string, std::string>> keys;
-    for(const auto& i : node->get_conds()) {
+    for (const auto& i : node->get_conds()) {
         keys.push_back(i);
     }
-    for(const auto& i : keys) {
+    for (const auto& i : keys) {
         if (i.first == keys.back().first) {
             set_last();
         }
@@ -122,7 +122,7 @@ bool dumper::visit_generic_type_list(generic_type_list* node) {
     dump_indent();
     std::cout << "generics" << format_location(node);
     push_indent();
-    for(auto i : node->get_types()) {
+    for (auto i : node->get_types()) {
         if (i==node->get_types().back()) {
             set_last();
         }
@@ -143,7 +143,7 @@ bool dumper::visit_enum_decl(enum_decl* node) {
     if (node->get_member().empty()) {
         set_last();
     }
-    for(auto i : node->get_member()) {
+    for (auto i : node->get_member()) {
         if (i.name==node->get_member().back().name) {
             set_last();
         }
@@ -190,7 +190,7 @@ bool dumper::visit_struct_decl(struct_decl* node) {
         }
         node->get_generic_types()->accept(this);
     }
-    for(auto i : node->get_fields()) {
+    for (auto i : node->get_fields()) {
         if (i==node->get_fields().back()) {
             set_last();
         }
@@ -219,7 +219,7 @@ bool dumper::visit_tagged_union_decl(tagged_union_decl* node) {
     }
     std::cout << node->get_name() << format_location(node);
     push_indent();
-    for(auto i : node->get_members()) {
+    for (auto i : node->get_members()) {
         if (i==node->get_members().back()) {
             set_last();
         }
@@ -246,7 +246,7 @@ bool dumper::visit_param_list(param_list* node) {
     dump_indent();
     std::cout << "params" << format_location(node);
     push_indent();
-    for(auto i : node->get_params()) {
+    for (auto i : node->get_params()) {
         if (i==node->get_params().back()) {
             set_last();
         }
@@ -296,7 +296,7 @@ bool dumper::visit_impl_struct(impl_struct* node) {
         }
         node->get_generic_types()->accept(this);
     }
-    for(auto i : node->get_methods()) {
+    for (auto i : node->get_methods()) {
         if (i==node->get_methods().back()) {
             set_last();
         }
@@ -390,7 +390,7 @@ bool dumper::visit_call_func_args(call_func_args* node) {
     dump_indent();
     std::cout << "call_func_args" << format_location(node);
     push_indent();
-    for(auto i : node->get_args()) {
+    for (auto i : node->get_args()) {
         if (i==node->get_args().back()) {
             set_last();
         }
@@ -427,7 +427,7 @@ bool dumper::visit_initializer(initializer* node) {
     dump_indent();
     std::cout << "initializer" << format_location(node);
     push_indent();
-    for(auto i : node->get_pairs()) {
+    for (auto i : node->get_pairs()) {
         if (i==node->get_pairs().back()) {
             set_last();
         }
@@ -451,7 +451,7 @@ bool dumper::visit_call(call* node) {
         set_last();
     }
     node->get_head()->accept(this);
-    for(auto i : node->get_chain()) {
+    for (auto i : node->get_chain()) {
         if (i==node->get_chain().back()) {
             set_last();
         }
@@ -488,7 +488,7 @@ bool dumper::visit_use_stmt(use_stmt* node) {
     dump_indent();
     std::cout << "use" << format_location(node);
     push_indent();
-    for(auto i : node->get_module_path()) {
+    for (auto i : node->get_module_path()) {
         i->accept(this);
     }
     set_last();
@@ -498,7 +498,7 @@ bool dumper::visit_use_stmt(use_stmt* node) {
     } else {
         std::cout << "import_symbol\n";
         push_indent();
-        for(auto i : node->get_import_symbol()) {
+        for (auto i : node->get_import_symbol()) {
             if (i==node->get_import_symbol().back()) {
                 set_last();
             }
@@ -533,7 +533,7 @@ bool dumper::visit_cond_stmt(cond_stmt* node) {
     dump_indent();
     std::cout << "condition" << format_location(node);
     push_indent();
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         if (i==node->get_stmts().back()) {
             set_last();
         }
@@ -582,7 +582,7 @@ bool dumper::visit_match_stmt(match_stmt* node) {
     node->get_value()->accept(this);
 
     push_indent();
-    for(auto i : node->get_cases()) {
+    for (auto i : node->get_cases()) {
         if (i==node->get_cases().back()) {
             set_last();
         }
@@ -694,7 +694,7 @@ bool dumper::visit_code_block(code_block* node) {
     dump_indent();
     std::cout << "block" << format_location(node);
     push_indent();
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         if (i==node->get_stmts().back()) {
             set_last();
         }

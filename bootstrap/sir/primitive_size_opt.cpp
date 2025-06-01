@@ -4,7 +4,7 @@ namespace colgm {
 
 void primitive_size_opt::remove_primitive_size_method(sir_block* b) {
     std::vector<sir*> new_stmts = {};
-    for(auto i : b->get_stmts()) {
+    for (auto i : b->get_stmts()) {
         if (i->get_ir_type() != sir_kind::sir_call) {
             new_stmts.push_back(i);
             continue;
@@ -29,7 +29,7 @@ void primitive_size_opt::remove_primitive_size_method(sir_block* b) {
 }
 
 bool primitive_size_opt::run(sir_context* ctx) {
-    for(auto i : ctx->func_impls) {
+    for (auto i : ctx->func_impls) {
         remove_primitive_size_method(i->get_code_block());
     }
     return true;

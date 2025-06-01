@@ -15,7 +15,7 @@ void delete_useless_label::add_count(std::unordered_map<std::string, u64>& m,
 
 void delete_useless_label::delete_label(sir_block* cb) {
     std::unordered_map<std::string, u64> used_label;
-    for(auto i : cb->get_stmts()) {
+    for (auto i : cb->get_stmts()) {
         switch(i->get_ir_type()) {
             case sir_kind::sir_br: {
                 auto label = i->to<sir_br>()->get_label();
@@ -39,7 +39,7 @@ void delete_useless_label::delete_label(sir_block* cb) {
     }
 
     std::unordered_set<sir*> useless_inst;
-    for(usize i = 0; i < cb->stmt_size(); ++i) {
+    for (usize i = 0; i < cb->stmt_size(); ++i) {
         if (i + 1 >= cb->stmt_size()) {
             continue;
         }
@@ -61,7 +61,7 @@ void delete_useless_label::delete_label(sir_block* cb) {
     }
 
     std::vector<sir*> after_remove = {};
-    for(auto i : cb->get_stmts()) {
+    for (auto i : cb->get_stmts()) {
         if (!useless_inst.count(i)) {
             after_remove.push_back(i);
         } else {
@@ -71,7 +71,7 @@ void delete_useless_label::delete_label(sir_block* cb) {
     }
     cb->get_mut_stmts() = after_remove;
 
-    for(auto i : cb->get_stmts()) {
+    for (auto i : cb->get_stmts()) {
         if (i->get_ir_type()==sir_kind::sir_block) {
             delete_label(i->to<sir_block>());
         }
@@ -79,7 +79,7 @@ void delete_useless_label::delete_label(sir_block* cb) {
 }
 
 bool delete_useless_label::run(sir_context* ctx) {
-    for(auto i : ctx->func_impls) {
+    for (auto i : ctx->func_impls) {
         delete_label(i->get_code_block());
     }
     return true;

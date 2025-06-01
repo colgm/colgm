@@ -6,7 +6,7 @@ namespace colgm {
 
 void replace_struct_ptr_call::do_remove(sir_block* b) {
     std::vector<sir*> new_stmts = {};
-    for(auto i : b->get_stmts()) {
+    for (auto i : b->get_stmts()) {
         if (i->get_ir_type() != sir_kind::sir_call) {
             new_stmts.push_back(i);
             continue;
@@ -35,7 +35,7 @@ void replace_struct_ptr_call::do_remove(sir_block* b) {
 }
 
 bool replace_struct_ptr_call::run(sir_context* ctx) {
-    for(auto i : ctx->func_impls) {
+    for (auto i : ctx->func_impls) {
         do_remove(i->get_code_block());
     }
     return true;

@@ -111,7 +111,7 @@ void execute(const std::string& input_file,
     // lexer scans file to get tokens
     lexer.scan(input_file).chkerr();
     if (cmd & COMPILE_VIEW_TOKEN) {
-        for(const auto& token : lexer.result()) {
+        for (const auto& token : lexer.result()) {
             std::cout << token.loc << ": " << token.str << "\n";
         }
     }
@@ -193,7 +193,7 @@ i32 main(i32 argc, const char* argv[]) {
         args.push_back(argv[i]);
     }
 
-    for(i32 i = 1; i < argc; ++i) {
+    for (i32 i = 1; i < argc; ++i) {
         if (args[i] == "-h" || args[i] == "--help") {
             std::clog << help;
             break;

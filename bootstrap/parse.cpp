@@ -124,13 +124,13 @@ identifier* parse::identifier_gen() {
 call* parse::call_gen() {
     auto res = new call(toks[ptr].loc);
     res->set_head(call_id_gen());
-    while(look_ahead(tok::tk_lcurve) || look_ahead(tok::tk_lbracket) ||
+    while (look_ahead(tok::tk_lcurve) || look_ahead(tok::tk_lbracket) ||
           look_ahead(tok::tk_dot) || look_ahead(tok::tk_arrow) ||
           look_ahead(tok::tk_double_colon) || look_ahead(tok::tk_lbrace)) {
         if (look_ahead(tok::tk_lcurve)) {
             match(tok::tk_lcurve);
             auto new_call_func = new call_func_args(toks[ptr].loc);
-            while(!look_ahead(tok::tk_rcurve)) {
+            while (!look_ahead(tok::tk_rcurve)) {
                 new_call_func->add_arg(calculation_gen());
                 if (look_ahead(tok::tk_comma)) {
                     match(tok::tk_comma);
@@ -188,7 +188,7 @@ initializer* parse::initializer_gen() {
     auto res = new initializer(toks[ptr].loc);
 
     match(tok::tk_lbrace);
-    while(!look_ahead(tok::tk_rbrace)) {
+    while (!look_ahead(tok::tk_rbrace)) {
         auto pair_node = new init_pair(toks[ptr].loc);
 
         pair_node->set_field(identifier_gen());
@@ -325,7 +325,7 @@ expr* parse::type_convert_gen() {
 expr* parse::multive_gen() {
     const auto begin_location = toks[ptr].loc;
     auto res = type_convert_gen();
-    while(look_ahead(tok::tk_mult) ||
+    while (look_ahead(tok::tk_mult) ||
         look_ahead(tok::tk_div) ||
         look_ahead(tok::tk_rem)) {
         auto binary = new binary_operator(begin_location);
@@ -347,7 +347,7 @@ expr* parse::multive_gen() {
 expr* parse::additive_gen() {
     const auto begin_location = toks[ptr].loc;
     auto res = multive_gen();
-    while(look_ahead(tok::tk_add) || look_ahead(tok::tk_sub)) {
+    while (look_ahead(tok::tk_add) || look_ahead(tok::tk_sub)) {
         auto binary = new binary_operator(begin_location);
         binary->set_left(res);
         switch(toks[ptr].type) {
@@ -366,7 +366,7 @@ expr* parse::additive_gen() {
 expr* parse::bitwise_and_gen() {
     const auto begin_location = toks[ptr].loc;
     auto res = additive_gen();
-    while(look_ahead(tok::tk_btand)) {
+    while (look_ahead(tok::tk_btand)) {
         auto binary = new binary_operator(begin_location);
         binary->set_left(res);
         binary->set_opr(binary_operator::kind::band);
@@ -381,7 +381,7 @@ expr* parse::bitwise_and_gen() {
 expr* parse::bitwise_xor_gen() {
     const auto begin_location = toks[ptr].loc;
     auto res = bitwise_and_gen();
-    while(look_ahead(tok::tk_btxor)) {
+    while (look_ahead(tok::tk_btxor)) {
         auto binary = new binary_operator(begin_location);
         binary->set_left(res);
         binary->set_opr(binary_operator::kind::bxor);
@@ -396,7 +396,7 @@ expr* parse::bitwise_xor_gen() {
 expr* parse::bitwise_or_gen() {
     const auto begin_location = toks[ptr].loc;
     auto res = bitwise_xor_gen();
-    while(look_ahead(tok::tk_btor)) {
+    while (look_ahead(tok::tk_btor)) {
         auto binary = new binary_operator(begin_location);
         binary->set_left(res);
         binary->set_opr(binary_operator::kind::bor);
@@ -411,7 +411,7 @@ expr* parse::bitwise_or_gen() {
 expr* parse::compare_gen() {
     const auto begin_location = toks[ptr].loc;
     auto res = bitwise_or_gen();
-    while(look_ahead(tok::tk_cmpeq) || look_ahead(tok::tk_neq) ||
+    while (look_ahead(tok::tk_cmpeq) || look_ahead(tok::tk_neq) ||
         look_ahead(tok::tk_less) || look_ahead(tok::tk_leq) ||
         look_ahead(tok::tk_grt) || look_ahead(tok::tk_geq)) {
         auto binary = new binary_operator(begin_location);
@@ -530,7 +530,7 @@ type_def* parse::array_type_gen() {
     if (look_ahead_generic()) {
         res->set_generic_types(generic_type_list_gen());
     }
-    while(look_ahead(tok::tk_mult)) {
+    while (look_ahead(tok::tk_mult)) {
         res->add_pointer_level();
         match(tok::tk_mult);
     }
@@ -567,7 +567,7 @@ type_def* parse::type_def_gen() {
     if (look_ahead_generic()) {
         res->set_generic_types(generic_type_list_gen());
     }
-    while(look_ahead(tok::tk_mult)) {
+    while (look_ahead(tok::tk_mult)) {
         res->add_pointer_level();
         match(tok::tk_mult);
     }
@@ -578,7 +578,7 @@ type_def* parse::type_def_gen() {
 generic_type_list* parse::generic_type_list_gen() {
     auto res = new generic_type_list(toks[ptr].loc);
     match(tok::tk_less);
-    while(look_ahead(tok::tk_id)) {
+    while (look_ahead(tok::tk_id)) {
         res->add_type(type_def_gen());
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
@@ -607,7 +607,7 @@ enum_decl* parse::enum_gen(std::vector<cond_compile*>& conds,
     match(tok::tk_enum);
     res->set_name(identifier_gen());
     match(tok::tk_lbrace);
-    while(look_ahead(tok::tk_id)) {
+    while (look_ahead(tok::tk_id)) {
         auto name_node = identifier_gen();
         if (look_ahead(tok::tk_eq)) {
             match(tok::tk_eq);
@@ -656,7 +656,7 @@ struct_decl* parse::struct_gen(std::vector<cond_compile*>& conds,
         res->set_generic_types(generic_type_list_gen());
     }
     match(tok::tk_lbrace);
-    while(!look_ahead(tok::tk_rbrace)) {
+    while (!look_ahead(tok::tk_rbrace)) {
         res->add_field(field_pair_gen());
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
@@ -699,7 +699,7 @@ tagged_union_decl* parse::tagged_union_gen(std::vector<cond_compile*>& conds,
     match(tok::tk_id);
 
     match(tok::tk_lbrace);
-    while(!look_ahead(tok::tk_rbrace)) {
+    while (!look_ahead(tok::tk_rbrace)) {
         res->add_member(field_pair_gen());
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
@@ -728,7 +728,7 @@ param* parse::param_gen() {
 param_list* parse::param_list_gen() {
     auto res = new param_list(toks[ptr].loc);
     match(tok::tk_lcurve);
-    while(!look_ahead(tok::tk_rcurve)) {
+    while (!look_ahead(tok::tk_rcurve)) {
         res->add_param(param_gen());
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
@@ -823,7 +823,7 @@ use_stmt* parse::use_stmt_gen() {
     auto res = new use_stmt(toks[ptr].loc);
     match(tok::tk_use);
     res->add_path(identifier_gen());
-    while(look_ahead(tok::tk_double_colon)) {
+    while (look_ahead(tok::tk_double_colon)) {
         match(tok::tk_double_colon);
         if (look_ahead(tok::tk_lbrace) || look_ahead(tok::tk_mult)) {
             break;
@@ -832,7 +832,7 @@ use_stmt* parse::use_stmt_gen() {
     }
     if (look_ahead(tok::tk_lbrace)) {
         match(tok::tk_lbrace);
-        while(look_ahead(tok::tk_id)) {
+        while (look_ahead(tok::tk_id)) {
             res->add_import_symbol(identifier_gen());
             if (look_ahead(tok::tk_comma)) {
                 match(tok::tk_comma);
@@ -879,7 +879,7 @@ cond_stmt* parse::cond_stmt_gen() {
     new_if->set_block(block_gen(true));
     update_location(new_if);
     res->add_stmt(new_if);
-    while(look_ahead(tok::tk_elsif)) {
+    while (look_ahead(tok::tk_elsif)) {
         auto new_elsif = new if_stmt(toks[ptr].loc);
         match(tok::tk_elsif);
         match(tok::tk_lcurve);
@@ -908,7 +908,7 @@ match_stmt* parse::match_stmt_gen() {
     match(tok::tk_rcurve);
 
     match(tok::tk_lbrace);
-    while(!look_ahead(tok::tk_rbrace)) {
+    while (!look_ahead(tok::tk_rbrace)) {
         auto new_case = new match_case(toks[ptr].loc);
         new_case->set_value(call_gen());
         match(tok::tk_wide_arrow);
@@ -1019,7 +1019,7 @@ code_block* parse::block_gen(bool flag_allow_single_stmt_without_brace) {
     }
 
     match(tok::tk_lbrace);
-    while(!look_ahead(tok::tk_rbrace)) {
+    while (!look_ahead(tok::tk_rbrace)) {
         add_gen_stmt(res);
         if (look_ahead(tok::tk_eof)) {
             break;

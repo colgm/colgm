@@ -8,10 +8,10 @@ void stmt::accept(visitor* v) {
 }
 
 use_stmt::~use_stmt() {
-    for(auto i : module_path) {
+    for (auto i : module_path) {
         delete i;
     }
-    for(auto i : import_symbol) {
+    for (auto i : import_symbol) {
         delete i;
     }
 }
@@ -22,10 +22,10 @@ void use_stmt::accept(visitor* v) {
 
 use_stmt* use_stmt::clone() const {
     auto ret = new use_stmt(location);
-    for(auto i : module_path) {
+    for (auto i : module_path) {
         ret->add_path(i->clone());
     }
-    for(auto i : import_symbol) {
+    for (auto i : import_symbol) {
         ret->add_import_symbol(i->clone());
     }
     return ret;
@@ -52,7 +52,7 @@ definition* definition::clone() const {
 }
 
 cond_stmt::~cond_stmt() {
-    for(auto i : stmts) {
+    for (auto i : stmts) {
         delete i;
     }
 }
@@ -63,7 +63,7 @@ void cond_stmt::accept(visitor* v) {
 
 cond_stmt* cond_stmt::clone() const {
     auto ret = new cond_stmt(location);
-    for(auto i : stmts) {
+    for (auto i : stmts) {
         ret->add_stmt(i->clone());
     }
     return ret;
@@ -111,7 +111,7 @@ match_case* match_case::clone() const {
 
 match_stmt::~match_stmt() {
     delete value;
-    for(auto i : cases) {
+    for (auto i : cases) {
         delete i;
     }
 }
@@ -125,7 +125,7 @@ match_stmt* match_stmt::clone() const {
     if (value) {
         ret->value = value->clone();
     }
-    for(auto i : cases) {
+    for (auto i : cases) {
         ret->add_case(i->clone());
     }
     return ret;
@@ -278,7 +278,7 @@ void break_stmt::accept(visitor* v) {
 }
 
 code_block::~code_block() {
-    for(auto i : statements) {
+    for (auto i : statements) {
         delete i;
     }
 }
@@ -289,7 +289,7 @@ void code_block::accept(visitor* v) {
 
 code_block* code_block::clone() const {
     auto ret = new code_block(location);
-    for(auto i : statements) {
+    for (auto i : statements) {
         ret->add_stmt(i->clone());
     }
     return ret;

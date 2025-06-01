@@ -54,7 +54,7 @@ std::string type::full_path_name(bool with_generics) const {
 
 std::string type::full_path_name_with_pointer(bool with_generics) const {
     auto result = full_path_name(with_generics);
-    for(i64 i = 0; i < pointer_depth; ++i) {
+    for (i64 i = 0; i < pointer_depth; ++i) {
         result += "*";
     }
     return result;
@@ -66,9 +66,9 @@ std::string type::generic_name() const {
         return result;
     }
     result += "<";
-    for(const auto& g: generics) {
+    for (const auto& g: generics) {
         result += g.full_path_name();
-        for(auto i = 0; i<g.pointer_depth; ++i) {
+        for (auto i = 0; i<g.pointer_depth; ++i) {
             result += "*";
         }
         result += ",";
@@ -86,7 +86,7 @@ u64 type::generic_depth() const {
     }
     u64 result = 1;
     u64 max_depth = 0;
-    for(const auto& g: generics) {
+    for (const auto& g: generics) {
         auto depth = g.generic_depth();
         if (depth > max_depth) {
             max_depth = depth;
@@ -98,7 +98,7 @@ u64 type::generic_depth() const {
 std::ostream& operator<<(std::ostream& out, const type& t) {
     t.check_pointer_depth();
     out << t.full_path_name();
-    for(i64 i = 0; i < t.pointer_depth; ++i) {
+    for (i64 i = 0; i < t.pointer_depth; ++i) {
         out << "*";
     }
     return out;
@@ -108,7 +108,7 @@ void type::dump(const std::string& end) const {
     std::cerr << "(" << name;
     if (!generics.empty()) {
         std::cerr << ":<";
-        for(const auto& g: generics) {
+        for (const auto& g: generics) {
             g.dump("");
         }
         std::cerr << ">";

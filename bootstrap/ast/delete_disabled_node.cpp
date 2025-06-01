@@ -15,7 +15,7 @@ bool delete_disabled_node::check_enable_if(error& err, cond_compile* cc) {
         "target_os", "arch"
     };
     bool contain_invalid = false;
-    for(const auto& i : cc->get_conds()) {
+    for (const auto& i : cc->get_conds()) {
         if (!valid_conditions.count(i.first)) {
             contain_invalid = true;
             err.err(cc->get_location(), "invalid enable_if condition");
@@ -80,7 +80,7 @@ void delete_disabled_node::report_not_supported_condition(error& err,
 
 void delete_disabled_node::scan(error& err, root* node) {
     std::vector<decl*> new_root_decls;
-    for(auto i : node->get_decls()) {
+    for (auto i : node->get_decls()) {
         switch (i->get_ast_type()) {
             case ast_type::ast_enum_decl:
                 if (check_conds(err, static_cast<enum_decl*>(i)->get_conds())) {

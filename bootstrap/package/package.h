@@ -46,10 +46,10 @@ struct colgm_package {
     std::unordered_map<std::string, colgm_module*> sub_mod;
 
     ~colgm_package() {
-        for(auto& i : sub_pack) {
+        for (auto& i : sub_pack) {
             delete i.second;
         }
-        for(auto& i : sub_mod) {
+        for (auto& i : sub_mod) {
             delete i.second;
         }
     }

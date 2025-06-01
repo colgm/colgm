@@ -130,7 +130,7 @@ call_index* call_index::clone() const {
 }
 
 call_func_args::~call_func_args() {
-    for(auto i : args) {
+    for (auto i : args) {
         delete i;
     }
 }
@@ -141,7 +141,7 @@ void call_func_args::accept(visitor* v) {
 
 call_func_args* call_func_args::clone() const {
     auto copy = new call_func_args(location);
-    for(auto i : args) {
+    for (auto i : args) {
         copy->args.push_back(i->clone());
     }
     return copy;
@@ -172,7 +172,7 @@ void initializer::accept(visitor* v) {
 
 initializer* initializer::clone() const {
     auto copy = new initializer(location);
-    for(auto i : pairs) {
+    for (auto i : pairs) {
         copy->pairs.push_back(i->clone());
     }
     return copy;
@@ -184,7 +184,7 @@ void call_path::accept(visitor* v) {
 
 call::~call() {
     delete head;
-    for(auto i : chain) {
+    for (auto i : chain) {
         delete i;
     }
 }
@@ -196,7 +196,7 @@ void call::accept(visitor* v) {
 call* call::clone() const {
     auto copy = new call(location);
     copy->head = head->clone();
-    for(auto i : chain) {
+    for (auto i : chain) {
         copy->chain.push_back(i->clone());
     }
     return copy;

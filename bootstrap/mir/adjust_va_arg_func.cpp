@@ -15,10 +15,10 @@ void adjust_va_arg_func::adjust_posix_open() {
 }
 
 bool adjust_va_arg_func::run(mir_context* c) {
-    for(auto i : c->decls) {
+    for (auto i : c->decls) {
         used_funcs.insert({i->name, i});
     }
-    for(auto i : c->impls) {
+    for (auto i : c->impls) {
         used_funcs.insert({i->name, i});
     }
 

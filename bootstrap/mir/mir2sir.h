@@ -202,6 +202,7 @@ private:
 
 private:
     void generate_type_mapper();
+    void emit_tagged_union(const mir_context&);
     void emit_struct(const mir_context&);
     void emit_func_decl(const mir_context&);
     void emit_func_impl(const mir_context&);

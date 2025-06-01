@@ -21,7 +21,7 @@ void sir_struct::dump(std::ostream& out) const {
         return;
     }
     out << " = type { ";
-    for(usize i = 0; i<field_type.size(); ++i) {
+    for (usize i = 0; i<field_type.size(); ++i) {
         out << quoted_name(field_type[i]);
         if (i != field_type.size()-1) {
             out << ", ";
@@ -30,9 +30,33 @@ void sir_struct::dump(std::ostream& out) const {
     out << " }\n";
 }
 
+const auto sir_tagged_union::get_mangled_name() const {
+    const auto ty = type {
+        .name = name,
+        .loc_file = location.file
+    };
+    return quoted_name("tagged_union." + mangle(ty.full_path_name()));
+}
+
+void sir_tagged_union::dump(std::ostream& out) const {
+    out << "%" << get_mangled_name();
+    if (member_type.empty()) {
+        out << " = type { i64 }\n";
+        return;
+    }
+    out << " = type { i64, ";
+    for (usize i = 0; i<member_type.size(); ++i) {
+        out << quoted_name(member_type[i]);
+        if (i != member_type.size()-1) {
+            out << ", ";
+        }
+    }
+    out << " }\n";
+}
+
 void sir_func::dump_attributes(std::ostream& out) const {
     bool contain_frame_pointer_attr = false;
-    for(const auto& i : attributes) {
+    for (const auto& i : attributes) {
         out << " " << i;
         if (i.find("frame-pointer") != std::string::npos) {
             contain_frame_pointer_attr = true;
@@ -51,7 +75,7 @@ void sir_func::dump_attributes(std::ostream& out) const {
 void sir_func::dump(std::ostream& out) const {
     out << (block? "define ":"declare ");
     out << quoted_name(return_type) << " @" << get_mangled_name() << "(";
-    for(const auto& i : params) {
+    for (const auto& i : params) {
         out << quoted_name(i.second) << " %" << i.first;
         if (i.first != params.back().first) {
             out << ", ";
@@ -128,7 +152,7 @@ void sir_context::dump_builtin_time(std::ostream& out) const {
 }
 
 void sir_context::dump_struct_size_method(std::ostream& out) const {
-    for(const auto& st : struct_decls) {
+    for (const auto& st : struct_decls) {
         const auto st_type = type {
             .name = st->get_name(),
             .loc_file = st->get_file()
@@ -142,7 +166,7 @@ void sir_context::dump_struct_size_method(std::ostream& out) const {
 }
 
 void sir_context::dump_struct_alloc_method(std::ostream& out) const {
-    for(const auto st: struct_decls) {
+    for (const auto st: struct_decls) {
         const auto st_type = type {
             .name = st->get_name(),
             .loc_file = st->get_file()
@@ -166,10 +190,13 @@ void sir_context::dump_code(std::ostream& out) {
     dump_target_tripple(out);
 
     // generate declarations of structs
-    for(auto i : struct_decls) {
+    for (auto i : tagged_union_decls) {
+         i->dump(out);
+    }
+    for (auto i : struct_decls) {
         i->dump(out);
     }
-    if (struct_decls.size()) {
+    if (tagged_union_decls.size() || struct_decls.size()) {
         out << "\n";
     }
 
@@ -185,7 +212,7 @@ void sir_context::dump_code(std::ostream& out) {
     }
 
     // generate function declarations for normal functions or libc functions
-    for(auto i : func_decls) {
+    for (auto i : func_decls) {
         i->dump(out);
     }
     if (func_decls.size()) {

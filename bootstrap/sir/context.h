@@ -34,6 +34,26 @@ public:
     auto get_size() const { return size; }
 };
 
+class sir_tagged_union {
+private:
+    std::string name;
+    span location;
+    std::vector<std::string> member_type;
+    u64 size;
+
+public:
+    sir_tagged_union(const std::string& n, const span& loc, u64 s):
+        name(n), location(loc), size(s) {}
+    const auto get_mangled_name() const;
+    void dump(std::ostream&) const;
+    const auto& get_name() const { return name; }
+    const auto& get_location() const { return location; }
+    const auto& get_file() const { return location.file; }
+    void add_member_type(const std::string& type) { member_type.push_back(type); }
+    const auto& get_member_type() const { return member_type; }
+    auto get_size() const { return size; }
+};
+
 class sir_func {
 private:
     std::string name;
@@ -69,6 +89,7 @@ public:
 
 struct sir_context {
 public:
+    std::vector<sir_tagged_union*> tagged_union_decls;
     std::vector<sir_struct*> struct_decls;
     std::vector<sir_func*> func_decls;
     std::vector<sir_func*> func_impls;
@@ -89,19 +110,22 @@ private:
 
 public:
     ~sir_context() {
-        for(auto i : struct_decls) {
+        for (auto i : tagged_union_decls) {
             delete i;
         }
-        for(auto i : func_decls) {
+        for (auto i : struct_decls) {
             delete i;
         }
-        for(auto i : func_impls) {
+        for (auto i : func_decls) {
             delete i;
         }
-        for(auto i : named_metadata) {
+        for (auto i : func_impls) {
             delete i;
         }
-        for(auto i : debug_info) {
+        for (auto i : named_metadata) {
+            delete i;
+        }
+        for (auto i : debug_info) {
             delete i;
         }
     }

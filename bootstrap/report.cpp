@@ -62,7 +62,7 @@ void flstream::load(const std::string& f) {
         std::exit(1);
     }
     
-    while(!in.eof()) {
+    while (!in.eof()) {
         std::string line;
         std::getline(in, line);
         res.push_back(line);
@@ -93,7 +93,7 @@ void error::err(const span& loc, const std::string& info) {
 
     std::cerr << cyan << iden << " | " << reset << "\n";
 
-    for(u32 line = loc.begin_line; line<=loc.end_line; ++line) {
+    for (u32 line = loc.begin_line; line<=loc.end_line; ++line) {
         // skip line 0
         if (!line) {
             continue;
@@ -122,25 +122,25 @@ void error::err(const span& loc, const std::string& info) {
         // output underline
         std::cerr << cyan << iden << " | " << reset;
         if (loc.begin_line==loc.end_line) {
-            for(u32 i = 0; i<loc.begin_column; ++i) {
+            for (u32 i = 0; i<loc.begin_column; ++i) {
                 std::cerr << char(" \t"[code[i]=='\t']);
             }
-            for(u32 i = loc.begin_column; i<loc.end_column; ++i) {
+            for (u32 i = loc.begin_column; i<loc.end_column; ++i) {
                 std::cerr << red << (code[i]=='\t'? "^^^^":"^") << reset;
             }
         } else if (line==loc.begin_line) {
-            for(u32 i = 0; i<loc.begin_column; ++i) {
+            for (u32 i = 0; i<loc.begin_column; ++i) {
                 std::cerr << char(" \t"[code[i]=='\t']);
             }
-            for(u32 i = loc.begin_column; i<code.size(); ++i) {
+            for (u32 i = loc.begin_column; i<code.size(); ++i) {
                 std::cerr << red << (code[i]=='\t'? "^^^^":"^") << reset;
             }
         } else if (loc.begin_line<line && line<loc.end_line) {
-            for(u32 i = 0; i<code.size(); ++i) {
+            for (u32 i = 0; i<code.size(); ++i) {
                 std::cerr << red << (code[i]=='\t'? "^^^^":"^");
             }
         } else {
-            for(u32 i = 0; i<loc.end_column; ++i) {
+            for (u32 i = 0; i<loc.end_column; ++i) {
                 std::cerr << red << (code[i]=='\t'? "^^^^":"^");
             }
         }
@@ -165,7 +165,7 @@ void error::warn(const span& loc, const std::string& info) {
     const usize maxlen = std::to_string(loc.end_line).length();
     const std::string iden = identation(maxlen);
 
-    for(u32 line = loc.begin_line; line<=loc.end_line; ++line) {
+    for (u32 line = loc.begin_line; line<=loc.end_line; ++line) {
         // skip line 0
         if (!line) {
             continue;
@@ -194,25 +194,25 @@ void error::warn(const span& loc, const std::string& info) {
         // output underline
         std::cerr << cyan << iden << " | " << reset;
         if (loc.begin_line==loc.end_line) {
-            for(u32 i = 0; i<loc.begin_column; ++i) {
+            for (u32 i = 0; i<loc.begin_column; ++i) {
                 std::cerr << char(" \t"[code[i]=='\t']);
             }
-            for(u32 i = loc.begin_column; i<loc.end_column; ++i) {
+            for (u32 i = loc.begin_column; i<loc.end_column; ++i) {
                 std::cerr << orange << (code[i]=='\t'? "^^^^":"^") << reset;
             }
         } else if (line==loc.begin_line) {
-            for(u32 i = 0; i<loc.begin_column; ++i) {
+            for (u32 i = 0; i<loc.begin_column; ++i) {
                 std::cerr << char(" \t"[code[i]=='\t']);
             }
-            for(u32 i = loc.begin_column; i<code.size(); ++i) {
+            for (u32 i = loc.begin_column; i<code.size(); ++i) {
                 std::cerr << orange << (code[i]=='\t'? "^^^^":"^") << reset;
             }
         } else if (loc.begin_line<line && line<loc.end_line) {
-            for(u32 i = 0; i<code.size(); ++i) {
+            for (u32 i = 0; i<code.size(); ++i) {
                 std::cerr << orange << (code[i]=='\t'? "^^^^":"^");
             }
         } else {
-            for(u32 i = 0; i<loc.end_column; ++i) {
+            for (u32 i = 0; i<loc.end_column; ++i) {
                 std::cerr << orange << (code[i]=='\t'? "^^^^":"^");
             }
         }

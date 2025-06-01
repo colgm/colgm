@@ -8,10 +8,10 @@ bool visitor::visit_node(node* node) {
 }
 
 bool visitor::visit_root(root* node) {
-    for(auto i : node->get_use_stmts()) {
+    for (auto i : node->get_use_stmts()) {
         i->accept(this);
     }
-    for(auto i : node->get_decls()) {
+    for (auto i : node->get_decls()) {
         i->accept(this);
     }
     return true;
@@ -38,7 +38,7 @@ bool visitor::visit_type_def(type_def* node) {
 }
 
 bool visitor::visit_generic_type_list(generic_type_list* node) {
-    for(auto i : node->get_types()) {
+    for (auto i : node->get_types()) {
         i->accept(this);
     }
     return true;
@@ -46,7 +46,7 @@ bool visitor::visit_generic_type_list(generic_type_list* node) {
 
 bool visitor::visit_enum_decl(enum_decl* node) {
     node->get_name()->accept(this);
-    for(const auto& i : node->get_member()) {
+    for (const auto& i : node->get_member()) {
         i.name->accept(this);
         if (i.value) {
             i.value->accept(this);
@@ -65,14 +65,14 @@ bool visitor::visit_struct_decl(struct_decl* node) {
     if (node->get_generic_types()) {
         node->get_generic_types()->accept(this);
     }
-    for(auto i : node->get_fields()) {
+    for (auto i : node->get_fields()) {
         i->accept(this);
     }
     return true;
 }
 
 bool visitor::visit_tagged_union_decl(tagged_union_decl* node) {
-    for(auto i : node->get_members()) {
+    for (auto i : node->get_members()) {
         i->accept(this);
     }
     return true;
@@ -87,7 +87,7 @@ bool visitor::visit_param(param* node) {
 }
 
 bool visitor::visit_param_list(param_list* node) {
-    for(auto i : node->get_params()) {
+    for (auto i : node->get_params()) {
         i->accept(this);
     }
     return true;
@@ -109,7 +109,7 @@ bool visitor::visit_impl_struct(impl_struct* node) {
     if (node->get_generic_types()) {
         node->get_generic_types()->accept(this);
     }
-    for(auto i : node->get_methods()) {
+    for (auto i : node->get_methods()) {
         i->accept(this);
     }
     return true;
@@ -182,7 +182,7 @@ bool visitor::visit_call_index(call_index* node) {
 }
 
 bool visitor::visit_call_func_args(call_func_args* node) {
-    for(auto i : node->get_args()) {
+    for (auto i : node->get_args()) {
         i->accept(this);
     }
     return true;
@@ -203,7 +203,7 @@ bool visitor::visit_init_pair(init_pair* node) {
 }
 
 bool visitor::visit_initializer(initializer* node) {
-    for(auto i : node->get_pairs()) {
+    for (auto i : node->get_pairs()) {
         i->accept(this);
     }
     return true;
@@ -215,7 +215,7 @@ bool visitor::visit_call_path(call_path* node) {
 
 bool visitor::visit_call(call* node) {
     node->get_head()->accept(this);
-    for(auto i : node->get_chain()) {
+    for (auto i : node->get_chain()) {
         i->accept(this);
     }
     return true;
@@ -233,10 +233,10 @@ bool visitor::visit_stmt(stmt* node) {
 }
 
 bool visitor::visit_use_stmt(use_stmt* node) {
-    for(auto i : node->get_module_path()) {
+    for (auto i : node->get_module_path()) {
         i->accept(this);
     }
-    for(auto i : node->get_import_symbol()) {
+    for (auto i : node->get_import_symbol()) {
         i->accept(this);
     }
     return true;
@@ -253,7 +253,7 @@ bool visitor::visit_definition(definition* node) {
 }
 
 bool visitor::visit_cond_stmt(cond_stmt* node) {
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         i->accept(this);
     }
     return true;
@@ -275,7 +275,7 @@ bool visitor::visit_match_case(match_case* node) {
 
 bool visitor::visit_match_stmt(match_stmt* node) {
     node->get_value()->accept(this);
-    for(auto i : node->get_cases()) {
+    for (auto i : node->get_cases()) {
         i->accept(this);
     }
     return true;
@@ -344,7 +344,7 @@ bool visitor::visit_break_stmt(break_stmt* node) {
 }
 
 bool visitor::visit_code_block(code_block* node) {
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         i->accept(this);
     }
     return true;

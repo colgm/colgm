@@ -55,7 +55,7 @@ private:
     }
     std::string leftpad(u32 num, usize len) {
         auto tmp = std::to_string(num);
-        while(tmp.length()<len) {
+        while (tmp.length()<len) {
             tmp = " " + tmp;
         }
         return tmp;

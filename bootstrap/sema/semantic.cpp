@@ -16,7 +16,7 @@ namespace colgm {
 void semantic::report_unreachable_statements(code_block* node) {
     bool flag_block_ended = false;
     std::vector<stmt*> unreachable_statements = {};
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         if (flag_block_ended) {
             unreachable_statements.push_back(i);
         }
@@ -30,7 +30,7 @@ void semantic::report_unreachable_statements(code_block* node) {
         return;
     }
     auto unreachable_location = unreachable_statements.front()->get_location();
-    for(auto i : unreachable_statements) {
+    for (auto i : unreachable_statements) {
         const auto& location = i->get_location();
         unreachable_location.end_column = location.end_column;
         unreachable_location.end_line = location.end_line;
@@ -46,7 +46,7 @@ void semantic::report_unreachable_statements(code_block* node) {
 void semantic::report_top_level_block_has_no_return(code_block* node,
                                                     const colgm_func& func) {
     bool flag_has_return = false;
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         if (i->is(ast_type::ast_ret_stmt)) {
             flag_has_return = true;
             break;
@@ -638,7 +638,7 @@ void semantic::check_static_call_args(const colgm_func& func,
         return;
     }
     size_t index = 0;
-    for(auto i : node->get_args()) {
+    for (auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
         const auto& param = func.params.at(func.ordered_params[index]);
         // do not report if infer is error, because it must be reported before
@@ -667,7 +667,7 @@ void semantic::check_method_call_args(const colgm_func& func,
 
     // check args
     size_t index = 1;
-    for(auto i : node->get_args()) {
+    for (auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
         const auto& param = func.params.at(func.ordered_params[index]);
         // do not report if infer is error, because it must be reported before
@@ -696,14 +696,14 @@ type semantic::resolve_call_id(call_id* node) {
     }
     if (node->get_generic_types()) {
         std::vector<type> types;
-        for(auto i : node->get_generic_types()->get_types()) {
+        for (auto i : node->get_generic_types()->get_types()) {
             types.push_back(tr.resolve(i));
         }
         std::string name = node->get_id()->get_name();
         name += "<";
-        for(const auto& i : types) {
+        for (const auto& i : types) {
             name += i.full_path_name();
-            for(auto j = 0; j < i.pointer_depth; ++j) {
+            for (auto j = 0; j < i.pointer_depth; ++j) {
                 name += "*";
             }
             name += ",";
@@ -849,7 +849,7 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
     }
 
     const auto& st = domain.structs.at(prev.name_for_search());
-    for(auto i : node->get_pairs()) {
+    for (auto i : node->get_pairs()) {
         const auto& field = i->get_field()->get_name();
         if (!st.field.count(field)) {
             rp.report(i,
@@ -1021,7 +1021,7 @@ type semantic::resolve_call(call* node) {
     }
 
     // resolve call chain
-    for(auto i : node->get_chain()) {
+    for (auto i : node->get_chain()) {
         if (i->get_ast_type() != ast_type::ast_call_func_args &&
             infer.is_function()) {
             rp.report(i, "function should be called before.");
@@ -1086,7 +1086,7 @@ bool semantic::check_valid_left_value(expr* node) {
         return false;
     }
     const auto mem_get_node = reinterpret_cast<call*>(node);
-    for(auto i : mem_get_node->get_chain()) {
+    for (auto i : mem_get_node->get_chain()) {
         if (i->is(ast_type::ast_initializer)) {
             rp.report(i, "bad left value: should not contain initializer.");
             return false;
@@ -1101,7 +1101,7 @@ bool semantic::check_valid_left_value(expr* node) {
 
     expr* seg = nullptr;
     bool maybe_invalid_assignment = false;
-    for(auto i : mem_get_node->get_chain()) {
+    for (auto i : mem_get_node->get_chain()) {
         if (i->is(ast_type::ast_call_func_args) &&
             !i->get_resolve().is_pointer()) {
             seg = i;
@@ -1315,7 +1315,7 @@ void semantic::resolve_if_stmt(if_stmt* node, const colgm_func& func_self) {
 }
 
 void semantic::resolve_cond_stmt(cond_stmt* node, const colgm_func& func_self) {
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         resolve_if_stmt(i, func_self);
     }
 }
@@ -1397,7 +1397,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
 
     bool default_found = false;
     std::unordered_set<size_t> used_values;
-    for(auto i : node->get_cases()) {
+    for (auto i : node->get_cases()) {
         if (check_is_match_default(i->get_value())) {
             i->get_value()->set_resolve_type(type::default_match_type());
             default_found = true;
@@ -1757,7 +1757,7 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
 void semantic::resolve_code_block(code_block* node, const colgm_func& func_self) {
     // should not be called to resolve function's top code block
     ctx.push_level();
-    for(auto i : node->get_stmts()) {
+    for (auto i : node->get_stmts()) {
         resolve_statement(i, func_self);
         if (i->is(ast_type::ast_ret_stmt) ||
             i->is(ast_type::ast_continue_stmt) ||
@@ -1814,10 +1814,10 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
     const auto& method_self = struct_self.method.count(node->get_name())
         ? struct_self.method.at(node->get_name())
         : struct_self.static_method.at(node->get_name());
-    for(const auto& p : method_self.ordered_params) {
+    for (const auto& p : method_self.ordered_params) {
         ctx.add_local(p, method_self.params.at(p));
     }
-    for(auto i : node->get_code_block()->get_stmts()) {
+    for (auto i : node->get_code_block()->get_stmts()) {
         resolve_statement(i, method_self);
         if (i->is(ast_type::ast_ret_stmt) ||
             i->is(ast_type::ast_continue_stmt) ||
@@ -1848,14 +1848,14 @@ void semantic::resolve_impl(impl_struct* node) {
 
     const auto& struct_self = domain.structs.at(node->get_struct_name());
     impl_struct_name = node->get_struct_name();
-    for(auto i : node->get_methods()) {
+    for (auto i : node->get_methods()) {
         resolve_method(i, struct_self);
     }
     impl_struct_name = "";
 }
 
 void semantic::resolve_function_block(root* ast_root) {
-    for(auto i : ast_root->get_decls()) {
+    for (auto i : ast_root->get_decls()) {
         if (i->is(ast_type::ast_impl)) {
             resolve_impl(reinterpret_cast<impl_struct*>(i));
         }

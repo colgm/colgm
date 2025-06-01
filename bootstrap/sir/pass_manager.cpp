@@ -10,7 +10,7 @@
 namespace colgm {
 
 sir_pass_manager::~sir_pass_manager() {
-    for(auto i : passes) {
+    for (auto i : passes) {
         delete i;
     }
 }
@@ -22,7 +22,7 @@ void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
     passes.push_back(new detect_redef_extern);
     passes.push_back(new primitive_size_opt);
     passes.push_back(new replace_struct_ptr_call);
-    for(auto i : passes) {
+    for (auto i : passes) {
         if (!i->run(sctx)) {
             break;
         }

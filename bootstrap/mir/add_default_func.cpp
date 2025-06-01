@@ -48,10 +48,10 @@ void add_default_func::add_main_impl() {
 
 bool add_default_func::run(mir_context* c) {
     ctx = c;
-    for(auto i : ctx->decls) {
+    for (auto i : ctx->decls) {
         used_funcs.insert({i->name, i});
     }
-    for(auto i : ctx->impls) {
+    for (auto i : ctx->impls) {
         used_funcs.insert({i->name, i});
     }
 
