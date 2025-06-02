@@ -938,8 +938,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
             );
             return type::error_type();
         }
-    }
-    if (domain.enums.count(prev.name_for_search()) && prev.is_global) {
+    } else if (domain.enums.count(prev.name_for_search()) && prev.is_global) {
         const auto& en = domain.enums.at(prev.name_for_search());
         if (en.members.count(node->get_name())) {
             auto res = prev;
@@ -953,9 +952,23 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
             "\" in \"" + prev.name_for_search() + "\"."
         );
         return type::error_type();
+    } else if (domain.tagged_unions.count(prev.name_for_search()) && prev.is_global) {
+        const auto& tu = domain.tagged_unions.at(prev.name_for_search());
+        if (tu.member.count(node->get_name())) {
+            auto res = tu.member.at(node->get_name());
+            node->set_resolve_type(res);
+            return res;
+        }
+        rp.report(node,
+            "cannot find tagged union member \"" + node->get_name() +
+            "\" in \"" + prev.name_for_search() + "\"."
+        );
     }
 
-    rp.report(node, "cannot find path from \"" + prev.to_string() + "\".");
+    rp.report(node,
+        "cannot find path \"" + node->get_name() +
+        "\" in \"" + prev.to_string() + "\"."
+    );
     return type::error_type();
 }
 
@@ -1073,7 +1086,7 @@ type semantic::resolve_call(call* node) {
     node->set_resolve_type(infer);
     if (infer.is_global) {
         rp.report(node,
-            "get global \"" + infer.to_string() + "\" type, " +
+            "get global symbol \"" + infer.to_string() + "\", " +
             "but not an instance."
         );
     }
