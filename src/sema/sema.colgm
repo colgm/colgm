@@ -1306,6 +1306,13 @@ impl sema {
                     continue;
                 }
             }
+            // struct foo { bar: [0, 1, 2] } is not allowed
+            if (infer.is_array) {
+                self->err->error(
+                    tmp->base.location.__ptr__(),
+                    "cannot initialize array, but it's already filled with 0 by default"
+                );
+            }
         }
 
         prev_name_for_search.delete();

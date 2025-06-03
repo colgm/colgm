@@ -875,6 +875,12 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
                 continue;
             }
         }
+        // struct foo { bar: [0, 1, 2] } is not allowed
+        if (infer.is_array) {
+            rp.report(i,
+                "cannot initialize array, but it's already filled with 0 by default."
+            );
+        }
     }
 
     auto copy = prev;
