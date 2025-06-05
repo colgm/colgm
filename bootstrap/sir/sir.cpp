@@ -56,6 +56,9 @@ sir_block::~sir_block() {
     for (auto i : allocas) {
         delete i;
     }
+    for (auto i : move_register) {
+        delete i;
+    }
     for (auto i : stmts) {
         delete i;
     }
