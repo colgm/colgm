@@ -54,7 +54,7 @@ impl sema {
     }
 
     pub func delete(self) {
-        // nothing to do now
+        self->impl_struct_name.delete();
     }
 }
 
@@ -254,6 +254,7 @@ impl sema {
             infer.delete();
             return type::bool_type();
         }
+        infer.delete();
         return type::bool_type();
     }
 
@@ -965,6 +966,7 @@ impl sema {
                     infer_name.delete();
                 }
             }
+            infer.delete();
         }
     }
 
@@ -1004,6 +1006,7 @@ impl sema {
                     infer_name.delete();
                 }
             }
+            infer.delete();
         }
     }
 
@@ -1303,6 +1306,7 @@ impl sema {
                     info.delete();
                     e_name.delete();
                     i_name.delete();
+                    infer.delete();
                     continue;
                 }
             }
@@ -1313,6 +1317,7 @@ impl sema {
                     "cannot initialize array, but it's already filled with 0 by default"
                 );
             }
+            infer.delete();
         }
 
         prev_name_for_search.delete();
@@ -1721,8 +1726,6 @@ impl sema {
 
 impl sema {
     func check_defined_variable_is_void(self, n: ast_definition*, ty: type*) {
-        var ty_path = ty->full_path_name(self->pkg, true);
-        ty_path.delete();
         if (!ty->is_void()) {
             return;
         }
@@ -2359,8 +2362,8 @@ impl sema {
 
         self->ctx->push_scope_level();
         self->resolve_definition(n->lowered_init, func_self);
-        self->resolve_expression(n->lowered_condition);
-        self->resolve_expression(n->lowered_update);
+        self->resolve_expression(n->lowered_condition).delete();
+        self->resolve_expression(n->lowered_update).delete();
         if (n->body != nil) {
             self->in_loop_level += 1;
             self->resolve_code_block(n->body, func_self);
@@ -2505,6 +2508,7 @@ impl sema {
                 rt.delete();
                 return;
             }
+            rt.delete();
         }
 
         // check iter.next() method
@@ -2524,14 +2528,15 @@ impl sema {
                 rt.delete();
                 return;
             }
+            rt.delete();
         }
 
         self->lowering_foreach(n);
 
         self->ctx->push_scope_level();
         self->resolve_definition(n->lowered_init, func_self);
-        self->resolve_expression(n->lowered_condition);
-        self->resolve_expression(n->lowered_update);
+        self->resolve_expression(n->lowered_condition).delete();
+        self->resolve_expression(n->lowered_update).delete();
         if (n->body != nil) {
             self->in_loop_level += 1;
             self->resolve_code_block(n->body, func_self);

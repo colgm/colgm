@@ -1996,8 +1996,9 @@ impl ast_func_decl {
             free(n => i8*);
         }
         foreach (var i; self->conds) {
-            i.get()->delete();
-            free(i.get() => i8*);
+            var n = i.get() => ast*;
+            n->delete();
+            free(n => i8*);
         }
         self->conds.delete();
     }
@@ -2116,6 +2117,12 @@ impl ast_func_decl {
             self->monomorphic_name.append_str(is_non_pointer_cond.__ptr__());
             self->monomorphic_name.append_char(' ');
         }
+
+        trivial_cond.delete();
+        non_trivial_cond.delete();
+        is_pointer_cond.delete();
+        is_non_pointer_cond.delete();
+
         self->monomorphic_name.append_str(self->name.__ptr__());
 
         return self->monomorphic_name.__ptr__();

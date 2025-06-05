@@ -1600,6 +1600,7 @@ void semantic::resolve_forindex(forindex* node, const colgm_func& func_self) {
         resolve_code_block(node->get_body(), func_self);
         --in_loop_level;
     }
+    ctx.dump_pop_level(node->get_location());
     ctx.pop_level();
 }
 
@@ -1691,6 +1692,7 @@ void semantic::resolve_foreach(foreach* node, const colgm_func& func_self) {
         resolve_code_block(node->get_body(), func_self);
         --in_loop_level;
     }
+    ctx.dump_pop_level(node->get_location());
     ctx.pop_level();
 }
 
@@ -1699,6 +1701,7 @@ void semantic::resolve_in_stmt_expr(in_stmt_expr* node, const colgm_func& func_s
 }
 
 void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
+    ctx.dump_return_level(node->get_location());
     if (!node->get_value() && func_self.return_type!=type::void_type()) {
         rp.report(node,
             "expected return type \"" + func_self.return_type.to_string() +
@@ -1765,6 +1768,8 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
     case ast_type::ast_break_stmt:
         if (!in_loop_level) {
             rp.report(node, "this statement should be used inside a loop.");
+        } else {
+            ctx.dump_pop_level(node->get_location());
         }
         break;
     default:
@@ -1785,6 +1790,7 @@ void semantic::resolve_code_block(code_block* node, const colgm_func& func_self)
             break;
         }
     }
+    ctx.dump_pop_level(node->get_location());
     ctx.pop_level();
 }
 
@@ -1821,6 +1827,7 @@ void semantic::resolve_global_func(func_decl* node) {
         }
     }
     report_top_level_block_has_no_return(node->get_code_block(), func_self);
+    ctx.dump_pop_level(node->get_location());
     ctx.pop_level();
 }
 
@@ -1846,6 +1853,7 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
         }
     }
     report_top_level_block_has_no_return(node->get_code_block(), method_self);
+    ctx.dump_pop_level(node->get_location());
     ctx.pop_level();
 }
 

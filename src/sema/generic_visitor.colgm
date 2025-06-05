@@ -220,6 +220,7 @@ impl generic_visitor {
             var r_type = self->tr.resolve(i.get() => ast_type_def*);
             g_data.generic_type.generics.push(r_type.__ptr__());
             g_data.types.insert(generic_template->get(i.index()), r_type.__ptr__());
+            r_type.delete();
         }
 
         self->insert_count += self->insert_generic_type(g_data.__ptr__());
@@ -671,11 +672,13 @@ impl generic_visitor {
         var dm = self->ctx->get_domain(domain_file);
         if (dm->generic_structs.has(g_data->generic_type.name.__ptr__())) {
             if (dm->structs.has(generic_name.__ptr__())) {
+                generic_name.delete();
                 return 0;
             }
             self->insert_struct(dm, g_data, generic_name.__ptr__());
         } else if (dm->generic_functions.has(g_data->generic_type.name.__ptr__())) {
             if (dm->functions.has(generic_name.__ptr__())) {
+                generic_name.delete();
                 return 0;
             }
             self->insert_function(dm, g_data, generic_name.__ptr__());

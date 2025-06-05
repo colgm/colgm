@@ -181,6 +181,7 @@ private:
 
 public:
     parse(error& e): ptr(0), err(e), result(nullptr), toks(nullptr) {}
+    ~parse() { delete result; }
     const error& analyse(const std::vector<token>&);
     auto get_result() { return result; }
 };
