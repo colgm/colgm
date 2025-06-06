@@ -47,8 +47,16 @@ bool generic_list_look_ahead::check() {
     return true;
 }
 
+void parse::try_match_semi() {
+    if (look_ahead(tok::tk_semi)) {
+        next();
+        return;
+    }
+    err.err(toks[ptr ? ptr - 1 : ptr].loc, "expected \";\".");
+}
+
 void parse::match(tok type) {
-    if (type==toks[ptr].type) {
+    if (type == toks[ptr].type) {
         next();
         return;
     }
@@ -56,26 +64,26 @@ void parse::match(tok type) {
         case tok::tk_id:
             err.err(
                 toks[ptr].loc,
-                "expected identifier but get \"" + toks[ptr].str + "\"."
+                "expected identifier, but found \"" + toks[ptr].str + "\"."
             );
             break;
         case tok::tk_num:
             err.err(
                 toks[ptr].loc,
-                "expected number but get \"" + toks[ptr].str + "\"."
+                "expected number, but found \"" + toks[ptr].str + "\"."
             );
             break;
         case tok::tk_str:
             err.err(
                 toks[ptr].loc,
-                "expected string but get \"" + toks[ptr].str + "\"."
+                "expected string, but found \"" + toks[ptr].str + "\"."
             );
             break;
         default:
             err.err(
                 toks[ptr].loc,
                 "expected \"" + tokname.at(type) +
-                "\" but get \"" + toks[ptr].str + "\"."
+                "\", but found \"" + toks[ptr].str + "\"."
             );
             break;
     }
@@ -849,7 +857,7 @@ use_stmt* parse::use_stmt_gen() {
         match(tok::tk_mult);
     }
     update_location(res);
-    match(tok::tk_semi);
+    try_match_semi();
     return res;
 }
 
@@ -864,7 +872,7 @@ definition* parse::definition_gen() {
     }
     match(tok::tk_eq);
     res->set_init_value(calculation_gen());
-    match(tok::tk_semi);
+    try_match_semi();
     update_location(res);
     return res;
 }
@@ -1033,7 +1041,7 @@ code_block* parse::block_gen(bool flag_allow_single_stmt_without_brace) {
 in_stmt_expr* parse::in_stmt_expr_gen() {
     auto res = new in_stmt_expr(toks[ptr].loc);
     res->set_expr(calculation_gen());
-    match(tok::tk_semi);
+    try_match_semi();
     update_location(res);
     return res;
 }
@@ -1044,7 +1052,7 @@ ret_stmt* parse::return_gen() {
     if (!look_ahead(tok::tk_semi)) {
         res->set_value(calculation_gen());
     }
-    match(tok::tk_semi);
+    try_match_semi();
     update_location(res);
     return res;
 }
@@ -1052,14 +1060,14 @@ ret_stmt* parse::return_gen() {
 continue_stmt* parse::continue_gen() {
     auto res = new continue_stmt(toks[ptr].loc);
     match(tok::tk_cont);
-    match(tok::tk_semi);
+    try_match_semi();
     return res;
 }
 
 break_stmt* parse::break_gen() {
     auto res = new break_stmt(toks[ptr].loc);
     match(tok::tk_brk);
-    match(tok::tk_semi);
+    try_match_semi();
     return res;
 }
 
