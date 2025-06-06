@@ -137,6 +137,13 @@ impl parser {
         return self->toks->get(self->index);
     }
 
+    func last_tok_loc(self) -> span* {
+        if (self->index == 0) {
+            return self->this_tok_loc();
+        }
+        return self->toks->get(self->index - 1)->location.__ptr__();
+    }
+
     func this_tok_loc(self) -> span* {
         return self->this_tok()->location.__ptr__();
     }
@@ -146,7 +153,7 @@ impl parser {
             return;
         }
 
-        var last_loc = self->get_tok(self->index - 1)->location.__ptr__();
+        var last_loc = self->last_tok_loc();
         node->location.end_line = last_loc->end_line;
         node->location.end_column = last_loc->end_column;
     }
@@ -179,6 +186,14 @@ impl parser {
         self->index += 1;
     }
 
+    func try_match_semi(self) {
+        if (self->this_tok()->kind == tok_kind::tok_semi) {
+            self->next();
+            return;
+        }
+        self->err->error(self->last_tok_loc(), "expected \";\"");
+    }
+
     func match_token(self, kind: tok_kind) {
         var tp = self->this_tok()->kind;
         if (tp == kind) {
@@ -189,13 +204,13 @@ impl parser {
         var message = str::from("expected ");
         match (kind) {
             tok_kind::tok_id => {
-                message.append_i8_vec("an identifier");
+                message.append_i8_vec("identifier");
             }
             tok_kind::tok_num => {
-                message.append_i8_vec("a number");
+                message.append_i8_vec("number");
             }
             tok_kind::tok_str => {
-                message.append_i8_vec("a string");
+                message.append_i8_vec("string");
             }
             _ => {
                 message.append_i8_vec("\"");
@@ -204,11 +219,15 @@ impl parser {
             }
         }
 
-        message.append_i8_vec(" here, but ");
+        message.append_i8_vec(", ");
         if (self->this_tok()->kind == tok_kind::tok_eof) {
-            message.append_i8_vec("reached end of file");
+            message.append_i8_vec("but reached end of file");
         } else {
-            message.append_i8_vec("got \"");
+            message.append_i8_vec("found ");
+            if (self->this_tok()->is_keyword()) {
+                message.append_i8_vec("keyword ");
+            }
+            message.append_i8_vec("\"");
             message.append_str(self->this_tok()->content.__ptr__());
             message.append_i8_vec("\"");
         }
@@ -942,7 +961,7 @@ impl parser {
             self->match_token(tok_kind::tok_mul);
         }
         self->update_location(res => ast*);
-        self->match_token(tok_kind::tok_semi);
+        self->try_match_semi();
         return res;
     }
 
@@ -1128,7 +1147,7 @@ impl parser {
         self->match_token(tok_kind::tok_eq);
         res->value = self->calculation_gen();
         self->update_location(res => ast*);
-        self->match_token(tok_kind::tok_semi);
+        self->try_match_semi();
         return res;
     }
 
@@ -1263,7 +1282,7 @@ impl parser {
     func in_stmt_expr_gen(self) -> ast_in_stmt_expr* {
         var res = ast_in_stmt_expr::new(self->this_tok_loc());
         res->value = self->calculation_gen();
-        self->match_token(tok_kind::tok_semi);
+        self->try_match_semi();
         return res;
     }
 
@@ -1274,21 +1293,21 @@ impl parser {
             res->value = self->calculation_gen();
         }
         self->update_location(res => ast*);
-        self->match_token(tok_kind::tok_semi);
+        self->try_match_semi();
         return res;
     }
 
     func continue_gen(self) -> ast_continue_stmt* {
         var res = ast_continue_stmt::new(self->this_tok_loc());
         self->match_token(tok_kind::tok_continue);
-        self->match_token(tok_kind::tok_semi);
+        self->try_match_semi();
         return res;
     }
 
     func break_gen(self) -> ast_break_stmt* {
         var res = ast_break_stmt::new(self->this_tok_loc());
         self->match_token(tok_kind::tok_break);
-        self->match_token(tok_kind::tok_semi);
+        self->try_match_semi();
         return res;
     }
 }
