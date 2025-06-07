@@ -59,6 +59,7 @@ private:
         {tok::tk_func        , "func"    },
         {tok::tk_match       , "match"   },
         {tok::tk_const       , "const"   },
+        {tok::tk_defer       , "defer"   },
         {tok::tk_brk         , "break"   },
         {tok::tk_cont        , "continue"},
         {tok::tk_ret         , "return"  },

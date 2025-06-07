@@ -33,6 +33,7 @@ enum class tok:u32 {
     tk_func,         // keyword for definition of function
     tk_match,        // keyword for match
     tk_const,        // keyword for constant
+    tk_defer,        // keyword defer
     tk_brk,          // loop keyword break
     tk_cont,         // loop keyword continue
     tk_ret,          // function keyword return
@@ -127,6 +128,7 @@ private:
         {"func"    , tok::tk_func        },
         {"match"   , tok::tk_match       },
         {"const"   , tok::tk_const       },
+        {"defer"   , tok::tk_defer       },
         {"break"   , tok::tk_brk         },
         {"continue", tok::tk_cont        },
         {"return"  , tok::tk_ret         },
