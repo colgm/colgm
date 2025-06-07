@@ -114,6 +114,7 @@ private:
 
 private:
     void try_match_semi();
+    void try_match_rbrace();
     void match(tok);
     void next() {
         if (toks[ptr].type!=tok::tk_eof) {

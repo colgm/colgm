@@ -55,6 +55,14 @@ void parse::try_match_semi() {
     err.err(toks[ptr ? ptr - 1 : ptr].loc, "expected \";\".");
 }
 
+void parse::try_match_rbrace() {
+    if (look_ahead(tok::tk_rbrace)) {
+        next();
+        return;
+    }
+    err.err(toks[ptr ? ptr - 1 : ptr].loc, "expected \"}\".");
+}
+
 void parse::match(tok type) {
     if (type == toks[ptr].type) {
         next();
@@ -211,7 +219,7 @@ initializer* parse::initializer_gen() {
             break;
         }
     }
-    match(tok::tk_rbrace);
+    try_match_rbrace();
 
     update_location(res);
     return res;
@@ -630,7 +638,7 @@ enum_decl* parse::enum_gen(std::vector<cond_compile*>& conds,
             err.err(toks[ptr-1].loc, "expected ',' here.");
         }
     }
-    match(tok::tk_rbrace);
+    try_match_rbrace();
     update_location(res);
     return res;
 }
@@ -665,6 +673,10 @@ struct_decl* parse::struct_gen(std::vector<cond_compile*>& conds,
     }
     match(tok::tk_lbrace);
     while (!look_ahead(tok::tk_rbrace)) {
+        // error occurred
+        if (!look_ahead(tok::tk_id)) {
+            break;
+        }
         res->add_field(field_pair_gen());
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
@@ -674,7 +686,7 @@ struct_decl* parse::struct_gen(std::vector<cond_compile*>& conds,
             break;
         }
     }
-    match(tok::tk_rbrace);
+    try_match_rbrace();
     update_location(res);
     return res;
 }
@@ -708,6 +720,10 @@ tagged_union_decl* parse::tagged_union_gen(std::vector<cond_compile*>& conds,
 
     match(tok::tk_lbrace);
     while (!look_ahead(tok::tk_rbrace)) {
+        // error occurred
+        if (!look_ahead(tok::tk_id)) {
+            break;
+        }
         res->add_member(field_pair_gen());
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
@@ -717,7 +733,7 @@ tagged_union_decl* parse::tagged_union_gen(std::vector<cond_compile*>& conds,
             break;
         }
     }
-    match(tok::tk_rbrace);
+    try_match_rbrace();
     update_location(res);
     return res;
 }
@@ -822,7 +838,7 @@ impl_struct* parse::impl_gen(std::vector<cond_compile*>& conds,
         auto func = function_gen(func_conds, is_pub, false);
         res->add_method(func);
     }
-    match(tok::tk_rbrace);
+    try_match_rbrace();
     update_location(res);
     return res;
 }
@@ -848,7 +864,7 @@ use_stmt* parse::use_stmt_gen() {
                 break;
             }
         }
-        match(tok::tk_rbrace);
+        try_match_rbrace();
     } else if (!look_ahead(tok::tk_mult)) {
         auto tmp = res->get_module_path().back();
         res->get_module_path().pop_back();
@@ -924,7 +940,7 @@ match_stmt* parse::match_stmt_gen() {
         update_location(new_case);
         res->add_case(new_case);
     }
-    match(tok::tk_rbrace);
+    try_match_rbrace();
     update_location(res);
     return res;
 }
@@ -1033,7 +1049,7 @@ code_block* parse::block_gen(bool flag_allow_single_stmt_without_brace) {
             break;
         }
     }
-    match(tok::tk_rbrace);
+    try_match_rbrace();
     update_location(res);
     return res;
 }

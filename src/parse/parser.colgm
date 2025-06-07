@@ -186,6 +186,14 @@ impl parser {
         self->index += 1;
     }
 
+    func try_match_rbrace(self) {
+        if (self->this_tok()->kind == tok_kind::tok_rbrace) {
+            self->next();
+            return;
+        }
+        self->err->error(self->last_tok_loc(), "expected \"}\"");
+    }
+
     func try_match_semi(self) {
         if (self->this_tok()->kind == tok_kind::tok_semi) {
             self->next();
@@ -300,7 +308,7 @@ impl parser {
                 break;
             }
         }
-        self->match_token(tok_kind::tok_rbrace);
+        self->try_match_rbrace();
         self->update_location(res => ast*);
         return res;
     }
@@ -854,6 +862,10 @@ impl parser {
         }
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
+            // error occurred
+            if (!self->lookahead(tok_kind::tok_id)) {
+                break;
+            }
             res->fields.push(self->field_pair_gen());
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
@@ -861,7 +873,7 @@ impl parser {
                 break;
             }
         }
-        self->match_token(tok_kind::tok_rbrace);
+        self->try_match_rbrace();
         self->update_location(res => ast*);
         return res;
     }
@@ -885,6 +897,10 @@ impl parser {
 
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
+            // error occurred
+            if (!self->lookahead(tok_kind::tok_id)) {
+                break;
+            }
             res->members.push(self->field_pair_gen());
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
@@ -892,7 +908,7 @@ impl parser {
                 break;
             }
         }
-        self->match_token(tok_kind::tok_rbrace);
+        self->try_match_rbrace();
         self->update_location(res => ast*);
         return res;
     }
@@ -918,6 +934,10 @@ impl parser {
         self->match_token(tok_kind::tok_id);
         self->match_token(tok_kind::tok_lbrace);
         while (!self->lookahead(tok_kind::tok_rbrace)) {
+            // error occurred
+            if (!self->lookahead(tok_kind::tok_id)) {
+                break;
+            }
             res->members.push(self->enum_member_gen() => ast*);
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
@@ -925,7 +945,7 @@ impl parser {
                 break;
             }
         }
-        self->match_token(tok_kind::tok_rbrace);
+        self->try_match_rbrace();
         self->update_location(res => ast*);
         return res;
     }
@@ -952,7 +972,7 @@ impl parser {
                     break;
                 }
             }
-            self->match_token(tok_kind::tok_rbrace);
+            self->try_match_rbrace();
         } else if (!self->lookahead(tok_kind::tok_mul)) {
             var last = res->module_path.back();
             res->module_path.pop_back();
@@ -1072,7 +1092,7 @@ impl parser {
 
             conds.delete();
         }
-        self->match_token(tok_kind::tok_rbrace);
+        self->try_match_rbrace();
         self->update_location(res => ast*);
         return res;
     }
@@ -1093,7 +1113,7 @@ impl parser {
                 break;
             }
         }
-        self->match_token(tok_kind::tok_rbrace);
+        self->try_match_rbrace();
         self->update_location(res => ast*);
         return res;
     }
@@ -1213,7 +1233,7 @@ impl parser {
             new_case->body = self->block_gen(true);
             res->cases.push(new_case => ast*);
         }
-        self->match_token(tok_kind::tok_rbrace);
+        self->try_match_rbrace();
         self->update_location(res => ast*);
         return res;
     }
