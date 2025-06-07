@@ -29,6 +29,7 @@
 - [条件编译](#条件编译)
 - [标记联合](../spec/tagged_union.md)
 - [元组](../spec/tuple.md)
+- [Defer](../spec/defer.md)
 - [编译器库参考](./library_reference.md)
 
 ## 字面量
