@@ -1,5 +1,8 @@
 use std::vec::{ vec };
+use std::io::{ io };
 use ast::ast::*;
+
+use err::panic::{ panic };
 use err::report::{ report };
 
 struct scope {
@@ -67,6 +70,205 @@ impl replace_defer {
 
     pub func scan(e: report*, n: root*) {
         var rd = replace_defer::instance(e);
+        rd.visit_root(n);
         rd.delete();
+    }
+}
+
+impl replace_defer {
+    func add_top_scope(self) {
+        var s = scope::instance();
+        self->top_scopes.push(s.__ptr__());
+        s.delete();
+    }
+
+    func add_sub_scope(self) {
+        self->top_scopes.back()->new_scope();
+    }
+
+    func pop_top_scope(self) {
+        if (self->top_scopes.empty()) {
+            return;
+        }
+        self->top_scopes.pop_back();
+    }
+
+    func pop_sub_scope(self) {
+        self->top_scopes.back()->pop_scope();
+    }
+
+    func add_defer_stmt(self, n: ast_defer_stmt*) {
+        self->top_scopes.back()->scopes.back()->push(n);
+    }
+}
+
+impl replace_defer {
+    func visit_while_stmt(self, n: ast_while_stmt*) {
+        self->add_top_scope();
+        self->visit_code_block(n->body);
+        self->pop_top_scope();
+    }
+
+    func visit_for_stmt(self, n: ast_for_stmt*) {
+        self->add_top_scope();
+        self->visit_code_block(n->body);
+        self->pop_top_scope();
+    }
+
+    func visit_forindex_stmt(self, n: ast_forindex*) {
+        self->add_top_scope();
+        self->visit_code_block(n->body);
+        self->pop_top_scope();
+    }
+
+    func visit_foreach_stmt(self, n: ast_foreach*) {
+        self->add_top_scope();
+        self->visit_code_block(n->body);
+        self->pop_top_scope();
+    }
+
+    func visit_defer_stmt(self, n: ast_defer_stmt*) {
+        if (self->in_defer_block) {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "defer statement cannot be nested in defer block"
+            );
+            return;
+        }
+
+        self->in_defer_block = true;
+        self->add_top_scope();
+        self->visit_code_block(n->block);
+        self->pop_top_scope();
+        self->in_defer_block = false;
+    }
+
+    func visit_ret_stmt(self, n: ast_ret_stmt*) {
+        if (self->in_defer_block) {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "return statement cannot be nested in defer block"
+            );
+            return;
+        }
+    }
+
+    func visit_continue_stmt(self, n: ast_continue_stmt*) {
+        if (self->in_defer_block) {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "continue statement cannot be nested in defer block"
+            );
+            return;
+        }
+    }
+
+    func visit_break_stmt(self, n: ast_break_stmt*) {
+        if (self->in_defer_block) {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "break statement cannot be nested in defer block"
+            );
+            return;
+        }
+    }
+
+    func visit_cond_stmt(self, n: ast_cond_stmt*) {
+        foreach (var i; n->stmts) {
+            self->visit_stmt(i.get());
+        }
+    }
+
+    func visit_if_stmt(self, n: ast_if_stmt*) {
+        if (n->body == nil) {
+            return;
+        }
+        self->visit_code_block(n->body);
+    }
+
+    func visit_match_stmt(self, n: ast_match_stmt*) {
+        foreach (var i; n->cases) {
+            self->visit_stmt(i.get());
+        }
+    }
+
+    func visit_match_case(self, n: ast_match_case*) {
+        if (n->body == nil) {
+            return;
+        }
+        self->visit_code_block(n->body);
+    }
+
+    func visit_stmt(self, n: ast*) {
+        match (n->kind) {
+            ast_kind::ast_while_stmt =>
+                self->visit_while_stmt(n => ast_while_stmt*);
+            ast_kind::ast_for_stmt =>
+                self->visit_for_stmt(n => ast_for_stmt*);
+            ast_kind::ast_forindex =>
+                self->visit_forindex_stmt(n => ast_forindex*);
+            ast_kind::ast_foreach =>
+                self->visit_foreach_stmt(n => ast_foreach*);
+            ast_kind::ast_defer_stmt =>
+                self->visit_defer_stmt(n => ast_defer_stmt*);
+            ast_kind::ast_ret_stmt =>
+                self->visit_ret_stmt(n => ast_ret_stmt*);
+            ast_kind::ast_continue_stmt =>
+                self->visit_continue_stmt(n => ast_continue_stmt*);
+            ast_kind::ast_break_stmt =>
+                self->visit_break_stmt(n => ast_break_stmt*);
+            ast_kind::ast_cond_stmt =>
+                self->visit_cond_stmt(n => ast_cond_stmt*);
+            ast_kind::ast_if_stmt =>
+                self->visit_if_stmt(n => ast_if_stmt*);
+            ast_kind::ast_in_stmt_expr => {}
+            ast_kind::ast_definition => {}
+            ast_kind::ast_assignment => {}
+            ast_kind::ast_match_stmt =>
+                self->visit_match_stmt(n => ast_match_stmt*);
+            ast_kind::ast_match_case =>
+                self->visit_match_case(n => ast_match_case*);
+            _ => {
+                io::stdout().out(ast_kind_name(n->kind)).out(" is not supported\n");
+                panic("unsupported ast node");
+            }
+        }
+    }
+
+    func visit_code_block(self, n: ast_code_block*) {
+        foreach (var i; n->stmts) {
+            self->visit_stmt(i.get());
+        }
+    }
+
+    func visit_func_decl(self, n: ast_func_decl*) {
+        if (n->body == nil) {
+            return;
+        }
+
+        self->top_scopes.clear();
+        self->add_top_scope();
+        self->visit_code_block(n->body);
+        self->pop_top_scope();
+        self->top_scopes.clear();
+    }
+
+    func visit_impl(self, n: ast_impl*) {
+        foreach (var i; n->methods) {
+            self->visit_func_decl(i.get() => ast_func_decl*);
+        }
+    }
+
+    func visit_root(self, n: root*) {
+        foreach (var i; n->decls) {
+            var d = i.get();
+            match (d->kind) {
+                ast_kind::ast_func_decl =>
+                    self->visit_func_decl(d => ast_func_decl*);
+                ast_kind::ast_impl =>
+                    self->visit_impl(d => ast_impl*);
+                _ => {}
+            }
+        }
     }
 }
