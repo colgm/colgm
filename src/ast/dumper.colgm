@@ -149,6 +149,8 @@ impl ast_dumper {
                 self->dump_foreach(node => ast_foreach*, out);
             ast_kind::ast_in_stmt_expr =>
                 self->dump_in_stmt_expr(node => ast_in_stmt_expr*, out);
+            ast_kind::ast_defer_stmt =>
+                self->dump_defer_stmt(node => ast_defer_stmt*, out);
             ast_kind::ast_ret_stmt =>
                 self->dump_ret_stmt(node => ast_ret_stmt*, out);
             ast_kind::ast_continue_stmt =>
@@ -1004,6 +1006,19 @@ impl ast_dumper {
         self->push_indent();
         self->set_last();
         self->dump(node->value, out);
+        self->pop_indent();
+    }
+
+    func dump_defer_stmt(self, node: ast_defer_stmt*, out: io) {
+        self->dump_indent(out);
+        out.purple().out("DeferStmt ").reset();
+        out.light_orange().out("0x").out_hex(node => i64).reset();
+        out.out(" -> ");
+        node->base.location.dump(out);
+
+        self->push_indent();
+        self->set_last();
+        self->dump(node->block => ast*, out);
         self->pop_indent();
     }
 

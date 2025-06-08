@@ -1,0 +1,72 @@
+use std::vec::{ vec };
+use ast::ast::*;
+use err::report::{ report };
+
+struct scope {
+    scopes: vec<vec<ast_defer_stmt*>>
+}
+
+impl scope {
+    pub func instance() -> scope {
+        return scope {
+            scopes: vec<vec<ast_defer_stmt*>>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->scopes.delete();
+    }
+
+    pub func copy_instance(self) -> scope {
+        return scope {
+            scopes: self->scopes.copy_instance()
+        };
+    }
+
+    pub func new_scope(self) {
+        var v = vec<ast_defer_stmt*>::instance();
+        self->scopes.push(v.__ptr__());
+        v.delete();
+    }
+
+    pub func pop_scope(self) {
+        if (self->scopes.empty()) {
+            return;
+        }
+        self->scopes.pop_back();
+    }
+
+    pub func empty(self) -> bool {
+        foreach (var s; self->scopes) {
+            if (!s.get()->empty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+pub struct replace_defer {
+    err: report*,
+    in_defer_block: bool,
+    top_scopes: vec<scope>
+}
+
+impl replace_defer {
+    pub func instance(e: report*) -> replace_defer {
+        return replace_defer {
+            err: e,
+            in_defer_block: false,
+            top_scopes: vec<scope>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self->top_scopes.delete();
+    }
+
+    pub func scan(e: report*, n: root*) {
+        var rd = replace_defer::instance(e);
+        rd.delete();
+    }
+}

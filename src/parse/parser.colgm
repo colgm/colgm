@@ -17,6 +17,7 @@ use util::cli::{ cli_option };
 
 use parse::generic_list_lookahead::{ generic_list_lookahead };
 use parse::remove_disabled_node::{ remove_disabled_node };
+use parse::replace_defer::{ replace_defer };
 
 pub struct parser {
     err: report*,
@@ -1129,6 +1130,7 @@ impl parser {
             tok_kind::tok_num => return self->in_stmt_expr_gen() => ast*;
             tok_kind::tok_str => return self->in_stmt_expr_gen() => ast*;
             tok_kind::tok_id => return self->in_stmt_expr_gen() => ast*;
+            tok_kind::tok_defer => return self->defer_gen() => ast*;
             tok_kind::tok_if => return self->cond_stmt_gen() => ast*;
             tok_kind::tok_match => return self->match_stmt_gen() => ast*;
             tok_kind::tok_while => return self->while_stmt_gen() => ast*;
@@ -1304,6 +1306,15 @@ impl parser {
         var res = ast_in_stmt_expr::new(self->this_tok_loc());
         res->value = self->calculation_gen();
         self->try_match_semi();
+        self->update_location(res => ast*);
+        return res;
+    }
+
+    func defer_gen(self) -> ast_defer_stmt* {
+        var res = ast_defer_stmt::new(self->this_tok_loc());
+        self->match_token(tok_kind::tok_defer);
+        res->block = self->block_gen(true);
+        self->update_location(res => ast*);
         return res;
     }
 
@@ -1495,6 +1506,8 @@ impl parser {
 
         // scan ast and remove conditional-disabled nodes
         remove_disabled_node(self->err, self->root, self->co);
+        // copy defer to block exits and remove it
+        replace_defer::scan(self->err, self->root);
     }
 }
 
