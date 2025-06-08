@@ -34,6 +34,7 @@ func main() -> i32 {
 }
 ```
 
+Defer in this language runs in order, not reverse.
 Equivalent to:
 
 ```rust

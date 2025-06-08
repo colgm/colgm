@@ -50,46 +50,6 @@ public:
     void push_level() { local_scope.push_back({}); }
     void pop_level() { local_scope.pop_back(); }
 
-    void dump_lifetime_end(const std::pair<std::string, type>& i, const span& loc) {
-        if (i.first == "self" || i.second.is_pointer()) {
-            return;
-        }
-        if (i.second.is_integer() || i.second.is_float() || i.second.is_boolean()) {
-            return;
-        }
-        if (!global.domain.count(i.second.loc_file)) {
-            return;
-        }
-        const auto& dm = global.domain.at(i.second.loc_file);
-        if (!dm.structs.count(i.second.name_for_search())) {
-            return;
-        }
-        const auto& st = dm.structs.at(i.second.name_for_search());
-        if (!st.method.count("delete")) {
-            return;
-        }
-        std::cout << i.first << ": " << i.second.to_string() << " lifetime ends";
-        std::cout << " at " << loc.file << ":" << loc.end_line << ":" << loc.end_column + 1 << std::endl;
-    }
-    void dump_pop_level(const span& loc) {
-        if (local_scope.empty()) {
-            return;
-        }
-        for (const auto& i : local_scope.back()) {
-            dump_lifetime_end(i, loc);
-        }
-    }
-    void dump_return_level(const span& loc) {
-        if (local_scope.empty()) {
-            return;
-        }
-        for (const auto& sc : local_scope) {
-            for (const auto& i : sc) {
-                dump_lifetime_end(i, loc);
-            }
-        }
-    }
-
 public:
     auto& global_symbol() {
         return global.domain.at(this_file).global_symbol;
