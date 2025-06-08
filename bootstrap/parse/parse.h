@@ -178,6 +178,7 @@ private:
     void add_gen_stmt(code_block*);
     code_block* block_gen(bool);
     in_stmt_expr* in_stmt_expr_gen();
+    defer_stmt* defer_gen();
     ret_stmt* return_gen();
     continue_stmt* continue_gen();
     break_stmt* break_gen();

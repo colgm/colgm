@@ -328,6 +328,13 @@ bool visitor::visit_in_stmt_expr(in_stmt_expr* node) {
     return true;
 }
 
+bool visitor::visit_defer_stmt(defer_stmt* node) {
+    if (node->get_block()) {
+        node->get_block()->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_ret_stmt(ret_stmt* node) {
     if (node->get_value()) {
         node->get_value()->accept(this);

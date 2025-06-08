@@ -1,5 +1,6 @@
-#include "parse.h"
+#include "parse/parse.h"
 #include "ast/delete_disabled_node.h"
+#include "ast/replace_defer.h"
 
 namespace colgm {
 
@@ -1014,6 +1015,7 @@ void parse::add_gen_stmt(code_block* res) {
         case tok::tk_num:
         case tok::tk_str:
         case tok::tk_id: res->add_stmt(in_stmt_expr_gen()); break;
+        case tok::tk_defer: res->add_stmt(defer_gen()); break;
         case tok::tk_if: res->add_stmt(cond_stmt_gen()); break;
         case tok::tk_match: res->add_stmt(match_stmt_gen()); break;
         case tok::tk_while: res->add_stmt(while_stmt_gen()); break;
@@ -1058,6 +1060,14 @@ in_stmt_expr* parse::in_stmt_expr_gen() {
     auto res = new in_stmt_expr(toks[ptr].loc);
     res->set_expr(calculation_gen());
     try_match_semi();
+    update_location(res);
+    return res;
+}
+
+defer_stmt* parse::defer_gen() {
+    auto res = new defer_stmt(toks[ptr].loc);
+    match(tok::tk_defer);
+    res->set_block(block_gen(true));
     update_location(res);
     return res;
 }
@@ -1158,6 +1168,9 @@ const error& parse::analyse(const std::vector<token>& token_list) {
     // delete disabled nodes marked by the conditional comments syntax
     delete_disabled_node ddn;
     ddn.scan(err, result);
+
+    replace_defer rd(err);
+    rd.scan(result);
     return err;
 }
 

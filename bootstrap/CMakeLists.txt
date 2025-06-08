@@ -28,6 +28,7 @@ set(COLGM_AST
     ${CMAKE_SOURCE_DIR}/ast/delete_disabled_node.cpp
     ${CMAKE_SOURCE_DIR}/ast/dumper.cpp
     ${CMAKE_SOURCE_DIR}/ast/expr.cpp
+    ${CMAKE_SOURCE_DIR}/ast/replace_defer.cpp
     ${CMAKE_SOURCE_DIR}/ast/stmt.cpp
     ${CMAKE_SOURCE_DIR}/ast/visitor.cpp)
 set(COLGM_SIR
@@ -63,7 +64,7 @@ set(COLGM_SEMA
 set(COLGM_OBJECT
     ${CMAKE_SOURCE_DIR}/lexer.cpp
     ${CMAKE_SOURCE_DIR}/misc.cpp
-    ${CMAKE_SOURCE_DIR}/parse.cpp
+    ${CMAKE_SOURCE_DIR}/parse/parse.cpp
     ${CMAKE_SOURCE_DIR}/report.cpp)
 
 add_library(colgm-ast STATIC ${COLGM_AST})

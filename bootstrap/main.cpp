@@ -1,6 +1,6 @@
 #include "colgm.h"
 #include "lexer.h"
-#include "parse.h"
+#include "parse/parse.h"
 #include "ast/dumper.h"
 #include "sema/semantic.h"
 #include "mir/ast2mir.h"
@@ -196,7 +196,7 @@ i32 main(i32 argc, const char* argv[]) {
     for (i32 i = 1; i < argc; ++i) {
         if (args[i] == "-h" || args[i] == "--help") {
             std::clog << help;
-            break;
+            return 0;
         } else if (cmdlst.count(args[i])) {
             cmd |= cmdlst.at(args[i]);
         } else if (args[i] == "--library") {

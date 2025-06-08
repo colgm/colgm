@@ -53,6 +53,7 @@ enum class ast_type {
     ast_forindex,
     ast_foreach,
     ast_in_stmt_expr,
+    ast_defer_stmt,
     ast_ret_stmt,
     ast_continue_stmt,
     ast_break_stmt,
@@ -104,6 +105,7 @@ class for_stmt;
 class forindex;
 class foreach;
 class in_stmt_expr;
+class defer_stmt;
 class ret_stmt;
 class continue_stmt;
 class break_stmt;

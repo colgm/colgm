@@ -87,6 +87,7 @@ private:
     bool visit_forindex(forindex*) override;
     bool visit_foreach(foreach*) override;
     bool visit_in_stmt_expr(in_stmt_expr*) override;
+    bool visit_defer_stmt(defer_stmt*) override;
     bool visit_ret_stmt(ret_stmt*) override;
     bool visit_continue_stmt(continue_stmt*) override;
     bool visit_break_stmt(break_stmt*) override;

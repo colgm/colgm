@@ -261,6 +261,22 @@ void in_stmt_expr::accept(visitor* v) {
     v->visit_in_stmt_expr(this);
 }
 
+defer_stmt::~defer_stmt() {
+    delete block;
+}
+
+void defer_stmt::accept(visitor* v) {
+    v->visit_defer_stmt(this);
+}
+
+defer_stmt* defer_stmt::clone() const {
+    auto ret = new defer_stmt(location);
+    if (block) {
+        ret->block = block->clone();
+    }
+    return ret;
+}
+
 ret_stmt::~ret_stmt() {
     delete value;
 }

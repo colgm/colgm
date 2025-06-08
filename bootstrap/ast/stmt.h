@@ -264,6 +264,22 @@ public:
     auto get_expr() const { return calculation; }
 };
 
+class defer_stmt: public stmt {
+private:
+    code_block* block;
+
+public:
+    defer_stmt(const span& loc):
+        stmt(ast_type::ast_defer_stmt, loc),
+        block(nullptr) {}
+    ~defer_stmt() override;
+    void accept(visitor*) override;
+    defer_stmt* clone() const override;
+
+    void set_block(code_block* node) { block = node; }
+    auto get_block() const { return block; }
+};
+
 class ret_stmt: public stmt {
 private:
     expr* value;
@@ -319,6 +335,9 @@ public:
 
     void add_stmt(stmt* node) { statements.push_back(node); }
     const auto& get_stmts() const { return statements; }
+    void reset_stmt_with(const std::vector<stmt*>& v) {
+        statements = v;
+    }
 };
 
 }

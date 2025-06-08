@@ -666,6 +666,16 @@ bool dumper::visit_in_stmt_expr(in_stmt_expr* node) {
     return true;
 }
 
+bool dumper::visit_defer_stmt(defer_stmt* node) {
+    dump_indent();
+    std::cout << "defer" << format_location(node);
+    push_indent();
+    set_last();
+    node->get_block()->accept(this);
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_ret_stmt(ret_stmt* node) {
     dump_indent();
     std::cout << "return" << format_location(node);

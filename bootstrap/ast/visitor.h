@@ -56,6 +56,7 @@ public:
     virtual bool visit_forindex(forindex*);
     virtual bool visit_foreach(foreach*);
     virtual bool visit_in_stmt_expr(in_stmt_expr*);
+    virtual bool visit_defer_stmt(defer_stmt*);
     virtual bool visit_ret_stmt(ret_stmt*);
     virtual bool visit_continue_stmt(continue_stmt*);
     virtual bool visit_break_stmt(break_stmt*);

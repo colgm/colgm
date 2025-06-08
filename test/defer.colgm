@@ -1,0 +1,78 @@
+use std::io::{ io };
+use err::panic::{ panic };
+
+struct structure_for_test {
+    freed: bool
+}
+
+impl structure_for_test {
+    pub func new() -> structure_for_test {
+        return structure_for_test {
+            freed: false
+        };
+    }
+
+    pub func delete(self) {
+        if (self->freed) {
+            panic("double free");
+        }
+        io::stdout().out("    - free 0x").out_hex(self => i64).endln();
+        self->freed = true;
+    }
+}
+
+func test_0() {
+    var a = structure_for_test::new();
+    defer {
+        io::stdout().out("test 0: delete a\n");
+        a.delete();
+    }
+
+    for (var i = 0; i < 10; i += 1) {
+        if (i == 5) {
+            return;
+        }
+    }
+}
+
+func test_1() {
+    var a = structure_for_test::new();
+    defer {
+        io::stdout().out("test 1: delete a\n");
+        a.delete();
+    }
+}
+
+func test_2() {
+    var a = structure_for_test::new();
+    defer io::stdout().out("test 2: delete a\n");
+    defer a.delete();
+}
+
+func main() -> i32 {
+    test_0();
+    test_1();
+    test_2();
+
+    var outer = structure_for_test::new();
+    defer io::stdout().out("main: delete outer").endln();
+    defer outer.delete();
+
+    for (var i = 0; i < 10; i += 1) {
+        var a = structure_for_test::new();
+        defer io::stdout().out("delete a\n");
+        defer a.delete();
+
+        if (i == 9) {
+            io::stdout().out("main: ( break    ) ").out_i64(i).out(" ");
+            break;
+        }
+        if (i == 6 || i == 7) {
+            io::stdout().out("main: ( continue ) ").out_i64(i).out(" ");
+            continue;
+        }
+
+        io::stdout().out("main: ( loop     ) ").out_i64(i).out(" ");
+    }
+    return 0;
+}
