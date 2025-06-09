@@ -24,6 +24,7 @@ TEST_LIST = [
     ("test/cmpnot.colgm",                  "src", False),
     ("test/complex_generics.colgm",        "src", False),
     ("test/continue_break.colgm",          "src", False),
+    ("test/defer.colgm",                   "src", False),
     ("test/enum_test.colgm",               "src", False),
     ("test/for_iter.colgm",                "src", False),
     ("test/for_test.colgm",                "src", False),

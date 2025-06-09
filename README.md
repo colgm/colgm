@@ -91,11 +91,10 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 ## Features and Roadmap
 
 1. feature: [Tagged Union](./doc/spec/tagged_union.md)
-2. feature: [Defer](./doc/spec/defer.md)
-3. feature: reference type
-4. feature: [Tuple](./doc/spec/tuple.md)
-5. feature: smart pointer
-6. feature: std
+2. feature: reference type
+3. feature: [Tuple](./doc/spec/tuple.md)
+4. feature: smart pointer
+5. feature: std
     - [x] Filesystem API (read, write, join, exists, etc)
     - [x] Datetime utils
     - [ ] String and Unicode Helpers
