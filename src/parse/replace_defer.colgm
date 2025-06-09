@@ -103,9 +103,23 @@ impl replace_defer {
         self->top_scopes.back()->scopes.back()->push(n);
     }
 
+    func in_top_scope(self) -> bool {
+        return !self->top_scopes.empty() &&
+               self->top_scopes.back()->scopes.size == 1;
+    }
+
     func insert_defer(self, ds: ast_defer_stmt*, v: vec<ast*>*) {
         foreach (var i; ds->block->stmts) {
             v->push(i.get()->copy());
+        }
+    }
+
+    func insert_defer_on_subscope_exit(self, v: vec<ast*>*) {
+        if (self->top_scopes.empty() || self->top_scopes.back()->empty()) {
+            return;
+        }
+        foreach (var i; self->top_scopes.back()->scopes.back()) {
+            self->insert_defer(i.get(), v);
         }
     }
 
@@ -266,9 +280,11 @@ impl replace_defer {
 
         // collect defers and generate new block
         var new_stmts = vec<ast*>::instance();
+        var has_defer_in_this_sub_scope = false;
         foreach (var i; n->stmts) {
             self->visit_stmt(i.get());
             if (i.get()->kind == ast_kind::ast_defer_stmt) {
+                has_defer_in_this_sub_scope = true;
                 self->add_defer_stmt(i.get() => ast_defer_stmt*);
                 new_stmts.push(i.get());
                 continue;
@@ -284,16 +300,16 @@ impl replace_defer {
                 new_stmts.push(i.get());
             }
         }
-        // insert defer if block exits
-        if (!n->stmts.empty()) {
+        // insert defer when top scope exits
+        if (!n->stmts.empty() && self->in_top_scope()) {
             var back = n->stmts.back();
             if (back->kind != ast_kind::ast_ret_stmt &&
                 back->kind != ast_kind::ast_break_stmt &&
                 back->kind != ast_kind::ast_continue_stmt) {
                 self->insert_defer_on_block_exit(new_stmts.__ptr__());
             }
-        } else {
-            self->insert_defer_on_block_exit(new_stmts.__ptr__());
+        } else if (has_defer_in_this_sub_scope) {
+            self->insert_defer_on_subscope_exit(new_stmts.__ptr__());
         }
         n->reset_stmt_with(new_stmts.__ptr__());
 

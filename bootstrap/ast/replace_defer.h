@@ -55,9 +55,14 @@ private:
         top_scopes.back().scopes.back().push_back(n);
     }
 
+    bool in_top_scope() const {
+        return !top_scopes.empty() && top_scopes.back().scopes.size() == 1;
+    }
+
     void insert_defer(defer_stmt*, std::vector<stmt*>&);
     void insert_defer_on_return(std::vector<stmt*>&);
     void insert_defer_on_block_exit(std::vector<stmt*>&);
+    void insert_defer_on_subscope_exit(std::vector<stmt*>&);
 
 private:
     bool visit_func_decl(func_decl*) override;

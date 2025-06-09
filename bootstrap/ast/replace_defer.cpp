@@ -26,6 +26,15 @@ void replace_defer::insert_defer_on_block_exit(std::vector<stmt*>& v) {
     }
 }
 
+void replace_defer::insert_defer_on_subscope_exit(std::vector<stmt*>& v) {
+    if (top_scopes.empty() || top_scopes.back().empty()) {
+        return;
+    }
+    for (auto i : top_scopes.back().scopes.back()) {
+        insert_defer(i, v);
+    }
+}
+
 bool replace_defer::visit_func_decl(func_decl* d) {
     if (d->get_code_block()) {
         top_scopes.clear();
@@ -111,9 +120,11 @@ bool replace_defer::visit_code_block(code_block* b) {
 
     // collect defers and generate new block
     std::vector<stmt*> new_stmts;
+    bool has_defer_in_this_sub_scope = false;
     for (auto i : b->get_stmts()) {
         i->accept(this);
         if (i->is(ast_type::ast_defer_stmt)) {
+            has_defer_in_this_sub_scope = true;
             add_defer_stmt(reinterpret_cast<defer_stmt*>(i));
             new_stmts.push_back(i);
             continue;
@@ -129,16 +140,16 @@ bool replace_defer::visit_code_block(code_block* b) {
             new_stmts.push_back(i);
         }
     }
-    // insert defer if block exits
-    if (!b->get_stmts().empty()) {
+    // insert defer when top scope exits
+    if (!b->get_stmts().empty() && in_top_scope()) {
         auto back = b->get_stmts().back();
         if (!back->is(ast_type::ast_ret_stmt) &&
             !back->is(ast_type::ast_break_stmt) &&
             !back->is(ast_type::ast_continue_stmt)) {
             insert_defer_on_block_exit(new_stmts);
         }
-    } else if (b->get_stmts().empty()) {
-        insert_defer_on_block_exit(new_stmts);
+    } else if (has_defer_in_this_sub_scope) {
+        insert_defer_on_subscope_exit(new_stmts);
     }
     b->reset_stmt_with(new_stmts);
 
