@@ -1,5 +1,7 @@
 use std::vec::{ vec };
 use std::io::{ io };
+use std::libc::{ free };
+
 use ast::ast::*;
 
 use err::panic::{ panic };
@@ -99,6 +101,30 @@ impl replace_defer {
 
     func add_defer_stmt(self, n: ast_defer_stmt*) {
         self->top_scopes.back()->scopes.back()->push(n);
+    }
+
+    func insert_defer(self, ds: ast_defer_stmt*, v: vec<ast*>*) {
+        foreach (var i; ds->block->stmts) {
+            v->push(i.get()->copy());
+        }
+    }
+
+    func insert_defer_on_block_exit(self, v: vec<ast*>*) {
+        foreach (var sub_scope; self->top_scopes.back()->scopes) {
+            foreach (var i; sub_scope.get()) {
+                self->insert_defer(i.get(), v);
+            }
+        }
+    }
+
+    func insert_defer_on_return(self, v: vec<ast*>*) {
+        foreach (var this_top_scope; self->top_scopes) {
+            foreach (var sub_scope; this_top_scope.get()->scopes) {
+                foreach (var i; sub_scope.get()) {
+                    self->insert_defer(i.get(), v);
+                }
+            }
+        }
     }
 }
 
@@ -236,9 +262,56 @@ impl replace_defer {
     }
 
     func visit_code_block(self, n: ast_code_block*) {
+        self->add_sub_scope();
+
+        // collect defers and generate new block
+        var new_stmts = vec<ast*>::instance();
         foreach (var i; n->stmts) {
             self->visit_stmt(i.get());
+            if (i.get()->kind == ast_kind::ast_defer_stmt) {
+                self->add_defer_stmt(i.get() => ast_defer_stmt*);
+                new_stmts.push(i.get());
+                continue;
+            }
+            if (i.get()->kind == ast_kind::ast_continue_stmt ||
+                i.get()->kind == ast_kind::ast_break_stmt) {
+                self->insert_defer_on_block_exit(new_stmts.__ptr__());
+                new_stmts.push(i.get());
+            } else if (i.get()->kind == ast_kind::ast_ret_stmt) {
+                self->insert_defer_on_return(new_stmts.__ptr__());
+                new_stmts.push(i.get());
+            } else {
+                new_stmts.push(i.get());
+            }
         }
+        // insert defer if block exits
+        if (!n->stmts.empty()) {
+            var back = n->stmts.back();
+            if (back->kind != ast_kind::ast_ret_stmt &&
+                back->kind != ast_kind::ast_break_stmt &&
+                back->kind != ast_kind::ast_continue_stmt) {
+                self->insert_defer_on_block_exit(new_stmts.__ptr__());
+            }
+        } else {
+            self->insert_defer_on_block_exit(new_stmts.__ptr__());
+        }
+        n->reset_stmt_with(new_stmts.__ptr__());
+
+        self->pop_sub_scope();
+
+        // delete defer now
+        new_stmts.clear();
+        foreach (var i; n->stmts) {
+            if (i.get()->kind != ast_kind::ast_defer_stmt) {
+                new_stmts.push(i.get());
+            } else {
+                i.get()->delete();
+                free(i.get() => i8*);
+            }
+        }
+        n->reset_stmt_with(new_stmts.__ptr__());
+
+        new_stmts.delete();
     }
 
     func visit_func_decl(self, n: ast_func_decl*) {
