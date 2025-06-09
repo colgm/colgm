@@ -28,11 +28,12 @@ func clang_compile(co: cli_option*) -> i32 {
     }
 
     var t_stamp = maketimestamp();
-
     t_stamp.stamp();
+
     var clang = find_clang();
+    defer clang.delete();
+
     if (clang.empty()) {
-        clang.delete();
         io::stdout().red().out("[    CLANG ] ").reset();
         io::stdout().out("Cannot find suitable clang\n");
         return -1;
@@ -44,13 +45,13 @@ func clang_compile(co: cli_option*) -> i32 {
     }
 
     var cmd = clang.copy_instance();
+    defer cmd.delete();
+
     var ll_file = str::from(co->output_file);
     ll_file.append_i8_vec(".ll");
+    defer ll_file.delete();
 
     if (!fs::exists(ll_file.c_str)) {
-        clang.delete();
-        cmd.delete();
-        ll_file.delete();
         return -1;
     }
 
@@ -82,9 +83,6 @@ func clang_compile(co: cli_option*) -> i32 {
     }
     io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
 
-    ll_file.delete();
-    clang.delete();
-    cmd.delete();
     return ret_code;
 }
 
@@ -110,27 +108,33 @@ func compile(option: cli_option) -> i32 {
     }
 
     var cwd = fs::getcwd();
+    defer cwd.delete();
     if (!cwd.empty()) {
         io::stdout().green().out("[    COLGM ] ").reset();
         io::stdout().out("In directory ");
         io::stdout().light_cyan().out("<").out(cwd.c_str).out(">").reset().endln();
     }
-    cwd.delete();
 
     var cc = frontend::instance(option.__ptr__());
+    defer cc.delete();
 
     // global symbol table
     var gt = global_symbol_table::instance();
     gt.main_input_file.append_i8_vec(option.input_file);
+    defer gt.delete();
 
     // semantic context
     var ctx = sema_context::instance(gt.__ptr__());
+    defer ctx.delete();
 
     // mir context
     var mctx = mir_context::instance();
+    defer mctx.delete();
 
     // sir context
     var sctx = sir_context::instance(cc.pkg.__ptr__());
+    defer sctx.delete();
+
     var regpass = regist_pass::instance(
         cc.err,
         cc.pkg.__ptr__(),
@@ -138,23 +142,30 @@ func compile(option: cli_option) -> i32 {
         cc.copt,
         mctx.__ptr__()
     );
+    defer regpass.delete();
+
     var semantic = sema::instance(
         cc.err,
         cc.pkg.__ptr__(),
         ctx.__ptr__(),
         cc.copt
     );
+    defer semantic.delete();
+
     var ast2mir_worker = ast2mir::instance(
         cc.err,
         ctx.__ptr__(),
         cc.pkg.__ptr__(),
         mctx.__ptr__()
     );
+    defer ast2mir_worker.delete();
+
     var mir2sir_worker = mir2sir::instance(
         ctx.__ptr__(),
         sctx.__ptr__(),
         cc.pkg.__ptr__()
     );
+    defer mir2sir_worker.delete();
 
     cc.pkg.library_path.clear();
     cc.pkg.library_path.append_i8_vec(option.library_path);
@@ -174,7 +185,6 @@ func compile(option: cli_option) -> i32 {
         if (option.VERBOSE) {
             cc.lex.log_dump();
         }
-        cc.delete();
         return -1;
     }
     if (option.VIEW_TOKEN) {
@@ -193,7 +203,6 @@ func compile(option: cli_option) -> i32 {
         if (option.VERBOSE) {
             cc.par.log_dump();
         }
-        cc.delete();
         return -1;
     }
     if (option.VIEW_AST) {
@@ -203,7 +212,6 @@ func compile(option: cli_option) -> i32 {
     t_stamp.stamp();
     regpass.run(cc.par.root);
     if (cc.err->error_count > 0) {
-        cc.delete();
         return -1;
     }
 
@@ -217,7 +225,6 @@ func compile(option: cli_option) -> i32 {
         if (option.VERBOSE) {
             semantic.ctx->log_dump(cc.pkg.__ptr__());
         }
-        cc.delete();
         return -1;
     }
     if (option.VIEW_RESOLVED_AST) {
@@ -229,7 +236,6 @@ func compile(option: cli_option) -> i32 {
 
     ast2mir_worker.generate(cc.par.root);
     if (cc.err->error_count > 0) {
-        cc.delete();
         return -1;
     }
     mctx.adjust_posix_open(option.VERBOSE);
@@ -245,6 +251,7 @@ func compile(option: cli_option) -> i32 {
 
     var ll_file = str::from(option.output_file);
     ll_file.append_i8_vec(".ll");
+    defer ll_file.delete();
 
     var file_output = io::fileout(ll_file.c_str);
     if (option.VERBOSE) {
@@ -259,19 +266,7 @@ func compile(option: cli_option) -> i32 {
         io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
     }
 
-    var ret_code = clang_compile(option.__ptr__());
-
-    cc.delete();
-    gt.delete();
-    ctx.delete();
-    regpass.delete();
-    semantic.delete();
-    mctx.delete();
-    sctx.delete();
-    ast2mir_worker.delete();
-    mir2sir_worker.delete();
-    ll_file.delete();
-    return ret_code;
+    return clang_compile(option.__ptr__());
 }
 
 func main(argc: i32, argv: i8**) -> i32 {

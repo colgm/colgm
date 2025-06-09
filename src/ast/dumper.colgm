@@ -49,13 +49,13 @@ impl ast_dumper {
 
         if (ty->is_array) {
             var n = ty->array_type_full_name(self->pkg);
+            defer n.delete();
             out.blue().out("[real: ").out(n.c_str).out("] ").reset();
-            n.delete();
         }
 
         var name = ty->full_path_name(self->pkg, true);
+        defer name.delete();
         out.cyan().out("[type: ").out(name.c_str).out("] ").reset();
-        name.delete();
     }
 }
 
@@ -284,9 +284,11 @@ impl ast_dumper {
         out.purple().out("StringLiteral ").reset();
         out.light_orange().out("0x").out_hex(node => i64).reset().out(" ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
+        
         var tmp = llvm_raw_string(node->literal.__ptr__());
+        defer tmp.delete();
+        
         out.green().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
-        tmp.delete();
         node->base.location.dump(out);
     }
 
@@ -295,9 +297,11 @@ impl ast_dumper {
         out.purple().out("CharacterLiteral ").reset();
         out.light_orange().out("[0x").out_hex(node => i64).reset().out(" ");
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
+        
         var tmp = llvm_raw_string(node->literal.__ptr__());
+        defer tmp.delete();
+
         out.green().out("\"").out(tmp.c_str).out("\"").reset().out(" -> ");
-        tmp.delete();
         node->base.location.dump(out);
     }
 

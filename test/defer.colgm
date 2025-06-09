@@ -68,6 +68,22 @@ func test_3() {
             defer io::stdout().out("test 3: delete b (").out_i64(i).out(")\n");
             defer b.delete();
             if (1 != 1) {} else {
+                for (var j  = 0; j < 10; j += 1) {
+                    var _a = structure_for_test::new();
+                    defer io::stdout().out("test 3: delete _a (").out_i64(j).out(")\n");
+                    defer _a.delete();
+
+                    if (1 == 1) {
+                        var _b = structure_for_test::new();
+                        defer io::stdout().out("test 3: delete _b (").out_i64(j).out(")\n");
+                        defer _b.delete();
+                        if (1 == 1) {
+                            var _c = structure_for_test::new();
+                            defer io::stdout().out("test 3: delete _c (").out_i64(j).out(")\n");
+                            defer _c.delete();
+                        }
+                    }
+                }
                 var c = structure_for_test::new();
                 defer io::stdout().out("test 3: delete c (").out_i64(i).out(")\n");
                 defer c.delete();
@@ -77,11 +93,60 @@ func test_3() {
     }
 }
 
+func test_4(v: i64) {
+    defer io::stdout().out("test 4: output when return\n");
+
+    if (v == 1) {
+        io::stdout().out("test 4: output when v == 1\n");
+        return;
+    } else if (v == 2) {
+        io::stdout().out("test 4: output when v == 2\n");
+        return;
+    }
+    io::stdout().out("test 4: output when top scope exits\n");
+}
+
+func test_5() {
+    for (var i = 0; i < 10; i += 1) {
+        defer io::stdout().out("test 5: output when loop exits\n");
+
+        if (i == 5) {
+            io::stdout().out("test 5: output when i == 5\n");
+            continue;
+        } else if (i == 7) {
+            io::stdout().out("test 5: output when i == 7\n");
+            break;
+        }
+    }
+
+    io::stdout().out("test 5: --------------\n");
+
+    for (var i = 0; i < 10; i += 1) {
+        defer io::stdout().out("test 5: output when loop exits\n");
+
+        if (i == 5) {
+            io::stdout().out("test 5: output when i == 5\n");
+            continue;
+        } else if (i == 7) {
+            io::stdout().out("test 5: output when i == 7\n");
+            continue;
+        }
+
+        io::stdout().out("test 5: output when top scope exits (").out_i64(i).out(")\n");
+    }
+}
+
 func main() -> i32 {
     test_0();
     test_1();
     test_2();
     test_3();
+
+    test_4(1);
+    test_4(2);
+    test_4(3);
+
+    test_5();
 
     var outer = structure_for_test::new();
     defer io::stdout().out("main: delete outer").endln();
