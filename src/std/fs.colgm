@@ -33,8 +33,12 @@ impl fs {
 impl fs {
     pub func getpath() -> vec<str> {
         var path = os::getenv("PATH");
-
         var tmp = str::from("");
+        defer {
+            path.delete();
+            tmp.delete();
+        }
+
         var res = vec<str>::instance();
 
         var separator = ':';
@@ -54,8 +58,6 @@ impl fs {
             res.push(tmp.__ptr__());
         }
 
-        tmp.delete();
-        path.delete();
         return res;
     }
 

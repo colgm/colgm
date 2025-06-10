@@ -216,14 +216,16 @@ impl io {
         if (!self->color_out) {
             return self[0];
         }
+
         var sequence = str::from("\e[");
+        defer sequence.delete();
+
         sequence.append_i64(color_code);
         if (!light) {
             sequence.append_i8_vec(";1");
         }
         sequence.append_i8_vec("m");
         self->out(sequence.c_str);
-        sequence.delete();
         return self[0];
     }
 

@@ -46,8 +46,11 @@ impl report {
         self->source.clear();
 
         var source = readfile(filename);
+        defer source.delete();
 
         var tmp = str::instance();
+        defer tmp.delete();
+
         foreach (var ch; source) {
             if (ch.get() =='\n') {
                 self->source.push(tmp.__ptr__());
@@ -60,9 +63,6 @@ impl report {
             self->source.push(tmp.__ptr__());
             tmp.clear();
         }
-
-        source.delete();
-        tmp.delete();
     }
 }
 
@@ -106,6 +106,7 @@ impl report {
         var index = location->begin_line;
         var max_line_number_length = report::get_number_length(location->end_line + 1);
         var pad_str = report::left_pad(max_line_number_length);
+        defer pad_str.delete();
 
         io::stderr().cyan().out(pad_str.c_str).out(" | ").reset().endln();
 
@@ -138,10 +139,13 @@ impl report {
             //       | ...
             //    12 | <source>
             var pad_num = report::to_str(index + 1, max_line_number_length);
+            defer pad_num.delete();
             io::stderr().cyan().out(pad_num.c_str).out(" | ")
                         .reset().out(this_line).endln();
 
             var underline = str::instance();
+            defer underline.delete();
+
             if (index == location->begin_line) {
                 for (var i = 0; i < len; i += 1) {
                     if (location->begin_line==location->end_line &&
@@ -208,14 +212,9 @@ impl report {
                             .orange().out(underline.c_str)
                             .reset().endln();
             }
-
-            underline.delete();
-            pad_num.delete();
         }
 
         io::stderr().endln();
-
-        pad_str.delete();
     }
 }
 

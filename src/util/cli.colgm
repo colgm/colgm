@@ -145,6 +145,10 @@ pub func help() {
 pub func logo(executable: i8*) {
     var possible_clang = find_clang();
     var current_time = chrono::localtime();
+    defer {
+        possible_clang.delete();
+        current_time.delete();
+    }
 
     io::stdout().green()
     .out("                __              \n")
@@ -160,15 +164,12 @@ pub func logo(executable: i8*) {
     .out("target  : ").out(get_target_triple()).out("\n")
     .out("repo    : https://github.com/colgm/colgm\n")
     .out("license : Apache 2.0\n");
-    current_time.delete();
 
     if (possible_clang.empty()) {
         io::stdout().out("clang   : no clang found on this machine\n");
     } else {
         io::stdout().out("clang   : ").out(possible_clang.c_str).out("\n");
     }
-    possible_clang.delete();
-
     io::stdout().out("\ninput <").out(executable).out(" -h> to get help.\n\n");
 }
 

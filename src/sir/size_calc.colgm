@@ -39,6 +39,7 @@ impl size_calc {
 impl size_calc {
     func get_size_align(self, t: type*) -> size_align_pair {
         var name = t->full_path_name(self->pkg, false);
+        defer name.delete();
 
         var field_size: u64 = 0;
         var alignment: u64 = 1;
@@ -100,8 +101,6 @@ impl size_calc {
         if (t->is_array) {
             field_size *= t->array_length;
         }
-
-        name.delete();
 
         return size_align_pair {
             size: field_size,
@@ -241,8 +240,8 @@ pub func calculate_size(mctx: mir_context*, pkg: package*, verbose: bool) {
     ts.stamp();
     
     var sc = size_calc::instance(pkg);
+    defer sc.delete();
     sc.calculate(mctx);
-    sc.delete();
 
     if (verbose) {
         io::stdout().green().out("[  MIR2SIR ] ").reset();

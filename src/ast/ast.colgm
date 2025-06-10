@@ -600,9 +600,11 @@ pub struct ast_null { base: ast }
 impl ast_null {
     pub func new() -> ast_null* {
         var res = ast_null::__alloc__();
+
         var null_span = span::instance();
+        defer null_span.delete();
+
         res->base = ast::instance(ast_kind::ast_null, null_span.__ptr__());
-        null_span.delete();
         return res;
     }
 
@@ -2086,28 +2088,33 @@ impl ast_func_decl {
         if (!self->monomorphic_name.empty()) {
             return self->monomorphic_name.__ptr__();
         }
+
         var trivial_cond = str::from("");
+        defer trivial_cond.delete();
+
         var non_trivial_cond = str::from("");
+        defer non_trivial_cond.delete();
+
         var is_pointer_cond = str::from("");
+        defer is_pointer_cond.delete();
+
         var is_non_pointer_cond = str::from("");
+        defer is_non_pointer_cond.delete();
+
         foreach (var i; self->conds) {
             var c = i.get();
+
+            var tmp = c->get_text();
+            defer tmp.delete();
+
             if (c->cond_name.eq_const("is_trivial")) {
-                var tmp = c->get_text();
                 trivial_cond.append_str(tmp.__ptr__());
-                tmp.delete();
             } else if (c->cond_name.eq_const("is_non_trivial")) {
-                var tmp = c->get_text();
                 non_trivial_cond.append_str(tmp.__ptr__());
-                tmp.delete();
             } else if (c->cond_name.eq_const("is_pointer")) {
-                var tmp = c->get_text();
                 is_pointer_cond.append_str(tmp.__ptr__());
-                tmp.delete();
             } else if (c->cond_name.eq_const("is_non_pointer")) {
-                var tmp = c->get_text();
                 is_non_pointer_cond.append_str(tmp.__ptr__());
-                tmp.delete();
             }
         }
 
@@ -2128,13 +2135,7 @@ impl ast_func_decl {
             self->monomorphic_name.append_char(' ');
         }
 
-        trivial_cond.delete();
-        non_trivial_cond.delete();
-        is_pointer_cond.delete();
-        is_non_pointer_cond.delete();
-
         self->monomorphic_name.append_str(self->name.__ptr__());
-
         return self->monomorphic_name.__ptr__();
     }
 }

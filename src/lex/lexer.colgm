@@ -43,9 +43,10 @@ impl lexer {
 
     pub func push_token(self, kind: tok_kind, content: str*, loc: span*) {
         var res = token::instance(kind, content, loc);
+        defer res.delete();
+
         // do token::copy(), content and loc are all copied
         self->toks.push(res.__ptr__());
-        res.delete();
     }
 }
 
@@ -176,10 +177,12 @@ impl lexer {
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
+        defer loc.delete();
 
         var tmp = str::instance();
         var ch = src->get(self->pos);
         tmp.append_char(ch);
+        defer tmp.delete();
 
         self->pos += 1;
         self->column += 1;
@@ -208,9 +211,6 @@ impl lexer {
         } elsif (ch == '#') {
             self->push_token(tok_kind::tok_sharp, tmp.__ptr__(), loc.__ptr__());
         }
-
-        loc.delete();
-        tmp.delete();
     }
 
     func generate_maybe_need_eq_oprs(self, src: str*) {

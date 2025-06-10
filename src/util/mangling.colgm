@@ -11,19 +11,25 @@ pub func mangle(name: str*) -> str {
 
     var prefix = name->copy_instance();
     var suffix = str::from("");
+    defer {
+        prefix.delete();
+        suffix.delete();
+    }
+
     if (pos != str::npos()) {
         // if get name is std::vec::vec<std::str::str>
         // the prefix will be std::vec::vec
         // the suffix will be <std::str::str>
         var temp_prefix = name->substr(0, pos);
         var temp_suffix = name->substr(pos, name->size);
+        defer {
+            temp_prefix.delete();
+            temp_suffix.delete();
+        }
 
         prefix.clear();
         prefix.append_str(temp_prefix.__ptr__());
         suffix.append_str(temp_suffix.__ptr__());
-
-        temp_prefix.delete();
-        temp_suffix.delete();
     }
 
     // if prefix is std::vec::vec
@@ -43,9 +49,6 @@ pub func mangle(name: str*) -> str {
     if (suffix.size > 0) {
         res.append_str(suffix.__ptr__());
     }
-
-    prefix.delete();
-    suffix.delete();
 
     // if get name std::vec::vec<std::str::str>
     // the res will be std.vec.vec<std::str::str>
@@ -67,15 +70,17 @@ pub func mangle_struct_name(name: str*) -> str {
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("%\"struct.");
         temp.append_str(mangled.__ptr__())->append_i8_vec("\"");
+        defer temp.delete();
+
         mangled.clear();
         mangled.append_str(temp.__ptr__());
-        temp.delete();
     } else {
         var temp = str::from("%struct.");
         temp.append_str(mangled.__ptr__());
+        defer temp.delete();
+
         mangled.clear();
         mangled.append_str(temp.__ptr__());
-        temp.delete();
     }
     return mangled;
 }
@@ -86,15 +91,17 @@ pub func mangle_tagged_union_name(name: str*) -> str {
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("%\"tagged_union.");
         temp.append_str(mangled.__ptr__())->append_i8_vec("\"");
+        defer temp.delete();
+
         mangled.clear();
         mangled.append_str(temp.__ptr__());
-        temp.delete();
     } else {
         var temp = str::from("%tagged_union.");
         temp.append_str(mangled.__ptr__());
+        defer temp.delete();
+
         mangled.clear();
         mangled.append_str(temp.__ptr__());
-        temp.delete();
     }
     return mangled;
 }
@@ -107,9 +114,10 @@ pub func mangle_function_name(name: str*) -> str {
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("\"");
         temp.append_str(mangled.__ptr__())->append_i8_vec("\"");
+        defer temp.delete();
+
         mangled.clear();
         mangled.append_str(temp.__ptr__());
-        temp.delete();
     }
     return mangled;
 }

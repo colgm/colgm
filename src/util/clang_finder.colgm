@@ -8,47 +8,50 @@ func supported_clang_version() -> vec<str> {
     // clang-13 ~ clang-20
     // clang++-13 ~ clang++-20
     for (var i = 13; i <= 20; i += 1) {
-        var name = str::from("clang-");
-        name.append_i64(i);
+        var name = str::from("");
+        defer name.delete();
+
+        name.append_i8_vec("clang-")->append_i64(i);
         res.push(name.__ptr__());
 
         name.clear();
         name.append_i8_vec("clang++-")->append_i64(i);
         res.push(name.__ptr__());
-
-        name.delete();
     }
 
     // also find default clang and clang++
     var cl = str::from("clang");
+    defer cl.delete();
+
     res.push(cl.__ptr__());
     cl.append_i8_vec("++");
     res.push(cl.__ptr__());
-    cl.delete();
     return res;
 }
 
 pub func find_clang() -> str {
     var path = fs::getpath();
     var version = supported_clang_version();
+    defer {
+        path.delete();
+        version.delete();
+    }
+
     var res = str::from("");
     foreach (var p; path) {
         foreach (var cl; version) {
             var full_path = p.get()->copy_instance();
+            defer full_path.delete();
+
             full_path.append_i8_vec("/")->append_i8_vec(cl.get()->c_str);
             if (fs::exists(full_path.c_str)) {
                 res.append_str(full_path.__ptr__());
-                full_path.delete();
                 break;
             }
-            full_path.delete();
         }
         if (!res.empty()) {
             break;
         }
     }
-
-    path.delete();
-    version.delete();
     return res;
 }
