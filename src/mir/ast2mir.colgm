@@ -204,6 +204,8 @@ impl ast2mir {
         self->block = temp;
 
         var target_type = self->tr.resolve(n->to);
+        defer target_type.delete();
+
         if (self->ctx->has_domain(target_type.loc_file.__ptr__())) {
             var dm = self->ctx->get_domain(target_type.loc_file.__ptr__());
             if (dm->enums.has(target_type.name.__ptr__())) {
@@ -216,7 +218,6 @@ impl ast2mir {
             new_block,
             target_type.__ptr__()
         ) => mir*);
-        target_type.delete();
     }
 
     func visit_nil_literal(self, n: ast_nil_literal*) {
@@ -356,14 +357,14 @@ impl ast2mir {
         self->block = new_block;
         if (n->head->generic_types != nil) {
             var ht = n->head->base.resolved_type.full_path_name(self->pkg, false);
+            defer ht.delete();
+
             var m = mir_call_id::new(
                 n->head->base.location.__ptr__(),
                 ht.__ptr__(),
                 n->head->base.resolved_type.__ptr__()
             );
             self->block->add(m => mir*);
-
-            ht.delete();
         } else {
             var m = mir_call_id::new(
                 n->head->base.location.__ptr__(),
@@ -577,6 +578,11 @@ impl ast2mir {
             var bt = type::bool_type();
             var it = type::i64_type();
             var one = str::from("1");
+            defer {
+                bt.delete();
+                it.delete();
+                one.delete();
+            }
 
             var cond = mir_binary::new(
                 n->base.location.__ptr__(),
@@ -597,10 +603,6 @@ impl ast2mir {
                 it.__ptr__()
             ) => mir*);
             cond_block->add(cond => mir*);
-
-            bt.delete();
-            it.delete();
-            one.delete();
         }
 
         var update_block: mir_block* = nil;
@@ -725,10 +727,11 @@ impl ast2mir {
 impl ast2mir {
     func generate_full_name(self, n: str*, loc: span*) -> str {
         var ty = type::instance();
+        defer ty.delete();
         ty.name.append_str(n);
         ty.loc_file.append_str(loc->file.__ptr__());
+
         var name = ty.full_path_name(self->pkg, false);
-        ty.delete();
         return name;
     }
 
@@ -740,24 +743,28 @@ impl ast2mir {
         }
 
         var st = mir_struct::instance(n->name.__ptr__(), n->base.location.__ptr__());
+        defer st.delete();
+
         foreach (var i; n->fields) {
             var t = self->tr.resolve(i.get()->type);
+            defer t.delete();
+
             st.field_type.push(t.__ptr__());
-            t.delete();
         }
         self->mctx->structs.push(st.__ptr__());
-        st.delete();
     }
 
     func visit_tagged_union_decl(self, n: ast_tagged_union_decl*) {
         var un = mir_tagged_union::instance(n->name.__ptr__(), n->base.location.__ptr__());
+        defer un.delete();
+
         foreach (var i; n->members) {
             var t = self->tr.resolve(i.get()->type);
-            un.member_type.push(t.__ptr__());
-            t.delete();
+            defer t.delete();
+
+            un.member_type.push(t.__ptr__());            
         }
         self->mctx->tagged_unions.push(un.__ptr__());
-        un.delete();
     }
 
     func visit_impl(self, n: ast_impl*) {
@@ -779,16 +786,18 @@ impl ast2mir {
         }
 
         var name = n->name.copy_instance();
+        defer name.delete();
         if (!self->impl_struct_name.empty()) {
             var tmp_ty_name = self->generate_full_name(
                 self->impl_struct_name.__ptr__(),
                 n->base.location.__ptr__()
             );
+            defer tmp_ty_name.delete();
+
             name.clear();
             name.append_str(tmp_ty_name.__ptr__())
                 ->append_i8_vec(".")
                 ->append_str(n->name.__ptr__());
-            tmp_ty_name.delete();
         }
 
         // global function with is not extern
@@ -797,49 +806,51 @@ impl ast2mir {
                 n->name.__ptr__(),
                 n->base.location.__ptr__()
             );
+            defer tmp_ty_name.delete();
+
             name.clear();
-            name.append_str(tmp_ty_name.__ptr__());
-            tmp_ty_name.delete();
+            name.append_str(tmp_ty_name.__ptr__());            
         }
 
         
         var ret_ty = type::instance();
+        defer ret_ty.delete();
         if (n->return_type != nil) {
             var t = self->tr.resolve(n->return_type);
+            defer t.delete();
+
             ret_ty.reset_with(t.__ptr__());
-            t.delete();
         } else {
             var t = type::void_type();
+            defer t.delete();
+
             ret_ty.reset_with(t.__ptr__());
-            t.delete();
         }
+
         var f = mir_func::instance(
             name.__ptr__(),
             n->base.location.__ptr__(),
             ret_ty.__ptr__()
         );
+        defer f.delete();
 
         foreach (var i; n->params->params) {
             var p = i.get() => ast_param*;
+
             var t = self->tr.resolve(p->type);
+            defer t.delete();
 
             var p_pair = pair<str, type>::instance(
                 p->name->content.__ptr__(),
                 t.__ptr__()
             );
+            defer p_pair.delete();
 
             f.params.push(p_pair.__ptr__());
-
-            t.delete();
-            p_pair.delete();
         }
-
-        ret_ty.delete();
-        name.delete();
 
         if (n->body == nil) {
             self->mctx->decls.push(f.__ptr__());
-            f.delete();
             return;
         }
 
@@ -849,7 +860,6 @@ impl ast2mir {
         self->block = nil;
 
         self->mctx->impls.push(f.__ptr__());
-        f.delete();
     }
 
     func generate_code_block(self, n: ast_code_block*) {

@@ -30,8 +30,9 @@ impl scope {
 
     pub func new_scope(self) {
         var v = vec<ast_defer_stmt*>::instance();
+        defer v.delete();
+
         self->scopes.push(v.__ptr__());
-        v.delete();
     }
 
     pub func pop_scope(self) {
@@ -72,16 +73,18 @@ impl replace_defer {
 
     pub func scan(e: report*, n: root*) {
         var rd = replace_defer::instance(e);
+        defer rd.delete();
+
         rd.visit_root(n);
-        rd.delete();
     }
 }
 
 impl replace_defer {
     func add_top_scope(self) {
         var s = scope::instance();
+        defer s.delete();
+
         self->top_scopes.push(s.__ptr__());
-        s.delete();
     }
 
     func add_sub_scope(self) {
@@ -280,6 +283,8 @@ impl replace_defer {
 
         // collect defers and generate new block
         var new_stmts = vec<ast*>::instance();
+        defer new_stmts.delete();
+
         var has_defer_in_this_sub_scope = false;
         foreach (var i; n->stmts) {
             self->visit_stmt(i.get());
@@ -326,8 +331,6 @@ impl replace_defer {
             }
         }
         n->reset_stmt_with(new_stmts.__ptr__());
-
-        new_stmts.delete();
     }
 
     func visit_func_decl(self, n: ast_func_decl*) {

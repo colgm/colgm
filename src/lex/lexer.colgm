@@ -215,11 +215,13 @@ impl lexer {
 
     func generate_maybe_need_eq_oprs(self, src: str*) {
         var loc = span::instance();
+        defer loc.delete();
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
 
         var tmp = str::instance();
+        defer tmp.delete();
         tmp.append_char(src->get(self->pos));
         self->pos += 1;
         if (self->pos < src->size && src->get(self->pos) == '=') {
@@ -276,20 +278,20 @@ impl lexer {
         } elsif (tmp.eq_const("!=")) {
             self->push_token(tok_kind::tok_neq, tmp.__ptr__(), loc.__ptr__());
         }
-
-        loc.delete();
-        tmp.delete();
     }
 
     func generate_lookahead_other(self, src: str*) {
         var loc = span::instance();
+        defer loc.delete();
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
 
         var tmp = str::instance();
+        defer tmp.delete();
         var ch = src->get(self->pos);
         tmp.append_char(ch);
+
         self->pos += 1;
         if (ch == '&' && self->pos < src->size) {
             if (src->get(self->pos) == '&' || src->get(self->pos) == '=') {
@@ -320,18 +322,17 @@ impl lexer {
         } elsif (tmp.eq_const("||")) {
             self->push_token(tok_kind::tok_op_or, tmp.__ptr__(), loc.__ptr__());
         }
-
-        loc.delete();
-        tmp.delete();
     }
 
     func generate_arrow(self, src: str*) {
         var loc = span::instance();
+        defer loc.delete();
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
 
         var tmp = str::instance();
+        defer tmp.delete();
         tmp.append_char(src->get(self->pos));
         self->pos += 1;
         tmp.append_char(src->get(self->pos));
@@ -354,18 +355,17 @@ impl lexer {
                 loc.__ptr__()
             );
         }
-
-        loc.delete();
-        tmp.delete();
     }
 
     func generate_identifier(self, src: str*) {
         var loc = span::instance();
+        defer loc.delete();
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
 
         var tmp = str::instance();
+        defer tmp.delete();
         while (self->pos < src->size &&
               lexer::is_identifier_body(src->get(self->pos))) {
             tmp.append_char(src->get(self->pos));
@@ -381,18 +381,17 @@ impl lexer {
             tmp.__ptr__(),
             loc.__ptr__()
         );
-
-        loc.delete();
-        tmp.delete();
     }
 
     func generate_number(self, src: str*) {
         var loc = span::instance();
+        defer loc.delete();
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
 
         var tmp = str::instance();
+        defer tmp.delete();
         if (src->get(self->pos)=='0' &&
             self->pos + 1 < src->size &&
             src->get(self->pos + 1) == 'x') {
@@ -417,9 +416,6 @@ impl lexer {
                 loc.end_column = self->column;
                 self->err->error(loc.__ptr__(), "invalid hex number");
             }
-
-            loc.delete();
-            tmp.delete();
             return;
         }
         if (src->get(self->pos)=='0' &&
@@ -446,9 +442,6 @@ impl lexer {
                 loc.end_column = self->column;
                 self->err->error(loc.__ptr__(), "invalid oct number");
             }
-
-            loc.delete();
-            tmp.delete();
             return;
         }
 
@@ -474,9 +467,6 @@ impl lexer {
                     tmp.__ptr__(),
                     loc.__ptr__()
                 );
-
-                loc.delete();
-                tmp.delete();
                 return;
             }
 
@@ -492,9 +482,6 @@ impl lexer {
                     tmp.__ptr__(),
                     loc.__ptr__()
                 );
-
-                loc.delete();
-                tmp.delete();
                 return;
             }
 
@@ -519,9 +506,6 @@ impl lexer {
                     tmp.__ptr__(),
                     loc.__ptr__()
                 );
-
-                loc.delete();
-                tmp.delete();
                 return;
             }
 
@@ -542,9 +526,6 @@ impl lexer {
                     tmp.__ptr__(),
                     loc.__ptr__()
                 );
-
-                loc.delete();
-                tmp.delete();
                 return;
             }
 
@@ -566,9 +547,6 @@ impl lexer {
                     tmp.__ptr__(),
                     loc.__ptr__()
                 );
-
-                loc.delete();
-                tmp.delete();
                 return;
             }
         }
@@ -581,19 +559,18 @@ impl lexer {
             tmp.__ptr__(),
             loc.__ptr__()
         );
-
-        loc.delete();
-        tmp.delete();
     }
 
     func generate_string(self, src: str*) {
         var loc = span::instance();
+        defer loc.delete();
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
 
         var quote_type = src->get(self->pos);
         var tmp = str::instance();
+        defer tmp.delete();
         // skip first quote
         self->pos += 1;
         self->column += 1;
@@ -658,8 +635,6 @@ impl lexer {
                 loc.__ptr__(),
                 "expected end of string but reached end of file"
             );
-            loc.delete();
-            tmp.delete();
             return;
         }
 
@@ -678,18 +653,17 @@ impl lexer {
             }
             self->push_token(tok_kind::tok_ch, tmp.__ptr__(), loc.__ptr__());
         }
-
-        loc.delete();
-        tmp.delete();
     }
 
     func generate_coloncolon(self, src: str*) {
         var loc = span::instance();
+        defer loc.delete();
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
 
         var tmp = str::instance();
+        defer tmp.delete();
         tmp.append_char(':');
         self->pos += 1;
         self->column += 1;
@@ -715,18 +689,17 @@ impl lexer {
                 loc.__ptr__()
             );
         }
-
-        loc.delete();
-        tmp.delete();
     }
 
     func generate_ellipsis(self, src: str*) {
         var loc = span::instance();
+        defer loc.delete();
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
 
         var tmp = str::instance();
+        defer tmp.delete();
         tmp.append_char('.');
         self->pos += 1;
         self->column += 1;
@@ -755,9 +728,6 @@ impl lexer {
                 loc.__ptr__()
             );
         }
-
-        loc.delete();
-        tmp.delete();
     }
 
     func skip_note(self, src: str*) {
@@ -769,6 +739,7 @@ impl lexer {
 
     func generate_eof_token(self) {
         var eof_span = span::instance();
+        defer eof_span.delete();
         eof_span.file.copy_const(self->filename.c_str);
         eof_span.begin_line = self->line;
         eof_span.begin_column = self->column;
@@ -776,14 +747,13 @@ impl lexer {
         eof_span.end_column = self->column;
 
         var eof_content = str::from("<eof>");
+        defer eof_content.delete();
+
         self->push_token(
             tok_kind::tok_eof,
             eof_content.__ptr__(),
             eof_span.__ptr__()
         );
-
-        eof_span.delete();
-        eof_content.delete();
     }
 
     pub func scan(self, filename: i8*) {
@@ -792,6 +762,7 @@ impl lexer {
         self->err->load_file_source(filename);
 
         var src = readfile(filename);
+        defer src.delete();
 
         self->pos = 0;
         self->line = 0;
@@ -832,9 +803,6 @@ impl lexer {
         }
 
         self->generate_eof_token();
-
-        // lifetime end for src
-        src.delete();
     }
 
     pub func dump(self, out: io) {

@@ -181,6 +181,8 @@ impl mir_context {
 
     pub func dump(self, out: io, pkg: package*) {
         var tm = tree_maker::instance();
+        defer tm.delete();
+
         foreach (var i; self->impls) {
             out.blue().out("<").out(i.get()->name.c_str).out(">:").reset().endln();
             if (i.get()->block != nil) {
@@ -189,7 +191,6 @@ impl mir_context {
             }
             out.endln();
         }
-        tm.delete();
     }
 
     pub func adjust_posix_open(self, verbose: bool) {
@@ -227,32 +228,34 @@ impl mir_context {
         var name = str::from("malloc");
         var null_loc = span::instance();
         var ret_type = type::i8_type(1);
-
         var arg_type = type::i64_type();
         var size = str::from("size");
         var arg_pair = pair<str, type>::instance(
             size.__ptr__(),
             arg_type.__ptr__()
         );
+        defer {
+            name.delete();
+            null_loc.delete();
+            ret_type.delete();
+            arg_type.delete();
+            size.delete();
+            arg_pair.delete();
+        }
 
         var malloc_decl = mir_func::instance(
             name.__ptr__(),
             null_loc.__ptr__(),
             ret_type.__ptr__()
         );
+        defer malloc_decl.delete();
+
         var nounwind_attr = str::from("nounwind");
+        defer nounwind_attr.delete();
+
         malloc_decl.attributes.push(nounwind_attr.__ptr__());
         malloc_decl.params.push(arg_pair.__ptr__());
         self->decls.push(malloc_decl.__ptr__());
-        malloc_decl.delete();
-
-        name.delete();
-        null_loc.delete();
-        ret_type.delete();
-        arg_type.delete();
-        size.delete();
-        arg_pair.delete();
-        nounwind_attr.delete();
     }
 
     func add_free_decl(self) {
@@ -265,32 +268,34 @@ impl mir_context {
         var name = str::from("free");
         var null_loc = span::instance();
         var ret_type = type::void_type();
-
         var arg_type = type::i8_type(1);
         var p = str::from("ptr");
         var arg_pair = pair<str, type>::instance(
             p.__ptr__(),
             arg_type.__ptr__()
         );
+        defer {
+            name.delete();
+            null_loc.delete();
+            ret_type.delete();
+            arg_type.delete();
+            p.delete();
+            arg_pair.delete();
+        }
 
         var free_decl = mir_func::instance(
             name.__ptr__(),
             null_loc.__ptr__(),
             ret_type.__ptr__()
         );
+        defer free_decl.delete();
+
         var nounwind_attr = str::from("nounwind");
+        defer nounwind_attr.delete();
+
         free_decl.attributes.push(nounwind_attr.__ptr__());
         free_decl.params.push(arg_pair.__ptr__());
         self->decls.push(free_decl.__ptr__());
-        free_decl.delete();
-
-        name.delete();
-        null_loc.delete();
-        ret_type.delete();
-        arg_type.delete();
-        p.delete();
-        arg_pair.delete();
-        nounwind_attr.delete();
     }
 
     func add_main_impl(self) {
@@ -308,18 +313,28 @@ impl mir_context {
         var name = str::from("main");
         var null_loc = span::instance();
         var ret_type = type::i32_type();
+        defer {
+            name.delete();
+            null_loc.delete();
+            ret_type.delete();
+        }
 
         var main_impl = mir_func::instance(
             name.__ptr__(),
             null_loc.__ptr__(),
             ret_type.__ptr__()
         );
+        defer main_impl.delete();
+
         main_impl.block = mir_block::new(null_loc.__ptr__());
         var ret_stmt = mir_return::new(
             null_loc.__ptr__(),
             mir_block::new(null_loc.__ptr__())
         );
+
         var zero = str::from("0");
+        defer zero.delete();
+
         ret_stmt->value->add(mir_number::new(
             null_loc.__ptr__(),
             zero.__ptr__(),
@@ -327,12 +342,6 @@ impl mir_context {
         ) => mir*);
         main_impl.block->add(ret_stmt => mir*);
         self->impls.push(main_impl.__ptr__());
-        main_impl.delete();
-
-        name.delete();
-        null_loc.delete();
-        ret_type.delete();
-        zero.delete();
     }
 
     pub func add_default_func(self, verbose: bool) {

@@ -1715,6 +1715,11 @@ impl sir_type_convert {
 
         var real_src_type = str::instance();
         var real_dst_type = str::instance();
+        defer {
+            real_src_type.delete();
+            real_dst_type.delete();
+        }
+
         if (self->src_type.eq_const("float")) {
             real_src_type.append_i8_vec("f32");
         } else if (self->src_type.eq_const("double")) {
@@ -1751,9 +1756,6 @@ impl sir_type_convert {
             out.out(" to ").out(self->dst_type.c_str);
             self->dump_debug_info(out);
             out.endln();
-
-            real_src_type.delete();
-            real_dst_type.delete();
             return;
         }
         // f32 f64 also
@@ -1765,9 +1767,6 @@ impl sir_type_convert {
             out.out(" to ").out(self->dst_type.c_str);
             self->dump_debug_info(out);
             out.endln();
-
-            real_src_type.delete();
-            real_dst_type.delete();
             return;
         }
 
@@ -1775,6 +1774,10 @@ impl sir_type_convert {
         var src_bits = to_u64(src_type_bits.__ptr__()).unwrap();
         var dst_type_bits = real_dst_type.substr_from(1);
         var dst_bits = to_u64(dst_type_bits.__ptr__()).unwrap();
+        defer {
+            src_type_bits.delete();
+            dst_type_bits.delete();
+        }
 
         var conv_inst = sir_type_convert::convert_instruction(
             src_type_mark,
@@ -1790,11 +1793,6 @@ impl sir_type_convert {
         out.out(" to ").out(self->dst_type.c_str);
         self->dump_debug_info(out);
         out.endln();
-
-        real_src_type.delete();
-        real_dst_type.delete();
-        src_type_bits.delete();
-        dst_type_bits.delete();
     }
 }
 

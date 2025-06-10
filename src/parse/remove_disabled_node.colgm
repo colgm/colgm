@@ -22,6 +22,11 @@ use util::cli::{ cli_option };
 func check_enable_if(err: report*, acc: ast_cond_compile*, co: cli_option*) -> bool {
     var key_arch = str::from("arch");
     var key_target_os = str::from("target_os");
+    defer {
+        key_arch.delete();
+        key_target_os.delete();
+    }
+
     var arch = get_arch();
     var platform = get_platform();
 
@@ -36,10 +41,11 @@ func check_enable_if(err: report*, acc: ast_cond_compile*, co: cli_option*) -> b
         if (!i.key()->eq(key_target_os.__ptr__()) &&
             !i.key()->eq(key_arch.__ptr__())) {
             var info = str::from("invalid enable_if condition \"");
+            defer info.delete();
+
             info.append_str(i.key());
             info.append_i8_vec("\", may cause this node disabled");
             err->warn(acc->base.location.__ptr__(), info.c_str);
-            info.delete();
         }
     }
 
@@ -47,24 +53,19 @@ func check_enable_if(err: report*, acc: ast_cond_compile*, co: cli_option*) -> b
         acc->conds.has(key_arch.__ptr__())) {
         var target_os = acc->conds.get(key_target_os.__ptr__());
         var target_arch = acc->conds.get(key_arch.__ptr__());
-        key_target_os.delete();
-        key_arch.delete();
         return target_os->eq_const(platform) && target_arch->eq_const(arch);
     }
 
     if (acc->conds.has(key_target_os.__ptr__())) {
         var target_os = acc->conds.get(key_target_os.__ptr__());
-        key_target_os.delete();
-        key_arch.delete();
         return target_os->eq_const(platform);
     }
 
     if (acc->conds.has(key_arch.__ptr__())) {
         var target_arch = acc->conds.get(key_arch.__ptr__());
-        key_target_os.delete();
-        key_arch.delete();
         return target_arch->eq_const(arch);
     }
+
     return false;
 }
 

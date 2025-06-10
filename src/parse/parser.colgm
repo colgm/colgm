@@ -211,7 +211,10 @@ impl parser {
             return;
         }
         var loc = self->this_tok_loc();
+
         var message = str::from("expected ");
+        defer message.delete();
+
         match (kind) {
             tok_kind::tok_id => {
                 message.append_i8_vec("identifier");
@@ -242,7 +245,6 @@ impl parser {
             message.append_i8_vec("\"");
         }
         self->err->error(loc, message.c_str);
-        message.delete();
 
         self->next();
     }
@@ -269,8 +271,9 @@ impl parser {
                 res->add_condition(key, value);
             } else {
                 var empty_value = str::from("");
+                defer empty_value.delete();
+
                 res->add_condition(key, empty_value.__ptr__());
-                empty_value.delete();
             }
             if (self->lookahead(tok_kind::tok_comma)) {
                 self->match_token(tok_kind::tok_comma);
@@ -1074,6 +1077,8 @@ impl parser {
             }
 
             var conds = vec<ast_cond_compile*>::instance();
+            defer conds.delete();
+
             while (self->lookahead(tok_kind::tok_sharp)) {
                 conds.push(self->conditional_compilation());
             }
@@ -1084,15 +1089,12 @@ impl parser {
                 is_pub = true;
             } else if (!self->lookahead(tok_kind::tok_func)) {
                 self->impl_block_invalid_first_token();
-                conds.delete();
                 continue;
             }
             var tmp = self->function_decl_gen();
             tmp->set_conds(conds.__ptr__());
             tmp->is_public = is_pub;
             res->methods.push(tmp => ast*);
-
-            conds.delete();
         }
         self->try_match_rbrace();
         self->update_location(res => ast*);
@@ -1347,10 +1349,11 @@ impl parser {
 impl parser {
     func report_unexpect_token_and_skip(self, tok: token*) {
         var info = str::from("unexpected token \"");
+        defer info.delete();
+
         info.append_i8_vec(tok->content.c_str);
         info.append_i8_vec("\"");
         self->err->error(tok->location.__ptr__(), info.c_str);
-        info.delete();
 
         // do skip
         while (!self->lookahead(tok_kind::tok_eof) &&
@@ -1401,6 +1404,7 @@ impl parser {
 
             // get conditional compilation
             var conds = vec<ast_cond_compile*>::instance();
+            defer conds.delete();
             if (self->lookahead(tok_kind::tok_sharp)) {
                 conds.push(self->conditional_compilation());
             }
@@ -1432,7 +1436,6 @@ impl parser {
                     tmp->is_public = flag_is_public;
                     tmp->is_extern = flag_is_extern;
                     self->root->decls.push(tmp => ast*);
-                    conds.delete();
                     continue;
                 }
                 tok_kind::tok_union => {
@@ -1441,7 +1444,6 @@ impl parser {
                     tmp->is_public = flag_is_public;
                     tmp->is_extern = flag_is_extern;
                     self->root->decls.push(tmp => ast*);
-                    conds.delete();
                     continue;
                 }
                 tok_kind::tok_enum => {
@@ -1454,7 +1456,6 @@ impl parser {
                         );
                     }
                     self->root->decls.push(tmp => ast*);
-                    conds.delete();
                     continue;
                 }
                 tok_kind::tok_func => {
@@ -1463,7 +1464,6 @@ impl parser {
                     tmp->is_public = flag_is_public;
                     tmp->is_extern = flag_is_extern;
                     self->root->decls.push(tmp => ast*);
-                    conds.delete();
                     continue;
                 }
                 tok_kind::tok_impl => {
@@ -1480,7 +1480,6 @@ impl parser {
                     var tmp = self->impl_gen();
                     tmp->set_conds(conds.__ptr__());
                     self->root->decls.push(tmp => ast*);
-                    conds.delete();
                     continue;
                 }
                 _ => {
@@ -1490,7 +1489,6 @@ impl parser {
                         n->delete();
                         free(n => i8*);
                     }
-                    conds.delete();
                     continue;
                 }
             }
@@ -1514,8 +1512,9 @@ impl parser {
 impl parser {
     pub func dump(self, out: io) {
         var dumper = ast_dumper::instance();
+        defer dumper.delete();
+
         dumper.dump(self->root => ast*, out);
-        dumper.delete();
     }
 
     pub func log_dump(self) {

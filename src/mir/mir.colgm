@@ -19,13 +19,15 @@ func dump_resolved_type(out: io, pkg: package*, ty: type*) {
 
     if (ty->is_array) {
         var n = ty->array_type_full_name(pkg);
+        defer n.delete();
+
         out.blue().out("[real: ").out(n.c_str).out("] ").reset();
-        n.delete();
     }
 
     var name = ty->full_path_name(pkg, true);
+    defer name.delete();
+
     out.cyan().out("[type: ").out(name.c_str).out("] ").reset();
-    name.delete();
 }
 
 pub enum mir_kind {
@@ -630,8 +632,9 @@ impl mir_string {
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         
         var tmp = llvm_raw_string(self->value.__ptr__());
+        defer tmp.delete();
+
         out.green().out("\"").out(tmp.c_str).out("\" ").reset();
-        tmp.delete();
 
         self->base.location.dump(out);
     }
@@ -664,8 +667,9 @@ impl mir_char {
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         
         var tmp = llvm_raw_string(self->value.__ptr__());
+        defer tmp.delete();
+
         out.green().out("'").out(tmp.c_str).out("' ").reset();
-        tmp.delete();
 
         self->base.location.dump(out);
     }
@@ -814,9 +818,12 @@ impl mir_struct_init {
             content: b,
             resolved_type: t->copy_instance()
         };
+        defer {
+            in_fld.content = nil;
+            in_fld.delete();
+        }
+
         self->fields.push(in_fld.__ptr__());
-        in_fld.content = nil;
-        in_fld.delete();
     }
 
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {

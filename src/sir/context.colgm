@@ -307,17 +307,19 @@ impl sir_context {
 impl sir_context {
     pub func add_DI_type(self, name: i8*, index: u64) {
         var temp = str::from(name);
+        defer temp.delete();
+
         self->DI_type_map.insert(temp.__ptr__(), index);
-        temp.delete();
     }
 
     pub func add_DI_struct(self, name: i8*, node: DI_structure_type*) {
         var temp = str::from(name);
+        defer temp.delete();
+
         self->DI_struct_map.insert(
             temp.__ptr__(),
             node
         );
-        temp.delete();
     }
 }
 
@@ -364,19 +366,17 @@ impl sir_context {
     }
 
     func dump_const_strings(self, out: io) {
+        // convert map to vec
         var ordered_const_string = vec<str>::instance();
+        defer ordered_const_string.delete();
         foreach (var i; self->const_strings) {
-            var t = str::instance();
-            ordered_const_string.push(t.__ptr__());
-            t.delete();
+            var temp = str::instance();
+            defer temp.delete();
+
+            ordered_const_string.push(temp.__ptr__());
         }
-
         foreach (var i; self->const_strings) {
-            var s_value = i.key();
-            var s_index = i.value();
-
-            var s_ptr = ordered_const_string.get(s_index);
-            s_ptr->append_str(s_value);
+            ordered_const_string.get(i.value())->append_str(i.key());
         }
 
         foreach (var i; ordered_const_string) {
@@ -385,89 +385,92 @@ impl sir_context {
             out.out_u64(i.get()->size + 1).out(" x i8] c\"");
 
             var raw_str = llvm_raw_string(i.get());
+            defer raw_str.delete();
+
             out.out(raw_str.c_str).out("\"\n");
-            raw_str.delete();
         }
 
         if (!ordered_const_string.empty()) {
             out.out("\n");
         }
-
-        ordered_const_string.delete();
     }
 
     func dump_builtin_time(self, out: io) {
         var time_str = chrono::localtime();
+        defer time_str.delete();
+
         out.out("@str.__time__ = private unnamed_addr constant [");
         out.out_u64(time_str.size + 1).out(" x i8] c\"");
+
         var time_raw = llvm_raw_string(time_str.__ptr__());
+        defer time_raw.delete();
+
         out.out(time_raw.c_str).out("\"\n");
 
         out.out("define i8* @__time__() alwaysinline nounwind {\n");
         out.out("label.entry:\n");
         out.out("  ret i8* bitcast ([");
         out.out_u64(time_str.size + 1).out(" x i8]* @str.__time__ to i8*)\n}\n\n");
-
-        time_str.delete();
-        time_raw.delete();
     }
 
     func dump_struct_size_method(self, out: io) {
         foreach (var i; self->struct_decls) {
-            var st_name = i.get()->name.copy_instance();
+            var st_name = i.get()->name.__ptr__();
             var size_func_name = str::instance();
-            if (st_name.size >= 2 && st_name.get(1) == '"') {
-                var temp = st_name.substr_from(9);
+            defer size_func_name.delete();
+
+            if (st_name->size >= 2 && st_name->get(1) == '"') {
+                var temp = st_name->substr_from(9);
+                defer temp.delete();
+
                 size_func_name.append_i8_vec("\"");
                 size_func_name.append_str(temp.__ptr__());
                 size_func_name.pop_back();
                 size_func_name.append_i8_vec(".__size__\"");
-                temp.delete();
             } else {
-                var temp = st_name.substr_from(8);
+                var temp = st_name->substr_from(8);
+                defer temp.delete();
+
                 size_func_name.append_str(temp.__ptr__());
                 size_func_name.append_i8_vec(".__size__");
-                temp.delete();
             }
 
             out.out("define i64 @").out(size_func_name.c_str);
             out.out("() alwaysinline {\n");
             out.out("  ret i64 ").out_u64(i.get()->size).out("\n}\n");
-
-            st_name.delete();
-            size_func_name.delete();
         }
     }
 
     func dump_struct_alloc_method(self, out: io) {
         foreach (var i; self->struct_decls) {
-            var st_name = i.get()->name.copy_instance();
+            var st_name = i.get()->name.__ptr__();
             var alloc_func_name = str::instance();
-            if (st_name.size >= 2 && st_name.get(1) == '"') {
+            defer alloc_func_name.delete();
+
+            if (st_name->size >= 2 && st_name->get(1) == '"') {
                 // delete prefix `"%struct.`
-                var temp = st_name.substr_from(9);
+                var temp = st_name->substr_from(9);
+                defer temp.delete();
+
                 alloc_func_name.append_i8_vec("\"");
                 alloc_func_name.append_str(temp.__ptr__());
                 alloc_func_name.pop_back();
                 alloc_func_name.append_i8_vec(".__alloc__\"");
-                temp.delete();
             } else {
                 // delete prefix `%struct.`
-                var temp = st_name.substr_from(8);
+                var temp = st_name->substr_from(8);
+                defer temp.delete();
+
                 alloc_func_name.append_str(temp.__ptr__());
                 alloc_func_name.append_i8_vec(".__alloc__");
-                temp.delete();
             }
 
-            out.out("define ").out(st_name.c_str).out("* @");
+            out.out("define ").out(st_name->c_str).out("* @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
             out.out("label.entry:\n");
             out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get()->size).out(")\n");
-            out.out("  %1 = bitcast i8* %0 to ").out(st_name.c_str).out("*\n");
-            out.out("  ret ").out(st_name.c_str).out("* %1\n}\n");
-
-            st_name.delete();
-            alloc_func_name.delete();
+            out.out("  %1 = bitcast i8* %0 to ").out(st_name->c_str).out("*\n");
+            out.out("  ret ").out(st_name->c_str).out("* %1\n}\n");
         }
     }
 

@@ -11,6 +11,8 @@ use util::timestamp::{ maketimestamp };
 func adjust_single_function(f: sir_func*) -> i64 {
     var replace_count = 0;
     var temp = vec<sir*>::instance();
+    defer temp.delete();
+
     foreach (var i; f->body->stmts) {
         var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
@@ -34,6 +36,7 @@ func adjust_single_function(f: sir_func*) -> i64 {
         }
 
         var rtt = call->return_type.copy_instance();
+        defer rtt.delete();
         rtt.pop_back(); // delete tail *
 
         replace_count += 1;
@@ -49,7 +52,7 @@ func adjust_single_function(f: sir_func*) -> i64 {
         );
         temp.push(constant => sir*);
 
-        rtt.delete();
+        // replaced old instruction could be freed
         inst->delete();
         free(inst => i8*);
     }
@@ -59,7 +62,6 @@ func adjust_single_function(f: sir_func*) -> i64 {
         f->body->stmts.push(i.get());
     }
 
-    temp.delete();
     return replace_count;
 }
 
