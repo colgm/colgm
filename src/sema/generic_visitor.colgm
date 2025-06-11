@@ -57,17 +57,16 @@ impl generic_visitor {
 
     func report_recursive_generic_generation(self, ty: type*) {
         var generic_name = ty->generic_name(self->pkg);
+        defer generic_name.delete();
         
         var domain_file = ty->loc_file.__ptr__();
         if (!self->ctx->has_domain(domain_file)) {
-            generic_name.delete();
             return;
         }
 
         var dm = self->ctx->get_domain(domain_file);
         if (dm->structs.has(generic_name.__ptr__()) ||
             dm->functions.has(generic_name.__ptr__())) {
-            generic_name.delete();
             return;
         }
 
@@ -79,13 +78,11 @@ impl generic_visitor {
         }
 
         var info = str::from("template instantiation depth exceeds maximum of ");
+        defer info.delete();
         info.append_i64(self->MAX_RECURSIVE_DEPTH);
         info.append_i8_vec(":\n  --> ");
         info.append_str(generic_name.__ptr__());
         self->err->error(loc, info.c_str);
-
-        generic_name.delete();
-        info.delete();
     }
 
     pub func scan_and_insert(self, n: root*) {
@@ -124,19 +121,21 @@ impl generic_visitor {
         // remember, symbol is stored both in global_symbol and generic_symbol
         if (!dm->global_symbol.has(type_name)) {
             var info = str::from("unknown type \"");
+            defer info.delete();
             info.append_str(type_name)->append_i8_vec("\"");
+
             self->err->error(n->location.__ptr__(), info.c_str);
-            info.delete();
             return false;
         }
 
         // check this symbol is generic type
         if (!dm->generic_symbol.has(type_name)) {
             var info = str::from("\"");
+            defer info.delete();
             info.append_str(type_name);
             info.append_i8_vec("\" is not a generic type");
+
             self->err->error(n->location.__ptr__(), info.c_str);
-            info.delete();
             return false;
         }
 
@@ -160,10 +159,11 @@ impl generic_visitor {
         var sym = dm->generic_symbol.get(type_name);
         if (sym->kind != symbol_kind::struct_kind) {
             var info = str::from("\"");
+            defer info.delete();
             info.append_str(type_name);
             info.append_i8_vec("\" is not a struct type");
+
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             return;
         }
 
@@ -193,40 +193,42 @@ impl generic_visitor {
         }
 
         var ss = str::from("");
+        defer ss.delete();
         ss.append_str(type_name)->append_char('<');
         foreach (var i; type_list) {
             var r_type = self->tr.resolve(i.get() => ast_type_def*);
             var r_type_fpn = r_type.full_path_name(self->pkg, true);
+            defer {
+                r_type.delete();
+                r_type_fpn.delete();
+            }
+
             ss.append_str(r_type_fpn.__ptr__());
-            r_type_fpn.delete();
             if (i.index() != type_list->size - 1) {
                 ss.append_char(',');
             }
-            r_type.delete();
         }
         ss.append_char('>');
         if (self->err->error_count > 0) {
-            ss.delete();
             return;
         }
 
         // load useful data into generic_data
         var g_data = generic_data::instance();
+        defer g_data.delete();
         g_data.name.append_str(ss.__ptr__());
         g_data.generic_type.name.append_str(type_name);
         g_data.generic_type.loc_file.append_str(sym->loc_file.__ptr__());
 
         foreach (var i; type_list) {
             var r_type = self->tr.resolve(i.get() => ast_type_def*);
+            defer r_type.delete();
+
             g_data.generic_type.generics.push(r_type.__ptr__());
             g_data.types.insert(generic_template->get(i.index()), r_type.__ptr__());
-            r_type.delete();
         }
 
         self->insert_count += self->insert_generic_type(g_data.__ptr__());
-
-        ss.delete();
-        g_data.delete();
         return;
     }
 }
@@ -417,10 +419,11 @@ impl generic_visitor {
         if (sym->kind != symbol_kind::struct_kind &&
             sym->kind != symbol_kind::func_kind) {
             var info = str::from("\"");
+            defer info.delete();
             info.append_str(type_name);
             info.append_i8_vec("\" is not a struct type");
+
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             return;
         }
 
@@ -614,6 +617,11 @@ impl generic_visitor {
         struct_info->name.clear();
         struct_info->name.append_str(gn);
         struct_info->generic_template.clear();
+        defer {
+            struct_info->delete();
+            free(struct_info => i8*);
+        }
+
         dm->structs.insert(gn, struct_info);
 
         var sym_info = symbol_info::instance(
@@ -621,13 +629,10 @@ impl generic_visitor {
             struct_info->location.file.c_str,
             struct_info->is_public,
         );
+        defer sym_info.delete();
+
         self->ctx->global_symbol()->insert(gn, sym_info.__ptr__());
-        sym_info.delete();
-
         self->replace_struct_type(dm->structs.get(gn), gd);
-
-        struct_info->delete();
-        free(struct_info => i8*);
     }
 
     func insert_function(self, dm: colgm_module*, gd: generic_data*, gn: str*) {
@@ -639,6 +644,11 @@ impl generic_visitor {
         func_info->name.clear();
         func_info->name.append_str(gn);
         func_info->generic_template.clear();
+        defer {
+            func_info->delete();
+            free(func_info => i8*);
+        }
+
         dm->functions.insert(gn, func_info);
 
         var sym_info = symbol_info::instance(
@@ -646,13 +656,10 @@ impl generic_visitor {
             func_info->location.file.c_str,
             func_info->is_public
         );
+        defer sym_info.delete();
+
         self->ctx->global_symbol()->insert(gn, sym_info.__ptr__());
-        sym_info.delete();
-
         self->replace_func_type(dm->functions.get(gn), gd);
-
-        func_info->delete();
-        free(func_info => i8*);
     }
 
     func insert_generic_type(self, g_data: generic_data*) -> i64 {

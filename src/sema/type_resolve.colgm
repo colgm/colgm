@@ -74,9 +74,10 @@ impl type_resolve {
         // cannot find type
         if (!DM->global_symbol.has(name) && !GN->has(name)) {
             var info = str::from("undefined type \"");
+            defer info.delete();
             info.append_str(name)->append_i8_vec("\"");
+
             self->err->error(node->base.location.__ptr__(), info.c_str);
-            info.delete();
             return type::error_type();
         }
 
@@ -85,9 +86,10 @@ impl type_resolve {
         if (DM->global_symbol.has(name) &&
             !DM->global_symbol.get(name)->is_public) {
             var info = str::from("private type \"");
+            defer info.delete();
             info.append_str(name)->append_i8_vec("\" cannot be used");
+
             self->err->error(node->base.location.__ptr__(), info.c_str);
-            info.delete();
             return type::error_type();
         }
 
@@ -95,11 +97,12 @@ impl type_resolve {
         if (DM->global_symbol.has(name) &&
             DM->global_symbol.get(name)->kind == symbol_kind::func_kind) {
             var info =  str::from("\"");
+            defer info.delete();
             info.append_str(name)
                 ->append_i8_vec("\" is a function, ")
                 ->append_i8_vec("cannot be used as a type");
+
             self->err->error(node->base.location.__ptr__(), info.c_str);
-            info.delete();
             return type::error_type();
         }
 
@@ -140,10 +143,10 @@ impl type_resolve {
                     );
                     continue;
                 }
-                var n_td = gt => ast_type_def*;
-                var gt_res = self->resolve(n_td);
-                t.generics.push(gt_res.__ptr__());
-                gt_res.delete();
+                var gt_res = self->resolve(gt => ast_type_def*);
+                defer gt_res.delete();
+
+                t.generics.push(gt_res.__ptr__());                
             }
         }
         return t;

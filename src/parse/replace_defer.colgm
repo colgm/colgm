@@ -306,15 +306,14 @@ impl replace_defer {
             }
         }
         // insert defer when top scope exits
-        if (!n->stmts.empty() && self->in_top_scope()) {
-            var back = n->stmts.back();
-            if (back->kind != ast_kind::ast_ret_stmt &&
-                back->kind != ast_kind::ast_break_stmt &&
-                back->kind != ast_kind::ast_continue_stmt) {
+        if (self->in_top_scope()) {
+            if (n->back_is_not_block_exit()) {
                 self->insert_defer_on_block_exit(new_stmts.__ptr__());
             }
         } else if (has_defer_in_this_sub_scope) {
-            self->insert_defer_on_subscope_exit(new_stmts.__ptr__());
+            if (n->back_is_not_block_exit()) {
+                self->insert_defer_on_subscope_exit(new_stmts.__ptr__());
+            }
         }
         n->reset_stmt_with(new_stmts.__ptr__());
 

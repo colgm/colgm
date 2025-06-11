@@ -43,8 +43,9 @@ impl global_symbol_table {
         }
 
         var res = colgm_module::instance();
+        defer res.delete();
+
         self->domain.insert(name, res.__ptr__());
-        res.delete();
     }
 }
 
@@ -59,8 +60,9 @@ pub struct sema_context {
 impl sema_context {
     pub func push_scope_level(self) {
         var res = hashmap<str, type>::instance();
+        defer res.delete();
+
         self->local_scope.push(res.__ptr__());
-        res.delete();
     }
 
     pub func pop_scope_level(self) {

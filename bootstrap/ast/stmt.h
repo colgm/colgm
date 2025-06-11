@@ -338,6 +338,16 @@ public:
     void reset_stmt_with(const std::vector<stmt*>& v) {
         statements = v;
     }
+    // last statement is not return/continue/break
+    bool back_not_block_exit() const {
+        if (statements.empty()) {
+            return true;
+        }
+        auto back = statements.back();
+        return !back->is(ast_type::ast_ret_stmt) &&
+               !back->is(ast_type::ast_continue_stmt) &&
+               !back->is(ast_type::ast_break_stmt);
+    }
 };
 
 }

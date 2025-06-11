@@ -20,6 +20,8 @@ impl structure_for_test {
     }
 }
 
+// output:
+// test 0: delete a
 func test_0() {
     var a = structure_for_test::new();
     defer {
@@ -37,6 +39,8 @@ func test_0() {
     }
 }
 
+// output:
+// test 1: delete a
 func test_1() {
     var a = structure_for_test::new();
     defer {
@@ -48,6 +52,8 @@ func test_1() {
     if (1 != 1) {} else {}
 }
 
+// output:
+// test 2: delete a
 func test_2() {
     var a = structure_for_test::new();
     defer io::stdout().out("test 2: delete a\n");
@@ -57,6 +63,43 @@ func test_2() {
     if (1 != 1) {} else {}
 }
 
+// output:
+// test 3: delete _c (0)
+// test 3: delete _b (0)
+// test 3: delete _a (0)
+// test 3: delete _c (1)
+// test 3: delete _b (1)
+// test 3: delete _a (1)
+// test 3: delete _c (2)
+// test 3: delete _b (2)
+// test 3: delete _a (2)
+// test 3: delete c (0)
+// test 3: delete b (0)
+// test 3: delete a (0)
+// test 3: delete _c (0)
+// test 3: delete _b (0)
+// test 3: delete _a (0)
+// test 3: delete _c (1)
+// test 3: delete _b (1)
+// test 3: delete _a (1)
+// test 3: delete _c (2)
+// test 3: delete _b (2)
+// test 3: delete _a (2)
+// test 3: delete c (1)
+// test 3: delete b (1)
+// test 3: delete a (1)
+// test 3: delete _c (0)
+// test 3: delete _b (0)
+// test 3: delete _a (0)
+// test 3: delete _c (1)
+// test 3: delete _b (1)
+// test 3: delete _a (1)
+// test 3: delete _c (2)
+// test 3: delete _b (2)
+// test 3: delete _a (2)
+// test 3: delete c (2)
+// test 3: delete b (2)
+// test 3: delete a (2)
 func test_3() {
     for (var i = 0; i < 3; i += 1) {
         var a = structure_for_test::new();
@@ -93,6 +136,13 @@ func test_3() {
     }
 }
 
+// output:
+// test 4: output when v == 1
+// test 4: output when return
+// test 4: output when v == 2
+// test 4: output when return
+// test 4: output when top scope exits
+// test 4: output when return
 func test_4(v: i64) {
     defer io::stdout().out("test 4: output when return\n");
 
@@ -106,6 +156,38 @@ func test_4(v: i64) {
     io::stdout().out("test 4: output when top scope exits\n");
 }
 
+// output:
+// test 5: output when loop exits
+// test 5: output when loop exits
+// test 5: output when loop exits
+// test 5: output when loop exits
+// test 5: output when i == 5
+// test 5: output when loop exits
+// test 5: output when loop exits
+// test 5: output when i == 7
+// test 5: output when loop exits
+// test 5: --------------
+// test 5: output when top scope exits (0)
+// test 5: output when loop exits
+// test 5: output when top scope exits (1)
+// test 5: output when loop exits
+// test 5: output when top scope exits (2)
+// test 5: output when loop exits
+// test 5: output when top scope exits (3)
+// test 5: output when loop exits
+// test 5: output when top scope exits (4)
+// test 5: output when loop exits
+// test 5: output when i == 5
+// test 5: output when loop exits
+// test 5: output when top scope exits (6)
+// test 5: output when loop exits
+// test 5: output when i == 7
+// test 5: output when loop exits
+// test 5: output when loop exits
+// test 5: output when top scope exits (8)
+// test 5: output when loop exits
+// test 5: output when top scope exits (9)
+// test 5: output when loop exits
 func test_5() {
     for (var i = 0; i < 10; i += 1) {
         defer io::stdout().out("test 5: output when loop exits\n");
@@ -136,6 +218,29 @@ func test_5() {
     }
 }
 
+// output:
+// test 6: delete a
+func test_6() {
+    if (1 == 1) {
+        var a = structure_for_test::new();
+        defer io::stdout().out("test 6: delete a\n");
+        defer a.delete();
+        return;
+    }
+}
+
+// output:
+// main: ( loop     ) 0 delete a
+// main: ( loop     ) 1 delete a
+// main: ( loop     ) 2 delete a
+// main: ( loop     ) 3 delete a
+// main: ( loop     ) 4 delete a
+// main: ( loop     ) 5 delete a
+// main: ( continue ) 6 delete a
+// main: ( continue ) 7 delete a
+// main: ( loop     ) 8 delete a
+// main: ( break    ) 9 delete a
+// main: delete outer
 func main() -> i32 {
     test_0();
     test_1();
@@ -147,6 +252,7 @@ func main() -> i32 {
     test_4(3);
 
     test_5();
+    test_6();
 
     var outer = structure_for_test::new();
     defer io::stdout().out("main: delete outer").endln();

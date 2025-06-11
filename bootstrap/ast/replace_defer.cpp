@@ -141,15 +141,14 @@ bool replace_defer::visit_code_block(code_block* b) {
         }
     }
     // insert defer when top scope exits
-    if (!b->get_stmts().empty() && in_top_scope()) {
-        auto back = b->get_stmts().back();
-        if (!back->is(ast_type::ast_ret_stmt) &&
-            !back->is(ast_type::ast_break_stmt) &&
-            !back->is(ast_type::ast_continue_stmt)) {
+    if (in_top_scope()) {
+        if (b->back_not_block_exit()) {
             insert_defer_on_block_exit(new_stmts);
         }
     } else if (has_defer_in_this_sub_scope) {
-        insert_defer_on_subscope_exit(new_stmts);
+        if (b->back_not_block_exit()) {
+            insert_defer_on_subscope_exit(new_stmts);
+        }
     }
     b->reset_stmt_with(new_stmts);
 
