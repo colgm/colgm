@@ -669,29 +669,26 @@ impl generic_visitor {
         }
 
         var generic_name = g_data->generic_type.generic_name(self->pkg);
+        defer generic_name.delete();
             
         var domain_file = g_data->generic_type.loc_file.__ptr__();
         if (!self->ctx->has_domain(domain_file)) {
-            generic_name.delete();
             return 0;
         }
 
         var dm = self->ctx->get_domain(domain_file);
         if (dm->generic_structs.has(g_data->generic_type.name.__ptr__())) {
             if (dm->structs.has(generic_name.__ptr__())) {
-                generic_name.delete();
                 return 0;
             }
             self->insert_struct(dm, g_data, generic_name.__ptr__());
         } else if (dm->generic_functions.has(g_data->generic_type.name.__ptr__())) {
             if (dm->functions.has(generic_name.__ptr__())) {
-                generic_name.delete();
                 return 0;
             }
             self->insert_function(dm, g_data, generic_name.__ptr__());
         }
 
-        generic_name.delete();
         return 1;
     }
 
@@ -730,13 +727,14 @@ impl generic_visitor {
             }
             if (!g_data->types.has(cond)) {
                 var info = str::from("generic type \"");
+                defer info.delete();
                 info.append_str(cond);
                 info.append_i8_vec("\" is not defined");
+
                 self->err->warn(
                     n->base.location.__ptr__(),
                     info.c_str
                 );
-                info.delete();
                 return false;
             }
 
@@ -752,22 +750,20 @@ impl generic_visitor {
 
             var domain = self->ctx->get_domain(t->loc_file.__ptr__());
             var t_name = t->generic_name(self->pkg);
+            defer t_name.delete();
+
             if (!domain->structs.has(t_name.__ptr__())) {
-                t_name.delete();
                 continue;
             }
 
             var s = domain->structs.get(t_name.__ptr__());
             var delete_func = str::from("delete");
+            defer delete_func.delete();
+
             // with delete methopd, it's non-trivial
             if (s->method.has(delete_func.__ptr__())) {
-                t_name.delete();
-                delete_func.delete();
                 return false;
             }
-
-            t_name.delete();
-            delete_func.delete();
         }
         return true;
     }
@@ -783,13 +779,14 @@ impl generic_visitor {
             }
             if (!g_data->types.has(cond)) {
                 var info = str::from("generic type \"");
+                defer info.delete();
                 info.append_str(cond);
                 info.append_i8_vec("\" is not defined");
+
                 self->err->warn(
                     n->base.location.__ptr__(),
                     info.c_str
                 );
-                info.delete();
                 return false;
             }
 
@@ -804,22 +801,20 @@ impl generic_visitor {
 
             var domain = self->ctx->get_domain(t->loc_file.__ptr__());
             var t_name = t->generic_name(self->pkg);
+            defer t_name.delete();
+
             if (!domain->structs.has(t_name.__ptr__())) {
-                t_name.delete();
                 return false;
             }
 
             var s = domain->structs.get(t_name.__ptr__());
             var delete_func = str::from("delete");
+            defer delete_func.delete();
+
             // without delete methopd, it's trivial
             if (!s->method.has(delete_func.__ptr__())) {
-                t_name.delete();
-                delete_func.delete();
                 return false;
             }
-
-            t_name.delete();
-            delete_func.delete();
         }
         return true;
     }
@@ -835,13 +830,14 @@ impl generic_visitor {
             }
             if (!g_data->types.has(cond)) {
                 var info = str::from("generic type \"");
+                defer info.delete();
                 info.append_str(cond);
                 info.append_i8_vec("\" is not defined");
+
                 self->err->warn(
                     n->base.location.__ptr__(),
                     info.c_str
                 );
-                info.delete();
                 return false;
             }
 
@@ -864,13 +860,14 @@ impl generic_visitor {
             }
             if (!g_data->types.has(cond)) {
                 var info = str::from("generic type \"");
+                defer info.delete();
                 info.append_str(cond);
                 info.append_i8_vec("\" is not defined");
+
                 self->err->warn(
                     n->base.location.__ptr__(),
                     info.c_str
                 );
-                info.delete();
                 return false;
             }
 
@@ -887,6 +884,8 @@ impl generic_visitor {
         foreach (var i; s->generic_struct_impl) {
             var impl_node = i.get();
             var new_vec = vec<ast*>::instance();
+            defer new_vec.delete();
+
             foreach (var j; impl_node->methods) {
                 var func_node = j.get() => ast_func_decl*;
                 if (!func_node->contain_cond()) {
@@ -970,7 +969,6 @@ impl generic_visitor {
             if (new_vec.size != impl_node->methods.size) {
                 impl_node->reset_methods(new_vec.__ptr__());
             }
-            new_vec.delete();
         }
     }
 

@@ -193,18 +193,22 @@ impl type_replace_pass {
     func visit_call_id(self, n: ast_call_id*) {
         var name = n->id->content.__ptr__();
         var copy = name->copy_instance();
+        defer copy.delete();
+
         if (self->g_data->types.has(name)) {
             var select_type = self->g_data->types.get(name);
 
             if (select_type->pointer_depth > 0) {
                 var st_full_name = select_type->full_path_name(self->pkg, true);
                 var info = str::from("replace generic type with pointer type \"");
+                defer {
+                    st_full_name.delete();
+                    info.delete();
+                }
                 info.append_str(st_full_name.__ptr__());
                 info.append_i8_vec("\", which is not allowed here");
+
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                
-                st_full_name.delete();
-                info.delete();
             }
 
             // cannot replace T in T<K> with another generic V<X>
@@ -213,13 +217,16 @@ impl type_replace_pass {
                 n->generic_types != nil) {
                 var info = str::from("try to replace generic \"");
                 var st_full_name = select_type->full_path_name(self->pkg, true);
+                defer {
+                    info.delete();
+                    st_full_name.delete();
+                }
                 info.append_str(name);
                 info.append_i8_vec("\" with \"");
                 info.append_str(st_full_name.__ptr__());
                 info.append_i8_vec("\", which is already a generic type");
+
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
-                st_full_name.delete();
             }
 
             n->id->content.clear();
@@ -239,20 +246,19 @@ impl type_replace_pass {
             }
 
             if (self->co->VIEW_TYPE_REPLACE_INFO) {
-                io::stdout().out("[type_replace] call_id");
                 var st_full_name = select_type->generic_name(self->pkg);
+                defer st_full_name.delete();
+
+                io::stdout().out("[type_replace] call_id");
                 io::stdout().out(" replace ").orange().out(copy.c_str).reset();
                 io::stdout().out(" with ").cyan().out(st_full_name.c_str).reset().out(" ");
                 n->base.location.dump(io::stdout());
-                st_full_name.delete();
             }
         }
 
         if (n->generic_types != nil) {
             self->visit_generic_type_list(n->generic_types);
         }
-
-        copy.delete();
     }
 
     func visit_call(self, n: ast_call*) {
@@ -270,6 +276,8 @@ impl type_replace_pass {
     func visit_type_def(self, n: ast_type_def*) {
         var name = n->name->content.__ptr__();
         var copy = name->copy_instance();
+        defer copy.delete();
+
         if (self->g_data->types.has(name)) {
             var select_type = self->g_data->types.get(name);
 
@@ -279,13 +287,16 @@ impl type_replace_pass {
                 n->generic_types != nil) {
                 var info = str::from("try to replace generic \"");
                 var st_full_name = select_type->full_path_name(self->pkg, true);
+                defer {
+                    info.delete();
+                    st_full_name.delete();
+                }
                 info.append_str(name);
                 info.append_i8_vec("\" with \"");
                 info.append_str(st_full_name.__ptr__());
                 info.append_i8_vec("\", which is already a generic type");
+
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
-                st_full_name.delete();
             }
 
             n->name->content.clear();
@@ -307,20 +318,19 @@ impl type_replace_pass {
             }
 
             if (self->co->VIEW_TYPE_REPLACE_INFO) {
-                io::stdout().out("[type_replace] type_def");
                 var st_full_name = select_type->generic_name(self->pkg);
+                defer st_full_name.delete();
+
+                io::stdout().out("[type_replace] type_def");
                 io::stdout().out(" replace ").orange().out(copy.c_str).reset();
                 io::stdout().out(" with ").cyan().out(st_full_name.c_str).reset().out(" ");
                 n->base.location.dump(io::stdout());
-                st_full_name.delete();
             }
         }
 
         if (n->generic_types != nil) {
             self->visit_generic_type_list(n->generic_types);
         }
-
-        copy.delete();
     }
 
     func visit_generic_type_list(self, n: ast_generic_type_list*) {
