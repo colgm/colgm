@@ -257,8 +257,8 @@ if (1 == 1) {
 ### 匹配
 
 Colgm 支持 `match` 关键字。
-Match 语句仅接受枚举类型。
-默认分支是 `_`
+Match 语句仅接受枚举类型。每个分支都不会 fall through。
+默认分支是 `_`。
 
 ```rust
 match (variable) {

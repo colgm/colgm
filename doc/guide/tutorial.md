@@ -258,7 +258,8 @@ if (1 == 1) {
 
 Colgm supports `match` keyword.
 Match statements only accept enum types.
-The default branch is `_`
+Each case will never fall through.
+The default branch is `_`.
 
 ```rust
 match (variable) {

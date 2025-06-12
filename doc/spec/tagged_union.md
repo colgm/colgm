@@ -37,7 +37,14 @@ pub func generate_mir_from_m_block() -> mir {
 
 pub func fetch_m_block_from_mir(m: mir) -> mir_block {
     match (m) {
-        mir_kind::m_block => return m.m_block;
+        mir_kind::m_block(value) => return value;
+        _ => { unreachable(); }
+    }
+}
+
+pub func fetch_m_block_ptr_from_mir(m: mir) -> mir_block* {
+    match (m) {
+        mir_kind::m_block(value) => return value.__ptr__();
         _ => { unreachable(); }
     }
 }
@@ -45,9 +52,9 @@ pub func fetch_m_block_from_mir(m: mir) -> mir_block {
 pub func test_match(m: mir) {
     var out = io::stdout();
     match (m) {
-        mir_kind::m_block => m.m_block.dump(out);
-        mir_kind::m_num => m.m_num.dump(out);
-        mir_kind::m_str => m.m_str.dump(out);
+        mir_kind::m_block(value) => value.dump(out);
+        mir_kind::m_num(value) => value.dump(out);
+        mir_kind::m_str(value) => value.dump(out);
     }
 }
 ```
