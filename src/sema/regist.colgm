@@ -78,40 +78,49 @@ impl regist_pass {
             if (!i.value()->is_public) {
                 continue;
             }
-            var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::enum_kind,
                 dm->file_name.c_str,
                 i.value()->is_public
             );
-            self->ctx->global_symbol()->insert(name, info.__ptr__());
-            info.delete();
+            defer info.delete();
+
+            self->ctx->global_symbol()->insert(
+                i.value()->name.__ptr__(),
+                info.__ptr__()
+            );
         }
         foreach (var i; dm->structs) {
             if (!i.value()->is_public) {
                 continue;
             }
-            var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::struct_kind,
                 dm->file_name.c_str,
                 i.value()->is_public
             );
-            self->ctx->global_symbol()->insert(name, info.__ptr__());
-            info.delete();
+            defer info.delete();
+
+            self->ctx->global_symbol()->insert(
+                i.value()->name.__ptr__(),
+                info.__ptr__()
+            );
         }
         foreach (var i; dm->functions) {
             if (!i.value()->is_public) {
                 continue;
             }
-            var name = i.value()->name.__ptr__();
             var info = symbol_info::instance(
                 symbol_kind::func_kind,
                 dm->file_name.c_str,
                 i.value()->is_public
             );
-            self->ctx->global_symbol()->insert(name, info.__ptr__());
-            info.delete();
+            defer info.delete();
+
+            self->ctx->global_symbol()->insert(
+                i.value()->name.__ptr__(),
+                info.__ptr__()
+            );
         }
         foreach (var i; dm->generic_structs) {
             if (!i.value()->is_public) {
@@ -123,9 +132,10 @@ impl regist_pass {
                 dm->file_name.c_str,
                 i.value()->is_public
             );
+            defer info.delete();
+
             self->ctx->global_symbol()->insert(name, info.__ptr__());
             self->ctx->generic_symbol()->insert(name, info.__ptr__());
-            info.delete();
         }
         foreach (var i; dm->generic_functions) {
             if (!i.value()->is_public) {
@@ -137,9 +147,10 @@ impl regist_pass {
                 dm->file_name.c_str,
                 i.value()->is_public
             );
+            defer info.delete();
+
             self->ctx->global_symbol()->insert(name, info.__ptr__());
             self->ctx->generic_symbol()->insert(name, info.__ptr__());
-            info.delete();
         }
     }
 
@@ -165,8 +176,9 @@ impl regist_pass {
                 info.append_i8_vec("\" in module \"");
                 info.append_str(path);
                 info.append_i8_vec("\"");
+                defer info.delete();
+
                 self->err->error(name_node->base.location.__ptr__(), info.c_str);
-                info.delete();
                 continue;
             }
 
@@ -174,8 +186,9 @@ impl regist_pass {
                 var info = str::from("cannot import private symbol \"");
                 info.append_str(name);
                 info.append_i8_vec("\"");
-                self->err->error(name_node->base.location.__ptr__(), info.c_str);
-                info.delete();
+                defer info.delete();
+
+                self->err->error(name_node->base.location.__ptr__(), info.c_str);                
                 continue;
             }
 
@@ -184,6 +197,8 @@ impl regist_pass {
                 dm->file_name.c_str,
                 true
             );
+            defer sym_info.delete();
+
             if (dm->enums.has(name)) {
                 sym_info.kind = symbol_kind::enum_kind;
                 self->ctx->global_symbol()->insert(name, sym_info.__ptr__());
@@ -202,7 +217,6 @@ impl regist_pass {
                 self->ctx->global_symbol()->insert(name, sym_info.__ptr__());
                 self->ctx->generic_symbol()->insert(name, sym_info.__ptr__());
             }
-            sym_info.delete();
         }
     }
 
@@ -213,11 +227,12 @@ impl regist_pass {
             info.append_i8_vec("\" not found,");
             info.append_i8_vec(" may encounter compilation failure");
             info.append_i8_vec(" or circle dependency");
+            defer info.delete();
+
             self->err->error(
                 node->base.location.__ptr__(),
                 info.c_str
             );
-            info.delete();
             return;
         }
         var dm = self->ctx->get_domain(path);
@@ -252,6 +267,14 @@ impl regist_pass {
             self->pkg,
             self->mctx
         );
+        defer {
+            lex.delete();
+            par.delete();
+            rp.delete();
+            semantic.delete();
+            ast2mir_worker.delete();
+        }
+
         lex.scan(path->c_str);
         if (self->err->error_count > 0) {
             return false;
@@ -274,12 +297,6 @@ impl regist_pass {
 
         ast2mir_worker.generate(par.root);
 
-        lex.delete();
-        par.delete();
-        rp.delete();
-        semantic.delete();
-        ast2mir_worker.delete();
-
         info->status = p_status::analysed;
         if (self->co->VERBOSE) {
             io::stdout().green().out("[ SEMANTIC ] ").reset();
@@ -297,8 +314,10 @@ impl regist_pass {
     func scan_single_import(self, node: ast_use_stmt*) {
         // name like: mod::foo::bar
         var expect_name = str::instance();
+        defer expect_name.delete();
         // path like: mod/foo/bar.colgm
         var expect_path = str::from(self->pkg->library_path.c_str);
+        defer expect_path.delete();
 
         // expect file path init with given library path
         while (expect_path.ends_with('/')) {
@@ -310,8 +329,6 @@ impl regist_pass {
             var name = i.get();
             if (!name->is(ast_kind::ast_identifier)) {
                 self->err->error(name->location.__ptr__(), "invalid module path");
-                expect_name.delete();
-                expect_path.delete();
                 return;
             }
             var real_node = name => ast_identifier*;
@@ -334,8 +351,9 @@ impl regist_pass {
             info.append_i8_vec("\" not found, \"");
             info.append_i8_vec(expect_path.c_str);
             info.append_i8_vec("\" does not exist");
+            defer info.delete();
+
             self->err->error(node->base.location.__ptr__(), info.c_str);
-            info.delete();
         }
 
         self->pkg->insert(expect_name.__ptr__(), expect_path.__ptr__());
@@ -343,15 +361,10 @@ impl regist_pass {
         if (self->pkg->get_status(expect_name.__ptr__()) == p_status::not_used &&
             !self->compile_module(expect_name.__ptr__(), expect_path.__ptr__())) {
             // failed to compile, skip importing this module
-            expect_name.delete();
-            expect_path.delete();
             return;
         }
 
         self->import_from_module(expect_path.__ptr__(), node);
-
-        expect_name.delete();
-        expect_path.delete();
     }
 
     func scan_imports(self) {
@@ -381,10 +394,12 @@ impl regist_pass {
                 "",
                 true // must be public
             );
-            self->ctx->global_symbol()->insert(name.__ptr__(), info.__ptr__());
+            defer {
+                name.delete();
+                info.delete();
+            }
 
-            name.delete();
-            info.delete();
+            self->ctx->global_symbol()->insert(name.__ptr__(), info.__ptr__());
         }
     }
 
@@ -405,13 +420,13 @@ impl regist_pass {
             var prim_name = str::from(prim_table[i]);
             var empty_prim = colgm_primitive::instance();
             empty_prim.name.append_i8_vec(prim_table[i]);
+            defer {
+                prim_name.delete();
+                empty_prim.delete();
+            }
 
             gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
-            var pt = gt->primitives.get(prim_name.__ptr__());
-            self->regist_primitive_size_method(pt);
-
-            prim_name.delete();
-            empty_prim.delete();
+            self->regist_primitive_size_method(gt->primitives.get(prim_name.__ptr__()));
         }
     }
 
@@ -425,19 +440,26 @@ impl regist_pass {
             ret.__ptr__()
         );
         func_info->is_public = true;
-        pt->static_method.insert(name.__ptr__(), func_info);
+        defer {
+            func_info->delete();
+            free(func_info => i8*);
+            name.delete();
+            loc.delete();
+            ret.delete();
+        }
 
-        func_info->delete();
-        free(func_info => i8*);
-        name.delete();
-        loc.delete();
-        ret.delete();
+        pt->static_method.insert(name.__ptr__(), func_info);
     }
 
     func regist_builtin_funcs(self, root: root*) {
         var time_func_name = str::from("__time__");
         var null_loc = span::instance();
         var ret_type = type::const_str_literal_type();
+        defer {
+            time_func_name.delete();
+            null_loc.delete();
+            ret_type.delete();
+        }
 
         var func_info = colgm_func::new(
             time_func_name.__ptr__(),
@@ -445,6 +467,10 @@ impl regist_pass {
             ret_type.__ptr__()
         );
         func_info->is_extern = true;
+        defer {
+            func_info->delete();
+            free(func_info => i8*);
+        }
 
         var dm = self->ctx->get_domain(root->base.location.file.__ptr__());
         dm->functions.insert(time_func_name.__ptr__(), func_info);
@@ -454,14 +480,9 @@ impl regist_pass {
             root->base.location.file.c_str,
             true // true for selves' domain
         );
-        self->ctx->global_symbol()->insert(time_func_name.__ptr__(), sym_info.__ptr__());
+        defer sym_info.delete();
 
-        time_func_name.delete();
-        null_loc.delete();
-        ret_type.delete();
-        func_info->delete();
-        free(func_info => i8*);
-        sym_info.delete();
+        self->ctx->global_symbol()->insert(time_func_name.__ptr__(), sym_info.__ptr__());        
     }
 }
 
