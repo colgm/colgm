@@ -1,7 +1,5 @@
 # Feature: defer
 
-Work in progress.
-
 ## Syntax
 
 ```rust
@@ -62,5 +60,34 @@ func main() -> i32 {
     c.delete();
     d.delete();
     return 0;
+}
+```
+
+All statements in defer block will run before the return statement
+(if it exists). So be aware of the order of execution.
+
+Here's an example of UAF:
+
+```rust
+func test() -> str {
+    var a = str::from_i64(1);
+    defer a.delete();
+
+    ...
+
+    return a.copy(); // use after free
+}
+```
+
+Because it equals to:
+
+```rust
+func test() -> str {
+    var a = str::from_i64(1);
+
+    ...
+
+    a.delete(); // a is freed here
+    return a.copy(); // use after free
 }
 ```

@@ -81,12 +81,7 @@ impl mir_value_t {
 
     pub func to_value_t(self) -> value_t {
         match (self->value_kind) {
-            mir_value_kind::null => {
-                var name = str::from("null");
-                var res = value_t::null(name.__ptr__());
-                name.delete();
-                return res;
-            }
+            mir_value_kind::null => return value_t::null("null");
             mir_value_kind::nil_value => {
                 return value_t::literal(self->content.__ptr__());
             }
@@ -96,36 +91,11 @@ impl mir_value_t {
             mir_value_kind::variable => {
                 return value_t::variable(self->content.__ptr__());
             }
-            mir_value_kind::primitive => {
-                var name = str::from("primitive");
-                var res = value_t::null(name.__ptr__());
-                name.delete();
-                return res;
-            }
-            mir_value_kind::func_symbol => {
-                var name = str::from("func");
-                var res = value_t::null(name.__ptr__());
-                name.delete();
-                return res;
-            }
-            mir_value_kind::method => {
-                var name = str::from("method");
-                var res = value_t::null(name.__ptr__());
-                name.delete();
-                return res;
-            }
-            mir_value_kind::struct_symbol => {
-                var name = str::from("struct");
-                var res = value_t::null(name.__ptr__());
-                name.delete();
-                return res;
-            }
-            mir_value_kind::enum_symbol => {
-                var name = str::from("enum");
-                var res = value_t::null(name.__ptr__());
-                name.delete();
-                return res;
-            }
+            mir_value_kind::primitive => return value_t::null("primitive");
+            mir_value_kind::func_symbol => return value_t::null("func");
+            mir_value_kind::method => return value_t::null("method");
+            mir_value_kind::struct_symbol => return value_t::null("struct");
+            mir_value_kind::enum_symbol => return value_t::null("enum");
         }
         // unreachable
         return value_t::null(nil);
@@ -275,9 +245,28 @@ impl mir2sir {
         var f32_s = str::from("f32");
         var void_s = str::from("void");
         var bool_s = str::from("bool");
+        defer {
+            i64_s.delete();
+            i32_s.delete();
+            i16_s.delete();
+            i8_s.delete();
+            i1_s.delete();
+            u64_s.delete();
+            u32_s.delete();
+            u16_s.delete();
+            u8_s.delete();
+            f64_s.delete();
+            f32_s.delete();
+            void_s.delete();
+            bool_s.delete();
+        }
 
         var double_s = str::from("double");
         var float_s = str::from("float");
+        defer {
+            double_s.delete();
+            float_s.delete();
+        }
 
         self->basic_type_mapper.insert(i64_s.__ptr__(), i64_s.__ptr__());
         self->basic_type_mapper.insert(i32_s.__ptr__(), i32_s.__ptr__());
@@ -291,22 +280,6 @@ impl mir2sir {
         self->basic_type_mapper.insert(f32_s.__ptr__(), float_s.__ptr__());
         self->basic_type_mapper.insert(void_s.__ptr__(), void_s.__ptr__());
         self->basic_type_mapper.insert(bool_s.__ptr__(), i1_s.__ptr__());
-
-        i64_s.delete();
-        i32_s.delete();
-        i16_s.delete();
-        i8_s.delete();
-        i1_s.delete();
-        u64_s.delete();
-        u32_s.delete();
-        u16_s.delete();
-        u8_s.delete();
-        f64_s.delete();
-        f32_s.delete();
-        void_s.delete();
-        bool_s.delete();
-        double_s.delete();
-        float_s.delete();
     }
 
     func init_primitive__size_methods(self) {
@@ -314,6 +287,12 @@ impl mir2sir {
         var size_2 = str::from("2");
         var size_4 = str::from("4");
         var size_8 = str::from("8");
+        defer {
+            size_1.delete();
+            size_2.delete();
+            size_4.delete();
+            size_8.delete();
+        }
 
         var i64_s = str::from("i64.__size__");
         var i32_s = str::from("i32.__size__");
@@ -327,6 +306,20 @@ impl mir2sir {
         var f64_s = str::from("f64.__size__");
         var f32_s = str::from("f32.__size__");
         var bool_s = str::from("bool.__size__");
+        defer {
+            i64_s.delete();
+            i32_s.delete();
+            i16_s.delete();
+            i8_s.delete();
+            i1_s.delete();
+            u64_s.delete();
+            u32_s.delete();
+            u16_s.delete();
+            u8_s.delete();
+            f64_s.delete();
+            f32_s.delete();
+            bool_s.delete();
+        }
 
         self->primitive_methods.insert(i64_s.__ptr__(), size_8.__ptr__());
         self->primitive_methods.insert(i32_s.__ptr__(), size_4.__ptr__());
@@ -339,23 +332,6 @@ impl mir2sir {
         self->primitive_methods.insert(f64_s.__ptr__(), size_8.__ptr__());
         self->primitive_methods.insert(f32_s.__ptr__(), size_4.__ptr__());
         self->primitive_methods.insert(bool_s.__ptr__(), size_1.__ptr__());
-
-        size_1.delete();
-        size_2.delete();
-        size_4.delete();
-        size_8.delete();
-        i64_s.delete();
-        i32_s.delete();
-        i16_s.delete();
-        i8_s.delete();
-        i1_s.delete();
-        u64_s.delete();
-        u32_s.delete();
-        u16_s.delete();
-        u8_s.delete();
-        f64_s.delete();
-        f32_s.delete();
-        bool_s.delete();
     }
 }
 
@@ -367,9 +343,14 @@ impl mir2sir {
             var s_ty = type::instance();
             s_ty.name.append_str(m_un->name.__ptr__());
             s_ty.loc_file.append_str(m_un->location.file.__ptr__());
+            defer s_ty.delete();
             
             var s_ty_name = s_ty.full_path_name(self->pkg, false);
             var s_ty_llvm_name = mangle_tagged_union_name(s_ty_name.__ptr__());
+            defer {
+                s_ty_name.delete();
+                s_ty_llvm_name.delete();
+            }
 
             var s_un = sir_tagged_union::instance(
                 s_ty_llvm_name.__ptr__(),
@@ -377,22 +358,22 @@ impl mir2sir {
                 m_un->total_size,
                 m_un->align
             );
-            s_ty.delete();
-            s_ty_name.delete();
-            s_ty_llvm_name.delete();
+            defer s_un.delete();
 
             if (m_un->max_align_type.is_array) {
                 var mapped_type = self->array_type_mapping(
                     m_un->max_align_type.__ptr__()
                 );
+                defer mapped_type.delete();
+
                 s_un.member_type.push(mapped_type.__ptr__());
-                mapped_type.delete();
             } else {
                 var mapped_type = self->type_mapping(
                     m_un->max_align_type.__ptr__()
                 );
+                defer mapped_type.delete();
+
                 s_un.member_type.push(mapped_type.__ptr__());
-                mapped_type.delete();
             }
 
             if (m_un->union_size > m_un->max_align_type_size) {
@@ -400,12 +381,12 @@ impl mir2sir {
                 var char_arr_ty = str::from("[");
                 char_arr_ty.append_u64(char_arr_size);
                 char_arr_ty.append_i8_vec(" x i8]");
+                defer char_arr_ty.delete();
+
                 s_un.member_type.push(char_arr_ty.__ptr__());
-                char_arr_ty.delete();
             }
 
             self->sctx->tagged_union_decls.push(s_un.__ptr__());
-            s_un.delete();
         }
     }
 
@@ -416,9 +397,14 @@ impl mir2sir {
             var s_ty = type::instance();
             s_ty.name.append_str(m_stct->name.__ptr__());
             s_ty.loc_file.append_str(m_stct->location.file.__ptr__());
+            defer s_ty.delete();
             
             var s_ty_name = s_ty.full_path_name(self->pkg, false);
             var s_ty_llvm_name = mangle_struct_name(s_ty_name.__ptr__());
+            defer {
+                s_ty_name.delete();
+                s_ty_llvm_name.delete();
+            }
 
             var s_stct = sir_struct::instance(
                 s_ty_llvm_name.__ptr__(),
@@ -426,25 +412,24 @@ impl mir2sir {
                 m_stct->size,
                 m_stct->align
             );
-            s_ty.delete();
-            s_ty_name.delete();
-            s_ty_llvm_name.delete();
+            defer s_stct.delete();
 
             foreach (var j; m_stct->field_type) {
                 var m_field = j.get();
                 if (m_field->is_array) {
                     var mapped_type = self->array_type_mapping(m_field);
+                    defer mapped_type.delete();
+
                     s_stct.field_type.push(mapped_type.__ptr__());
-                    mapped_type.delete();
                 } else {
                     var mapped_type = self->type_mapping(m_field);
+                    defer mapped_type.delete();
+
                     s_stct.field_type.push(mapped_type.__ptr__());
-                    mapped_type.delete();
                 }
             }
 
             self->sctx->struct_decls.push(s_stct.__ptr__());
-            s_stct.delete();
         }
     }
 
@@ -454,24 +439,29 @@ impl mir2sir {
             var s_func = sir_func::instance(m_func->name.__ptr__());
             s_func.set_attributes(m_func->attributes.__ptr__());
             s_func.with_va_args = m_func->with_va_args;
+            defer s_func.delete();
 
             var ret_type_name = self->type_mapping(m_func->return_type.__ptr__());
+            defer ret_type_name.delete();
+
             s_func.return_type.append_str(ret_type_name.__ptr__());
-            ret_type_name.delete();
 
             foreach (var j; m_func->params) {
                 var m_param = j.get();
+
                 var mapped_type = self->type_mapping(m_param->value.__ptr__());
-                var p_pair = pair<str, str>::instance(m_param->key.__ptr__(), mapped_type.__ptr__());
+                defer mapped_type.delete();
+
+                var p_pair = pair<str, str>::instance(
+                    m_param->key.__ptr__(),
+                    mapped_type.__ptr__()
+                );
+                defer p_pair.delete();
 
                 s_func.params.push(p_pair.__ptr__());
-
-                mapped_type.delete();
-                p_pair.delete();
             }
 
             self->sctx->func_decls.push(s_func.__ptr__());
-            s_func.delete();
         }
     }
 
@@ -502,14 +492,15 @@ impl mir2sir {
             self->process_print(i.index(), mctx->impls.size);
             var m_func = i.get();
             var m_mangled_name = mangle_function_name(m_func->name.__ptr__());
+            defer m_mangled_name.delete();
+
             var s_func = sir_func::instance(m_mangled_name.__ptr__());
-            m_mangled_name.delete();
-            
             s_func.set_attributes(m_func->attributes.__ptr__());
+            defer s_func.delete();
 
             var ret_type_name = self->type_mapping(m_func->return_type.__ptr__());
+            defer ret_type_name.delete();
             s_func.return_type.append_str(ret_type_name.__ptr__());
-            ret_type_name.delete();
 
             // push local scope
             self->locals.push();
@@ -518,9 +509,11 @@ impl mir2sir {
             foreach (var j; m_func->params) {
                 var m_param = j.get();
                 var mapped_type = self->type_mapping(m_param->value.__ptr__());
+                defer mapped_type.delete();
 
                 var param_name = m_param->key.copy_instance();
                 param_name.append_i8_vec(".param");
+                defer param_name.delete();
 
                 self->locals.elem.back()->insert(
                     m_param->key.__ptr__(),
@@ -531,12 +524,9 @@ impl mir2sir {
                     param_name.__ptr__(),
                     mapped_type.__ptr__()
                 );
+                defer p_pair.delete();
 
                 s_func.params.push(p_pair.__ptr__());
-
-                param_name.delete();
-                mapped_type.delete();
-                p_pair.delete();
             }
 
             if (self->dwarf_status.impl_debug_info.has(m_func->name.__ptr__())) {
@@ -551,13 +541,13 @@ impl mir2sir {
             self->ssa_gen.clear();
             self->array_ssa_gen.clear();
             self->value_stack.clear();
+
             s_func.body = sir_block::new();
             self->block = s_func.body;
             self->generate_func_impl_from_mir_func(m_func);
             self->block = nil;
 
             self->sctx->func_impls.push(s_func.__ptr__());
-            s_func.delete();
 
             // pop local scope
             self->locals.pop();
@@ -574,29 +564,30 @@ impl mir2sir {
                 var e_type = type::instance();
                 e_type.name.append_str(j.value()->name.__ptr__());
                 e_type.loc_file.append_str(j.value()->location.file.__ptr__());
+                defer e_type.delete();
                 
                 var e_name = e_type.full_path_name(self->pkg, false);
+                defer e_name.delete();
+
                 self->type_mapper.insert(e_name.__ptr__(), symbol_kind::enum_kind);
-                
-                e_type.delete();
-                e_name.delete();
             }
             foreach (var j; dm->structs) {
                 var s_type = type::instance();
                 s_type.name.append_str(j.value()->name.__ptr__());
                 s_type.loc_file.append_str(j.value()->location.file.__ptr__());
-                
+                defer s_type.delete();
+
                 var s_name = s_type.full_path_name(self->pkg, false);
+                defer s_name.delete();
+
                 self->type_mapper.insert(s_name.__ptr__(), symbol_kind::struct_kind);
-                
-                s_type.delete();
-                s_name.delete();
             }
         }
     }
 
     func type_mapping(self, t: type*) -> str {
         var copy = t->copy_instance();
+        defer copy.delete();
 
         // basic type mapping
         if (self->basic_type_mapper.has(copy.name.__ptr__())) {
@@ -606,22 +597,27 @@ impl mir2sir {
             copy.loc_file.clear();
 
             var res = copy.full_path_name(self->pkg, true);
-            copy.delete();
+            // copy will delete here, do not merge definition with return statement
             return res;
         }
 
         var full_name = t->full_path_name(self->pkg, false);
+        defer full_name.delete();
+
         // if not found, let it crash
         if (!self->type_mapper.has(full_name.__ptr__())) {
             var info = str::from("type not found: \"");
+            defer info.delete();
+
             info.append_str(full_name.__ptr__())->append_i8_vec("\"");
             panic(info.c_str);
-            info.delete();
         }
 
         match (self->type_mapper.get(full_name.__ptr__())) {
             symbol_kind::struct_kind => {
                 var new_name = mangle_struct_name(full_name.__ptr__());
+                defer new_name.delete();
+
                 copy.name.clear();
                 copy.name.append_str(new_name.__ptr__());
                 // need to clear loc_file info
@@ -645,17 +641,14 @@ impl mir2sir {
                 // but expect to be
                 // %struct.std.vec<data::foo>
                 copy.generics.clear();
-
-                new_name.delete();
             }
             symbol_kind::enum_kind => {
                 var i64_t = type::i64_type();
+                defer i64_t.delete();
 
                 // should copy pointer depth too
                 i64_t.pointer_depth = copy.pointer_depth;
                 copy.reset_with(i64_t.__ptr__());
-
-                i64_t.delete();
             }
             _ => {
                 unreachable();
@@ -663,8 +656,7 @@ impl mir2sir {
         }
 
         var res = copy.full_path_name(self->pkg, true);
-        copy.delete();
-        full_name.delete();
+        // copy will delete here, do not merge definition with return statement
         return res;
     }
 
@@ -673,17 +665,16 @@ impl mir2sir {
             panic("not array type");
         }
 
-        var copy = t->copy_instance();
-        copy.pointer_depth -= 1;
+        var copy = t->ref_copy();
         copy.is_array = false;
+        defer copy.delete();
 
         var mapped_type = self->type_mapping(copy.__ptr__());
+        defer mapped_type.delete();
+
         var array_name = str::from("[");
         array_name.append_u64(copy.array_length)->append_i8_vec(" x ");
         array_name.append_str(mapped_type.__ptr__())->append_i8_vec("]");
-        mapped_type.delete();
-
-        copy.delete();
         return array_name;
     }
 }
@@ -693,9 +684,11 @@ impl mir2sir {
         foreach (var i; m_func->params) {
             var m_param = i.get();
             var mapped_type = self->type_mapping(m_param->value.__ptr__());
+            defer mapped_type.delete();
 
             var param_name = m_param->key.copy_instance();
             param_name.append_i8_vec(".param");
+            defer param_name.delete();
 
             self->block->add_alloca(
                 sir_alloca::new(m_param->key.__ptr__(), mapped_type.__ptr__())
@@ -703,16 +696,16 @@ impl mir2sir {
 
             var source = value_t::variable(param_name.__ptr__());
             var target = value_t::variable(m_param->key.__ptr__());
+            defer {
+                source.delete();
+                target.delete();
+            }
+
             self->block->add_stmt(sir_store::new(
                 mapped_type.__ptr__(),
                 source.__ptr__(),
                 target.__ptr__()
             ) => sir*);
-
-            param_name.delete();
-            mapped_type.delete();
-            source.delete();
-            target.delete();
         }
 
         self->visit_mir_block(m_func->block);

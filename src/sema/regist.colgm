@@ -1163,6 +1163,8 @@ impl regist_pass {
         var structs = dm->structs.__ptr__();
 
         var need_check = vec<str>::instance();
+        defer need_check.delete();
+
         foreach (var st; structs) {
             var info = st.value();
             foreach (var f; info->fields) {
@@ -1176,19 +1178,24 @@ impl regist_pass {
 
         foreach (var s; need_check) {
             var bfs = queue<pair<str, str>>::instance();
+            defer bfs.delete();
+
             var visited = hashset<str>::instance();
+            defer visited.delete();
 
             var first = pair<str, str>::instance(s.get(), s.get());
+            defer first.delete();
+
             bfs.push(first.__ptr__());
-            first.delete();
             while (!bfs.empty()) {
                 var current = bfs.front()->key.copy_instance();
                 var ref_path = bfs.front()->value.copy_instance();
+                defer current.delete();
+                defer ref_path.delete();
+
                 bfs.pop();
 
                 if (visited.has(current.__ptr__())) {
-                    current.delete();
-                    ref_path.delete();
                     continue;
                 } else {
                     visited.insert(current.__ptr__());
@@ -1203,35 +1210,30 @@ impl regist_pass {
                     }
 
                     var new_ref_path = ref_path.copy_instance();
+                    defer new_ref_path.delete();
                     new_ref_path.append_i8_vec("::");
                     new_ref_path.append_str(fld_name);
                     new_ref_path.append_i8_vec(" -> ");
                     new_ref_path.append_str(fld_type->name.__ptr__());
+
                     if (fld_type->name.eq(s.get())) {
                         var info = str::from("self reference: ");
+                        defer info.delete();
                         info.append_str(new_ref_path.__ptr__());
+
                         self->err->error(cur_st->location.__ptr__(), info.c_str);
-                        info.delete();
                     } else if (structs->has(fld_type->name.__ptr__())) {
                         var new_pair = pair<str, str>::instance(
                             fld_type->name.__ptr__(),
                             new_ref_path.__ptr__()
                         );
+                        defer new_pair.delete();
+
                         bfs.push(new_pair.__ptr__());
-                        new_pair.delete();
                     }
-                    new_ref_path.delete();
                 }
-
-                current.delete();
-                ref_path.delete();
             }
-
-            bfs.delete();
-            visited.delete();
         }
-
-        need_check.delete();
     }
 }
 
@@ -1302,10 +1304,11 @@ impl regist_pass {
         var name = node->get_monomorphic_name();
         if (!self->check_field_not_exist(struct_info, name)) {
             var info = str::from("field \"");
+            defer info.delete();
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist field or method");
+
             self->err->error(node->base.location.__ptr__(), info.c_str);
-            info.delete();
             return;
         }
 
@@ -1313,20 +1316,22 @@ impl regist_pass {
         var func_info: colgm_func* = nil;
         if (node->return_type == nil) {
             var ret_type = type::void_type();
+            defer ret_type.delete();
+
             func_info = colgm_func::new(
                 name,
                 node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
-            ret_type.delete();
         } else {
             var ret_type = self->tr.resolve(node->return_type);
+            defer ret_type.delete();
+
             func_info = colgm_func::new(
                 name,
                 node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
-            ret_type.delete();
         }
         defer {
             func_info->delete();
@@ -1347,10 +1352,11 @@ impl regist_pass {
         var name = node->get_monomorphic_name();
         if (!self->check_field_not_exist(struct_info, name)) {
             var info = str::from("field \"");
+            defer info.delete();
             info.append_str(name);
             info.append_i8_vec("\" conflicts with exist field or method");
+
             self->err->error(node->base.location.__ptr__(), info.c_str);
-            info.delete();
             return;
         }
 
@@ -1358,20 +1364,22 @@ impl regist_pass {
         var func_info: colgm_func* = nil;
         if (node->return_type == nil) {
             var ret_type = type::void_type();
+            defer ret_type.delete();
+
             func_info = colgm_func::new(
                 name,
                 node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
-            ret_type.delete();
         } else {
             var ret_type = self->tr.resolve(node->return_type);
+            defer ret_type.delete();
+
             func_info = colgm_func::new(
                 name,
                 node->base.location.__ptr__(),
                 ret_type.__ptr__()
             );
-            ret_type.delete();
         }
 
         self->generate_function_params(func_info, node, false);
@@ -1401,10 +1409,11 @@ impl regist_pass {
         var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         if (!dm->structs.has(name) && !dm->generic_structs.has(name)) {
             var info = str::from("cannot find struct \"");
+            defer info.delete();
             info.append_str(name);
             info.append_i8_vec("\"");
+
             self->err->error(node->base.location.__ptr__(), info.c_str);
-            info.delete();
             return;
         }
 
