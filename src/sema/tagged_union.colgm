@@ -23,20 +23,17 @@ pub struct colgm_tagged_union {
 }
 
 impl colgm_tagged_union {
-    pub func new(name: str*, loc: span*) -> colgm_tagged_union* {
-        var res = colgm_tagged_union::__alloc__();
-        if (res == nil) {
-            panic("failed to allocate memory");
-        }
-        res->name = name->copy_instance();
-        res->ref_enum_type = type::instance();
-        res->location = loc->copy_instance();
-        res->members = hashmap<str, type>::instance();
-        res->member_int_map = hashmap<str, i64>::instance();
-        res->ordered_members = vec<str>::instance();
-        res->is_public = false;
-        res->is_extern = false;
-        return res;
+    pub func instance(name: str*, loc: span*) -> colgm_tagged_union {
+        return colgm_tagged_union {
+            name: name->copy_instance(),
+            ref_enum_type: type::instance(),
+            location: loc->copy_instance(),
+            members: hashmap<str, type>::instance(),
+            member_int_map: hashmap<str, i64>::instance(),
+            ordered_members: vec<str>::instance(),
+            is_public: false,
+            is_extern: false
+        };
     }
 
     pub func delete(self) {
