@@ -230,11 +230,16 @@ impl str {
         return self->c_str[self->size - 1];
     }
 
-    pub func ends_with(self, ch: i8) -> bool {
-        if (self->size == 0) {
+    pub func endswith(self, src: i8*) -> bool {
+        if (src == nil) {
             return false;
         }
-        return self->back() == ch;
+        var len = strlen(src) => u64;
+        if (self->size < len) {
+            return false;
+        }
+        var addr = (self->c_str => u64 + self->size - len) => i8*;
+        return memcmp(addr, src, len) == 0;
     }
 }
 
