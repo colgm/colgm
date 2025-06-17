@@ -29,7 +29,7 @@ impl str {
             panic("cannot create string from nil");
         }
         var res = str::instance();
-        res.append_i8_vec(src);
+        res.append(src);
         return res;
     }
 
@@ -37,7 +37,7 @@ impl str {
         var res = str::instance();
         var buffer: [i8; 128] = [];
         itoa(src, buffer, 10);
-        res.append_i8_vec(buffer);
+        res.append(buffer);
         return res;
     }
 
@@ -45,7 +45,7 @@ impl str {
         var res = str::instance();
         var buffer: [i8; 128] = [];
         utoa(src, buffer, 10);
-        res.append_i8_vec(buffer);
+        res.append(buffer);
         return res;
     }
 
@@ -183,16 +183,6 @@ impl str {
         if (src == nil) {
             return self;
         }
-
-        self->append_i8_vec(src);
-        return self;
-    }
-
-    pub func append_i8_vec(self, src: i8*) -> str* {
-        // do nothing if src is null pointer
-        if (src == nil) {
-            return self;
-        }
         var len = strlen(src) => u64;
         while (self->size + len >= self->capacity) {
             self->expand_capacity();
@@ -206,14 +196,14 @@ impl str {
     pub func append_i64(self, num: i64) -> str* {
         var buffer: [i8; 128] = [];
         itoa(num, buffer, 10);
-        self->append_i8_vec(buffer);
+        self->append(buffer);
         return self;
     }
 
     pub func append_u64(self, num: u64) -> str* {
         var buffer: [i8; 128] = [];
         utoa(num, buffer, 10);
-        self->append_i8_vec(buffer);
+        self->append(buffer);
         return self;
     }
 

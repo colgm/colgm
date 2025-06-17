@@ -380,7 +380,7 @@ impl mir2sir {
                 var char_arr_size =  m_un->union_size - m_un->max_align_type_size;
                 var char_arr_ty = str::from("[");
                 char_arr_ty.append_u64(char_arr_size);
-                char_arr_ty.append_i8_vec(" x i8]");
+                char_arr_ty.append(" x i8]");
                 defer char_arr_ty.delete();
 
                 s_un.member_type.push(char_arr_ty.__ptr__());
@@ -512,7 +512,7 @@ impl mir2sir {
                 defer mapped_type.delete();
 
                 var param_name = m_param->key.copy_instance();
-                param_name.append_i8_vec(".param");
+                param_name.append(".param");
                 defer param_name.delete();
 
                 self->locals.elem.back()->insert(
@@ -609,7 +609,7 @@ impl mir2sir {
             var info = str::from("type not found: \"");
             defer info.delete();
 
-            info.append_str(full_name.__ptr__())->append_i8_vec("\"");
+            info.append_str(full_name.__ptr__())->append("\"");
             panic(info.c_str);
         }
 
@@ -673,8 +673,8 @@ impl mir2sir {
         defer mapped_type.delete();
 
         var array_name = str::from("[");
-        array_name.append_u64(copy.array_length)->append_i8_vec(" x ");
-        array_name.append_str(mapped_type.__ptr__())->append_i8_vec("]");
+        array_name.append_u64(copy.array_length)->append(" x ");
+        array_name.append_str(mapped_type.__ptr__())->append("]");
         return array_name;
     }
 }
@@ -687,7 +687,7 @@ impl mir2sir {
             defer mapped_type.delete();
 
             var param_name = m_param->key.copy_instance();
-            param_name.append_i8_vec(".param");
+            param_name.append(".param");
             defer param_name.delete();
 
             self->block->add_alloca(
@@ -774,7 +774,7 @@ impl mir2sir {
         var temp_0 = self->ssa_gen.create();
         var temp_0_value = value_t::variable(temp_0.__ptr__());
         var temp_0_real = str::from("_");
-        temp_0_real.append_str(temp_0.__ptr__())->append_i8_vec(".real");
+        temp_0_real.append_str(temp_0.__ptr__())->append(".real");
         defer {
             i1_name.delete();
             temp_0.delete();
@@ -861,7 +861,7 @@ impl mir2sir {
         var temp_0 = self->ssa_gen.create();
         var temp_0_value = value_t::variable(temp_0.__ptr__());
         var temp_0_real = str::from("_");
-        temp_0_real.append_str(temp_0.__ptr__())->append_i8_vec(".real");
+        temp_0_real.append_str(temp_0.__ptr__())->append(".real");
         defer {
             i1_name.delete();
             temp_0.delete();
@@ -1184,7 +1184,7 @@ impl mir2sir {
 
         if (!n->resolved_type.is_integer() &&
             !literal.contains('.')) {
-            literal.append_i8_vec(".0");
+            literal.append(".0");
         }
 
         var v = mir_value_t::literal(literal.__ptr__(), n->resolved_type.__ptr__());
@@ -1547,7 +1547,7 @@ impl mir2sir {
         } else {
             var info = str::from("cannot get global symbol ");
             info.append_str(name_for_search.__ptr__())
-                ->append_i8_vec(" from ")
+                ->append(" from ")
                 ->append_str(loc_file);
             panic(info.c_str);
             info.delete();
@@ -1716,7 +1716,7 @@ impl mir2sir {
         } else {
             var temp_var = self->ssa_gen.create();
             var real = str::from("_");
-            real.append_str(temp_var.__ptr__())->append_i8_vec(".real");
+            real.append_str(temp_var.__ptr__())->append(".real");
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
             var target_value = value_t::variable(target.__ptr__());
             var temp_var_value = value_t::variable(temp_var.__ptr__());
@@ -1914,7 +1914,7 @@ impl mir2sir {
         match (prev.value_kind) {
             mir_value_kind::primitive => {
                 var name = prev.resolved_type.full_path_name(self->pkg, false);
-                name.append_i8_vec(".")->append_str(n->name.__ptr__());
+                name.append(".")->append_str(n->name.__ptr__());
 
                 var v = mir_value_t::func_symbol(
                     name.__ptr__(),
@@ -1926,7 +1926,7 @@ impl mir2sir {
             }
             mir_value_kind::struct_symbol => {
                 var name = prev.resolved_type.full_path_name(self->pkg, false);
-                name.append_i8_vec(".")->append_str(n->name.__ptr__());
+                name.append(".")->append_str(n->name.__ptr__());
 
                 var v = mir_value_t::func_symbol(
                     name.__ptr__(),
@@ -1957,7 +1957,7 @@ impl mir2sir {
 
     func visit_mir_define(self, n: mir_define*) {
         var name = n->name.copy_instance();
-        name.append_i8_vec(".");
+        name.append(".");
         name.append_i64(self->locals.local_scope_depth);
 
         // real name of the local variable
@@ -2635,7 +2635,7 @@ impl mir2sir {
             p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__());
         } else {
             var info = str::from("cannot generate DI_type for \"");
-            info.append_i8_vec(n->c_str)->append_i8_vec("\"");
+            info.append(n->c_str)->append("\"");
             panic(info.c_str);
             info.delete();
         }
@@ -2692,7 +2692,7 @@ impl mir2sir {
         self->sctx->named_metadata.push(ident);
         
         var version_str = str::from("colgm compiler version ");
-        version_str.append_i8_vec(version());
+        version_str.append(version());
         
         var ver_list = DI_list::new(self->dwarf_status.DI_counter);
         ver_list->add(DI_string::new(version_str.c_str) => DI_node*);
@@ -2787,7 +2787,7 @@ impl mir2sir {
         self->dwarf_status.compile_unit_index = self->dwarf_status.DI_counter;
         
         var version_str = str::from("colgm compiler version ");
-        version_str.append_i8_vec(version());
+        version_str.append(version());
         var cu = DI_compile_unit::new(
             self->dwarf_status.DI_counter,
             version_str.c_str,
@@ -2903,8 +2903,8 @@ impl mir2sir {
 
     func generate_single_DI_enum(self, e: colgm_enum*) -> u64 {
         var ty = type::instance();
-        ty.name.append_i8_vec(e->name.c_str);
-        ty.loc_file.append_i8_vec(e->location.file.c_str);
+        ty.name.append(e->name.c_str);
+        ty.loc_file.append(e->location.file.c_str);
         var id = ty.full_path_name(self->pkg, false);
 
         var i64_s = str::from("i64");
@@ -2959,8 +2959,8 @@ impl mir2sir {
 
     func generate_single_DI_struct(self, s: colgm_struct*) {
         var ty = type::instance();
-        ty.name.append_i8_vec(s->name.c_str);
-        ty.loc_file.append_i8_vec(s->location.file.c_str);
+        ty.name.append(s->name.c_str);
+        ty.loc_file.append(s->location.file.c_str);
         var id = ty.full_path_name(self->pkg, false);
 
         var tmp = DI_structure_type::new(
@@ -2989,8 +2989,8 @@ impl mir2sir {
 
     func generate_single_struct_member_dwarf(self, s: colgm_struct*) {
         var ty = type::instance();
-        ty.name.append_i8_vec(s->name.c_str);
-        ty.loc_file.append_i8_vec(s->location.file.c_str);
+        ty.name.append(s->name.c_str);
+        ty.loc_file.append(s->location.file.c_str);
         var id = ty.full_path_name(self->pkg, false);
 
         var s_node = self->sctx->DI_struct_map.get(id.__ptr__());

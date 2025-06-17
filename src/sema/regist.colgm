@@ -173,9 +173,9 @@ impl regist_pass {
             } else {
                 var info = str::from("cannot find symbol \"");
                 info.append_str(name);
-                info.append_i8_vec("\" in module \"");
+                info.append("\" in module \"");
                 info.append_str(path);
-                info.append_i8_vec("\"");
+                info.append("\"");
                 defer info.delete();
 
                 self->err->error(name_node->base.location.__ptr__(), info.c_str);
@@ -185,7 +185,7 @@ impl regist_pass {
             if (!is_public) {
                 var info = str::from("cannot import private symbol \"");
                 info.append_str(name);
-                info.append_i8_vec("\"");
+                info.append("\"");
                 defer info.delete();
 
                 self->err->error(name_node->base.location.__ptr__(), info.c_str);                
@@ -224,9 +224,9 @@ impl regist_pass {
         if (!self->ctx->has_domain(path)) {
             var info = str::from("module \"");
             info.append_str(path);
-            info.append_i8_vec("\" not found,");
-            info.append_i8_vec(" may encounter compilation failure");
-            info.append_i8_vec(" or circle dependency");
+            info.append("\" not found,");
+            info.append(" may encounter compilation failure");
+            info.append(" or circle dependency");
             defer info.delete();
 
             self->err->error(
@@ -307,7 +307,7 @@ impl regist_pass {
 
         // ctx's this file maybe over-written, set it back
         self->ctx->this_file.clear();
-        self->ctx->this_file.append_i8_vec(self->root->base.location.file.c_str);
+        self->ctx->this_file.append(self->root->base.location.file.c_str);
         return true;
     }
 
@@ -333,24 +333,24 @@ impl regist_pass {
             }
             var real_node = name => ast_identifier*;
             if (!expect_name.empty()) {
-                expect_name.append_i8_vec("::");
+                expect_name.append("::");
             }
             if (!expect_path.empty()) {
                 expect_path.append_char('/');
             }
-            expect_name.append_i8_vec(real_node->content.c_str);
-            expect_path.append_i8_vec(real_node->content.c_str);
+            expect_name.append(real_node->content.c_str);
+            expect_path.append(real_node->content.c_str);
         }
         // generate expect path extention
-        expect_path.append_i8_vec(".colgm");
+        expect_path.append(".colgm");
 
         // check if expect path exists
         if (!fs::exists(expect_path.c_str)) {
             var info = str::from("module \"");
-            info.append_i8_vec(expect_name.c_str);
-            info.append_i8_vec("\" not found, \"");
-            info.append_i8_vec(expect_path.c_str);
-            info.append_i8_vec("\" does not exist");
+            info.append(expect_name.c_str);
+            info.append("\" not found, \"");
+            info.append(expect_path.c_str);
+            info.append("\" does not exist");
             defer info.delete();
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
@@ -419,7 +419,7 @@ impl regist_pass {
         for (var i = 0; i < 11; i += 1) {
             var prim_name = str::from(prim_table[i]);
             var empty_prim = colgm_primitive::instance();
-            empty_prim.name.append_i8_vec(prim_table[i]);
+            empty_prim.name.append(prim_table[i]);
             defer {
                 prim_name.delete();
                 empty_prim.delete();
@@ -550,7 +550,7 @@ impl regist_pass {
             var info = str::from("enum \"");
             defer info.delete();
             info.append_str(name);
-            info.append_i8_vec("\" conflicts with exist symbol");
+            info.append("\" conflicts with exist symbol");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -630,7 +630,7 @@ impl regist_pass {
                 var info = str::from("parameter \"");
                 defer info.delete();
                 info.append_str(param_name);
-                info.append_i8_vec("\" conflicts with an exist parameter");
+                info.append("\" conflicts with an exist parameter");
 
                 self->err->error(n->location.__ptr__(), info.c_str);
                 continue;
@@ -661,7 +661,7 @@ impl regist_pass {
             var info = str::from("\"");
             defer info.delete();
             info.append_str(name);
-            info.append_i8_vec("\" conflicts with exist symbol");
+            info.append("\" conflicts with exist symbol");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -766,7 +766,7 @@ impl regist_pass {
             var info = str::from("cannot find symbol \"");
             defer info.delete();
             info.append_str(name);
-            info.append_i8_vec("\"");
+            info.append("\"");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -822,7 +822,7 @@ impl regist_pass {
                 var info = str::from("field \"");
                 defer info.delete();
                 info.append_str(fld_name);
-                info.append_i8_vec("\" conflicts with exist field");
+                info.append("\" conflicts with exist field");
 
                 self->err->error(node->base.location.__ptr__(), info.c_str);
                 continue;
@@ -928,7 +928,7 @@ impl regist_pass {
             var info = str::from("struct \"");
             defer info.delete();
             info.append_str(name);
-            info.append_i8_vec("\" conflicts with exist symbol");
+            info.append("\" conflicts with exist symbol");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -974,7 +974,7 @@ impl regist_pass {
             var info = str::from("enum \"");
             defer info.delete();
             info.append_str(node->ref_enum_name.__ptr__());
-            info.append_i8_vec("\" not found, make sure it is defined or imported");
+            info.append("\" not found, make sure it is defined or imported");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -985,7 +985,7 @@ impl regist_pass {
             var info = str::from("\"");
             defer info.delete();
             info.append_str(node->ref_enum_name.__ptr__());
-            info.append_i8_vec("\" is not enum");
+            info.append("\" is not enum");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -1008,13 +1008,13 @@ impl regist_pass {
             var info = str::from("member \"");
             defer info.delete();
             info.append_str(i.get()->name->content.__ptr__());
-            info.append_i8_vec("\" not found in enum \"");
+            info.append("\" not found in enum \"");
 
             var full_name = ty.full_path_name(self->pkg, false);
             defer full_name.delete();
             info.append_str(full_name.__ptr__());
 
-            info.append_i8_vec("\"");
+            info.append("\"");
             self->err->error(i.get()->base.location.__ptr__(), info.c_str);
         }
     }
@@ -1058,7 +1058,7 @@ impl regist_pass {
             var info = str::from("cannot find symbol \"");
             defer info.delete();
             info.append_str(name);
-            info.append_i8_vec("\"");
+            info.append("\"");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -1074,7 +1074,7 @@ impl regist_pass {
                 var info = str::from("member \"");
                 defer info.delete();
                 info.append_str(member_name);
-                info.append_i8_vec("\" conflicts with exist member");
+                info.append("\" conflicts with exist member");
 
                 self->err->error(node->base.location.__ptr__(), info.c_str);
                 continue;
@@ -1095,7 +1095,7 @@ impl regist_pass {
             var info = str::from("struct \"");
             defer info.delete();
             info.append_str(name);
-            info.append_i8_vec("\" conflicts with exist symbol");
+            info.append("\" conflicts with exist symbol");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -1211,9 +1211,9 @@ impl regist_pass {
 
                     var new_ref_path = ref_path.copy_instance();
                     defer new_ref_path.delete();
-                    new_ref_path.append_i8_vec("::");
+                    new_ref_path.append("::");
                     new_ref_path.append_str(fld_name);
-                    new_ref_path.append_i8_vec(" -> ");
+                    new_ref_path.append(" -> ");
                     new_ref_path.append_str(fld_type->name.__ptr__());
 
                     if (fld_type->name.eq(s.get())) {
@@ -1306,7 +1306,7 @@ impl regist_pass {
             var info = str::from("field \"");
             defer info.delete();
             info.append_str(name);
-            info.append_i8_vec("\" conflicts with exist field or method");
+            info.append("\" conflicts with exist field or method");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -1354,7 +1354,7 @@ impl regist_pass {
             var info = str::from("field \"");
             defer info.delete();
             info.append_str(name);
-            info.append_i8_vec("\" conflicts with exist field or method");
+            info.append("\" conflicts with exist field or method");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -1411,7 +1411,7 @@ impl regist_pass {
             var info = str::from("cannot find struct \"");
             defer info.delete();
             info.append_str(name);
-            info.append_i8_vec("\"");
+            info.append("\"");
 
             self->err->error(node->base.location.__ptr__(), info.c_str);
             return;
@@ -1462,14 +1462,14 @@ impl regist_pass {
 
         // clear this file's name and reset to the current ast file
         self->ctx->this_file.clear();
-        self->ctx->this_file.append_i8_vec(root->base.location.file.c_str);
+        self->ctx->this_file.append(root->base.location.file.c_str);
 
         // create domain if not exist
         self->ctx->create_domain_if_not_exist(root->base.location.file.__ptr__());
 
         var this_dm = self->ctx->get_domain(root->base.location.file.__ptr__());
         this_dm->file_name.clear();
-        this_dm->file_name.append_i8_vec(root->base.location.file.c_str);
+        this_dm->file_name.append(root->base.location.file.c_str);
 
         // load primitive types:
         // i8, i16, i32, i64,

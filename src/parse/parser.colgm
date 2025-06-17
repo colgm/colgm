@@ -217,32 +217,32 @@ impl parser {
 
         match (kind) {
             tok_kind::tok_id => {
-                message.append_i8_vec("identifier");
+                message.append("identifier");
             }
             tok_kind::tok_num => {
-                message.append_i8_vec("number");
+                message.append("number");
             }
             tok_kind::tok_str => {
-                message.append_i8_vec("string");
+                message.append("string");
             }
             _ => {
-                message.append_i8_vec("\"");
-                message.append_i8_vec(parser::tok_kind_to_content(kind));
-                message.append_i8_vec("\"");
+                message.append("\"");
+                message.append(parser::tok_kind_to_content(kind));
+                message.append("\"");
             }
         }
 
-        message.append_i8_vec(", ");
+        message.append(", ");
         if (self->this_tok()->kind == tok_kind::tok_eof) {
-            message.append_i8_vec("but reached end of file");
+            message.append("but reached end of file");
         } else {
-            message.append_i8_vec("found ");
+            message.append("found ");
             if (self->this_tok()->is_keyword()) {
-                message.append_i8_vec("keyword ");
+                message.append("keyword ");
             }
-            message.append_i8_vec("\"");
+            message.append("\"");
             message.append_str(self->this_tok()->content.__ptr__());
-            message.append_i8_vec("\"");
+            message.append("\"");
         }
         self->err->error(loc, message.c_str);
 
@@ -892,12 +892,12 @@ impl parser {
         if (self->lookahead(tok_kind::tok_enum)) {
             self->match_token(tok_kind::tok_enum);
         } else {
-            res->ref_enum_name.append_i8_vec(self->this_tok()->content.c_str);
+            res->ref_enum_name.append(self->this_tok()->content.c_str);
             self->match_token(tok_kind::tok_id);
         }
         self->match_token(tok_kind::tok_rparen);
 
-        res->name.append_i8_vec(self->this_tok()->content.c_str);
+        res->name.append(self->this_tok()->content.c_str);
         self->match_token(tok_kind::tok_id);
 
         self->match_token(tok_kind::tok_lbrace);
@@ -1351,8 +1351,8 @@ impl parser {
         var info = str::from("unexpected token \"");
         defer info.delete();
 
-        info.append_i8_vec(tok->content.c_str);
-        info.append_i8_vec("\"");
+        info.append(tok->content.c_str);
+        info.append("\"");
         self->err->error(tok->location.__ptr__(), info.c_str);
 
         // do skip

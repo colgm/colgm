@@ -69,7 +69,7 @@ pub func mangle_struct_name(name: str*) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("%\"struct.");
-        temp.append_str(mangled.__ptr__())->append_i8_vec("\"");
+        temp.append_str(mangled.__ptr__())->append("\"");
         defer temp.delete();
 
         mangled.clear();
@@ -90,7 +90,7 @@ pub func mangle_tagged_union_name(name: str*) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("%\"tagged_union.");
-        temp.append_str(mangled.__ptr__())->append_i8_vec("\"");
+        temp.append_str(mangled.__ptr__())->append("\"");
         defer temp.delete();
 
         mangled.clear();
@@ -113,7 +113,7 @@ pub func mangle_function_name(name: str*) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("\"");
-        temp.append_str(mangled.__ptr__())->append_i8_vec("\"");
+        temp.append_str(mangled.__ptr__())->append("\"");
         defer temp.delete();
 
         mangled.clear();
@@ -159,6 +159,6 @@ pub func llvm_raw_string(s: str*) -> str {
         res.append_char(table[c / 16]);
         res.append_char(table[c & 15]);
     }
-    res.append_i8_vec("\\00");
+    res.append("\\00");
     return res;
 }

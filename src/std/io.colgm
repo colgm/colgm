@@ -47,12 +47,12 @@ pub func readfile(filename: i8*) -> str {
     var buff: [i8; 8192] = [];
     var readcount = read(fd, buff, 8191);
     buff[readcount] = 0;
-    dst.append_i8_vec(buff);
+    dst.append(buff);
 
     while (readcount != 0) {
         readcount = read(fd, buff, 8191);
         buff[readcount] = 0;
-        dst.append_i8_vec(buff);
+        dst.append(buff);
     }
 
     close(fd);
@@ -108,7 +108,7 @@ impl io {
         if (self->cache == nil) {
             write(self->fd, info, strlen(info));
         } else {
-            self->cache->append_i8_vec(info);
+            self->cache->append(info);
             self->check_and_flush();
         }
         return self[0];
@@ -141,7 +141,7 @@ impl io {
         if (self->cache == nil) {
             write(self->fd, buff, strlen(buff));
         } else {
-            self->cache->append_i8_vec(buff);
+            self->cache->append(buff);
             self->check_and_flush();
         }
         return self[0];
@@ -158,7 +158,7 @@ impl io {
         if (self->cache == nil) {
             write(self->fd, buff, strlen(buff));
         } else {
-            self->cache->append_i8_vec(buff);
+            self->cache->append(buff);
             self->check_and_flush();
         }
         return self[0];
@@ -175,7 +175,7 @@ impl io {
         if (self->cache == nil) {
             write(self->fd, buff, strlen(buff));
         } else {
-            self->cache->append_i8_vec(buff);
+            self->cache->append(buff);
             self->check_and_flush();
         }
         return self[0];
@@ -192,7 +192,7 @@ impl io {
         if (self->cache == nil) {
             write(self->fd, buff, strlen(buff));
         } else {
-            self->cache->append_i8_vec(buff);
+            self->cache->append(buff);
             self->check_and_flush();
         }
         return self[0];
@@ -222,9 +222,9 @@ impl io {
 
         sequence.append_i64(color_code);
         if (!light) {
-            sequence.append_i8_vec(";1");
+            sequence.append(";1");
         }
-        sequence.append_i8_vec("m");
+        sequence.append("m");
         self->out(sequence.c_str);
         return self[0];
     }

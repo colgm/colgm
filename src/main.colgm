@@ -48,21 +48,21 @@ func clang_compile(co: cli_option*) -> i32 {
     defer cmd.delete();
 
     var ll_file = str::from(co->output_file);
-    ll_file.append_i8_vec(".ll");
+    ll_file.append(".ll");
     defer ll_file.delete();
 
     if (!fs::exists(ll_file.c_str)) {
         return -1;
     }
 
-    cmd.append_i8_vec(" ")->append_i8_vec(co->get_opt_level())->append_i8_vec(" ");
-    cmd.append_i8_vec(ll_file.c_str);
+    cmd.append(" ")->append(co->get_opt_level())->append(" ");
+    cmd.append(ll_file.c_str);
     if (co->DEBUG_MODE) {
-        cmd.append_i8_vec(" -g");
+        cmd.append(" -g");
     }
-    cmd.append_i8_vec(" -o ");
-    cmd.append_i8_vec(co->output_file);
-    cmd.append_i8_vec(" -rdynamic -lm");
+    cmd.append(" -o ");
+    cmd.append(co->output_file);
+    cmd.append(" -rdynamic -lm");
     if (co->VERBOSE) {
         io::stdout().green().out("[    CLANG ] ").reset();
         io::stdout().out("Executing ");
@@ -120,7 +120,7 @@ func compile(option: cli_option) -> i32 {
 
     // global symbol table
     var gt = global_symbol_table::instance();
-    gt.main_input_file.append_i8_vec(option.input_file);
+    gt.main_input_file.append(option.input_file);
     defer gt.delete();
 
     // semantic context
@@ -168,7 +168,7 @@ func compile(option: cli_option) -> i32 {
     defer mir2sir_worker.delete();
 
     cc.pkg.library_path.clear();
-    cc.pkg.library_path.append_i8_vec(option.library_path);
+    cc.pkg.library_path.append(option.library_path);
 
     var t_stamp = maketimestamp();
 
@@ -250,7 +250,7 @@ func compile(option: cli_option) -> i32 {
     }
 
     var ll_file = str::from(option.output_file);
-    ll_file.append_i8_vec(".ll");
+    ll_file.append(".ll");
     defer ll_file.delete();
 
     var file_output = io::fileout(ll_file.c_str);
