@@ -1792,7 +1792,11 @@ impl mir2sir {
 
     func visit_mir_get_field(self, n: mir_get_field*) {
         var prev = self->value_stack.back()->copy_instance();
+        defer prev.delete();
+
         var prev_name_for_search = prev.resolved_type.generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
         self->value_stack.pop_back();
 
         var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
@@ -1804,27 +1808,36 @@ impl mir2sir {
             self->value_stack.push(prev.__ptr__());
             var method_name = prev.resolved_type.full_path_name(self->pkg, false);
             method_name.append_char('.')->append_str(n->name.__ptr__());
+            defer method_name.delete();
 
             var v = mir_value_t::method(
                 method_name.__ptr__(),
                 n->resolved_type.__ptr__()
             );
-            self->value_stack.push(v.__ptr__());
+            defer v.delete();
 
-            prev.delete();
-            prev_name_for_search.delete();
-            method_name.delete();
-            v.delete();
+            self->value_stack.push(v.__ptr__());
             return;
         }
 
         var target = self->ssa_gen.create();
         var target_value = value_t::variable(target.__ptr__());
+        defer {
+            target.delete();
+            target_value.delete();
+        }
+
         var index = st->field_index(n->name.__ptr__());
 
         var prev_value = prev.to_value_t();
         var prev_ref = prev.resolved_type.ref_copy();
         var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
+        defer {
+            prev_value.delete();
+            prev_ref.delete();
+            prev_ref_ty.delete();
+        }
+
         self->block->add_stmt(sir_get_field::new(
             target_value.__ptr__(),
             prev_value.__ptr__(),
@@ -1835,23 +1848,21 @@ impl mir2sir {
 
         var n_ty = n->resolved_type.pointer_copy();
         var v = mir_value_t::variable(target.__ptr__(), n_ty.__ptr__());
+        defer {
+            n_ty.delete();
+            v.delete();
+        }
 
         self->value_stack.push(v.__ptr__());
-
-        prev.delete();
-        prev_name_for_search.delete();
-        target.delete();
-        target_value.delete();
-        prev_value.delete();
-        prev_ref.delete();
-        prev_ref_ty.delete();
-        n_ty.delete();
-        v.delete();
     }
 
     func visit_mir_ptr_get_field(self, n: mir_ptr_get_field*) {
         var prev = self->value_stack.back()->copy_instance();
+        defer prev.delete();
+
         var prev_name_for_search = prev.resolved_type.generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
         self->value_stack.pop_back();
 
         var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
@@ -1864,6 +1875,13 @@ impl mir2sir {
             var prev_ref = prev.resolved_type.ref_copy();
             var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
             var prev_value = prev.to_value_t();
+            defer {
+                temp_var.delete();
+                temp_var_value.delete();
+                prev_ref.delete();
+                prev_ref_ty.delete();
+                prev_value.delete();
+            }
             self->block->add_stmt(sir_load::new(
                 prev_ref_ty.__ptr__(),
                 prev_value.__ptr__(),
@@ -1872,27 +1890,21 @@ impl mir2sir {
 
             // push self into stack
             var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
+            defer v_self.delete();
+
             self->value_stack.push(v_self.__ptr__());
 
             var method_name = prev.resolved_type.full_path_name(self->pkg, false);
             method_name.append_char('.')->append_str(n->name.__ptr__());
+            defer method_name.delete();
 
             var v = mir_value_t::method(
                 method_name.__ptr__(),
                 n->resolved_type.__ptr__()
             );
-            self->value_stack.push(v.__ptr__());
+            defer v.delete();
 
-            prev.delete();
-            prev_name_for_search.delete();
-            temp_var.delete();
-            temp_var_value.delete();
-            prev_ref.delete();
-            prev_ref_ty.delete();
-            prev_value.delete();
-            v_self.delete();
-            method_name.delete();
-            v.delete();
+            self->value_stack.push(v.__ptr__());
             return;
         }
 
@@ -1901,12 +1913,25 @@ impl mir2sir {
         var temp_1 = self->ssa_gen.create();
         var temp_0_value = value_t::variable(temp_0.__ptr__());
         var temp_1_value = value_t::variable(temp_1.__ptr__());
+        defer {
+            temp_0.delete();
+            temp_0_value.delete();
+            temp_1.delete();
+            temp_1_value.delete();
+        }
 
         var prev_value = prev.to_value_t();
         var prev_ref = prev.resolved_type.ref_copy();
         var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
         var prev_ref_ref = prev_ref.ref_copy();
         var prev_ref_ref_ty = self->type_mapping(prev_ref_ref.__ptr__());
+        defer {
+            prev_value.delete();
+            prev_ref.delete();
+            prev_ref_ty.delete();
+            prev_ref_ref.delete();
+            prev_ref_ref_ty.delete();
+        }
 
         self->block->add_stmt(sir_load::new(
             prev_ref_ty.__ptr__(),
@@ -1924,83 +1949,82 @@ impl mir2sir {
 
         var n_ty = n->resolved_type.pointer_copy();
         var v = mir_value_t::variable(temp_1.__ptr__(), n_ty.__ptr__());
+        defer {
+            n_ty.delete();
+            v.delete();
+        }
 
         self->value_stack.push(v.__ptr__());
-
-        prev.delete();
-        prev_name_for_search.delete();
-        temp_0.delete();
-        temp_0_value.delete();
-        temp_1.delete();
-        temp_1_value.delete();
-        prev_value.delete();
-        prev_ref.delete();
-        prev_ref_ty.delete();
-        prev_ref_ref.delete();
-        prev_ref_ref_ty.delete();
-        n_ty.delete();
-        v.delete();
     }
 
     func visit_mir_get_path(self, n: mir_get_path*) {
         var prev = self->value_stack.back()->copy_instance();
+        defer prev.delete();
         self->value_stack.pop_back();
 
         match (prev.value_kind) {
             mir_value_kind::primitive => {
                 var name = prev.resolved_type.full_path_name(self->pkg, false);
                 name.append(".")->append_str(n->name.__ptr__());
+                defer name.delete();
 
                 var v = mir_value_t::func_symbol(
                     name.__ptr__(),
                     n->resolved_type.__ptr__()
                 );
+                defer v.delete();
+
                 self->value_stack.push(v.__ptr__());
-                name.delete();
-                v.delete();
             }
             mir_value_kind::struct_symbol => {
                 var name = prev.resolved_type.full_path_name(self->pkg, false);
                 name.append(".")->append_str(n->name.__ptr__());
+                defer name.delete();
 
                 var v = mir_value_t::func_symbol(
                     name.__ptr__(),
                     n->resolved_type.__ptr__()
                 );
+                defer v.delete();
+
                 self->value_stack.push(v.__ptr__());
-                name.delete();
-                v.delete();
             }
             mir_value_kind::enum_symbol => {
                 var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
                 var em = dm->enums.get(prev.resolved_type.name.__ptr__());
                 var index = em->members.get(n->name.__ptr__());
+
                 var index_str = str::from_i64(index);
+                defer index_str.delete();
+
                 var v = mir_value_t::literal(
                     index_str.__ptr__(),
                     n->resolved_type.__ptr__()
                 );
-                self->value_stack.push(v.__ptr__());
+                defer v.delete();
 
-                index_str.delete();
-                v.delete();
+                self->value_stack.push(v.__ptr__());
             }
             _ => { unreachable(); }
         }
-        prev.delete();
     }
 
     func visit_mir_define(self, n: mir_define*) {
         var name = n->name.copy_instance();
         name.append(".");
         name.append_i64(self->locals.local_scope_depth);
+        defer name.delete();
 
         // real name of the local variable
         self->locals.elem.back()->insert(n->name.__ptr__(), name.__ptr__());
 
         var n_ty = n->resolved_type.copy_instance();
         n_ty.is_array = false;
+        defer n_ty.delete();
+
         var type_name = self->type_mapping(n_ty.__ptr__());
+        defer type_name.delete();
+
         self->block->add_alloca(sir_alloca::new(
             name.__ptr__(),
             type_name.__ptr__()
@@ -2009,22 +2033,20 @@ impl mir2sir {
         self->visit(n->init_value => mir*);
 
         var source = self->value_stack.back()->copy_instance();
+        defer source.delete();
         self->value_stack.pop_back();
+
         var source_value = source.to_value_t();
+        defer source_value.delete();
+
         var name_value = value_t::variable(name.__ptr__());
+        defer name_value.delete();
 
         self->block->add_stmt(sir_store::new(
             type_name.__ptr__(),
             source_value.__ptr__(),
             name_value.__ptr__()
         ) => sir*);
-
-        name.delete();
-        n_ty.delete();
-        type_name.delete();
-        source.delete();
-        source_value.delete();
-        name_value.delete();
     }
 
     func visit_mir_assign(self, n: mir_assign*) {
@@ -2035,12 +2057,21 @@ impl mir2sir {
         var left = self->value_stack.back()->copy_instance();
         var left_value = left.to_value_t();
         self->value_stack.pop_back();
+        defer {
+            left.delete();
+            left_value.delete();
+        }
 
         self->visit(n->right => mir*);
         var right = self->value_stack.back()->copy_instance();
         var right_value = right.to_value_t();
         var right_ty = self->type_mapping(right.resolved_type.__ptr__());
         self->value_stack.pop_back();
+        defer {
+            right.delete();
+            right_value.delete();
+            right_ty.delete();
+        }
 
         match (n->opr) {
             mir_assign_opr::addeq => {
@@ -2048,6 +2079,13 @@ impl mir2sir {
                 var temp_1 = self->ssa_gen.create();
                 var temp_0_value = value_t::variable(temp_0.__ptr__());
                 var temp_1_value = value_t::variable(temp_1.__ptr__());
+                defer {
+                    temp_0.delete();
+                    temp_1.delete();
+                    temp_0_value.delete();
+                    temp_1_value.delete();
+                }
+
                 self->block->add_stmt(sir_load::new(
                     right_ty.__ptr__(),
                     left_value.__ptr__(),
@@ -2065,16 +2103,19 @@ impl mir2sir {
                     temp_1_value.__ptr__(),
                     left_value.__ptr__()
                 ) => sir*);
-                temp_0.delete();
-                temp_1.delete();
-                temp_0_value.delete();
-                temp_1_value.delete();
             }
             mir_assign_opr::subeq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
                 var temp_0_value = value_t::variable(temp_0.__ptr__());
                 var temp_1_value = value_t::variable(temp_1.__ptr__());
+                defer {
+                    temp_0.delete();
+                    temp_1.delete();
+                    temp_0_value.delete();
+                    temp_1_value.delete();
+                }
+
                 self->block->add_stmt(sir_load::new(
                     right_ty.__ptr__(),
                     left_value.__ptr__(),
@@ -2092,16 +2133,19 @@ impl mir2sir {
                     temp_1_value.__ptr__(),
                     left_value.__ptr__()
                 ) => sir*);
-                temp_0.delete();
-                temp_1.delete();
-                temp_0_value.delete();
-                temp_1_value.delete();
             }
             mir_assign_opr::muleq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
                 var temp_0_value = value_t::variable(temp_0.__ptr__());
                 var temp_1_value = value_t::variable(temp_1.__ptr__());
+                defer {
+                    temp_0.delete();
+                    temp_1.delete();
+                    temp_0_value.delete();
+                    temp_1_value.delete();
+                }
+
                 self->block->add_stmt(sir_load::new(
                     right_ty.__ptr__(),
                     left_value.__ptr__(),
@@ -2119,16 +2163,19 @@ impl mir2sir {
                     temp_1_value.__ptr__(),
                     left_value.__ptr__()
                 ) => sir*);
-                temp_0.delete();
-                temp_1.delete();
-                temp_0_value.delete();
-                temp_1_value.delete();
             }
             mir_assign_opr::diveq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
                 var temp_0_value = value_t::variable(temp_0.__ptr__());
                 var temp_1_value = value_t::variable(temp_1.__ptr__());
+                defer {
+                    temp_0.delete();
+                    temp_1.delete();
+                    temp_0_value.delete();
+                    temp_1_value.delete();
+                }
+
                 self->block->add_stmt(sir_load::new(
                     right_ty.__ptr__(),
                     left_value.__ptr__(),
@@ -2147,16 +2194,19 @@ impl mir2sir {
                     temp_1_value.__ptr__(),
                     left_value.__ptr__()
                 ) => sir*);
-                temp_0.delete();
-                temp_1.delete();
-                temp_0_value.delete();
-                temp_1_value.delete();
             }
             mir_assign_opr::remeq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
                 var temp_0_value = value_t::variable(temp_0.__ptr__());
                 var temp_1_value = value_t::variable(temp_1.__ptr__());
+                defer {
+                    temp_0.delete();
+                    temp_1.delete();
+                    temp_0_value.delete();
+                    temp_1_value.delete();
+                }
+
                 self->block->add_stmt(sir_load::new(
                     right_ty.__ptr__(),
                     left_value.__ptr__(),
@@ -2175,10 +2225,6 @@ impl mir2sir {
                     temp_1_value.__ptr__(),
                     left_value.__ptr__()
                 ) => sir*);
-                temp_0.delete();
-                temp_1.delete();
-                temp_0_value.delete();
-                temp_1_value.delete();
             }
             mir_assign_opr::eq => {
                 self->block->add_stmt(sir_store::new(
@@ -2192,6 +2238,13 @@ impl mir2sir {
                 var temp_1 = self->ssa_gen.create();
                 var temp_0_value = value_t::variable(temp_0.__ptr__());
                 var temp_1_value = value_t::variable(temp_1.__ptr__());
+                defer {
+                    temp_0.delete();
+                    temp_1.delete();
+                    temp_0_value.delete();
+                    temp_1_value.delete();
+                }
+
                 self->block->add_stmt(sir_load::new(
                     right_ty.__ptr__(),
                     left_value.__ptr__(),
@@ -2208,16 +2261,19 @@ impl mir2sir {
                     temp_1_value.__ptr__(),
                     left_value.__ptr__()
                 ) => sir*);
-                temp_0.delete();
-                temp_1.delete();
-                temp_0_value.delete();
-                temp_1_value.delete();
             }
             mir_assign_opr::xoreq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
                 var temp_0_value = value_t::variable(temp_0.__ptr__());
                 var temp_1_value = value_t::variable(temp_1.__ptr__());
+                defer {
+                    temp_0.delete();
+                    temp_1.delete();
+                    temp_0_value.delete();
+                    temp_1_value.delete();
+                }
+
                 self->block->add_stmt(sir_load::new(
                     right_ty.__ptr__(),
                     left_value.__ptr__(),
@@ -2234,16 +2290,19 @@ impl mir2sir {
                     temp_1_value.__ptr__(),
                     left_value.__ptr__()
                 ) => sir*);
-                temp_0.delete();
-                temp_1.delete();
-                temp_0_value.delete();
-                temp_1_value.delete();
             }
             mir_assign_opr::oreq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
                 var temp_0_value = value_t::variable(temp_0.__ptr__());
                 var temp_1_value = value_t::variable(temp_1.__ptr__());
+                defer {
+                    temp_0.delete();
+                    temp_1.delete();
+                    temp_0_value.delete();
+                    temp_1_value.delete();
+                }
+
                 self->block->add_stmt(sir_load::new(
                     right_ty.__ptr__(),
                     left_value.__ptr__(),
@@ -2260,18 +2319,8 @@ impl mir2sir {
                     temp_1_value.__ptr__(),
                     left_value.__ptr__()
                 ) => sir*);
-                temp_0.delete();
-                temp_1.delete();
-                temp_0_value.delete();
-                temp_1_value.delete();
             }
         }
-
-        left.delete();
-        left_value.delete();
-        right.delete();
-        right_value.delete();
-        right_ty.delete();
     }
 
     func visit_mir_if(self, n: mir_if*) {
@@ -2281,8 +2330,11 @@ impl mir2sir {
             self->visit(n->condition => mir*);
 
             var cond = self->value_stack.back()->copy_instance();
+            defer cond.delete();
             self->value_stack.pop_back();
+
             var cond_value = cond.to_value_t();
+            defer cond_value.delete();
 
             br_cond = sir_br_cond::new(
                 cond_value.__ptr__(),
@@ -2291,9 +2343,6 @@ impl mir2sir {
             );
             self->block->add_stmt(br_cond => sir*);
             self->block->add_stmt(sir_label::new(self->block->stmts.size, "cond.true") => sir*);
-
-            cond.delete();
-            cond_value.delete();
         }
         
         self->visit(n->content => mir*);
@@ -2343,23 +2392,27 @@ impl mir2sir {
         self->visit(n->condition => mir*);
         var value = self->value_stack.back()->copy_instance();
         self->value_stack.pop_back();
+        defer value.delete();
+
         var value_val = value.to_value_t();
+        defer value_val.delete();
 
         var switch_inst = sir_switch::new(value_val.__ptr__());
         self->block->add_stmt(switch_inst => sir*);
 
         var jmp_exits = vec<sir_br*>::instance();
+        defer jmp_exits.delete();
 
         foreach (var i; n->cases) {
             var case_label_index = self->block->stmts.size;
             var label_comment = str::from("switch.case ");
             label_comment.append_i64(i.get()->value);
+            defer label_comment.delete();
 
             var label = sir_label::new(
                 case_label_index,
                 label_comment.c_str
             );
-            label_comment.delete();
 
             self->block->add_stmt(label => sir*);
             switch_inst->add_case(i.get()->value, case_label_index);
@@ -2407,10 +2460,6 @@ impl mir2sir {
                 i.get()->label = default_label_index;
             }
         }
-
-        value.delete();
-        value_val.delete();
-        jmp_exits.delete();
     }
 
     func visit_mir_break(self, n: mir_break*) {
@@ -2460,8 +2509,11 @@ impl mir2sir {
 
         self->visit(n->condition => mir*);
         var cond = self->value_stack.back()->copy_instance();
+        defer cond.delete();
         self->value_stack.pop_back();
+
         var cond_value = cond.to_value_t();
+        defer cond_value.delete();
 
         var cond_inst = sir_br_cond::new(
             cond_value.__ptr__(),
@@ -2514,8 +2566,6 @@ impl mir2sir {
             i.get()->label = exit_label_index;
         }
 
-        cond.delete();
-        cond_value.delete();
         self->continue_inst.pop_back();
         self->break_inst.pop_back();
     }
@@ -2523,32 +2573,35 @@ impl mir2sir {
     func visit_mir_return(self, n: mir_return*) {
         if (n->value->content.empty()) {
             var void_name = str::from("void");
+            defer void_name.delete();
+
             var null_val = value_t::null(nil);
+            defer null_val.delete();
+
             self->block->add_stmt(sir_ret::new(
                 void_name.__ptr__(),
                 null_val.__ptr__(),
                 self->generate_DI_location(n->base.location.__ptr__())
             ) => sir*);
-            void_name.delete();
-            null_val.delete();
             return;
         }
 
         self->visit(n->value => mir*);
         var ret = self->value_stack.back()->copy_instance();
         self->value_stack.pop_back();
+        defer ret.delete();
 
         var ret_ty = self->type_mapping(ret.resolved_type.__ptr__());
+        defer ret_ty.delete();
+
         var ret_val = ret.to_value_t();
+        defer ret_val.delete();
+
         self->block->add_stmt(sir_ret::new(
             ret_ty.__ptr__(),
             ret_val.__ptr__(),
             self->generate_DI_location(n->base.location.__ptr__())
         ) => sir*);
-
-        ret.delete();
-        ret_ty.delete();
-        ret_val.delete();
     }
 
     func visit(self, n: mir*) {
@@ -2671,8 +2724,9 @@ impl mir2sir {
         } else {
             var info = str::from("cannot generate DI_type for \"");
             info.append(n->c_str)->append("\"");
+            defer info.delete();
+
             panic(info.c_str);
-            info.delete();
         }
     }
 
@@ -2682,11 +2736,12 @@ impl mir2sir {
         }
 
         var n = ty->full_path_name(self->pkg, true);
+        defer n.delete();
+
         if (!self->sctx->DI_type_map.has(n.__ptr__())) {
             self->generate_DI_type_if_not_exists(n.__ptr__());
         }
         var index = self->sctx->DI_type_map.get(n.__ptr__());
-        n.delete();
         return DI_ref_index::new(index) => DI_node*;
     }
 
@@ -2696,11 +2751,12 @@ impl mir2sir {
         }
 
         var n = ty->full_path_name(self->pkg, true);
+        defer n.delete();
+
         if (!self->sctx->DI_type_map.has(n.__ptr__())) {
             self->generate_DI_type_if_not_exists(n.__ptr__());
         }
         var index = self->sctx->DI_type_map.get(n.__ptr__());
-        n.delete();
         return index;
     }
 
@@ -2728,6 +2784,7 @@ impl mir2sir {
         
         var version_str = str::from("colgm compiler version ");
         version_str.append(version());
+        defer version_str.delete();
         
         var ver_list = DI_list::new(self->dwarf_status.DI_counter);
         ver_list->add(DI_string::new(version_str.c_str) => DI_node*);
@@ -2735,7 +2792,6 @@ impl mir2sir {
         self->sctx->debug_info.push(ver_list => DI_node*);
 
         self->dwarf_status.DI_counter += 1;
-        version_str.delete();
     }
 
     func generate_llvm_module_flags(self) {
@@ -2787,7 +2843,9 @@ impl mir2sir {
         self->sctx->DI_file_map.clear();
 
         // empty file name maybe used for auto-generated functions
-        var empty_file_name = str::from("");
+        var empty_file_name = str::instance();
+        defer empty_file_name.delete();
+
         self->sctx->debug_info.push(
             DI_file::new(self->dwarf_status.DI_counter, "", "") => DI_node*
         );
@@ -2796,7 +2854,6 @@ impl mir2sir {
             self->dwarf_status.DI_counter
         );
         self->dwarf_status.DI_counter += 1;
-        empty_file_name.delete();
 
         foreach (var i; self->ctx->global->domain) {
             self->sctx->debug_info.push(DI_file::new(
@@ -2940,9 +2997,13 @@ impl mir2sir {
         var ty = type::instance();
         ty.name.append(e->name.c_str);
         ty.loc_file.append(e->location.file.c_str);
+        defer ty.delete();
+
         var id = ty.full_path_name(self->pkg, false);
+        defer id.delete();
 
         var i64_s = str::from("i64");
+        defer i64_s.delete();
 
         var tmp = DI_enum_type::new(
             self->dwarf_status.DI_counter,
@@ -2971,9 +3032,6 @@ impl mir2sir {
             self->dwarf_status.DI_counter += 1;
         }
 
-        ty.delete();
-        id.delete();
-        i64_s.delete();
         return tmp->base.index;
     }
 
@@ -2996,7 +3054,10 @@ impl mir2sir {
         var ty = type::instance();
         ty.name.append(s->name.c_str);
         ty.loc_file.append(s->location.file.c_str);
+        defer ty.delete();
+
         var id = ty.full_path_name(self->pkg, false);
+        defer id.delete();
 
         var tmp = DI_structure_type::new(
             self->dwarf_status.DI_counter,
@@ -3009,9 +3070,6 @@ impl mir2sir {
         self->sctx->add_DI_struct(id.c_str, tmp);
         self->sctx->debug_info.push(tmp => DI_node*);
         self->dwarf_status.DI_counter += 1;
-
-        ty.delete();
-        id.delete();
     }
 
     func generate_DI_structure_type(self) {
@@ -3026,7 +3084,10 @@ impl mir2sir {
         var ty = type::instance();
         ty.name.append(s->name.c_str);
         ty.loc_file.append(s->location.file.c_str);
+        defer ty.delete();
+
         var id = ty.full_path_name(self->pkg, false);
+        defer id.delete();
 
         var s_node = self->sctx->DI_struct_map.get(id.__ptr__());
 
@@ -3052,9 +3113,6 @@ impl mir2sir {
             element->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
             self->dwarf_status.DI_counter += 1;
         }
-
-        ty.delete();
-        id.delete();
     }
 
     func generate_structure_member_dwarf(self) {

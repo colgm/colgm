@@ -76,11 +76,11 @@ impl sema {
         }
         var dm = self->ctx->get_domain(ty->loc_file.__ptr__());
         var n = ty->generic_name(self->pkg);
+        defer n.delete();
+
         if (dm->structs.has(n.__ptr__())) {
-            n.delete();
             return true;
         }
-        n.delete();
         return false;
     }
 }
@@ -99,8 +99,9 @@ impl sema {
             var info = str::from("invalid number \"");
             info.append_str(n->literal.__ptr__());
             info.append_char('\"');
+            defer info.delete();
+
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             return type::error_type();
         }
 
@@ -152,20 +153,21 @@ impl sema {
 
     func resolve_array_list(self, n: ast_array_list*) -> type {
         var list_type = vec<type>::instance();
+        defer list_type.delete();
+
         foreach (var i; n->value) {
             var t = self->resolve_expression(i.get());
+            defer t.delete();
+
             list_type.push(t.__ptr__());
-            t.delete();
         }
         foreach (var i; list_type) {
             if (i.get()->is_error()) {
-                list_type.delete();
                 return type::error_type();
             }
         }
 
         if (list_type.empty()) {
-            list_type.delete();
             return type::empty_array_type();
         }
 
@@ -175,25 +177,29 @@ impl sema {
             if (!list_type.get(i)->eq(marked_base_type) &&
                 !self->check_can_be_converted(this_node, marked_base_type)) {
                 var info = str::from("expect \"");
+                defer info.delete();
+
                 var e_name = marked_base_type->full_path_name(self->pkg, true);
+                defer e_name.delete();
+
                 info.append_str(e_name.__ptr__());
                 info.append("\" but get \"");
+
                 var i_name = list_type.get(i)->full_path_name(self->pkg, true);
+                defer i_name.delete();
+
                 info.append_str(i_name.__ptr__());
                 info.append("\"");
+
                 self->err->error(this_node->location.__ptr__(), info.c_str);
-                info.delete();
-                e_name.delete();
-                i_name.delete();
             }
         }
 
         var type_infer = marked_base_type->pointer_copy();
         type_infer.is_array = true;
         type_infer.array_length = list_type.size;
-        n->base.resolved_type.reset_with(type_infer.__ptr__());
 
-        list_type.delete();
+        n->base.resolved_type.reset_with(type_infer.__ptr__());
         return type_infer;
     }
 
@@ -204,12 +210,16 @@ impl sema {
         }
         if (!infer.is_integer() && !infer.is_float()) {
             var info = str::from("expect integer or float but get \"");
+            defer info.delete();
+
             var i_name = infer.full_path_name(self->pkg, true);
+            defer i_name.delete();
+
             info.append_str(i_name.__ptr__());
             info.append("\"");
+
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            i_name.delete();
+
             infer.delete();
             return type::error_type();
         }
@@ -223,12 +233,16 @@ impl sema {
         }
         if (!infer.is_integer() || infer.is_pointer()) {
             var info = str::from("bitwise operator cannot be used on \"");
+            defer info.delete();
+
             var i_name = infer.full_path_name(self->pkg, true);
+            defer i_name.delete();
+
             info.append_str(i_name.__ptr__());
             info.append("\"");
+
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            i_name.delete();
+
             infer.delete();
             return type::error_type();
         }
@@ -237,24 +251,26 @@ impl sema {
 
     func resolve_unary_lnot(self, n: ast_unary_operator*) -> type {
         var infer = self->resolve_expression(n->value);
+        defer infer.delete();
         // do not report if get error type,
         // because the related error is reported before
         if (infer.is_error()) {
-            infer.delete();
             return type::bool_type();
         }
         if (!infer.is_bool() || infer.is_pointer()) {
             var info = str::from("logical operator cannot be used on \"");
+            defer info.delete();
+
             var i_name = infer.full_path_name(self->pkg, true);
+            defer i_name.delete();
+
             info.append_str(i_name.__ptr__());
             info.append("\"");
+
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            i_name.delete();
-            infer.delete();
             return type::bool_type();
         }
-        infer.delete();
+
         return type::bool_type();
     }
 
@@ -283,10 +299,12 @@ impl sema {
 
     func resolve_comparison_operator(self, n: ast_binary_operator*) -> type {
         var left = self->resolve_expression(n->left);
+        defer left.delete();
+
         var right = self->resolve_expression(n->right);
+        defer right.delete();
+
         if (left.is_error() || right.is_error()) {
-            left.delete();
-            right.delete();
             var infer = type::bool_type();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
@@ -297,16 +315,18 @@ impl sema {
                 var info = str::from("cannot compare \"");
                 var l_name = left.full_path_name(self->pkg, true);
                 var r_name = right.full_path_name(self->pkg, true);
+                defer {
+                    info.delete();
+                    l_name.delete();
+                    r_name.delete();
+                }
+
                 info.append_str(l_name.__ptr__());
                 info.append("\" and \"");
                 info.append_str(r_name.__ptr__());
                 info.append("\"");
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
-                l_name.delete();
-                r_name.delete();
-                left.delete();
-                right.delete();
+
                 var infer = type::bool_type();
                 n->base.resolved_type.reset_with(infer.__ptr__());
                 return infer;
@@ -319,8 +339,7 @@ impl sema {
                 n->kind != binary_kind::cmpne) {
                 self->err->error(n->base.location.__ptr__(), "only \"==\" and \"!=\" are allowed");
             }
-            left.delete();
-            right.delete();
+
             var infer = type::bool_type();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
@@ -329,16 +348,18 @@ impl sema {
             var info = str::from("cannot compare uncomparable type \"");
             var l_name = left.full_path_name(self->pkg, true);
             var r_name = right.full_path_name(self->pkg, true);
+            defer {
+                info.delete();
+                l_name.delete();
+                r_name.delete();
+            }
+
             info.append_str(l_name.__ptr__());
             info.append("\" and \"");
             info.append_str(r_name.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            l_name.delete();
-            r_name.delete();
-            left.delete();
-            right.delete();
+
             var infer = type::bool_type();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
@@ -348,23 +369,23 @@ impl sema {
             var info = str::from("cannot compare pointer \"");
             var l_name = left.full_path_name(self->pkg, true);
             var r_name = right.full_path_name(self->pkg, true);
+            defer {
+                info.delete();
+                l_name.delete();
+                r_name.delete();
+            }
+
             info.append_str(l_name.__ptr__());
             info.append("\" with different pointer level type \"");
             info.append_str(r_name.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            l_name.delete();
-            r_name.delete();
-            left.delete();
-            right.delete();
+
             var infer = type::bool_type();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
 
-        left.delete();
-        right.delete();
         var infer = type::bool_type();
         n->base.resolved_type.reset_with(infer.__ptr__());
         return infer;
@@ -372,18 +393,18 @@ impl sema {
 
     func resolve_logical_operator(self, n: ast_binary_operator*) -> type {
         var left = self->resolve_expression(n->left);
+        defer left.delete();
+
         var right = self->resolve_expression(n->right);
+        defer right.delete();
+
         if (left.is_error() || !right.is_error()) {
-            left.delete();
-            right.delete();
             var infer = type::bool_type();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
 
         if (left.is_bool() && right.is_bool()) {
-            left.delete();
-            right.delete();
             var infer = type::bool_type();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
@@ -391,25 +412,27 @@ impl sema {
 
         if (!left.is_bool()) {
             var info = str::from("expect \"bool\" but get \"");
+            defer info.delete();
+
             var name = left.full_path_name(self->pkg, true);
+            defer name.delete();
+
             info.append_str(name.__ptr__());
             info.append("\"");
             self->err->error(n->left->location.__ptr__(), info.c_str);
-            info.delete();
-            name.delete();
         }
         if (!right.is_bool()) {
             var info = str::from("expect \"bool\" but get \"");
+            defer info.delete();
+
             var name = right.full_path_name(self->pkg, true);
+            defer name.delete();
+
             info.append_str(name.__ptr__());
             info.append("\"");
             self->err->error(n->right->location.__ptr__(), info.c_str);
-            info.delete();
-            name.delete();
         }
 
-        left.delete();
-        right.delete();
         var infer = type::bool_type();
         n->base.resolved_type.reset_with(infer.__ptr__());
         return infer;
@@ -417,11 +440,12 @@ impl sema {
 
     func resolve_arithmetic_operator(self, n: ast_binary_operator*) -> type {
         var left = self->resolve_expression(n->left);
+        defer left.delete();
+
         var right = self->resolve_expression(n->right);
+        defer right.delete();
 
         if (left.is_error() || right.is_error()) {
-            left.delete();
-            right.delete();
             return type::error_type();
         }
 
@@ -432,14 +456,15 @@ impl sema {
                 var info = str::from("cannot calculate \"");
                 var l_name = left.full_path_name(self->pkg, true);
                 var r_name = right.full_path_name(self->pkg, true);
+                defer {
+                    info.delete();
+                    l_name.delete();
+                    r_name.delete();
+                }
+
                 info.append_str(l_name.__ptr__())->append("\" and \"");
                 info.append_str(r_name.__ptr__());
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
-                l_name.delete();
-                r_name.delete();
-                left.delete();
-                right.delete();
                 return type::error_type();
             }
         }
@@ -447,29 +472,29 @@ impl sema {
         // cannot calculate enum
         if (self->is_enum_type(left.__ptr__())) {
             var info = str::from("cannot calculate enum \"");
+            defer info.delete();
+
             var name = left.full_path_name(self->pkg, true);
+            defer name.delete();
+
             info.append_str(name.__ptr__())->append("\"");
             self->err->error(n->left->location.__ptr__(), info.c_str);
-            info.delete();
-            name.delete();
-            left.delete();
-            right.delete();
             return type::error_type();
         } else if (self->is_enum_type(right.__ptr__())) {
             var info = str::from("cannot calculate enum \"");
+            defer info.delete();
+
             var name = right.full_path_name(self->pkg, true);
+            defer name.delete();
+
             info.append_str(name.__ptr__())->append("\"");
             self->err->error(n->right->location.__ptr__(), info.c_str);
-            info.delete();
-            name.delete();
-            left.delete();
-            right.delete();
             return type::error_type();
         }
 
-        right.delete();
         n->base.resolved_type.reset_with(left.__ptr__());
-        return left;
+        var res = left.copy_instance();
+        return res;
     }
 
     func resolve_bitwise_operator(self, n: ast_binary_operator*) -> type {
@@ -2867,9 +2892,9 @@ impl sema {
 
 impl sema {
     pub func view_resolved_ast(self, out: io) {
-        var dumper = ast_dumper::instance();
-        dumper.pkg = self->pkg;
+        var dumper = ast_dumper::instance(self->pkg);
+        defer dumper.delete();
+
         dumper.dump(self->root => ast*, out);
-        dumper.delete();
     }
 }
