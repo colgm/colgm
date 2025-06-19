@@ -25,7 +25,7 @@ u64 type_resolver::get_array_length(ast::number_literal* n) {
 
     if (literal_string.find(".") != std::string::npos ||
         literal_string.find("e") != std::string::npos) {
-        rp.report(n, "invalid float number \"" + literal_string + "\", expect u64.");
+        rp.report(n, "invalid float number \"" + literal_string + "\", expect u64");
         return 0;
     }
 
@@ -39,12 +39,12 @@ u64 type_resolver::get_array_length(ast::number_literal* n) {
     }
 
     if (res == 0) {
-        rp.report(n, "invalid number \"" + literal_string + "\", length should not be 0.");
+        rp.report(n, "invalid number \"" + literal_string + "\", length should not be 0");
     }
     if (res < 0 || res >= UINT32_MAX) {
         rp.report(n,
             "invalid number \"" + literal_string +
-            "\", length should be 0 ~ " + std::to_string(UINT32_MAX) + "."
+            "\", length should be 0 ~ " + std::to_string(UINT32_MAX)
         );
     }
     return res;
@@ -59,7 +59,7 @@ type type_resolver::resolve(ast::type_def* node) {
     // cannot find type
     if (!dm.global_symbol.count(name) && !ctx.generics.count(name)) {
         rp.report(node->get_name(),
-            "undefined type \"" + name + "\"."
+            "undefined type \"" + name + "\""
         );
         return type::error_type();
     }
@@ -69,7 +69,7 @@ type type_resolver::resolve(ast::type_def* node) {
     if (dm.global_symbol.count(name) &&
         !dm.global_symbol.at(name).is_public) {
         rp.report(node->get_name(),
-            "private type \"" + name + "\" cannot be used."
+            "private type \"" + name + "\" cannot be used"
         );
     }
 
@@ -77,7 +77,7 @@ type type_resolver::resolve(ast::type_def* node) {
     if (dm.global_symbol.count(name) &&
         dm.global_symbol.at(name).kind == sym_kind::func_kind) {
         rp.report(node->get_name(),
-            "\"" + name + "\" is a function, cannot be used as a type."
+            "\"" + name + "\" is a function, cannot be used as a type"
         );
     }
 

@@ -38,7 +38,7 @@ std::ostream& orange(std::ostream& s) {
 }
 
 std::ostream& white(std::ostream& s) {
-    s << "\033[0m\033[1m";
+    s << "\033[97;1m";
     return s;
 }
 

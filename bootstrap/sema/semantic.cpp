@@ -38,8 +38,8 @@ void semantic::report_unreachable_statements(code_block* node) {
     rp.warn(
         unreachable_location,
         unreachable_statements.size() > 1
-        ? "unreachable statements, ignored."
-        : "unreachable statement, ignored."
+        ? "unreachable statements, ignored"
+        : "unreachable statement, ignored"
     );
 }
 
@@ -63,7 +63,7 @@ void semantic::report_top_level_block_has_no_return(code_block* node,
     }
 
     // report
-    rp.report(node, "expect at least one return statement.");
+    rp.report(node, "expect at least one return statement");
 }
 
 bool semantic::number_literal_can_be_converted(node* n,
@@ -183,12 +183,12 @@ type semantic::resolve_logical_operator(binary_operator* node) {
     }
     if (!left.is_boolean()) {
         rp.report(node->get_left(),
-            "expect \"bool\" type, but get \"" + left.to_string() + "\"."
+            "expect \"bool\" type, but get \"" + left.to_string() + "\""
         );
     }
     if (!right.is_boolean()) {
         rp.report(node->get_right(),
-            "expect \"bool\" type, but get \"" + right.to_string() + "\"."
+            "expect \"bool\" type, but get \"" + right.to_string() + "\""
         );
     }
     node->set_resolve_type(type::bool_type());
@@ -207,7 +207,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
             !check_can_be_converted(node->get_left(), right)) {
             rp.report(node,
                 "get \"" + left.to_string() +
-                "\" and \"" + right.to_string() + "\"."
+                "\" and \"" + right.to_string() + "\""
             );
         }
         node->set_resolve_type(type::bool_type());
@@ -218,7 +218,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
     if (ctx.search_symbol_kind(left)==sym_kind::enum_kind) {
         if (node->get_opr()!=binary_operator::kind::cmpeq &&
             node->get_opr()!=binary_operator::kind::cmpneq) {
-            rp.report(node, "only \"==\" and \"!=\" is allowed.");
+            rp.report(node, "only \"==\" and \"!=\" is allowed");
         }
         node->set_resolve_type(type::bool_type());
         return type::bool_type();
@@ -228,7 +228,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
         !left.is_pointer() && !left.is_boolean()) {
         rp.report(node,
             "cannot compare \"" + left.to_string() +
-            "\" and \"" + right.to_string() + "\"."
+            "\" and \"" + right.to_string() + "\""
         );
         node->set_resolve_type(type::bool_type());
         return type::bool_type();
@@ -236,7 +236,7 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
     if (left.is_pointer() && left.pointer_depth != right.pointer_depth) {
         rp.report(node,
             "cannot compare \"" + left.to_string() +
-            "\" and \"" + right.to_string() + "\"."
+            "\" and \"" + right.to_string() + "\""
         );
         node->set_resolve_type(type::bool_type());
         return type::bool_type();
@@ -255,17 +255,17 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
             !check_can_be_converted(node->get_left(), right)) {
             rp.report(node,
                 "get \"" + left.to_string() +
-                "\" and \"" + right.to_string() + "\"."
+                "\" and \"" + right.to_string() + "\""
             );
         }
     }
 
     // cannot calculate enum
     if (ctx.search_symbol_kind(left)==sym_kind::enum_kind) {
-        rp.report(node->get_left(), "cannot calculate enum \"" + left.to_string() + "\".");
+        rp.report(node->get_left(), "cannot calculate enum \"" + left.to_string() + "\"");
         return type::error_type();
     } else if (ctx.search_symbol_kind(right)==sym_kind::enum_kind) {
-        rp.report(node->get_right(), "cannot calculate enum \"" + right.to_string() + "\".");
+        rp.report(node->get_right(), "cannot calculate enum \"" + right.to_string() + "\"");
         return type::error_type();
     }
 
@@ -278,14 +278,14 @@ type semantic::resolve_bitwise_operator(binary_operator* node) {
     const auto right = resolve_expression(node->get_right());
     if (!left.is_integer()) {
         rp.report(node->get_left(),
-            "bitwise operator cannot be used on \"" + left.to_string() + "\"."
+            "bitwise operator cannot be used on \"" + left.to_string() + "\""
         );
         node->set_resolve_type(left);
         return left;
     }
     if (!right.is_integer()) {
         rp.report(node->get_right(),
-            "bitwise operator cannot be used on \"" + right.to_string() + "\"."
+            "bitwise operator cannot be used on \"" + right.to_string() + "\""
         );
         node->set_resolve_type(right);
         return right;
@@ -295,7 +295,7 @@ type semantic::resolve_bitwise_operator(binary_operator* node) {
             !check_can_be_converted(node->get_left(), right)) {
             rp.report(node,
                 "get \"" + left.to_string() +
-                "\" and \"" + right.to_string() + "\"."
+                "\" and \"" + right.to_string() + "\""
             );
         }
     }
@@ -337,7 +337,7 @@ type semantic::resolve_unary_neg(unary_operator* node) {
     }
     if (!value.is_integer() && !value.is_float()) {
         rp.report(node,
-            "expect integer or float but get \"" + value.to_string() + "\"."
+            "expect integer or float but get \"" + value.to_string() + "\""
         );
     }
     return value;
@@ -350,7 +350,7 @@ type semantic::resolve_unary_bnot(unary_operator* node) {
     }
     if (!value.is_integer() || value.is_pointer()) {
         rp.report(node->get_value(),
-            "bitwise operator cannot be used on \"" + value.to_string() + "\"."
+            "bitwise operator cannot be used on \"" + value.to_string() + "\""
         );
     }
     return value;
@@ -364,7 +364,7 @@ type semantic::resolve_unary_lnot(unary_operator* node) {
     }
     if (!value.is_boolean() || value.is_pointer()) {
         rp.report(node->get_value(),
-            "logical operator cannot be used on \"" + value.to_string() + "\"."
+            "logical operator cannot be used on \"" + value.to_string() + "\""
         );
     }
     return type::bool_type();
@@ -404,7 +404,7 @@ type semantic::resolve_type_convert(type_convert* node) {
         (res.is_pointer() && type_res.is_float() && !type_res.is_pointer())) {
         rp.report(node->get_target(),
             "cannot cast floating point number to pointer: \"" +
-            res.to_string() + "\" => \"" + type_res.to_string() + "\"."
+            res.to_string() + "\" => \"" + type_res.to_string() + "\""
         );
     }
 
@@ -413,7 +413,7 @@ type semantic::resolve_type_convert(type_convert* node) {
         !res.is_pointer()) {
         rp.report(node->get_target(),
             "cannot convert \"" + res.to_string() +
-            "\" to \"" + type_res.to_string() + "\"."
+            "\" to \"" + type_res.to_string() + "\""
         );
     }
     // any type to normal struct is also not allowed
@@ -421,7 +421,7 @@ type semantic::resolve_type_convert(type_convert* node) {
         !type_res.is_pointer()) {
         rp.report(node->get_target(),
             "cannot convert \"" + res.to_string() +
-            "\" to \"" + type_res.to_string() + "\"."
+            "\" to \"" + type_res.to_string() + "\""
         );
     }
 
@@ -438,7 +438,7 @@ type semantic::resolve_number_literal(number_literal* node) {
     const auto& literal_string = node->get_number();
     f64 result = str_to_num(literal_string.c_str());
     if (std::isinf(result) || std::isnan(result)) {
-        rp.report(node, "invalid number \"" + literal_string + "\".");
+        rp.report(node, "invalid number \"" + literal_string + "\"");
         return type::error_type();
     }
     if (literal_string.find(".") != std::string::npos ||
@@ -496,7 +496,7 @@ type semantic::resolve_array_list(array_list* node) {
             !check_can_be_converted(node->get_value()[i], marked_base_type)) {
             rp.report(node->get_value()[i],
                 "expect \"" +  marked_base_type.to_string() +
-                "\" but get \"" + list_type[i].to_string() + "\"."
+                "\" but get \"" + list_type[i].to_string() + "\""
             );
         }
     }
@@ -520,7 +520,7 @@ type semantic::resolve_identifier(identifier* node) {
     if (dm.global_symbol.count(name)) {
         const auto& sym = dm.global_symbol.at(name);
         if (!sym.is_public) {
-            rp.report(node, "\"" + name + "\" is not imported.");
+            rp.report(node, "\"" + name + "\" is not imported");
             return type::error_type();
         }
         return {
@@ -531,7 +531,7 @@ type semantic::resolve_identifier(identifier* node) {
             .is_global_func = sym.kind==sym_kind::func_kind
         };
     }
-    rp.report(node, "undefined symbol \"" + name + "\".");
+    rp.report(node, "undefined symbol \"" + name + "\"");
     return type::error_type();
 }
 
@@ -546,7 +546,7 @@ void semantic::check_pub_method(ast::node* node,
     }
     if (impl_struct_name.empty() || impl_struct_name!=self.name) {
         rp.report(node,
-            "cannot call private method \"" + self.name + "::" + name + "\"."
+            "cannot call private method \"" + self.name + "::" + name + "\""
         );
     }
 }
@@ -563,7 +563,7 @@ void semantic::check_pub_static_method(ast::node* node,
     if (impl_struct_name.empty()) {
         rp.report(node,
             "cannot call private static method \"" +
-            self.name + "::" + name + "\"."
+            self.name + "::" + name + "\""
         );
     }
 }
@@ -571,7 +571,7 @@ void semantic::check_pub_static_method(ast::node* node,
 type semantic::resolve_get_field(const type& prev, get_field* node) {
     if (prev.is_global) {
         rp.report(node,
-            "cannot get field from global symbol \"" + prev.to_string() + "\"."
+            "cannot get field from global symbol \"" + prev.to_string() + "\""
         );
         return type::error_type();
     }
@@ -587,7 +587,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
     if (prev.loc_file.empty()) {
         rp.report(node,
             "cannot get method \"" + node->get_name() +
-            "\" from \"" + prev.to_string() + "\"."
+            "\" from \"" + prev.to_string() + "\""
         );
         return type::error_type();
     }
@@ -597,7 +597,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
         rp.report(node,
             "cannot get field from \"" +
             prev.full_path_name() +
-            "\", struct not found."
+            "\", struct not found"
         );
         return type::error_type();
     }
@@ -616,13 +616,13 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
     if (struct_self.static_method.count(node->get_name())) {
         rp.report(node,
             "method \"" + node->get_name() +
-            "\" in \"" + prev.name_for_search() + "\" is static."
+            "\" in \"" + prev.name_for_search() + "\" is static"
         );
         return type::error_type();
     }
     rp.report(node,
         "cannot find field \"" + node->get_name() +
-        "\" in \"" + prev.name_for_search() + "\"."
+        "\" in \"" + prev.name_for_search() + "\""
     );
     return type::error_type();
 }
@@ -632,8 +632,7 @@ void semantic::check_static_call_args(const colgm_func& func,
     if (func.ordered_params.size() != node->get_args().size()) {
         rp.report(node,
             "expect " + std::to_string(func.ordered_params.size()) +
-            " argument(s) but get " + std::to_string(node->get_args().size()) +
-            "."
+            " argument(s) but get " + std::to_string(node->get_args().size())
         );
         return;
     }
@@ -646,7 +645,7 @@ void semantic::check_static_call_args(const colgm_func& func,
             if (!check_can_be_converted(i, param)) {
                 rp.report(i,
                     "expect \"" + param.to_string() +
-                    "\" but get \"" + infer.to_string() + "\"."
+                    "\" but get \"" + infer.to_string() + "\""
                 );
             }
         }
@@ -659,8 +658,7 @@ void semantic::check_method_call_args(const colgm_func& func,
     if (func.ordered_params.size() != node->get_args().size() + 1) {
         rp.report(node,
             "expect " + std::to_string(func.ordered_params.size() - 1) +
-            " argument(s) but get " + std::to_string(node->get_args().size()) +
-            "."
+            " argument(s) but get " + std::to_string(node->get_args().size())
         );
         return;
     }
@@ -675,7 +673,7 @@ void semantic::check_method_call_args(const colgm_func& func,
             if (!check_can_be_converted(i, param)) {
                 rp.report(i,
                     "expect \"" + param.to_string() +
-                    "\" but get \"" + infer.to_string() + "\"."
+                    "\" but get \"" + infer.to_string() + "\""
                 );
             }
         }
@@ -691,7 +689,7 @@ type semantic::resolve_call_id(call_id* node) {
     if (node->get_generic_types() && !infer.is_global) {
         rp.report(node,
             "non global symbol \"" + node->get_id()->get_name() +
-            "\" cannot be generic."
+            "\" cannot be generic"
         );
     }
     if (node->get_generic_types()) {
@@ -714,7 +712,7 @@ type semantic::resolve_call_id(call_id* node) {
         name += ">";
         
         if (!ctx.global.domain.count(infer.loc_file)) {
-            rp.report(node, "namespace in \"" + infer.loc_file + "\" not found.");
+            rp.report(node, "namespace in \"" + infer.loc_file + "\" not found");
             return infer;
         }
 
@@ -723,7 +721,7 @@ type semantic::resolve_call_id(call_id* node) {
             infer.name = node->get_id()->get_name();
             infer.generics = types;
         } else {
-            rp.report(node, "error resolving generic symbol \"" + name + "\".");
+            rp.report(node, "error resolving generic symbol \"" + name + "\"");
         }
     }
 
@@ -737,7 +735,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         const auto& domain = ctx.get_domain(prev.loc_file);
         if (!domain.functions.count(prev.name_for_search())) {
             rp.report(node,
-                "cannot find function \"" + prev.name_for_search() + "\"."
+                "cannot find function \"" + prev.name_for_search() + "\""
             );
             return type::error_type();
         }
@@ -751,7 +749,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         if (!ctx.global.primitives.count(prev.name_for_search())) {
             rp.report(node,
                 "cannot call static method of primitive type \"" +
-                prev.name_for_search() + "\"."
+                prev.name_for_search() + "\""
             );
             return type::error_type();
         }
@@ -766,7 +764,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         const auto& domain = ctx.get_domain(prev.loc_file);
         if (!domain.structs.count(prev.name_for_search())) {
             rp.report(node,
-                "cannot find struct \"" + prev.name_for_search() + "\"."
+                "cannot find struct \"" + prev.name_for_search() + "\""
             );
             return type::error_type();
         }
@@ -781,7 +779,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         const auto& domain = ctx.get_domain(prev.loc_file);
         if (!domain.structs.count(prev.name_for_search())) {
             rp.report(node,
-                "cannot find struct \"" + prev.name_for_search() + "\"."
+                "cannot find struct \"" + prev.name_for_search() + "\""
             );
             return type::error_type();
         }
@@ -792,20 +790,20 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         return method.return_type;
     }
 
-    rp.report(node, "cannot call non-function.");
+    rp.report(node, "cannot call non-function");
     return type::error_type();
 }
 
 type semantic::resolve_call_index(const type& prev, call_index* node) {
     if (prev.is_global) {
         rp.report(node,
-            "cannot get index from global symbol \"" + prev.to_string() + "\"."
+            "cannot get index from global symbol \"" + prev.to_string() + "\""
         );
         return type::error_type();
     }
     if (!prev.is_pointer()) {
         rp.report(node,
-            "cannot get index from \"" + prev.to_string() + "\"."
+            "cannot get index from \"" + prev.to_string() + "\""
         );
         return type::error_type();
     }
@@ -814,7 +812,7 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
     if (!index_infer.is_error()) {
         if (!index_infer.is_integer() || index_infer.is_pointer()) {
             rp.report(node,
-                "cannot get index with \"" + index_infer.to_string() + "\"."
+                "cannot get index with \"" + index_infer.to_string() + "\""
             );
         }
     }
@@ -830,12 +828,12 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
 
 type semantic::resolve_initializer(const type& prev, initializer* node) {
     if (!prev.is_global) {
-        rp.report(node, "need a global symbol to initialize.");
+        rp.report(node, "need a global symbol to initialize");
         return type::error_type();
     }
 
     if (prev.loc_file.empty()) {
-        rp.report(node, "basic type cannot be initialized as a struct.");
+        rp.report(node, "basic type cannot be initialized as a struct");
         return type::error_type();
     }
 
@@ -843,7 +841,7 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
     if (!domain.structs.count(prev.name_for_search())) {
         rp.report(node,
             "\"" + prev.name_for_search() +
-            "\" is not a struct type, cannot initialize."
+            "\" is not a struct type, cannot initialize"
         );
         return type::error_type();
     }
@@ -854,7 +852,7 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
         if (!st.field.count(field)) {
             rp.report(i,
                 "cannot find field \"" + field +
-                "\" in \"" + prev.name_for_search() + "\"."
+                "\" in \"" + prev.name_for_search() + "\""
             );
             continue;
         }
@@ -870,7 +868,7 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
             if (!check_can_be_converted(i->get_value(), expect)) {
                 rp.report(i,
                     "expect \"" + expect.to_string() +
-                    "\" but get \"" + infer.to_string() + "\"."
+                    "\" but get \"" + infer.to_string() + "\""
                 );
                 continue;
             }
@@ -878,7 +876,7 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
         // struct foo { bar: [0, 1, 2] } is not allowed
         if (infer.is_array) {
             rp.report(i,
-                "cannot initialize array, but it's already filled with 0 by default."
+                "cannot initialize array, but it's already filled with 0 by default"
             );
         }
     }
@@ -891,7 +889,7 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
 
 type semantic::resolve_call_path(const type& prev, call_path* node) {
     if (!prev.is_global) {
-        rp.report(node, "cannot get path from a value.");
+        rp.report(node, "cannot get path from a value");
         return type::error_type();
     }
 
@@ -900,7 +898,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         if (!ctx.global.primitives.count(prev.name_for_search())) {
             rp.report(node,
                 "cannot get static method \"" + node->get_name() +
-                "\" from \"" + prev.to_string() + "\"."
+                "\" from \"" + prev.to_string() + "\""
             );
             return type::error_type();
         }
@@ -908,7 +906,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         if (!p.static_methods.count(node->get_name())) {
             rp.report(node,
                 "cannot get static method \"" + node->get_name() +
-                "\" from \"" + prev.to_string() + "\"."
+                "\" from \"" + prev.to_string() + "\""
             );
             return type::error_type();
         }
@@ -934,13 +932,13 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         } else if (st.method.count(node->get_name())) {
             rp.report(node,
                 "\"" + node->get_name() +
-                "\" in \"" + prev.name_for_search() + "\" is not static method."
+                "\" in \"" + prev.name_for_search() + "\" is not static method"
             );
             return type::error_type();
         } else {
             rp.report(node,
                 "cannot find static method \"" + node->get_name() +
-                "\" in \"" + prev.name_for_search() + "\"."
+                "\" in \"" + prev.name_for_search() + "\""
             );
             return type::error_type();
         }
@@ -955,7 +953,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         }
         rp.report(node,
             "cannot find enum member \"" + node->get_name() +
-            "\" in \"" + prev.name_for_search() + "\"."
+            "\" in \"" + prev.name_for_search() + "\""
         );
         return type::error_type();
     } else if (domain.tagged_unions.count(prev.name_for_search()) && prev.is_global) {
@@ -967,13 +965,13 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         }
         rp.report(node,
             "cannot find tagged union member \"" + node->get_name() +
-            "\" in \"" + prev.name_for_search() + "\"."
+            "\" in \"" + prev.name_for_search() + "\""
         );
     }
 
     rp.report(node,
         "cannot find path \"" + node->get_name() +
-        "\" in \"" + prev.to_string() + "\"."
+        "\" in \"" + prev.to_string() + "\""
     );
     return type::error_type();
 }
@@ -981,14 +979,14 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
 type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
     if (prev.is_global) {
         rp.report(node,
-            "cannot get field from global symbol \"" + prev.to_string() + "\"."
+            "cannot get field from global symbol \"" + prev.to_string() + "\""
         );
         return type::error_type();
     }
     if (prev.pointer_depth!=1) {
         rp.report(node,
             "cannot use \"->\" to get field from \"" +
-            prev.to_string() + "\"."
+            prev.to_string() + "\""
         );
         return type::error_type();
     }
@@ -997,14 +995,14 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
     if (prev.loc_file.empty()) {
         rp.report(node,
             "cannot get method \"" + node->get_name() +
-            "\" from \"" + prev.to_string() + "\"."
+            "\" from \"" + prev.to_string() + "\""
         );
         return type::error_type();
     }
 
     const auto& domain = ctx.get_domain(prev.loc_file);
     if (!domain.structs.count(prev.name_for_search())) {
-        rp.report(node, "cannot get field from \"" + prev.full_path_name() + "\".");
+        rp.report(node, "cannot get field from \"" + prev.full_path_name() + "\"");
         return type::error_type();
     }
 
@@ -1022,13 +1020,13 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
     if (struct_self.static_method.count(node->get_name())) {
         rp.report(node,
             "method \"" + node->get_name() +
-            "\" in \"" + prev.name_for_search() + "\" is static."
+            "\" in \"" + prev.name_for_search() + "\" is static"
         );
         return type::error_type();
     }
     rp.report(node,
         "cannot find field \"" + node->get_name() +
-        "\" in \"" + prev.name_for_search() + "\"."
+        "\" in \"" + prev.name_for_search() + "\""
     );
     return type::error_type();
 }
@@ -1043,7 +1041,7 @@ type semantic::resolve_call(call* node) {
     for (auto i : node->get_chain()) {
         if (i->get_ast_type() != ast_type::ast_call_func_args &&
             infer.is_function()) {
-            rp.report(i, "function should be called before.");
+            rp.report(i, "function should be called before");
             return type::error_type();
         }
         switch(i->get_ast_type()) {
@@ -1086,14 +1084,14 @@ type semantic::resolve_call(call* node) {
         }
     }
     if (infer.is_function()) {
-        rp.report(node, "function should be called here.");
+        rp.report(node, "function should be called here");
         return type::error_type();
     }
     node->set_resolve_type(infer);
     if (infer.is_global) {
         rp.report(node,
             "get global symbol \"" + infer.to_string() + "\", " +
-            "but not an instance."
+            "but not an instance"
         );
     }
     return infer;
@@ -1101,19 +1099,19 @@ type semantic::resolve_call(call* node) {
 
 bool semantic::check_valid_left_value(expr* node) {
     if (!node->is(ast_type::ast_call)) {
-        rp.report(node, "bad left value: should be a call.");
+        rp.report(node, "bad left value: should be a call");
         return false;
     }
     const auto mem_get_node = reinterpret_cast<call*>(node);
     for (auto i : mem_get_node->get_chain()) {
         if (i->is(ast_type::ast_initializer)) {
-            rp.report(i, "bad left value: should not contain initializer.");
+            rp.report(i, "bad left value: should not contain initializer");
             return false;
         }
         if ((i->is(ast_type::ast_call_path) ||
             i->is(ast_type::ast_call_func_args)) &&
             i == mem_get_node->get_chain().back()) {
-            rp.report(i, "bad left value: should not end with function call.");
+            rp.report(i, "bad left value: should not end with function call");
             return false;
         }
     }
@@ -1132,16 +1130,16 @@ bool semantic::check_valid_left_value(expr* node) {
     if (maybe_invalid_assignment && seg) {
         rp.warn(seg, "function returning non-pointer type,"
                      " will do shallow copy on return,"
-                     " may cause invalid assignment.");
+                     " may cause invalid assignment");
     }
     return true;
 }
 
 void semantic::check_mutable_left_value(expr* node, const type& lt) {
     if (lt.is_const && !lt.is_pointer()) {
-        rp.report(node, "cannot assign to \"const " + lt.to_string() + "\".");
+        rp.report(node, "cannot assign to \"const " + lt.to_string() + "\"");
     } else if (lt.is_array) {
-        rp.report(node, "cannot change array \"" + lt.to_string() + "\".");
+        rp.report(node, "cannot change array \"" + lt.to_string() + "\"");
     }
     return;
 }
@@ -1165,14 +1163,14 @@ type semantic::resolve_assignment(assignment* node) {
             if (!left.is_integer()) {
                 rp.report(node->get_left(),
                     "bitwise operator cannot be used on \"" +
-                    left.to_string() + "\"."
+                    left.to_string() + "\""
                 );
                 return type::restrict_type();
             }
             if (!right.is_integer()) {
                 rp.report(node->get_right(),
                     "bitwise operator cannot be used on \"" +
-                    right.to_string() + "\"."
+                    right.to_string() + "\""
                 );
                 return type::restrict_type();
             }
@@ -1182,14 +1180,14 @@ type semantic::resolve_assignment(assignment* node) {
         if (left != right && !check_can_be_converted(node->get_right(), left)) {
             rp.report(node,
                 "cannot calculate \"" + left.to_string() +
-                "\" and \"" + right.to_string() + "\"."
+                "\" and \"" + right.to_string() + "\""
             );
         }
     } else if (left != right) {
         if (!check_can_be_converted(node->get_right(), left)) {
             rp.report(node,
                 "get \"" + right.to_string() +
-                "\" but expect \"" + left.to_string() + "\"."
+                "\" but expect \"" + left.to_string() + "\""
             );
         }
     }
@@ -1197,7 +1195,7 @@ type semantic::resolve_assignment(assignment* node) {
     // only = is allowed to be applied on enums
     if (ctx.search_symbol_kind(left)==sym_kind::enum_kind &&
         node->get_type()!=assignment::kind::eq) {
-        rp.report(node, "cannot calculate enum \"" + left.to_string() + "\".");
+        rp.report(node, "cannot calculate enum \"" + left.to_string() + "\"");
         return type::restrict_type();
     }
     return type::restrict_type();
@@ -1238,23 +1236,23 @@ type semantic::resolve_expression(expr* node) {
 void semantic::resolve_definition(definition* node, const colgm_func& func_self) {
     const auto& name = node->get_name();
     if (ctx.find_local(name)) {
-        rp.report(node, "redefinition of variable \"" + name + "\".");
+        rp.report(node, "redefinition of variable \"" + name + "\"");
         return;
     }
     if (ctx.get_domain(node->get_file()).global_symbol.count(name)) {
-        rp.report(node, "variable \"" + name + "\" conflicts with global symbol.");
+        rp.report(node, "variable \"" + name + "\" conflicts with global symbol");
         return;
     }
     // must have init value!
     if (!node->get_init_value()) {
-        rp.report(node, "expect initial value.");
+        rp.report(node, "expect initial value");
         return;
     }
     // no type declaration
     if (!node->get_type()) {
         const auto real_type = resolve_expression(node->get_init_value());
         if (real_type.is_empty_array()) {
-            rp.report(node, "expect at least one element to infer type.");
+            rp.report(node, "expect at least one element to infer type");
         }
         node->set_resolve_type(real_type);
         ctx.add_local(name, real_type);
@@ -1269,13 +1267,13 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         if (expected_type != real_type && !real_type.is_empty_array()) {
             rp.report(node,
                 "expected \"" + expected_type.array_type_to_string() +
-                "\", but get \"" + real_type.array_type_to_string() + "\"."
+                "\", but get \"" + real_type.array_type_to_string() + "\""
             );
         } else if (expected_type.is_array &&
                    real_type.array_length > expected_type.array_length) {
             rp.report(node,
                 "expected at most " + std::to_string(expected_type.array_length) +
-                "element(s), but get " + std::to_string(real_type.array_length) + "."
+                "element(s), but get " + std::to_string(real_type.array_length) + ""
             );
         }
         // sync the array length
@@ -1287,14 +1285,14 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
             !check_can_be_converted(node->get_init_value(), expected_type)) {
             rp.warn(node,
                 "expected \"" + expected_type.to_string() +
-                "\", but get \"" + real_type.to_string() + "\"."
+                "\", but get \"" + real_type.to_string() + "\""
             );
         }
     } else if (expected_type != real_type) {
         if (!check_can_be_converted(node->get_init_value(), expected_type)) {
             rp.report(node->get_type(),
                 "expected \"" + expected_type.to_string() +
-                "\", but get \"" + real_type.to_string() + "\"."
+                "\", but get \"" + real_type.to_string() + "\""
             );
         }
     }
@@ -1315,7 +1313,7 @@ void semantic::check_defined_variable_is_void(definition* node, const type& t) {
     if (!t.is_void()) {
         return;
     }
-    rp.report(node, "cannot define variable with void type.");
+    rp.report(node, "cannot define variable with void type");
 }
 
 void semantic::resolve_if_stmt(if_stmt* node, const colgm_func& func_self) {
@@ -1324,7 +1322,7 @@ void semantic::resolve_if_stmt(if_stmt* node, const colgm_func& func_self) {
         if (infer!=type::bool_type() && infer!=type::error_type()) {
             rp.report(node->get_condition(),
                 "condition should be \"bool\" type but get \"" +
-                infer.to_string() + "\"."
+                infer.to_string() + "\""
             );
         }
     }
@@ -1406,11 +1404,11 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
     }
 
     if (ctx.search_symbol_kind(infer) != sym_kind::enum_kind) {
-        rp.report(node->get_value(), "match value should be enum type.");
+        rp.report(node->get_value(), "match value should be enum type");
         return;
     }
     if (node->get_cases().empty()) {
-        rp.report(node, "expect at least one case.");
+        rp.report(node, "expect at least one case");
         return;
     }
 
@@ -1431,14 +1429,14 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
             if (!case_infer.is_error()) {
                 rp.report(case_node,
                     "case value should be \"" + infer.to_string() +
-                    "\" type but get \"" + case_infer.to_string() + "\"."
+                    "\" type but get \"" + case_infer.to_string() + "\""
                 );
             }
             continue;
         }
 
         if (!check_is_enum_literal(case_node)) {
-            rp.report(case_node, "case value should be enum literal.");
+            rp.report(case_node, "case value should be enum literal");
             continue;
         } else {
             const auto value = get_enum_literal_value(case_node, infer);
@@ -1446,7 +1444,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
                 if (used_values.count(value)) {
                     rp.report(
                         case_node,
-                        "duplicate enum literal value."
+                        "duplicate enum literal value"
                     );
                 }
                 used_values.insert(value);
@@ -1490,7 +1488,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
     if (generated_warning.length()) {
         rp.warn(node, "match statement with enum \"" + infer.to_string() +
             "\" has unused member" + (unused_counter > 1? "s":"") +
-            ": " + generated_warning + "."
+            ": " + generated_warning
         );
     }
 }
@@ -1500,7 +1498,7 @@ void semantic::resolve_while_stmt(while_stmt* node, const colgm_func& func_self)
     if (infer!=type::bool_type() && infer!=type::error_type()) {
         rp.report(node->get_condition(),
             "condition should be \"bool\" type but get \"" +
-            infer.to_string() + "\"."
+            infer.to_string() + "\""
         );
     }
     if (node->get_block()) {
@@ -1520,7 +1518,7 @@ void semantic::resolve_for_stmt(for_stmt* node, const colgm_func& func_self) {
         if (infer!=type::bool_type() && infer!=type::error_type()) {
             rp.report(node->get_condition(),
                 "condition should be \"bool\" type but get \"" +
-                infer.to_string() + "\"."
+                infer.to_string() + "\""
             );
         }
     }
@@ -1702,7 +1700,7 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
     if (!node->get_value() && func_self.return_type!=type::void_type()) {
         rp.report(node,
             "expected return type \"" + func_self.return_type.to_string() +
-            "\" but get \"void\"."
+            "\" but get \"void\""
         );
         return;
     }
@@ -1718,7 +1716,7 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
             !check_can_be_converted(node->get_value(), func_self.return_type)) {
             rp.warn(node,
                 "expected return type \"" + func_self.return_type.to_string() +
-                "\" but get \"" + infer.to_string() + "\"."
+                "\" but get \"" + infer.to_string() + "\""
             );
         }
     } else if (infer != func_self.return_type) {
@@ -1726,7 +1724,7 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
             rp.report(node,
                 "expected return type \"" +
                 func_self.return_type.to_string() +
-                "\" but get \"" + infer.to_string() + "\"."
+                "\" but get \"" + infer.to_string() + "\""
             );
         }
     }
@@ -1764,7 +1762,7 @@ void semantic::resolve_statement(stmt* node, const colgm_func& func_self) {
     case ast_type::ast_continue_stmt:
     case ast_type::ast_break_stmt:
         if (!in_loop_level) {
-            rp.report(node, "this statement should be used inside a loop.");
+            rp.report(node, "this statement should be used inside a loop");
         }
         break;
     default:
@@ -1794,7 +1792,7 @@ void semantic::resolve_global_func(func_decl* node) {
     }
     const auto& domain = ctx.get_domain(ctx.this_file);
     if (!domain.functions.count(node->get_name())) {
-        rp.report(node, "cannot find function \"" + node->get_name() + "\".");
+        rp.report(node, "cannot find function \"" + node->get_name() + "\"");
         return;
     }
     const auto& func_self = domain.functions.at(node->get_name());
@@ -1802,7 +1800,7 @@ void semantic::resolve_global_func(func_decl* node) {
         if (!func_self.is_extern) {
             rp.warn(node,
                 "non-extern function \"" + node->get_name() +
-                "\" is not implemented."
+                "\" is not implemented"
             );
         }
         return;
@@ -1826,7 +1824,7 @@ void semantic::resolve_global_func(func_decl* node) {
 
 void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) {
     if (!node->get_code_block()) {
-        rp.report(node, "should be implemented here.");
+        rp.report(node, "should be implemented here");
         return;
     }
     ctx.push_level();
@@ -1860,7 +1858,7 @@ void semantic::resolve_impl(impl_struct* node) {
     if (!domain.structs.count(node->get_struct_name())) {
         rp.report(node,
             "cannot implement \"" + node->get_struct_name() +
-            "\", this struct is not defined in the same file."
+            "\", this struct is not defined in the same file"
         );
         return;
     }

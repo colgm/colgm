@@ -53,7 +53,7 @@ void parse::try_match_semi() {
         next();
         return;
     }
-    err.err(toks[ptr ? ptr - 1 : ptr].loc, "expected \";\".");
+    err.err(toks[ptr ? ptr - 1 : ptr].loc, "expected \";\"");
 }
 
 void parse::try_match_rbrace() {
@@ -61,7 +61,7 @@ void parse::try_match_rbrace() {
         next();
         return;
     }
-    err.err(toks[ptr ? ptr - 1 : ptr].loc, "expected \"}\".");
+    err.err(toks[ptr ? ptr - 1 : ptr].loc, "expected \"}\"");
 }
 
 void parse::match(tok type) {
@@ -73,26 +73,26 @@ void parse::match(tok type) {
         case tok::tk_id:
             err.err(
                 toks[ptr].loc,
-                "expected identifier, but found \"" + toks[ptr].str + "\"."
+                "expected identifier, but found \"" + toks[ptr].str + "\""
             );
             break;
         case tok::tk_num:
             err.err(
                 toks[ptr].loc,
-                "expected number, but found \"" + toks[ptr].str + "\"."
+                "expected number, but found \"" + toks[ptr].str + "\""
             );
             break;
         case tok::tk_str:
             err.err(
                 toks[ptr].loc,
-                "expected string, but found \"" + toks[ptr].str + "\"."
+                "expected string, but found \"" + toks[ptr].str + "\""
             );
             break;
         default:
             err.err(
                 toks[ptr].loc,
                 "expected \"" + tokname.at(type) +
-                "\", but found \"" + toks[ptr].str + "\"."
+                "\", but found \"" + toks[ptr].str + "\""
             );
             break;
     }
@@ -267,7 +267,7 @@ array_list* parse::array_list_gen() {
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (!look_ahead(tok::tk_rbracket)) {
-            err.err(toks[ptr-1].loc, "expected ',' here.");
+            err.err(toks[ptr-1].loc, "expected ',' here");
         }
     }
     match(tok::tk_rbracket);
@@ -301,7 +301,7 @@ expr* parse::scalar_gen() {
     } else if (look_ahead(tok::tk_id)) {
         return call_gen();
     }
-    err.err(toks[ptr].loc, "expected scalar here.");
+    err.err(toks[ptr].loc, "expected scalar here");
     next();
     return new null();
 }
@@ -553,7 +553,7 @@ type_def* parse::array_type_gen() {
     }
     match(tok::tk_semi);
     if (look_ahead(tok::tk_sub)) {
-        err.err(toks[ptr].loc, "array type does not accept negative length.");
+        err.err(toks[ptr].loc, "array type does not accept negative length");
         match(tok::tk_sub);
     }
     res->set_array(number_gen());
@@ -600,7 +600,7 @@ generic_type_list* parse::generic_type_list_gen() {
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {
-            err.err(toks[ptr-1].loc, "expected ',' here.");
+            err.err(toks[ptr-1].loc, "expected ',' here");
         }
     }
     match(tok::tk_grt);
@@ -619,7 +619,7 @@ enum_decl* parse::enum_gen(std::vector<cond_compile*>& conds,
         res->set_public(true);
     }
     if (flag_is_extern) {
-        err.err(toks[ptr].loc, "extern enum is not supported.");
+        err.err(toks[ptr].loc, "extern enum is not supported");
     }
     match(tok::tk_enum);
     res->set_name(identifier_gen());
@@ -636,7 +636,7 @@ enum_decl* parse::enum_gen(std::vector<cond_compile*>& conds,
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {
-            err.err(toks[ptr-1].loc, "expected ',' here.");
+            err.err(toks[ptr-1].loc, "expected ',' here");
         }
     }
     try_match_rbrace();
@@ -682,7 +682,7 @@ struct_decl* parse::struct_gen(std::vector<cond_compile*>& conds,
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {
-            err.err(toks[ptr-1].loc, "expected ',' here.");
+            err.err(toks[ptr-1].loc, "expected ',' here");
         } else {
             break;
         }
@@ -729,7 +729,7 @@ tagged_union_decl* parse::tagged_union_gen(std::vector<cond_compile*>& conds,
         if (look_ahead(tok::tk_comma)) {
             match(tok::tk_comma);
         } else if (look_ahead(tok::tk_id)) {
-            err.err(toks[ptr-1].loc, "expected ',' here.");
+            err.err(toks[ptr-1].loc, "expected ',' here");
         } else {
             break;
         }
@@ -809,10 +809,10 @@ impl_struct* parse::impl_gen(std::vector<cond_compile*>& conds,
                              bool flag_is_public,
                              bool flag_is_extern) {
     if (flag_is_public) {
-        err.err(toks[ptr].loc, "\"pub\" is not used for impl struct.");
+        err.err(toks[ptr].loc, "\"pub\" is not used for impl struct");
     }
     if (flag_is_extern) {
-        err.err(toks[ptr].loc, "\"extern\" is not used for impl struct.");
+        err.err(toks[ptr].loc, "\"extern\" is not used for impl struct");
     }
     match(tok::tk_impl);
     auto res = new impl_struct(toks[ptr].loc, toks[ptr].str);
@@ -1028,7 +1028,7 @@ void parse::add_gen_stmt(code_block* res) {
         case tok::tk_semi: match(tok::tk_semi); break;
         default:
             err.err(toks[ptr].loc,
-                "unexpected token for statement syntax \"" + toks[ptr].str + "\"."
+                "unexpected token for statement syntax \"" + toks[ptr].str + "\""
             );
             match(toks[ptr].type);
             break;
@@ -1126,14 +1126,14 @@ const error& parse::analyse(const std::vector<token>& token_list) {
                 flag_is_public = true;
             } else if (look_ahead(tok::tk_pub) && flag_is_public) {
                 err.err(toks[ptr].loc,
-                    "duplicate modifier \"pub\"."
+                    "duplicate modifier \"pub\""
                 );
             }
             if (look_ahead(tok::tk_extern) && !flag_is_extern) {
                 flag_is_extern = true;
             } else if (look_ahead(tok::tk_extern) && flag_is_extern) {
                 err.err(toks[ptr].loc,
-                    "duplicate modifier \"extern\"."
+                    "duplicate modifier \"extern\""
                 );
             }
             match(toks[ptr].type);
@@ -1157,7 +1157,7 @@ const error& parse::analyse(const std::vector<token>& token_list) {
                 break;
             default:
                 err.err(toks[ptr].loc,
-                    "unexpected token \"" + toks[ptr].str + "\"."
+                    "unexpected token \"" + toks[ptr].str + "\""
                 );
                 match(toks[ptr].type);
                 break;

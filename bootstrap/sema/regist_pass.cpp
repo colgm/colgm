@@ -54,7 +54,7 @@ bool type_replace_pass::visit_type_def(type_def* node) {
             err.err(node->get_name()->get_location(),
                 "replace type \"" + select_type.full_path_name() +
                 "\" is already a generic type, not allowed to replace \"" +
-                name + "\"."
+                name + "\""
             );
         }
         if (!select_type.generics.empty() &&
@@ -84,7 +84,7 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
         if (select_type.pointer_depth) {
             err.err(node->get_id()->get_location(),
                 "replace type \"" + select_type.full_path_name() +
-                "\" is a pointer type, which is not allowed here."
+                "\" is a pointer type, which is not allowed here"
             );
         }
 
@@ -93,7 +93,7 @@ bool type_replace_pass::visit_call_id(ast::call_id* node) {
             err.err(node->get_id()->get_location(),
                 "replace type \"" + select_type.full_path_name() +
                 "\" is already a generic type, not allowed to replace \"" +
-                name + "\"."
+                name + "\""
             );
         }
         if (!select_type.generics.empty() &&
@@ -119,12 +119,12 @@ void generic_visitor::scan_generic_type(type_def* type_node) {
         : ctx.get_domain(type_node->get_file());
 
     if (!dm.global_symbol.count(type_name)) {
-        rp.report(type_node, "unknown type \"" + type_name + "\".");
+        rp.report(type_node, "unknown type \"" + type_name + "\"");
         return;
     }
     if (!dm.generic_symbol.count(type_name)) {
         rp.report(type_node->get_name(),
-            "\"" + type_name + "\" is not a generic type."
+            "\"" + type_name + "\" is not a generic type"
         );
         return;
     }
@@ -132,7 +132,7 @@ void generic_visitor::scan_generic_type(type_def* type_node) {
     const auto& sym = dm.global_symbol.at(type_name);
     const auto& sdm = ctx.get_domain(sym.loc_file);
     if (sym.kind != sym_kind::struct_kind) {
-        rp.report(type_node, "\"" + type_name + "\" is not a struct type.");
+        rp.report(type_node, "\"" + type_name + "\" is not a struct type");
         return;
     }
 
@@ -150,7 +150,7 @@ void generic_visitor::check_generic_type(
 
     // check size match
     if (type_list.size() != generic_template.size()) {
-        rp.report(node, "generic type count does not match.");
+        rp.report(node, "generic type count does not match");
         return;
     }
 
@@ -243,12 +243,12 @@ bool generic_visitor::visit_call_id(ast::call_id* node) {
         ? ctx.get_domain(node->get_redirect_location())
         : ctx.get_domain(node->get_file());
     if (!dm.global_symbol.count(type_name)) {
-        rp.report(node, "unknown type \"" + type_name + "\".");
+        rp.report(node, "unknown type \"" + type_name + "\"");
         return true;
     }
     if (!dm.generic_symbol.count(type_name)) {
         rp.report(node->get_id(),
-            "\"" + type_name + "\" is not a generic type."
+            "\"" + type_name + "\" is not a generic type"
         );
         return true;
     }
@@ -296,10 +296,10 @@ bool generic_visitor::check_is_trivial(ast::cond_compile* node,
                                        const generic_data& data) {
     for (const auto& i : node->get_ordered_cond_name()) {
         if (!node->get_conds().at(i).empty()) {
-            err.warn(node->get_location(), "condition value is ignored.");
+            err.warn(node->get_location(), "condition value is ignored");
         }
         if (!data.types.count(i)) {
-            err.err(node->get_location(), "generic type '" + i + "' is not defined.");
+            err.err(node->get_location(), "generic type '" + i + "' is not defined");
             return false;
         }
         const auto& t = data.types.at(i);
@@ -329,10 +329,10 @@ bool generic_visitor::check_is_non_trivial(ast::cond_compile* node,
                                            const generic_data& data) {
     for (const auto& i : node->get_ordered_cond_name()) {
         if (!node->get_conds().at(i).empty()) {
-            err.warn(node->get_location(), "condition value is ignored.");
+            err.warn(node->get_location(), "condition value is ignored");
         }
         if (!data.types.count(i)) {
-            err.err(node->get_location(), "generic type '" + i + "' is not defined.");
+            err.err(node->get_location(), "generic type '" + i + "' is not defined");
             return false;
         }
         const auto& t = data.types.at(i);
@@ -360,10 +360,10 @@ bool generic_visitor::check_is_pointer(ast::cond_compile* node,
                                        const generic_data& data) {
     for (const auto& i : node->get_ordered_cond_name()) {
         if (!node->get_conds().at(i).empty()) {
-            err.warn(node->get_location(), "condition value is ignored.");
+            err.warn(node->get_location(), "condition value is ignored");
         }
         if (!data.types.count(i)) {
-            err.err(node->get_location(), "generic type '" + i + "' is not defined.");
+            err.err(node->get_location(), "generic type '" + i + "' is not defined");
             return false;
         }
         const auto& t = data.types.at(i);
@@ -378,10 +378,10 @@ bool generic_visitor::check_is_non_pointer(ast::cond_compile* node,
                                            const generic_data& data) {
     for (const auto& i : node->get_ordered_cond_name()) {
         if (!node->get_conds().at(i).empty()) {
-            err.warn(node->get_location(), "condition value is ignored.");
+            err.warn(node->get_location(), "condition value is ignored");
         }
         if (!data.types.count(i)) {
-            err.err(node->get_location(), "generic type '" + i + "' is not defined.");
+            err.err(node->get_location(), "generic type '" + i + "' is not defined");
             return false;
         }
         const auto& t = data.types.at(i);
@@ -452,7 +452,7 @@ void generic_visitor::remove_cond_compile_method(colgm_struct& s,
                 if (s.field.count(j->get_name()) ||
                     s.method.count(j->get_name()) ||
                     s.static_method.count(j->get_name())) {
-                    err.err(j->get_location(), "method name conflicts.");
+                    err.err(j->get_location(), "method name conflicts");
                 } else {
                     s.method[j->get_name()] = s.method.at(monomorphic_name);
                     s.method.at(j->get_name()).name = j->get_name();
@@ -462,7 +462,7 @@ void generic_visitor::remove_cond_compile_method(colgm_struct& s,
                 if (s.field.count(j->get_name()) ||
                     s.method.count(j->get_name()) ||
                     s.static_method.count(j->get_name())) {
-                    err.err(j->get_location(), "static method name conflicts.");
+                    err.err(j->get_location(), "static method name conflicts");
                 } else {
                     s.static_method[j->get_name()] = s.static_method.at(monomorphic_name);
                     s.static_method.at(j->get_name()).name = j->get_name();
@@ -627,14 +627,14 @@ bool regist_pass::check_is_public_struct(ast::identifier* node,
     if (domain.structs.count(name) &&
         !domain.structs.at(name).is_public) {
         rp.report(node,
-            "cannot import private struct \"" + name + "\"."
+            "cannot import private struct \"" + name + "\""
         );
         return false;
     }
     if (domain.generic_structs.count(name) &&
         !domain.generic_structs.at(name).is_public) {
         rp.report(node,
-            "cannot import private struct \"" + name + "\"."
+            "cannot import private struct \"" + name + "\""
         );
         return false;
     }
@@ -651,14 +651,14 @@ bool regist_pass::check_is_public_func(ast::identifier* node,
     if (domain.functions.count(name) &&
         !domain.functions.at(name).is_public) {
         rp.report(node,
-            "cannot import private function \"" + name + "\"."
+            "cannot import private function \"" + name + "\""
         );
         return false;
     }
     if (domain.generic_functions.count(name) &&
         !domain.generic_functions.at(name).is_public) {
         rp.report(node,
-            "cannot import private function \"" + name + "\"."
+            "cannot import private function \"" + name + "\""
         );
         return false;
     }
@@ -673,7 +673,7 @@ bool regist_pass::check_is_public_enum(ast::identifier* node,
     if (!domain.enums.at(node->get_name()).is_public) {
         rp.report(node,
             "cannot import private enum \"" +
-            node->get_name() + "\"."
+            node->get_name() + "\""
         );
         return false;
     }
@@ -688,7 +688,7 @@ void regist_pass::import_global_symbol(ast::node* n,
         const auto& info = ctx.global_symbol().at(name);
         rp.report(n, "\"" + name +
             "\" conflicts, another declaration is in \"" +
-            info.loc_file + "\"."
+            info.loc_file + "\""
         );
         return;
     }
@@ -805,7 +805,7 @@ void regist_pass::regist_builtin_funcs() {
 
 void regist_pass::regist_single_import(ast::use_stmt* node) {
     if (node->get_module_path().empty()) {
-        rp.report(node, "must import at least one symbol from this module.");
+        rp.report(node, "must import at least one symbol from this module");
         return;
     }
     auto mp = std::string("");
@@ -818,14 +818,14 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
 
     const auto& file = package_manager::singleton()->get_file_name(mp);
     if (file.empty()) {
-        rp.report(node, "cannot find module \"" + mp + "\".");
+        rp.report(node, "cannot find module \"" + mp + "\"");
         return;
     }
 
     auto pkgman = package_manager::singleton();
     if (pkgman->get_analyse_status(file)==package_manager::status::analysing) {
         rp.report(node, "module \"" + mp +
-            "\" is not totally analysed, maybe encounter circular import."
+            "\" is not totally analysed, maybe encounter circular import"
         );
         return;
     }
@@ -851,7 +851,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
         // generate mir
         if (ast2mir.generate(par.get_result()).geterr()) {
             rp.report(node,
-                "error ocurred when generating mir for module \"" + mp + "\"."
+                "error ocurred when generating mir for module \"" + mp + "\""
             );
             return;
         }
@@ -945,7 +945,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
             continue;
         }
         rp.report(i, "cannot find symbol \"" + i->get_name() +
-            "\" in module \"" + mp + "\"."
+            "\" in module \"" + mp + "\""
         );
     }
 }
@@ -969,7 +969,7 @@ void regist_pass::regist_enums(ast::root* node) {
 void regist_pass::regist_single_enum(ast::enum_decl* node) {
     const auto& name = node->get_name()->get_name();
     if (ctx.global_symbol().count(name)) {
-        rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
+        rp.report(node, "\"" + name + "\" conflicts with exist symbol");
         return;
     }
 
@@ -994,7 +994,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
         }
     }
     if (has_specified_member && has_non_specified_member) {
-        rp.report(node, "enum members cannot be both specified and non-specified with number.");
+        rp.report(node, "enum members cannot be both specified and non-specified with number");
         return;
     }
 
@@ -1003,7 +1003,7 @@ void regist_pass::regist_single_enum(ast::enum_decl* node) {
             continue;
         }
         if (!check_is_valid_enum_member(i.value)) {
-            rp.report(i.value, "enum member cannot be specified with float.");
+            rp.report(i.value, "enum member cannot be specified with float");
             return;
         }
     }
@@ -1051,7 +1051,7 @@ void regist_pass::regist_complex_structs(ast::root* node) {
 void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol().count(name)) {
-        rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
+        rp.report(node, "\"" + name + "\" conflicts with exist symbol");
         return;
     }
 
@@ -1083,7 +1083,7 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
     if (node->get_generic_types()) {
         if (node->get_generic_types()->get_types().empty()) {
             rp.report(node, "generic struct \"" + name +
-                "\" must have at least one generic type."
+                "\" must have at least one generic type"
             );
         }
         std::unordered_set<std::string> used_generic;
@@ -1091,12 +1091,12 @@ void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
             const auto& generic_name = i->get_name()->get_name();
             if (ctx.global_symbol().count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
-                    "\" conflicts with exist symbol."
+                    "\" conflicts with exist symbol"
                 );
             }
             if (used_generic.count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
-                    "\" conflicts with exist generic type."
+                    "\" conflicts with exist generic type"
                 );
             }
             used_generic.insert(generic_name);
@@ -1205,7 +1205,7 @@ void regist_pass::check_struct_self_reference() {
                 auto new_path = path + "::" + field.first + " -> " + type_name;
                 if (type_name == st) {
                     rp.report(structs.at(st).location,
-                        "self reference detected: " + new_path + "."
+                        "self reference detected: " + new_path
                     );
                 } else if (structs.count(type_name)) {
                     bfs.push({type_name, new_path});
@@ -1223,7 +1223,7 @@ void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
 
     if (!ctx.global_symbol().count(node->get_ref_enum_name())) {
         rp.report(node, "enum \"" + node->get_ref_enum_name() +
-            "\" does not exist, make sure the enum is defined or imported."
+            "\" does not exist, make sure the enum is defined or imported"
         );
         return;
     }
@@ -1231,7 +1231,7 @@ void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
     const auto& info = ctx.global_symbol().at(node->get_ref_enum_name());
     if (info.kind != sym_kind::enum_kind) {
         rp.report(node, "\"" + node->get_ref_enum_name() +
-            "\" is not enum."
+            "\" is not enum"
         );
         return;
     }
@@ -1249,7 +1249,7 @@ void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
     for (auto i : node->get_members()) {
         if (!em.members.count(i->get_name()->get_name())) {
             rp.report(i, "enum \"" + ty.full_path_name() +
-                "\" does not have member \"" + i->get_name()->get_name() + "\"."
+                "\" does not have member \"" + i->get_name()->get_name() + "\""
             );
         }
     }
@@ -1290,7 +1290,7 @@ void regist_pass::load_tagged_union_member_map(ast::tagged_union_decl* node,
 void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol().count(name)) {
-        rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
+        rp.report(node, "\"" + name + "\" conflicts with exist symbol");
         return;
     }
 
@@ -1355,13 +1355,13 @@ void regist_pass::regist_global_funcs(ast::root* node) {
 void regist_pass::regist_single_global_func(ast::func_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol().count(name)) {
-        rp.report(node, "\"" + name + "\" conflicts with exist symbol.");
+        rp.report(node, "\"" + name + "\" conflicts with exist symbol");
         return;
     }
 
     auto& this_domain = ctx.get_domain(ctx.this_file);
     if (this_domain.functions.count(name)) {
-        rp.report(node, "function \"" + name + "\" conflicts with exist symbol.");
+        rp.report(node, "function \"" + name + "\" conflicts with exist symbol");
         return;
     }
 
@@ -1397,12 +1397,12 @@ void regist_pass::regist_single_global_func(ast::func_decl* node) {
     if (node->get_generic_types()) {
         if (node->get_generic_types()->get_types().empty()) {
             rp.report(node, "generic function \"" + name +
-                "\" must have at least one generic type."
+                "\" must have at least one generic type"
             );
         }
         if (node->is_extern_func()) {
             rp.report(node, "extern generic function \"" + name +
-                "\" is not supported."
+                "\" is not supported"
             );
         }
         std::unordered_set<std::string> used_generic;
@@ -1410,12 +1410,12 @@ void regist_pass::regist_single_global_func(ast::func_decl* node) {
             const auto& generic_name = i->get_name()->get_name();
             if (ctx.global_symbol().count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
-                    "\" conflicts with exist symbol."
+                    "\" conflicts with exist symbol"
                 );
             }
             if (used_generic.count(generic_name)) {
                 rp.report(i, "generic type \"" + generic_name +
-                    "\" conflicts with exist generic type."
+                    "\" conflicts with exist generic type"
                 );
             }
             used_generic.insert(generic_name);
@@ -1442,7 +1442,7 @@ colgm_func regist_pass::generate_single_global_func(func_decl* node) {
     generate_parameter_list(node->get_params(), func_self);
     generate_return_type(node->get_return_type(), func_self);
     if (node->get_name()=="main" && func_self.return_type.is_void()) {
-        rp.warn(node, "main function should return integer.");
+        rp.warn(node, "main function should return integer");
     }
 
     // clear generic temporary table
@@ -1461,7 +1461,7 @@ void regist_pass::generate_parameter(param* node, colgm_func& self) {
     const auto& name = node->get_name()->get_name();
     if (self.find_parameter(name)) {
         rp.report(node->get_name(),
-            "redefinition of parameter \"" + name + "\"."
+            "redefinition of parameter \"" + name + "\""
         );
         return;
     }
@@ -1486,7 +1486,7 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
     auto& dm = ctx.get_domain(ctx.this_file);
     if (!dm.structs.count(node->get_struct_name()) &&
         !dm.generic_structs.count(node->get_struct_name())) {
-        rp.report(node, "undefined struct \"" + node->get_struct_name() + "\".");
+        rp.report(node, "cannot find struct \"" + node->get_struct_name() + "\"");
         return;
     }
     auto& stct = dm.structs.count(node->get_struct_name())
@@ -1500,24 +1500,24 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
     for (auto i : node->get_methods()) {
         const auto name = i->get_monomorphic_name();
         if (stct.field.count(name)) {
-            rp.report(i, "conflict with field \"" + name + "\".");
+            rp.report(i, "conflict with field \"" + name + "\"");
             continue;
         }
         if (stct.method.count(name) || stct.static_method.count(name)) {
-            rp.report(i, "method \"" + name + "\" already exists.");
+            rp.report(i, "method \"" + name + "\" already exists");
             continue;
         }
 
         // generic methods are not allowed
         if (i->get_generic_types()) {
-            rp.report(i, "method \"" + name + "\" cannot be generic.");
+            rp.report(i, "method \"" + name + "\" cannot be generic");
         }
         auto func = generate_method(i, stct);
         if (i->is_public_func()) {
             func.is_public = true;
         }
         if (i->is_extern_func()) {
-            rp.report(i, "extern method is not supported.");
+            rp.report(i, "extern method is not supported");
         }
         if (func.ordered_params.size() && func.ordered_params.front() == "self") {
             stct.method.insert({name, func});
@@ -1528,12 +1528,12 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
 
     if (node->get_generic_types()) {
         if (node->get_generic_types()->get_types().empty()) {
-            rp.report(node, "generic impl must have at least one generic type.");
+            rp.report(node, "generic impl must have at least one generic type");
             return;
         }
         const auto& impl_generic_vec = node->get_generic_types()->get_types();
         if (stct.generic_template.size() != impl_generic_vec.size()) {
-            rp.report(node, "generic type count does not match.");
+            rp.report(node, "generic type count does not match");
             return;
         }
         for (u64 i = 0; i < stct.generic_template.size(); ++i) {
@@ -1541,7 +1541,7 @@ void regist_pass::regist_single_impl(ast::impl_struct* node) {
             if (stct.generic_template[i] != name) {
                 rp.report(impl_generic_vec[i], "generic type \"" + name +
                     "\" does not match with \"" +
-                    stct.generic_template[i] + "\"."
+                    stct.generic_template[i] + "\""
                 );
             }
         }
@@ -1587,10 +1587,10 @@ void regist_pass::generate_method_parameter_list(param_list* node,
     for (auto i : node->get_params()) {
         bool is_self = i->get_name()->get_name()=="self";
         if (is_self && i!=node->get_params().front()) {
-            rp.report(i->get_name(), "\"self\" must be the first parameter.");
+            rp.report(i->get_name(), "\"self\" must be the first parameter");
         }
         if (is_self && i->get_type()) {
-            rp.warn(i->get_type(), "\"self\" does not need type.");
+            rp.warn(i->get_type(), "\"self\" does not need type");
         }
         if (is_self && !i->get_type()) {
             generate_self_parameter(i, stct);
@@ -1611,7 +1611,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
         self_type.pointer_depth != 1) {
         rp.report(node->get_params().front(),
             "\"self\" should be \"" + stct.name + "*\", but get \"" +
-            self_type.to_string() + "\"."
+            self_type.to_string() + "\""
         );
     }
 }

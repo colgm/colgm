@@ -466,7 +466,7 @@ mir_switch_case* ast2mir::generate_match_case(ast::match_case* node) {
 
     const auto& enum_ty = node->get_value()->get_resolve();
     if (!node->get_value()->is(ast::ast_type::ast_call)) {
-        err.err(node->get_location(), "enum value must be call node.");
+        err.err(node->get_location(), "enum value must be call node");
         return nullptr;
     }
 
