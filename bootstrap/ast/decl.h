@@ -342,7 +342,7 @@ public:
     cond_compile* get_is_non_pointer_cond() const;
 };
 
-class impl_struct: public decl {
+class impl: public decl {
 private:
     std::string struct_name;
     generic_type_list* generic_types;
@@ -352,12 +352,12 @@ private:
     std::vector<cond_compile*> conds;
 
 public:
-    impl_struct(const span& loc, const std::string& sn):
+    impl(const span& loc, const std::string& sn):
         decl(ast_type::ast_impl, loc), struct_name(sn),
         generic_types(nullptr) {}
-    ~impl_struct() override;
+    ~impl() override;
     void accept(visitor*) override;
-    impl_struct* clone() const override;
+    impl* clone() const override;
 
     void set_struct_name(const std::string& n) { struct_name = n; }
     const auto& get_struct_name() const { return struct_name; }

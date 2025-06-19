@@ -221,7 +221,7 @@ bool generic_visitor::visit_func_decl(func_decl* node) {
     return true;
 }
 
-bool generic_visitor::visit_impl_struct(ast::impl_struct* node) {
+bool generic_visitor::visit_impl(ast::impl* node) {
     // do not scan generic impl block
     if (node->get_generic_types()) {
         return true;
@@ -507,7 +507,7 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
         s.generic_struct_decl = nullptr;
     }
     for (auto i : s.generic_struct_impl) {
-        trp.visit_impl(i);
+        trp.visit_impl_node(i);
         need_to_be_inserted.push_back(i);
         // s.name is generated with generic
         // for example original name is "foo",
@@ -1477,12 +1477,12 @@ void regist_pass::regist_impls(ast::root* node) {
         if (i->get_ast_type() != ast_type::ast_impl) {
             continue;
         }
-        auto impl_decl = reinterpret_cast<ast::impl_struct*>(i);
+        auto impl_decl = reinterpret_cast<ast::impl*>(i);
         regist_single_impl(impl_decl);
     }
 }
 
-void regist_pass::regist_single_impl(ast::impl_struct* node) {
+void regist_pass::regist_single_impl(ast::impl* node) {
     auto& dm = ctx.get_domain(ctx.this_file);
     if (!dm.structs.count(node->get_struct_name()) &&
         !dm.generic_structs.count(node->get_struct_name())) {

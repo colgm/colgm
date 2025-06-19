@@ -286,7 +286,7 @@ bool dumper::visit_func_decl(func_decl* node) {
     return true;
 }
 
-bool dumper::visit_impl_struct(impl_struct* node) {
+bool dumper::visit_impl(impl* node) {
     dump_indent();
     std::cout << "impl " << node->get_struct_name() << format_location(node);
     push_indent();

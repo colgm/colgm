@@ -25,7 +25,7 @@ public:
 public:
     std::vector<std::string> generic_template;
     ast::struct_decl* generic_struct_decl = nullptr;
-    std::vector<ast::impl_struct*> generic_struct_impl;
+    std::vector<ast::impl*> generic_struct_impl;
 
 public:
     bool is_public = false;

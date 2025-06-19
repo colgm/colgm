@@ -105,7 +105,7 @@ bool visitor::visit_func_decl(func_decl* node) {
     return true;
 }
 
-bool visitor::visit_impl_struct(impl_struct* node) {
+bool visitor::visit_impl(impl* node) {
     if (node->get_generic_types()) {
         node->get_generic_types()->accept(this);
     }

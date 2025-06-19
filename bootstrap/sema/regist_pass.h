@@ -39,7 +39,7 @@ public:
     void visit_func(ast::func_decl* node) {
         node->accept(this);
     }
-    void visit_impl(ast::impl_struct* node) {
+    void visit_impl_node(ast::impl* node) {
         node->accept(this);
     }
     void visit_struct(ast::struct_decl* node) {
@@ -72,7 +72,7 @@ private:
 private:
     bool visit_struct_decl(ast::struct_decl*) override;
     bool visit_func_decl(ast::func_decl*) override;
-    bool visit_impl_struct(ast::impl_struct*) override;
+    bool visit_impl(ast::impl*) override;
     bool visit_call_id(ast::call_id*) override;
     bool visit_type_def(ast::type_def*) override;
 
@@ -175,7 +175,7 @@ private: // global functions
 
 private: // implementations
     void regist_impls(ast::root*);
-    void regist_single_impl(ast::impl_struct*);
+    void regist_single_impl(ast::impl*);
     colgm_func generate_method(ast::func_decl*, const colgm_struct&);
     void generate_self_parameter(ast::param*, const colgm_struct&);
     void generate_method_parameter_list(ast::param_list*,

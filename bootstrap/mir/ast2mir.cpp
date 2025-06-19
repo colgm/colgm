@@ -230,7 +230,7 @@ bool ast2mir::visit_func_decl(ast::func_decl* node) {
     return true;
 }
 
-bool ast2mir::visit_impl_struct(ast::impl_struct* node) {
+bool ast2mir::visit_impl(ast::impl* node) {
     if (node->get_generic_types()) {
         return true;
     }

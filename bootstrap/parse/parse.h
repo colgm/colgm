@@ -166,7 +166,7 @@ private:
     param* param_gen();
     param_list* param_list_gen();
     func_decl* function_gen(std::vector<cond_compile*>&, bool, bool);
-    impl_struct* impl_gen(std::vector<cond_compile*>&, bool, bool);
+    impl* impl_gen(std::vector<cond_compile*>&, bool, bool);
     use_stmt* use_stmt_gen();
     definition* definition_gen();
     cond_stmt* cond_stmt_gen();

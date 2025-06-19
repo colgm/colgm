@@ -71,7 +71,7 @@ class struct_decl;
 class tagged_union_decl;
 class param_list;
 class func_decl;
-class impl_struct;
+class impl;
 class expr;
 class null;
 class unary_operator;

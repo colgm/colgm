@@ -98,7 +98,7 @@ private:
     bool visit_struct_decl(ast::struct_decl*) override;
     bool visit_tagged_union_decl(ast::tagged_union_decl*) override;
     bool visit_func_decl(ast::func_decl*) override;
-    bool visit_impl_struct(ast::impl_struct*) override;
+    bool visit_impl(ast::impl*) override;
     bool visit_call_index(ast::call_index*) override;
     bool visit_call_func_args(ast::call_func_args*) override;
     bool visit_get_field(ast::get_field*) override;

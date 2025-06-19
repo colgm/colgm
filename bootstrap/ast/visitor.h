@@ -22,7 +22,7 @@ public:
     virtual bool visit_param(param*);
     virtual bool visit_param_list(param_list*);
     virtual bool visit_func_decl(func_decl*);
-    virtual bool visit_impl_struct(impl_struct*);
+    virtual bool visit_impl(impl*);
     virtual bool visit_expr(expr*);
     virtual bool visit_unary_operator(unary_operator*);
     virtual bool visit_binary_operator(binary_operator*);

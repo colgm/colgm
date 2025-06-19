@@ -318,7 +318,7 @@ cond_compile* func_decl::get_is_non_pointer_cond() const {
     return nullptr;
 }
 
-impl_struct::~impl_struct() {
+impl::~impl() {
     delete generic_types;
     for (auto i : methods) {
         delete i;
@@ -328,12 +328,12 @@ impl_struct::~impl_struct() {
     }
 }
 
-void impl_struct::accept(visitor* v) {
-    v->visit_impl_struct(this);
+void impl::accept(visitor* v) {
+    v->visit_impl(this);
 }
 
-impl_struct* impl_struct::clone() const {
-    auto ret = new impl_struct(location, struct_name);
+impl* impl::clone() const {
+    auto ret = new impl(location, struct_name);
     if (generic_types) {
         ret->generic_types = generic_types->clone();
     }

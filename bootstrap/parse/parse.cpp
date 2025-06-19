@@ -805,9 +805,9 @@ func_decl* parse::function_gen(std::vector<cond_compile*>& conds,
     return res;
 }
 
-impl_struct* parse::impl_gen(std::vector<cond_compile*>& conds,
-                             bool flag_is_public,
-                             bool flag_is_extern) {
+impl* parse::impl_gen(std::vector<cond_compile*>& conds,
+                      bool flag_is_public,
+                      bool flag_is_extern) {
     if (flag_is_public) {
         err.err(toks[ptr].loc, "\"pub\" is not used for impl struct");
     }
@@ -815,7 +815,7 @@ impl_struct* parse::impl_gen(std::vector<cond_compile*>& conds,
         err.err(toks[ptr].loc, "\"extern\" is not used for impl struct");
     }
     match(tok::tk_impl);
-    auto res = new impl_struct(toks[ptr].loc, toks[ptr].str);
+    auto res = new impl(toks[ptr].loc, toks[ptr].str);
     for (auto i : conds) {
         res->add_cond(i);
     }

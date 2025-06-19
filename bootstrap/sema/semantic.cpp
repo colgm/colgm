@@ -1847,7 +1847,7 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
     ctx.pop_level();
 }
 
-void semantic::resolve_impl(impl_struct* node) {
+void semantic::resolve_impl(impl* node) {
     if (node->get_generic_types()) {
         return; // do not resolve generic impl
     }
@@ -1874,7 +1874,7 @@ void semantic::resolve_impl(impl_struct* node) {
 void semantic::resolve_function_block(root* ast_root) {
     for (auto i : ast_root->get_decls()) {
         if (i->is(ast_type::ast_impl)) {
-            resolve_impl(reinterpret_cast<impl_struct*>(i));
+            resolve_impl(reinterpret_cast<impl*>(i));
         }
         if (i->is(ast_type::ast_func_decl)) {
             resolve_global_func(reinterpret_cast<func_decl*>(i));
