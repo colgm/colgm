@@ -879,51 +879,52 @@ impl sema {
 
     func resolve_get_field(self, prev: type*, n: ast_get_field*) -> type {
         var prev_name = prev->full_path_name(self->pkg, true);
+        defer prev_name.delete();
+
         var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
 
         if (prev->is_global_sym) {
             var info = str::from("cannot get field from global symbol \"");
+            defer info.delete();
+
             info.append_str(prev_name.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
             return type::error_type();
         }
 
         if (prev->is_pointer()) {
             var info = str::from("cannot use \".\" to get field from pointer \"");
+            defer info.delete();
+
             info.append_str(prev_name.__ptr__());
             info.append("\". use \"->\" instead");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             // report but continue resolving
         }
 
         // loc_file is empty means prev is native type
         if (prev->loc_file.empty()) {
             var info = str::from("cannot get method \"");
+            defer info.delete();
+
             info.append_str(n->name.__ptr__());
             info.append("\" from native type \"");
             info.append_str(prev_name.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
             return type::error_type();
         }
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("cannot get field from undefined struct \"");
+            defer info.delete();
+
             info.append_str(prev_name.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
             return type::error_type();
         }
 
@@ -931,41 +932,35 @@ impl sema {
         if (struct_self->fields.has(n->name.__ptr__())) {
             var infer = struct_self->fields.get(n->name.__ptr__())->copy_instance();
             n->base.resolved_type.reset_with(infer.__ptr__());
-            prev_name.delete();
-            prev_name_for_search.delete();
             return infer;
         }
         if (struct_self->method.has(n->name.__ptr__())) {
             self->check_pub_method(n => ast*, n->name.__ptr__(), struct_self);
             var infer = self->struct_method_infer(prev, n->name.__ptr__());
             n->base.resolved_type.reset_with(infer.__ptr__());
-            prev_name.delete();
-            prev_name_for_search.delete();
             return infer;
         }
 
         if (struct_self->static_method.has(n->name.__ptr__())) {
             var info = str::from("method \"");
+            defer info.delete();
+
             info.append_str(n->name.__ptr__());
             info.append("\" in \"");
             info.append_str(prev_name.__ptr__());
             info.append("\" is static");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
             return type::error_type();
         }
 
         var info = str::from("cannot find field or method \"");
+        defer info.delete();
+
         info.append_str(n->name.__ptr__());
         info.append("\" in \"");
         info.append_str(prev_name_for_search.__ptr__());
         info.append("\"");
         self->err->error(n->base.location.__ptr__(), info.c_str);
-        info.delete();
-        prev_name.delete();
-        prev_name_for_search.delete();
         return type::error_type();
     }
 
@@ -974,38 +969,42 @@ impl sema {
                                 n: ast_call_func_args*) {
         if (func_self->unordered_params.size != n->args.size) {
             var info = str::from("expect ");
+            defer info.delete();
+
             info.append_u64(func_self->unordered_params.size);
             info.append(" argument(s), but get ");
             info.append_u64(n->args.size);
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             return;
         }
 
         foreach (var i; n->args) {
             var arg = i.get();
             var infer = self->resolve_expression(arg);
+            defer infer.delete();
+
             if (infer.is_error()) {
-                infer.delete();
                 continue;
             }
             var param = func_self->param_type.get(i.index());
             if (!infer.eq(param)) {
                 if (!self->check_can_be_converted(arg, param)) {
                     var info = str::from("expect \"");
+                    defer info.delete();
+
                     var param_name = param->full_path_name(self->pkg, true);
+                    defer param_name.delete();
+
                     info.append_str(param_name.__ptr__());
                     info.append("\" but get \"");
                     var infer_name = infer.full_path_name(self->pkg, true);
+                    defer infer_name.delete();
+
                     info.append_str(infer_name.__ptr__());
                     info.append("\"");
                     self->err->error(arg->location.__ptr__(), info.c_str);
-                    info.delete();
-                    param_name.delete();
-                    infer_name.delete();
                 }
             }
-            infer.delete();
         }
     }
 
