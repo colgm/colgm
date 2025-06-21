@@ -1013,38 +1013,42 @@ impl sema {
                                 n: ast_call_func_args*) {
         if (func_self->unordered_params.size != n->args.size + 1) {
             var info = str::from("expect ");
+            defer info.delete();
+
             info.append_u64(func_self->unordered_params.size - 1);
             info.append(" argument(s), but get ");
             info.append_u64(n->args.size);
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             return;
         }
 
         foreach (var i; n->args) {
             var arg = i.get();
             var infer = self->resolve_expression(arg);
+            defer infer.delete();
+
             if (infer.is_error()) {
-                infer.delete();
                 continue;
             }
             var param = func_self->param_type.get(i.index() + 1);
             if (!infer.eq(param)) {
                 if (!self->check_can_be_converted(arg, param)) {
                     var info = str::from("expect \"");
+                    defer info.delete();
+
                     var param_name = param->full_path_name(self->pkg, true);
+                    defer param_name.delete();
+
                     info.append_str(param_name.__ptr__());
                     info.append("\" but get \"");
                     var infer_name = infer.full_path_name(self->pkg, true);
+                    defer infer_name.delete();
+
                     info.append_str(infer_name.__ptr__());
                     info.append("\"");
                     self->err->error(arg->location.__ptr__(), info.c_str);
-                    info.delete();
-                    param_name.delete();
-                    infer_name.delete();
                 }
             }
-            infer.delete();
         }
     }
 
