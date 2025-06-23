@@ -10,6 +10,7 @@ use std::vec::{ vec };
 pub struct report {
     filename: str,
     source: vec<str>,
+    cache: str,
     error_count: i64
 }
 
@@ -21,6 +22,7 @@ impl report {
         }
         res->filename = str::instance();
         res->source = vec<str>::instance();
+        res->cache = str::instance();
         res->error_count = 0;
         return res;
     }
@@ -28,6 +30,7 @@ impl report {
     pub func delete(self) {
         self->filename.delete();
         self->source.delete();
+        self->cache.delete();
     }
 }
 
@@ -247,5 +250,25 @@ impl report {
             io::stderr().reset().endln();
             self->print_file_line(location, false);
         }
+    }
+
+    pub func out(self, message: const i8*) -> report* {
+        self->cache.append(message);
+        return self;
+    }
+
+    pub func out_i64(self, value: i64) -> report* {
+        self->cache.append_i64(value);
+        return self;
+    }
+
+    pub func emit_warn(self, location: span*) {
+        self->warn(location, self->cache.c_str);
+        self->cache.clear();
+    }
+
+    pub func emit_err(self, location: span*) {
+        self->error(location, self->cache.c_str);
+        self->cache.clear();
     }
 }

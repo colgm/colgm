@@ -1177,22 +1177,24 @@ impl sema {
         if (prev->loc_file.empty()) {
             if (!self->ctx->global->primitives.has(prev_name_for_search.__ptr__())) {
                 var info = str::from("cannot get static method from primitive type \"");
+                defer info.delete();
+
                 info.append_str(prev_name_for_search.__ptr__());
                 info.append("\"");
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
                 return type::error_type();
             }
 
             var p = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
             if (!p->static_method.has(n->name.__ptr__())) {
                 var info = str::from("cannot find static method \"");
+                defer info.delete();
+
                 info.append_str(n->name.__ptr__());
                 info.append("\" in \"");
                 info.append_str(prev_name_for_search.__ptr__());
                 info.append("\"");
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
                 return type::error_type();
             }
 
@@ -1216,21 +1218,23 @@ impl sema {
                 return infer;
             } else if (st->method.has(n->name.__ptr__())) {
                 var info = str::from("\"");
+                defer info.delete();
+
                 info.append_str(n->name.__ptr__());
                 info.append("\" in \"");
                 info.append_str(prev_name_for_search.__ptr__());
                 info.append("\" is not a static method");
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
                 return type::error_type();
             } else {
                 var info = str::from("cannot find static method \"");
+                defer info.delete();
+
                 info.append_str(n->name.__ptr__());
                 info.append("\" in \"");
                 info.append_str(prev_name_for_search.__ptr__());
                 info.append("\"");
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
                 return type::error_type();
             }
             // unreachable
@@ -1247,12 +1251,13 @@ impl sema {
             }
 
             var info = str::from("cannot find enum member \"");
+            defer info.delete();
+
             info.append_str(n->name.__ptr__());
             info.append("\" in \"");
             info.append_str(prev_name_for_search.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             return type::error_type();
         } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__()) &&
                    prev->is_global_sym) {
@@ -1264,21 +1269,23 @@ impl sema {
             }
 
             var info = str::from("cannot find tagged union member \"");
+            defer info.delete();
+
             info.append_str(n->name.__ptr__());
             info.append("\" in \"");
             info.append_str(prev_name_for_search.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             return type::error_type();
         } else {
             var info = str::from("cannot find path \"");
+            defer info.delete();
+
             info.append_str(n->name.__ptr__());
             info.append("\" in \"");
             info.append_str(prev_name_for_search.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             return type::error_type();
         }
 
@@ -1299,13 +1306,15 @@ impl sema {
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("\"");
+            defer info.delete();
+
             info.append_str(prev_name_for_search.__ptr__());
             info.append("\" is not a struct type, cannot initialize");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            prev_name_for_search.delete();
             return type::error_type();
         }
 
@@ -1315,19 +1324,21 @@ impl sema {
             var field = tmp->field->content.__ptr__();
             if (!struct_self->fields.has(field)) {
                 var info = str::from("cannot find field \"");
+                defer info.delete();
+
                 info.append_str(field);
                 info.append("\" in \"");
                 info.append_str(prev_name_for_search.__ptr__());
                 info.append("\"");
                 self->err->error(tmp->base.location.__ptr__(), info.c_str);
-                info.delete();
                 continue;
             }
 
             var infer = self->resolve_expression(tmp->value);
+            defer infer.delete();
+
             tmp->base.resolved_type.reset_with(infer.__ptr__());
             if (infer.is_error()) {
-                infer.delete();
                 continue;
             }
 
@@ -1337,14 +1348,16 @@ impl sema {
                     var info = str::from("expect \"");
                     var e_name = expect->full_path_name(self->pkg, true);
                     var i_name = infer.full_path_name(self->pkg, true);
+                    defer {
+                        info.delete();
+                        e_name.delete();
+                        i_name.delete();
+                    }
+
                     info.append_str(e_name.__ptr__());
                     info.append("\" but get \"");
                     info.append_str(i_name.__ptr__());
-                    self->err->error(tmp->base.location.__ptr__(), info.c_str);
-                    info.delete();
-                    e_name.delete();
-                    i_name.delete();
-                    infer.delete();
+                    self->err->error(tmp->base.location.__ptr__(), info.c_str);                    
                     continue;
                 }
             }
@@ -1355,10 +1368,8 @@ impl sema {
                     "cannot initialize array, but it's already filled with 0 by default"
                 );
             }
-            infer.delete();
         }
 
-        prev_name_for_search.delete();
         var copy = prev->copy_instance();
         copy.is_global_sym = false;
         n->base.resolved_type.reset_with(copy.__ptr__());
@@ -1367,58 +1378,60 @@ impl sema {
 
     func resolve_ptr_get_field(self, prev: type*, n: ast_ptr_get_field*) -> type {
         var prev_name = prev->full_path_name(self->pkg, true);
+        defer prev_name.delete();
+
         var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
 
         if (prev->is_global_sym) {
             var info = str::from("cannot get field from global symbol \"");
+            defer info.delete();
+
             info.append_str(prev_name.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
             return type::error_type();
         }
 
         if (prev->pointer_depth == 0) {
             var info = str::from("cannot use \"->\" to get field from \"");
+            defer info.delete();
+
             info.append_str(prev_name.__ptr__());
             info.append("\", use \".\" instead");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             // report but continue resolving
         } else if (prev->pointer_depth > 1) {
             var info = str::from("cannot use \"->\" to get field from pointer \"");
+            defer info.delete();
+
             info.append_str(prev_name.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
             // report but continue resolving
         }
 
         // loc_file is empty means prev is native type
         if (prev->loc_file.empty()) {
             var info = str::from("cannot get method \"");
+            defer info.delete();
+
             info.append_str(n->name.__ptr__());
             info.append("\" from native type \"");
             info.append_str(prev_name.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
             return type::error_type();
         }
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
         if (!dm->structs.has(prev_name_for_search.__ptr__())) {
             var info = str::from("cannot get field from undefined struct \"");
+            defer info.delete();
+
             info.append_str(prev_name.__ptr__());
             info.append("\"");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
             return type::error_type();
         }
 
@@ -1426,41 +1439,35 @@ impl sema {
         if (struct_self->fields.has(n->name.__ptr__())) {
             var infer = struct_self->fields.get(n->name.__ptr__())->copy_instance();
             n->base.resolved_type.reset_with(infer.__ptr__());
-            prev_name.delete();
-            prev_name_for_search.delete();
             return infer;
         }
         if (struct_self->method.has(n->name.__ptr__())) {
             self->check_pub_method(n => ast*, n->name.__ptr__(), struct_self);
             var infer = self->struct_method_infer(prev, n->name.__ptr__());
             n->base.resolved_type.reset_with(infer.__ptr__());
-            prev_name.delete();
-            prev_name_for_search.delete();
             return infer;
         }
 
         if (struct_self->static_method.has(n->name.__ptr__())) {
             var info = str::from("method \"");
+            defer info.delete();
+
             info.append_str(n->name.__ptr__());
             info.append("\" in \"");
             info.append_str(prev_name.__ptr__());
             info.append("\" is static");
             self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            prev_name.delete();
-            prev_name_for_search.delete();
             return type::error_type();
         }
 
         var info = str::from("cannot find field or method \"");
+        defer info.delete();
+
         info.append_str(n->name.__ptr__());
         info.append("\" in \"");
         info.append_str(prev_name_for_search.__ptr__());
         info.append("\"");
         self->err->error(n->base.location.__ptr__(), info.c_str);
-        info.delete();
-        prev_name.delete();
-        prev_name_for_search.delete();
         return type::error_type();
     }
 
@@ -1593,10 +1600,10 @@ impl sema {
         }
 
         if (maybe_invalid_assignment && seg != nil) {
-            self->err->warn(
-                seg->location.__ptr__(),
-                "function returning non-pointer type, will do shallow copy, may cause invalid assignment"
-            );
+            self->err->out("function returning non-pointer type, ")
+                     ->out("will do shallow copy, ")
+                     ->out("may cause invalid assignment")
+                     ->emit_warn(seg->location.__ptr__());
         }
         return true;
     }
@@ -2738,15 +2745,11 @@ impl sema {
         }
 
         if (unreachable_statements.size > 1) {
-            self->err->warn(
-                unreachable_location.__ptr__(),
-                "unreachable statements, ignored"
-            );
+            self->err->out("unreachable statements, ignored")
+                     ->emit_warn(unreachable_location.__ptr__());
         } else {
-            self->err->warn(
-                unreachable_location.__ptr__(),
-                "unreachable statement, ignored"
-            );
+            self->err->out("unreachable statement, ignored")
+                     ->emit_warn(unreachable_location.__ptr__());
         }
 
         unreachable_statements.delete();

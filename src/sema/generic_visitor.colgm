@@ -77,12 +77,11 @@ impl generic_visitor {
             loc = dm->generic_functions.get(ty->name.__ptr__())->location.__ptr__();
         }
 
-        var info = str::from("template instantiation depth exceeds maximum of ");
-        defer info.delete();
-        info.append_i64(self->MAX_RECURSIVE_DEPTH);
-        info.append(":\n  --> ");
-        info.append_str(generic_name.__ptr__());
-        self->err->error(loc, info.c_str);
+        self->err->out("template instantiation depth exceeds maximum of ")
+                 ->out_i64(self->MAX_RECURSIVE_DEPTH)
+                 ->out(":\n  --> ")
+                 ->out(generic_name.c_str)
+                 ->emit_err(loc);
     }
 
     pub func scan_and_insert(self, n: root*) {
