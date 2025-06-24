@@ -1473,8 +1473,10 @@ impl sema {
 
     func resolve_call(self, n: ast_call*) -> type {
         var infer = self->resolve_call_identifier(n->head);
+        defer infer.delete();
+
         if (infer.is_error()) {
-            return infer;
+            return type::error_type();
         }
 
         foreach (var i; n->chain) {
@@ -1482,44 +1484,50 @@ impl sema {
             if (c->kind != ast_kind::ast_call_func_args &&
                 infer.is_function()) {
                 self->err->error(c->location.__ptr__(), "function should be called before");
-                infer.delete();
                 return type::error_type();
             }
 
             var prev = infer.copy_instance();
-            infer.delete();
+            defer prev.delete();
+
             match (c->kind) {
                 ast_kind::ast_get_field => {
+                    infer.delete();
                     infer = self->resolve_get_field(
                         prev.__ptr__(),
                         c => ast_get_field*
                     );
                 }
                 ast_kind::ast_call_func_args => {
+                    infer.delete();
                     infer = self->resolve_call_func_args(
                         prev.__ptr__(),
                         c => ast_call_func_args*
                     );
                 }
                 ast_kind::ast_call_index => {
+                    infer.delete();
                     infer = self->resolve_call_index(
                         prev.__ptr__(),
                         c => ast_call_index*
                     );
                 }
                 ast_kind::ast_call_path => {
+                    infer.delete();
                     infer = self->resolve_call_path(
                         prev.__ptr__(),
                         c => ast_call_path*
                     );
                 }
                 ast_kind::ast_initializer => {
+                    infer.delete();
                     infer = self->resolve_initializer(
                         prev.__ptr__(),
                         c => ast_initializer*
                     );
                 }
                 ast_kind::ast_ptr_get_field => {
+                    infer.delete();
                     infer = self->resolve_ptr_get_field(
                         prev.__ptr__(),
                         c => ast_ptr_get_field*
@@ -1527,36 +1535,33 @@ impl sema {
                 }
                 _ => {
                     self->err->unimplemented(c->location.__ptr__());
-                    prev.delete();
                     return type::error_type();
                 }
             }
-            prev.delete();
+
             // interrupt if error occur
             if (infer.is_error()) {
-                return infer;
+                return type::error_type();
             }
         }
 
         // infer should not be a function
         if (infer.is_function()) {
             self->err->error(n->base.location.__ptr__(), "function should be called here");
-            infer.delete();
             return type::error_type();
         }
 
         n->base.resolved_type.reset_with(infer.__ptr__());
         // infer should not be a global symbol
         if (infer.is_global_sym) {
-            var info = str::from("get global symbol \"");
-            var f_n = infer.full_path_name(self->pkg, true);
-            info.append_str(f_n.__ptr__());
-            info.append("\", but not an instance");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
-            f_n.delete();
-            info.delete();
+            self->err->out("get global symbol \"")
+                     ->out_type(infer.__ptr__(), self->pkg)
+                     ->out("\", but not an instance")
+                     ->emit_err(n->base.location.__ptr__());
         }
-        return infer;
+
+        var res = infer.copy_instance();
+        return res;
     }
 
     func check_valid_left_value(self, n: ast_call*) -> bool {
@@ -1609,29 +1614,24 @@ impl sema {
     }
 
     func check_mutable_left_value(self, n: ast_call*, left: type*) {
-        var l_name = left->full_path_name(self->pkg, true);
-        
         if (left->is_const && !left->is_pointer()) {
-            var info = str::from("cannot assign to \"const ");
-            info.append_str(l_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
+            self->err->out("cannot assign to \"const ")
+                     ->out_type(left, self->pkg)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
         } else if (left->is_array) {
-            var info = str::from("cannot change array \"");
-            info.append_str(l_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
-            info.delete();
+            self->err->out("cannot change array \"")
+                     ->out_type(left, self->pkg)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
         }
-
-        l_name.delete();
     }
 
     func resolve_assignment(self, n: ast_assignment*) -> type {
         var left = self->resolve_expression(n->left => ast*);
+        defer left.delete();
+
         if (!self->check_valid_left_value(n->left)) {
-            left.delete();
             return type::error_type();
         }
 
@@ -1639,43 +1639,29 @@ impl sema {
         self->check_mutable_left_value(n->left, left.__ptr__());
 
         var right = self->resolve_expression(n->right);
+        defer right.delete();
+
         if (left.is_error() || right.is_error()) {
-            left.delete();
-            right.delete();
             return type::error_type();
         }
 
         if (n->kind == assignment_kind::andeq ||
             n->kind == assignment_kind::xoreq ||
             n->kind == assignment_kind::oreq) {
-            var l_name = left.full_path_name(self->pkg, true);
-            var r_name = right.full_path_name(self->pkg, true);
             if (!left.is_integer() || left.is_pointer()) {
-                var info = str::from("bitwise operator cannot be used on \"");
-                info.append_str(l_name.__ptr__());
-                info.append("\"");
-                self->err->error(n->left->base.location.__ptr__(), info.c_str);
-                info.delete();
-                l_name.delete();
-                r_name.delete();
-                left.delete();
-                right.delete();
+                self->err->out("bitwise operator cannot be used on \"")
+                         ->out_type(left.__ptr__(), self->pkg)
+                         ->out("\"")
+                         ->emit_err(n->left->base.location.__ptr__());
                 return type::restrict_type();
             }
             if (!right.is_integer() || right.is_pointer()) {
-                var info = str::from("bitwise operator cannot be used on \"");
-                info.append_str(r_name.__ptr__());
-                info.append("\"");
-                self->err->error(n->right->location.__ptr__(), info.c_str);
-                info.delete();
-                l_name.delete();
-                r_name.delete();
-                left.delete();
-                right.delete();
+                self->err->out("bitwise operator cannot be used on \"")
+                         ->out_type(right.__ptr__(), self->pkg)
+                         ->out("\"")
+                         ->emit_err(n->right->location.__ptr__());
                 return type::restrict_type();
             }
-            l_name.delete();
-            r_name.delete();
         }
 
         if (left.is_pointer() && right.is_pointer()) {
@@ -1708,9 +1694,6 @@ impl sema {
                 r_name.delete();
             }
         }
-
-        left.delete();
-        right.delete();
 
         // only = is allowed to be applied on enums
         if (self->is_enum_type(left.__ptr__()) && n->kind != assignment_kind::eq) {

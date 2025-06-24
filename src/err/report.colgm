@@ -1,6 +1,9 @@
 use err::span::{ span };
 use err::panic::{ panic };
 
+use util::package::{ package };
+use sema::type::{ type };
+
 use std::str::{ str };
 use std::io::{ readfile, io };
 use std::libc::{ itoa, strlen };
@@ -259,6 +262,14 @@ impl report {
 
     pub func out_i64(self, value: i64) -> report* {
         self->cache.append_i64(value);
+        return self;
+    }
+
+    pub func out_type(self, ty: type*, pkg: package*) -> report* {
+        var name = ty->full_path_name(pkg, true);
+        defer name.delete();
+
+        self->cache.append(name.c_str);
         return self;
     }
 

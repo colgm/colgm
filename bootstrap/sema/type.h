@@ -115,10 +115,10 @@ public:
     bool is_empty_array() const { return name=="<empty array>"; }
     bool is_unsigned() const {
         const auto& t = *this;
-        return t == type::u8_type(t.pointer_depth) ||
-               t == type::u16_type(t.pointer_depth) ||
-               t == type::u32_type(t.pointer_depth) ||
-               t == type::u64_type(t.pointer_depth) ||
+        return t == type::u8_type() ||
+               t == type::u16_type() ||
+               t == type::u32_type() ||
+               t == type::u64_type() ||
                t.pointer_depth > 0;
     }
     bool is_integer() const {
@@ -131,12 +131,12 @@ public:
                t == type::u32_type(t.pointer_depth) ||
                t == type::i64_type(t.pointer_depth) ||
                t == type::u64_type(t.pointer_depth) ||
-               (this->is_enum && !t.pointer_depth);
+               (t.is_enum && !t.pointer_depth);
     }
     bool is_float() const {
         const auto& t = *this;
-        return t == type::f32_type(t.pointer_depth) ||
-               t == type::f64_type(t.pointer_depth);
+        return t == type::f32_type() ||
+               t == type::f64_type();
     }
     bool is_boolean() const {
         return *this == type::bool_type(pointer_depth);
