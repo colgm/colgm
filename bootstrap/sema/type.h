@@ -141,6 +141,9 @@ public:
     bool is_boolean() const {
         return *this == type::bool_type(pointer_depth);
     }
+    bool can_bitwise_calculate() const { 
+        return (is_integer() || is_boolean()) && !pointer_depth;
+    }
     bool is_void() const { return *this == type::void_type(0); }
     bool is_pointer() const { return pointer_depth > 0; }
     bool is_function() const {

@@ -276,14 +276,14 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
 type semantic::resolve_bitwise_operator(binary_operator* node) {
     const auto left = resolve_expression(node->get_left());
     const auto right = resolve_expression(node->get_right());
-    if (!left.is_integer()) {
+    if (!left.can_bitwise_calculate()) {
         rp.report(node->get_left(),
             "bitwise operator cannot be used on \"" + left.to_string() + "\""
         );
         node->set_resolve_type(left);
         return left;
     }
-    if (!right.is_integer()) {
+    if (!right.can_bitwise_calculate()) {
         rp.report(node->get_right(),
             "bitwise operator cannot be used on \"" + right.to_string() + "\""
         );
@@ -348,7 +348,7 @@ type semantic::resolve_unary_bnot(unary_operator* node) {
     if (value.is_error()) {
         return value;
     }
-    if (!value.is_integer() || value.is_pointer()) {
+    if (!value.can_bitwise_calculate()) {
         rp.report(node->get_value(),
             "bitwise operator cannot be used on \"" + value.to_string() + "\""
         );
@@ -1160,14 +1160,14 @@ type semantic::resolve_assignment(assignment* node) {
         case assignment::kind::andeq:
         case assignment::kind::xoreq:
         case assignment::kind::oreq:
-            if (!left.is_integer()) {
+            if (!left.can_bitwise_calculate()) {
                 rp.report(node->get_left(),
                     "bitwise operator cannot be used on \"" +
                     left.to_string() + "\""
                 );
                 return type::restrict_type();
             }
-            if (!right.is_integer()) {
+            if (!right.can_bitwise_calculate()) {
                 rp.report(node->get_right(),
                     "bitwise operator cannot be used on \"" +
                     right.to_string() + "\""

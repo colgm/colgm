@@ -231,7 +231,7 @@ impl sema {
         if (infer.is_error()) {
             return infer;
         }
-        if (!infer.is_integer() || infer.is_pointer()) {
+        if (!infer.can_bitwise_calculate()) {
             var info = str::from("bitwise operator cannot be used on \"");
             defer info.delete();
 
@@ -508,7 +508,7 @@ impl sema {
             return type::error_type();
         }
 
-        if (!left.is_integer()) {
+        if (!left.can_bitwise_calculate()) {
             var info = str::from("bitwise operator cannot be used on \"");
             defer info.delete();
 
@@ -520,7 +520,7 @@ impl sema {
             return type::error_type();
         }
 
-        if (!right.is_integer()) {
+        if (!right.can_bitwise_calculate()) {
             var info = str::from("bitwise operator cannot be used on \"");
             defer info.delete();
 
@@ -1648,14 +1648,14 @@ impl sema {
         if (n->kind == assignment_kind::andeq ||
             n->kind == assignment_kind::xoreq ||
             n->kind == assignment_kind::oreq) {
-            if (!left.is_integer() || left.is_pointer()) {
+            if (!left.can_bitwise_calculate()) {
                 self->err->out("bitwise operator cannot be used on \"")
                          ->out_type(left.__ptr__(), self->pkg)
                          ->out("\"")
                          ->emit_err(n->left->base.location.__ptr__());
                 return type::restrict_type();
             }
-            if (!right.is_integer() || right.is_pointer()) {
+            if (!right.can_bitwise_calculate()) {
                 self->err->out("bitwise operator cannot be used on \"")
                          ->out_type(right.__ptr__(), self->pkg)
                          ->out("\"")
