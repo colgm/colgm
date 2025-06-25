@@ -205,48 +205,40 @@ impl sema {
 
     func resolve_unary_neg(self, n: ast_unary_operator*) -> type {
         var infer = self->resolve_expression(n->value);
+        defer infer.delete();
+
         if (infer.is_error()) {
-            return infer;
-        }
-        if (!infer.is_integer() && !infer.is_float()) {
-            var info = str::from("expect integer or float but get \"");
-            defer info.delete();
-
-            var i_name = infer.full_path_name(self->pkg, true);
-            defer i_name.delete();
-
-            info.append_str(i_name.__ptr__());
-            info.append("\"");
-
-            self->err->error(n->base.location.__ptr__(), info.c_str);
-
-            infer.delete();
             return type::error_type();
         }
-        return infer;
+        if (!infer.is_integer() && !infer.is_float()) {
+            self->err->out("expect integer or float but get \"")
+                     ->out_type(infer.__ptr__(), self->pkg)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
+            return type::error_type();
+        }
+
+        var res = infer.copy_instance();
+        return res;
     }
 
     func resolve_unary_bnot(self, n: ast_unary_operator*) -> type {
         var infer = self->resolve_expression(n->value);
+        defer infer.delete();
+
         if (infer.is_error()) {
-            return infer;
-        }
-        if (!infer.can_bitwise_calculate()) {
-            var info = str::from("bitwise operator cannot be used on \"");
-            defer info.delete();
-
-            var i_name = infer.full_path_name(self->pkg, true);
-            defer i_name.delete();
-
-            info.append_str(i_name.__ptr__());
-            info.append("\"");
-
-            self->err->error(n->base.location.__ptr__(), info.c_str);
-
-            infer.delete();
             return type::error_type();
         }
-        return infer;
+        if (!infer.can_bitwise_calculate()) {
+            self->err->out("bitwise operator cannot be used on \"")
+                     ->out_type(infer.__ptr__(), self->pkg)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
+            return type::error_type();
+        }
+
+        var res = infer.copy_instance();
+        return res;
     }
 
     func resolve_unary_lnot(self, n: ast_unary_operator*) -> type {
@@ -509,26 +501,18 @@ impl sema {
         }
 
         if (!left.can_bitwise_calculate()) {
-            var info = str::from("bitwise operator cannot be used on \"");
-            defer info.delete();
-
-            var name = left.full_path_name(self->pkg, true);
-            defer name.delete();
-
-            info.append_str(name.__ptr__())->append("\"");
-            self->err->error(n->left->location.__ptr__(), info.c_str);
+            self->err->out("bitwise operator cannot be used on \"")
+                     ->out_type(left.__ptr__(), self->pkg)
+                     ->out("\"")
+                     ->emit_err(n->left->location.__ptr__());
             return type::error_type();
         }
 
         if (!right.can_bitwise_calculate()) {
-            var info = str::from("bitwise operator cannot be used on \"");
-            defer info.delete();
-
-            var name = right.full_path_name(self->pkg, true);
-            defer name.delete();
-
-            info.append_str(name.__ptr__())->append("\"");
-            self->err->error(n->right->location.__ptr__(), info.c_str);
+            self->err->out("bitwise operator cannot be used on \"")
+                     ->out_type(right.__ptr__(), self->pkg)
+                     ->out("\"")
+                     ->emit_err(n->right->location.__ptr__());
             return type::error_type();
         }
 
@@ -1667,48 +1651,35 @@ impl sema {
         if (left.is_pointer() && right.is_pointer()) {
             if (!left.eq(right.__ptr__()) &&
                 !self->check_can_be_converted(n->right, left.__ptr__())) {
-                var info = str::from("cannot calculate \"");
-                var l_name = left.full_path_name(self->pkg, true);
-                var r_name = right.full_path_name(self->pkg, true);
-                info.append_str(l_name.__ptr__());
-                info.append("\" and \"");
-                info.append_str(r_name.__ptr__());
-                info.append("\"");
-                self->err->error(n->right->location.__ptr__(), info.c_str);
-                info.delete();
-                l_name.delete();
-                r_name.delete();
+                self->err->out("cannot calculate \"")
+                         ->out_type(left.__ptr__(), self->pkg)
+                         ->out("\" and \"")
+                         ->out_type(right.__ptr__(), self->pkg)
+                         ->out("\"")
+                         ->emit_err(n->right->location.__ptr__());
             }
         } else if (!left.eq(right.__ptr__())) {
             if (!self->check_can_be_converted(n->right, left.__ptr__())) {
-                var info = str::from("get \"");
-                var l_name = left.full_path_name(self->pkg, true);
-                var r_name = right.full_path_name(self->pkg, true);
-                info.append_str(r_name.__ptr__());
-                info.append("\" but expect \"");
-                info.append_str(l_name.__ptr__());
-                info.append("\"");
-                self->err->error(n->right->location.__ptr__(), info.c_str);
-                info.delete();
-                l_name.delete();
-                r_name.delete();
+                self->err->out("get \"")
+                         ->out_type(right.__ptr__(), self->pkg)
+                         ->out("\" but expect \"")
+                         ->out_type(left.__ptr__(), self->pkg)
+                         ->out("\"")
+                         ->emit_err(n->right->location.__ptr__());
             }
         }
 
         // only = is allowed to be applied on enums
         if (self->is_enum_type(left.__ptr__()) && n->kind != assignment_kind::eq) {
-            var info = str::from("cannot calculate enum \"");
-            var l_name = left.full_path_name(self->pkg, true);
-            info.append_str(l_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->left->base.location.__ptr__(), info.c_str);
-            info.delete();
-            l_name.delete();
+            self->err->out("cannot calculate enum \"")
+                     ->out_type(left.__ptr__(), self->pkg)
+                     ->out("\"")
+                     ->emit_err(n->left->base.location.__ptr__());
         }
 
-        var infer = type::restrict_type();
-        n->base.resolved_type.reset_with(infer.__ptr__());
-        return infer;
+        var res = type::restrict_type();
+        n->base.resolved_type.reset_with(res.__ptr__());
+        return res;
     }
 
     func resolve_expression(self, n: ast*) -> type {
@@ -1843,21 +1814,19 @@ impl sema {
     func check_local_variable_conflict(self, name: str*, loc: span*) -> bool {
         // check if conflicts with local variable
         if (self->ctx->find_local(name)) {
-            var info = str::from("redefinition of variable \"");
-            info.append_str(name);
-            info.append("\"");
-            self->err->error(loc, info.c_str);
-            info.delete();
+            self->err->out("redefinition of variable \"")
+                     ->out(name->c_str)
+                     ->out("\"")
+                     ->emit_err(loc);
             return false;
         }
 
         // check if conflicts with global symbol
         if (self->ctx->get_domain(loc->file.__ptr__())->global_symbol.has(name)) {
-            var info = str::from("variable \"");
-            info.append_str(name);
-            info.append("\" conflicts with global symbol");
-            self->err->error(loc, info.c_str);
-            info.delete();
+            self->err->out("variable \"")
+                     ->out(name->c_str)
+                     ->out("\" conflicts with global symbol")
+                     ->emit_err(loc);
             return false;
         }
 
@@ -1880,6 +1849,8 @@ impl sema {
 
         if (n->type == nil) {
             var real_type = self->resolve_expression(n->value);
+            defer real_type.delete();
+
             n->base.resolved_type.reset_with(real_type.__ptr__());
             if (real_type.is_empty_array()) {
                 self->err->error(
@@ -1889,16 +1860,17 @@ impl sema {
             }
             self->ctx->add_local_var(name, real_type.__ptr__());
             self->check_defined_variable_is_void(n, real_type.__ptr__());
-            real_type.delete();
             return;
         }
 
         // with type declaration
         var expect_type = self->tr.resolve(n->type);
+        defer expect_type.delete();
+
         var real_type = self->resolve_expression(n->value);
+        defer real_type.delete();
+
         if (expect_type.is_error() || real_type.is_error()) {
-            expect_type.delete();
-            real_type.delete();
             return;
         }
         if (expect_type.is_array || real_type.is_array) {
@@ -1906,21 +1878,25 @@ impl sema {
                 var info = str::from("expect \"");
                 var expect_type_name = expect_type.array_type_full_name(self->pkg);
                 var real_type_name = real_type.array_type_full_name(self->pkg);
+                defer {
+                    info.delete();
+                    expect_type_name.delete();
+                    real_type_name.delete();
+                }
+
                 info.append(expect_type_name.c_str);
                 info.append("\", but get \"");
                 info.append(real_type_name.c_str);
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
-                expect_type_name.delete();
-                real_type_name.delete();
             } else if (expect_type.is_array &&
                        expect_type.array_length < real_type.array_length) {
                 var info = str::from("expect at most ");
+                defer info.delete();
+
                 info.append_u64(expect_type.array_length);
                 info.append(" element(s), but get ");
                 info.append_u64(real_type.array_length);
                 self->err->error(n->base.location.__ptr__(), info.c_str);
-                info.delete();
             }
             // sync the array length
             if (expect_type.is_array) {
@@ -1934,26 +1910,32 @@ impl sema {
                 var info = str::from("expect \"");
                 var expect_type_name = expect_type.full_path_name(self->pkg, true);
                 var real_type_name = real_type.full_path_name(self->pkg, true);
+                defer {
+                    info.delete();
+                    expect_type_name.delete();
+                    real_type_name.delete();
+                }
+
                 info.append(expect_type_name.c_str);
                 info.append("\", but get \"");
                 info.append(real_type_name.c_str);
                 self->err->warn(n->base.location.__ptr__(), info.c_str);
-                info.delete();
-                expect_type_name.delete();
-                real_type_name.delete();
             }
         } else if (!expect_type.eq(real_type.__ptr__()) &&
             !self->check_can_be_converted(n->value, expect_type.__ptr__())) {
             var info = str::from("def: expect \"");
             var expect_type_name = expect_type.full_path_name(self->pkg, true);
             var real_type_name = real_type.full_path_name(self->pkg, true);
+            defer {
+                info.delete();
+                expect_type_name.delete();
+                real_type_name.delete();
+            }
+
             info.append(expect_type_name.c_str);
             info.append("\", but get \"");
             info.append(real_type_name.c_str);
             self->err->warn(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            expect_type_name.delete();
-            real_type_name.delete();
         }
 
         // if immutable, make sure the type is correct
@@ -1966,19 +1948,17 @@ impl sema {
             self->ctx->add_local_var(name, expect_type.__ptr__());
             self->check_defined_variable_is_void(n, expect_type.__ptr__());
         }
-
-        expect_type.delete();
-        real_type.delete();
     }
 
     func resolve_if_stmt(self, n: ast_if_stmt*, func_self: colgm_func*) {
         if (n->condition != nil) {
             var ty = self->resolve_expression(n->condition => ast*);
+            defer ty.delete();
+
             if (!ty.is_bool() && !ty.is_error()) {
                 self->err->error(n->condition->location.__ptr__(),
                                 "condition must be bool");
             }
-            ty.delete();
         }
 
         // resolve block
@@ -2047,44 +2027,46 @@ impl sema {
 
     func resolve_match_stmt(self, n: ast_match_stmt*, func_self: colgm_func*) {
         var infer = self->resolve_expression(n->value);
+        defer infer.delete();
+
         // check error type
         if (infer.is_error()) {
-            infer.delete();
             return;
         }
 
         if (!self->is_enum_type(infer.__ptr__())) {
             self->err->error(n->value->location.__ptr__(),
                             "match value must be enum type");
-            infer.delete();
             return;
         }
 
         if (n->cases.empty()) {
-            self->err->error(
-                n->value->location.__ptr__(),
-                "must have at least one case"
-            );
-            infer.delete();
+            self->err->error(n->value->location.__ptr__(),
+                             "must have at least one case");
             return;
         }
 
         var default_found = false;
         var used_values = hashset<basic<i64>>::instance();
+        defer used_values.delete();
+
         foreach (var i; n->cases) {
             var case_node = i.get() => ast_match_case*;
 
             if (self->check_is_match_default(case_node->pattern)) {
                 var case_type = type::default_match_type();
+                defer case_type.delete();
+
                 case_node->pattern->base.resolved_type.reset_with(case_type.__ptr__());
                 case_node->base.resolved_type.reset_with(case_type.__ptr__());
                 default_found = true;
                 self->resolve_code_block(case_node->body, func_self);
-                case_type.delete();
                 continue;
             }
 
             var case_type = self->resolve_call(case_node->pattern);
+            defer case_type.delete();
+
             case_node->base.resolved_type.reset_with(case_type.__ptr__());
             case_node->pattern->base.resolved_type.reset_with(case_type.__ptr__());
 
@@ -2093,16 +2075,18 @@ impl sema {
                     var info = str::from("case value should be \"");
                     var c_name = case_type.full_path_name(self->pkg, true);
                     var i_name = infer.full_path_name(self->pkg, true);
+                    defer {
+                        info.delete();
+                        c_name.delete();
+                        i_name.delete();
+                    }
+
                     info.append(c_name.c_str);
                     info.append("\", but get \"");
                     info.append(i_name.c_str);
                     info.append("\"");
                     self->err->error(case_node->pattern->base.location.__ptr__(), info.c_str);
-                    info.delete();
-                    c_name.delete();
-                    i_name.delete();
                 }
-                case_type.delete();
                 continue;
             }
 
@@ -2111,7 +2095,6 @@ impl sema {
                     case_node->pattern->base.location.__ptr__(),
                     "match value must be enum literal"
                 );
-                case_type.delete();
                 continue;
             } else {
                 var value = self->get_enum_literal_value(case_node->pattern, infer.__ptr__());
@@ -2127,28 +2110,22 @@ impl sema {
             }
 
             self->resolve_code_block(case_node->body, func_self);
-            case_type.delete();
         }
 
         if (default_found) {
-            infer.delete();
-            used_values.delete();
             return;
         }
 
         if (!self->ctx->has_domain(infer.loc_file.__ptr__())) {
-            infer.delete();
-            used_values.delete();
             return;
         }
         var dm = self->ctx->get_domain(infer.loc_file.__ptr__());
         if (!dm->enums.has(infer.name.__ptr__())) {
-            infer.delete();
-            used_values.delete();
             return;
         }
         var em = dm->enums.get(infer.name.__ptr__());
         var generated_warning = str::instance();
+        defer generated_warning.delete();
         var unused_counter = 0;
 
         foreach (var i; em->members) {
@@ -2169,6 +2146,11 @@ impl sema {
         if (generated_warning.size > 0) {
             var info = str::from("match statement with enum \"");
             var i_name = infer.full_path_name(self->pkg, true);
+            defer {
+                info.delete();
+                i_name.delete();
+            }
+
             info.append_str(i_name.__ptr__());
             info.append("\" has unused member");
             if (unused_counter > 1) {
@@ -2176,24 +2158,19 @@ impl sema {
             }
             info.append(": ")->append_str(generated_warning.__ptr__());
             self->err->warn(n->base.location.__ptr__(), info.c_str);
-            info.delete();
-            i_name.delete();
         }
-
-        infer.delete();
-        used_values.delete();
-        generated_warning.delete();
     }
 
     func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func*) {
         var infer = self->resolve_expression(n->condition => ast*);
+        defer infer.delete();
+
         if (!infer.is_bool() && !infer.is_error()) {
             self->err->error(
                 n->condition->location.__ptr__(),
                 "condition must be bool"
             );
         }
-        infer.delete();
 
         // resolve block
         if (n->body != nil) {
@@ -2210,15 +2187,15 @@ impl sema {
         }
         if (n->condition != nil) {
             var ty = self->resolve_expression(n->condition => ast*);
+            defer ty.delete();
+
             if (!ty.is_bool() && !ty.is_error()) {
                 self->err->error(n->condition->location.__ptr__(),
                                 "condition must be bool");
             }
-            ty.delete();
         }
         if (n->update != nil) {
-            var ty = self->resolve_expression(n->update => ast*);
-            ty.delete();
+            self->resolve_expression(n->update => ast*).delete();
         }
         if (n->body != nil) {
             self->in_loop_level += 1;
@@ -2235,21 +2212,19 @@ impl sema {
 
         var dm = self->ctx->get_domain(t->loc_file.__ptr__());
         var name_for_search = t->generic_name(self->pkg);
+        defer name_for_search.delete();
+
         if (!dm->structs.has(name_for_search.__ptr__())) {
-            name_for_search.delete();
             return false;
         }
 
         var s = dm->structs.get(name_for_search.__ptr__());
         var method_name = str::from(m_name);
+        defer method_name.delete();
+
         if (!s->method.has(method_name.__ptr__())) {
-            name_for_search.delete();
-            method_name.delete();
             return false;
         }
-
-        name_for_search.delete();
-        method_name.delete();
         return true;
     }
 
