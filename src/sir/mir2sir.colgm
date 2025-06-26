@@ -2698,6 +2698,8 @@ impl mir2sir {
 impl mir2sir {
     func generate_DI_type_if_not_exists(self, n: str*) {
         var temp = n->copy_instance();
+        defer temp.delete();
+
         var p: DW_TAG_pointer_type* = nil;
         while (temp.back() == '*') {
             if (self->sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
@@ -2880,6 +2882,8 @@ impl mir2sir {
         
         var version_str = str::from("colgm compiler version ");
         version_str.append(version());
+        defer version_str.delete();
+
         var cu = DI_compile_unit::new(
             self->dwarf_status.DI_counter,
             version_str.c_str,

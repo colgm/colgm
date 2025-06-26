@@ -84,6 +84,12 @@ Use this script to test tcp/udp utils:
 python3 misc/test_tcp_udp.py
 ```
 
+To check if any memory leakage, use this script:
+
+```sh
+python3 misc/memleak_check.py
+```
+
 ### Code Style
 
 And for development, you should follow the [code style](./doc/spec/code_style.md).
