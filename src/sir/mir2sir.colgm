@@ -529,6 +529,7 @@ impl mir2sir {
                 s_func.params.push(p_pair.__ptr__());
             }
 
+            // if debug mode is enabled, scope_index should not be DI_ERROR_INDEX
             if (self->dwarf_status.impl_debug_info.has(m_func->name.__ptr__())) {
                 self->dwarf_status.scope_index = self->dwarf_status
                                                      .impl_debug_info
@@ -1704,7 +1705,8 @@ impl mir2sir {
             sir_function_call = sir_call::new(
                 mangled_name.__ptr__(),
                 n_ty.__ptr__(),
-                target_value.__ptr__()
+                target_value.__ptr__(),
+                self->generate_DI_location(n->base.location.__ptr__())
             );            
         } else {
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
@@ -1719,12 +1721,10 @@ impl mir2sir {
             sir_function_call = sir_call::new(
                 mangled_name.__ptr__(),
                 n_ty.__ptr__(),
-                target_value.__ptr__()
+                target_value.__ptr__(),
+                self->generate_DI_location(n->base.location.__ptr__())
             );
         }
-
-        // generate DWARF info
-        sir_function_call->debug_info_index = self->generate_DI_location(n->base.location.__ptr__());
 
         // load args
         foreach (var i; args) {
@@ -2761,21 +2761,21 @@ impl mir2sir {
     }
 
     func generate_DI_location(self, loc: span*) -> u64 {
+        // if scope index is invalid, we can't add location info
+        // if debug mode is not enabled, scope_index must be DI_ERROR_INDEX
         if (self->dwarf_status.scope_index == DI_ERROR_INDEX()) {
             return DI_ERROR_INDEX();
         }
 
-        var index = self->dwarf_status.DI_counter;
-        var DI_loc = DI_location::new(
-            index,
-            loc->file.c_str,
-            loc->begin_line + 1,
-            loc->begin_column,
-            self->dwarf_status.scope_index
-        );
+        // check if location is already generated
+        if (self->dwarf_status.has_DI_location(loc)) {
+            return self->dwarf_status.get_DI_location_index(loc);
+        }
+
+        // will do DI_counter + 1 here
+        var DI_loc = self->dwarf_status.new_DI_location(loc);
         self->sctx->debug_info.push(DI_loc => DI_node*);
-        self->dwarf_status.DI_counter += 1;
-        return index;
+        return DI_loc->get_index();
     }
 
     func generate_llvm_ident(self) {
@@ -3167,9 +3167,7 @@ impl mir2sir {
     }
 
     func generate_DI_subprogram(self, mctx: mir_context*) {
-        foreach (var i; mctx->decls) {
-            self->generate_single_DI_subprogram(i.get());
-        }
+        // only generate subprogram for impls
         foreach (var i; mctx->impls) {
             self->generate_single_DI_subprogram(i.get());
         }
