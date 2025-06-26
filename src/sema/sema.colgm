@@ -2230,13 +2230,16 @@ impl sema {
 
     func get_struct_method_return_type(self, t: type*, m_name: i8*) -> type {
         var dm = self->ctx->get_domain(t->loc_file.__ptr__());
-        var name_for_search = t->generic_name(self->pkg);
-        var s = dm->structs.get(name_for_search.__ptr__());
-        var method_name = str::from(m_name);
-        var m = s->method.get(method_name.__ptr__());
 
-        name_for_search.delete();
-        method_name.delete();
+        var name_for_search = t->generic_name(self->pkg);
+        defer name_for_search.delete();
+
+        var s = dm->structs.get(name_for_search.__ptr__());
+
+        var method_name = str::from(m_name);
+        defer method_name.delete();
+
+        var m = s->method.get(method_name.__ptr__());
         return m->return_type.copy_instance();
     }
 
@@ -2253,12 +2256,10 @@ impl sema {
             iter_ty->name.__ptr__()
         );
 
-        var zero_num = str::from("0");
         lowered_init->value = ast_number_literal::new(
             n->variable->base.location.__ptr__(),
-            zero_num.__ptr__()
+            "0"
         ) => ast*;
-        zero_num.delete();
 
         n->lowered_init = lowered_init;
 
@@ -2273,19 +2274,15 @@ impl sema {
         // generate `container.iter_size()`
         var lowered_condition_rhs = n->container->copy();
         if (n->container->base.resolved_type.is_pointer()) {
-            var m_name = str::from("iter_size");
             lowered_condition_rhs->chain.push(ast_ptr_get_field::new(
                 n->container->base.location.__ptr__(),
-                m_name.__ptr__()
+                "iter_size"
             ) => ast*);
-            m_name.delete();
         } else {
-            var m_name = str::from("iter_size");
             lowered_condition_rhs->chain.push(ast_get_field::new(
                 n->container->base.location.__ptr__(),
-                m_name.__ptr__()
+                "iter_size"
             ) => ast*);
-            m_name.delete();
         }
         lowered_condition_rhs->chain.push(
             ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
@@ -2305,12 +2302,11 @@ impl sema {
         // generate `i`
         var lowered_update_lhs = lowered_condition_lhs->copy();
         // generate `1`
-        var one_num = str::from("1");
         var lowered_update_rhs = ast_number_literal::new(
             n->container->base.location.__ptr__(),
-            one_num.__ptr__()
+            "1"
         ) => ast*;
-        one_num.delete();
+
         var lowered_update = ast_assignment::new(n->container->base.location.__ptr__());
         lowered_update->kind = assignment_kind::addeq;
         lowered_update->left = lowered_update_lhs;
@@ -2386,19 +2382,15 @@ impl sema {
         var lowered_init_rhs = n->container->copy();
         lowered_init->value = lowered_init_rhs => ast*;
         if (n->container->base.resolved_type.is_pointer()) {
-            var m_name = str::from("iter");
             lowered_init_rhs->chain.push(ast_ptr_get_field::new(
                 n->container->base.location.__ptr__(),
-                m_name.__ptr__()
+                "iter"
             ) => ast*);
-            m_name.delete();
         } else {
-            var m_name = str::from("iter");
             lowered_init_rhs->chain.push(ast_get_field::new(
                 n->container->base.location.__ptr__(),
-                m_name.__ptr__()
+                "iter"
             ) => ast*);
-            m_name.delete();
         }
         lowered_init_rhs->chain.push(
             ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
@@ -2417,12 +2409,10 @@ impl sema {
         );
         lowered_condition_value->head->id = n->variable->copy();
         // generate `is_end`
-        var end_method = str::from("is_end");
         lowered_condition_value->chain.push(ast_get_field::new(
             n->container->base.location.__ptr__(),
-            end_method.__ptr__()
+            "is_end"
         ) => ast*);
-        end_method.delete();
         // generate `()`
         lowered_condition_value->chain.push(
             ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
@@ -2453,12 +2443,10 @@ impl sema {
             n->container->base.location.__ptr__(),
         );
         lowered_update_rhs->head->id = n->variable->copy();
-        var next_method = str::from("next");
         lowered_update_rhs->chain.push(ast_get_field::new(
             n->container->base.location.__ptr__(),
-            next_method.__ptr__()
+            "next"
         ) => ast*);
-        next_method.delete();
         lowered_update_rhs->chain.push(
             ast_call_func_args::new(n->container->base.location.__ptr__()) => ast*
         );
