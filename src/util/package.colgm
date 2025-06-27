@@ -11,24 +11,21 @@ pub enum p_status {
     analysing
 }
 
-pub struct package_info {
+struct package_info {
     path: str,
     status: p_status
 }
 
 impl package_info {
-    pub func delete(self) {
-        self->path.delete();
+    pub func instance(path: const i8*, status: p_status) -> package_info {
+        return package_info {
+            path: str::from(path),
+            status: status
+        };
     }
 
-    pub func copy(self) -> package_info* {
-        var res = package_info::__alloc__();
-        if (res == nil) {
-            panic("failed to allocate memory");
-        }
-        res->path = self->path.copy_instance();
-        res->status = self->status;
-        return res;
+    pub func delete(self) {
+        self->path.delete();
     }
 
     pub func copy_instance(self) -> package_info {
@@ -68,10 +65,7 @@ impl package {
             return;
         }
 
-        var info = package_info {
-            path: file_path->copy_instance(),
-            status: p_status::not_used
-        };
+        var info = package_info::instance(file_path->c_str, p_status::not_used);
         defer info.delete();
 
         self->file_mapper.insert(module_name, info.__ptr__());

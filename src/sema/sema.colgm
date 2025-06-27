@@ -2316,44 +2316,40 @@ impl sema {
 
     func resolve_forindex_stmt(self, n: ast_forindex*, func_self: colgm_func*) {
         var ty = self->resolve_expression(n->container => ast*);
+        defer ty.delete();
+
         // only accept container T, T& or T*
         if (ty.pointer_depth > 1) {
-            var info = str::from("\"");
-            var c_name = ty.full_path_name(self->pkg, true);
-            info.append_str(c_name.__ptr__())->append("\"");
-            info.append(" is not accpted as container");
-            self->err->error(n->container->base.location.__ptr__(), info.c_str);
-            c_name.delete();
-            info.delete();
+            self->err->out("\"")
+                     ->out_type(ty.__ptr__(), self->pkg)
+                     ->out("\" is not accpted as container")
+                     ->emit_err(n->container->base.location.__ptr__());
         }
 
         // T should have method size(T) -> integer
         if (!self->check_struct_has_method(ty.__ptr__(), "iter_size")) {
             self->err->error(n->container->base.location.__ptr__(),
                              "container must have iter_size method");
-            ty.delete();
             return;
         }
 
         // forindex will directly combine size method's return type to iter_type
         var iter_ty = self->get_struct_method_return_type(ty.__ptr__(), "iter_size");
+        defer iter_ty.delete();
+
         var u64_type = type::u64_type();
+        defer u64_type.delete();
+
         if (!iter_ty.eq(u64_type.__ptr__())) {
             self->err->error(n->container->base.location.__ptr__(),
                              "iter_size method must return u64");
-            ty.delete();
-            iter_ty.delete();
-            u64_type.delete();
             return;
         }
-        u64_type.delete();
 
         n->variable->base.resolved_type.reset_with(iter_ty.__ptr__());
         if (!iter_ty.is_integer()) {
             self->err->error(n->container->base.location.__ptr__(),
                              "iter_size method must return integer");
-            ty.delete();
-            iter_ty.delete();
             return;
         }
 
@@ -2369,8 +2365,6 @@ impl sema {
             self->in_loop_level -= 1;
         }
         self->ctx->pop_scope_level();
-        ty.delete();
-        iter_ty.delete();
     }
 
     func lowering_foreach(self, n: ast_foreach*) {
@@ -2460,66 +2454,58 @@ impl sema {
 
     func resolve_foreach_stmt(self, n: ast_foreach*, func_self: colgm_func*) {
         var ty = self->resolve_expression(n->container => ast*);
+        defer ty.delete();
+
         // only accept container T, T& or T*
         if (ty.pointer_depth > 1) {
-            var info = str::from("\"");
-            var c_name = ty.full_path_name(self->pkg, true);
-            info.append_str(c_name.__ptr__())->append("\"");
-            info.append(" is not accpted as container");
-            self->err->error(n->container->base.location.__ptr__(), info.c_str);
-            c_name.delete();
-            info.delete();
+            self->err->out("\"")
+                     ->out_type(ty.__ptr__(), self->pkg)
+                     ->out("\" is not accpted as container")
+                     ->emit_err(n->container->base.location.__ptr__());
         }
         // T should have method iter(T) -> iter_type
         if (!self->check_struct_has_method(ty.__ptr__(), "iter")) {
             self->err->error(n->container->base.location.__ptr__(),
                              "container must have iter method");
-            ty.delete();
             return;
         }
 
         // foreach will directly combine iter_type to defined variable
         var iter_ty = self->get_struct_method_return_type(ty.__ptr__(), "iter");
+        defer iter_ty.delete();
+
         n->variable->base.resolved_type.reset_with(iter_ty.__ptr__());
 
         // check iter.is_end() method
         if (!self->check_struct_has_method(iter_ty.__ptr__(), "is_end")) {
             self->err->error(n->variable->base.location.__ptr__(),
                              "iterator must have is_end method");
-            ty.delete();
-            iter_ty.delete();
             return;
         } else {
             var rt = self->get_struct_method_return_type(iter_ty.__ptr__(), "is_end");
+            defer rt.delete();
+
             if (!rt.is_bool()) {
                 self->err->error(n->variable->base.location.__ptr__(),
                                  "is_end method must return bool type");
-                ty.delete();
-                iter_ty.delete();
-                rt.delete();
                 return;
             }
-            rt.delete();
         }
 
         // check iter.next() method
         if (!self->check_struct_has_method(iter_ty.__ptr__(), "next")) {
             self->err->error(n->variable->base.location.__ptr__(),
                              "iterator must have next method");
-            ty.delete();
-            iter_ty.delete();
             return;
         } else {
             var rt = self->get_struct_method_return_type(iter_ty.__ptr__(), "next");
+            defer rt.delete();
+
             if (!rt.eq(iter_ty.__ptr__())) {
                 self->err->error(n->variable->base.location.__ptr__(),
                                  "next method's return type should equal to the iterator");
-                ty.delete();
-                iter_ty.delete();
-                rt.delete();
                 return;
             }
-            rt.delete();
         }
 
         self->lowering_foreach(n);
@@ -2534,14 +2520,13 @@ impl sema {
             self->in_loop_level -= 1;
         }
         self->ctx->pop_scope_level();
-        ty.delete();
-        iter_ty.delete();
     }
 
     func resolve_in_stmt_expr(self, n: ast_in_stmt_expr*, func_self: colgm_func*) {
         var ty = self->resolve_expression(n->value => ast*);
+        defer ty.delete();
+
         n->base.resolved_type.reset_with(ty.__ptr__());
-        ty.delete();
     }
 
     func resolve_ret_stmt(self, n: ast_ret_stmt*, func_self: colgm_func*) {
@@ -2555,41 +2540,31 @@ impl sema {
         }
 
         var infer = self->resolve_expression(n->value);
+        defer infer.delete();
+
         if (infer.is_error()) {
-            infer.delete();
             return;
         }
         if (infer.is_pointer() && func_self->return_type.is_pointer()) {
             if (!func_self->return_type.eq(infer.__ptr__()) &&
                 !self->check_can_be_converted(n->value, func_self->return_type.__ptr__())) {
-                var info = str::from("expected return type \"");
-                var expect_type_name = func_self->return_type.full_path_name(self->pkg, true);
-                info.append(expect_type_name.c_str);
-                info.append("\", but get \"");
-                var real_type_name = infer.full_path_name(self->pkg, true);
-                info.append(real_type_name.c_str);
-                info.append("\"");
-                self->err->warn(n->base.location.__ptr__(), info.c_str);
-                expect_type_name.delete();
-                real_type_name.delete();
-                info.delete();
+                self->err->out("expected return type \"")
+                         ->out_type(func_self->return_type.__ptr__(), self->pkg)
+                         ->out("\", but get \"")
+                         ->out_type(infer.__ptr__(), self->pkg)
+                         ->out("\"")
+                         ->emit_warn(n->base.location.__ptr__());
             }
         } else if (!func_self->return_type.eq(infer.__ptr__())) {
             if (!self->check_can_be_converted(n->value, func_self->return_type.__ptr__())) {
-                var info = str::from("expected return type \"");
-                var expect_type_name = func_self->return_type.full_path_name(self->pkg, true);
-                info.append(expect_type_name.c_str);
-                info.append("\", but get \"");
-                var real_type_name = infer.full_path_name(self->pkg, true);
-                info.append(real_type_name.c_str);
-                info.append("\"");
-                self->err->error(n->base.location.__ptr__(), info.c_str);
-                expect_type_name.delete();
-                real_type_name.delete();
-                info.delete();
+                self->err->out("expected return type \"")
+                         ->out_type(func_self->return_type.__ptr__(), self->pkg)
+                         ->out("\", but get \"")
+                         ->out_type(infer.__ptr__(), self->pkg)
+                         ->out("\"")
+                         ->emit_err(n->base.location.__ptr__());
             }
         }
-        infer.delete();
     }
 
     func resolve_statement(self, n: ast*, func_self: colgm_func*) {
@@ -2664,6 +2639,7 @@ impl sema {
     func report_unreachable_statements(self, n: ast_code_block*) {
         var flag_block_ended = false;
         var unreachable_statements = vec<ast*>::instance();
+        defer unreachable_statements.delete();
 
         foreach (var i; n->stmts) {
             var tmp = i.get();
@@ -2678,12 +2654,13 @@ impl sema {
         }
 
         if (unreachable_statements.empty()) {
-            unreachable_statements.delete();
             return;
         }
 
         var unreachable_location = unreachable_statements
                                    .get(0)->location.copy_instance();
+        defer unreachable_location.delete();
+
         foreach (var i; unreachable_statements) {
             var tmp = i.get();
             unreachable_location.end_column = tmp->location.end_column;
@@ -2697,9 +2674,6 @@ impl sema {
             self->err->out("unreachable statement, ignored")
                      ->emit_warn(unreachable_location.__ptr__());
         }
-
-        unreachable_statements.delete();
-        unreachable_location.delete();
     }
 
     func report_top_level_block_has_no_return(self,
@@ -2752,11 +2726,10 @@ impl sema {
         }
 
         if (!dm->structs.has(node->name.__ptr__())) {
-            var info = str::from("cannot implement \"");
-            info.append_str(node->name.__ptr__());
-            info.append("\", because it is not defined in the same file");
-            self->err->error(node->base.location.__ptr__(), info.c_str);
-            info.delete();
+            self->err->out("cannot implement \"")
+                     ->out(node->name.c_str)
+                     ->out("\", because it is not defined in the same file")
+                     ->emit_err(node->base.location.__ptr__());
             return;
         }
 
@@ -2777,22 +2750,20 @@ impl sema {
 
         var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         if (!dm->functions.has(node->name.__ptr__())) {
-            var info = str::from("cannot find function \"");
-            info.append_str(node->name.__ptr__());
-            info.append("\"");
-            self->err->error(node->base.location.__ptr__(), info.c_str);
-            info.delete();
+            self->err->out("cannot find function \"")
+                     ->out(node->name.c_str)
+                     ->out("\"")
+                     ->emit_err(node->base.location.__ptr__());
             return;
         }
 
         var func_self = dm->functions.get(node->name.__ptr__());
         if (node->body == nil) {
             if (!func_self->is_extern) {
-                var info = str::from("non-extern function \"");
-                info.append_str(node->name.__ptr__());
-                info.append("\" is not implemented");
-                self->err->error(node->base.location.__ptr__(), info.c_str);
-                info.delete();
+                self->err->out("non-extern function \"")
+                         ->out(node->name.c_str)
+                         ->out("\" is not implemented")
+                         ->emit_err(node->base.location.__ptr__());
             }
             return;
         }
