@@ -7,6 +7,10 @@ void DI_node::dump(std::ostream& out) const {
     out << "!undef";
 }
 
+void DI_null::dump(std::ostream& out) const {
+    out << "null";
+}
+
 void DI_named_metadata::dump(std::ostream& out) const {
     dump_index(out);
     out << "!" << name << " = !{";
@@ -61,7 +65,7 @@ void DI_compile_unit::dump(std::ostream& out) const {
     if (imports_index != DI_node::DI_ERROR_INDEX) {
         out << "imports: !" << imports_index << ", ";
     }
-    out << "isOptimized: false)";
+    out << "isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)";
 }
 
 void DI_basic_type::dump(std::ostream& out) const {
@@ -105,7 +109,13 @@ void DI_subprogram::dump(std::ostream& out) const {
     out << "distinct !DISubprogram(name: \"" << name << "\", ";
     out << "file: !" << file_index << ", ";
     out << "line: " << line << ", ";
+    out << "type: !" << type_index << ", ";
     out << "unit: !" << compile_unit_index << ")";
+}
+
+void DI_subprocess::dump(std::ostream& out) const {
+    dump_index(out);
+    out << "!DISubroutineType(types: !" << type_list_index << ")";
 }
 
 void DI_location::dump(std::ostream& out) const {

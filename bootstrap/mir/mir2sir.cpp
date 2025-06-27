@@ -1579,33 +1579,39 @@ void mir2sir::generate_DI_structure_type(const mir_context& mctx) {
 }
 
 void mir2sir::generate_DI_subprogram(const mir_context& mctx) {
-    for (auto& i : mctx.decls) {
+    for (auto& i : mctx.impls) {
         // auto added libc func like free, malloc may not have location
         if (!ictx.DI_file_map.count(i->location.file)) {
             continue;
         }
+
         auto tmp = new DI_subprogram(
             dwarf_status.DI_counter,
             i->name,
             ictx.DI_file_map.at(i->location.file),
             i->location.begin_line,
-            dwarf_status.compile_unit_index
-        );
-        ictx.debug_info.push_back(tmp);
-        ++dwarf_status.DI_counter;
-    }
-    for (auto& i : mctx.impls) {
-        auto tmp = new DI_subprogram(
-            dwarf_status.DI_counter,
-            i->name,
-            ictx.DI_file_map.at(i->location.file),
-            i->location.begin_line,
-            dwarf_status.compile_unit_index
+            dwarf_status.DI_counter + 1,    // `type` field, DISubroutineType
+            dwarf_status.compile_unit_index // `unit` field, DICompileUnit
         );
         dwarf_status.impl_debug_info.insert(
             {i->name, dwarf_status.DI_counter}
         );
         ictx.debug_info.push_back(tmp);
+        ++dwarf_status.DI_counter;
+
+        // DISubprogram must have DISubroutineType as `type` field
+        // otherwise segfault will happen when using llc or clang
+        // issue: https://github.com/llvm/llvm-project/issues/59471
+        auto subprocess = new DI_subprocess(
+            dwarf_status.DI_counter,    // self index
+            dwarf_status.DI_counter + 1 // DI_list index
+        );
+        ictx.debug_info.push_back(subprocess);
+        ++dwarf_status.DI_counter;
+
+        auto type_list = new DI_list(dwarf_status.DI_counter);
+        type_list->add(new DI_null());
+        ictx.debug_info.push_back(type_list);
         ++dwarf_status.DI_counter;
     }
 }

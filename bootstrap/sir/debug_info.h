@@ -11,6 +11,7 @@ namespace colgm {
 
 enum class DI_kind {
     DI_error,
+    DI_null,
     DI_named_metadata,
     DI_ref_index,
     DI_list,
@@ -23,6 +24,7 @@ enum class DI_kind {
     DI_enum_type,
     DI_enumerator,
     DI_subprogram,
+    DI_subprocess,
     DI_location
 };
 
@@ -47,6 +49,13 @@ public:
     bool is(DI_kind k) {
         return kind == k;
     }
+};
+
+class DI_null: public DI_node {
+public:
+    DI_null(): DI_node(DI_kind::DI_null, DI_node::DI_ERROR_INDEX) {}
+    ~DI_null() override = default;
+    void dump(std::ostream&) const override;
 };
 
 class DI_named_metadata: public DI_node {
@@ -214,14 +223,28 @@ private:
     std::string name;
     u64 file_index;
     u64 line;
+    u64 type_index;
     u64 compile_unit_index;
 
 public:
-    DI_subprogram(u64 i, const std::string& n, u64 fi, u64 l, u64 cui):
+    DI_subprogram(u64 i, const std::string& n, u64 fi, u64 l, u64 ti, u64 cui):
         DI_node(DI_kind::DI_subprogram, i),
         name(n), file_index(fi), line(l),
+        type_index(ti),
         compile_unit_index(cui) {}
     ~DI_subprogram() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class DI_subprocess: public DI_node {
+private:
+    u64 type_list_index;
+
+public:
+    DI_subprocess(u64 i, u64 tli):
+        DI_node(DI_kind::DI_subprocess, i),
+        type_list_index(tli) {}
+    ~DI_subprocess() override = default;
     void dump(std::ostream&) const override;
 };
 
