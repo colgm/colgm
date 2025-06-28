@@ -104,7 +104,7 @@ void mir2sir::emit_struct(const mir_context& mctx) {
 
 void mir2sir::emit_func_decl(const mir_context& mctx) {
     for (auto i : mctx.decls) {
-        auto func = new sir_func(i->name);
+        auto func = new sir_func(i->name, i->location);
         func->set_attributes(i->attributes);
         func->set_return_type(type_mapping(i->return_type));
         for (const auto& j : i->params) {
@@ -117,7 +117,7 @@ void mir2sir::emit_func_decl(const mir_context& mctx) {
 
 void mir2sir::emit_func_impl(const mir_context& mctx) {
     for (auto i : mctx.impls) {
-        auto func = new sir_func(i->name);
+        auto func = new sir_func(i->name, i->location);
         func->set_attributes(i->attributes);
         func->set_return_type(type_mapping(i->return_type));
         // push local scope

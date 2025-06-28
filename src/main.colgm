@@ -163,7 +163,8 @@ func compile(option: cli_option) -> i32 {
     var mir2sir_worker = mir2sir::instance(
         ctx.__ptr__(),
         sctx.__ptr__(),
-        cc.pkg.__ptr__()
+        cc.pkg.__ptr__(),
+        cc.err
     );
     defer mir2sir_worker.delete();
 
@@ -247,6 +248,9 @@ func compile(option: cli_option) -> i32 {
     mir2sir_worker.generate(mctx.__ptr__(), option.VERBOSE, option.DEBUG_MODE);
     if (option.VIEW_SIR) {
         sctx.dump(io::stdout());
+    }
+    if (cc.err->error_count > 0) {
+        return -1;
     }
 
     var ll_file = str::from(option.output_file);

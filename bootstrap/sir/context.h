@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "colgm.h"
+#include "error.h"
 #include "sema/type.h"
 #include "sir/sir.h"
 #include "sir/debug_info.h"
@@ -62,6 +63,7 @@ public:
 class sir_func {
 private:
     std::string name;
+    span location;
     std::vector<std::pair<std::string, std::string>> params;
     bool with_va_args;
     std::vector<std::string> attributes;
@@ -73,14 +75,15 @@ private:
     void dump_attributes(std::ostream&) const;
 
 public:
-    sir_func(const std::string& n):
-        name(n), with_va_args(false),
+    sir_func(const std::string& n, const span& l):
+        name(n), location(l), with_va_args(false),
         debug_info_index(DI_node::DI_ERROR_INDEX), block(nullptr) {}
     ~sir_func() { delete block; }
     void set_debug_info_index(u64 i) { debug_info_index = i; }
     const auto get_mangled_name() const { return quoted_name(name); }
     void dump(std::ostream&) const;
     const auto& get_name() const { return name; }
+    const auto& get_location() const { return location; }
 
     void add_param(const std::string& pname, const std::string& ptype) {
         params.push_back({pname, ptype});

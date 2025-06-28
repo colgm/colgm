@@ -1,0 +1,34 @@
+use err::report::{ report };
+use sir::context::{ sir_context };
+use util::timestamp::{ maketimestamp };
+
+use std::io::{ io };
+use std::str::{ str };
+use std::set::{ hashset };
+
+pub func detect_redef_extern(ctx: sir_context*, err: report*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var externs = hashset<str>::instance();
+    defer externs.delete();
+
+    // externs should be declared only
+    foreach (var i; ctx->func_decls) {
+        var f = i.get();
+        if (externs.has(f->name.__ptr__())) {
+            err->out("redefinition of extern function \"")
+               ->out(f->name.c_str)
+               ->out("\"")->emit_err(f->location.__ptr__());
+            continue;
+        }
+        externs.insert(f->name.__ptr__());
+    }
+
+    if (verbose) {
+        io::stdout().green().out("[ SIR-PASS ] ").reset();
+        io::stdout().out("Detect redefined externs: ");
+        io::stdout().light_cyan().out("success").reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}

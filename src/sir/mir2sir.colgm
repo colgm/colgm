@@ -14,6 +14,7 @@ use sir::value::{ value_t };
 use sir::adjust_va_arg::{ adjust_va_arg };
 use sir::replace_ptr_call::{ replace_struct_ptr_call };
 use sir::size_calc::{ calculate_size };
+use sir::detect_redef_extern::{ detect_redef_extern };
 
 use dwarf::dwarf::*;
 use dwarf::status::{ DWARF_status };
@@ -26,6 +27,7 @@ use sema::type::{ type };
 
 use err::panic::{ panic, unreachable };
 use err::span::{ span };
+use err::report::{ report };
 use util::package::{ package };
 
 use util::cli::{ version };
@@ -170,6 +172,7 @@ pub struct mir2sir {
     ctx: sema_context*,
     sctx: sir_context*,
     pkg: package*,
+    err: report*,
     type_mapper: hashmap<str, symbol_kind>,
     basic_type_mapper: hashmap<str, str>,
     primitive_methods: hashmap<str, str>,
@@ -192,11 +195,13 @@ pub struct mir2sir {
 impl mir2sir {
     pub func instance(ctx: sema_context*,
                       sctx: sir_context*,
-                      pkg: package*) -> mir2sir {
+                      pkg: package*,
+                      err: report*) -> mir2sir {
         var res = mir2sir {
             ctx: ctx,
             sctx: sctx,
             pkg: pkg,
+            err: err,
             type_mapper: hashmap<str, symbol_kind>::instance(),
             basic_type_mapper: hashmap<str, str>::instance(),
             primitive_methods: hashmap<str, str>::instance(),
@@ -436,7 +441,10 @@ impl mir2sir {
     func emit_func_decl(self, mctx: mir_context*) {
         foreach (var i; mctx->decls) {
             var m_func = i.get();
-            var s_func = sir_func::instance(m_func->name.__ptr__());
+            var s_func = sir_func::instance(
+                m_func->name.__ptr__(),
+                m_func->location.__ptr__()
+            );
             s_func.set_attributes(m_func->attributes.__ptr__());
             s_func.with_va_args = m_func->with_va_args;
             defer s_func.delete();
@@ -466,7 +474,7 @@ impl mir2sir {
     }
 
     func process_print(self, curr: u64, total: u64) {
-        if (curr + 1 != total && (curr + 1) % 50 != 0) {
+        if (curr + 1 != total && (curr + 1) % 100 != 0) {
             return;
         }
         io::stdout().green().out("[  MIR2SIR ] ").reset();
@@ -494,7 +502,10 @@ impl mir2sir {
             var m_mangled_name = mangle_function_name(m_func->name.__ptr__());
             defer m_mangled_name.delete();
 
-            var s_func = sir_func::instance(m_mangled_name.__ptr__());
+            var s_func = sir_func::instance(
+                m_mangled_name.__ptr__(),
+                m_func->location.__ptr__()
+            );
             s_func.set_attributes(m_func->attributes.__ptr__());
             defer s_func.delete();
 
@@ -3210,5 +3221,6 @@ impl mir2sir {
         self->emit_func_impl(mctx);
         adjust_va_arg(self->sctx, verbose);
         replace_struct_ptr_call(self->sctx, verbose);
+        detect_redef_extern(self->sctx, self->err, verbose);
     }
 }

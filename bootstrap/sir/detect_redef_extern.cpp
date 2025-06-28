@@ -8,7 +8,7 @@ bool detect_redef_extern::run(sir_context* ctx) {
     for (auto i : ctx->func_decls) {
         const auto name = i->get_mangled_name();
         if (externs.count(name)) {
-            err.err("redefinition of extern function \"" + name + "\"");
+            err.err(i->get_location(), "redefinition of extern function \"" + name + "\"");
             continue;
         }
         externs.insert(name);
