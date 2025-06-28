@@ -35,6 +35,37 @@ See compiler library reference in:
 
 - [doc/guide/library_reference.md](./doc/guide/library_reference.md)
 
+### Usage
+
+Use this command to show help:
+
+```sh
+<colgm compiler path> -h
+```
+
+#### Example
+
+If you want to compile `test.colgm` with debug mode,
+and output the executable file to `test.out`,
+use this command:
+
+```sh
+<colgm compiler path> test.colgm -g -o test.out
+```
+
+#### Optimization
+
+Colgm accepts `-O` option to enable optimization.
+
+- `-O0`: disable optimization
+- `-O1`: enable basic optimization
+- `-O2`: enable advanced optimization
+- `-O3`: enable maximum optimization
+- `-Oz`: enable size optimization
+- `-Os`: enable speed optimization
+
+Also you could use `-Ox -g` for release with debug info.
+
 ## Build and Development
 
 ### Requirements

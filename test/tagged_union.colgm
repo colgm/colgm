@@ -13,38 +13,32 @@ struct mir_num {
 
 struct mir_str {}
 
-// type {
-//     i64,           // 8 align 8
-//     mir_block      // 16 align 8
-//     [u8; 127 - 16] // 111 align 1
-//                    // 1 for alignment
-// }                  // 136 align 8
-pub union(enum) mir {
-    m_block: mir_block,
-    m_num: mir_num,
-    m_str: mir_str
-}
-
 pub enum mir_tag {
     m_block = 0x0010,
     m_num = 0x0100,
     m_str = 0x1000
 }
 
-pub union(mir_tag) mir_with_tag {
+// type {
+//     i64,           // 8 align 8
+//     mir_block      // 16 align 8
+//     [u8; 127 - 16] // 111 align 1
+//                    // 1 for alignment
+// }                  // 136 align 8
+pub union(mir_tag) mir {
     m_block: mir_block,
     m_num: mir_num,
     m_str: mir_str
 }
 
-impl mir_with_tag {
-    pub func get_tag(self) -> mir_tag {
-        return self->__kind__();
-    }
-}
+// impl mir {
+//     pub func get_tag(self) -> mir_tag {
+//         return self->__kind__();
+//     }
+// }
 
 func test() {
-    // var a = mir_with_tag::m_block(mir_block {a: 1, b: 2, c: 3});
-    // var b = mir_with_tag::m_num(mir_num {a: [0]});
-    // var c = mir_with_tag::m_str(mir_str {});
+    // var a = mir::m_block(mir_block {a: 1, b: 2, c: 3});
+    // var b = mir::m_num(mir_num {a: [0]});
+    // var c = mir::m_str(mir_str {});
 }

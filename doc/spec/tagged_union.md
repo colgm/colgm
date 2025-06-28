@@ -5,16 +5,6 @@ Work in progress.
 ## Definition
 
 ```rust
-pub union(enum) mir {
-    m_block: mir_block,
-    m_num: mir_num,
-    m_str: mir_str
-}
-```
-
-Or we can also write this:
-
-```rust
 pub enum mir_tag {
     m_block,
     m_num,
