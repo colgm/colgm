@@ -8,7 +8,12 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-self", "--only-self-lift", action="store_true", default=False)
+    parser.add_argument("-boot", "--only-bootstrap", action="store_true", default=False)
     args = parser.parse_args()
+
+    if args.only_bootstrap:
+        build_bootstrap_compiler()
+        exit(0)
 
     if args.only_self_lift:
         test_self_lift()

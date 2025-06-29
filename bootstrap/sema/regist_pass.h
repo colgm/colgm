@@ -177,6 +177,8 @@ private: // global functions
 private: // implementations
     void regist_impls(ast::root*);
     void regist_single_impl(ast::impl*);
+    void regist_single_impl_for_struct(ast::impl*, colgm_struct&);
+    void regist_single_impl_for_tagged_union(ast::impl*, colgm_tagged_union&);
     colgm_func generate_method(ast::func_decl*, const colgm_struct&);
     void generate_self_parameter(ast::param*, const colgm_struct&);
     void generate_method_parameter_list(ast::param_list*,

@@ -234,7 +234,7 @@ bool ast2mir::visit_impl(ast::impl* node) {
     if (node->get_generic_types()) {
         return true;
     }
-    impl_struct_name = node->get_struct_name();
+    impl_struct_name = node->get_name();
     for (auto i : node->get_methods()) {
         i->accept(this);
     }

@@ -512,7 +512,7 @@ void generic_visitor::replace_struct_type(colgm_struct& s,
         // s.name is generated with generic
         // for example original name is "foo",
         // but now it should be replaced with "foo<int, bool>"
-        i->set_struct_name(s.name);
+        i->set_name(s.name);
         i->clear_generic_types();
     }
     s.generic_struct_impl.clear();
@@ -1534,15 +1534,32 @@ void regist_pass::regist_impls(ast::root* node) {
 
 void regist_pass::regist_single_impl(ast::impl* node) {
     auto& dm = ctx.get_domain(ctx.this_file);
-    if (!dm.structs.count(node->get_struct_name()) &&
-        !dm.generic_structs.count(node->get_struct_name())) {
-        rp.report(node, "cannot find struct \"" + node->get_struct_name() + "\"");
+
+    if (dm.structs.count(node->get_name()) ||
+        dm.generic_structs.count(node->get_name())) {
+        auto& stct = dm.structs.count(node->get_name())
+            ? dm.structs.at(node->get_name())
+            : dm.generic_structs.at(node->get_name());
+        regist_single_impl_for_struct(node, stct);
         return;
     }
-    auto& stct = dm.structs.count(node->get_struct_name())
-        ? dm.structs.at(node->get_struct_name())
-        : dm.generic_structs.at(node->get_struct_name());
 
+    if (dm.tagged_unions.count(node->get_name())) {
+        regist_single_impl_for_tagged_union(
+            node,
+            dm.tagged_unions.at(node->get_name())
+        );
+        return;
+    }
+
+    rp.report(node,
+        "cannot find struct or tagged union named \"" +
+        node->get_name() + "\""
+    );
+}
+
+void regist_pass::regist_single_impl_for_struct(ast::impl* node,
+                                                colgm_struct& stct) {
     ctx.generics = {};
     for (const auto& i : stct.generic_template) {
         ctx.generics.insert(i);
@@ -1599,6 +1616,12 @@ void regist_pass::regist_single_impl(ast::impl* node) {
         stct.generic_struct_impl.push_back(node->clone());
     }
 }
+
+void regist_pass::regist_single_impl_for_tagged_union(ast::impl* node,
+                                                      colgm_tagged_union& un) {
+    // TODO
+}
+
 
 colgm_func regist_pass::generate_method(ast::func_decl* node,
                                         const colgm_struct& stct) {

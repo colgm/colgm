@@ -333,7 +333,7 @@ void impl::accept(visitor* v) {
 }
 
 impl* impl::clone() const {
-    auto ret = new impl(location, struct_name);
+    auto ret = new impl(location, name);
     if (generic_types) {
         ret->generic_types = generic_types->clone();
     }

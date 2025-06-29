@@ -344,7 +344,7 @@ public:
 
 class impl: public decl {
 private:
-    std::string struct_name;
+    std::string name;
     generic_type_list* generic_types;
     std::vector<func_decl*> methods;
 
@@ -352,15 +352,15 @@ private:
     std::vector<cond_compile*> conds;
 
 public:
-    impl(const span& loc, const std::string& sn):
-        decl(ast_type::ast_impl, loc), struct_name(sn),
+    impl(const span& loc, const std::string& n):
+        decl(ast_type::ast_impl, loc), name(n),
         generic_types(nullptr) {}
     ~impl() override;
     void accept(visitor*) override;
     impl* clone() const override;
 
-    void set_struct_name(const std::string& n) { struct_name = n; }
-    const auto& get_struct_name() const { return struct_name; }
+    void set_name(const std::string& n) { name = n; }
+    const auto& get_name() const { return name; }
     void set_generic_types(generic_type_list* node) { generic_types = node; }
     auto get_generic_types() const { return generic_types; }
     void add_method(func_decl* node) { methods.push_back(node); }

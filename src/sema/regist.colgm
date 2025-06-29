@@ -1458,6 +1458,29 @@ impl regist_pass {
     }
 
     func regist_single_impl(self, node: ast_impl*) {
+        var name = node->name.__ptr__();
+        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
+        if (dm->structs.has(name) || dm->generic_structs.has(name)) {
+            var struct_info: colgm_struct* = nil;
+            if (node->generic_types != nil) {
+                struct_info = dm->generic_structs.get(name);
+            } else {
+                struct_info = dm->structs.get(name);
+            }
+            self->regist_single_impl_for_struct(node, struct_info);
+            return;
+        } else if (dm->tagged_unions.has(name)) {
+            self->regist_single_impl_for_tagged_union(node, dm->tagged_unions.get(name));
+            return;
+        }
+
+        self->err->out("cannot find struct or tagged union named \"")
+                 ->out(name->c_str)
+                 ->out("\"")
+                 ->emit_err(node->base.location.__ptr__());
+    }
+
+    func regist_single_impl_for_struct(self, node: ast_impl*, struct_info: colgm_struct*) {
         if (node->generic_types != nil) {
             self->ctx->generics.clear();
             var gtv = node->generic_types->types.__ptr__();
@@ -1472,25 +1495,6 @@ impl regist_pass {
                 var n_td = gt => ast_type_def*;
                 self->ctx->generics.insert(n_td->name->content.__ptr__());
             }
-        }
-
-        var name = node->name.__ptr__();
-        var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
-        if (!dm->structs.has(name) && !dm->generic_structs.has(name)) {
-            var info = str::from("cannot find struct \"");
-            defer info.delete();
-            info.append_str(name);
-            info.append("\"");
-
-            self->err->error(node->base.location.__ptr__(), info.c_str);
-            return;
-        }
-
-        var struct_info: colgm_struct* = nil;
-        if (node->generic_types != nil) {
-            struct_info = dm->generic_structs.get(name);
-        } else {
-            struct_info = dm->structs.get(name);
         }
 
         foreach (var i; node->methods) {
@@ -1509,6 +1513,16 @@ impl regist_pass {
         }
 
         self->ctx->generics.clear();
+    }
+
+    func regist_single_impl_for_tagged_union(self, node: ast_impl*, union_info: colgm_tagged_union*) {
+        if (node->generic_types != nil) {
+            self->err->warn(
+                node->base.location.__ptr__(),
+                "generic template ignored"
+            );
+        }
+        // TODO
     }
 
     func scan_impls(self) {

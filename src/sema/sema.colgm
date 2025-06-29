@@ -2725,21 +2725,33 @@ impl sema {
             dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         }
 
-        if (!dm->structs.has(node->name.__ptr__())) {
-            self->err->out("cannot implement \"")
-                     ->out(node->name.c_str)
-                     ->out("\", because it is not defined in the same file")
-                     ->emit_err(node->base.location.__ptr__());
+        if (dm->structs.has(node->name.__ptr__())) {
+            var struct_self = dm->structs.get(node->name.__ptr__());
+            self->impl_struct_name.clear();
+            self->impl_struct_name.append_str(node->name.__ptr__());
+            foreach (var i; node->methods) {
+                self->resolve_method(i.get() => ast_func_decl*, struct_self);
+            }
+            self->impl_struct_name.clear();
+            return;
+        } else if (dm->tagged_unions.has(node->name.__ptr__())) {
+            var union_self = dm->tagged_unions.get(node->name.__ptr__());
+            self->impl_struct_name.clear();
+            self->impl_struct_name.append_str(node->name.__ptr__());
+            foreach (var i; node->methods) {
+                self->err->error(
+                    i.get()->location.__ptr__(),
+                    "not implemented yet"
+                );
+            }
+            self->impl_struct_name.clear();
             return;
         }
 
-        var struct_self = dm->structs.get(node->name.__ptr__());
-        self->impl_struct_name.clear();
-        self->impl_struct_name.append_str(node->name.__ptr__());
-        foreach (var i; node->methods) {
-            self->resolve_method(i.get() => ast_func_decl*, struct_self);
-        }
-        self->impl_struct_name.clear();
+        self->err->out("cannot implement \"")
+                 ->out(node->name.c_str)
+                 ->out("\", because it is not defined in the same file")
+                 ->emit_err(node->base.location.__ptr__());
     }
 
     func resolve_global_func(self, node: ast_func_decl*) {

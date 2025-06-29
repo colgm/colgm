@@ -1855,20 +1855,29 @@ void semantic::resolve_impl(impl* node) {
     const auto& domain = node->is_redirected()
         ? ctx.get_domain(node->get_redirect_location())
         : ctx.get_domain(node->get_file());
-    if (!domain.structs.count(node->get_struct_name())) {
-        rp.report(node,
-            "cannot implement \"" + node->get_struct_name() +
-            "\", this struct is not defined in the same file"
-        );
+    
+    if (domain.structs.count(node->get_name())) {
+        const auto& struct_self = domain.structs.at(node->get_name());
+        impl_struct_name = node->get_name();
+        for (auto i : node->get_methods()) {
+            resolve_method(i, struct_self);
+        }
+        impl_struct_name = "";
+        return;
+    } else if (domain.tagged_unions.count(node->get_name())) {
+        const auto& union_self = domain.tagged_unions.at(node->get_name());
+        impl_struct_name = node->get_name();
+        for (auto i : node->get_methods()) {
+            rp.report(i, "not implemented yet");
+        }
+        impl_struct_name = "";
         return;
     }
 
-    const auto& struct_self = domain.structs.at(node->get_struct_name());
-    impl_struct_name = node->get_struct_name();
-    for (auto i : node->get_methods()) {
-        resolve_method(i, struct_self);
-    }
-    impl_struct_name = "";
+    rp.report(node,
+        "cannot implement \"" + node->get_name() +
+        "\", this struct or tagged union is not defined in the same file"
+    );
 }
 
 void semantic::resolve_function_block(root* ast_root) {
