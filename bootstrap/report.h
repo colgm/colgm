@@ -65,8 +65,8 @@ public:
     error(): cnt(0) {}
     void err(const std::string&);
     void warn(const std::string&);
-    void err(const span&, const std::string&);
-    void warn(const span&, const std::string&);
+    void err(const span&, const std::string&, const std::string& note = "");
+    void warn(const span&, const std::string&, const std::string& note = "");
 
     void chkerr() const {
         if (cnt) {

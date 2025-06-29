@@ -879,12 +879,11 @@ impl sema {
         }
 
         if (prev->is_pointer()) {
-            var info = str::from("cannot use \".\" to get field from pointer \"");
-            defer info.delete();
-
-            info.append_str(prev_name.__ptr__());
-            info.append("\". use \"->\" instead");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("cannot use \".\" to get field from pointer \"")
+                     ->out(prev_name.c_str)
+                     ->out("\".")
+                     ->out_note("maybe you mean \"->\"?")
+                     ->emit_err(n->base.location.__ptr__());
             // report but continue resolving
         }
 
@@ -1218,7 +1217,21 @@ impl sema {
                 info.append("\" in \"");
                 info.append_str(prev_name_for_search.__ptr__());
                 info.append("\"");
-                self->err->error(n->base.location.__ptr__(), info.c_str);
+
+                var note = str::from("maybe you mean \"");
+                defer note.delete();
+
+                var fuzzy = st->fuzzy_match_field(n->name.__ptr__());
+                defer fuzzy.delete();
+
+                note.append_str(fuzzy.__ptr__());
+                note.append("\"?");
+
+                self->err->error_with_note(
+                    n->base.location.__ptr__(),
+                    info.c_str,
+                    note.c_str
+                );
                 return type::error_type();
             }
             // unreachable

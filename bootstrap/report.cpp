@@ -78,7 +78,7 @@ void error::warn(const std::string& info) {
     std::clog << orange << "Warning: " << white << info << reset << "\n\n";
 }
 
-void error::err(const span& loc, const std::string& info) {
+void error::err(const span& loc, const std::string& info, const std::string& note) {
     // load error occurred file into string lines
     load(loc.file);
 
@@ -150,10 +150,13 @@ void error::err(const span& loc, const std::string& info) {
             std::cerr << reset << "\n";
         }
     }
+    if (note.size()) {
+        std::cerr << "\n" << iden << cyan << "note: " << reset << note;
+    }
     std::cerr << "\n\n";
 }
 
-void error::warn(const span& loc, const std::string& info) {
+void error::warn(const span& loc, const std::string& info, const std::string& note) {
     // load error occurred file into string lines
     load(loc.file);
 
@@ -221,6 +224,9 @@ void error::warn(const span& loc, const std::string& info) {
         } else {
             std::cerr << reset << "\n";
         }
+    }
+    if (note.size()) {
+        std::cerr << "\n" << iden << cyan << "note: " << reset << note;
     }
     std::cerr << "\n\n";
 }

@@ -3,6 +3,8 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <vector>
+#include <algorithm>
 
 #ifndef _MSC_VER
 #include <unistd.h>
@@ -350,6 +352,32 @@ std::string local_time_str() {
     char buffer[128];
     strftime(buffer, 127, "%Y-%m-%d %H:%M:%S", localtime(&t));
     return std::string(buffer);
+}
+
+usize levenshtein_distance(const std::string& left, const std::string& right) {
+    std::vector<usize> v0;
+    std::vector<usize> v1;
+
+    usize left_len = left.length();
+    usize right_len = right.length();
+    v0.resize(right_len);
+    v1.resize(right_len);
+
+    for(usize i = 0; i < right_len; i++) {
+        v0[i] = i;
+    }
+    for(usize i = 1; i < left_len; i++) {
+        v1[0] = i;
+        for(usize j = 1; j < right_len; j++) {
+            usize deletion = v0[j] + 1;
+            usize insertion = v1[j - 1] + 1;
+            usize substitution = v0[j - 1] + ((left[i]==right[j])? 0 : 1);
+            v1[j] = std::min({deletion, insertion, substitution});
+        }
+        v0 = v1;
+    }
+
+    return v0.back();
 }
 
 }

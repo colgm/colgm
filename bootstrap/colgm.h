@@ -78,4 +78,6 @@ std::string llvm_raw_string(const std::string&);
 
 std::string local_time_str();
 
+usize levenshtein_distance(const std::string&, const std::string&);
+
 }

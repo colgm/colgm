@@ -14,6 +14,7 @@ pub struct report {
     filename: str,
     source: vec<str>,
     cache: str,
+    note: str,
     error_count: i64
 }
 
@@ -26,6 +27,7 @@ impl report {
         res->filename = str::instance();
         res->source = vec<str>::instance();
         res->cache = str::instance();
+        res->note = str::instance();
         res->error_count = 0;
         return res;
     }
@@ -34,6 +36,7 @@ impl report {
         self->filename.delete();
         self->source.delete();
         self->cache.delete();
+        self->note.delete();
     }
 }
 
@@ -104,7 +107,7 @@ impl report {
         return res;
     }
 
-    func print_file_line(self, location: span*, is_error: bool) {
+    func print_file_line(self, location: span*, note: const i8*, is_error: bool) {
         if (!location->file.eq_const(self->filename.c_str)) {
             self->load_file_source(location->file.c_str);
         }
@@ -220,6 +223,11 @@ impl report {
             }
         }
 
+        if (note != nil) {
+            io::stderr().out(pad_str.c_str)
+                        .cyan().out("note: ").reset()
+                        .out(note).endln();
+        }
         io::stderr().endln();
     }
 }
@@ -239,7 +247,21 @@ impl report {
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
             io::stderr().out_ch(':').out_i64(location->begin_column + 1);
             io::stderr().reset().endln();
-            self->print_file_line(location, true);
+            self->print_file_line(location, nil, true);
+        }
+    }
+
+    pub func error_with_note(self, location: span*, message: i8*, note: i8*) {
+        self->error_count += 1;
+
+        io::stderr().red().out("Error: ").reset();
+        io::stderr().white().out(message).reset().endln();
+        if (location != nil) {
+            io::stderr().cyan().out("  --> ").red().out(location->file.c_str);
+            io::stderr().out_ch(':').out_i64(location->begin_line + 1);
+            io::stderr().out_ch(':').out_i64(location->begin_column + 1);
+            io::stderr().reset().endln();
+            self->print_file_line(location, note, true);
         }
     }
 
@@ -251,7 +273,19 @@ impl report {
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
             io::stderr().out_ch(':').out_i64(location->begin_column + 1);
             io::stderr().reset().endln();
-            self->print_file_line(location, false);
+            self->print_file_line(location, nil, false);
+        }
+    }
+
+    pub func warn_with_note(self, location: span*, message: i8*, note: i8*) {
+        io::stderr().orange().out("Warning: ").reset();
+        io::stderr().white().out(message).reset().endln();
+        if (location != nil) {
+            io::stderr().cyan().out("  --> ").orange().out(location->file.c_str);
+            io::stderr().out_ch(':').out_i64(location->begin_line + 1);
+            io::stderr().out_ch(':').out_i64(location->begin_column + 1);
+            io::stderr().reset().endln();
+            self->print_file_line(location, note, false);
         }
     }
 
@@ -273,13 +307,28 @@ impl report {
         return self;
     }
 
+    pub func out_note(self, message: const i8*) -> report* {
+        self->note.append(message);
+        return self;
+    }
+
     pub func emit_warn(self, location: span*) {
-        self->warn(location, self->cache.c_str);
+        if (self->note.empty()) {
+            self->warn_with_note(location, self->cache.c_str, nil);
+        } else {
+            self->warn_with_note(location, self->cache.c_str, self->note.c_str);
+        }
         self->cache.clear();
+        self->note.clear();
     }
 
     pub func emit_err(self, location: span*) {
-        self->error(location, self->cache.c_str);
+        if (self->note.empty()) {
+            self->error_with_note(location, self->cache.c_str, nil);
+        } else {
+            self->error_with_note(location, self->cache.c_str, self->note.c_str);
+        }
         self->cache.clear();
+        self->note.clear();
     }
 }

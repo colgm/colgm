@@ -7,6 +7,8 @@ use std::io::{ io };
 use err::span::{ span };
 use err::panic::{ panic };
 use ast::ast::{ ast, ast_struct_decl, ast_impl };
+
+use util::levenshtein::{ levenshtein_distance };
 use util::package::{ package };
 
 use sema::type::{ type };
@@ -131,6 +133,37 @@ impl colgm_struct {
             }
         }
         return -1;
+    }
+
+    pub func fuzzy_match_field(self, name: str*) -> str {
+        var res = str::instance();
+        var min_distance: u64 = 0xffffffffffffffff;
+        foreach (var i; self->fields) {
+            var distance = levenshtein_distance(name, i.key());
+            if (distance < min_distance) {
+                min_distance = distance;
+                res.clear();
+                res.append_str(i.key());
+            }
+        }
+        foreach (var i; self->method) {
+            var distance = levenshtein_distance(name, i.key());
+            if (distance < min_distance) {
+                min_distance = distance;
+                res.clear();
+                res.append_str(i.key());
+            }
+        }
+        foreach (var i; self->static_method) {
+            var distance = levenshtein_distance(name, i.key());
+            if (distance < min_distance) {
+                min_distance = distance;
+                res.clear();
+                res.append_str(i.key());
+            }
+        }
+
+        return res;
     }
 }
 

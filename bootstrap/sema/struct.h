@@ -50,6 +50,7 @@ public:
     }
     ~colgm_struct();
     usize field_index(const std::string&) const;
+    std::string fuzzy_match_field(const std::string&) const;
 };
 
 }

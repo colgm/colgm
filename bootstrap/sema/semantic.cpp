@@ -578,7 +578,8 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
     if (prev.is_pointer()) {
         rp.report(node,
             "cannot use \".\" to get field from pointer \"" +
-            prev.to_string() + "\". maybe \"->\"?"
+            prev.to_string() + "\".",
+            "maybe you mean \"->\"?"
         );
         return type::error_type();
     }
@@ -622,7 +623,8 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
     }
     rp.report(node,
         "cannot find field \"" + node->get_name() +
-        "\" in \"" + prev.name_for_search() + "\""
+        "\" in \"" + prev.name_for_search() + "\"",
+        "maybe you mean \"" + struct_self.fuzzy_match_field(node->get_name()) + "\"?"
     );
     return type::error_type();
 }
@@ -938,7 +940,8 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         } else {
             rp.report(node,
                 "cannot find static method \"" + node->get_name() +
-                "\" in \"" + prev.name_for_search() + "\""
+                "\" in \"" + prev.name_for_search() + "\"",
+                "maybe you mean \"" + st.fuzzy_match_field(node->get_name()) + "\"?"
             );
             return type::error_type();
         }

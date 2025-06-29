@@ -14,11 +14,11 @@ public:
     bool has_error() const { return err.geterr(); }
 
 public:
-    void report(ast::node* n, const std::string& info) {
-        err.err(n->get_location(), info);
+    void report(ast::node* n, const std::string& info, const std::string& note = "") {
+        err.err(n->get_location(), info, note);
     }
-    void report(const span& loc, const std::string& info) {
-        err.err(loc, info);
+    void report(const span& loc, const std::string& info, const std::string& note = "") {
+        err.err(loc, info, note);
     }
     void warn(ast::node* n, const std::string& info) {
         err.warn(n->get_location(), info);
