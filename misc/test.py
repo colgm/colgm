@@ -37,7 +37,7 @@ TEST_LIST = [
     ("test/negative.colgm",                "src", False),
     ("test/recursive_instantiation.colgm", "src", True),
     ("test/report_const_changed.colgm",    "src", True),
-    ("test/self_ref_test.colgm",           "src", False),
+    ("test/self_ref_test.colgm",           "src", True),
     ("test/std_test.colgm",                "src", False),
     ("test/string.colgm",                  "src", False),
     ("test/to_str.colgm",                  "src", False),

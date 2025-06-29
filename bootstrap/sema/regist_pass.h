@@ -159,7 +159,8 @@ private: // structs and tagged unions
     void regist_complex_structs(ast::root*);
     void regist_single_struct_symbol(ast::struct_decl*);
     void regist_single_struct_field(ast::struct_decl*);
-    void check_struct_self_reference();
+    void check_self_reference();
+    void check_single_self_reference(const std::string&);
     void check_ref_enum(ast::tagged_union_decl*, colgm_tagged_union&);
     void load_tagged_union_member_map(ast::tagged_union_decl*, colgm_tagged_union&);
     void regist_single_tagged_union_symbol(ast::tagged_union_decl*);

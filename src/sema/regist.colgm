@@ -1155,54 +1155,48 @@ impl regist_pass {
         }
 
         // do self reference check
-        self->check_struct_self_reference();
+        self->check_self_reference();
     }
 
-    func check_struct_self_reference(self) {
+    func check_single_self_reference(self, name: str*) {
         var dm = self->ctx->get_domain(self->ctx->this_file.__ptr__());
         var structs = dm->structs.__ptr__();
+        var tagged_unions = dm->tagged_unions.__ptr__();
 
-        var need_check = vec<str>::instance();
-        defer need_check.delete();
+        var bfs = queue<pair<str, str>>::instance();
+        defer bfs.delete();
 
-        foreach (var st; structs) {
-            var info = st.value();
-            foreach (var f; info->fields) {
-                var fld_ty = f.value();
-                if (!fld_ty->is_pointer() &&
-                    structs->has(fld_ty->name.__ptr__())) {
-                    need_check.push(fld_ty->name.__ptr__());
-                }
-            }
+        var visited = hashset<str>::instance();
+        defer visited.delete();
+
+        var first = pair<str, str>::instance(name, name);
+        defer first.delete();
+
+        bfs.push(first.__ptr__());
+
+        var location: span* = nil;
+        if (structs->has(name)) {
+            location = structs->get(name)->location.__ptr__();
+        } else {
+            location = tagged_unions->get(name)->location.__ptr__();
         }
 
-        foreach (var s; need_check) {
-            var bfs = queue<pair<str, str>>::instance();
-            defer bfs.delete();
+        while (!bfs.empty()) {
+            var current = bfs.front()->key.copy_instance();
+            var ref_path = bfs.front()->value.copy_instance();
+            defer current.delete();
+            defer ref_path.delete();
 
-            var visited = hashset<str>::instance();
-            defer visited.delete();
+            bfs.pop();
 
-            var first = pair<str, str>::instance(s.get(), s.get());
-            defer first.delete();
+            if (visited.has(current.__ptr__())) {
+                continue;
+            } else {
+                visited.insert(current.__ptr__());
+            }
 
-            bfs.push(first.__ptr__());
-            while (!bfs.empty()) {
-                var current = bfs.front()->key.copy_instance();
-                var ref_path = bfs.front()->value.copy_instance();
-                defer current.delete();
-                defer ref_path.delete();
-
-                bfs.pop();
-
-                if (visited.has(current.__ptr__())) {
-                    continue;
-                } else {
-                    visited.insert(current.__ptr__());
-                }
-
-                var cur_st = structs->get(current.__ptr__());
-                foreach (var f; cur_st->fields) {
+            if (structs->has(current.__ptr__())) {
+                foreach (var f; structs->get(current.__ptr__())->fields) {
                     var fld_name = f.key();
                     var fld_type = f.value();
                     if (fld_type->is_pointer()) {
@@ -1216,13 +1210,14 @@ impl regist_pass {
                     new_ref_path.append(" -> ");
                     new_ref_path.append_str(fld_type->name.__ptr__());
 
-                    if (fld_type->name.eq(s.get())) {
-                        var info = str::from("self reference: ");
+                    if (fld_type->name.eq(name)) {
+                        var info = str::from("self reference detected: ");
                         defer info.delete();
                         info.append_str(new_ref_path.__ptr__());
 
-                        self->err->error(cur_st->location.__ptr__(), info.c_str);
-                    } else if (structs->has(fld_type->name.__ptr__())) {
+                        self->err->error(location, info.c_str);
+                    } else if (structs->has(fld_type->name.__ptr__()) ||
+                            tagged_unions->has(fld_type->name.__ptr__())) {
                         var new_pair = pair<str, str>::instance(
                             fld_type->name.__ptr__(),
                             new_ref_path.__ptr__()
@@ -1232,7 +1227,81 @@ impl regist_pass {
                         bfs.push(new_pair.__ptr__());
                     }
                 }
+            } else {
+                foreach (var m; tagged_unions->get(current.__ptr__())->members) {
+                    var member_name = m.key();
+                    var member_type = m.value();
+                    if (member_type->is_pointer()) {
+                        continue;
+                    }
+
+                    var new_ref_path = ref_path.copy_instance();
+                    defer new_ref_path.delete();
+                    new_ref_path.append("::");
+                    new_ref_path.append_str(member_name);
+                    new_ref_path.append(" -> ");
+                    new_ref_path.append_str(member_type->name.__ptr__());
+
+                    if (member_type->name.eq(name)) {
+                        var info = str::from("self reference detected: ");
+                        defer info.delete();
+                        info.append_str(new_ref_path.__ptr__());
+
+                        self->err->error(location, info.c_str);
+                    } else if (structs->has(member_type->name.__ptr__()) ||
+                            tagged_unions->has(member_type->name.__ptr__())) {
+                        var new_pair = pair<str, str>::instance(
+                            member_type->name.__ptr__(),
+                            new_ref_path.__ptr__()
+                        );
+                        defer new_pair.delete();
+
+                        bfs.push(new_pair.__ptr__());
+                    }
+                }
             }
+        }
+    }
+
+    func check_self_reference(self) {
+        var dm = self->ctx->get_domain(self->ctx->this_file.__ptr__());
+        var structs = dm->structs.__ptr__();
+        var tagged_unions = dm->tagged_unions.__ptr__();
+
+        var need_check = vec<str>::instance();
+        defer need_check.delete();
+
+        foreach (var st; structs) {
+            var info = st.value();
+            foreach (var f; info->fields) {
+                var field = f.value();
+                if (!field->is_pointer() &&
+                    structs->has(field->name.__ptr__())) {
+                    need_check.push(field->name.__ptr__());
+                }
+                if (!field->is_pointer() &&
+                    tagged_unions->has(field->name.__ptr__())) {
+                    need_check.push(field->name.__ptr__());
+                }
+            }
+        }
+        foreach (var un; tagged_unions) {
+            var info = un.value();
+            foreach (var m; info->members) {
+                var member = m.value();
+                if (!member->is_pointer() &&
+                    structs->has(member->name.__ptr__())) {
+                    need_check.push(member->name.__ptr__());
+                }
+                if (!member->is_pointer() &&
+                    tagged_unions->has(member->name.__ptr__())) {
+                    need_check.push(member->name.__ptr__());
+                }
+            }
+        }
+
+        foreach (var s; need_check) {
+            self->check_single_self_reference(s.get());
         }
     }
 }

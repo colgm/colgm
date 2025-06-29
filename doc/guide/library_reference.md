@@ -133,11 +133,11 @@ Example:
 func main() -> i32 {
     var a = vec<str>::instance();
     var s = str::from("hello world!");
-    a.push_back(s.__ptr__());
+    a.push(s.__ptr__());
     a.pop_back();
 
     var b = vec<i32>::instance();
-    b.push_back(123);
+    b.push(123);
 
     a.delete();
     s.delete();

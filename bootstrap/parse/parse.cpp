@@ -708,8 +708,12 @@ tagged_union_decl* parse::tagged_union_gen(std::vector<cond_compile*>& conds,
 
     match(tok::tk_union);
     match(tok::tk_lcurve);
-    res->set_ref_enum_name(toks[ptr].str);
-    match(tok::tk_id);
+    if (look_ahead(tok::tk_enum)) {
+        match(tok::tk_enum);
+    } else {
+        res->set_ref_enum_name(toks[ptr].str);
+        match(tok::tk_id);
+    }
     match(tok::tk_rcurve);
 
     res->set_name(toks[ptr].str);

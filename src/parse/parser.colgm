@@ -889,8 +889,12 @@ impl parser {
         var res = ast_tagged_union_decl::new(begin_loc);
 
         self->match_token(tok_kind::tok_lparen);
-        res->ref_enum_name.append(self->this_tok()->content.c_str);
-        self->match_token(tok_kind::tok_id);
+        if (self->lookahead(tok_kind::tok_enum)) {
+            self->match_token(tok_kind::tok_enum);
+        } else {
+            res->ref_enum_name.append(self->this_tok()->content.c_str);
+            self->match_token(tok_kind::tok_id);
+        }
         self->match_token(tok_kind::tok_rparen);
 
         res->name.append(self->this_tok()->content.c_str);

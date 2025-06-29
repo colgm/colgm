@@ -1045,7 +1045,7 @@ void regist_pass::regist_complex_structs(ast::root* node) {
         }
     }
     // do self reference check
-    check_struct_self_reference();
+    check_self_reference();
 }
 
 void regist_pass::regist_single_struct_symbol(ast::struct_decl* node) {
@@ -1171,8 +1171,9 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
     );
 }
 
-void regist_pass::check_struct_self_reference() {
+void regist_pass::check_self_reference() {
     const auto& structs = ctx.get_domain(ctx.this_file).structs;
+    const auto& tagged_unions = ctx.get_domain(ctx.this_file).tagged_unions;
 
     std::vector<std::string> need_check = {};
     for (const auto& st : structs) {
@@ -1182,32 +1183,81 @@ void regist_pass::check_struct_self_reference() {
                 need_check.push_back(st.first);
                 break;
             }
+            if (!field.second.is_pointer() &&
+                tagged_unions.count(field.second.name)) {
+                need_check.push_back(st.first);
+                break;
+            }
         }
     }
-    for (const auto& st : need_check) {
-        std::queue<std::pair<std::string, std::string>> bfs;
-        std::unordered_set<std::string> visited;
-        bfs.push({st, st});
-        while (!bfs.empty()) {
-            auto [cur, path] = bfs.front();
-            bfs.pop();
-            if (visited.count(cur)) {
-                continue;
-            } else {
-                visited.insert(cur);
+    for (const auto& un : tagged_unions) {
+        for (const auto& member : un.second.member) {
+            if (!member.second.is_pointer() &&
+                structs.count(member.second.name)) {
+                need_check.push_back(un.first);
+                break;
             }
+            if (!member.second.is_pointer() &&
+                tagged_unions.count(member.second.name)) {
+                need_check.push_back(un.first);
+                break;
+            }
+        }
+    }
 
-            for (const auto& field : structs.at(cur).field) {
+    for (const auto& name : need_check) {
+        check_single_self_reference(name);
+    }
+}
+
+void regist_pass::check_single_self_reference(const std::string& name) {
+    const auto& structs = ctx.get_domain(ctx.this_file).structs;
+    const auto& tagged_unions = ctx.get_domain(ctx.this_file).tagged_unions;
+
+    std::queue<std::pair<std::string, std::string>> bfs;
+    std::unordered_set<std::string> visited;
+    bfs.push({name, name});
+
+    const auto& location = structs.count(name)
+        ? structs.at(name).location
+        : tagged_unions.at(name).location;
+
+    while (!bfs.empty()) {
+        auto [current, path] = bfs.front();
+        bfs.pop();
+        if (visited.count(current)) {
+            continue;
+        } else {
+            visited.insert(current);
+        }
+
+        if (structs.count(current)) {
+            for (const auto& field : structs.at(current).field) {
                 if (field.second.is_pointer()) {
                     continue;
                 }
                 const auto& type_name = field.second.name;
                 auto new_path = path + "::" + field.first + " -> " + type_name;
-                if (type_name == st) {
-                    rp.report(structs.at(st).location,
+                if (type_name == name) {
+                    rp.report(location,
                         "self reference detected: " + new_path
                     );
-                } else if (structs.count(type_name)) {
+                } else if (structs.count(type_name) || tagged_unions.count(type_name)) {
+                    bfs.push({type_name, new_path});
+                }
+            }
+        } else {
+            for (const auto& member : tagged_unions.at(current).member) {
+                if (member.second.is_pointer()) {
+                    continue;
+                }
+                const auto& type_name = member.second.name;
+                auto new_path = path + "::" + member.first + " -> " + type_name;
+                if (type_name == name) {
+                    rp.report(location,
+                        "self reference detected: " + new_path
+                    );
+                } else if (structs.count(type_name) || tagged_unions.count(type_name)) {
                     bfs.push({type_name, new_path});
                 }
             }

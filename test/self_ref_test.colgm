@@ -1,27 +1,21 @@
-use std::libc::{ puts, malloc };
 
+// self reference detected: str::wrap -> wrap::string -> str
+// self reference detected: str::wrap -> wrap::un -> test_union::bb -> str
 struct str {
-    c_str: i8*
+    c_str: i8*,
+    wrap: wrap
 }
 
+// self reference detected: wrap::un -> test_union::cc -> wrap
+// self reference detected: wrap::string -> str::wrap -> wrap
 struct wrap {
-    string: str
+    string: str,
+    un: test_union
 }
 
-impl str {
-    pub func dump(self) {
-        puts(self->c_str);
-        return;
-    }
-}
-
-func main() -> i32 {
-    var consts = "[self-ref-test] hello world!";
-    var w = wrap::__alloc__();
-    w->string.c_str = consts;
-
-    puts(consts);
-    puts(w->string.c_str);
-    w->string.dump();
-    return 0;
+// self reference detected: test_union::cc -> wrap::un -> test_union
+union(enum) test_union {
+    aa: i32,
+    bb: str,
+    cc: wrap
 }
