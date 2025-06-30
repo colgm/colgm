@@ -15,6 +15,7 @@ use ast::ast::*;
 use ast::dumper::{ ast_dumper };
 
 use sema::structure::{ colgm_struct };
+use sema::tagged_union::{ colgm_tagged_union };
 use sema::function::{ colgm_func };
 use sema::context::{ sema_context };
 use sema::type::{ type };
@@ -2743,7 +2744,7 @@ impl sema {
             self->impl_struct_name.clear();
             self->impl_struct_name.append_str(node->name.__ptr__());
             foreach (var i; node->methods) {
-                self->resolve_method(i.get() => ast_func_decl*, struct_self);
+                self->resolve_struct_method(i.get() => ast_func_decl*, struct_self);
             }
             self->impl_struct_name.clear();
             return;
@@ -2752,10 +2753,7 @@ impl sema {
             self->impl_struct_name.clear();
             self->impl_struct_name.append_str(node->name.__ptr__());
             foreach (var i; node->methods) {
-                self->err->error(
-                    i.get()->location.__ptr__(),
-                    "not implemented yet"
-                );
+                self->resolve_union_method(i.get() => ast_func_decl*, union_self);
             }
             self->impl_struct_name.clear();
             return;
@@ -2813,7 +2811,7 @@ impl sema {
         self->ctx->pop_scope_level();
     }
 
-    func resolve_method(self, node: ast_func_decl*, struct_self: colgm_struct*) {
+    func resolve_struct_method(self, node: ast_func_decl*, struct_self: colgm_struct*) {
         if (node->body == nil) {
             self->err->error(node->base.location.__ptr__(),
                              "method should be implemented");
@@ -2825,6 +2823,40 @@ impl sema {
             method_self = struct_self->method.get(node->name.__ptr__());
         } else {
             method_self = struct_self->static_method.get(node->name.__ptr__());
+        }
+
+        self->ctx->push_scope_level();
+        foreach (var p; method_self->unordered_params) {
+            var param_name = p.key();
+            var param_type = p.value();
+            self->ctx->add_local_var(param_name, param_type);
+        }
+        foreach (var i; node->body->stmts) {
+            var n = i.get();
+            self->resolve_statement(n, method_self);
+            if (n->is(ast_kind::ast_ret_stmt) ||
+                n->is(ast_kind::ast_break_stmt) ||
+                n->is(ast_kind::ast_continue_stmt)) {
+                self->report_unreachable_statements(node->body);
+                break;
+            }
+        }
+        self->report_top_level_block_has_no_return(node->body, method_self);
+        self->ctx->pop_scope_level();
+    }
+
+    func resolve_union_method(self, node: ast_func_decl*, union_self: colgm_tagged_union*) {
+        if (node->body == nil) {
+            self->err->error(node->base.location.__ptr__(),
+                             "method should be implemented");
+            return;
+        }
+        
+        var method_self: colgm_func* = nil;
+        if (union_self->method.has(node->name.__ptr__())) {
+            method_self = union_self->method.get(node->name.__ptr__());
+        } else {
+            method_self = union_self->static_method.get(node->name.__ptr__());
         }
 
         self->ctx->push_scope_level();

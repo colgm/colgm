@@ -1328,24 +1328,9 @@ impl regist_pass {
         return false;
     }
 
-    func check_field_not_exist(self,
-                               struct_info: colgm_struct*,
-                               name: str*) -> bool {
-        if (struct_info->fields.has(name)) {
-            return false;
-        }
-        if (struct_info->static_method.has(name)) {
-            return false;
-        }
-        if (struct_info->method.has(name)) {
-            return false;
-        }
-        return true;
-    }
-
-    func generate_self_type_node(self,
-                                 struct_info: colgm_struct*,
-                                 node: ast_func_decl*) {
+    func generate_struct_self_type_node(self,
+                                        struct_info: colgm_struct*,
+                                        node: ast_func_decl*) {
         var pms = node->params->params.__ptr__();
         var first_param = pms->get(0) => ast_param*;
         if (first_param->type != nil) {
@@ -1371,12 +1356,12 @@ impl regist_pass {
         first_param->type = tn;
     }
 
-    func generate_impl_method(self,
-                              struct_info: colgm_struct*,
-                              node: ast_func_decl*) {
+    func generate_impl_method_for_struct(self,
+                                         struct_info: colgm_struct*,
+                                         node: ast_func_decl*) {
         var name = node->get_monomorphic_name();
-        if (!self->check_field_not_exist(struct_info, name)) {
-            var info = str::from("field \"");
+        if (struct_info->check_field_exists(name)) {
+            var info = str::from("\"");
             defer info.delete();
             info.append_str(name);
             info.append("\" conflicts with exist field or method");
@@ -1413,18 +1398,18 @@ impl regist_pass {
 
         // generate self type node, after this process,
         // type node of self will not be nil
-        self->generate_self_type_node(struct_info, node);
+        self->generate_struct_self_type_node(struct_info, node);
 
         self->generate_function_params(func_info, node, false);
         struct_info->method.insert(name, func_info);
     }
 
-    func generate_impl_static_method(self,
-                              struct_info: colgm_struct*,
-                              node: ast_func_decl*) {
+    func generate_impl_static_method_for_struct(self,
+                                                struct_info: colgm_struct*,
+                                                node: ast_func_decl*) {
         var name = node->get_monomorphic_name();
-        if (!self->check_field_not_exist(struct_info, name)) {
-            var info = str::from("field \"");
+        if (struct_info->check_field_exists(name)) {
+            var info = str::from("\"");
             defer info.delete();
             info.append_str(name);
             info.append("\" conflicts with exist field or method");
@@ -1454,11 +1439,122 @@ impl regist_pass {
                 ret_type.__ptr__()
             );
         }
+        defer {
+            func_info->delete();
+            free(func_info => i8*);
+        }
 
         self->generate_function_params(func_info, node, false);
         struct_info->static_method.insert(name, func_info);
-        func_info->delete();
-        free(func_info => i8*);
+    }
+
+    func generate_union_self_type_node(self,
+                                       union_info: colgm_tagged_union*,
+                                       node: ast_func_decl*) {
+        var pms = node->params->params.__ptr__();
+        var first_param = pms->get(0) => ast_param*;
+        if (first_param->type != nil) {
+            panic("unreachable");
+            return;
+        }
+
+        var loc = first_param->base.location.__ptr__();
+        var tn = ast_type_def::new(loc);
+        tn->name = ast_identifier::new(loc, union_info->name.__ptr__());
+        tn->pointer_depth = 1;
+        first_param->type = tn;
+    }
+
+    func generate_impl_method_for_tagged_union(self,
+                                               union_info: colgm_tagged_union*,
+                                               node: ast_func_decl*) {
+        var name = node->name.__ptr__();
+        if (union_info->check_member_exists(name)) {
+            var info = str::from("\"");
+            defer info.delete();
+            info.append_str(name);
+            info.append("\" conflicts with exist member or method");
+
+            self->err->error(node->base.location.__ptr__(), info.c_str);
+            return;
+        }
+
+        // allocate func info
+        var func_info: colgm_func* = nil;
+        if (node->return_type == nil) {
+            var ret_type = type::void_type();
+            defer ret_type.delete();
+
+            func_info = colgm_func::new(
+                name,
+                node->base.location.__ptr__(),
+                ret_type.__ptr__()
+            );
+        } else {
+            var ret_type = self->tr.resolve(node->return_type);
+            defer ret_type.delete();
+
+            func_info = colgm_func::new(
+                name,
+                node->base.location.__ptr__(),
+                ret_type.__ptr__()
+            );
+        }
+        defer {
+            func_info->delete();
+            free(func_info => i8*);
+        }
+
+        // generate self type node, after this process,
+        // type node of self will not be nil
+        self->generate_union_self_type_node(union_info, node);
+
+        self->generate_function_params(func_info, node, false);
+        union_info->method.insert(name, func_info);
+    }
+
+    func generate_impl_static_method_for_tagged_union(self,
+                                                      union_info: colgm_tagged_union*,
+                                                      node: ast_func_decl*) {
+        var name = node->name.__ptr__();
+        if (union_info->check_member_exists(name)) {
+            var info = str::from("\"");
+            defer info.delete();
+            info.append_str(name);
+            info.append("\" conflicts with exist member or method");
+
+            self->err->error(node->base.location.__ptr__(), info.c_str);
+            return;
+        }
+
+        // allocate func info
+        var func_info: colgm_func* = nil;
+        if (node->return_type == nil) {
+            var ret_type = type::void_type();
+            defer ret_type.delete();
+
+            func_info = colgm_func::new(
+                name,
+                node->base.location.__ptr__(),
+                ret_type.__ptr__()
+            );
+        } else {
+            var ret_type = self->tr.resolve(node->return_type);
+            defer ret_type.delete();
+
+            func_info = colgm_func::new(
+                name,
+                node->base.location.__ptr__(),
+                ret_type.__ptr__()
+            );
+        }
+        defer {
+            func_info->delete();
+            free(func_info => i8*);
+        }
+
+        self->generate_function_params(func_info, node, false);
+        union_info->static_method.insert(name, func_info);
     }
 
     func regist_single_impl(self, node: ast_impl*) {
@@ -1504,9 +1600,9 @@ impl regist_pass {
         foreach (var i; node->methods) {
             var mthd = i.get() => ast_func_decl*;
             if (self->is_method(mthd)) {
-                self->generate_impl_method(struct_info, mthd);
+                self->generate_impl_method_for_struct(struct_info, mthd);
             } else {
-                self->generate_impl_static_method(struct_info, mthd);
+                self->generate_impl_static_method_for_struct(struct_info, mthd);
             }
         }
 
@@ -1526,7 +1622,15 @@ impl regist_pass {
                 "generic template ignored"
             );
         }
-        // TODO
+
+        foreach (var i; node->methods) {
+            var mthd = i.get() => ast_func_decl*;
+            if (self->is_method(mthd)) {
+                self->generate_impl_method_for_tagged_union(union_info, mthd);
+            } else {
+                self->generate_impl_static_method_for_tagged_union(union_info, mthd);
+            }
+        }
     }
 
     func scan_impls(self) {

@@ -180,10 +180,15 @@ private: // implementations
     void regist_single_impl_for_struct(ast::impl*, colgm_struct&);
     void regist_single_impl_for_tagged_union(ast::impl*, colgm_tagged_union&);
     colgm_func generate_method(ast::func_decl*, const colgm_struct&);
+    colgm_func generate_method(ast::func_decl*, const colgm_tagged_union&);
     void generate_self_parameter(ast::param*, const colgm_struct&);
+    void generate_self_parameter(ast::param*, const colgm_tagged_union&);
     void generate_method_parameter_list(ast::param_list*,
                                         colgm_func&,
                                         const colgm_struct&);
+    void generate_method_parameter_list(ast::param_list*,
+                                        colgm_func&,
+                                        const colgm_tagged_union&);
 
 public:
     regist_pass(error& e, sema_context& c):

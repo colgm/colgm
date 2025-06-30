@@ -1850,6 +1850,31 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
     ctx.pop_level();
 }
 
+void semantic::resolve_method(func_decl* node, const colgm_tagged_union& union_self) {
+    if (!node->get_code_block()) {
+        rp.report(node, "should be implemented here");
+        return;
+    }
+    ctx.push_level();
+    const auto& method_self = union_self.method.count(node->get_name())
+        ? union_self.method.at(node->get_name())
+        : union_self.static_method.at(node->get_name());
+    for (const auto& p : method_self.ordered_params) {
+        ctx.add_local(p, method_self.params.at(p));
+    }
+    for (auto i : node->get_code_block()->get_stmts()) {
+        resolve_statement(i, method_self);
+        if (i->is(ast_type::ast_ret_stmt) ||
+            i->is(ast_type::ast_continue_stmt) ||
+            i->is(ast_type::ast_break_stmt)) {
+            report_unreachable_statements(node->get_code_block());
+            break;
+        }
+    }
+    report_top_level_block_has_no_return(node->get_code_block(), method_self);
+    ctx.pop_level();
+}
+
 void semantic::resolve_impl(impl* node) {
     if (node->get_generic_types()) {
         return; // do not resolve generic impl
@@ -1871,7 +1896,7 @@ void semantic::resolve_impl(impl* node) {
         const auto& union_self = domain.tagged_unions.at(node->get_name());
         impl_struct_name = node->get_name();
         for (auto i : node->get_methods()) {
-            rp.report(i, "not implemented yet");
+            resolve_method(i, union_self);
         }
         impl_struct_name = "";
         return;

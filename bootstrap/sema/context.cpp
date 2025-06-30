@@ -96,16 +96,28 @@ void sema_context::dump_tagged_unions() const {
     }
 }
 
-void sema_context::dump_single_tagged_union(const colgm_tagged_union& u) const {
-    std::cout << "  tagged union " << u.name << " {\n";
-    for (const auto& member : u.ordered_member) {
+void sema_context::dump_single_tagged_union(const colgm_tagged_union& un) const {
+    std::cout << "  tagged union " << un.name << " {\n";
+    for (const auto& member : un.ordered_member) {
         std::cout << "    " << member;
-        std::cout << " (" << u.member_int_map.at(member) << ")";
-        std::cout << ": " << u.member.at(member);
-        if (member != u.ordered_member.back()) {
+        std::cout << " (" << un.member_int_map.at(member) << ")";
+        std::cout << ": " << un.member.at(member);
+        if (member != un.ordered_member.back()) {
             std::cout << ",";
         }
         std::cout << "\n";
+    }
+    std::cout << "  }\n";
+    if (un.method.empty() && un.static_method.empty()) {
+        return;
+    }
+    std::cout << "  impl " << un.name;
+    std::cout << " {\n";
+    for (const auto& method : un.method) {
+        dump_single_function(method.second, "  ");
+    }
+    for (const auto& method : un.static_method) {
+        dump_single_function(method.second, "  ");
     }
     std::cout << "  }\n";
 }

@@ -594,6 +594,17 @@ impl mir2sir {
 
                 self->type_mapper.insert(s_name.__ptr__(), symbol_kind::struct_kind);
             }
+            foreach (var j; dm->tagged_unions) {
+                var tu_type = type::instance();
+                tu_type.name.append_str(j.value()->name.__ptr__());
+                tu_type.loc_file.append_str(j.value()->location.file.__ptr__());
+                defer tu_type.delete();
+
+                var tu_name = tu_type.full_path_name(self->pkg, false);
+                defer tu_name.delete();
+
+                self->type_mapper.insert(tu_name.__ptr__(), symbol_kind::tagged_union_kind);
+            }
         }
     }
 
@@ -654,6 +665,14 @@ impl mir2sir {
                 // %struct.std.vec<data::foo>
                 copy.generics.clear();
             }
+            symbol_kind::tagged_union_kind => {
+                var new_name = mangle_tagged_union_name(full_name.__ptr__());
+                defer new_name.delete();
+
+                copy.name.clear();
+                copy.name.append_str(new_name.__ptr__());
+                copy.loc_file.clear();
+            }
             symbol_kind::enum_kind => {
                 var i64_t = type::i64_type();
                 defer i64_t.delete();
@@ -663,7 +682,7 @@ impl mir2sir {
                 copy.reset_with(i64_t.__ptr__());
             }
             _ => {
-                unreachable();
+                panic("unsupported type kind");
             }
         }
 

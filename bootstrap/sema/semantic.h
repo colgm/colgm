@@ -8,6 +8,7 @@
 #include "sema/type.h"
 #include "sema/func.h"
 #include "sema/struct.h"
+#include "sema/tagged_union.h"
 #include "package/package.h"
 #include "sema/context.h"
 #include "sema/reporter.h"
@@ -99,6 +100,7 @@ private:
     void resolve_code_block(code_block*, const colgm_func&);
     void resolve_global_func(func_decl*);
     void resolve_method(func_decl*, const colgm_struct&);
+    void resolve_method(func_decl*, const colgm_tagged_union&);
     void resolve_impl(impl*);
     void resolve_function_block(root*);
 

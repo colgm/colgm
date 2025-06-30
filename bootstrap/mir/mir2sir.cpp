@@ -22,6 +22,13 @@ void mir2sir::generate_type_mapper() {
             };
             type_mapper.insert({tp.full_path_name(), sym_kind::struct_kind});
         }
+        for (const auto& i : dm.second.tagged_unions) {
+            const auto tp = type {
+                .name = i.second.name,
+                .loc_file = i.second.location.file
+            };
+            type_mapper.insert({tp.full_path_name(), sym_kind::tagged_union_kind});
+        }
     }
 }
 
@@ -50,6 +57,9 @@ std::string mir2sir::type_mapping(const type& t) {
             // but expect to be
             // %struct.std.vec<data::foo>
             copy.name = "%struct." + mangle(t.full_path_name(false));
+            break;
+        case sym_kind::tagged_union_kind:
+            copy.name = "%tagged_union." + mangle(t.full_path_name(false));
             break;
         case sym_kind::enum_kind:
             // should copy pointer depth too

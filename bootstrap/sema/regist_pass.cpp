@@ -1619,7 +1619,34 @@ void regist_pass::regist_single_impl_for_struct(ast::impl* node,
 
 void regist_pass::regist_single_impl_for_tagged_union(ast::impl* node,
                                                       colgm_tagged_union& un) {
-    // TODO
+    for (auto i : node->get_methods()) {
+        const auto& name = i->get_name();
+        if (un.member.count(name)) {
+            rp.report(i, "conflict with union member \"" + name + "\"");
+            continue;
+        }
+        if (un.method.count(name) || un.static_method.count(name)) {
+            rp.report(i, "method \"" + name + "\" already exists");
+            continue;
+        }
+
+        // generic methods are not allowed
+        if (i->get_generic_types()) {
+            rp.report(i, "union's method \"" + name + "\" cannot be generic");
+        }
+        auto func = generate_method(i, un);
+        if (i->is_public_func()) {
+            func.is_public = true;
+        }
+        if (i->is_extern_func()) {
+            rp.report(i, "extern method is not supported");
+        }
+        if (func.ordered_params.size() && func.ordered_params.front() == "self") {
+            un.method.insert({name, func});
+        } else {
+            un.static_method.insert({name, func});
+        }
+    }
 }
 
 
@@ -1629,6 +1656,16 @@ colgm_func regist_pass::generate_method(ast::func_decl* node,
     func_self.name = node->get_monomorphic_name();
     func_self.location = node->get_location();
     generate_method_parameter_list(node->get_params(), func_self, stct);
+    generate_return_type(node->get_return_type(), func_self);
+    return func_self;
+}
+
+colgm_func regist_pass::generate_method(ast::func_decl* node,
+                                        const colgm_tagged_union& un) {
+    auto func_self = colgm_func();
+    func_self.name = node->get_name();
+    func_self.location = node->get_location();
+    generate_method_parameter_list(node->get_params(), func_self, un);
     generate_return_type(node->get_return_type(), func_self);
     return func_self;
 }
@@ -1650,6 +1687,18 @@ void regist_pass::generate_self_parameter(ast::param* node,
             new_type_def->get_generic_types()->add_type(t);
         }
     }
+    new_type_def->add_pointer_level();
+    node->set_type(new_type_def);
+}
+
+void regist_pass::generate_self_parameter(ast::param* node,
+                                          const colgm_tagged_union& un) {
+    auto new_type_def = new type_def(node->get_location());
+    new_type_def->set_name(new identifier(
+        node->get_name()->get_location(),
+        un.name
+    ));
+
     new_type_def->add_pointer_level();
     node->set_type(new_type_def);
 }
@@ -1684,6 +1733,41 @@ void regist_pass::generate_method_parameter_list(param_list* node,
         self_type.pointer_depth != 1) {
         rp.report(node->get_params().front(),
             "\"self\" should be \"" + stct.name + "*\", but get \"" +
+            self_type.to_string() + "\""
+        );
+    }
+}
+
+void regist_pass::generate_method_parameter_list(param_list* node,
+                                                 colgm_func& self,
+                                                 const colgm_tagged_union& un) {
+    for (auto i : node->get_params()) {
+        bool is_self = i->get_name()->get_name()=="self";
+        if (is_self && i!=node->get_params().front()) {
+            rp.report(i->get_name(), "\"self\" must be the first parameter");
+        }
+        if (is_self && i->get_type()) {
+            rp.warn(i->get_type(), "\"self\" does not need type");
+        }
+        if (is_self && !i->get_type()) {
+            generate_self_parameter(i, un);
+        }
+        generate_parameter(i, self);
+    }
+
+    if (self.ordered_params.empty() ||
+        self.ordered_params.front() != "self") {
+        return;
+    }
+
+    // we still need to check self type, for user may specify a wrong type
+    // check self type is the pointer of implemented struct
+    const auto& self_type = self.params.at(self.ordered_params.front());
+    if (self_type.name != un.name ||
+        self_type.loc_file != un.location.file ||
+        self_type.pointer_depth != 1) {
+        rp.report(node->get_params().front(),
+            "\"self\" should be \"" + un.name + "*\", but get \"" +
             self_type.to_string() + "\""
         );
     }
