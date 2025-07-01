@@ -36,6 +36,7 @@ public:
         method(t.method), static_method(t.static_method),
         is_public(t.is_public), is_extern(t.is_extern) {}
     ~colgm_tagged_union() = default;
+    std::string fuzzy_match_field(const std::string&) const;
 };
 
 }

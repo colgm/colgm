@@ -65,8 +65,12 @@ private:
     type resolve_array_list(array_list*);
     type resolve_identifier(identifier*);
     void check_pub_method(node*, const std::string&, const colgm_struct&);
+    void check_pub_method(node*, const std::string&, const colgm_tagged_union&);
     void check_pub_static_method(node*, const std::string&, const colgm_struct&);
+    void check_pub_static_method(node*, const std::string&, const colgm_tagged_union&);
     type resolve_get_field(const type&, get_field*);
+    type resolve_struct_get_field(const colgm_struct&, const type&, get_field*);
+    type resolve_tagged_union_get_field(const colgm_tagged_union&, const type&, get_field*);
     void check_static_call_args(const colgm_func&, call_func_args*);
     void check_method_call_args(const colgm_func&, call_func_args*);
     type resolve_call_id(call_id*);
@@ -75,6 +79,8 @@ private:
     type resolve_initializer(const type&, initializer*);
     type resolve_call_path(const type&, call_path*);
     type resolve_ptr_get_field(const type&, ptr_get_field*);
+    type resolve_struct_ptr_get_field(const colgm_struct&, const type&, ptr_get_field*);
+    type resolve_tagged_union_ptr_get_field(const colgm_tagged_union&, const type&, ptr_get_field*);
     type resolve_call(call*);
     bool check_valid_left_value(expr*);
     void check_mutable_left_value(expr*, const type&);

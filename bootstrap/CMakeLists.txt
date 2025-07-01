@@ -59,6 +59,7 @@ set(COLGM_SEMA
     ${CMAKE_SOURCE_DIR}/sema/regist_pass.cpp
     ${CMAKE_SOURCE_DIR}/sema/semantic.cpp
     ${CMAKE_SOURCE_DIR}/sema/struct.cpp
+    ${CMAKE_SOURCE_DIR}/sema/tagged_union.cpp
     ${CMAKE_SOURCE_DIR}/sema/type.cpp
     ${CMAKE_SOURCE_DIR}/sema/type_resolver.cpp)
 set(COLGM_OBJECT

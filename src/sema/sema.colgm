@@ -816,10 +816,10 @@ impl sema {
         return infer;
     }
 
-    func check_pub_method(self,
-                          n: ast*,
-                          name: str*,
-                          struct_self: colgm_struct*) {
+    func check_struct_pub_method(self,
+                                 n: ast*,
+                                 name: str*,
+                                 struct_self: colgm_struct*) {
         if (!struct_self->method.has(name)) {
             return;
         }
@@ -835,6 +835,32 @@ impl sema {
             defer info.delete();
 
             info.append_str(struct_self->name.__ptr__());
+            info.append("::");
+            info.append_str(name);
+            info.append("\"");
+            self->err->error(n->location.__ptr__(), info.c_str);
+        }
+    }
+
+    func check_tagged_union_pub_method(self,
+                                       n: ast*,
+                                       name: str*,
+                                       union_self: colgm_tagged_union*) {
+        if (!union_self->method.has(name)) {
+            return;
+        }
+
+        var m = union_self->method.get(name);
+        if (m->is_public) {
+            return;
+        }
+
+        if (self->impl_struct_name.empty() ||
+            !self->impl_struct_name.eq(union_self->name.__ptr__())) {
+            var info = str::from("cannot access private method \"");
+            defer info.delete();
+
+            info.append_str(union_self->name.__ptr__());
             info.append("::");
             info.append_str(name);
             info.append("\"");
@@ -870,12 +896,10 @@ impl sema {
         defer prev_name_for_search.delete();
 
         if (prev->is_global_sym) {
-            var info = str::from("cannot get field from global symbol \"");
-            defer info.delete();
-
-            info.append_str(prev_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("cannot get field from global symbol \"")
+                     ->out(prev_name.c_str)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
             return type::error_type();
         }
 
@@ -890,61 +914,118 @@ impl sema {
 
         // loc_file is empty means prev is native type
         if (prev->loc_file.empty()) {
-            var info = str::from("cannot get method \"");
-            defer info.delete();
-
-            info.append_str(n->name.__ptr__());
-            info.append("\" from native type \"");
-            info.append_str(prev_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("cannot get method \"")
+                     ->out(n->name.c_str)
+                     ->out("\" from native type \"")
+                     ->out(prev_name.c_str)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
             return type::error_type();
         }
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
-        if (!dm->structs.has(prev_name_for_search.__ptr__())) {
-            var info = str::from("cannot get field from undefined struct \"");
-            defer info.delete();
-
-            info.append_str(prev_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
-            return type::error_type();
+        if (dm->structs.has(prev_name_for_search.__ptr__())) {
+            var res = self->resolve_struct_get_field(
+                dm->structs.get(prev_name_for_search.__ptr__()),
+                prev,
+                n
+            );
+            return res;
+        } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
+            var res = self->resolve_tagged_union_get_field(
+                dm->tagged_unions.get(prev_name_for_search.__ptr__()),
+                prev,
+                n
+            );
+            return res;
         }
 
-        var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+        self->err->out("cannot get field from \"")
+                 ->out(prev_name.c_str)
+                 ->out("\"")
+                 ->emit_err(n->base.location.__ptr__());
+        return type::error_type();
+    }
+
+    func resolve_struct_get_field(self,
+                                  struct_self: colgm_struct*,
+                                  prev: type*,
+                                  n: ast_get_field*) -> type {
+        var prev_name = prev->full_path_name(self->pkg, true);
+        defer prev_name.delete();
+
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
         if (struct_self->fields.has(n->name.__ptr__())) {
             var infer = struct_self->fields.get(n->name.__ptr__())->copy_instance();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
         if (struct_self->method.has(n->name.__ptr__())) {
-            self->check_pub_method(n => ast*, n->name.__ptr__(), struct_self);
+            self->check_struct_pub_method(n => ast*, n->name.__ptr__(), struct_self);
             var infer = self->struct_method_infer(prev, n->name.__ptr__());
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
 
         if (struct_self->static_method.has(n->name.__ptr__())) {
-            var info = str::from("method \"");
-            defer info.delete();
-
-            info.append_str(n->name.__ptr__());
-            info.append("\" in \"");
-            info.append_str(prev_name.__ptr__());
-            info.append("\" is static");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("method \"")
+                     ->out(n->name.c_str)
+                     ->out("\" in \"")
+                     ->out(prev_name.c_str)
+                     ->out("\" is static")
+                     ->emit_err(n->base.location.__ptr__());
             return type::error_type();
         }
 
-        var info = str::from("cannot find field or method \"");
-        defer info.delete();
+        self->err->out("cannot find field or method \"")
+                 ->out(n->name.c_str)
+                 ->out("\" in \"")
+                 ->out(prev_name_for_search.c_str)
+                 ->out("\"")
+                 ->emit_err(n->base.location.__ptr__());
+        return type::error_type();
+    }
 
-        info.append_str(n->name.__ptr__());
-        info.append("\" in \"");
-        info.append_str(prev_name_for_search.__ptr__());
-        info.append("\"");
-        self->err->error(n->base.location.__ptr__(), info.c_str);
+    func resolve_tagged_union_get_field(self,
+                                        union_self: colgm_tagged_union*,
+                                        prev: type*,
+                                        n: ast_get_field*) -> type {
+        var prev_name = prev->full_path_name(self->pkg, true);
+        defer prev_name.delete();
+
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
+        if (union_self->members.has(n->name.__ptr__())) {
+            var infer = union_self->members.get(n->name.__ptr__())->copy_instance();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
+        }
+        if (union_self->method.has(n->name.__ptr__())) {
+            self->check_tagged_union_pub_method(n => ast*, n->name.__ptr__(), union_self);
+            var infer = self->struct_method_infer(prev, n->name.__ptr__());
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
+        }
+
+        if (union_self->static_method.has(n->name.__ptr__())) {
+            self->err->out("method \"")
+                     ->out(n->name.c_str)
+                     ->out("\" in \"")
+                     ->out(prev_name.c_str)
+                     ->out("\" is static")
+                     ->emit_err(n->base.location.__ptr__());
+            return type::error_type();
+        }
+
+        self->err->out("cannot find field or method \"")
+                 ->out(n->name.c_str)
+                 ->out("\" in \"")
+                 ->out(prev_name_for_search.c_str)
+                 ->out("\"")
+                 ->emit_err(n->base.location.__ptr__());
         return type::error_type();
     }
 
@@ -1067,29 +1148,64 @@ impl sema {
         // static method call of struct
         if (prev->stm_info.flag_is_static) {
             var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
-            var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
-            var method = struct_self->static_method.get(
-                prev->stm_info.method_name.__ptr__()
-            );
-            self->check_static_call_args(method, n);
+            if (dm->structs.has(prev_name_for_search.__ptr__())) {
+                var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+                var method = struct_self->static_method.get(
+                    prev->stm_info.method_name.__ptr__()
+                );
+                self->check_static_call_args(method, n);
 
-            var infer = method->return_type.copy_instance();
-            n->base.resolved_type.reset_with(infer.__ptr__());
-            return infer;
+                var infer = method->return_type.copy_instance();
+                n->base.resolved_type.reset_with(infer.__ptr__());
+                return infer;
+            } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
+                var union_self = dm->tagged_unions.get(prev_name_for_search.__ptr__());
+                var method = union_self->static_method.get(
+                    prev->stm_info.method_name.__ptr__()
+                );
+                self->check_static_call_args(method, n);
+
+                var infer = method->return_type.copy_instance();
+                n->base.resolved_type.reset_with(infer.__ptr__());
+                return infer;
+            }
+            self->err->out("cannot find \"")
+                     ->out(prev_name_for_search.c_str)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
+            return type::error_type();
         }
 
         // normal method call of struct
         if (prev->stm_info.flag_is_normal) {
             var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
-            var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
-            var method = struct_self->method.get(
-                prev->stm_info.method_name.__ptr__()
-            );
-            self->check_method_call_args(method, n);
+            if (dm->structs.has(prev_name_for_search.__ptr__())) {
+                var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+                var method = struct_self->method.get(
+                    prev->stm_info.method_name.__ptr__()
+                );
+                self->check_method_call_args(method, n);
 
-            var infer = method->return_type.copy_instance();
-            n->base.resolved_type.reset_with(infer.__ptr__());
-            return infer;
+                var infer = method->return_type.copy_instance();
+                n->base.resolved_type.reset_with(infer.__ptr__());
+                return infer;
+            } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
+                var union_self = dm->tagged_unions.get(prev_name_for_search.__ptr__());
+                var method = union_self->method.get(
+                    prev->stm_info.method_name.__ptr__()
+                );
+                self->check_method_call_args(method, n);
+
+                var infer = method->return_type.copy_instance();
+                n->base.resolved_type.reset_with(infer.__ptr__());
+                return infer;
+            }
+
+            self->err->out("cannot find \"")
+                     ->out(prev_name_for_search.c_str)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
+            return type::error_type();
         }
 
         self->err->error(n->base.location.__ptr__(), "cannot call non-function");
@@ -1196,7 +1312,7 @@ impl sema {
             prev->is_global_sym) {
             var st = dm->structs.get(prev_name_for_search.__ptr__());
             if (st->static_method.has(n->name.__ptr__())) {
-                self->check_pub_method(n => ast*, n->name.__ptr__(), st);
+                self->check_struct_pub_method(n => ast*, n->name.__ptr__(), st);
                 var infer = self->struct_static_method_infer(prev, n->name.__ptr__());
                 n->base.resolved_type.reset_with(infer.__ptr__());
                 return infer;
@@ -1260,20 +1376,47 @@ impl sema {
         } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__()) &&
                    prev->is_global_sym) {
             var tu = dm->tagged_unions.get(prev_name_for_search.__ptr__());
-            if (tu->members.has(n->name.__ptr__())) {
-                var infer = tu->members.get(n->name.__ptr__());
-                n->base.resolved_type.reset_with(infer);
-                return infer->copy_instance();
+            if (tu->static_method.has(n->name.__ptr__())) {
+                self->check_tagged_union_pub_method(n => ast*, n->name.__ptr__(), tu);
+                var infer = self->struct_static_method_infer(prev, n->name.__ptr__());
+                n->base.resolved_type.reset_with(infer.__ptr__());
+                return infer;
+            } else if (tu->method.has(n->name.__ptr__())) {
+                var info = str::from("\"");
+                defer info.delete();
+
+                info.append_str(n->name.__ptr__());
+                info.append("\" in \"");
+                info.append_str(prev_name_for_search.__ptr__());
+                info.append("\" is not a static method");
+                self->err->error(n->base.location.__ptr__(), info.c_str);
+                return type::error_type();
+            } else {
+                var info = str::from("cannot find static method \"");
+                defer info.delete();
+
+                info.append_str(n->name.__ptr__());
+                info.append("\" in \"");
+                info.append_str(prev_name_for_search.__ptr__());
+                info.append("\"");
+
+                var note = str::from("maybe you mean \"");
+                defer note.delete();
+
+                var fuzzy = tu->fuzzy_match_field(n->name.__ptr__());
+                defer fuzzy.delete();
+
+                note.append_str(fuzzy.__ptr__());
+                note.append("\"?");
+
+                self->err->error_with_note(
+                    n->base.location.__ptr__(),
+                    info.c_str,
+                    note.c_str
+                );
+                return type::error_type();
             }
-
-            var info = str::from("cannot find tagged union member \"");
-            defer info.delete();
-
-            info.append_str(n->name.__ptr__());
-            info.append("\" in \"");
-            info.append_str(prev_name_for_search.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            // unreachable
             return type::error_type();
         } else {
             var info = str::from("cannot find path \"");
@@ -1382,90 +1525,143 @@ impl sema {
         defer prev_name_for_search.delete();
 
         if (prev->is_global_sym) {
-            var info = str::from("cannot get field from global symbol \"");
-            defer info.delete();
-
-            info.append_str(prev_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("cannot get field from global symbol \"")
+                     ->out(prev_name.c_str)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
             return type::error_type();
         }
 
         if (prev->pointer_depth == 0) {
-            var info = str::from("cannot use \"->\" to get field from \"");
-            defer info.delete();
-
-            info.append_str(prev_name.__ptr__());
-            info.append("\", use \".\" instead");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("cannot use \"->\" to get field from \"")
+                     ->out(prev_name.c_str)
+                     ->out("\", use \".\" instead")
+                     ->emit_err(n->base.location.__ptr__());
             // report but continue resolving
         } else if (prev->pointer_depth > 1) {
-            var info = str::from("cannot use \"->\" to get field from pointer \"");
-            defer info.delete();
-
-            info.append_str(prev_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("cannot use \"->\" to get field from pointer \"")
+                     ->out(prev_name.c_str)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
             // report but continue resolving
         }
 
         // loc_file is empty means prev is native type
         if (prev->loc_file.empty()) {
-            var info = str::from("cannot get method \"");
-            defer info.delete();
-
-            info.append_str(n->name.__ptr__());
-            info.append("\" from native type \"");
-            info.append_str(prev_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("cannot get method \"")
+                     ->out(n->name.c_str)
+                     ->out("\" from native type \"")
+                     ->out(prev_name.c_str)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
             return type::error_type();
         }
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
-        if (!dm->structs.has(prev_name_for_search.__ptr__())) {
-            var info = str::from("cannot get field from undefined struct \"");
-            defer info.delete();
-
-            info.append_str(prev_name.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
-            return type::error_type();
+        if (dm->structs.has(prev_name_for_search.__ptr__())) {
+            var res = self->resolve_struct_ptr_get_field(
+                dm->structs.get(prev_name_for_search.__ptr__()),
+                prev,
+                n
+            );
+            return res;
+        } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
+            var res = self->resolve_tagged_union_ptr_get_field(
+                dm->tagged_unions.get(prev_name_for_search.__ptr__()),
+                prev,
+                n
+            );
+            return res;
         }
 
-        var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+        var info = str::from("cannot get field from undefined struct \"");
+        defer info.delete();
+
+        info.append_str(prev_name.__ptr__());
+        info.append("\"");
+        self->err->error(n->base.location.__ptr__(), info.c_str);
+        return type::error_type();
+    }
+
+    func resolve_struct_ptr_get_field(self,
+                                      struct_self: colgm_struct*,
+                                      prev: type*,
+                                      n: ast_ptr_get_field*) -> type {
+        var prev_name = prev->full_path_name(self->pkg, true);
+        defer prev_name.delete();
+
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+        
         if (struct_self->fields.has(n->name.__ptr__())) {
             var infer = struct_self->fields.get(n->name.__ptr__())->copy_instance();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
         if (struct_self->method.has(n->name.__ptr__())) {
-            self->check_pub_method(n => ast*, n->name.__ptr__(), struct_self);
+            self->check_struct_pub_method(n => ast*, n->name.__ptr__(), struct_self);
             var infer = self->struct_method_infer(prev, n->name.__ptr__());
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
 
         if (struct_self->static_method.has(n->name.__ptr__())) {
-            var info = str::from("method \"");
-            defer info.delete();
-
-            info.append_str(n->name.__ptr__());
-            info.append("\" in \"");
-            info.append_str(prev_name.__ptr__());
-            info.append("\" is static");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("method \"")
+                     ->out(n->name.c_str)
+                     ->out("\" in \"")
+                     ->out(prev_name.c_str)
+                     ->out("\" is static")
+                     ->emit_err(n->base.location.__ptr__());
             return type::error_type();
         }
 
-        var info = str::from("cannot find field or method \"");
-        defer info.delete();
+        self->err->out("cannot find field or method \"")
+                 ->out(n->name.c_str)
+                 ->out("\" in \"")
+                 ->out(prev_name_for_search.c_str)
+                 ->out("\"")
+                 ->emit_err(n->base.location.__ptr__());
+        return type::error_type();
+    }
 
-        info.append_str(n->name.__ptr__());
-        info.append("\" in \"");
-        info.append_str(prev_name_for_search.__ptr__());
-        info.append("\"");
-        self->err->error(n->base.location.__ptr__(), info.c_str);
+    func resolve_tagged_union_ptr_get_field(self,
+                                            union_self: colgm_tagged_union*,
+                                            prev: type*,
+                                            n: ast_ptr_get_field*) -> type {
+        var prev_name = prev->full_path_name(self->pkg, true);
+        defer prev_name.delete();
+
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+        
+        if (union_self->members.has(n->name.__ptr__())) {
+            var infer = union_self->members.get(n->name.__ptr__())->copy_instance();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
+        }
+        if (union_self->method.has(n->name.__ptr__())) {
+            self->check_tagged_union_pub_method(n => ast*, n->name.__ptr__(), union_self);
+            var infer = self->struct_method_infer(prev, n->name.__ptr__());
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
+        }
+
+        if (union_self->static_method.has(n->name.__ptr__())) {
+            self->err->out("method \"")
+                     ->out(n->name.c_str)
+                     ->out("\" in \"")
+                     ->out(prev_name.c_str)
+                     ->out("\" is static")
+                     ->emit_err(n->base.location.__ptr__());
+            return type::error_type();
+        }
+
+        self->err->out("cannot find field or method \"")
+                 ->out(n->name.c_str)
+                 ->out("\" in \"")
+                 ->out(prev_name_for_search.c_str)
+                 ->out("\"")
+                 ->emit_err(n->base.location.__ptr__());
         return type::error_type();
     }
 
