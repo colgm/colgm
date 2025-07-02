@@ -1619,10 +1619,17 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
         return;
     }
 
-    if (ctx.search_symbol_kind(infer) != sym_kind::enum_kind) {
-        rp.report(node->get_value(), "match value should be enum type");
+    if (ctx.search_symbol_kind(infer) != sym_kind::enum_kind &&
+        ctx.search_symbol_kind(infer) != sym_kind::tagged_union_kind) {
+        rp.report(node->get_value(), "match value should be enum or tagged union");
         return;
     }
+
+    if (ctx.search_symbol_kind(infer) == sym_kind::enum_kind &&
+        infer.is_pointer()) {
+        rp.report(node->get_value(), "match value should not be pointer");
+    }
+
     if (node->get_cases().empty()) {
         rp.report(node, "expect at least one case");
         return;

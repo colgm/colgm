@@ -108,6 +108,9 @@ public:
         if (domain.structs.count(t.name_for_search())) {
             return sym_kind::struct_kind;
         }
+        if (domain.tagged_unions.count(t.name_for_search())) {
+            return sym_kind::tagged_union_kind;
+        }
         if (domain.functions.count(t.name_for_search())) {
             return sym_kind::func_kind;
         }

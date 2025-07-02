@@ -84,6 +84,20 @@ impl sema {
         }
         return false;
     }
+
+    func is_tagged_union_type(self, ty: type*) -> bool {
+        if (ty->loc_file.empty()) {
+            return false;
+        }
+        var dm = self->ctx->get_domain(ty->loc_file.__ptr__());
+        var n = ty->generic_name(self->pkg);
+        defer n.delete();
+
+        if (dm->tagged_unions.has(n.__ptr__())) {
+            return true;
+        }
+        return false;
+    }
 }
 
 impl sema {
@@ -2355,9 +2369,16 @@ impl sema {
             return;
         }
 
-        if (!self->is_enum_type(infer.__ptr__())) {
+        if (!self->is_enum_type(infer.__ptr__()) &&
+            !self->is_tagged_union_type(infer.__ptr__())) {
             self->err->error(n->value->location.__ptr__(),
-                            "match value must be enum type");
+                            "match value must be enum or tagged union");
+            return;
+        }
+
+        if (self->is_enum_type(infer.__ptr__()) && infer.is_pointer()) {
+            self->err->out("match value should not be pointer")
+                     ->emit_err(n->value->location.__ptr__());
             return;
         }
 
