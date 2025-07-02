@@ -144,7 +144,7 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [ ] HTTP Utilities
     - [x] OS Utils (exec, env, args, etc)
     - [ ] Typeof, is_type, etc
-    - [ ] Assert and Bench
+    - [x] Assert and Bench
     - [ ] Logging
     - [ ] Deprecation Marker
     - [ ] Regex
