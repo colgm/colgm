@@ -979,11 +979,17 @@ impl sema {
             return type::error_type();
         }
 
+        var fuzzy_field = struct_self->fuzzy_match_field(n->name.__ptr__());
+        defer fuzzy_field.delete();
+
         self->err->out("cannot find field or method \"")
                  ->out(n->name.c_str)
                  ->out("\" in \"")
                  ->out(prev_name_for_search.c_str)
                  ->out("\"")
+                 ->out_note("maybe you mean \"")
+                 ->out_note(fuzzy_field.c_str)
+                 ->out_note("\"?")
                  ->emit_err(n->base.location.__ptr__());
         return type::error_type();
     }
@@ -1020,11 +1026,17 @@ impl sema {
             return type::error_type();
         }
 
+        var fuzzy_field = union_self->fuzzy_match_field(n->name.__ptr__());
+        defer fuzzy_field.delete();
+
         self->err->out("cannot find field or method \"")
                  ->out(n->name.c_str)
                  ->out("\" in \"")
                  ->out(prev_name_for_search.c_str)
                  ->out("\"")
+                 ->out_note("maybe you mean \"")
+                 ->out_note(fuzzy_field.c_str)
+                 ->out_note("\"?")
                  ->emit_err(n->base.location.__ptr__());
         return type::error_type();
     }
@@ -1435,7 +1447,9 @@ impl sema {
 
     func resolve_initializer(self, prev: type*, n: ast_initializer*) -> type {
         if (!prev->is_global_sym) {
-            self->err->error(n->base.location.__ptr__(), "need a global symbol to initialize");
+            self->err->error(n->base.location.__ptr__(),
+                "need a global symbol to initialize"
+            );
             return type::error_type();
         }
         if (prev->loc_file.empty()) {
@@ -1449,17 +1463,31 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self->pkg);
         defer prev_name_for_search.delete();
 
-        if (!dm->structs.has(prev_name_for_search.__ptr__())) {
-            var info = str::from("\"");
-            defer info.delete();
-
-            info.append_str(prev_name_for_search.__ptr__());
-            info.append("\" is not a struct type, cannot initialize");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
-            return type::error_type();
+        if (dm->structs.has(prev_name_for_search.__ptr__())) {
+            var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+            return self->resolve_struct_initializer(struct_self, prev, n);
+        } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
+            var union_self = dm->tagged_unions.get(prev_name_for_search.__ptr__());
+            return self->resolve_tagged_union_initializer(union_self, prev, n);
         }
 
-        var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
+        var info = str::from("\"");
+        defer info.delete();
+
+        info.append_str(prev_name_for_search.__ptr__());
+        info.append("\" is not struct or tagged union, cannot initialize");
+        self->err->error(n->base.location.__ptr__(), info.c_str);
+        return type::error_type();
+    }
+
+    func resolve_struct_initializer(self, struct_self: colgm_struct*, prev: type*, n: ast_initializer*) -> type {
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
+        var copy = prev->copy_instance();
+        copy.is_global_sym = false;
+        n->base.resolved_type.reset_with(copy.__ptr__());
+
         foreach (var i; n->pairs) {
             var tmp = i.get() => ast_init_pair*;
             var field = tmp->field->content.__ptr__();
@@ -1511,9 +1539,80 @@ impl sema {
             }
         }
 
+        return copy;
+    }
+
+    func resolve_tagged_union_initializer(self, union_self: colgm_tagged_union*, prev: type*, n: ast_initializer*) -> type {
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
         var copy = prev->copy_instance();
         copy.is_global_sym = false;
         n->base.resolved_type.reset_with(copy.__ptr__());
+
+        if (n->pairs.size > 1) {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "cannot initialize tagged union with more than one member"
+            );
+            return copy;
+        } else if (n->pairs.empty()) {
+            self->err->error(
+                n->base.location.__ptr__(),
+                "tagged union's initializer cannot be empty"
+            );
+            return copy;
+        }
+
+        var tmp = n->pairs.get(0) => ast_init_pair*;
+        var member = tmp->field->content.__ptr__();
+        if (!union_self->members.has(member)) {
+            var info = str::from("cannot find member \"");
+            defer info.delete();
+
+            info.append_str(member);
+            info.append("\" in \"");
+            info.append_str(prev_name_for_search.__ptr__());
+            info.append("\"");
+            self->err->error(tmp->base.location.__ptr__(), info.c_str);
+            return copy;
+        }
+
+        var infer = self->resolve_expression(tmp->value);
+        defer infer.delete();
+
+        tmp->base.resolved_type.reset_with(infer.__ptr__());
+        if (infer.is_error()) {
+            return copy;
+        }
+
+        var expect = union_self->members.get(member);
+        if (!infer.eq(expect)) {
+            if (!self->check_can_be_converted(tmp->value, expect)) {
+                var info = str::from("expect \"");
+                var e_name = expect->full_path_name(self->pkg, true);
+                var i_name = infer.full_path_name(self->pkg, true);
+                defer {
+                    info.delete();
+                    e_name.delete();
+                    i_name.delete();
+                }
+
+                info.append_str(e_name.__ptr__());
+                info.append("\" but get \"");
+                info.append_str(i_name.__ptr__());
+                self->err->error(tmp->base.location.__ptr__(), info.c_str);                    
+                return copy;
+            }
+        }
+        // struct foo { bar: [0, 1, 2] } is not allowed
+        if (infer.is_array) {
+            self->err->error(
+                tmp->base.location.__ptr__(),
+                "cannot initialize array, but it's already filled with 0 by default"
+            );
+        }
+
         return copy;
     }
 
@@ -1615,11 +1714,17 @@ impl sema {
             return type::error_type();
         }
 
+        var fuzzy_field = struct_self->fuzzy_match_field(n->name.__ptr__());
+        defer fuzzy_field.delete();
+
         self->err->out("cannot find field or method \"")
                  ->out(n->name.c_str)
                  ->out("\" in \"")
                  ->out(prev_name_for_search.c_str)
                  ->out("\"")
+                 ->out_note("maybe you mean \"")
+                 ->out_note(fuzzy_field.c_str)
+                 ->out_note("\"?")
                  ->emit_err(n->base.location.__ptr__());
         return type::error_type();
     }
@@ -1656,11 +1761,17 @@ impl sema {
             return type::error_type();
         }
 
+        var fuzzy_field = union_self->fuzzy_match_field(n->name.__ptr__());
+        defer fuzzy_field.delete();
+
         self->err->out("cannot find field or method \"")
                  ->out(n->name.c_str)
                  ->out("\" in \"")
                  ->out(prev_name_for_search.c_str)
                  ->out("\"")
+                 ->out_note("maybe you mean \"")
+                 ->out_note(fuzzy_field.c_str)
+                 ->out_note("\"?")
                  ->emit_err(n->base.location.__ptr__());
         return type::error_type();
     }

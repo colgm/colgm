@@ -930,15 +930,34 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
     }
 
     const auto& domain = ctx.get_domain(prev.loc_file);
-    if (!domain.structs.count(prev.name_for_search())) {
-        rp.report(node,
-            "\"" + prev.name_for_search() +
-            "\" is not a struct type, cannot initialize"
+    if (domain.structs.count(prev.name_for_search())) {
+        return resolve_struct_initializer(
+            domain.structs.at(prev.name_for_search()),
+            prev,
+            node
         );
-        return type::error_type();
+    } else if (domain.tagged_unions.count(prev.name_for_search())) {
+        return resolve_tagged_union_initializer(
+            domain.tagged_unions.at(prev.name_for_search()),
+            prev,
+            node
+        );
     }
 
-    const auto& st = domain.structs.at(prev.name_for_search());
+    rp.report(node,
+        "\"" + prev.name_for_search() +
+        "\" is not struct or tagged union, cannot initialize"
+    );
+    return type::error_type();
+}
+
+type semantic::resolve_struct_initializer(const colgm_struct& st,
+                                          const type& prev,
+                                          initializer* node) {
+    auto copy = prev;
+    copy.is_global = false;
+    node->set_resolve_type(copy);
+
     for (auto i : node->get_pairs()) {
         const auto& field = i->get_field()->get_name();
         if (!st.field.count(field)) {
@@ -965,7 +984,8 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
                 continue;
             }
         }
-        // struct foo { bar: [0, 1, 2] } is not allowed
+
+        // foo { bar: [0, 1, 2] } is not allowed
         if (infer.is_array) {
             rp.report(i,
                 "cannot initialize array, but it's already filled with 0 by default"
@@ -973,9 +993,58 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
         }
     }
 
+    return copy;
+}
+
+type semantic::resolve_tagged_union_initializer(const colgm_tagged_union& un,
+                                                const type& prev,
+                                                initializer* node) {
     auto copy = prev;
     copy.is_global = false;
     node->set_resolve_type(copy);
+
+    if (node->get_pairs().size() > 1) {
+        rp.report(node, "cannot initialize tagged union with more than one member");
+        return copy;
+    } else if (node->get_pairs().empty()) {
+        rp.report(node, "tagged union's initializer cannot be empty");
+        return copy;
+    }
+
+    auto i = node->get_pairs()[0];
+    const auto& member = i->get_field()->get_name();
+    if (!un.member.count(member)) {
+        rp.report(i,
+            "cannot find member \"" + member +
+            "\" in \"" + prev.name_for_search() + "\""
+        );
+        return copy;
+    }
+
+    const auto infer = resolve_expression(i->get_value());
+    i->get_value()->set_resolve_type(infer);
+    const auto& expect = un.member.at(member);
+    // error type means the related error is reported before
+    if (infer.is_error()) {
+        return copy;
+    }
+    if (infer != expect) {
+        if (!check_can_be_converted(i->get_value(), expect)) {
+            rp.report(i,
+                "expect \"" + expect.to_string() +
+                "\" but get \"" + infer.to_string() + "\""
+            );
+            return copy;
+        }
+    }
+
+    // foo { bar: [0, 1, 2] } is not allowed
+    if (infer.is_array) {
+        rp.report(i,
+            "cannot initialize array, but it's already filled with 0 by default"
+        );
+    }
+
     return copy;
 }
 
