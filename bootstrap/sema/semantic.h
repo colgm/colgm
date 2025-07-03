@@ -96,6 +96,8 @@ private:
     size_t get_enum_literal_value(expr*, const type&);
     void resolve_cond_stmt(cond_stmt*, const colgm_func&);
     void resolve_match_stmt(match_stmt*, const colgm_func&);
+    void resolve_match_stmt_for_enum(match_stmt*, const colgm_func&, const type&);
+    void resolve_match_stmt_for_tagged_union(match_stmt*, const colgm_func&, const type&);
     void resolve_while_stmt(while_stmt*, const colgm_func&);
     void resolve_for_stmt(for_stmt*, const colgm_func&);
     void lowering_forindex(forindex*);

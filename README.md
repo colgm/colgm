@@ -61,8 +61,8 @@ Colgm accepts `-O` option to enable optimization.
 - `-O1`: enable basic optimization
 - `-O2`: enable advanced optimization
 - `-O3`: enable maximum optimization
-- `-Oz`: enable size optimization
-- `-Os`: enable speed optimization
+- `-Oz`: enable speed optimization
+- `-Os`: enable size optimization
 
 Also you could use `-Ox -g` for release with debug info.
 

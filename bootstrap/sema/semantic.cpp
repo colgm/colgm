@@ -1158,7 +1158,8 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
     if (prev.pointer_depth!=1) {
         rp.report(node,
             "cannot use \"->\" to get field from \"" +
-            prev.to_string() + "\""
+            prev.to_string() + "\"",
+            "use \".\" instead"
         );
         return type::error_type();
     }
@@ -1635,6 +1636,16 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
         return;
     }
 
+    if (ctx.search_symbol_kind(infer) == sym_kind::enum_kind) {
+        resolve_match_stmt_for_enum(node, func_self, infer);
+    } else if (ctx.search_symbol_kind(infer) == sym_kind::tagged_union_kind) {
+        resolve_match_stmt_for_tagged_union(node, func_self, infer);
+    }
+}
+
+void semantic::resolve_match_stmt_for_enum(match_stmt* node,
+                                           const colgm_func& func_self,
+                                           const type& infer) {
     bool default_found = false;
     std::unordered_set<size_t> used_values;
     for (auto i : node->get_cases()) {
@@ -1673,6 +1684,66 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
                 used_values.insert(value);
             }
         }
+
+        resolve_code_block(i->get_block(), func_self);
+    }
+
+    if (default_found) {
+        return;
+    }
+
+    // check unused values if default is not used
+    if (!ctx.global.domain.count(infer.loc_file)) {
+        return;
+    }
+    const auto& dm = ctx.get_domain(infer.loc_file);
+    if (!dm.enums.count(infer.name)) {
+        return;
+    }
+    const auto& em = dm.enums.at(infer.name);
+    auto generated_warning = std::string("");
+    auto unused_counter = 0;
+
+    for (auto& i : em.members) {
+        if (used_values.count(i.second)) {
+            continue;
+        }
+        if (generated_warning.length()) {
+            generated_warning += ", ";
+        }
+        unused_counter++;
+        if (unused_counter >= 3) {
+            generated_warning += "...";
+            break;
+        }
+        generated_warning += i.first;
+    }
+
+    if (generated_warning.length()) {
+        rp.warn(node, "match statement with enum \"" + infer.to_string() +
+            "\" has unused member" + (unused_counter > 1? "s":"") +
+            ": " + generated_warning
+        );
+    }
+}
+
+void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
+                                                   const colgm_func& func_self,
+                                                   const type& infer) {
+    bool default_found = false;
+    std::unordered_set<size_t> used_values;
+    for (auto i : node->get_cases()) {
+        if (check_is_match_default(i->get_value())) {
+            i->get_value()->set_resolve_type(type::default_match_type());
+            default_found = true;
+            resolve_code_block(i->get_block(), func_self);
+            continue;
+        }
+        const auto case_node = i->get_value();
+
+        rp.warn(case_node, "unsupported match case");
+
+        // TODO
 
         resolve_code_block(i->get_block(), func_self);
     }

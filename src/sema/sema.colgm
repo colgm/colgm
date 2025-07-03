@@ -1648,7 +1648,8 @@ impl sema {
         if (prev->pointer_depth == 0) {
             self->err->out("cannot use \"->\" to get field from \"")
                      ->out(prev_name.c_str)
-                     ->out("\", use \".\" instead")
+                     ->out("\"")
+                     ->out_note("use \".\" instead")
                      ->emit_err(n->base.location.__ptr__());
             // report but continue resolving
         } else if (prev->pointer_depth > 1) {
@@ -2388,6 +2389,17 @@ impl sema {
             return;
         }
 
+        if (self->is_enum_type(infer.__ptr__())) {
+            self->resolve_match_stmt_for_enum(n, func_self, infer.__ptr__());
+        } else if (self->is_tagged_union_type(infer.__ptr__())) {
+            self->resolve_match_stmt_for_tagged_union(n, func_self, infer.__ptr__());
+        }
+    }
+
+    func resolve_match_stmt_for_enum(self,
+                                     n: ast_match_stmt*,
+                                     func_self: colgm_func*,
+                                     infer: type*) {
         var default_found = false;
         var used_values = hashset<basic<i64>>::instance();
         defer used_values.delete();
@@ -2412,11 +2424,11 @@ impl sema {
             case_node->base.resolved_type.reset_with(case_type.__ptr__());
             case_node->pattern->base.resolved_type.reset_with(case_type.__ptr__());
 
-            if (!case_type.eq(infer.__ptr__())) {
+            if (!case_type.eq(infer)) {
                 if (!case_type.is_error()) {
                     var info = str::from("case value should be \"");
                     var c_name = case_type.full_path_name(self->pkg, true);
-                    var i_name = infer.full_path_name(self->pkg, true);
+                    var i_name = infer->full_path_name(self->pkg, true);
                     defer {
                         info.delete();
                         c_name.delete();
@@ -2439,7 +2451,7 @@ impl sema {
                 );
                 continue;
             } else {
-                var value = self->get_enum_literal_value(case_node->pattern, infer.__ptr__());
+                var value = self->get_enum_literal_value(case_node->pattern, infer);
                 if (value != 0xffffffffffffffff) {
                     if (used_values.has(basic<i64>::wrap(value))) {
                          self->err->error(
@@ -2458,14 +2470,14 @@ impl sema {
             return;
         }
 
-        if (!self->ctx->has_domain(infer.loc_file.__ptr__())) {
+        if (!self->ctx->has_domain(infer->loc_file.__ptr__())) {
             return;
         }
-        var dm = self->ctx->get_domain(infer.loc_file.__ptr__());
-        if (!dm->enums.has(infer.name.__ptr__())) {
+        var dm = self->ctx->get_domain(infer->loc_file.__ptr__());
+        if (!dm->enums.has(infer->name.__ptr__())) {
             return;
         }
-        var em = dm->enums.get(infer.name.__ptr__());
+        var em = dm->enums.get(infer->name.__ptr__());
         var generated_warning = str::instance();
         defer generated_warning.delete();
         var unused_counter = 0;
@@ -2487,7 +2499,7 @@ impl sema {
 
         if (generated_warning.size > 0) {
             var info = str::from("match statement with enum \"");
-            var i_name = infer.full_path_name(self->pkg, true);
+            var i_name = infer->full_path_name(self->pkg, true);
             defer {
                 info.delete();
                 i_name.delete();
@@ -2503,6 +2515,82 @@ impl sema {
         }
     }
 
+    func resolve_match_stmt_for_tagged_union(self,
+                                             n: ast_match_stmt*,
+                                             func_self: colgm_func*,
+                                             infer: type*) {
+        var default_found = false;
+        var used_values = hashset<basic<i64>>::instance();
+        defer used_values.delete();
+
+        foreach (var i; n->cases) {
+            var case_node = i.get() => ast_match_case*;
+
+            if (self->check_is_match_default(case_node->pattern)) {
+                var case_type = type::default_match_type();
+                defer case_type.delete();
+
+                case_node->pattern->base.resolved_type.reset_with(case_type.__ptr__());
+                case_node->base.resolved_type.reset_with(case_type.__ptr__());
+                default_found = true;
+                self->resolve_code_block(case_node->body, func_self);
+                continue;
+            }
+
+            self->err->warn(case_node->base.location.__ptr__(), "unsupported match case");
+
+            self->resolve_code_block(case_node->body, func_self);
+        }
+
+        if (default_found) {
+            return;
+        }
+
+        if (!self->ctx->has_domain(infer->loc_file.__ptr__())) {
+            return;
+        }
+        var dm = self->ctx->get_domain(infer->loc_file.__ptr__());
+        if (!dm->enums.has(infer->name.__ptr__())) {
+            return;
+        }
+        var em = dm->enums.get(infer->name.__ptr__());
+        var generated_warning = str::instance();
+        defer generated_warning.delete();
+        var unused_counter = 0;
+
+        foreach (var i; em->members) {
+            if (used_values.has(basic<i64>::wrap(i.value()))) {
+                continue;
+            }
+            if (generated_warning.size > 0) {
+                generated_warning.append(", ");
+            }
+            unused_counter += 1;
+            if (unused_counter >= 5) {
+                generated_warning.append("...");
+                break;
+            }
+            generated_warning.append_str(i.key());
+        }
+
+        if (generated_warning.size > 0) {
+            var info = str::from("match statement with enum \"");
+            var i_name = infer->full_path_name(self->pkg, true);
+            defer {
+                info.delete();
+                i_name.delete();
+            }
+
+            info.append_str(i_name.__ptr__());
+            info.append("\" has unused member");
+            if (unused_counter > 1) {
+                info.append("s");
+            }
+            info.append(": ")->append_str(generated_warning.__ptr__());
+            self->err->warn(n->base.location.__ptr__(), info.c_str);
+        }
+    }
+ 
     func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func*) {
         var infer = self->resolve_expression(n->condition => ast*);
         defer infer.delete();
