@@ -1652,9 +1652,9 @@ void semantic::resolve_match_stmt_for_enum(match_stmt* node,
         if (check_is_match_default(i->get_value())) {
             i->get_value()->set_resolve_type(type::default_match_type());
             default_found = true;
-            resolve_code_block(i->get_block(), func_self);
             continue;
         }
+
         const auto case_node = i->get_value();
         const auto case_infer = resolve_expression(case_node);
         case_node->set_resolve_type(case_infer);
@@ -1672,19 +1672,21 @@ void semantic::resolve_match_stmt_for_enum(match_stmt* node,
         if (!check_is_enum_literal(case_node)) {
             rp.report(case_node, "case value should be enum literal");
             continue;
-        } else {
-            const auto value = get_enum_literal_value(case_node, infer);
-            if (value != SIZE_MAX) {
-                if (used_values.count(value)) {
-                    rp.report(
-                        case_node,
-                        "duplicate enum literal value"
-                    );
-                }
-                used_values.insert(value);
-            }
         }
+    
+        const auto value = get_enum_literal_value(case_node, infer);
+        if (value == SIZE_MAX) {
+            // unreachable
+            continue;
+        }
+        if (used_values.count(value)) {
+            rp.report(case_node, "duplicate enum literal value");
+        }
+        used_values.insert(value);
+    }
 
+    // resolve blocks after labels
+    for (auto i : node->get_cases()) {
         resolve_code_block(i->get_block(), func_self);
     }
 
@@ -1736,7 +1738,6 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
         if (check_is_match_default(i->get_value())) {
             i->get_value()->set_resolve_type(type::default_match_type());
             default_found = true;
-            resolve_code_block(i->get_block(), func_self);
             continue;
         }
         const auto case_node = i->get_value();
@@ -1744,7 +1745,10 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
         rp.warn(case_node, "unsupported match case");
 
         // TODO
+    }
 
+    // resolve blocks after labels
+    for (auto i : node->get_cases()) {
         resolve_code_block(i->get_block(), func_self);
     }
 

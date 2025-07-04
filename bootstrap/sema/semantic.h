@@ -64,6 +64,8 @@ private:
     type resolve_bool_literal(bool_literal*);
     type resolve_array_list(array_list*);
     type resolve_identifier(identifier*);
+
+private:
     void check_pub_method(node*, const std::string&, const colgm_struct&);
     void check_pub_method(node*, const std::string&, const colgm_tagged_union&);
     void check_pub_static_method(node*, const std::string&, const colgm_struct&);
@@ -84,13 +86,19 @@ private:
     type resolve_struct_ptr_get_field(const colgm_struct&, const type&, ptr_get_field*);
     type resolve_tagged_union_ptr_get_field(const colgm_tagged_union&, const type&, ptr_get_field*);
     type resolve_call(call*);
+
+private:
     bool check_valid_left_value(expr*);
     void check_mutable_left_value(expr*, const type&);
     type resolve_assignment(assignment*);
     type resolve_expression(expr*);
     void resolve_definition(definition*, const colgm_func&);
     void check_defined_variable_is_void(definition*, const type&);
+
+private:
     void resolve_if_stmt(if_stmt*, const colgm_func&);
+
+private:
     bool check_is_match_default(expr*);
     bool check_is_enum_literal(expr*);
     size_t get_enum_literal_value(expr*, const type&);
@@ -98,6 +106,8 @@ private:
     void resolve_match_stmt(match_stmt*, const colgm_func&);
     void resolve_match_stmt_for_enum(match_stmt*, const colgm_func&, const type&);
     void resolve_match_stmt_for_tagged_union(match_stmt*, const colgm_func&, const type&);
+
+private:
     void resolve_while_stmt(while_stmt*, const colgm_func&);
     void resolve_for_stmt(for_stmt*, const colgm_func&);
     void lowering_forindex(forindex*);

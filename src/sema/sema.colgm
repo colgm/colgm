@@ -2310,7 +2310,9 @@ impl sema {
             self->resolve_if_stmt(i.get() => ast_if_stmt*, func_self);
         }
     }
+}
 
+impl sema {
     func check_is_match_default(self, n: ast_call*) -> bool {
         if (!n->chain.empty()) {
             return false;
@@ -2414,7 +2416,6 @@ impl sema {
                 case_node->pattern->base.resolved_type.reset_with(case_type.__ptr__());
                 case_node->base.resolved_type.reset_with(case_type.__ptr__());
                 default_found = true;
-                self->resolve_code_block(case_node->body, func_self);
                 continue;
             }
 
@@ -2450,19 +2451,24 @@ impl sema {
                     "match value must be enum literal"
                 );
                 continue;
-            } else {
-                var value = self->get_enum_literal_value(case_node->pattern, infer);
-                if (value != 0xffffffffffffffff) {
-                    if (used_values.has(basic<i64>::wrap(value))) {
-                         self->err->error(
-                            case_node->pattern->base.location.__ptr__(),
-                            "enum literal value is already used"
-                        );
-                    }
-                    used_values.insert(basic<i64>::wrap(value));
-                }
             }
+            var value = self->get_enum_literal_value(case_node->pattern, infer);
+            if (value == 0xffffffffffffffff) {
+                // unreachable
+                continue;
+            }
+            if (used_values.has(basic<i64>::wrap(value))) {
+                    self->err->error(
+                    case_node->pattern->base.location.__ptr__(),
+                    "enum literal value is already used"
+                );
+            }
+            used_values.insert(basic<i64>::wrap(value));
+        }
 
+        // resolve block after labels
+        foreach (var i; n->cases) {
+            var case_node = i.get() => ast_match_case*;
             self->resolve_code_block(case_node->body, func_self);
         }
 
@@ -2533,12 +2539,16 @@ impl sema {
                 case_node->pattern->base.resolved_type.reset_with(case_type.__ptr__());
                 case_node->base.resolved_type.reset_with(case_type.__ptr__());
                 default_found = true;
-                self->resolve_code_block(case_node->body, func_self);
                 continue;
             }
 
             self->err->warn(case_node->base.location.__ptr__(), "unsupported match case");
+            // TODO
+        }
 
+        // resolve block after labels
+        foreach (var i; n->cases) {
+            var case_node = i.get() => ast_match_case*;
             self->resolve_code_block(case_node->body, func_self);
         }
 
@@ -2590,7 +2600,9 @@ impl sema {
             self->err->warn(n->base.location.__ptr__(), info.c_str);
         }
     }
- 
+}
+
+impl sema {
     func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func*) {
         var infer = self->resolve_expression(n->condition => ast*);
         defer infer.delete();
