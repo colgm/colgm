@@ -1295,7 +1295,6 @@ void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
 
     const auto& dm = ctx.get_domain(info.loc_file);
     const auto& em = dm.enums.at(node->get_ref_enum_name());
-
     for (auto i : node->get_members()) {
         if (!em.members.count(i->get_name()->get_name())) {
             rp.report(i, "enum \"" + ty.full_path_name() +

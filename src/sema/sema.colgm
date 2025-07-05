@@ -2529,6 +2529,11 @@ impl sema {
         var used_values = hashset<basic<i64>>::instance();
         defer used_values.delete();
 
+        var dm = self->ctx->get_domain(infer->loc_file.__ptr__());
+        var un = dm->tagged_unions.get(infer->name.__ptr__());
+
+        var has_ref_enum = !un->ref_enum_type.is_empty();
+
         foreach (var i; n->cases) {
             var case_node = i.get() => ast_match_case*;
 
@@ -2559,7 +2564,7 @@ impl sema {
         if (!self->ctx->has_domain(infer->loc_file.__ptr__())) {
             return;
         }
-        var dm = self->ctx->get_domain(infer->loc_file.__ptr__());
+
         if (!dm->enums.has(infer->name.__ptr__())) {
             return;
         }

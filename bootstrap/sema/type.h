@@ -109,6 +109,7 @@ public:
     }
 
 public:
+    bool is_empty() const { return name.empty() && loc_file.empty(); }
     bool is_error() const { return name=="<err>"; }
     bool is_restrict() const { return name=="<restrict>"; }
     bool is_default_match() const { return name=="<match default>"; }

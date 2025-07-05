@@ -105,6 +105,7 @@ private:
     void resolve_cond_stmt(cond_stmt*, const colgm_func&);
     void resolve_match_stmt(match_stmt*, const colgm_func&);
     void resolve_match_stmt_for_enum(match_stmt*, const colgm_func&, const type&);
+    bool check_is_tagged_union_member(expr*, const colgm_tagged_union&);
     void resolve_match_stmt_for_tagged_union(match_stmt*, const colgm_func&, const type&);
 
 private:

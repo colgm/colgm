@@ -1729,11 +1729,49 @@ void semantic::resolve_match_stmt_for_enum(match_stmt* node,
     }
 }
 
+bool semantic::check_is_tagged_union_member(expr* node, const colgm_tagged_union& un) {
+    if (!node->is(ast_type::ast_call)) {
+        // unreachable
+        return false;
+    }
+
+    auto call_node = static_cast<call*>(node);
+    const auto& name = call_node->get_head()->get_id()->get_name();
+
+    // means this tag is not referenced from enum
+    // so the call head's identifier is the tag
+    if (un.ref_enum_type.is_empty()) {
+        if (call_node->get_chain().size() != 0) {
+            return false;
+        }
+        return un.member.count(name);
+    }
+
+    if (name != un.ref_enum_type.name) {
+        return false;
+    }
+
+    if (call_node->get_chain().size() != 1) {
+        return false;
+    }
+
+    auto chain = call_node->get_chain()[0];
+    if (!chain->is(ast_type::ast_call_path)) {
+        return false;
+    }
+
+    return un.member.count(static_cast<call_path*>(chain)->get_name());
+}
+
 void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
                                                    const colgm_func& func_self,
                                                    const type& infer) {
     bool default_found = false;
-    std::unordered_set<size_t> used_values;
+    std::unordered_set<std::string> used_values;
+
+    const auto& dm = ctx.get_domain(infer.loc_file);
+    const auto& un = dm.tagged_unions.at(infer.name);
+
     for (auto i : node->get_cases()) {
         if (check_is_match_default(i->get_value())) {
             i->get_value()->set_resolve_type(type::default_match_type());
@@ -1742,9 +1780,12 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
         }
         const auto case_node = i->get_value();
 
-        rp.warn(case_node, "unsupported match case");
-
-        // TODO
+        if (!check_is_tagged_union_member(case_node, un)) {
+            rp.report(case_node,
+                "cannot find this tag in this union"
+            );
+            continue;
+        }
     }
 
     // resolve blocks after labels
@@ -1760,16 +1801,12 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
     if (!ctx.global.domain.count(infer.loc_file)) {
         return;
     }
-    const auto& dm = ctx.get_domain(infer.loc_file);
-    if (!dm.enums.count(infer.name)) {
-        return;
-    }
-    const auto& em = dm.enums.at(infer.name);
+
     auto generated_warning = std::string("");
     auto unused_counter = 0;
 
-    for (auto& i : em.members) {
-        if (used_values.count(i.second)) {
+    for (auto& i : un.member) {
+        if (used_values.count(i.first)) {
             continue;
         }
         if (generated_warning.length()) {
@@ -1784,7 +1821,7 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
     }
 
     if (generated_warning.length()) {
-        rp.warn(node, "match statement with enum \"" + infer.to_string() +
+        rp.warn(node, "match statement with union \"" + infer.to_string() +
             "\" has unused member" + (unused_counter > 1? "s":"") +
             ": " + generated_warning
         );
