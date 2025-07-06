@@ -2580,6 +2580,8 @@ impl sema {
 
         foreach (var i; n->cases) {
             var case_node = i.get() => ast_match_case*;
+            case_node->base.resolved_type.reset_with(infer);
+            case_node->pattern->base.resolved_type.reset_with(infer);
 
             if (self->check_is_match_default(case_node->pattern)) {
                 var case_type = type::default_match_type();

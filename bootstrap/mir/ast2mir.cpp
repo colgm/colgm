@@ -464,20 +464,27 @@ bool ast2mir::visit_match_stmt(ast::match_stmt* node) {
 mir_switch_case* ast2mir::generate_match_case(ast::match_case* node) {
     auto temp = block;
 
-    const auto& enum_ty = node->get_value()->get_resolve();
-    if (!node->get_value()->is(ast::ast_type::ast_call)) {
-        err.err(node->get_location(), "enum value must be call node");
-        return nullptr;
+    const auto& ty = node->get_value()->get_resolve();
+    const auto& dm = ctx.get_domain(ty.loc_file);
+    size_t index = 0;
+    if (dm.enums.count(ty.name)) {
+        auto value_node = reinterpret_cast<ast::call*>(node->get_value());
+        auto path_node = reinterpret_cast<ast::call_path*>(value_node->get_chain()[0]);
+        const auto& label = path_node->get_name();
+        index = dm.enums.at(ty.name).members.at(label);
+    } else if (dm.tagged_unions.count(ty.name)) {
+        const auto& un = dm.tagged_unions.at(ty.name);
+        auto value_node = reinterpret_cast<ast::call*>(node->get_value());
+        if (un.ref_enum_type.is_empty()) {
+            const auto& label = value_node->get_head()->get_id()->get_name();
+            index = un.member_int_map.at(label);
+        } else {
+            auto path_node = reinterpret_cast<ast::call_path*>(value_node->get_chain()[0]);
+            const auto& label = path_node->get_name();
+            index = un.member_int_map.at(label);
+        }
     }
 
-    const auto& dm = ctx.get_domain(enum_ty.loc_file);
-    const auto& em = dm.enums.at(enum_ty.name);
-
-    auto value_node = reinterpret_cast<ast::call*>(node->get_value());
-    auto path_node = reinterpret_cast<ast::call_path*>(value_node->get_chain()[0]);
-    const auto& em_name = path_node->get_name();
-
-    const auto index = em.members.at(em_name);
     auto body_block = new mir_block(node->get_block()->get_location());
     block = body_block;
     generate_code_block(node->get_block());

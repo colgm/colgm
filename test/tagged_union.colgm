@@ -42,3 +42,94 @@ func test() {
     // var b = mir::m_num(mir_num {a: [0]});
     // var c = mir::m_str(mir_str {});
 }
+
+
+union(enum) tagged_union_without_ref_enum {
+    aaa: i32,
+    bbb: i8*,
+    ccc: f32
+}
+
+impl tagged_union_without_ref_enum {
+    pub func _aaa(self) -> i32 {
+        self[0].aaa = 0;
+        match (self) {
+            aaa => return self->aaa;
+            _ => {}
+        }
+        return -1;
+    }
+
+    pub func _bbb(self) -> i8* {
+        self[0].bbb = nil;
+        return self->bbb;
+    }
+
+    pub func _ccc(self) -> f32 {
+        self[0].ccc = 0.0;
+        return self->ccc;
+    }
+
+    pub func static() -> i32 {
+        return 0;
+    }
+}
+
+enum Tag {
+    aaa,
+    bbb,
+    ccc
+}
+
+union(Tag) tagged_union_with_ref_enum {
+    aaa: i32,
+    bbb: i8*,
+    ccc: f32
+}
+
+impl tagged_union_with_ref_enum {
+    pub func _aaa(self) -> i32 {
+        self[0].aaa = 0;
+        match (self) {
+            Tag::aaa => return self->aaa;
+            _ => {}
+        }
+        return -1;
+    }
+
+    pub func _bbb(self) -> i8* {
+        self[0].bbb = nil;
+        return self->bbb;
+    }
+
+    pub func _ccc(self) -> f32 {
+        self[0].ccc = 0.0;
+        return self->ccc;
+    }
+
+    pub func static() -> i32 {
+        return 0;
+    }
+}
+
+func main() -> i32 {
+    var a = tagged_union_without_ref_enum { aaa: 0 };
+    var b = tagged_union_with_ref_enum { aaa: 0 };
+
+    a._aaa() + b._aaa();
+
+    match (a) {
+        aaa => a.aaa;
+        bbb => a.bbb;
+        ccc => a.ccc;
+    }
+
+    match (b) {
+        Tag::aaa => b.aaa;
+        Tag::bbb => b.bbb;
+        Tag::ccc => b.ccc;
+    }
+
+    return tagged_union_without_ref_enum::static() +
+           tagged_union_with_ref_enum::static();
+}
