@@ -2363,6 +2363,50 @@ impl sema {
         return em->members.get(e_name);
     }
 
+    func check_is_tagged_union_member(self,
+                                      n: ast_call*,
+                                      un: colgm_tagged_union*) -> bool {
+        var name = n->head->id->content.__ptr__();
+        // means this tag is not referenced from enum
+        // so the call head's identifier is the tag
+        if (un->ref_enum_type.is_empty()) {
+            if (n->chain.size != 0) {
+                return false;
+            }
+            return un->members.has(name);
+        }
+
+        if (!un->ref_enum_type.name.eq(name)) {
+            return false;
+        }
+        if (n->chain.size != 1) {
+            return false;
+        }
+
+        var call_node = n->chain.get(0);
+        if (call_node->kind != ast_kind::ast_call_path) {
+            return false;
+        }
+
+        var call_path_node = call_node => ast_call_path*;
+        return un->members.has(call_path_node->name.__ptr__());
+    }
+
+    // must use when check_is_tagged_union_member is true
+    func get_tagged_union_label(self,
+                                n: ast_call*,
+                                un: colgm_tagged_union*) -> str {
+        var name = n->head->id->content.__ptr__();
+        // means this tag is not referenced from enum
+        // so the call head's identifier is the tag
+        if (un->ref_enum_type.is_empty()) {
+            return name->copy_instance();
+        }
+
+        var call_path_node = n->chain.get(0) => ast_call_path*;
+        return call_path_node->name.copy_instance();
+    }
+
     func resolve_match_stmt(self, n: ast_match_stmt*, func_self: colgm_func*) {
         var infer = self->resolve_expression(n->value);
         defer infer.delete();
@@ -2526,7 +2570,7 @@ impl sema {
                                              func_self: colgm_func*,
                                              infer: type*) {
         var default_found = false;
-        var used_values = hashset<basic<i64>>::instance();
+        var used_values = hashset<str>::instance();
         defer used_values.delete();
 
         var dm = self->ctx->get_domain(infer->loc_file.__ptr__());
@@ -2547,8 +2591,24 @@ impl sema {
                 continue;
             }
 
-            self->err->warn(case_node->base.location.__ptr__(), "unsupported match case");
-            // TODO
+            if (!self->check_is_tagged_union_member(case_node->pattern, un)) {
+                self->err->error(
+                    case_node->base.location.__ptr__(),
+                    "cannot find this tag in this union"
+                );
+                continue;
+            }
+
+            var label = self->get_tagged_union_label(case_node->pattern, un);
+            defer label.delete();
+
+            if (used_values.has(label.__ptr__())) {
+                self->err->error(
+                    case_node->base.location.__ptr__(),
+                    "duplicate tag"
+                );
+            }
+            used_values.insert(label.__ptr__());
         }
 
         // resolve block after labels
@@ -2561,20 +2621,12 @@ impl sema {
             return;
         }
 
-        if (!self->ctx->has_domain(infer->loc_file.__ptr__())) {
-            return;
-        }
-
-        if (!dm->enums.has(infer->name.__ptr__())) {
-            return;
-        }
-        var em = dm->enums.get(infer->name.__ptr__());
         var generated_warning = str::instance();
         defer generated_warning.delete();
         var unused_counter = 0;
 
-        foreach (var i; em->members) {
-            if (used_values.has(basic<i64>::wrap(i.value()))) {
+        foreach (var i; un->members) {
+            if (used_values.has(i.key())) {
                 continue;
             }
             if (generated_warning.size > 0) {
@@ -2589,7 +2641,7 @@ impl sema {
         }
 
         if (generated_warning.size > 0) {
-            var info = str::from("match statement with enum \"");
+            var info = str::from("match statement with union \"");
             var i_name = infer->full_path_name(self->pkg, true);
             defer {
                 info.delete();
@@ -2597,12 +2649,16 @@ impl sema {
             }
 
             info.append_str(i_name.__ptr__());
-            info.append("\" has unused member");
+            info.append("\" has unused tag");
             if (unused_counter > 1) {
                 info.append("s");
             }
             info.append(": ")->append_str(generated_warning.__ptr__());
-            self->err->warn(n->base.location.__ptr__(), info.c_str);
+            self->err->warn_with_note(
+                n->base.location.__ptr__(),
+                info.c_str,
+                "complete unused branch or use \"_\" default branch instead"
+            );
         }
     }
 }

@@ -1763,6 +1763,20 @@ bool semantic::check_is_tagged_union_member(expr* node, const colgm_tagged_union
     return un.member.count(static_cast<call_path*>(chain)->get_name());
 }
 
+std::string semantic::get_tagged_union_label(expr* node, const colgm_tagged_union& un) {
+    auto call_node = static_cast<call*>(node);
+    const auto& name = call_node->get_head()->get_id()->get_name();
+
+    // means this tag is not referenced from enum
+    // so the call head's identifier is the tag
+    if (un.ref_enum_type.is_empty()) {
+        return name;
+    }
+
+    auto chain = call_node->get_chain()[0];
+    return static_cast<call_path*>(chain)->get_name();
+}
+
 void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
                                                    const colgm_func& func_self,
                                                    const type& infer) {
@@ -1779,6 +1793,7 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
             continue;
         }
         const auto case_node = i->get_value();
+        case_node->set_resolve_type(infer);
 
         if (!check_is_tagged_union_member(case_node, un)) {
             rp.report(case_node,
@@ -1786,6 +1801,12 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
             );
             continue;
         }
+
+        const auto label = get_tagged_union_label(case_node, un);
+        if (used_values.count(label)) {
+            rp.report(case_node, "duplicate tag");
+        }
+        used_values.insert(label);
     }
 
     // resolve blocks after labels
@@ -1794,11 +1815,6 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
     }
 
     if (default_found) {
-        return;
-    }
-
-    // check unused values if default is not used
-    if (!ctx.global.domain.count(infer.loc_file)) {
         return;
     }
 
@@ -1822,8 +1838,9 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
 
     if (generated_warning.length()) {
         rp.warn(node, "match statement with union \"" + infer.to_string() +
-            "\" has unused member" + (unused_counter > 1? "s":"") +
-            ": " + generated_warning
+            "\" has unused tag" + (unused_counter > 1? "s":"") +
+            ": " + generated_warning,
+            "complete unused branch or use \"_\" default branch instead"
         );
     }
 }

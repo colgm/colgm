@@ -20,11 +20,11 @@ public:
     void report(const span& loc, const std::string& info, const std::string& note = "") {
         err.err(loc, info, note);
     }
-    void warn(ast::node* n, const std::string& info) {
-        err.warn(n->get_location(), info);
+    void warn(ast::node* n, const std::string& info, const std::string& note = "") {
+        err.warn(n->get_location(), info, note);
     }
-    void warn(const span& loc, const std::string& info) {
-        err.warn(loc, info);
+    void warn(const span& loc, const std::string& info, const std::string& note = "") {
+        err.warn(loc, info, note);
     }
     void unimplemented(ast::node* n) {
         err.err(n->get_location(),
