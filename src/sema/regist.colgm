@@ -1067,6 +1067,13 @@ impl regist_pass {
         var dm = self->ctx->get_domain(node->base.location.file.__ptr__());
         var union_info = dm->tagged_unions.get(name);
 
+        if (node->members.empty()) {
+            self->err->error(node->base.location.__ptr__(),
+                "tagged union must have at least one member"
+            );
+            return;
+        }
+
         foreach (var i; node->members) {
             var member = i.get() ;
             var member_name = member->name->content.__ptr__();

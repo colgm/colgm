@@ -610,6 +610,8 @@ public:
         sir(sir_kind::sir_load), type(t), source(src), destination(dst) {}
     ~sir_load() override = default;
     void dump(std::ostream&) const override;
+    const auto& get_source() const { return source; }
+    const auto& get_destination() const { return destination; }
 };
 
 class sir_br: public sir {

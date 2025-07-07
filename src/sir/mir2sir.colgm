@@ -13,7 +13,7 @@ use sir::context::{ sir_tagged_union, sir_struct, sir_func, sir_context };
 use sir::value::{ value_t };
 use sir::adjust_va_arg::{ adjust_va_arg };
 use sir::replace_ptr_call::{ replace_struct_ptr_call };
-use sir::size_calc::{ calculate_size };
+use sir::size_calc::{ size_calc };
 use sir::detect_redef_extern::{ detect_redef_extern };
 
 use dwarf::dwarf::*;
@@ -47,6 +47,7 @@ enum mir_value_kind {
     func_symbol,
     method,
     struct_symbol,
+    tagged_union_symbol,
     enum_symbol
 }
 
@@ -97,6 +98,7 @@ impl mir_value_t {
             mir_value_kind::func_symbol => return value_t::null("func");
             mir_value_kind::method => return value_t::null("method");
             mir_value_kind::struct_symbol => return value_t::null("struct");
+            mir_value_kind::tagged_union_symbol => return value_t::null("tagged_union");
             mir_value_kind::enum_symbol => return value_t::null("enum");
         }
         // unreachable
@@ -159,6 +161,14 @@ impl mir_value_t {
         };
     }
 
+    func tagged_union_symbol(name: str*, ty: type*) -> mir_value_t {
+        return mir_value_t {
+            value_kind: mir_value_kind::tagged_union_symbol,
+            content: name->copy_instance(),
+            resolved_type: ty->copy_instance()
+        };
+    }
+
     func enum_symbol(name: str*, ty: type*) -> mir_value_t {
         return mir_value_t {
             value_kind: mir_value_kind::enum_symbol,
@@ -173,6 +183,7 @@ pub struct mir2sir {
     sctx: sir_context*,
     pkg: package*,
     err: report*,
+    sc: size_calc,
     type_mapper: hashmap<str, symbol_kind>,
     basic_type_mapper: hashmap<str, str>,
     primitive_methods: hashmap<str, str>,
@@ -202,6 +213,7 @@ impl mir2sir {
             sctx: sctx,
             pkg: pkg,
             err: err,
+            sc: size_calc::instance(pkg),
             type_mapper: hashmap<str, symbol_kind>::instance(),
             basic_type_mapper: hashmap<str, str>::instance(),
             primitive_methods: hashmap<str, str>::instance(),
@@ -221,6 +233,7 @@ impl mir2sir {
     }
 
     pub func delete(self) {
+        self->sc.delete();
         self->type_mapper.delete();
         self->basic_type_mapper.delete();
         self->primitive_methods.delete();
@@ -1400,49 +1413,121 @@ impl mir2sir {
         defer name_for_search.delete();
 
         var dm = self->ctx->get_domain(n->resolved_type.loc_file.__ptr__());
-        var st = dm->structs.get(name_for_search.__ptr__());
 
-        foreach (var i; n->fields) {
-            var target = self->ssa_gen.create();
-            defer target.delete();
+        if (dm->structs.has(name_for_search.__ptr__())) {        
+            var st = dm->structs.get(name_for_search.__ptr__());
 
-            var target_value = value_t::variable(target.__ptr__());
-            defer target_value.delete();
+            foreach (var i; n->fields) {
+                var target = self->ssa_gen.create();
+                defer target.delete();
 
-            var index = st->field_index(i.get()->name.__ptr__());
-            self->block->add_stmt(sir_get_field::new(
-                target_value.__ptr__(),
-                temp_var_value.__ptr__(),
-                n_ty.__ptr__(),
-                index,
-                self->generate_DI_location(i.get()->content->base.location.__ptr__())
-            ) => sir*);
+                var target_value = value_t::variable(target.__ptr__());
+                defer target_value.delete();
 
-            self->visit(i.get()->content => mir*);
+                var index = st->field_index(i.get()->name.__ptr__());
+                self->block->add_stmt(sir_get_field::new(
+                    target_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    n_ty.__ptr__(),
+                    index,
+                    self->generate_DI_location(i.get()->content->base.location.__ptr__())
+                ) => sir*);
 
-            var res = self->value_stack.back()->copy_instance();
-            defer res.delete();
-            self->value_stack.pop_back();
+                self->visit(i.get()->content => mir*);
 
-            var res_ty = self->type_mapping(res.resolved_type.__ptr__());
-            defer res_ty.delete();
+                var res = self->value_stack.back()->copy_instance();
+                defer res.delete();
+                self->value_stack.pop_back();
 
-            var res_value = res.to_value_t();
-            defer res_value.delete();
+                var res_ty = self->type_mapping(res.resolved_type.__ptr__());
+                defer res_ty.delete();
 
-            self->block->add_stmt(sir_store::new(
-                res_ty.__ptr__(),
-                res_value.__ptr__(),
-                target_value.__ptr__()
-            ) => sir*);
+                var res_value = res.to_value_t();
+                defer res_value.delete();
+
+                self->block->add_stmt(sir_store::new(
+                    res_ty.__ptr__(),
+                    res_value.__ptr__(),
+                    target_value.__ptr__()
+                ) => sir*);
+            }
+
+            var n_ptr = n->resolved_type.pointer_copy();
+            defer n_ptr.delete();
+            var v = mir_value_t::variable(temp_var.__ptr__(), n_ptr.__ptr__());
+            defer v.delete();
+
+            self->value_stack.push(v.__ptr__());
+        } else if (dm->tagged_unions.has(name_for_search.__ptr__())) {
+            var un = dm->tagged_unions.get(name_for_search.__ptr__());
+
+            foreach (var i; n->fields) {
+                var source = self->ssa_gen.create();
+                var target = self->ssa_gen.create();
+                defer source.delete();
+                defer target.delete();
+
+                var source_value = value_t::variable(source.__ptr__());
+                var target_value = value_t::variable(target.__ptr__());
+                defer source_value.delete();
+                defer target_value.delete();
+
+                self->block->add_stmt(sir_get_field::new(
+                    source_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    n_ty.__ptr__(),
+                    1,
+                    self->generate_DI_location(i.get()->content->base.location.__ptr__())
+                ) => sir*);
+
+                // get max align type, it's the base type of union
+                var base_type = self->sc.tagged_union_mapper.get(
+                    name_for_search.__ptr__()
+                )->max_align_type.pointer_copy();
+                defer base_type.delete();
+                var base_type_name = self->type_mapping(base_type.__ptr__());
+                defer base_type_name.delete();
+                var target_type = un->members.get(i.get()->name.__ptr__())->pointer_copy();
+                defer target_type.delete();
+                var target_type_name = self->type_mapping(target_type.__ptr__());
+                defer target_type_name.delete();
+
+                self->block->add_stmt(sir_type_convert::new(
+                    source_value.__ptr__(),
+                    target_value.__ptr__(),
+                    base_type_name.__ptr__(),
+                    target_type_name.__ptr__(),
+                    true,
+                    true,
+                    self->generate_DI_location(i.get()->content->base.location.__ptr__())
+                ) => sir*);
+
+                self->visit(i.get()->content => mir*);
+
+                var res = self->value_stack.back()->copy_instance();
+                defer res.delete();
+                self->value_stack.pop_back();
+
+                var res_ty = self->type_mapping(res.resolved_type.__ptr__());
+                defer res_ty.delete();
+
+                var res_value = res.to_value_t();
+                defer res_value.delete();
+
+                self->block->add_stmt(sir_store::new(
+                    res_ty.__ptr__(),
+                    res_value.__ptr__(),
+                    target_value.__ptr__()
+                ) => sir*);
+            }
+
+            var n_ptr = n->resolved_type.pointer_copy();
+            defer n_ptr.delete();
+            var v = mir_value_t::variable(temp_var.__ptr__(), n_ptr.__ptr__());
+            defer v.delete();
+
+            self->value_stack.push(v.__ptr__());
         }
-
-        var n_ptr = n->resolved_type.pointer_copy();
-        defer n_ptr.delete();
-        var v = mir_value_t::variable(temp_var.__ptr__(), n_ptr.__ptr__());
-        defer v.delete();
-
-        self->value_stack.push(v.__ptr__());
     }
 
     func call_expr_gen(self, n: mir_call*, need_address: bool) {
@@ -1571,6 +1656,14 @@ impl mir2sir {
             self->value_stack.push(v.__ptr__());
         } else if (dm->structs.has(name_for_search.__ptr__())) {
             var v = mir_value_t::struct_symbol(
+                full_path_name.__ptr__(),
+                n->resolved_type.__ptr__()
+            );
+            defer v.delete();
+
+            self->value_stack.push(v.__ptr__());
+        } else if (dm->tagged_unions.has(name_for_search.__ptr__())) {
+            var v = mir_value_t::tagged_union_symbol(
                 full_path_name.__ptr__(),
                 n->resolved_type.__ptr__()
             );
@@ -1830,60 +1923,143 @@ impl mir2sir {
         self->value_stack.pop_back();
 
         var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
-        var st = dm->structs.get(prev_name_for_search.__ptr__());
 
-        // get method
-        if (st->method.has(n->name.__ptr__())) {
-            // push self into stack
-            self->value_stack.push(prev.__ptr__());
-            var method_name = prev.resolved_type.full_path_name(self->pkg, false);
-            method_name.append_char('.')->append_str(n->name.__ptr__());
-            defer method_name.delete();
+        if (dm->structs.has(prev_name_for_search.__ptr__())) {
+            var st = dm->structs.get(prev_name_for_search.__ptr__());
 
-            var v = mir_value_t::method(
-                method_name.__ptr__(),
-                n->resolved_type.__ptr__()
-            );
-            defer v.delete();
+            // get method
+            if (st->method.has(n->name.__ptr__())) {
+                // push self into stack
+                self->value_stack.push(prev.__ptr__());
+                var method_name = prev.resolved_type.full_path_name(self->pkg, false);
+                method_name.append_char('.')->append_str(n->name.__ptr__());
+                defer method_name.delete();
+
+                var v = mir_value_t::method(
+                    method_name.__ptr__(),
+                    n->resolved_type.__ptr__()
+                );
+                defer v.delete();
+
+                self->value_stack.push(v.__ptr__());
+                return;
+            }
+
+            var target = self->ssa_gen.create();
+            var target_value = value_t::variable(target.__ptr__());
+            defer {
+                target.delete();
+                target_value.delete();
+            }
+
+            var index = st->field_index(n->name.__ptr__());
+
+            var prev_value = prev.to_value_t();
+            var prev_ref = prev.resolved_type.ref_copy();
+            var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
+            defer {
+                prev_value.delete();
+                prev_ref.delete();
+                prev_ref_ty.delete();
+            }
+
+            self->block->add_stmt(sir_get_field::new(
+                target_value.__ptr__(),
+                prev_value.__ptr__(),
+                prev_ref_ty.__ptr__(),
+                index,
+                self->generate_DI_location(n->base.location.__ptr__())
+            ) => sir*);
+
+            var n_ty = n->resolved_type.pointer_copy();
+            var v = mir_value_t::variable(target.__ptr__(), n_ty.__ptr__());
+            defer {
+                n_ty.delete();
+                v.delete();
+            }
 
             self->value_stack.push(v.__ptr__());
-            return;
+        } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
+            var un = dm->tagged_unions.get(prev_name_for_search.__ptr__());
+
+            // get method
+            if (un->method.has(n->name.__ptr__())) {
+                // push self into stack
+                self->value_stack.push(prev.__ptr__());
+                var method_name = prev.resolved_type.full_path_name(self->pkg, false);
+                method_name.append_char('.')->append_str(n->name.__ptr__());
+                defer method_name.delete();
+
+                var v = mir_value_t::method(
+                    method_name.__ptr__(),
+                    n->resolved_type.__ptr__()
+                );
+                defer v.delete();
+
+                self->value_stack.push(v.__ptr__());
+                return;
+            }
+
+            var source = self->ssa_gen.create();
+            var source_value = value_t::variable(source.__ptr__());
+            var target = self->ssa_gen.create();
+            var target_value = value_t::variable(target.__ptr__());
+            defer {
+                source.delete();
+                source_value.delete();
+                target.delete();
+                target_value.delete();
+            }
+
+            var prev_value = prev.to_value_t();
+            var prev_ref = prev.resolved_type.ref_copy();
+            var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
+            defer {
+                prev_value.delete();
+                prev_ref.delete();
+                prev_ref_ty.delete();
+            }
+
+            self->block->add_stmt(sir_get_field::new(
+                source_value.__ptr__(),
+                prev_value.__ptr__(),
+                prev_ref_ty.__ptr__(),
+                1,
+                self->generate_DI_location(n->base.location.__ptr__())
+            ) => sir*);
+
+            // get max align type, it's the base type of union
+            var base_type = self->sc.tagged_union_mapper.get(
+                prev_name_for_search.__ptr__()
+            )->max_align_type.pointer_copy();
+            defer base_type.delete();
+            var base_type_name = self->type_mapping(base_type.__ptr__());
+            defer base_type_name.delete();
+
+            var target_type = un->members.get(n->name.__ptr__())->pointer_copy();
+            defer target_type.delete();
+            var target_type_name = self->type_mapping(target_type.__ptr__());
+            defer target_type_name.delete();
+
+            self->block->add_stmt(sir_type_convert::new(
+                source_value.__ptr__(),
+                target_value.__ptr__(),
+                base_type_name.__ptr__(),
+                target_type_name.__ptr__(),
+                true,
+                true,
+                self->generate_DI_location(n->base.location.__ptr__())
+            ) => sir*);
+
+            var n_ty = n->resolved_type.pointer_copy();
+            var v = mir_value_t::variable(target.__ptr__(), n_ty.__ptr__());
+            defer {
+                n_ty.delete();
+                v.delete();
+            }
+
+            self->value_stack.push(v.__ptr__());
         }
-
-        var target = self->ssa_gen.create();
-        var target_value = value_t::variable(target.__ptr__());
-        defer {
-            target.delete();
-            target_value.delete();
-        }
-
-        var index = st->field_index(n->name.__ptr__());
-
-        var prev_value = prev.to_value_t();
-        var prev_ref = prev.resolved_type.ref_copy();
-        var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
-        defer {
-            prev_value.delete();
-            prev_ref.delete();
-            prev_ref_ty.delete();
-        }
-
-        self->block->add_stmt(sir_get_field::new(
-            target_value.__ptr__(),
-            prev_value.__ptr__(),
-            prev_ref_ty.__ptr__(),
-            index,
-            self->generate_DI_location(n->base.location.__ptr__())
-        ) => sir*);
-
-        var n_ty = n->resolved_type.pointer_copy();
-        var v = mir_value_t::variable(target.__ptr__(), n_ty.__ptr__());
-        defer {
-            n_ty.delete();
-            v.delete();
-        }
-
-        self->value_stack.push(v.__ptr__());
     }
 
     func visit_mir_ptr_get_field(self, n: mir_ptr_get_field*) {
@@ -1896,95 +2072,214 @@ impl mir2sir {
         self->value_stack.pop_back();
 
         var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
-        var st = dm->structs.get(prev_name_for_search.__ptr__());
+        
+        if (dm->structs.has(prev_name_for_search.__ptr__())) {
+            var st = dm->structs.get(prev_name_for_search.__ptr__());
 
-        // get method
-        if (st->method.has(n->name.__ptr__())) {
-            var temp_var = self->ssa_gen.create();
-            var temp_var_value = value_t::variable(temp_var.__ptr__());
+            // get method
+            if (st->method.has(n->name.__ptr__())) {
+                var temp_var = self->ssa_gen.create();
+                var temp_var_value = value_t::variable(temp_var.__ptr__());
+                var prev_ref = prev.resolved_type.ref_copy();
+                var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
+                var prev_value = prev.to_value_t();
+                defer {
+                    temp_var.delete();
+                    temp_var_value.delete();
+                    prev_ref.delete();
+                    prev_ref_ty.delete();
+                    prev_value.delete();
+                }
+                self->block->add_stmt(sir_load::new(
+                    prev_ref_ty.__ptr__(),
+                    prev_value.__ptr__(),
+                    temp_var_value.__ptr__()
+                ) => sir*);
+
+                // push self into stack
+                var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
+                defer v_self.delete();
+
+                self->value_stack.push(v_self.__ptr__());
+
+                var method_name = prev.resolved_type.full_path_name(self->pkg, false);
+                method_name.append_char('.')->append_str(n->name.__ptr__());
+                defer method_name.delete();
+
+                var v = mir_value_t::method(
+                    method_name.__ptr__(),
+                    n->resolved_type.__ptr__()
+                );
+                defer v.delete();
+
+                self->value_stack.push(v.__ptr__());
+                return;
+            }
+
+            var index = st->field_index(n->name.__ptr__());
+            var temp_0 = self->ssa_gen.create();
+            var temp_1 = self->ssa_gen.create();
+            var temp_0_value = value_t::variable(temp_0.__ptr__());
+            var temp_1_value = value_t::variable(temp_1.__ptr__());
+            defer {
+                temp_0.delete();
+                temp_0_value.delete();
+                temp_1.delete();
+                temp_1_value.delete();
+            }
+
+            var prev_value = prev.to_value_t();
             var prev_ref = prev.resolved_type.ref_copy();
             var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
-            var prev_value = prev.to_value_t();
+            var prev_ref_ref = prev_ref.ref_copy();
+            var prev_ref_ref_ty = self->type_mapping(prev_ref_ref.__ptr__());
             defer {
-                temp_var.delete();
-                temp_var_value.delete();
+                prev_value.delete();
                 prev_ref.delete();
                 prev_ref_ty.delete();
-                prev_value.delete();
+                prev_ref_ref.delete();
+                prev_ref_ref_ty.delete();
             }
+
             self->block->add_stmt(sir_load::new(
                 prev_ref_ty.__ptr__(),
                 prev_value.__ptr__(),
-                temp_var_value.__ptr__()
+                temp_0_value.__ptr__()
             ) => sir*);
 
-            // push self into stack
-            var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
-            defer v_self.delete();
+            self->block->add_stmt(sir_get_field::new(
+                temp_1_value.__ptr__(),
+                temp_0_value.__ptr__(),
+                prev_ref_ref_ty.__ptr__(),
+                index,
+                self->generate_DI_location(n->base.location.__ptr__())
+            ) => sir*);
 
-            self->value_stack.push(v_self.__ptr__());
-
-            var method_name = prev.resolved_type.full_path_name(self->pkg, false);
-            method_name.append_char('.')->append_str(n->name.__ptr__());
-            defer method_name.delete();
-
-            var v = mir_value_t::method(
-                method_name.__ptr__(),
-                n->resolved_type.__ptr__()
-            );
-            defer v.delete();
+            var n_ty = n->resolved_type.pointer_copy();
+            var v = mir_value_t::variable(temp_1.__ptr__(), n_ty.__ptr__());
+            defer {
+                n_ty.delete();
+                v.delete();
+            }
 
             self->value_stack.push(v.__ptr__());
-            return;
+        } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
+            var un = dm->tagged_unions.get(prev_name_for_search.__ptr__());
+
+            // get method
+            if (un->method.has(n->name.__ptr__())) {
+                var temp_var = self->ssa_gen.create();
+                var temp_var_value = value_t::variable(temp_var.__ptr__());
+                var prev_ref = prev.resolved_type.ref_copy();
+                var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
+                var prev_value = prev.to_value_t();
+                defer {
+                    temp_var.delete();
+                    temp_var_value.delete();
+                    prev_ref.delete();
+                    prev_ref_ty.delete();
+                    prev_value.delete();
+                }
+                self->block->add_stmt(sir_load::new(
+                    prev_ref_ty.__ptr__(),
+                    prev_value.__ptr__(),
+                    temp_var_value.__ptr__()
+                ) => sir*);
+
+                // push self into stack
+                var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
+                defer v_self.delete();
+
+                self->value_stack.push(v_self.__ptr__());
+
+                var method_name = prev.resolved_type.full_path_name(self->pkg, false);
+                method_name.append_char('.')->append_str(n->name.__ptr__());
+                defer method_name.delete();
+
+                var v = mir_value_t::method(
+                    method_name.__ptr__(),
+                    n->resolved_type.__ptr__()
+                );
+                defer v.delete();
+
+                self->value_stack.push(v.__ptr__());
+                return;
+            }
+
+            var temp_0 = self->ssa_gen.create();
+            var temp_1 = self->ssa_gen.create();
+            var target = self->ssa_gen.create();
+            var temp_0_value = value_t::variable(temp_0.__ptr__());
+            var temp_1_value = value_t::variable(temp_1.__ptr__());
+            var target_value = value_t::variable(target.__ptr__());
+            defer {
+                temp_0.delete();
+                temp_0_value.delete();
+                temp_1.delete();
+                temp_1_value.delete();
+                target.delete();
+                target_value.delete();
+            }
+
+            var prev_value = prev.to_value_t();
+            var prev_ref = prev.resolved_type.ref_copy();
+            var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
+            var prev_ref_ref = prev_ref.ref_copy();
+            var prev_ref_ref_ty = self->type_mapping(prev_ref_ref.__ptr__());
+            defer {
+                prev_value.delete();
+                prev_ref.delete();
+                prev_ref_ty.delete();
+                prev_ref_ref.delete();
+                prev_ref_ref_ty.delete();
+            }
+
+            self->block->add_stmt(sir_load::new(
+                prev_ref_ty.__ptr__(),
+                prev_value.__ptr__(),
+                temp_0_value.__ptr__()
+            ) => sir*);
+
+            self->block->add_stmt(sir_get_field::new(
+                temp_1_value.__ptr__(),
+                temp_0_value.__ptr__(),
+                prev_ref_ref_ty.__ptr__(),
+                1,
+                self->generate_DI_location(n->base.location.__ptr__())
+            ) => sir*);
+
+            // get max align type, it's the base type of union
+            var base_type = self->sc.tagged_union_mapper.get(
+                prev_name_for_search.__ptr__()
+            )->max_align_type.pointer_copy();
+            defer base_type.delete();
+            var base_type_name = self->type_mapping(base_type.__ptr__());
+            defer base_type_name.delete();
+
+            var target_type = un->members.get(n->name.__ptr__())->pointer_copy();
+            defer target_type.delete();
+            var target_type_name = self->type_mapping(target_type.__ptr__());
+            defer target_type_name.delete();
+
+            self->block->add_stmt(sir_type_convert::new(
+                temp_1_value.__ptr__(),
+                target_value.__ptr__(),
+                base_type_name.__ptr__(),
+                target_type_name.__ptr__(),
+                true,
+                true,
+                self->generate_DI_location(n->base.location.__ptr__())
+            ) => sir*);
+
+            var n_ty = n->resolved_type.pointer_copy();
+            var v = mir_value_t::variable(target.__ptr__(), n_ty.__ptr__());
+            defer {
+                n_ty.delete();
+                v.delete();
+            }
+
+            self->value_stack.push(v.__ptr__());
         }
-
-        var index = st->field_index(n->name.__ptr__());
-        var temp_0 = self->ssa_gen.create();
-        var temp_1 = self->ssa_gen.create();
-        var temp_0_value = value_t::variable(temp_0.__ptr__());
-        var temp_1_value = value_t::variable(temp_1.__ptr__());
-        defer {
-            temp_0.delete();
-            temp_0_value.delete();
-            temp_1.delete();
-            temp_1_value.delete();
-        }
-
-        var prev_value = prev.to_value_t();
-        var prev_ref = prev.resolved_type.ref_copy();
-        var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
-        var prev_ref_ref = prev_ref.ref_copy();
-        var prev_ref_ref_ty = self->type_mapping(prev_ref_ref.__ptr__());
-        defer {
-            prev_value.delete();
-            prev_ref.delete();
-            prev_ref_ty.delete();
-            prev_ref_ref.delete();
-            prev_ref_ref_ty.delete();
-        }
-
-        self->block->add_stmt(sir_load::new(
-            prev_ref_ty.__ptr__(),
-            prev_value.__ptr__(),
-            temp_0_value.__ptr__()
-        ) => sir*);
-
-        self->block->add_stmt(sir_get_field::new(
-            temp_1_value.__ptr__(),
-            temp_0_value.__ptr__(),
-            prev_ref_ref_ty.__ptr__(),
-            index,
-            self->generate_DI_location(n->base.location.__ptr__())
-        ) => sir*);
-
-        var n_ty = n->resolved_type.pointer_copy();
-        var v = mir_value_t::variable(temp_1.__ptr__(), n_ty.__ptr__());
-        defer {
-            n_ty.delete();
-            v.delete();
-        }
-
-        self->value_stack.push(v.__ptr__());
     }
 
     func visit_mir_get_path(self, n: mir_get_path*) {
@@ -2007,6 +2302,19 @@ impl mir2sir {
                 self->value_stack.push(v.__ptr__());
             }
             mir_value_kind::struct_symbol => {
+                var name = prev.resolved_type.full_path_name(self->pkg, false);
+                name.append(".")->append_str(n->name.__ptr__());
+                defer name.delete();
+
+                var v = mir_value_t::func_symbol(
+                    name.__ptr__(),
+                    n->resolved_type.__ptr__()
+                );
+                defer v.delete();
+
+                self->value_stack.push(v.__ptr__());
+            }
+            mir_value_kind::tagged_union_symbol => {
                 var name = prev.resolved_type.full_path_name(self->pkg, false);
                 name.append(".")->append_str(n->name.__ptr__());
                 defer name.delete();
@@ -2427,7 +2735,64 @@ impl mir2sir {
         var value_val = value.to_value_t();
         defer value_val.delete();
 
-        var switch_inst = sir_switch::new(value_val.__ptr__());
+        var name_for_search = value.resolved_type.generic_name(self->pkg);
+        defer name_for_search.delete();
+
+        var dm = self->ctx->get_domain(value.resolved_type.loc_file.__ptr__());
+        var switch_inst: sir_switch* = nil;
+        if (dm->tagged_unions.has(name_for_search.__ptr__())) {
+            var tag = self->ssa_gen.create();
+            var tag_v = value_t::variable(tag.__ptr__());
+            var tag_value = self->ssa_gen.create();
+            var tag_value_v = value_t::variable(tag_value.__ptr__());
+            defer tag.delete();
+            defer tag_v.delete();
+            defer tag_value.delete();
+            defer tag_value_v.delete();
+            // if value type is not a pointer, means the value is tagged union value
+            // not a tagged union reference, so there must be a sir_load before it
+            // if value is pointer type, we could directly get the tag value
+            if (!value.resolved_type.is_pointer() &&
+                !self->block->stmts.empty() &&
+                self->block->stmts.back()->kind == sir_kind::sir_load) {
+                // TODO: this load inst should be deleted
+                var load_inst = self->block->stmts.back() => sir_load*;
+                var value_type_name = self->type_mapping(value.resolved_type.__ptr__());
+                defer value_type_name.delete();
+                self->block->add_stmt(sir_get_field::new(
+                    tag_v.__ptr__(),
+                    load_inst->source.__ptr__(),
+                    value_type_name.__ptr__(),
+                    0,
+                    self->generate_DI_location(n->condition->base.location.__ptr__())
+                ) => sir*);
+            } else {
+                var value_type_ref = value.resolved_type.ref_copy();
+                defer value_type_ref.delete();
+                var value_type_ref_name = self->type_mapping(value_type_ref.__ptr__());
+                defer value_type_ref_name.delete();
+
+                self->block->add_stmt(sir_get_field::new(
+                    tag_v.__ptr__(),
+                    value_val.__ptr__(),
+                    value_type_ref_name.__ptr__(),
+                    0,
+                    self->generate_DI_location(n->condition->base.location.__ptr__())
+                ) => sir*);
+            }
+
+            var i64_t = str::from("i64");
+            defer i64_t.delete();
+            self->block->add_stmt(sir_load::new(
+                i64_t.__ptr__(),
+                tag_v.__ptr__(),
+                tag_value_v.__ptr__(),
+            ) => sir*);
+            switch_inst = sir_switch::new(tag_value_v.__ptr__());
+        } else {
+            switch_inst = sir_switch::new(value_val.__ptr__());
+        }
+
         self->block->add_stmt(switch_inst => sir*);
 
         var jmp_exits = vec<sir_br*>::instance();
@@ -3233,7 +3598,7 @@ impl mir2sir {
         }
 
         self->generate_type_mapper();
-        calculate_size(mctx, self->pkg, verbose);
+        self->sc.calculate(mctx, verbose);
         self->emit_tagged_union(mctx);
         self->emit_struct(mctx);
         self->emit_func_decl(mctx);

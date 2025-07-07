@@ -86,9 +86,8 @@ void mir2sir::emit_tagged_union(const mir_context& mctx) {
             i->total_size,
             i->align
         );
-        if (!i->max_align_type.name.empty()) {
-            tud->add_member_type(type_mapping(i->max_align_type));
-        }
+        
+        tud->add_member_type(type_mapping(i->max_align_type));
         if (i->union_size > i->max_align_type_size) {
             tud->add_member_type(
                 "[" + std::to_string(i->union_size - i->max_align_type_size) + " x i8]"
@@ -652,30 +651,68 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
     ));
 
     const auto& dm = ctx.get_domain(node->get_type().loc_file);
-    const auto& st = dm.structs.at(node->get_type().name_for_search());
-    for (const auto& i : node->get_fields()) {
-        const auto target = ssa_gen.create();
-        const auto index = st.field_index(i.name);
-        block->add_stmt(new sir_get_field(
-            value_t::variable(target),
-            value_t::variable(temp_var),
-            type_mapping(node->get_type()),
-            index
-        ));
-        i.content->accept(this);
 
-        const auto res = value_stack.back();
-        block->add_stmt(new sir_store(
-            type_mapping(res.resolve_type),
-            res.to_value_t(),
-            value_t::variable(target)
+    if (dm.structs.count(node->get_type().name_for_search())) {
+        const auto& st = dm.structs.at(node->get_type().name_for_search());
+        for (const auto& i : node->get_fields()) {
+            const auto target = ssa_gen.create();
+            const auto index = st.field_index(i.name);
+            block->add_stmt(new sir_get_field(
+                value_t::variable(target),
+                value_t::variable(temp_var),
+                type_mapping(node->get_type()),
+                index
+            ));
+            i.content->accept(this);
+
+            const auto res = value_stack.back();
+            block->add_stmt(new sir_store(
+                type_mapping(res.resolve_type),
+                res.to_value_t(),
+                value_t::variable(target)
+            ));
+            value_stack.pop_back();
+        }
+        value_stack.push_back(mir_value_t::variable(
+            temp_var,
+            node->get_type().get_pointer_copy()
         ));
-        value_stack.pop_back();
+    } else if (dm.tagged_unions.count(node->get_type().name_for_search())) {
+        const auto& un = dm.tagged_unions.at(node->get_type().name_for_search());
+        for (const auto& i : node->get_fields()) {
+            const auto source = ssa_gen.create();
+            const auto target = ssa_gen.create();
+            block->add_stmt(new sir_get_field(
+                value_t::variable(source),
+                value_t::variable(temp_var),
+                type_mapping(node->get_type()),
+                1
+            ));
+            block->add_stmt(new sir_type_convert(
+                value_t::variable(source),
+                value_t::variable(target),
+                // get max align type, it's the base type of union
+                type_mapping(tagged_union_mapper.at(node->get_type().full_path_name())
+                                                ->max_align_type.get_pointer_copy()),
+                type_mapping(un.member.at(i.name).get_pointer_copy()),
+                true,
+                true
+            ));
+            i.content->accept(this);
+
+            const auto res = value_stack.back();
+            block->add_stmt(new sir_store(
+                type_mapping(res.resolve_type),
+                res.to_value_t(),
+                value_t::variable(target)
+            ));
+            value_stack.pop_back();
+        }
+        value_stack.push_back(mir_value_t::variable(
+            temp_var,
+            node->get_type().get_pointer_copy()
+        ));
     }
-    value_stack.push_back(mir_value_t::variable(
-        temp_var,
-        node->get_type().get_pointer_copy()
-    ));
 }
 
 void mir2sir::push_global_func(const type& t) {
@@ -736,6 +773,12 @@ void mir2sir::visit_mir_call_id(mir_call_id* node) {
             break;
         case sym_kind::struct_kind:
             value_stack.push_back(mir_value_t::struct_kind(
+                node->get_type().full_path_name(),
+                node->get_type()
+            ));
+            break;
+        case sym_kind::tagged_union_kind:
+            value_stack.push_back(mir_value_t::tagged_union_kind(
                 node->get_type().full_path_name(),
                 node->get_type()
             ));
@@ -875,32 +918,72 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
     value_stack.pop_back();
 
     const auto& dm = ctx.get_domain(prev.resolve_type.loc_file);
-    const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
 
-    // get method
-    if (st.method.count(node->get_name())) {
-        // push self into the stack
-        value_stack.push_back(prev);
-        value_stack.push_back(mir_value_t::method(
-            prev.resolve_type.full_path_name() + "." + node->get_name(),
-            node->get_type()
+    if (dm.structs.count(prev.resolve_type.name_for_search())) {
+        const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
+
+        // get method
+        if (st.method.count(node->get_name())) {
+            // push self into the stack
+            value_stack.push_back(prev);
+            value_stack.push_back(mir_value_t::method(
+                prev.resolve_type.full_path_name() + "." + node->get_name(),
+                node->get_type()
+            ));
+            return;
+        }
+
+        const auto target = ssa_gen.create();
+        const auto index = st.field_index(node->get_name());
+        block->add_stmt(new sir_get_field(
+            value_t::variable(target),
+            prev.to_value_t(),
+            type_mapping(prev.resolve_type.get_ref_copy()),
+            index
         ));
-        return;
+
+        value_stack.push_back(mir_value_t::variable(
+            target,
+            node->get_type().get_pointer_copy()
+        ));
+    } else if (dm.tagged_unions.count(prev.resolve_type.name_for_search())) {
+        const auto& un = dm.tagged_unions.at(prev.resolve_type.name_for_search());
+
+        // get method
+        if (un.method.count(node->get_name())) {
+            // push self into the stack
+            value_stack.push_back(prev);
+            value_stack.push_back(mir_value_t::method(
+                prev.resolve_type.full_path_name() + "." + node->get_name(),
+                node->get_type()
+            ));
+            return;
+        }
+
+        const auto source = ssa_gen.create();
+        const auto target = ssa_gen.create();
+        block->add_stmt(new sir_get_field(
+            value_t::variable(source),
+            prev.to_value_t(),
+            type_mapping(prev.resolve_type.get_ref_copy()),
+            1
+        ));
+        block->add_stmt(new sir_type_convert(
+            value_t::variable(source),
+            value_t::variable(target),
+            // get max align type, it's the base type of union
+            type_mapping(tagged_union_mapper.at(prev.resolve_type.full_path_name())
+                                            ->max_align_type.get_pointer_copy()),
+            type_mapping(un.member.at(node->get_name()).get_pointer_copy()),
+            true,
+            true
+        ));
+
+        value_stack.push_back(mir_value_t::variable(
+            target,
+            node->get_type().get_pointer_copy()
+        ));
     }
-
-    const auto target = ssa_gen.create();
-    const auto index = st.field_index(node->get_name());
-    block->add_stmt(new sir_get_field(
-        value_t::variable(target),
-        prev.to_value_t(),
-        type_mapping(prev.resolve_type.get_ref_copy()),
-        index
-    ));
-
-    value_stack.push_back(mir_value_t::variable(
-        target,
-        node->get_type().get_pointer_copy()
-    ));
 }
 
 void mir2sir::visit_mir_get_path(mir_get_path* node) {
@@ -910,6 +993,12 @@ void mir2sir::visit_mir_get_path(mir_get_path* node) {
     switch(prev.value_kind) {
         case mir_value_t::kind::primitive:
         case mir_value_t::kind::struct_symbol:
+            value_stack.push_back(mir_value_t::func_kind(
+                prev.resolve_type.full_path_name() + "." + node->get_name(),
+                node->get_type()
+            ));
+            break;
+        case mir_value_t::kind::tagged_union_symbol:
             value_stack.push_back(mir_value_t::func_kind(
                 prev.resolve_type.full_path_name() + "." + node->get_name(),
                 node->get_type()
@@ -932,46 +1021,100 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
     value_stack.pop_back();
 
     const auto& dm = ctx.get_domain(prev.resolve_type.loc_file);
-    const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
 
-    // get method
-    if (st.method.count(node->get_name())) {
-        // push self into the stack
-        auto temp_var = ssa_gen.create();
+    if (dm.structs.count(prev.resolve_type.name_for_search())) {
+        const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
+
+        // get method
+        if (st.method.count(node->get_name())) {
+            // push self into the stack
+            auto temp_var = ssa_gen.create();
+            block->add_stmt(new sir_load(
+                type_mapping(prev.resolve_type.get_ref_copy()),
+                prev.to_value_t(),
+                value_t::variable(temp_var)
+            ));
+            value_stack.push_back(mir_value_t::variable(
+                temp_var,
+                prev.resolve_type.get_ref_copy()
+            ));
+            value_stack.push_back(mir_value_t::method(
+                prev.resolve_type.full_path_name() + "." + node->get_name(),
+                node->get_type()
+            ));
+            return;
+        }
+
+        const auto index = st.field_index(node->get_name());
+        const auto temp_0 = ssa_gen.create();
+        const auto temp_1 = ssa_gen.create();
         block->add_stmt(new sir_load(
             type_mapping(prev.resolve_type.get_ref_copy()),
             prev.to_value_t(),
-            value_t::variable(temp_var)
+            value_t::variable(temp_0)
+        ));
+        block->add_stmt(new sir_get_field(
+            value_t::variable(temp_1),
+            value_t::variable(temp_0),
+            type_mapping(prev.resolve_type.get_ref_copy().get_ref_copy()),
+            index
         ));
         value_stack.push_back(mir_value_t::variable(
-            temp_var,
-            prev.resolve_type.get_ref_copy()
+            temp_1,
+            node->get_type().get_pointer_copy()
         ));
-        value_stack.push_back(mir_value_t::method(
-            prev.resolve_type.full_path_name() + "." + node->get_name(),
-            node->get_type()
-        ));
-        return;
-    }
+    } else if (dm.tagged_unions.count(prev.resolve_type.name_for_search())) {
+        const auto& un = dm.tagged_unions.at(prev.resolve_type.name_for_search());
 
-    const auto index = st.field_index(node->get_name());
-    const auto temp_0 = ssa_gen.create();
-    const auto temp_1 = ssa_gen.create();
-    block->add_stmt(new sir_load(
-        type_mapping(prev.resolve_type.get_ref_copy()),
-        prev.to_value_t(),
-        value_t::variable(temp_0)
-    ));
-    block->add_stmt(new sir_get_field(
-        value_t::variable(temp_1),
-        value_t::variable(temp_0),
-        type_mapping(prev.resolve_type.get_ref_copy().get_ref_copy()),
-        index
-    ));
-    value_stack.push_back(mir_value_t::variable(
-        temp_1,
-        node->get_type().get_pointer_copy()
-    ));
+        // get method
+        if (un.method.count(node->get_name())) {
+            // push self into the stack
+            auto temp_var = ssa_gen.create();
+            block->add_stmt(new sir_load(
+                type_mapping(prev.resolve_type.get_ref_copy()),
+                prev.to_value_t(),
+                value_t::variable(temp_var)
+            ));
+            value_stack.push_back(mir_value_t::variable(
+                temp_var,
+                prev.resolve_type.get_ref_copy()
+            ));
+            value_stack.push_back(mir_value_t::method(
+                prev.resolve_type.full_path_name() + "." + node->get_name(),
+                node->get_type()
+            ));
+            return;
+        }
+
+        const auto temp_0 = ssa_gen.create();
+        const auto temp_1 = ssa_gen.create();
+        const auto target = ssa_gen.create();
+        block->add_stmt(new sir_load(
+            type_mapping(prev.resolve_type.get_ref_copy()),
+            prev.to_value_t(),
+            value_t::variable(temp_0)
+        ));
+        block->add_stmt(new sir_get_field(
+            value_t::variable(temp_1),
+            value_t::variable(temp_0),
+            type_mapping(prev.resolve_type.get_ref_copy().get_ref_copy()),
+            1
+        ));
+        block->add_stmt(new sir_type_convert(
+            value_t::variable(temp_1),
+            value_t::variable(target),
+            // get max align type, it's the base type of union
+            type_mapping(tagged_union_mapper.at(prev.resolve_type.full_path_name())
+                                            ->max_align_type.get_pointer_copy()),
+            type_mapping(un.member.at(node->get_name()).get_pointer_copy()),
+            true,
+            true
+        ));
+        value_stack.push_back(mir_value_t::variable(
+            target,
+            node->get_type().get_pointer_copy()
+        ));
+    }
 }
 
 void mir2sir::visit_mir_define(mir_define* node) {
@@ -1253,7 +1396,43 @@ void mir2sir::visit_mir_switch(mir_switch* node) {
 
     const auto value = value_stack.back();
     value_stack.pop_back();
-    auto switch_inst = new sir_switch(value.to_value_t());
+
+    const auto& dm = ctx.get_domain(value.resolve_type.loc_file);
+    sir_switch* switch_inst = nullptr;
+    if (dm.tagged_unions.count(value.resolve_type.name_for_search())) {
+        const auto tag = ssa_gen.create();
+        const auto tag_value = ssa_gen.create();
+        // if value type is not a pointer, means the value is tagged union value
+        // not a tagged union reference, so there must be a sir_load before it
+        // if value is pointer type, we could directly get the tag value
+        if (!value.resolve_type.is_pointer() &&
+            block->get_stmts().size() &&
+            block->get_stmts().back()->get_ir_type() == sir_kind::sir_load) {
+            // TODO: this load inst should be deleted
+            auto load_inst = static_cast<sir_load*>(block->get_stmts().back());
+            block->add_stmt(new sir_get_field(
+                value_t::variable(tag),
+                load_inst->get_source(),
+                type_mapping(value.resolve_type),
+                0
+            ));
+        } else {
+            block->add_stmt(new sir_get_field(
+                value_t::variable(tag),
+                value.to_value_t(),
+                type_mapping(value.resolve_type.get_ref_copy()),
+                0
+            ));
+        }
+        block->add_stmt(new sir_load(
+            "i64",
+            value_t::variable(tag),
+            value_t::variable(tag_value)
+        ));
+        switch_inst = new sir_switch(value_t::variable(tag_value));
+    } else {
+        switch_inst = new sir_switch(value.to_value_t());
+    }
     block->add_stmt(switch_inst);
     for (auto i : node->get_cases()) {
         auto case_label = block->stmt_size();
@@ -1706,11 +1885,7 @@ void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
     }
 
     if (u->member_type.empty()) {
-        // tagged union must have a field with i64 type
-        u->total_size = 8;
-        u->union_size = 8;
-        u->align = 8;
-        u->size_calculated = true;
+        // unreachable
         return;
     }
 

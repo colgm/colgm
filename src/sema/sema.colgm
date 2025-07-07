@@ -2573,6 +2573,13 @@ impl sema {
         var used_values = hashset<str>::instance();
         defer used_values.delete();
 
+        if (infer->pointer_depth > 1) {
+            self->err->out("cannot match \"")
+                     ->out_type(infer, self->pkg)
+                     ->out("\"")
+                     ->emit_err(n->value->location.__ptr__());
+        }
+
         var dm = self->ctx->get_domain(infer->loc_file.__ptr__());
         var un = dm->tagged_unions.get(infer->name.__ptr__());
 

@@ -1783,6 +1783,12 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
     bool default_found = false;
     std::unordered_set<std::string> used_values;
 
+    if (infer.pointer_depth > 1) {
+        rp.report(node->get_value(),
+            "cannot match \"" + infer.full_path_name_with_pointer() + "\""
+        );
+    }
+
     const auto& dm = ctx.get_domain(infer.loc_file);
     const auto& un = dm.tagged_unions.at(infer.name);
 

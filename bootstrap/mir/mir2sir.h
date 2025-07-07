@@ -58,6 +58,7 @@ public:
         func_symbol,
         method,
         struct_symbol,
+        tagged_union_symbol,
         enum_symbol
     };
 
@@ -77,6 +78,7 @@ public:
             case mir_value_t::kind::func_symbol: return value_t::null("func");
             case mir_value_t::kind::method: return value_t::null("method");
             case mir_value_t::kind::struct_symbol: return value_t::null("struct");
+            case mir_value_t::kind::tagged_union_symbol: return value_t::null("tagged_union");
             case mir_value_t::kind::enum_symbol: return value_t::null("enum");
         }
         // unreachable
@@ -129,6 +131,13 @@ public:
     static auto struct_kind(const std::string& full_name, const type& ty) {
         return mir_value_t {
             .value_kind = mir_value_t::kind::struct_symbol,
+            .content = full_name,
+            .resolve_type = ty
+        };
+    }
+    static auto tagged_union_kind(const std::string& full_name, const type& ty) {
+        return mir_value_t {
+            .value_kind = mir_value_t::kind::tagged_union_symbol,
             .content = full_name,
             .resolve_type = ty
         };

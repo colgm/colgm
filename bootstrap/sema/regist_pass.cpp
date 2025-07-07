@@ -1374,6 +1374,11 @@ void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node
     }
 
     auto& self = this_domain.tagged_unions.at(name);
+    if (node->get_members().empty()) {
+        rp.report(node, "tagged union must have at least one member");
+        return;
+    }
+
     // load members
     for (auto i : node->get_members()) {
         auto type_node = i->get_type();

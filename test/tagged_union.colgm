@@ -1,3 +1,4 @@
+use std::io::{ io };
 
 struct mir_block {
     a: u8,  // 1 align 1
@@ -31,16 +32,16 @@ pub union(mir_tag) mir {
     m_str: mir_str
 }
 
-// impl mir {
-//     pub func get_tag(self) -> mir_tag {
-//         return self->__kind__();
-//     }
-// }
-
 func test() {
-    // var a = mir::m_block(mir_block {a: 1, b: 2, c: 3});
-    // var b = mir::m_num(mir_num {a: [0]});
-    // var c = mir::m_str(mir_str {});
+    var a = mir { m_block: mir_block {a: 1, b: 2, c: 3} };
+    var b = mir { m_num: mir_num {} };
+    b.m_num.a[0] = 1;
+    var c = mir { m_str: mir_str {} };
+
+    match (mir { m_str: mir_str {} }) {
+        mir_tag::m_str => { io::stdout().out("mir_tag::m_str branch\n"); }
+        _ => { io::stdout().out("default branch\n"); }
+    }
 }
 
 
@@ -113,21 +114,41 @@ impl tagged_union_with_ref_enum {
 }
 
 func main() -> i32 {
-    var a = tagged_union_without_ref_enum { aaa: 0 };
-    var b = tagged_union_with_ref_enum { aaa: 0 };
+    test();
+
+    var a = tagged_union_without_ref_enum { bbb: nil };
+    var b = tagged_union_with_ref_enum { ccc: 0.0 };
 
     a._aaa() + b._aaa();
 
     match (a) {
-        aaa => a.aaa;
-        bbb => a.bbb;
-        ccc => a.ccc;
+        aaa => {
+            a.aaa;
+            io::stdout().out("unexpected aaa branch\n");
+        }
+        bbb => {
+            a.bbb;
+            io::stdout().out("expected bbb branch\n");
+        }
+        ccc => {
+            a.ccc;
+            io::stdout().out("unexpected ccc branch\n");
+        }
     }
 
     match (b) {
-        Tag::aaa => b.aaa;
-        Tag::bbb => b.bbb;
-        Tag::ccc => b.ccc;
+        Tag::aaa => {
+            b.aaa;
+            io::stdout().out("unexpected aaa branch\n");
+        }
+        Tag::bbb => {
+            b.bbb;
+            io::stdout().out("unexpected bbb branch\n");
+        }
+        Tag::ccc => {
+            b.ccc;
+            io::stdout().out("expected ccc branch\n");
+        }
     }
 
     return tagged_union_without_ref_enum::static() +

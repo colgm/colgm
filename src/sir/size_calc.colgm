@@ -15,7 +15,7 @@ struct size_align_pair {
     align: u64
 }
 
-struct size_calc {
+pub struct size_calc {
     pkg: package*,
     struct_mapper: hashmap<str, mir_struct*>,
     tagged_union_mapper: hashmap<str, mir_tagged_union*>,
@@ -204,7 +204,10 @@ impl size_calc {
         u->size_calculated = true;
     }
 
-    pub func calculate(self, mctx: mir_context*) {
+    pub func calculate(self, mctx: mir_context*, verbose: bool) {
+        var ts = maketimestamp();
+        ts.stamp();
+
         self->struct_mapper.clear();
         self->tagged_union_mapper.clear();
         foreach (var i; mctx->structs) {
@@ -236,21 +239,12 @@ impl size_calc {
         foreach (var i; mctx->tagged_unions) {
             self->calculate_single_tagged_union_size(i.get());
         }
-    }
-}
 
-pub func calculate_size(mctx: mir_context*, pkg: package*, verbose: bool) {
-    var ts = maketimestamp();
-    ts.stamp();
-    
-    var sc = size_calc::instance(pkg);
-    defer sc.delete();
-    sc.calculate(mctx);
-
-    if (verbose) {
-        io::stdout().green().out("[  MIR2SIR ] ").reset();
-        io::stdout().out("Calculate struct size: ");
-        io::stdout().light_cyan().out_u64(mctx->structs.size).reset();
-        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+        if (verbose) {
+            io::stdout().green().out("[  MIR2SIR ] ").reset();
+            io::stdout().out("Calculate struct size: ");
+            io::stdout().light_cyan().out_u64(mctx->structs.size).reset();
+            io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+        }
     }
 }
