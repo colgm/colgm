@@ -424,6 +424,9 @@ impl sir_context {
             defer size_func_name.delete();
 
             if (st_name->size >= 2 && st_name->get(1) == '"') {
+                // %"struct.
+                // ^^^^^^^^^ 9
+                // delete prefix `"%struct.`
                 var temp = st_name->substr_from(9);
                 defer temp.delete();
 
@@ -432,12 +435,32 @@ impl sir_context {
                 size_func_name.pop_back();
                 size_func_name.append(".__size__\"");
             } else {
+                // delete prefix `%struct.`
                 var temp = st_name->substr_from(8);
                 defer temp.delete();
 
                 size_func_name.append_str(temp.__ptr__());
                 size_func_name.append(".__size__");
             }
+
+            out.out("define i64 @").out(size_func_name.c_str);
+            out.out("() alwaysinline {\n");
+            out.out("  ret i64 ").out_u64(i.get()->size).out("\n}\n");
+        }
+
+        foreach (var i; self->tagged_union_decls) {
+            var un_name = i.get()->name.__ptr__();
+            var size_func_name = str::instance();
+            defer size_func_name.delete();
+
+            // %tagged_union.
+            // ^^^^^^^^^^^^^^ 14
+            // delete prefix `%tagged_union.`
+            var temp = un_name->substr_from(14);
+            defer temp.delete();
+
+            size_func_name.append_str(temp.__ptr__());
+            size_func_name.append(".__size__");
 
             out.out("define i64 @").out(size_func_name.c_str);
             out.out("() alwaysinline {\n");
@@ -475,6 +498,26 @@ impl sir_context {
             out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get()->size).out(")\n");
             out.out("  %1 = bitcast i8* %0 to ").out(st_name->c_str).out("*\n");
             out.out("  ret ").out(st_name->c_str).out("* %1\n}\n");
+        }
+
+        foreach (var i; self->tagged_union_decls) {
+            var un_name = i.get()->name.__ptr__();
+            var alloc_func_name = str::instance();
+            defer alloc_func_name.delete();
+
+            // delete prefix `%tagged_union.`
+            var temp = un_name->substr_from(14);
+            defer temp.delete();
+
+            alloc_func_name.append_str(temp.__ptr__());
+            alloc_func_name.append(".__alloc__");
+
+            out.out("define ").out(un_name->c_str).out("* @");
+            out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
+            out.out("label.entry:\n");
+            out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get()->size).out(")\n");
+            out.out("  %1 = bitcast i8* %0 to ").out(un_name->c_str).out("*\n");
+            out.out("  ret ").out(un_name->c_str).out("* %1\n}\n");
         }
     }
 

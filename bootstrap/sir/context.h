@@ -113,8 +113,8 @@ private:
     void dump_target_tripple(std::ostream&) const;
     void dump_const_string(std::ostream&) const;
     void dump_builtin_time(std::ostream&) const;
-    void dump_struct_size_method(std::ostream&) const;
-    void dump_struct_alloc_method(std::ostream&) const;
+    void dump_size_method(std::ostream&) const;
+    void dump_alloc_method(std::ostream&) const;
 
 public:
     ~sir_context() {

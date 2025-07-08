@@ -136,9 +136,9 @@ private:
     bool check_is_valid_enum_member(ast::number_literal*);
 
 private:
-    colgm_func builtin_struct_size(const span&);
-    colgm_func builtin_struct_alloc(const span&, const type&);
-    colgm_func builtin_struct_ptr(const span&, const type&);
+    colgm_func builtin_size(const span&);
+    colgm_func builtin_alloc(const span&, const type&);
+    colgm_func builtin_ptr(const span&, const type&);
 
 private: // primitive types
     // primitive types, now support:

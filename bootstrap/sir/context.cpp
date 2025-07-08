@@ -151,7 +151,7 @@ void sir_context::dump_builtin_time(std::ostream& out) const {
     out << "}\n\n";
 }
 
-void sir_context::dump_struct_size_method(std::ostream& out) const {
+void sir_context::dump_size_method(std::ostream& out) const {
     for (const auto& st : struct_decls) {
         const auto st_type = type {
             .name = st->get_name(),
@@ -163,9 +163,21 @@ void sir_context::dump_struct_size_method(std::ostream& out) const {
         out << "define i64 @" << size_func_name << "() alwaysinline {\n";
         out << "  ret i64 " << st->get_size() << "\n}\n";
     }
+
+    for (const auto& un : tagged_union_decls) {
+        const auto un_type = type {
+            .name = un->get_name(),
+            .loc_file = un->get_file()
+        };
+        const auto un_name = mangle(un_type.full_path_name());
+        const auto un_real_name = quoted_name("%tagged_union." + un_name);
+        const auto size_func_name = quoted_name(un_name + ".__size__");
+        out << "define i64 @" << size_func_name << "() alwaysinline {\n";
+        out << "  ret i64 " << un->get_size() << "\n}\n";
+    }
 }
 
-void sir_context::dump_struct_alloc_method(std::ostream& out) const {
+void sir_context::dump_alloc_method(std::ostream& out) const {
     for (const auto st: struct_decls) {
         const auto st_type = type {
             .name = st->get_name(),
@@ -181,6 +193,24 @@ void sir_context::dump_struct_alloc_method(std::ostream& out) const {
         out << "  %0 = call i8* @malloc(i64 " << st->get_size() << ")\n";
         out << "  %1 = bitcast i8* %0 to " << st_real_name << "*\n";
         out << "  ret " << st_real_name << "* %1\n";
+        out << "}\n";
+    }
+
+    for (const auto un: tagged_union_decls) {
+        const auto un_type = type {
+            .name = un->get_name(),
+            .loc_file = un->get_file()
+        };
+        const auto un_name = mangle(un_type.full_path_name());
+        const auto un_real_name = quoted_name("%tagged_union." + un_name);
+        const auto alloc_func_name = quoted_name(un_name + ".__alloc__");
+        out << "define " << un_real_name << "* ";
+        out << "@" << alloc_func_name;
+        out << "() alwaysinline {\n";
+        out << "label.entry:\n";
+        out << "  %0 = call i8* @malloc(i64 " << un->get_size() << ")\n";
+        out << "  %1 = bitcast i8* %0 to " << un_real_name << "*\n";
+        out << "  ret " << un_real_name << "* %1\n";
         out << "}\n";
     }
 }
@@ -205,8 +235,8 @@ void sir_context::dump_code(std::ostream& out) {
     dump_builtin_time(out);
 
     // generate builtin methods for structs
-    dump_struct_size_method(out);
-    dump_struct_alloc_method(out);
+    dump_size_method(out);
+    dump_alloc_method(out);
     if (struct_decls.size()) {
         out << "\n";
     }

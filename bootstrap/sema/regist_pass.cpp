@@ -712,7 +712,7 @@ bool regist_pass::check_is_valid_enum_member(ast::number_literal* node) {
     return true;
 }
 
-colgm_func regist_pass::builtin_struct_size(const span& loc) {
+colgm_func regist_pass::builtin_size(const span& loc) {
     auto func = colgm_func();
     func.name = "__size__";
     func.location = loc;
@@ -721,7 +721,7 @@ colgm_func regist_pass::builtin_struct_size(const span& loc) {
     return func;
 }
 
-colgm_func regist_pass::builtin_struct_alloc(const span& loc, const type& ty) {
+colgm_func regist_pass::builtin_alloc(const span& loc, const type& ty) {
     auto func = colgm_func();
     func.name = "__alloc__";
     func.location = loc;
@@ -730,7 +730,7 @@ colgm_func regist_pass::builtin_struct_alloc(const span& loc, const type& ty) {
     return func;
 }
 
-colgm_func regist_pass::builtin_struct_ptr(const span& loc, const type& ty) {
+colgm_func regist_pass::builtin_ptr(const span& loc, const type& ty) {
     auto func = colgm_func();
     func.name = "__ptr__";
     func.location = loc;
@@ -1154,17 +1154,17 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
 
     // add built-in static methods
     self.static_method.insert(
-        {"__size__", builtin_struct_size(node->get_location())}
+        {"__size__", builtin_size(node->get_location())}
     );
     self.static_method.insert(
-        {"__alloc__", builtin_struct_alloc(
+        {"__alloc__", builtin_alloc(
             node->get_location(),
             struct_self_type.get_pointer_copy()
         )}
     );
     // add built-in methods
     self.method.insert(
-        {"__ptr__", builtin_struct_ptr(
+        {"__ptr__", builtin_ptr(
             node->get_location(),
             struct_self_type.get_pointer_copy()
         )}
@@ -1373,11 +1373,33 @@ void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node
         return;
     }
 
+    auto union_self_type = type {
+        .name = name,
+        .loc_file = node->get_file()
+    };
     auto& self = this_domain.tagged_unions.at(name);
     if (node->get_members().empty()) {
         rp.report(node, "tagged union must have at least one member");
         return;
     }
+
+    // add built-in static methods
+    self.static_method.insert(
+        {"__size__", builtin_size(node->get_location())}
+    );
+    self.static_method.insert(
+        {"__alloc__", builtin_alloc(
+            node->get_location(),
+            union_self_type.get_pointer_copy()
+        )}
+    );
+    // add built-in methods
+    self.method.insert(
+        {"__ptr__", builtin_ptr(
+            node->get_location(),
+            union_self_type.get_pointer_copy()
+        )}
+    );
 
     // load members
     for (auto i : node->get_members()) {

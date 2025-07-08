@@ -1,10 +1,10 @@
-#include "sir/replace_struct_ptr_call.h"
+#include "sir/replace_ptr_call.h"
 
 #include <vector>
 
 namespace colgm {
 
-void replace_struct_ptr_call::do_remove(sir_block* b) {
+void replace_ptr_call::do_remove(sir_block* b) {
     std::vector<sir*> new_stmts = {};
     for (auto i : b->get_stmts()) {
         if (i->get_ir_type() != sir_kind::sir_call) {
@@ -34,7 +34,7 @@ void replace_struct_ptr_call::do_remove(sir_block* b) {
     b->get_mut_stmts() = new_stmts;
 }
 
-bool replace_struct_ptr_call::run(sir_context* ctx) {
+bool replace_ptr_call::run(sir_context* ctx) {
     for (auto i : ctx->func_impls) {
         do_remove(i->get_code_block());
     }

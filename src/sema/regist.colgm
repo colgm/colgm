@@ -1074,6 +1074,14 @@ impl regist_pass {
             return;
         }
 
+        var un_type = type::instance();
+        un_type.name.append_str(name);
+        un_type.loc_file.append_str(node->base.location.file.__ptr__());
+        defer un_type.delete();
+        self->regist_tagged_union_size_method(union_info);
+        self->regist_tagged_union_alloc_method(union_info, un_type.__ptr__());
+        self->regist_tagged_union_ptr_method(union_info, un_type.__ptr__());
+
         foreach (var i; node->members) {
             var member = i.get() ;
             var member_name = member->name->content.__ptr__();
@@ -1094,6 +1102,72 @@ impl regist_pass {
             union_info->ordered_members.push(member_name);
         }
         self->load_tagged_union_member_map(node, union_info);
+    }
+
+    func regist_tagged_union_size_method(self, un: colgm_tagged_union*) {
+        var name = str::from("__size__");
+        var ret = type::u64_type();
+        defer {
+            name.delete();
+            ret.delete();
+        }
+
+        var func_info = colgm_func::instance(
+            name.__ptr__(),
+            un->location.__ptr__(),
+            ret.__ptr__()
+        );
+        func_info.is_public = true;
+        defer func_info.delete();
+
+        un->static_method.insert(name.__ptr__(), func_info.__ptr__());
+    }
+
+    func regist_tagged_union_alloc_method(self,
+                                          un: colgm_tagged_union*,
+                                          un_type: type*) {
+        var name = str::from("__alloc__");
+        var ret = un_type->pointer_copy();
+        defer {
+            name.delete();
+            ret.delete();
+        }
+
+        var func_info = colgm_func::instance(
+            name.__ptr__(),
+            un->location.__ptr__(),
+            ret.__ptr__()
+        );
+        func_info.is_public = true;
+        defer func_info.delete();
+
+        un->static_method.insert(name.__ptr__(), func_info.__ptr__());
+    }
+
+    func regist_tagged_union_ptr_method(self,
+                                        un: colgm_tagged_union*,
+                                        un_type: type*) {
+        var name = str::from("__ptr__");
+        var self_name = str::from("self");
+        var ret = un_type->pointer_copy();
+        defer {
+            name.delete();
+            self_name.delete();
+            ret.delete();
+        }
+
+        var func_info = colgm_func::instance(
+            name.__ptr__(),
+            un->location.__ptr__(),
+            ret.__ptr__()
+        );
+        func_info.is_public = true;
+        func_info.param_name.push(self_name.__ptr__());
+        func_info.param_type.push(ret.__ptr__());
+        func_info.unordered_params.insert(self_name.__ptr__(), ret.__ptr__());
+        defer func_info.delete();
+
+        un->method.insert(name.__ptr__(), func_info.__ptr__());
     }
 
     func regist_single_tagged_union_symbol(self, node: ast_tagged_union_decl*) {

@@ -40,7 +40,7 @@ set(COLGM_SIR
     ${CMAKE_SOURCE_DIR}/sir/pass_manager.cpp
     ${CMAKE_SOURCE_DIR}/sir/primitive_size_opt.cpp
     ${CMAKE_SOURCE_DIR}/sir/remove_alloca.cpp
-    ${CMAKE_SOURCE_DIR}/sir/replace_struct_ptr_call.cpp
+    ${CMAKE_SOURCE_DIR}/sir/replace_ptr_call.cpp
     ${CMAKE_SOURCE_DIR}/sir/sir.cpp)
 set(COLGM_MIR
     ${CMAKE_SOURCE_DIR}/mir/add_default_func.cpp

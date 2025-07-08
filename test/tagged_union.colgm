@@ -1,5 +1,7 @@
 use std::io::{ io };
-use err::panic::{ panic };
+use std::str::{ str };
+use std::libc::{ free };
+use err::panic::{ panic, assert };
 
 struct mir_block {
     a: u8,  // 1 align 1
@@ -11,14 +13,14 @@ struct mir_block {
 
 struct mir_num {
     a: [u8; 127]
-}
+} // 127 align 1
 
-struct mir_str {}
+struct mir_str {} // 1 align 1
 
 pub enum mir_tag {
     m_block = 0x0010,
     m_num = 0x0100,
-    m_str = 0x1000
+    m_str = 0x1000,
 }
 
 // type {
@@ -34,6 +36,9 @@ pub union(mir_tag) mir {
 }
 
 func test() {
+    assert(mir_block::__size__() == 16, "mir_block size is not 16");
+    assert(mir::__size__() == 136, "mir size is not 136");
+
     var a = mir { m_block: mir_block {a: 1, b: 2, c: 3} };
     var b = mir { m_num: mir_num {} };
     b.m_num.a[0] = 1;
@@ -82,13 +87,15 @@ impl tagged_union_without_ref_enum {
 enum Tag {
     aaa,
     bbb,
-    ccc
+    ccc,
+    ddd
 }
 
 union(Tag) tagged_union_with_ref_enum {
     aaa: i32,
     bbb: i8*,
-    ccc: f32
+    ccc: f32,
+    ddd: str
 }
 
 impl tagged_union_with_ref_enum {
@@ -114,6 +121,22 @@ impl tagged_union_with_ref_enum {
     pub func static() -> i32 {
         return 0;
     }
+
+    pub func create_str(info: i8*) -> tagged_union_with_ref_enum* {
+        var res = tagged_union_with_ref_enum::__alloc__();
+        res[0] = tagged_union_with_ref_enum { ddd: str::from(info) };
+        return res;
+    }
+
+    pub func delete(self) {
+        match (self) {
+            Tag::ddd => {
+                io::stdout().out("[tagged_union.colgm] delete ddd str\n");
+                self->ddd.delete();
+            }
+            _ => {}
+        }
+    }
 }
 
 func main() -> i32 {
@@ -125,6 +148,21 @@ func main() -> i32 {
     a._aaa() + b._aaa();
 
     match (a) {
+        aaa => {
+            a.aaa;
+            panic("unexpected aaa branch");
+        }
+        bbb => {
+            a.bbb;
+            io::stdout().out("[tagged_union.colgm] expected bbb branch\n");
+        }
+        ccc => {
+            a.ccc;
+            panic("unexpected ccc branch");
+        }
+    }
+
+    match (a.__ptr__()) {
         aaa => {
             a.aaa;
             panic("unexpected aaa branch");
@@ -152,7 +190,32 @@ func main() -> i32 {
             b.ccc;
             io::stdout().out("[tagged_union.colgm] expected ccc branch\n");
         }
+        _ => { panic("unexpected branch"); }
     }
+
+    match (b.__ptr__()) {
+        Tag::aaa => {
+            b.aaa;
+            panic("unexpected aaa branch");
+        }
+        Tag::bbb => {
+            b.bbb;
+            panic("unexpected bbb branch");
+        }
+        Tag::ccc => {
+            b.ccc;
+            io::stdout().out("[tagged_union.colgm] expected ccc branch\n");
+        }
+        _ => { panic("unexpected branch"); }
+    }
+
+    var ptr = tagged_union_with_ref_enum::create_str("hello world");
+    defer {
+        ptr->delete();
+        free(ptr => i8*);
+    }
+
+    io::stdout().out("[tagged_union.colgm] ").out(ptr->ddd.c_str).endln();
 
     return tagged_union_without_ref_enum::static() +
            tagged_union_with_ref_enum::static();
