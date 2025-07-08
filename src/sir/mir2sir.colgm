@@ -22,6 +22,7 @@ use dwarf::status::{ DWARF_status };
 use sema::symbol_info::{ symbol_kind };
 use sema::enumerate::{ colgm_enum };
 use sema::structure::{ colgm_struct };
+use sema::tagged_union::{ colgm_tagged_union };
 use sema::context::{ sema_context };
 use sema::type::{ type };
 
@@ -3503,6 +3504,36 @@ impl mir2sir {
         }
     }
 
+    func generate_single_DI_tagged_union(self, u: colgm_tagged_union*) {
+        var ty = type::instance();
+        ty.name.append(u->name.c_str);
+        ty.loc_file.append(u->location.file.c_str);
+        defer ty.delete();
+
+        var id = ty.full_path_name(self->pkg, false);
+        defer id.delete();
+
+        var tmp = DI_union_type::new(
+            self->dwarf_status.DI_counter,
+            u->name.c_str,
+            id.c_str,
+            self->sctx->DI_file_map.get(u->location.file.__ptr__()),
+            u->location.begin_line
+        );
+        self->sctx->add_DI_type(id.c_str, self->dwarf_status.DI_counter);
+        self->sctx->add_DI_union(id.c_str, tmp);
+        self->sctx->debug_info.push(tmp => DI_node*);
+        self->dwarf_status.DI_counter += 1;
+    }
+
+    func generate_DI_tagged_union_type(self) {
+        foreach (var i; self->ctx->global->domain) {
+            foreach (var j; i.value()->tagged_unions) {
+                self->generate_single_DI_tagged_union(j.value());
+            }
+        }
+    }
+
     func generate_single_struct_member_dwarf(self, s: colgm_struct*) {
         var ty = type::instance();
         ty.name.append(s->name.c_str);
@@ -3542,6 +3573,49 @@ impl mir2sir {
         foreach (var i; self->ctx->global->domain) {
             foreach (var j; i.value()->structs) {
                 self->generate_single_struct_member_dwarf(j.value());
+            }
+        }
+    }
+
+    func generate_single_tagged_union_member_dwarf(self, u: colgm_tagged_union*) {
+        var ty = type::instance();
+        ty.name.append(u->name.c_str);
+        ty.loc_file.append(u->location.file.c_str);
+        defer ty.delete();
+
+        var id = ty.full_path_name(self->pkg, false);
+        defer id.delete();
+
+        var u_node = self->sctx->DI_union_map.get(id.__ptr__());
+
+        var element = DI_list::new(self->dwarf_status.DI_counter);
+        u_node->elements = self->dwarf_status.DI_counter;
+        self->sctx->debug_info.push(element => DI_node*);
+        self->dwarf_status.DI_counter += 1;
+
+        foreach (var i; u->ordered_members) {
+            var member = i.get();
+            var member_type = u->members.get(member);
+            var member_span = u->members_span.get(i.index());
+            var member_type_index = self->find_DI_type_index(member_type);
+            var field_node = DW_TAG_member::new(
+                self->dwarf_status.DI_counter,
+                member->c_str,
+                u_node->base.index,
+                self->sctx->DI_file_map.get(member_span->file.__ptr__()),
+                member_span->begin_line + 1,
+                member_type_index
+            );
+            self->sctx->debug_info.push(field_node => DI_node*);
+            element->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+            self->dwarf_status.DI_counter += 1;
+        }
+    }
+
+    func generate_tagged_union_member_dwarf(self) {
+        foreach (var i; self->ctx->global->domain) {
+            foreach (var j; i.value()->tagged_unions) {
+                self->generate_single_tagged_union_member_dwarf(j.value());
             }
         }
     }
@@ -3606,9 +3680,11 @@ impl mir2sir {
         self->generate_basic_type();
         cu->enums_index = self->generate_DI_enum_type();
         self->generate_DI_structure_type();
+        self->generate_DI_tagged_union_type();
 
         // generate after all base types are registered
         self->generate_structure_member_dwarf();
+        self->generate_tagged_union_member_dwarf();
         self->generate_DI_subprogram(mctx);
     }
 }

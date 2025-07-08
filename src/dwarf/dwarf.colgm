@@ -17,6 +17,7 @@ pub enum DI_kind {
     DI_compile_unit,
     DI_basic_type,
     DI_structure_type,
+    DI_union_type,
     DI_enum_type,
     DI_enumerator,
     DI_subprogram,
@@ -74,6 +75,10 @@ impl DI_node {
             }
             DI_kind::DI_structure_type => {
                 var n = self => DI_structure_type*;
+                n->delete();
+            }
+            DI_kind::DI_union_type => {
+                var n = self => DI_union_type*;
                 n->delete();
             }
             DI_kind::DI_enum_type => {
@@ -158,6 +163,10 @@ impl DI_node {
             }
             DI_kind::DI_structure_type => {
                 var n = self => DI_structure_type*;
+                n->dump(out);
+            }
+            DI_kind::DI_union_type => {
+                var n = self => DI_union_type*;
                 n->dump(out);
             }
             DI_kind::DI_enum_type => {
@@ -469,6 +478,45 @@ impl DI_structure_type {
 
     pub func dump(self, out: io) {
         out.out("!DICompositeType(tag: DW_TAG_structure_type, ");
+        out.out("name: \"").out(self->name.c_str).out("\", ");
+        out.out("file: !").out_u64(self->file_index).out(", ");
+        out.out("line: ").out_i64(self->line).out(", ");
+        out.out("identifier: \"").out(self->identifier.c_str).out("\"");
+        if (self->elements != DI_ERROR_INDEX()) {
+            out.out(", elements: !").out_u64(self->elements);
+        }
+        out.out(")");
+    }
+}
+
+pub struct DI_union_type {
+    base: DI_node,
+    name: str,
+    identifier: str,
+    file_index: u64,
+    line: i64,
+    elements: u64
+}
+
+impl DI_union_type {
+    pub func new(i: u64, n: i8*, id: i8*, fi: u64, l: i64) -> DI_union_type* {
+        var res = DI_union_type::__alloc__();
+        res->base = DI_node::instance(DI_kind::DI_union_type, i);
+        res->name = str::from(n);
+        res->identifier = str::from(id);
+        res->file_index = fi;
+        res->line = l;
+        res->elements = DI_ERROR_INDEX();
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        self->identifier.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DICompositeType(tag: DW_TAG_union_type, ");
         out.out("name: \"").out(self->name.c_str).out("\", ");
         out.out("file: !").out_u64(self->file_index).out(", ");
         out.out("line: ").out_i64(self->line).out(", ");

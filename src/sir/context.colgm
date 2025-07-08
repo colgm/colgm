@@ -263,6 +263,7 @@ pub struct sir_context {
     DI_file_map: hashmap<str, u64>,
     DI_type_map: hashmap<str, u64>,
     DI_struct_map: hashmap<str, DI_structure_type*>,
+    DI_union_map: hashmap<str, DI_union_type*>,
 
     pkg: package*
 }
@@ -280,6 +281,7 @@ impl sir_context {
             DI_file_map: hashmap<str, u64>::instance(),
             DI_type_map: hashmap<str, u64>::instance(),
             DI_struct_map: hashmap<str, DI_structure_type*>::instance(),
+            DI_union_map: hashmap<str, DI_union_type*>::instance(),
             pkg: pkg
         };
     }
@@ -305,6 +307,7 @@ impl sir_context {
         self->DI_file_map.delete();
         self->DI_type_map.delete();
         self->DI_struct_map.delete();
+        self->DI_union_map.delete();
     }
 }
 
@@ -321,6 +324,16 @@ impl sir_context {
         defer temp.delete();
 
         self->DI_struct_map.insert(
+            temp.__ptr__(),
+            node
+        );
+    }
+
+    pub func add_DI_union(self, name: i8*, node: DI_union_type*) {
+        var temp = str::from(name);
+        defer temp.delete();
+
+        self->DI_union_map.insert(
             temp.__ptr__(),
             node
         );

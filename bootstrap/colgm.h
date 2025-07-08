@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef __colgm_ver__
-#define __colgm_ver__ "0.1.7"
+#define __colgm_ver__ "0.2.0"
 #endif
 
 #include <cstdint>

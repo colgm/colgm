@@ -54,7 +54,8 @@ for (test, lib, allow_failure) in TEST_LIST:
         test,
         "-L", lib,
         "-o", "test.out",
-        "-O2"
+        "-O2",
+        "-g"
     ], allow_failure)
     if ret != 0:
         continue
