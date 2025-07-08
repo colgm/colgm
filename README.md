@@ -133,13 +133,12 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 
 ## Features and Roadmap
 
-1. feature: [Tagged Union](./doc/spec/tagged_union.md)
-2. feature: fuzzy match when field or method name is not found
-3. feature: to_string method for struct/enum/tagged union
-4. feature: reference type
-5. feature: [Tuple](./doc/spec/tuple.md)
-6. feature: smart pointer
-7. feature: std
+1. feature: fuzzy match when field or method name is not found
+2. feature: to_string method for struct/enum/tagged union
+3. feature: reference type
+4. feature: [Tuple](./doc/spec/tuple.md)
+5. feature: smart pointer
+6. feature: std
     - [x] Filesystem API (read, write, join, exists, etc)
     - [x] Datetime utils
     - [ ] String and Unicode Helpers

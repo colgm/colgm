@@ -1,8 +1,8 @@
-# Feature: Tagged Union
-
-Work in progress.
+# Tagged Union
 
 ## Definition
+
+There're two ways to define tagged union:
 
 ```rust
 pub enum mir_tag {
@@ -26,15 +26,19 @@ pub union(enum) mir_without_tag {
 
 ## Implementation
 
+The implementation is simple, just use `match` statement to match the tag.
+Also, static methods are allowed, just like impl structs.
+
 ```rust
 impl mir {
     pub func generate_mir_from_m_block() -> mir {
         // create tagged union instance
+        // only one tag could be initialized
         return mir { m_block: mir_block::instance() };
     }
 
     pub func fetch_m_block_from_mir(self) -> mir_block {
-        // match statement
+        // match statement, accept tagged union pointer (depth=1) or instance
         match (self) {
             mir_kind::m_block => return self->m_block;
             //                                ^^^^^^^ get element
