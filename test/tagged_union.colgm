@@ -1,4 +1,5 @@
 use std::io::{ io };
+use err::panic::{ panic };
 
 struct mir_block {
     a: u8,  // 1 align 1
@@ -39,8 +40,10 @@ func test() {
     var c = mir { m_str: mir_str {} };
 
     match (mir { m_str: mir_str {} }) {
-        mir_tag::m_str => { io::stdout().out("mir_tag::m_str branch\n"); }
-        _ => { io::stdout().out("default branch\n"); }
+        mir_tag::m_str => {
+            io::stdout().out("[tagged_union.colgm] expected mir_tag::m_str branch\n");
+        }
+        _ => { panic("default branch"); }
     }
 }
 
@@ -124,30 +127,30 @@ func main() -> i32 {
     match (a) {
         aaa => {
             a.aaa;
-            io::stdout().out("unexpected aaa branch\n");
+            panic("unexpected aaa branch");
         }
         bbb => {
             a.bbb;
-            io::stdout().out("expected bbb branch\n");
+            io::stdout().out("[tagged_union.colgm] expected bbb branch\n");
         }
         ccc => {
             a.ccc;
-            io::stdout().out("unexpected ccc branch\n");
+            panic("unexpected ccc branch");
         }
     }
 
     match (b) {
         Tag::aaa => {
             b.aaa;
-            io::stdout().out("unexpected aaa branch\n");
+            panic("unexpected aaa branch");
         }
         Tag::bbb => {
             b.bbb;
-            io::stdout().out("unexpected bbb branch\n");
+            panic("unexpected bbb branch");
         }
         Tag::ccc => {
             b.ccc;
-            io::stdout().out("expected ccc branch\n");
+            io::stdout().out("[tagged_union.colgm] expected ccc branch\n");
         }
     }
 

@@ -40,6 +40,7 @@ TEST_LIST = [
     ("test/self_ref_test.colgm",           "src", True),
     ("test/std_test.colgm",                "src", False),
     ("test/string.colgm",                  "src", False),
+    ("test/tagged_union.colgm",            "src", False),
     ("test/to_str.colgm",                  "src", False),
     ("test/type_convert.colgm",            "src", False),
     ("test/unreachable.colgm",             "src", False),

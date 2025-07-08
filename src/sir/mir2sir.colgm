@@ -1462,6 +1462,30 @@ impl mir2sir {
             var un = dm->tagged_unions.get(name_for_search.__ptr__());
 
             foreach (var i; n->fields) {
+                var tag = self->ssa_gen.create();
+                var tag_value = value_t::variable(tag.__ptr__());
+                defer tag.delete();
+                defer tag_value.delete();
+                self->block->add_stmt(sir_get_field::new(
+                    tag_value.__ptr__(),
+                    temp_var_value.__ptr__(),
+                    n_ty.__ptr__(),
+                    0,
+                    self->generate_DI_location(i.get()->content->base.location.__ptr__())
+                ) => sir*);
+
+                var i64_t = str::from("i64");
+                var tag_value_str = str::from_i64(un->member_int_map.get(i.get()->name.__ptr__()));
+                var tag_value_v = value_t::literal(tag_value_str.__ptr__());
+                defer i64_t.delete();
+                defer tag_value_str.delete();
+                defer tag_value_v.delete();
+                self->block->add_stmt(sir_store::new(
+                    i64_t.__ptr__(),
+                    tag_value_v.__ptr__(),
+                    tag_value.__ptr__()
+                ) => sir*);
+
                 var source = self->ssa_gen.create();
                 var target = self->ssa_gen.create();
                 defer source.delete();

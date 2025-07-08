@@ -64,7 +64,7 @@ Colgm accepts `-O` option to enable optimization.
 - `-Oz`: enable speed optimization
 - `-Os`: enable size optimization
 
-Also you could use `-Ox -g` for release with debug info.
+Also you could use `-O[x] -g` for release with debug info.
 
 ## Build and Development
 
@@ -94,6 +94,12 @@ directory:
 1. `build/colgm`: bootstrap compiler (compiled by gcc/clang)
 2. `build/colgm_lifted`: lifted compiler (compiled by `build/colgm`)
 3. `build/colgm_selfhost`: self-host compiler (compiled by `build/colgm_lifted`)
+
+If only want to build the bootstrap compiler, you can use this:
+
+```sh
+python3 misc/build.py -boot
+```
 
 If only want to build the self-host compiler __after running the build script once__, you can use this to just build the self-host compiler:
 

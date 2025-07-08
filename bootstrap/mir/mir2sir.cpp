@@ -680,6 +680,19 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
     } else if (dm.tagged_unions.count(node->get_type().name_for_search())) {
         const auto& un = dm.tagged_unions.at(node->get_type().name_for_search());
         for (const auto& i : node->get_fields()) {
+            const auto tag = ssa_gen.create();
+            block->add_stmt(new sir_get_field(
+                value_t::variable(tag),
+                value_t::variable(temp_var),
+                type_mapping(node->get_type()),
+                0
+            ));
+            block->add_stmt(new sir_store(
+                "i64",
+                value_t::literal(std::to_string(un.member_int_map.at(i.name))),
+                value_t::variable(tag)
+            ));
+
             const auto source = ssa_gen.create();
             const auto target = ssa_gen.create();
             block->add_stmt(new sir_get_field(
