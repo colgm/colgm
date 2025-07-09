@@ -11,10 +11,18 @@ pub enum json_kind {
     json_bool
 }
 
-union(json_kind) json {
+pub union(json_kind) json {
     json_object: hashmap<str, json*>,
     json_array: vec<json*>,
     json_string: str,
     json_number: f64,
     json_bool: bool
+}
+
+impl json {
+    pub func obj() -> json* {
+        var res = json::__alloc__();
+        res[0] = json { json_object: hashmap<str, json*>::instance() };
+        return res;
+    }
 }
