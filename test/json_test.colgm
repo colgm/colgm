@@ -1,0 +1,71 @@
+use std::json::{ json };
+use std::str::{ str };
+use std::io::{ io };
+use std::libc::{ free };
+
+func make_num_arr() -> json* {
+    var arr = json::arr();
+    for (var i = 0; i < 10; i += 1) {
+        arr->json_array.push(json::num(i => f64));
+    }
+    return arr;
+}
+
+func make_bool_arr() -> json* {
+    var arr = json::arr();
+    for (var i = 0; i < 10; i += 1) {
+        arr->json_array.push(json::bool(i % 2 == 0));
+    }
+    return arr;
+}
+
+func make_str_arr() -> json* {
+    var arr = json::arr();
+    for (var i = 0; i < 10; i += 1) {
+        var s = json::str();
+        s->json_string.append("hello world - ")->append_i64(i);
+        arr->json_array.push(s);
+    }
+    return arr;
+}
+
+func main() -> i32 {
+    var obj = json::obj();
+    defer {
+        obj->delete();
+        free(obj => i8*);
+    }
+
+    var another_obj = json::obj();
+
+    var key_obj = str::from("json_object");
+    defer key_obj.delete();
+    obj->json_object.insert(key_obj.__ptr__(), another_obj);
+
+    var key_num_arr = str::from("json_num_array");
+    var key_bool_arr = str::from("json_bool_array");
+    var key_str_arr = str::from("json_str_array");
+    defer key_num_arr.delete();
+    defer key_bool_arr.delete();
+    defer key_str_arr.delete();
+    obj->json_object.insert(key_num_arr.__ptr__(), make_num_arr());
+    obj->json_object.insert(key_bool_arr.__ptr__(), make_bool_arr());
+    obj->json_object.insert(key_str_arr.__ptr__(), make_str_arr());
+    another_obj->json_object.insert(key_num_arr.__ptr__(), make_num_arr());
+    another_obj->json_object.insert(key_bool_arr.__ptr__(), make_bool_arr());
+    another_obj->json_object.insert(key_str_arr.__ptr__(), make_str_arr());
+
+    var key_num = str::from("json_num");
+    defer key_num.delete();
+    obj->json_object.insert(key_num.__ptr__(), json::num(114.514));
+
+    var key_str = str::from("json_str");
+    defer key_str.delete();
+    obj->json_object.insert(key_str.__ptr__(), json::str());
+    obj->json_object.get(key_str.__ptr__())->json_string.append("hello world");
+
+    var res = obj->to_string();
+    defer res.delete();
+    io::stdout().out(res.c_str).endln();
+    return 0;
+}

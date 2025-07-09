@@ -32,6 +32,7 @@ TEST_LIST = [
     ("test/generic_embed.colgm",           "src", False),
     ("test/hello.colgm",                   "src", False),
     ("test/initializer.colgm",             "src", False),
+    ("test/json_test.colgm",               "src", False),
     ("test/local.colgm",                   "src", False),
     ("test/match.colgm",                   "src", False),
     ("test/negative.colgm",                "src", False),

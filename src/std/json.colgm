@@ -2,6 +2,7 @@ use std::io::{ io };
 use std::str::{ str };
 use std::vec::{ vec };
 use std::map::{ hashmap };
+use std::libc::{ free };
 
 pub enum json_kind {
     json_object,
@@ -20,9 +21,111 @@ pub union(json_kind) json {
 }
 
 impl json {
+    pub func delete(self) {
+        match (self) {
+            json_kind::json_object => {
+                foreach (var i; self->json_object) {
+                    i.value()->delete();
+                    free(i.value() => i8*);
+                }
+                self->json_object.delete();
+            }
+            json_kind::json_array => {
+                foreach (var i; self->json_array) {
+                    i.get()->delete();
+                    free(i.get() => i8*);
+                }
+                self->json_array.delete();
+            }
+            json_kind::json_string => {
+                self->json_string.delete();
+            }
+            _ => {}
+        }
+    }
+}
+
+impl json {
     pub func obj() -> json* {
         var res = json::__alloc__();
         res[0] = json { json_object: hashmap<str, json*>::instance() };
         return res;
+    }
+
+    pub func arr() -> json* {
+        var res = json::__alloc__();
+        res[0] = json { json_array: vec<json*>::instance() };
+        return res;
+    }
+
+    pub func str() -> json* {
+        var res = json::__alloc__();
+        res[0] = json { json_string: str::instance() };
+        return res;
+    }
+
+    pub func num(n: f64) -> json* {
+        var res = json::__alloc__();
+        res[0] = json { json_number: n };
+        return res;
+    }
+
+    pub func bool(flag: bool) -> json* {
+        var res = json::__alloc__();
+        res[0] = json { json_bool: flag };
+        return res;
+    }
+}
+
+impl json {
+    pub func to_string(self) -> str {
+        match (self) {
+            json_kind::json_object => {
+                var res = str::from("{");
+                foreach (var i; self->json_object) {
+                    if (!res.eq_const("{")) {
+                        res.append(",");
+                    }
+                    res.append("\"");
+                    res.append(i.key()->c_str);
+                    res.append("\":");
+                    var temp = i.value()->to_string();
+                    defer temp.delete();
+                    res.append(temp.c_str);
+                }
+                res.append("}");
+                return res;
+            }
+            json_kind::json_array => {
+                var res = str::from("[");
+                foreach (var i; self->json_array) {
+                    if (!res.eq_const("[")) {
+                        res.append(",");
+                    }
+                    var temp = i.get()->to_string();
+                    defer temp.delete();
+                    res.append(temp.c_str);
+                }
+                res.append("]");
+                return res;
+            }
+            json_kind::json_string => {
+                var res = str::from("\"");
+                res.append(self->json_string.c_str);
+                res.append("\"");
+                return res;
+            }
+            json_kind::json_number => {
+                return str::from_f64(self->json_number);
+            }
+            json_kind::json_bool => {
+                if (self->json_bool) {
+                    return str::from("true");
+                } else {
+                    return str::from("false");
+                }
+            }
+        }
+        return str::from("null");
     }
 }
