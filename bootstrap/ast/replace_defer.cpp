@@ -10,7 +10,7 @@ void replace_defer::insert_defer(defer_stmt* ds, std::vector<stmt*>& v) {
 
 void replace_defer::insert_defer_on_return(std::vector<stmt*>& v) {
     for (const auto& this_top_scope : top_scopes) {
-        for (auto sub_scope : this_top_scope.scopes) {
+        for (const auto& sub_scope : this_top_scope.scopes) {
             for (auto i : sub_scope) {
                 insert_defer(i, v);
             }
@@ -19,7 +19,7 @@ void replace_defer::insert_defer_on_return(std::vector<stmt*>& v) {
 }
 
 void replace_defer::insert_defer_on_block_exit(std::vector<stmt*>& v) {
-    for (auto sub_scope : top_scopes.back().scopes) {
+    for (const auto& sub_scope : top_scopes.back().scopes) {
         for (auto i : sub_scope) {
             insert_defer(i, v);
         }
