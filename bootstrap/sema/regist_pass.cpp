@@ -641,6 +641,22 @@ bool regist_pass::check_is_public_struct(ast::identifier* node,
     return true;
 }
 
+bool regist_pass::check_is_public_tagged_union(ast::identifier* node,
+                                               const colgm_module& domain) {
+    const auto& name = node->get_name();
+    if (!domain.tagged_unions.count(name)) {
+        return false;
+    }
+    if (domain.tagged_unions.count(name) &&
+        !domain.tagged_unions.at(name).is_public) {
+        rp.report(node,
+            "cannot import private tagged union \"" + name + "\""
+        );
+        return false;
+    }
+    return true;
+}
+
 bool regist_pass::check_is_public_func(ast::identifier* node,
                                        const colgm_module& domain) {
     const auto& name = node->get_name();
@@ -881,6 +897,15 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
                 true
             );
         }
+        for (const auto& i : domain.tagged_unions) {
+            if (!i.second.is_public) {
+                continue;
+            }
+            import_global_symbol(node, i.second.name,
+                {sym_kind::tagged_union_kind, file, i.second.is_public},
+                false
+            );
+        }
         for (const auto& i : domain.functions) {
             if (!i.second.is_public) {
                 continue;
@@ -920,6 +945,16 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
             import_global_symbol(i, i->get_name(),
                 {sym_kind::struct_kind, file, true},
                 domain.generic_structs.count(i->get_name())
+            );
+            continue;
+        }
+        if (domain.tagged_unions.count(i->get_name())) {
+            if (!check_is_public_tagged_union(i, domain)) {
+                continue;
+            }
+            import_global_symbol(i, i->get_name(),
+                {sym_kind::tagged_union_kind, file, true},
+                false
             );
             continue;
         }

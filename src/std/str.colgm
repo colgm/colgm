@@ -1,4 +1,8 @@
-use std::libc::{ malloc, realloc, free, memcpy, memcmp, strlen, streq, itoa, utoa };
+use std::libc::{
+    malloc, realloc, free,
+    memcpy, memcmp,
+    strlen, streq, itoa, utoa, gcvt
+};
 use err::panic::{ panic };
 
 pub struct str {
@@ -45,6 +49,14 @@ impl str {
         var res = str::instance();
         var buffer: [i8; 128] = [];
         utoa(src, buffer, 10);
+        res.append(buffer);
+        return res;
+    }
+
+    pub func from_f64(src: f64) -> str {
+        var res = str::instance();
+        var buffer: [i8; 256] = [];
+        gcvt(src, 10, buffer);
         res.append(buffer);
         return res;
     }
@@ -203,6 +215,13 @@ impl str {
     pub func append_u64(self, num: u64) -> str* {
         var buffer: [i8; 128] = [];
         utoa(num, buffer, 10);
+        self->append(buffer);
+        return self;
+    }
+
+    pub func append_f64(self, num: f64) -> str* {
+        var buffer: [i8; 256] = [];
+        gcvt(num, 10, buffer);
         self->append(buffer);
         return self;
     }

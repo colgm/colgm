@@ -106,6 +106,22 @@ impl regist_pass {
                 info.__ptr__()
             );
         }
+        foreach (var i; dm->tagged_unions) {
+            if (!i.value()->is_public) {
+                continue;
+            }
+            var info = symbol_info::instance(
+                symbol_kind::tagged_union_kind,
+                dm->file_name.c_str,
+                i.value()->is_public
+            );
+            defer info.delete();
+
+            self->ctx->global_symbol()->insert(
+                i.value()->name.__ptr__(),
+                info.__ptr__()
+            );
+        }
         foreach (var i; dm->functions) {
             if (!i.value()->is_public) {
                 continue;
@@ -164,6 +180,8 @@ impl regist_pass {
                 is_public = dm->enums.get(name)->is_public;
             } else if (dm->structs.has(name)) {
                 is_public = dm->structs.get(name)->is_public;
+            } else if (dm->tagged_unions.has(name)) {
+                is_public = dm->tagged_unions.get(name)->is_public;
             } else if (dm->functions.has(name)) {
                 is_public = dm->functions.get(name)->is_public;
             } else if (dm->generic_structs.has(name)) {
@@ -204,6 +222,9 @@ impl regist_pass {
                 self->ctx->global_symbol()->insert(name, sym_info.__ptr__());
             } else if (dm->structs.has(name)) {
                 sym_info.kind = symbol_kind::struct_kind;
+                self->ctx->global_symbol()->insert(name, sym_info.__ptr__());
+            } else if (dm->tagged_unions.has(name)) {
+                sym_info.kind = symbol_kind::tagged_union_kind;
                 self->ctx->global_symbol()->insert(name, sym_info.__ptr__());
             } else if (dm->functions.has(name)) {
                 sym_info.kind = symbol_kind::func_kind;

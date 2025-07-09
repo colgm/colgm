@@ -125,6 +125,7 @@ private:
 
 private:
     bool check_is_public_struct(ast::identifier*, const colgm_module&);
+    bool check_is_public_tagged_union(ast::identifier*, const colgm_module&);
     bool check_is_public_func(ast::identifier*, const colgm_module&);
     bool check_is_public_enum(ast::identifier*, const colgm_module&);
     void import_global_symbol(ast::node*,
