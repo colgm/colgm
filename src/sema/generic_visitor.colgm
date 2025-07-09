@@ -264,6 +264,8 @@ impl generic_visitor {
                 self->visit_field_pair(n => ast_field_pair*);
             ast_kind::ast_struct_decl =>
                 self->visit_struct_decl(n => ast_struct_decl*);
+            ast_kind::ast_tagged_union_decl =>
+                self->visit_tagged_union_decl(n => ast_tagged_union_decl*);
             ast_kind::ast_param =>
                 self->visit_param(n => ast_param*);
             ast_kind::ast_param_list =>
@@ -309,6 +311,9 @@ impl generic_visitor {
                 ast_kind::ast_struct_decl => {
                     self->visit_struct_decl(d => ast_struct_decl*);
                 }
+                ast_kind::ast_tagged_union_decl => {
+                    self->visit_tagged_union_decl(d => ast_tagged_union_decl*);
+                }
                 ast_kind::ast_func_decl => {
                     self->visit_func_decl(d => ast_func_decl*);
                 }
@@ -325,6 +330,12 @@ impl generic_visitor {
             return;
         }
         foreach (var i; n->fields) {
+            self->visit_field_pair(i.get());
+        }
+    }
+
+    func visit_tagged_union_decl(self, n: ast_tagged_union_decl*) {
+        foreach (var i; n->members) {
             self->visit_field_pair(i.get());
         }
     }
