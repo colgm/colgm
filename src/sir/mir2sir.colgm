@@ -3,6 +3,8 @@ use std::map::{ hashmap };
 use std::str::{ str };
 use std::io::{ io };
 use std::vec::{ vec };
+use std::fs::{ fs };
+use std::libc::{ streq };
 
 use mir::mir::*;
 use mir::context::{ mir_context, mir_func };
@@ -29,8 +31,9 @@ use sema::type::{ type };
 use err::panic::{ panic, unreachable };
 use err::span::{ span };
 use err::report::{ report };
-use util::package::{ package };
 
+use util::package::{ package };
+use util::platform::{ get_platform };
 use util::cli::{ version };
 use util::mangling::{
     mangle_struct_name,
@@ -3250,6 +3253,16 @@ impl mir2sir {
         module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
+        if (streq(get_platform(), "macos")) {
+            var pic_level = DI_list::new(self->dwarf_status.DI_counter);
+            pic_level->add(DI_i32::new(8) => DI_node*);
+            pic_level->add(DI_string::new("PIC level") => DI_node*);
+            pic_level->add(DI_i32::new(2) => DI_node*);
+            self->sctx->debug_info.push(pic_level => DI_node*);
+            module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
+            self->dwarf_status.DI_counter += 1;
+        }
+
         var uwtable = DI_list::new(self->dwarf_status.DI_counter);
         uwtable->add(DI_i32::new(7) => DI_node*);
         uwtable->add(DI_string::new("uwtable") => DI_node*);
@@ -3261,7 +3274,7 @@ impl mir2sir {
         var frame_pointer = DI_list::new(self->dwarf_status.DI_counter);
         frame_pointer->add(DI_i32::new(7) => DI_node*);
         frame_pointer->add(DI_string::new("frame-pointer") => DI_node*);
-        frame_pointer->add(DI_i32::new(2) => DI_node*);
+        frame_pointer->add(DI_i32::new(1) => DI_node*);
         self->sctx->debug_info.push(frame_pointer => DI_node*);
         module_flags->add(DI_ref_index::new(self->dwarf_status.DI_counter) => DI_node*);
         self->dwarf_status.DI_counter += 1;
@@ -3283,11 +3296,19 @@ impl mir2sir {
         );
         self->dwarf_status.DI_counter += 1;
 
+        // if DIFile is a single filename and the directory is empty
+        // dsymutil may report no debug symbol
+        // so directory must be set here
+        // !DIFile(filename: "main.colgm", directory: "")
+        //                                            ^^ should not be empty
+        var cwd = fs::getcwd();
+        defer cwd.delete();
+
         foreach (var i; self->ctx->global->domain) {
             self->sctx->debug_info.push(DI_file::new(
                 self->dwarf_status.DI_counter,
                 i.key()->c_str,
-                ""
+                cwd.c_str
             ) => DI_node*);
             self->sctx->DI_file_map.insert(
                 i.key(),

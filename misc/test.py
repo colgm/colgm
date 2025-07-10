@@ -66,3 +66,5 @@ if os.path.exists("test.out"):
     execute(["rm", "test.out"], False, False)
 if os.path.exists("test.out.ll"):
     execute(["rm", "test.out.ll"], False, False)
+if os.path.exists("test.out.dSYM"):
+    execute(["rm", "-rf", "test.out.dSYM"], False, False)

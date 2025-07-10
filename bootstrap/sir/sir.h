@@ -150,7 +150,7 @@ public:
         array_info(ati) {}
     ~sir_alloca() override = default;
     void dump(std::ostream&) const override;
-    void set_array(array_type_info ati) { array_info = ati; }
+    void set_array(const array_type_info& ati) { array_info = ati; }
     const auto& get_variable_name() const { return variable; }
     const auto& get_type_name() const { return type; }
 };

@@ -158,7 +158,6 @@ void sir_context::dump_size_method(std::ostream& out) const {
             .loc_file = st->get_file()
         };
         const auto st_name = mangle(st_type.full_path_name());
-        const auto st_real_name = quoted_name("%struct." + st_name);
         const auto size_func_name = quoted_name(st_name + ".__size__");
         out << "define i64 @" << size_func_name << "() alwaysinline {\n";
         out << "  ret i64 " << st->get_size() << "\n}\n";
@@ -170,7 +169,6 @@ void sir_context::dump_size_method(std::ostream& out) const {
             .loc_file = un->get_file()
         };
         const auto un_name = mangle(un_type.full_path_name());
-        const auto un_real_name = quoted_name("%tagged_union." + un_name);
         const auto size_func_name = quoted_name(un_name + ".__size__");
         out << "define i64 @" << size_func_name << "() alwaysinline {\n";
         out << "  ret i64 " << un->get_size() << "\n}\n";

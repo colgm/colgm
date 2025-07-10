@@ -3,6 +3,8 @@
 #include <fstream>
 #include <cassert>
 
+#include <unistd.h>
+
 namespace colgm::mir {
 
 void mir2sir::generate_type_mapper() {
@@ -1634,6 +1636,16 @@ void mir2sir::generate_llvm_module_flags() {
     module_flags->add(new DI_ref_index(dwarf_status.DI_counter));
     ++dwarf_status.DI_counter;
 
+    if (is_macos()) {
+        auto pic_level = new DI_list(dwarf_status.DI_counter);
+        pic_level->add(new DI_i32(8));
+        pic_level->add(new DI_string("PIC level"));
+        pic_level->add(new DI_i32(2));
+        ictx.debug_info.push_back(pic_level);
+        module_flags->add(new DI_ref_index(dwarf_status.DI_counter));
+        ++dwarf_status.DI_counter;
+    }
+
     auto uwtable = new DI_list(dwarf_status.DI_counter);
     uwtable->add(new DI_i32(7));
     uwtable->add(new DI_string("uwtable"));
@@ -1645,7 +1657,7 @@ void mir2sir::generate_llvm_module_flags() {
     auto frame_pointer = new DI_list(dwarf_status.DI_counter);
     frame_pointer->add(new DI_i32(7));
     frame_pointer->add(new DI_string("frame-pointer"));
-    frame_pointer->add(new DI_i32(2));
+    frame_pointer->add(new DI_i32(1));
     ictx.debug_info.push_back(frame_pointer);
     module_flags->add(new DI_ref_index(dwarf_status.DI_counter));
     ++dwarf_status.DI_counter;
@@ -1678,9 +1690,12 @@ void mir2sir::generate_DIFile() {
     ictx.DI_file_map.insert({empty_file_name, dwarf_status.DI_counter});
     ++dwarf_status.DI_counter;
 
+    char cwd[1024];
+    getcwd(cwd, 1023);
+
     for (const auto& i : ctx.global.domain) {
         const auto& filename = i.first;
-        const auto directory = std::string("");
+        const auto directory = std::string(cwd);
         ictx.debug_info.push_back(
             new DI_file(dwarf_status.DI_counter, filename, directory)
         );
