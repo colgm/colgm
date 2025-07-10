@@ -1691,7 +1691,9 @@ void mir2sir::generate_DIFile() {
     ++dwarf_status.DI_counter;
 
     char cwd[1024];
-    getcwd(cwd, 1023);
+    if (!getcwd(cwd, 1023)) {
+        cwd[0] = '\0';
+    }
 
     for (const auto& i : ctx.global.domain) {
         const auto& filename = i.first;

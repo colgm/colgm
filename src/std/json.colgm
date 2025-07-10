@@ -9,7 +9,8 @@ pub enum json_kind {
     json_array,
     json_string,
     json_number,
-    json_bool
+    json_bool,
+    json_null
 }
 
 pub union(json_kind) json {
@@ -17,7 +18,8 @@ pub union(json_kind) json {
     json_array: vec<json*>,
     json_string: str,
     json_number: f64,
-    json_bool: bool
+    json_bool: bool,
+    json_null: i8
 }
 
 impl json {
@@ -75,6 +77,12 @@ impl json {
         res[0] = json { json_bool: flag };
         return res;
     }
+
+    pub func null() -> json* {
+        var res = json::__alloc__();
+        res[0] = json { json_null: 0 };
+        return res;
+    }
 }
 
 impl json {
@@ -125,7 +133,38 @@ impl json {
                     return str::from("false");
                 }
             }
+            json_kind::json_null => {
+                return str::from("null");
+            }
         }
         return str::from("null");
+    }
+}
+
+enum json_token_kind {
+    tok_left_brace,
+    tok_right_brace,
+    tok_left_bracket,
+    tok_right_bracket,
+    tok_comma,
+    tok_colon,
+    tok_string,
+    tok_number,
+    tok_bool,
+    tok_null,
+    tok_eof
+}
+
+struct json_token {
+    kind: json_token_kind,
+    value: str
+}
+
+impl json_token {
+    pub func instance() -> json_token {
+        return json_token {
+            kind: json_token_kind::tok_eof,
+            value: str::instance()
+        };
     }
 }
