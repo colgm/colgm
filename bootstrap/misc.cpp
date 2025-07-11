@@ -139,6 +139,14 @@ const char* get_arch() {
     return "unknown arch";
 }
 
+std::string get_cwd() {
+    char buf[1024];
+    if (getcwd(buf, 1023)) {
+        return std::string(buf);
+    }
+    return std::string("");
+}
+
 f64 hex_to_f64(const char* str) {
     f64 ret = 0;
     for (; *str; ++str) {

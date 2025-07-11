@@ -609,7 +609,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
         return type::error_type();
     }
     if (prev.is_pointer()) {
-        rp.report(node,
+        rp.report(node->get_operator_location(),
             "cannot use \".\" to get field from pointer \"" +
             prev.to_string() + "\".",
             "maybe you mean \"->\"?"
@@ -1155,8 +1155,8 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
         );
         return type::error_type();
     }
-    if (prev.pointer_depth!=1) {
-        rp.report(node,
+    if (prev.pointer_depth != 1) {
+        rp.report(node->get_operator_location(),
             "cannot use \"->\" to get field from \"" +
             prev.to_string() + "\"",
             "use \".\" instead"
@@ -1918,10 +1918,12 @@ void semantic::lowering_forindex(forindex* node) {
     if (node->get_container()->get_resolve().is_pointer()) {
         lowered_condition_rhs->add_chain(new ptr_get_field(
             node->get_container()->get_location(),
+            node->get_container()->get_location(),
             "iter_size"
         ));
     } else {
         lowered_condition_rhs->add_chain(new get_field(
+            node->get_container()->get_location(),
             node->get_container()->get_location(),
             "iter_size"
         ));
@@ -1969,10 +1971,12 @@ void semantic::lowering_foreach(foreach* node) {
     if (node->get_container()->get_resolve().is_pointer()) {
         lowered_init_rhs->add_chain(new ptr_get_field(
             node->get_container()->get_location(),
+            node->get_container()->get_location(),
             "iter"
         ));
     } else {
         lowered_init_rhs->add_chain(new get_field(
+            node->get_container()->get_location(),
             node->get_container()->get_location(),
             "iter"
         ));
@@ -1991,6 +1995,7 @@ void semantic::lowering_foreach(foreach* node) {
         node->get_variable()->get_name()
     ));
     lowered_condition_value->add_chain(new get_field(
+        node->get_container()->get_location(),
         node->get_container()->get_location(),
         "is_end"
     ));
@@ -2021,6 +2026,7 @@ void semantic::lowering_foreach(foreach* node) {
         node->get_variable()->get_name()
     ));
     lowered_update_rhs->add_chain(new get_field(
+        node->get_container()->get_location(),
         node->get_container()->get_location(),
         "next"
     ));

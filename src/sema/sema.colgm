@@ -922,7 +922,7 @@ impl sema {
                      ->out(prev_name.c_str)
                      ->out("\".")
                      ->out_note("maybe you mean \"->\"?")
-                     ->emit_err(n->base.location.__ptr__());
+                     ->emit_err(n->operator_location.__ptr__());
             // report but continue resolving
         }
 
@@ -1650,13 +1650,13 @@ impl sema {
                      ->out(prev_name.c_str)
                      ->out("\"")
                      ->out_note("use \".\" instead")
-                     ->emit_err(n->base.location.__ptr__());
+                     ->emit_err(n->operator_location.__ptr__());
             // report but continue resolving
         } else if (prev->pointer_depth > 1) {
             self->err->out("cannot use \"->\" to get field from pointer \"")
                      ->out(prev_name.c_str)
                      ->out("\"")
-                     ->emit_err(n->base.location.__ptr__());
+                     ->emit_err(n->operator_location.__ptr__());
             // report but continue resolving
         }
 
@@ -2788,10 +2788,12 @@ impl sema {
         if (n->container->base.resolved_type.is_pointer()) {
             lowered_condition_rhs->chain.push(ast_ptr_get_field::new(
                 n->container->base.location.__ptr__(),
+                n->container->base.location.__ptr__(),
                 "iter_size"
             ) => ast*);
         } else {
             lowered_condition_rhs->chain.push(ast_get_field::new(
+                n->container->base.location.__ptr__(),
                 n->container->base.location.__ptr__(),
                 "iter_size"
             ) => ast*);
@@ -2890,10 +2892,12 @@ impl sema {
         if (n->container->base.resolved_type.is_pointer()) {
             lowered_init_rhs->chain.push(ast_ptr_get_field::new(
                 n->container->base.location.__ptr__(),
+                n->container->base.location.__ptr__(),
                 "iter"
             ) => ast*);
         } else {
             lowered_init_rhs->chain.push(ast_get_field::new(
+                n->container->base.location.__ptr__(),
                 n->container->base.location.__ptr__(),
                 "iter"
             ) => ast*);
@@ -2916,6 +2920,7 @@ impl sema {
         lowered_condition_value->head->id = n->variable->copy();
         // generate `is_end`
         lowered_condition_value->chain.push(ast_get_field::new(
+            n->container->base.location.__ptr__(),
             n->container->base.location.__ptr__(),
             "is_end"
         ) => ast*);
@@ -2950,6 +2955,7 @@ impl sema {
         );
         lowered_update_rhs->head->id = n->variable->copy();
         lowered_update_rhs->chain.push(ast_get_field::new(
+            n->container->base.location.__ptr__(),
             n->container->base.location.__ptr__(),
             "next"
         ) => ast*);

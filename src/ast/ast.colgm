@@ -1049,13 +1049,15 @@ impl ast_call_func_args {
 
 pub struct ast_get_field {
     base: ast,
+    operator_location: span,
     name: str
 }
 
 impl ast_get_field {
-    pub func new(loc: span*, name: const i8*) -> ast_get_field* {
+    pub func new(loc: span*, opr_loc: span*, name: const i8*) -> ast_get_field* {
         var res = ast_get_field::__alloc__();
         res->base = ast::instance(ast_kind::ast_get_field, loc);
+        res->operator_location = opr_loc->copy_instance();
         res->name = str::from(name);
         return res;
     }
@@ -1066,24 +1068,28 @@ impl ast_get_field {
             ast_kind::ast_get_field,
             self->base.location.__ptr__()
         );
+        res->operator_location = self->operator_location.copy_instance();
         res->name = self->name.copy_instance();
         return res;
     }
 
     pub func delete(self) {
+        self->operator_location.delete();
         self->name.delete();
     }
 }
 
 pub struct ast_ptr_get_field {
     base: ast,
+    operator_location: span,
     name: str
 }
 
 impl ast_ptr_get_field {
-    pub func new(loc: span*, name: const i8*) -> ast_ptr_get_field* {
+    pub func new(loc: span*, opr_loc: span*, name: const i8*) -> ast_ptr_get_field* {
         var res = ast_ptr_get_field::__alloc__();
         res->base = ast::instance(ast_kind::ast_ptr_get_field, loc);
+        res->operator_location = opr_loc->copy_instance();
         res->name = str::from(name);
         return res;
     }
@@ -1094,11 +1100,13 @@ impl ast_ptr_get_field {
             ast_kind::ast_ptr_get_field,
             self->base.location.__ptr__()
         );
+        res->operator_location = self->operator_location.copy_instance();
         res->name = self->name.copy_instance();
         return res;
     }
 
     pub func delete(self) {
+        self->operator_location.delete();
         self->name.delete();
     }
 }

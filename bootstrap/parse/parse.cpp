@@ -166,14 +166,16 @@ call* parse::call_gen() {
             update_location(new_call_index);
             res->add_chain(new_call_index);
         } else if (look_ahead(tok::tk_dot)) {
+            const auto& dot_loc = toks[ptr].loc;
             match(tok::tk_dot);
-            auto new_call_field = new get_field(toks[ptr].loc, toks[ptr].str);
+            auto new_call_field = new get_field(toks[ptr].loc, dot_loc, toks[ptr].str);
             match(tok::tk_id);
             update_location(new_call_field);
             res->add_chain(new_call_field);
         } else if (look_ahead(tok::tk_arrow)) {
+            const auto& arrow_loc = toks[ptr].loc;
             match(tok::tk_arrow);
-            auto new_call_field = new ptr_get_field(toks[ptr].loc, toks[ptr].str);
+            auto new_call_field = new ptr_get_field(toks[ptr].loc, arrow_loc, toks[ptr].str);
             match(tok::tk_id);
             update_location(new_call_field);
             res->add_chain(new_call_field);

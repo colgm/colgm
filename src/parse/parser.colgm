@@ -373,18 +373,22 @@ impl parser {
                     res->chain.push(self->initializer_gen() => ast*);
                 }
                 tok_kind::tok_dot => {
+                    var dot_location = self->this_tok_loc();
                     self->match_token(tok_kind::tok_dot);
                     var get_field = ast_get_field::new(
                         self->this_tok_loc(),
+                        dot_location,
                         self->this_tok()->content.c_str
                     );
                     self->match_token(tok_kind::tok_id);
                     res->chain.push(get_field => ast*);
                 }
                 tok_kind::tok_arrow => {
+                    var arrow_location = self->this_tok_loc();
                     self->match_token(tok_kind::tok_arrow);
                     var ptr_get_field = ast_ptr_get_field::new(
                         self->this_tok_loc(),
+                        arrow_location,
                         self->this_tok()->content.c_str
                     );
                     self->match_token(tok_kind::tok_id);

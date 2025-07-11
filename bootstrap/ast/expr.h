@@ -271,33 +271,39 @@ public:
 class get_field: public expr {
 private:
     std::string name;
+    span operator_location;
 
 public:
-    get_field(const span& loc, const std::string& f):
-        expr(ast_type::ast_get_field, loc), name(f) {}
+    get_field(const span& loc, const span& opr_loc, const std::string& f):
+        expr(ast_type::ast_get_field, loc),
+        operator_location(opr_loc), name(f) {}
     ~get_field() override = default;
     void accept(visitor*) override;
     get_field* clone() const override {
-        return new get_field(location, name);
+        return new get_field(location, operator_location, name);
     }
 
     const auto& get_name() const { return name; }
+    const auto& get_operator_location() const { return operator_location; }
 };
 
 class ptr_get_field: public expr {
 private:
     std::string name;
+    span operator_location;
 
 public:
-    ptr_get_field(const span& loc, const std::string& f):
-        expr(ast_type::ast_ptr_get_field, loc), name(f) {}
+    ptr_get_field(const span& loc, const span& opr_loc, const std::string& f):
+        expr(ast_type::ast_ptr_get_field, loc),
+        operator_location(opr_loc), name(f) {}
     ~ptr_get_field() override = default;
     void accept(visitor*) override;
     ptr_get_field* clone() const override {
-        return new ptr_get_field(location, name);
+        return new ptr_get_field(location, operator_location, name);
     }
 
     const auto& get_name() const { return name; }
+    const auto& get_operator_location() const { return operator_location; }
 };
 
 class init_pair: public expr {

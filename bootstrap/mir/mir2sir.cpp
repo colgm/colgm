@@ -3,8 +3,6 @@
 #include <fstream>
 #include <cassert>
 
-#include <unistd.h>
-
 namespace colgm::mir {
 
 void mir2sir::generate_type_mapper() {
@@ -1690,14 +1688,10 @@ void mir2sir::generate_DIFile() {
     ictx.DI_file_map.insert({empty_file_name, dwarf_status.DI_counter});
     ++dwarf_status.DI_counter;
 
-    char cwd[1024];
-    if (!getcwd(cwd, 1023)) {
-        cwd[0] = '\0';
-    }
+    const auto directory = get_cwd();
 
     for (const auto& i : ctx.global.domain) {
         const auto& filename = i.first;
-        const auto directory = std::string(cwd);
         ictx.debug_info.push_back(
             new DI_file(dwarf_status.DI_counter, filename, directory)
         );

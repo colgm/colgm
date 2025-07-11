@@ -11,6 +11,8 @@
 #include <sstream>
 #include <cmath>
 
+#include <unistd.h>
+
 // abbreviation of some useful basic type
 using i32 = std::int32_t;
 using i64 = std::int64_t;
@@ -53,6 +55,7 @@ bool is_powerpc();
 bool is_superh();
 const char* get_platform();
 const char* get_arch();
+std::string get_cwd();
 
 f64 hex_to_f64(const char*);
 u64 hex_to_u64(const char*);
