@@ -8,6 +8,7 @@ use std::libc::{ free };
 use std::fs::{ fs };
 use std::pair::{ pair };
 use std::set::{ hashset };
+use std::map::{ hashmap };
 use std::vec::{ vec };
 use std::queue::{ queue };
 use std::math::{ isinf, isnan, floor };
@@ -621,6 +622,9 @@ impl regist_pass {
             f->is_extern = true;
         }
 
+        var param_loc_map = hashmap<str, span>::instance();
+        defer param_loc_map.delete();
+
         var v = node->params->params.__ptr__();
         for (var i: u64 = 0; i < v->size; i += 1) {
             var n = v->get(i);
@@ -648,13 +652,11 @@ impl regist_pass {
             }
 
             if (f->unordered_params.has(param_name)) {
-                // TODO: try impl the first detailed report on this
-                var info = str::from("parameter \"");
-                defer info.delete();
-                info.append_str(param_name);
-                info.append("\" conflicts with an exist parameter");
-
-                self->err->error(n->location.__ptr__(), info.c_str);
+                self->err->report_conflict_param(
+                    n->location.__ptr__(),
+                    param_loc_map.get(param_name),
+                    param_name->c_str
+                );
                 continue;
             }
 
@@ -666,6 +668,7 @@ impl regist_pass {
                 f->param_name.push(param_name);
                 f->param_type.push(param_type.__ptr__());
                 f->unordered_params.insert(param_name, param_type.__ptr__());                
+                param_loc_map.insert(param_name, n_ast->base.location.__ptr__());
             } else {
                 var param_type = self->tr.resolve(n_ast->type);
                 defer param_type.delete();
@@ -673,6 +676,7 @@ impl regist_pass {
                 f->param_name.push(param_name);
                 f->param_type.push(param_type.__ptr__());
                 f->unordered_params.insert(param_name, param_type.__ptr__());
+                param_loc_map.insert(param_name, n_ast->base.location.__ptr__());
             }
         }
     }

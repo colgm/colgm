@@ -10,12 +10,19 @@ use std::libc::{ itoa, strlen };
 use std::fs::{ fs };
 use std::vec::{ vec };
 
+enum report_level {
+    note,
+    warning,
+    error
+}
+
 pub struct report {
     filename: str,
     source: vec<str>,
-    cache: str,
-    note: str,
-    error_count: i64
+    message_cache: str,
+    note_cache: str,
+    error_count: i64,
+    endwith_enter: bool
 }
 
 impl report {
@@ -26,17 +33,18 @@ impl report {
         }
         res->filename = str::instance();
         res->source = vec<str>::instance();
-        res->cache = str::instance();
-        res->note = str::instance();
+        res->message_cache = str::instance();
+        res->note_cache = str::instance();
         res->error_count = 0;
+        res->endwith_enter = true;
         return res;
     }
 
     pub func delete(self) {
         self->filename.delete();
         self->source.delete();
-        self->cache.delete();
-        self->note.delete();
+        self->message_cache.delete();
+        self->note_cache.delete();
     }
 }
 
@@ -107,7 +115,7 @@ impl report {
         return res;
     }
 
-    func print_file_line(self, location: span*, note: const i8*, is_error: bool) {
+    func print_span(self, location: span*, note: const i8*, level: report_level) {
         if (!location->file.eq_const(self->filename.c_str)) {
             self->load_file_source(location->file.c_str);
         }
@@ -211,24 +219,36 @@ impl report {
             }
 
             index += 1;
-            
-            if (is_error) {
-                io::stderr().cyan().out(pad_str.c_str).out(" | ")
-                            .red().out(underline.c_str)
-                            .reset().endln();
-            } else {
-                io::stderr().cyan().out(pad_str.c_str).out(" | ")
-                            .orange().out(underline.c_str)
-                            .reset().endln();
+
+            match (level) {
+                report_level::note => {
+                    io::stderr().cyan().out(pad_str.c_str).out(" | ")
+                                .grey().out(underline.c_str)
+                                .reset().endln();
+                }
+                report_level::warning => {
+                    io::stderr().cyan().out(pad_str.c_str).out(" | ")
+                                .orange().out(underline.c_str)
+                                .reset().endln();
+                }
+                report_level::error => {
+                    io::stderr().cyan().out(pad_str.c_str).out(" | ")
+                                .red().out(underline.c_str)
+                                .reset().endln();
+                }
             }
         }
 
+        // print note
         if (note != nil) {
             io::stderr().out(pad_str.c_str)
                         .cyan().out("note: ").reset()
-                        .out(note).endln();
+                        .grey().out(note).reset()
+                        .endln();
         }
-        io::stderr().endln();
+        if (self->endwith_enter) {
+            io::stderr().endln();
+        }
     }
 }
 
@@ -247,7 +267,7 @@ impl report {
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
             io::stderr().out_ch(':').out_i64(location->begin_column + 1);
             io::stderr().reset().endln();
-            self->print_file_line(location, nil, true);
+            self->print_span(location, nil, report_level::error);
         }
     }
 
@@ -261,7 +281,7 @@ impl report {
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
             io::stderr().out_ch(':').out_i64(location->begin_column + 1);
             io::stderr().reset().endln();
-            self->print_file_line(location, note, true);
+            self->print_span(location, note, report_level::error);
         }
     }
 
@@ -273,7 +293,7 @@ impl report {
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
             io::stderr().out_ch(':').out_i64(location->begin_column + 1);
             io::stderr().reset().endln();
-            self->print_file_line(location, nil, false);
+            self->print_span(location, nil, report_level::warning);
         }
     }
 
@@ -285,17 +305,52 @@ impl report {
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
             io::stderr().out_ch(':').out_i64(location->begin_column + 1);
             io::stderr().reset().endln();
-            self->print_file_line(location, note, false);
+            self->print_span(location, note, report_level::warning);
         }
     }
 
+    pub func note(self, location: span*, message: i8*) {
+        io::stderr().grey().out("Note: ").reset();
+        io::stderr().white().out(message).reset().endln();
+        if (location != nil) {
+            io::stderr().cyan().out("  --> ").grey().out(location->file.c_str);
+            io::stderr().out_ch(':').out_i64(location->begin_line + 1);
+            io::stderr().out_ch(':').out_i64(location->begin_column + 1);
+            io::stderr().reset().endln();
+            self->print_span(location, nil, report_level::note);
+        }
+    }
+
+    pub func note_with_note(self, location: span*, message: i8*, note: i8*) {
+        io::stderr().grey().out("Note: ").reset();
+        io::stderr().white().out(message).reset().endln();
+        if (location != nil) {
+            io::stderr().cyan().out("  --> ").grey().out(location->file.c_str);
+            io::stderr().out_ch(':').out_i64(location->begin_line + 1);
+            io::stderr().out_ch(':').out_i64(location->begin_column + 1);
+            io::stderr().reset().endln();
+            self->print_span(location, note, report_level::note);
+        }
+    }
+
+    pub func headless_note(self, location: span*, message: i8*) {
+        if (location == nil) {
+            return;
+        }
+        io::stderr().cyan().out("  --> ").grey().out(location->file.c_str);
+        io::stderr().out_ch(':').out_i64(location->begin_line + 1);
+        io::stderr().out_ch(':').out_i64(location->begin_column + 1);
+        io::stderr().reset().endln();
+        self->print_span(location, message, report_level::note);
+    }
+
     pub func out(self, message: const i8*) -> report* {
-        self->cache.append(message);
+        self->message_cache.append(message);
         return self;
     }
 
     pub func out_i64(self, value: i64) -> report* {
-        self->cache.append_i64(value);
+        self->message_cache.append_i64(value);
         return self;
     }
 
@@ -303,32 +358,63 @@ impl report {
         var name = ty->full_path_name(pkg, true);
         defer name.delete();
 
-        self->cache.append(name.c_str);
+        self->message_cache.append(name.c_str);
         return self;
     }
 
     pub func out_note(self, message: const i8*) -> report* {
-        self->note.append(message);
+        self->note_cache.append(message);
         return self;
     }
 
     pub func emit_warn(self, location: span*) {
-        if (self->note.empty()) {
-            self->warn_with_note(location, self->cache.c_str, nil);
+        if (self->note_cache.empty()) {
+            self->warn_with_note(location, self->message_cache.c_str, nil);
         } else {
-            self->warn_with_note(location, self->cache.c_str, self->note.c_str);
+            self->warn_with_note(location, self->message_cache.c_str, self->note_cache.c_str);
         }
-        self->cache.clear();
-        self->note.clear();
+        self->message_cache.clear();
+        self->note_cache.clear();
     }
 
     pub func emit_err(self, location: span*) {
-        if (self->note.empty()) {
-            self->error_with_note(location, self->cache.c_str, nil);
+        if (self->note_cache.empty()) {
+            self->error_with_note(location, self->message_cache.c_str, nil);
         } else {
-            self->error_with_note(location, self->cache.c_str, self->note.c_str);
+            self->error_with_note(location, self->message_cache.c_str, self->note_cache.c_str);
         }
-        self->cache.clear();
-        self->note.clear();
+        self->message_cache.clear();
+        self->note_cache.clear();
+    }
+
+    pub func emit_note(self, location: span*) {
+        if (self->note_cache.empty()) {
+            self->note_with_note(location, self->message_cache.c_str, nil);
+        } else {
+            self->note_with_note(location, self->message_cache.c_str, self->note_cache.c_str);
+        }
+        self->message_cache.clear();
+        self->note_cache.clear();
+    }
+
+    pub func emit_headless(self, location: span*) {
+        self->headless_note(location, self->message_cache.c_str);
+        self->message_cache.clear();
+        self->note_cache.clear();
+    }
+}
+
+impl report {
+    pub func report_conflict_param(self,
+                                   param_loc: span*,
+                                   conflict_loc: span*,
+                                   param_name: const i8*) {
+        self->endwith_enter = false;
+        self->out("\"")->out(param_name)
+            ->out("\" conflicts with an exist parameter")
+            ->emit_err(param_loc);
+        self->endwith_enter = true;
+        self->out("parameter \"")->out(param_name)->out("\" is defined here")
+            ->emit_headless(conflict_loc);
     }
 }
