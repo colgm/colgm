@@ -1301,86 +1301,13 @@ impl sema {
 
         // loc_file is empty means prev is native type
         if (prev->loc_file.empty()) {
-            if (!self->ctx->global->primitives.has(prev_name_for_search.__ptr__())) {
-                var info = str::from("cannot get static method from primitive type \"");
-                defer info.delete();
-
-                info.append_str(prev_name_for_search.__ptr__());
-                info.append("\"");
-                self->err->error(n->base.location.__ptr__(), info.c_str);
-                return type::error_type();
-            }
-
-            var p = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
-            if (!p->static_method.has(n->name.__ptr__())) {
-                var info = str::from("cannot find static method \"");
-                defer info.delete();
-
-                info.append_str(n->name.__ptr__());
-                info.append("\" in \"");
-                info.append_str(prev_name_for_search.__ptr__());
-                info.append("\"");
-                self->err->error(n->base.location.__ptr__(), info.c_str);
-                return type::error_type();
-            }
-
-            var infer = prev->copy_instance();
-            infer.pointer_depth = 0;
-            infer.is_global_sym = true;
-            infer.prm_info.flag_is_static = true;
-            infer.prm_info.flag_is_normal = false;
-            infer.prm_info.method_name.append_str(n->name.__ptr__());
-            return infer;
+            return self->resolve_primitive_call_path(prev, n);
         }
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
-        if (dm->structs.has(prev_name_for_search.__ptr__()) &&
-            prev->is_global_sym) {
-            var st = dm->structs.get(prev_name_for_search.__ptr__());
-            if (st->static_method.has(n->name.__ptr__())) {
-                self->check_struct_pub_method(n => ast*, n->name.__ptr__(), st);
-                var infer = self->struct_static_method_infer(prev, n->name.__ptr__());
-                n->base.resolved_type.reset_with(infer.__ptr__());
-                return infer;
-            } else if (st->method.has(n->name.__ptr__())) {
-                var info = str::from("\"");
-                defer info.delete();
-
-                info.append_str(n->name.__ptr__());
-                info.append("\" in \"");
-                info.append_str(prev_name_for_search.__ptr__());
-                info.append("\" is not a static method");
-                self->err->error(n->base.location.__ptr__(), info.c_str);
-                return type::error_type();
-            } else {
-                var info = str::from("cannot find static method \"");
-                defer info.delete();
-
-                info.append_str(n->name.__ptr__());
-                info.append("\" in \"");
-                info.append_str(prev_name_for_search.__ptr__());
-                info.append("\"");
-
-                var note = str::from("maybe you mean \"");
-                defer note.delete();
-
-                var fuzzy = st->fuzzy_match_field(n->name.__ptr__());
-                defer fuzzy.delete();
-
-                note.append_str(fuzzy.__ptr__());
-                note.append("\"?");
-
-                self->err->error_with_note(
-                    n->base.location.__ptr__(),
-                    info.c_str,
-                    note.c_str
-                );
-                return type::error_type();
-            }
-            // unreachable
-            return type::error_type();
-        } else if (dm->enums.has(prev_name_for_search.__ptr__()) &&
-            prev->is_global_sym) {
+        if (dm->structs.has(prev_name_for_search.__ptr__())) {
+            return self->resolve_struct_call_path(prev, n);
+        } else if (dm->enums.has(prev_name_for_search.__ptr__())) {
             var en = dm->enums.get(prev_name_for_search.__ptr__());
             if (en->members.has(n->name.__ptr__())) {
                 var infer = prev->copy_instance();
@@ -1390,60 +1317,15 @@ impl sema {
                 return infer;
             }
 
-            var info = str::from("cannot find enum member \"");
-            defer info.delete();
-
-            info.append_str(n->name.__ptr__());
-            info.append("\" in \"");
-            info.append_str(prev_name_for_search.__ptr__());
-            info.append("\"");
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->out("cannot find enum member \"")
+                     ->out(n->name.c_str)
+                     ->out("\" in enum \"")
+                     ->out(prev_name_for_search.c_str)
+                     ->out("\"")
+                     ->emit_err(n->base.location.__ptr__());
             return type::error_type();
-        } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__()) &&
-                   prev->is_global_sym) {
-            var tu = dm->tagged_unions.get(prev_name_for_search.__ptr__());
-            if (tu->static_method.has(n->name.__ptr__())) {
-                self->check_tagged_union_pub_method(n => ast*, n->name.__ptr__(), tu);
-                var infer = self->struct_static_method_infer(prev, n->name.__ptr__());
-                n->base.resolved_type.reset_with(infer.__ptr__());
-                return infer;
-            } else if (tu->method.has(n->name.__ptr__())) {
-                var info = str::from("\"");
-                defer info.delete();
-
-                info.append_str(n->name.__ptr__());
-                info.append("\" in \"");
-                info.append_str(prev_name_for_search.__ptr__());
-                info.append("\" is not a static method");
-                self->err->error(n->base.location.__ptr__(), info.c_str);
-                return type::error_type();
-            } else {
-                var info = str::from("cannot find static method \"");
-                defer info.delete();
-
-                info.append_str(n->name.__ptr__());
-                info.append("\" in \"");
-                info.append_str(prev_name_for_search.__ptr__());
-                info.append("\"");
-
-                var note = str::from("maybe you mean \"");
-                defer note.delete();
-
-                var fuzzy = tu->fuzzy_match_field(n->name.__ptr__());
-                defer fuzzy.delete();
-
-                note.append_str(fuzzy.__ptr__());
-                note.append("\"?");
-
-                self->err->error_with_note(
-                    n->base.location.__ptr__(),
-                    info.c_str,
-                    note.c_str
-                );
-                return type::error_type();
-            }
-            // unreachable
-            return type::error_type();
+        } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
+            return self->resolve_tagged_union_call_path(prev, n);
         } else {
             var info = str::from("cannot find path \"");
             defer info.delete();
@@ -1456,6 +1338,134 @@ impl sema {
             return type::error_type();
         }
 
+        return type::error_type();
+    }
+
+    func resolve_primitive_call_path(self, prev: type*, n: ast_call_path*) -> type {
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
+        if (!self->ctx->global->primitives.has(prev_name_for_search.__ptr__())) {
+            var info = str::from("cannot get static method from primitive type \"");
+            defer info.delete();
+
+            info.append_str(prev_name_for_search.__ptr__());
+            info.append("\"");
+            self->err->error(n->base.location.__ptr__(), info.c_str);
+            return type::error_type();
+        }
+
+        var p = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
+        if (!p->static_method.has(n->name.__ptr__())) {
+            var info = str::from("cannot find static method \"");
+            defer info.delete();
+
+            info.append_str(n->name.__ptr__());
+            info.append("\" in \"");
+            info.append_str(prev_name_for_search.__ptr__());
+            info.append("\"");
+            self->err->error(n->base.location.__ptr__(), info.c_str);
+            return type::error_type();
+        }
+
+        var infer = prev->copy_instance();
+        infer.pointer_depth = 0;
+        infer.is_global_sym = true;
+        infer.prm_info.flag_is_static = true;
+        infer.prm_info.flag_is_normal = false;
+        infer.prm_info.method_name.append_str(n->name.__ptr__());
+        return infer;
+    }
+
+    func resolve_struct_call_path(self, prev: type*, n: ast_call_path*) -> type {
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
+        var st = dm->structs.get(prev_name_for_search.__ptr__());
+        if (st->static_method.has(n->name.__ptr__())) {
+            self->check_struct_pub_method(n => ast*, n->name.__ptr__(), st);
+            var infer = self->struct_static_method_infer(prev, n->name.__ptr__());
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
+        } else if (st->method.has(n->name.__ptr__())) {
+            self->err->out("\"")->out(prev_name_for_search.c_str)
+                     ->out("::")->out(n->name.c_str)
+                     ->out("\" is not a static method")
+                     ->emit_err(n->base.location.__ptr__());
+            return type::error_type();
+        } else {
+            var info = str::from("cannot find static method \"");
+            defer info.delete();
+
+            info.append_str(n->name.__ptr__());
+            info.append("\" in \"");
+            info.append_str(prev_name_for_search.__ptr__());
+            info.append("\"");
+
+            var note = str::from("maybe you mean \"");
+            defer note.delete();
+
+            var fuzzy = st->fuzzy_match_field(n->name.__ptr__());
+            defer fuzzy.delete();
+
+            note.append_str(fuzzy.__ptr__());
+            note.append("\"?");
+
+            self->err->error_with_note(
+                n->base.location.__ptr__(),
+                info.c_str,
+                note.c_str
+            );
+            return type::error_type();
+        }
+        // unreachable
+        return type::error_type();
+    }
+
+    func resolve_tagged_union_call_path(self, prev: type*, n: ast_call_path*) -> type {
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
+        var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
+        var tu = dm->tagged_unions.get(prev_name_for_search.__ptr__());
+        if (tu->static_method.has(n->name.__ptr__())) {
+            self->check_tagged_union_pub_method(n => ast*, n->name.__ptr__(), tu);
+            var infer = self->struct_static_method_infer(prev, n->name.__ptr__());
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
+        } else if (tu->method.has(n->name.__ptr__())) {
+            self->err->out("\"")->out(prev_name_for_search.c_str)
+                     ->out("::")->out(n->name.c_str)
+                     ->out("\" is not a static method")
+                     ->emit_err(n->base.location.__ptr__());
+            return type::error_type();
+        } else {
+            var info = str::from("cannot find static method \"");
+            defer info.delete();
+
+            info.append_str(n->name.__ptr__());
+            info.append("\" in \"");
+            info.append_str(prev_name_for_search.__ptr__());
+            info.append("\"");
+
+            var note = str::from("maybe you mean \"");
+            defer note.delete();
+
+            var fuzzy = tu->fuzzy_match_field(n->name.__ptr__());
+            defer fuzzy.delete();
+
+            note.append_str(fuzzy.__ptr__());
+            note.append("\"?");
+
+            self->err->error_with_note(
+                n->base.location.__ptr__(),
+                info.c_str,
+                note.c_str
+            );
+            return type::error_type();
+        }
+        // unreachable
         return type::error_type();
     }
 
