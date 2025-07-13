@@ -995,16 +995,18 @@ impl sema {
 
         var fuzzy_field = struct_self->fuzzy_match_field(n->name.__ptr__());
         defer fuzzy_field.delete();
+        var fuzzy_field_loc: span* = nil;
+        if (struct_self->fields_span.has(fuzzy_field.__ptr__())) {
+            fuzzy_field_loc = struct_self->fields_span.get(fuzzy_field.__ptr__());
+        }
 
-        self->err->out("cannot find field or method \"")
-                 ->out(n->name.c_str)
-                 ->out("\" in \"")
-                 ->out(prev_name_for_search.c_str)
-                 ->out("\"")
-                 ->out_note("maybe you mean \"")
-                 ->out_note(fuzzy_field.c_str)
-                 ->out_note("\"?")
-                 ->emit_err(n->base.location.__ptr__());
+        self->err->report_field_not_found(
+            n->base.location.__ptr__(),
+            n->name.c_str,
+            prev_name_for_search.c_str,
+            fuzzy_field.c_str,
+            fuzzy_field_loc
+        );
         return type::error_type();
     }
 
@@ -1042,16 +1044,18 @@ impl sema {
 
         var fuzzy_field = union_self->fuzzy_match_field(n->name.__ptr__());
         defer fuzzy_field.delete();
+        var fuzzy_field_loc: span* = nil;
+        if (union_self->members_span.has(fuzzy_field.__ptr__())) {
+            fuzzy_field_loc = union_self->members_span.get(fuzzy_field.__ptr__());
+        }
 
-        self->err->out("cannot find field or method \"")
-                 ->out(n->name.c_str)
-                 ->out("\" in \"")
-                 ->out(prev_name_for_search.c_str)
-                 ->out("\"")
-                 ->out_note("maybe you mean \"")
-                 ->out_note(fuzzy_field.c_str)
-                 ->out_note("\"?")
-                 ->emit_err(n->base.location.__ptr__());
+        self->err->report_field_not_found(
+            n->base.location.__ptr__(),
+            n->name.c_str,
+            prev_name_for_search.c_str,
+            fuzzy_field.c_str,
+            fuzzy_field_loc
+        );
         return type::error_type();
     }
 
@@ -1389,10 +1393,12 @@ impl sema {
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         } else if (st->method.has(n->name.__ptr__())) {
-            self->err->out("\"")->out(prev_name_for_search.c_str)
-                     ->out("::")->out(n->name.c_str)
-                     ->out("\" is not a static method")
-                     ->emit_err(n->base.location.__ptr__());
+            self->err->report_non_static_method(
+                n->base.location.__ptr__(),
+                prev_name_for_search.c_str,
+                n->name.c_str,
+                st->method.get(n->name.__ptr__())->location.__ptr__()
+            );
             return type::error_type();
         } else {
             var info = str::from("cannot find static method \"");
@@ -1435,10 +1441,12 @@ impl sema {
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         } else if (tu->method.has(n->name.__ptr__())) {
-            self->err->out("\"")->out(prev_name_for_search.c_str)
-                     ->out("::")->out(n->name.c_str)
-                     ->out("\" is not a static method")
-                     ->emit_err(n->base.location.__ptr__());
+            self->err->report_non_static_method(
+                n->base.location.__ptr__(),
+                prev_name_for_search.c_str,
+                n->name.c_str,
+                tu->method.get(n->name.__ptr__())->location.__ptr__()
+            );
             return type::error_type();
         } else {
             var info = str::from("cannot find static method \"");
@@ -1741,16 +1749,18 @@ impl sema {
 
         var fuzzy_field = struct_self->fuzzy_match_field(n->name.__ptr__());
         defer fuzzy_field.delete();
+        var fuzzy_field_loc: span* = nil;
+        if (struct_self->fields_span.has(fuzzy_field.__ptr__())) {
+            fuzzy_field_loc = struct_self->fields_span.get(fuzzy_field.__ptr__());
+        }
 
-        self->err->out("cannot find field or method \"")
-                 ->out(n->name.c_str)
-                 ->out("\" in \"")
-                 ->out(prev_name_for_search.c_str)
-                 ->out("\"")
-                 ->out_note("maybe you mean \"")
-                 ->out_note(fuzzy_field.c_str)
-                 ->out_note("\"?")
-                 ->emit_err(n->base.location.__ptr__());
+        self->err->report_field_not_found(
+            n->base.location.__ptr__(),
+            n->name.c_str,
+            prev_name_for_search.c_str,
+            fuzzy_field.c_str,
+            fuzzy_field_loc
+        );
         return type::error_type();
     }
 
@@ -1788,16 +1798,18 @@ impl sema {
 
         var fuzzy_field = union_self->fuzzy_match_field(n->name.__ptr__());
         defer fuzzy_field.delete();
+        var fuzzy_field_loc: span* = nil;
+        if (union_self->members_span.has(fuzzy_field.__ptr__())) {
+            fuzzy_field_loc = union_self->members_span.get(fuzzy_field.__ptr__());
+        }
 
-        self->err->out("cannot find field or method \"")
-                 ->out(n->name.c_str)
-                 ->out("\" in \"")
-                 ->out(prev_name_for_search.c_str)
-                 ->out("\"")
-                 ->out_note("maybe you mean \"")
-                 ->out_note(fuzzy_field.c_str)
-                 ->out_note("\"?")
-                 ->emit_err(n->base.location.__ptr__());
+        self->err->report_field_not_found(
+            n->base.location.__ptr__(),
+            n->name.c_str,
+            prev_name_for_search.c_str,
+            fuzzy_field.c_str,
+            fuzzy_field_loc
+        );
         return type::error_type();
     }
 

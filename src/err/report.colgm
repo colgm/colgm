@@ -243,8 +243,7 @@ impl report {
         if (note != nil) {
             io::stderr().out(pad_str.c_str)
                         .cyan().out("note: ").reset()
-                        .grey().out(note).reset()
-                        .endln();
+                        .out(note).endln();
         }
         if (self->endwith_enter) {
             io::stderr().endln();
@@ -254,14 +253,16 @@ impl report {
 
 impl report {
     pub func unimplemented(self, location: span*) {
-        self->error(location, "unimplemented");
+        self->error_with_note(location,
+            "unimplemented",
+            "please report issue to https://github.com/colgm/colgm/issues"
+        );
     }
 
     pub func error(self, location: span*, message: i8*) {
         self->error_count += 1;
 
-        io::stderr().red().out("Error: ").reset();
-        io::stderr().white().out(message).reset().endln();
+        io::stderr().red().out("Error: ").reset().out(message).endln();
         if (location != nil) {
             io::stderr().cyan().out("  --> ").red().out(location->file.c_str);
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
@@ -274,8 +275,7 @@ impl report {
     pub func error_with_note(self, location: span*, message: i8*, note: i8*) {
         self->error_count += 1;
 
-        io::stderr().red().out("Error: ").reset();
-        io::stderr().white().out(message).reset().endln();
+        io::stderr().red().out("Error: ").reset().out(message).endln();
         if (location != nil) {
             io::stderr().cyan().out("  --> ").red().out(location->file.c_str);
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
@@ -286,8 +286,7 @@ impl report {
     }
 
     pub func warn(self, location: span*, message: i8*) {
-        io::stderr().orange().out("Warning: ").reset();
-        io::stderr().white().out(message).reset().endln();
+        io::stderr().orange().out("Warning: ").reset().out(message).endln();
         if (location != nil) {
             io::stderr().cyan().out("  --> ").orange().out(location->file.c_str);
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
@@ -298,8 +297,7 @@ impl report {
     }
 
     pub func warn_with_note(self, location: span*, message: i8*, note: i8*) {
-        io::stderr().orange().out("Warning: ").reset();
-        io::stderr().white().out(message).reset().endln();
+        io::stderr().orange().out("Warning: ").reset().out(message).endln();
         if (location != nil) {
             io::stderr().cyan().out("  --> ").orange().out(location->file.c_str);
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
@@ -310,8 +308,7 @@ impl report {
     }
 
     pub func note(self, location: span*, message: i8*) {
-        io::stderr().grey().out("Note: ").reset();
-        io::stderr().white().out(message).reset().endln();
+        io::stderr().grey().out("Note: ").reset().out(message).endln();
         if (location != nil) {
             io::stderr().cyan().out("  --> ").grey().out(location->file.c_str);
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
@@ -322,8 +319,7 @@ impl report {
     }
 
     pub func note_with_note(self, location: span*, message: i8*, note: i8*) {
-        io::stderr().grey().out("Note: ").reset();
-        io::stderr().white().out(message).reset().endln();
+        io::stderr().grey().out("Note: ").reset().out(message).endln();
         if (location != nil) {
             io::stderr().cyan().out("  --> ").grey().out(location->file.c_str);
             io::stderr().out_ch(':').out_i64(location->begin_line + 1);
@@ -343,7 +339,10 @@ impl report {
         io::stderr().reset().endln();
         self->print_span(location, message, report_level::note);
     }
+}
 
+// report builder methods
+impl report {
     pub func out(self, message: const i8*) -> report* {
         self->message_cache.append(message);
         return self;
@@ -359,6 +358,26 @@ impl report {
         defer name.delete();
 
         self->message_cache.append(name.c_str);
+        return self;
+    }
+
+    pub func highlight(self) -> report* {
+        self->message_cache.append("\e[97;1m");
+        return self;
+    }
+
+    pub func cancel_highlight(self) -> report* {
+        self->message_cache.append("\e[0m");
+        return self;
+    }
+
+    pub func highlight_note(self) -> report* {
+        self->note_cache.append("\e[97;1m");
+        return self;
+    }
+
+    pub func cancel_highlight_note(self) -> report* {
+        self->note_cache.append("\e[0m");
         return self;
     }
 
@@ -410,11 +429,58 @@ impl report {
                                    conflict_loc: span*,
                                    param_name: const i8*) {
         self->endwith_enter = false;
-        self->out("\"")->out(param_name)
-            ->out("\" conflicts with an exist parameter")
+        self->highlight()->out("\"")->out(param_name)
+            ->out("\"")->cancel_highlight()
+            ->out(" conflicts with an exist parameter")
             ->emit_err(param_loc);
         self->endwith_enter = true;
-        self->out("parameter \"")->out(param_name)->out("\" is defined here")
+        self->out("parameter ")
+            ->highlight()
+            ->out("\"")->out(param_name)->out("\"")
+            ->cancel_highlight()
+            ->out(" is defined here")
             ->emit_headless(conflict_loc);
+    }
+
+    pub func report_field_not_found(self,
+                                    call_loc: span*,
+                                    field_name: const i8*,
+                                    data_struct_name: const i8*,
+                                    fuzzy_match: const i8*,
+                                    fuzzy_match_loc: span*) {
+        if (fuzzy_match_loc != nil) {
+            self->endwith_enter = false;
+        }
+
+        self->out("cannot find field or method ")
+            ->highlight()->out("\"")->out(field_name)->out("\"")->cancel_highlight()
+            ->out(" in ")
+            ->highlight()->out("\"")->out(data_struct_name)->out("\"")->cancel_highlight()
+            ->out_note("maybe you mean ")
+            ->highlight_note()
+            ->out_note("\"")->out_note(fuzzy_match)->out_note("\"")
+            ->cancel_highlight_note()
+            ->out_note("?")
+            ->emit_err(call_loc);
+
+        if (fuzzy_match_loc != nil) {
+            self->endwith_enter = true;
+            self->out("defined here")->emit_headless(fuzzy_match_loc);
+        }
+    }
+
+    pub func report_non_static_method(self,
+                                      call_loc: span*,
+                                      data_struct_name: const i8*,
+                                      method_name: const i8*,
+                                      def_loc: span*) {
+        self->endwith_enter = false;
+        self->highlight()->out("\"")->out(data_struct_name)
+            ->out("::")->out(method_name)->out("\"")
+            ->cancel_highlight()
+            ->out(" is not a static method")
+            ->emit_err(call_loc);
+        self->endwith_enter = true;
+        self->out("defined here")->emit_headless(def_loc);
     }
 }

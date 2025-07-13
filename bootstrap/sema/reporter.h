@@ -28,22 +28,26 @@ public:
     }
     void unimplemented(ast::node* n) {
         err.err(n->get_location(),
-            "unimplemented, please report a bug."
+            "unimplemented",
+            "please report issue to https://github.com/colgm/colgm/issues"
         );
     }
     void unimplemented(const span& loc) {
         err.err(loc,
-            "unimplemented, please report a bug."
+            "unimplemented",
+            "please report issue to https://github.com/colgm/colgm/issues"
         );
     }
     void unreachable(ast::node* n) {
         err.err(n->get_location(),
-            "unreachable, please report a bug."
+            "unreachable",
+            "please report issue to https://github.com/colgm/colgm/issues"
         );
     }
     void unreachable(const span& loc) {
         err.err(loc,
-            "unreachable, please report a bug."
+            "unreachable",
+            "please report issue to https://github.com/colgm/colgm/issues"
         );
     }
 };
