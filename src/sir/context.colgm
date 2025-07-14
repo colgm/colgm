@@ -141,7 +141,10 @@ pub struct sir_func {
     attributes: vec<str>,
     with_va_args: bool,
     debug_info_index: u64,
-    body: sir_block*
+    body: sir_block*,
+
+    // mark as eliminated
+    eliminated: bool
 }
 
 impl sir_func {
@@ -154,7 +157,8 @@ impl sir_func {
             attributes: vec<str>::instance(),
             with_va_args: false,
             debug_info_index: DI_ERROR_INDEX(),
-            body: nil
+            body: nil,
+            eliminated: false
         };
     }
 
@@ -183,6 +187,8 @@ impl sir_func {
 
         res.body = self->body; // shallow copy
         self->body = nil; // set to nil to avoid double free
+
+        res.eliminated = self->eliminated;
         return res;
     }
 
@@ -215,6 +221,10 @@ impl sir_func {
     }
 
     pub func dump(self, out: io) {
+        if (self->eliminated) {
+            return;
+        }
+
         if (self->body == nil) {
             out.out("declare ");
         } else {

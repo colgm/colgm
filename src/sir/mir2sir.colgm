@@ -17,6 +17,7 @@ use sir::adjust_va_arg::{ adjust_va_arg };
 use sir::replace_ptr_call::{ replace_struct_ptr_call };
 use sir::size_calc::{ size_calc };
 use sir::detect_redef_extern::{ detect_redef_extern };
+use sir::remove_unused_func::{ remove_unused_func };
 
 use dwarf::dwarf::*;
 use dwarf::status::{ DWARF_status };
@@ -40,7 +41,7 @@ use util::mangling::{
     mangle_tagged_union_name,
     mangle_function_name
 };
-use util::timestamp::{ maketimestamp };
+use util::timestamp::{ timestamp, maketimestamp };
 
 enum mir_value_kind {
     null, // reserved
@@ -490,10 +491,19 @@ impl mir2sir {
         }
     }
 
-    func process_print(self, curr: u64, total: u64) {
+    func process_print(self, curr: u64, total: u64, ts: timestamp*) {
         if (curr + 1 != total && (curr + 1) % 100 != 0) {
             return;
         }
+
+        var elapsed_msec = ts->elapsed_msec();
+        var remaining_sec = (
+            elapsed_msec
+            * ((total - curr - 1) => f64)
+            / ((curr + 1) => f64)
+            / 1000.0
+        ) => i64;
+
         io::stdout().green().out("[  MIR2SIR ] ").reset();
         io::stdout().out("Generating function ");
         io::stdout().light_cyan().out("(").reset();
@@ -505,7 +515,11 @@ impl mir2sir {
         io::stdout().out_u64(curr + 1).reset();
         io::stdout().light_cyan().out("/").out_u64(total).out(")").reset();
         if (curr + 1 != total) {
-            io::stdout().out("\r");
+            io::stdout().out(" in ").cyan().out_i64(remaining_sec).reset().out(" s");
+            io::stdout().out("                  \r");
+        } else {
+            io::stdout().out(" ").out_f64(ts->elapsed_msec()).out(" ms");
+            io::stdout().out("                  \n");
         }
     }
 
@@ -514,7 +528,7 @@ impl mir2sir {
         ts.stamp();
 
         foreach (var i; mctx->impls) {
-            self->process_print(i.index(), mctx->impls.size);
+            self->process_print(i.index(), mctx->impls.size, ts.__ptr__());
             var m_func = i.get();
             var m_mangled_name = mangle_function_name(m_func->name.__ptr__());
             defer m_mangled_name.delete();
@@ -581,7 +595,6 @@ impl mir2sir {
             // pop local scope
             self->locals.pop();
         }
-        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
     }
 }
 
@@ -3733,5 +3746,6 @@ impl mir2sir {
         adjust_va_arg(self->sctx, verbose);
         replace_struct_ptr_call(self->sctx, verbose);
         detect_redef_extern(self->sctx, self->err, verbose);
+        remove_unused_func(self->sctx, verbose);
     }
 }

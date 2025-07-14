@@ -105,6 +105,19 @@ impl colgm_tagged_union {
                self->static_method.has(name);
     }
 
+    pub func get_member_span(self, name: str*) -> span* {
+        if (self->members_span.has(name)) {
+            return self->members_span.get(name);
+        }
+        if (self->method.has(name)) {
+            return self->method.get(name)->location.__ptr__();
+        }
+        if (self->static_method.has(name)) {
+            return self->static_method.get(name)->location.__ptr__();
+        }
+        return nil;
+    }
+
     pub func fuzzy_match_field(self, name: str*) -> str {
         var res = str::instance();
         var min_distance: u64 = 0xffffffffffffffff;

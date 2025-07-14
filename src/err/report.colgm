@@ -130,7 +130,10 @@ impl report {
         var omit_line_printed = false;
 
         while (index <= location->end_line) {
-            if (index > location->begin_line && index < location->end_line) {
+            // if total span includes more than 5 lines, omit the middle lines
+            if (index > location->begin_line &&
+                index < location->end_line &&
+                location->end_line - location->begin_line > 5) {
                 if (!omit_line_printed) {
                     io::stderr().cyan().out(pad_str.c_str).out(" | ").reset();
                     io::stderr().out("  ...").endln();
@@ -140,7 +143,8 @@ impl report {
                 index += 1;
                 continue;
             }
-            var this_line: i8* = nil;
+
+            var this_line: const i8* = nil;
             var len: i64 = 0;
             if ((index => u64) < self->source.size) {
                 this_line = self->source.get(index => u64)->c_str;
@@ -165,7 +169,7 @@ impl report {
 
             if (index == location->begin_line) {
                 for (var i = 0; i < len; i += 1) {
-                    if (location->begin_line==location->end_line &&
+                    if (location->begin_line == location->end_line &&
                         i == location->end_column) {
                         break;
                     }
@@ -191,7 +195,7 @@ impl report {
                 }
                 for (var i = 0; i < len; i += 1) {
                     // in fact this should be unreachable
-                    if (location->begin_line==location->end_line &&
+                    if (location->begin_line == location->end_line &&
                         i < location->begin_column) {
                         continue;
                     }
@@ -328,17 +332,6 @@ impl report {
             self->print_span(location, note, report_level::note);
         }
     }
-
-    pub func headless_note(self, location: span*, message: i8*) {
-        if (location == nil) {
-            return;
-        }
-        io::stderr().cyan().out("  --> ").grey().out(location->file.c_str);
-        io::stderr().out_ch(':').out_i64(location->begin_line + 1);
-        io::stderr().out_ch(':').out_i64(location->begin_column + 1);
-        io::stderr().reset().endln();
-        self->print_span(location, message, report_level::note);
-    }
 }
 
 // report builder methods
@@ -358,26 +351,6 @@ impl report {
         defer name.delete();
 
         self->message_cache.append(name.c_str);
-        return self;
-    }
-
-    pub func highlight(self) -> report* {
-        self->message_cache.append("\e[97;1m");
-        return self;
-    }
-
-    pub func cancel_highlight(self) -> report* {
-        self->message_cache.append("\e[0m");
-        return self;
-    }
-
-    pub func highlight_note(self) -> report* {
-        self->note_cache.append("\e[97;1m");
-        return self;
-    }
-
-    pub func cancel_highlight_note(self) -> report* {
-        self->note_cache.append("\e[0m");
         return self;
     }
 
@@ -415,9 +388,42 @@ impl report {
         self->message_cache.clear();
         self->note_cache.clear();
     }
+}
 
-    pub func emit_headless(self, location: span*) {
-        self->headless_note(location, self->message_cache.c_str);
+impl report {
+    func highlight(self) -> report* {
+        self->message_cache.append("\e[97;1m");
+        return self;
+    }
+
+    func cancel_highlight(self) -> report* {
+        self->message_cache.append("\e[0m");
+        return self;
+    }
+
+    func highlight_note(self) -> report* {
+        self->note_cache.append("\e[97;1m");
+        return self;
+    }
+
+    func cancel_highlight_note(self) -> report* {
+        self->note_cache.append("\e[0m");
+        return self;
+    }
+
+    func headless_note(self, location: span*, note: i8*) {
+        if (location == nil) {
+            return;
+        }
+        io::stderr().cyan().out("  --> ").grey().out(location->file.c_str);
+        io::stderr().out_ch(':').out_i64(location->begin_line + 1);
+        io::stderr().out_ch(':').out_i64(location->begin_column + 1);
+        io::stderr().reset().endln();
+        self->print_span(location, note, report_level::note);
+    }
+
+    func emit_headless(self, location: span*) {
+        self->headless_note(location, self->note_cache.c_str);
         self->message_cache.clear();
         self->note_cache.clear();
     }
@@ -434,11 +440,11 @@ impl report {
             ->out(" conflicts with an exist parameter")
             ->emit_err(param_loc);
         self->endwith_enter = true;
-        self->out("parameter ")
-            ->highlight()
-            ->out("\"")->out(param_name)->out("\"")
-            ->cancel_highlight()
-            ->out(" is defined here")
+        self->out_note("parameter ")
+            ->highlight_note()
+            ->out_note("\"")->out_note(param_name)->out_note("\"")
+            ->cancel_highlight_note()
+            ->out_note(" is defined here")
             ->emit_headless(conflict_loc);
     }
 
@@ -465,7 +471,7 @@ impl report {
 
         if (fuzzy_match_loc != nil) {
             self->endwith_enter = true;
-            self->out("defined here")->emit_headless(fuzzy_match_loc);
+            self->out_note("defined here")->emit_headless(fuzzy_match_loc);
         }
     }
 
@@ -481,6 +487,6 @@ impl report {
             ->out(" is not a static method")
             ->emit_err(call_loc);
         self->endwith_enter = true;
-        self->out("defined here")->emit_headless(def_loc);
+        self->out_note("defined here")->emit_headless(def_loc);
     }
 }

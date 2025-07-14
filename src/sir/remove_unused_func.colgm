@@ -1,0 +1,103 @@
+use sir::context::{ sir_func, sir_context };
+use sir::sir::{ sir_kind, sir_call };
+use util::timestamp::{ maketimestamp };
+
+use std::io::{ io };
+use std::str::{ str };
+use std::vec::{ vec };
+use std::queue::{ queue };
+use std::pair::{ pair };
+use std::map::{ hashmap };
+use std::set::{ hashset };
+
+func check_main(func_map: hashmap<str, sir_func*>*) -> bool {
+    var main_name = str::from("main");
+    defer main_name.delete();
+
+    if (!func_map->has(main_name.__ptr__())) {
+        return false;
+    }
+
+    var main_func = func_map->get(main_name.__ptr__());
+    return main_func->body != nil && !main_func->body->stmts.empty();
+}
+
+pub func remove_unused_func(ctx: sir_context*, verbose: bool) {
+    var func_map = hashmap<str, sir_func*>::instance();
+    defer func_map.delete();
+
+    foreach (var i; ctx->func_impls) {
+        var f = i.get();
+        func_map.insert(f->name.__ptr__(), f);
+    }
+
+    // if main function does not exist or has no statement, return
+    if (!check_main(func_map.__ptr__())) {
+        return;
+    }
+
+    var bfs = queue<pair<str, sir_func*>>::instance();
+    defer bfs.delete();
+    var used_func = hashset<str>::instance();
+    defer used_func.delete();
+    var main_name = str::from("main");
+    defer main_name.delete();
+
+    var new_pair = pair<str, sir_func*>::instance(
+        main_name.__ptr__(),
+        func_map.get(main_name.__ptr__())
+    );
+    defer new_pair.delete();
+
+    bfs.push(new_pair.__ptr__());
+    used_func.insert(main_name.__ptr__());
+    while (!bfs.empty()) {
+        var cur = bfs.front()->copy_instance();
+        defer cur.delete();
+        bfs.pop();
+
+        var cur_func = cur.value;
+        foreach (var i; cur_func->body->stmts) {
+            var stmt = i.get();
+            if (stmt->kind == sir_kind::sir_call) {
+                var call_stmt = stmt => sir_call*;
+                var callee = call_stmt->name.__ptr__();
+                if (used_func.has(callee)) {
+                    continue;
+                }
+                if (!func_map.has(callee)) {
+                    continue;
+                }
+                var callee_func = func_map.get(callee);
+                var callee_pair = pair<str, sir_func*>::instance(
+                    callee,
+                    callee_func
+                );
+                defer callee_pair.delete();
+
+                bfs.push(callee_pair.__ptr__());
+                used_func.insert(callee);
+            }
+        }
+    }
+
+    var delete_count = 0;
+    foreach (var i; ctx->func_impls) {
+        var f = i.get();
+        if (!used_func.has(f->name.__ptr__())) {
+            // mark as eliminated, avoid too many copy operations
+            f->eliminated = true;
+            delete_count += 1;
+        }
+    }
+
+    var ts = maketimestamp();
+    ts.stamp();
+
+    if (verbose) {
+        io::stdout().green().out("[ SIR-PASS ] ").reset();
+        io::stdout().out("Remove unused function: ");
+        io::stdout().light_cyan().out_i64(delete_count).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}
