@@ -14,7 +14,7 @@ use sir::sir::*;
 use sir::context::{ sir_tagged_union, sir_struct, sir_func, sir_context };
 use sir::value::{ value_t };
 use sir::adjust_va_arg::{ adjust_va_arg };
-use sir::replace_ptr_call::{ replace_struct_ptr_call };
+use sir::replace_call::{ replace_ptr_call, replace_size_call };
 use sir::size_calc::{ size_calc };
 use sir::detect_redef_extern::{ detect_redef_extern };
 use sir::remove_unused_func::{ remove_unused_func };
@@ -1051,7 +1051,8 @@ impl mir2sir {
                     right_value.__ptr__(),
                     temp_var_value.__ptr__(),
                     left.resolved_type.is_integer(),
-                    left_ty.__ptr__()
+                    left_ty.__ptr__(),
+                    "+"
                 ) => sir*);
             }
             mir_binary_opr::sub => {
@@ -2481,7 +2482,8 @@ impl mir2sir {
                     right_value.__ptr__(),
                     temp_1_value.__ptr__(),
                     right.resolved_type.is_integer(),
-                    right_ty.__ptr__()
+                    right_ty.__ptr__(),
+                    "+="
                 ) => sir*);
                 self->block->add_stmt(sir_store::new(
                     right_ty.__ptr__(),
@@ -3730,6 +3732,14 @@ impl mir2sir {
 }
 
 impl mir2sir {
+    func run_sir_pass(self, verbose: bool) {
+        adjust_va_arg(self->sctx, verbose);
+        replace_ptr_call(self->sctx, verbose);
+        replace_size_call(self->sctx, verbose);
+        detect_redef_extern(self->sctx, self->err, verbose);
+        remove_unused_func(self->sctx, verbose);
+    }
+
     pub func generate(self, mctx: mir_context*, verbose: bool, debug_mode: bool) {
         // debug mode is enabled by '-g'
         if (debug_mode) {
@@ -3743,9 +3753,7 @@ impl mir2sir {
         self->emit_struct(mctx);
         self->emit_func_decl(mctx);
         self->emit_func_impl(mctx);
-        adjust_va_arg(self->sctx, verbose);
-        replace_struct_ptr_call(self->sctx, verbose);
-        detect_redef_extern(self->sctx, self->err, verbose);
-        remove_unused_func(self->sctx, verbose);
+        
+        self->run_sir_pass(verbose);
     }
 }

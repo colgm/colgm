@@ -73,6 +73,35 @@ impl sir_struct {
         out.out(" } ; size ").out_u64(self->size);
         out.out(" align ").out_u64(self->align).endln();
     }
+
+    pub func get_intrinsic_method_name(self, method: const i8*) -> str {
+        var func_name = str::instance();
+
+        if (self->name.size >= 2 && self->name.get(1) == '"') {
+            // %"struct.
+            // ^^^^^^^^^ 9
+            // delete prefix `"%struct.`
+            var temp = self->name.substr_from(9);
+            defer temp.delete();
+
+            func_name.append("\"");
+            func_name.append_str(temp.__ptr__());
+            func_name.pop_back();
+            func_name.append(".");
+            func_name.append(method);
+            func_name.append("\"");
+        } else {
+            // delete prefix `%struct.`
+            var temp = self->name.substr_from(8);
+            defer temp.delete();
+
+            func_name.append_str(temp.__ptr__());
+            func_name.append(".");
+            func_name.append(method);
+        }
+
+        return func_name;
+    }
 }
 
 pub struct sir_tagged_union {
@@ -130,6 +159,22 @@ impl sir_tagged_union {
 
         out.out(" } ; size ").out_u64(self->size);
         out.out(" align ").out_u64(self->align).endln();
+    }
+
+    pub func get_intrinsic_method_name(self, method: const i8*) -> str {
+        var func_name = str::instance();
+
+        // %tagged_union.
+        // ^^^^^^^^^^^^^^ 14
+        // delete prefix `%tagged_union.`
+        var temp = self->name.substr_from(14);
+        defer temp.delete();
+
+        func_name.append_str(temp.__ptr__());
+        func_name.append(".");
+        func_name.append(method);
+
+        return func_name;
     }
 }
 
@@ -440,80 +485,11 @@ impl sir_context {
         out.out_u64(time_str.size + 1).out(" x i8]* @str.__time__ to i8*)\n}\n\n");
     }
 
-    func dump_struct_size_method(self, out: io) {
+    func dump_intrinsic_alloc_method(self, out: io) {
         foreach (var i; self->struct_decls) {
             var st_name = i.get()->name.__ptr__();
-            var size_func_name = str::instance();
-            defer size_func_name.delete();
-
-            if (st_name->size >= 2 && st_name->get(1) == '"') {
-                // %"struct.
-                // ^^^^^^^^^ 9
-                // delete prefix `"%struct.`
-                var temp = st_name->substr_from(9);
-                defer temp.delete();
-
-                size_func_name.append("\"");
-                size_func_name.append_str(temp.__ptr__());
-                size_func_name.pop_back();
-                size_func_name.append(".__size__\"");
-            } else {
-                // delete prefix `%struct.`
-                var temp = st_name->substr_from(8);
-                defer temp.delete();
-
-                size_func_name.append_str(temp.__ptr__());
-                size_func_name.append(".__size__");
-            }
-
-            out.out("define i64 @").out(size_func_name.c_str);
-            out.out("() alwaysinline {\n");
-            out.out("  ret i64 ").out_u64(i.get()->size).out("\n}\n");
-        }
-
-        foreach (var i; self->tagged_union_decls) {
-            var un_name = i.get()->name.__ptr__();
-            var size_func_name = str::instance();
-            defer size_func_name.delete();
-
-            // %tagged_union.
-            // ^^^^^^^^^^^^^^ 14
-            // delete prefix `%tagged_union.`
-            var temp = un_name->substr_from(14);
-            defer temp.delete();
-
-            size_func_name.append_str(temp.__ptr__());
-            size_func_name.append(".__size__");
-
-            out.out("define i64 @").out(size_func_name.c_str);
-            out.out("() alwaysinline {\n");
-            out.out("  ret i64 ").out_u64(i.get()->size).out("\n}\n");
-        }
-    }
-
-    func dump_struct_alloc_method(self, out: io) {
-        foreach (var i; self->struct_decls) {
-            var st_name = i.get()->name.__ptr__();
-            var alloc_func_name = str::instance();
+            var alloc_func_name = i.get()->get_intrinsic_method_name("__alloc__");
             defer alloc_func_name.delete();
-
-            if (st_name->size >= 2 && st_name->get(1) == '"') {
-                // delete prefix `"%struct.`
-                var temp = st_name->substr_from(9);
-                defer temp.delete();
-
-                alloc_func_name.append("\"");
-                alloc_func_name.append_str(temp.__ptr__());
-                alloc_func_name.pop_back();
-                alloc_func_name.append(".__alloc__\"");
-            } else {
-                // delete prefix `%struct.`
-                var temp = st_name->substr_from(8);
-                defer temp.delete();
-
-                alloc_func_name.append_str(temp.__ptr__());
-                alloc_func_name.append(".__alloc__");
-            }
 
             out.out("define ").out(st_name->c_str).out("* @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
@@ -525,15 +501,8 @@ impl sir_context {
 
         foreach (var i; self->tagged_union_decls) {
             var un_name = i.get()->name.__ptr__();
-            var alloc_func_name = str::instance();
+            var alloc_func_name = i.get()->get_intrinsic_method_name("__alloc__");
             defer alloc_func_name.delete();
-
-            // delete prefix `%tagged_union.`
-            var temp = un_name->substr_from(14);
-            defer temp.delete();
-
-            alloc_func_name.append_str(temp.__ptr__());
-            alloc_func_name.append(".__alloc__");
 
             out.out("define ").out(un_name->c_str).out("* @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
@@ -568,8 +537,7 @@ impl sir_context {
         self->dump_func_decls(out);
         self->dump_const_strings(out);
         self->dump_builtin_time(out);
-        self->dump_struct_size_method(out);
-        self->dump_struct_alloc_method(out);
+        self->dump_intrinsic_alloc_method(out);
         self->dump_func_impls(out);
         self->dump_named_metadata(out);
         self->dump_debug_info(out);

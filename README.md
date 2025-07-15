@@ -148,10 +148,12 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [x] networking (socket, TCP/UDP Server and Client)
     - [ ] HTTP Utilities
     - [x] OS Utils (exec, env, args, etc)
-    - [ ] Typeof, is_type, etc
     - [x] Assert and Bench
-    - [ ] Logging
     - [ ] Deprecation Marker
     - [ ] Regex
     - [ ] Package manager
     - [ ] Docs generator
+7. SIR refactor
+8. constant fold
+9. DCE opt
+10. CSE opt

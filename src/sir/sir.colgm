@@ -927,7 +927,8 @@ pub struct sir_add {
     left: value_t,
     right: value_t,
     is_integer: bool,
-    type: str
+    type: str,
+    comment: str
 }
 
 impl sir_add {
@@ -935,7 +936,8 @@ impl sir_add {
                  r: value_t*,
                  tgt: value_t*,
                  is_int: bool,
-                 type: str*) -> sir_add* {
+                 type: str*,
+                 comment: const i8*) -> sir_add* {
         var n = sir_add::__alloc__();
         n->base = sir::instance(sir_kind::sir_add);
         n->target = tgt->copy_instance();
@@ -943,6 +945,11 @@ impl sir_add {
         n->right = r->copy_instance();
         n->is_integer = is_int;
         n->type = type->copy_instance();
+        if (comment != nil) {
+            n->comment = str::from(comment);
+        } else {
+            n->comment = str::instance();
+        }
         return n;
     }
 
@@ -951,6 +958,7 @@ impl sir_add {
         self->left.delete();
         self->right.delete();
         self->type.delete();
+        self->comment.delete();
     }
 
     pub func dump(self, out: io) {
@@ -966,6 +974,9 @@ impl sir_add {
         self->left.dump(out);
         out.out(", ");
         self->right.dump(out);
+        if (!self->comment.empty()) {
+            out.out(" ; ").out(self->comment.c_str);
+        }
         out.endln();
     }
 }

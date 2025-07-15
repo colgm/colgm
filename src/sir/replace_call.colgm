@@ -1,0 +1,196 @@
+use sir::sir::*;
+use sir::value::{ value_t };
+use sir::context::{ sir_func, sir_struct, sir_tagged_union, sir_context };
+
+use std::vec::{ vec };
+use std::str::{ str };
+use std::map::{ hashmap };
+use std::io::{ io };
+use std::libc::{ free };
+
+use util::timestamp::{ maketimestamp };
+
+func adjust_single_function_size_call(
+    f: sir_func*,
+    struct_size_map: hashmap<str, sir_struct*>*,
+    union_size_map: hashmap<str, sir_tagged_union*>*
+) -> i64 {
+    var replace_count = 0;
+    var temp = vec<sir*>::instance();
+    defer temp.delete();
+
+    foreach (var i; f->body->stmts) {
+        var inst = i.get();
+        if (inst->kind != sir_kind::sir_call) {
+            temp.push(inst);
+            continue;
+        }
+
+        var call = inst => sir_call*;
+        if (!call->name.endswith(".__size__") &&
+            !call->name.endswith(".__size__\"")) {
+            temp.push(inst);
+            continue;
+        }
+
+        var size: u64 = 0;
+        if (struct_size_map->has(call->name.__ptr__())) {
+            size = struct_size_map->get(call->name.__ptr__())->size;
+        } else if (union_size_map->has(call->name.__ptr__())) {
+            size = union_size_map->get(call->name.__ptr__())->size;
+        } else {
+            temp.push(inst);
+            continue;
+        }
+
+        var size_str = str::from_u64(size);
+        var zero_str = str::from("0");
+        defer size_str.delete();
+        defer zero_str.delete();
+
+        var left = value_t::literal(size_str.__ptr__());
+        var right = value_t::literal(zero_str.__ptr__());
+        defer left.delete();
+        defer right.delete();
+
+        replace_count += 1;
+        // replace
+        //   %1 = call i64 @T.__size__()
+        // to
+        //   %1 = add i64 [size], i64 0
+        var constant = sir_add::new(
+            left.__ptr__(),
+            right.__ptr__(),
+            call->target.__ptr__(),
+            true,
+            call->return_type.__ptr__(),
+            call->name.c_str
+        );
+        temp.push(constant => sir*);
+
+        // replaced old instruction could be freed
+        inst->delete();
+        free(inst => i8*);
+    }
+
+    f->body->stmts.clear();
+    foreach (var i; temp) {
+        f->body->stmts.push(i.get());
+    }
+
+    return replace_count;
+}
+
+pub func replace_size_call(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var struct_size_map = hashmap<str, sir_struct*>::instance();
+    var union_size_map = hashmap<str, sir_tagged_union*>::instance();
+    defer struct_size_map.delete();
+    defer union_size_map.delete();
+
+    foreach (var i; ctx->struct_decls) {
+        var size_func_name = i.get()->get_intrinsic_method_name("__size__");
+        defer size_func_name.delete();
+
+        struct_size_map.insert(size_func_name.__ptr__(), i.get());
+    }
+    foreach (var i; ctx->tagged_union_decls) {
+        var size_func_name = i.get()->get_intrinsic_method_name("__size__");
+        defer size_func_name.delete();
+
+        union_size_map.insert(size_func_name.__ptr__(), i.get());
+    }
+
+    var replace_count = 0;
+    foreach (var i; ctx->func_impls) {
+        replace_count += adjust_single_function_size_call(
+            i.get(),
+            struct_size_map.__ptr__(),
+            union_size_map.__ptr__()
+        );
+    }
+
+    if (verbose) {
+        io::stdout().green().out("[ SIR-PASS ] ").reset();
+        io::stdout().out("Replace __size__ call: ");
+        io::stdout().light_cyan().out_i64(replace_count).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}
+
+func adjust_single_function_ptr_call(f: sir_func*) -> i64 {
+    var replace_count = 0;
+    var temp = vec<sir*>::instance();
+    defer temp.delete();
+
+    foreach (var i; f->body->stmts) {
+        var inst = i.get();
+        if (inst->kind != sir_kind::sir_call) {
+            temp.push(inst);
+            continue;
+        }
+
+        var call = inst => sir_call*;
+        if (!call->name.endswith(".__ptr__") &&
+            !call->name.endswith(".__ptr__\"")) {
+            temp.push(inst);
+            continue;
+        }
+
+        // __ptr__ call has one argument, and must return pointer type
+        // __ptr__(self: T*) -> T*
+        if (call->args.size != 1 ||
+            call->return_type.empty() ||
+            call->return_type.back() != '*') {
+            temp.push(inst);
+            continue;
+        }
+
+        var rtt = call->return_type.copy_instance();
+        defer rtt.delete();
+        rtt.pop_back(); // delete tail *
+
+        replace_count += 1;
+        // replace
+        //   %target = call %struct.T* @T.__ptr__(%struct.T* %source)
+        // to
+        //   %target = getelementptr %struct.T, %struct.T* %source, i32 0; __ptr__
+        var constant = sir_temp_ptr::new(
+            call->target.content.__ptr__(),
+            call->args.get(0)->content.__ptr__(),
+            rtt.__ptr__(),
+            "__ptr__"
+        );
+        temp.push(constant => sir*);
+
+        // replaced old instruction could be freed
+        inst->delete();
+        free(inst => i8*);
+    }
+
+    f->body->stmts.clear();
+    foreach (var i; temp) {
+        f->body->stmts.push(i.get());
+    }
+
+    return replace_count;
+}
+
+pub func replace_ptr_call(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var replace_count = 0;
+    foreach (var i; ctx->func_impls) {
+        replace_count += adjust_single_function_ptr_call(i.get());
+    }
+
+    if (verbose) {
+        io::stdout().green().out("[ SIR-PASS ] ").reset();
+        io::stdout().out("Replace __ptr__ call: ");
+        io::stdout().light_cyan().out_i64(replace_count).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}

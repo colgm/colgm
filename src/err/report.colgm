@@ -346,6 +346,11 @@ impl report {
         return self;
     }
 
+    pub func out_u64(self, value: u64) -> report* {
+        self->message_cache.append_u64(value);
+        return self;
+    }
+
     pub func out_type(self, ty: type*, pkg: package*) -> report* {
         var name = ty->full_path_name(pkg, true);
         defer name.delete();
@@ -488,5 +493,20 @@ impl report {
             ->emit_err(call_loc);
         self->endwith_enter = true;
         self->out_note("defined here")->emit_headless(def_loc);
+    }
+
+    pub func report_wrong_arg_num(self,
+                                  call_loc: span*,
+                                  def_loc: span*,
+                                  expect_num: u64,
+                                  actual_num: u64) {
+        self->endwith_enter = false;
+        self->out("expect ")
+            ->highlight()->out_u64(expect_num)->cancel_highlight()
+            ->out(" argument(s), but get ")
+            ->highlight()->out_u64(actual_num)->cancel_highlight()
+            ->emit_err(call_loc);
+        self->endwith_enter = true;
+        self->out_note("function defined here")->emit_headless(def_loc);
     }
 }

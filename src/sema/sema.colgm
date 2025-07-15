@@ -1055,13 +1055,12 @@ impl sema {
                                 func_self: colgm_func*,
                                 n: ast_call_func_args*) {
         if (func_self->unordered_params.size != n->args.size) {
-            var info = str::from("expect ");
-            defer info.delete();
-
-            info.append_u64(func_self->unordered_params.size);
-            info.append(" argument(s), but get ");
-            info.append_u64(n->args.size);
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->report_wrong_arg_num(
+                n->base.location.__ptr__(),
+                func_self->location.__ptr__(),
+                func_self->unordered_params.size,
+                n->args.size
+            );
             return;
         }
 
@@ -1099,13 +1098,12 @@ impl sema {
                                 func_self: colgm_func*,
                                 n: ast_call_func_args*) {
         if (func_self->unordered_params.size != n->args.size + 1) {
-            var info = str::from("expect ");
-            defer info.delete();
-
-            info.append_u64(func_self->unordered_params.size - 1);
-            info.append(" argument(s), but get ");
-            info.append_u64(n->args.size);
-            self->err->error(n->base.location.__ptr__(), info.c_str);
+            self->err->report_wrong_arg_num(
+                n->base.location.__ptr__(),
+                func_self->location.__ptr__(),
+                func_self->unordered_params.size - 1,
+                n->args.size
+            );
             return;
         }
 
