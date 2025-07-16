@@ -66,7 +66,7 @@ impl str {
         self->c_str[0] = '\0';
 
         self->size = 0;
-        self->capacity = 16;
+        self->capacity = 8;
     }
 
     pub func copy(self) -> str* {
@@ -247,6 +247,18 @@ impl str {
             panic("empty string");
         }
         return self->c_str[self->size - 1];
+    }
+
+    pub func startswith(self, src: i8*) -> bool {
+        if (src == nil) {
+            return false;
+        }
+        var len = strlen(src) => u64;
+        if (self->size < len) {
+            return false;
+        }
+
+        return memcmp(self->c_str, src, len) == 0;
     }
 
     pub func endswith(self, src: i8*) -> bool {
