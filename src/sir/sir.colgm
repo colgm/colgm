@@ -928,6 +928,7 @@ pub struct sir_add {
     right: value_t,
     is_integer: bool,
     type: str,
+    debug_info_index: u64,
     comment: str
 }
 
@@ -937,6 +938,7 @@ impl sir_add {
                  tgt: value_t*,
                  is_int: bool,
                  type: str*,
+                 dii: u64,
                  comment: const i8*) -> sir_add* {
         var n = sir_add::__alloc__();
         n->base = sir::instance(sir_kind::sir_add);
@@ -945,6 +947,7 @@ impl sir_add {
         n->right = r->copy_instance();
         n->is_integer = is_int;
         n->type = type->copy_instance();
+        n->debug_info_index = dii;
         if (comment != nil) {
             n->comment = str::from(comment);
         } else {
@@ -974,6 +977,9 @@ impl sir_add {
         self->left.dump(out);
         out.out(", ");
         self->right.dump(out);
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
         if (!self->comment.empty()) {
             out.out(" ; ").out(self->comment.c_str);
         }
