@@ -134,8 +134,8 @@ impl ast2mir {
     func visit_unary_operator(self, n: ast_unary_operator*) {
         var temp = self->block;
 
-        var v = mir_block::new(n->value->location.__ptr__());
-        self->block = v;
+        var unary_operator_block = mir_block::new(n->value->location.__ptr__());
+        self->block = unary_operator_block;
         self->visit(n->value);
         self->block = temp;
 
@@ -150,7 +150,7 @@ impl ast2mir {
             n->base.location.__ptr__(),
             op,
             n->base.resolved_type.__ptr__(),
-            v
+            unary_operator_block
         ) => mir*);
     }
 
@@ -838,7 +838,7 @@ impl ast2mir {
         }
 
         var f = mir_func::instance(
-            name.__ptr__(),
+            name.c_str,
             n->base.location.__ptr__(),
             ret_ty.__ptr__()
         );

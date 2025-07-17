@@ -115,9 +115,9 @@ pub struct mir_func {
 }
 
 impl mir_func {
-    pub func instance(name: str*, loc: span*, ret_ty: type*) -> mir_func {
+    pub func instance(name: const i8*, loc: span*, ret_ty: type*) -> mir_func {
         return mir_func {
-            name: name->copy_instance(),
+            name: str::from(name),
             location: loc->copy_instance(),
             params: vec<pair<str, type>>::instance(),
             with_va_args: false,
@@ -225,7 +225,6 @@ impl mir_context {
             }
         }
 
-        var name = str::from("malloc");
         var null_loc = span::instance();
         var ret_type = type::i8_type(1);
         var arg_type = type::i64_type();
@@ -235,7 +234,6 @@ impl mir_context {
             arg_type.__ptr__()
         );
         defer {
-            name.delete();
             null_loc.delete();
             ret_type.delete();
             arg_type.delete();
@@ -244,7 +242,7 @@ impl mir_context {
         }
 
         var malloc_decl = mir_func::instance(
-            name.__ptr__(),
+            "malloc",
             null_loc.__ptr__(),
             ret_type.__ptr__()
         );
@@ -265,7 +263,6 @@ impl mir_context {
             }
         }
 
-        var name = str::from("free");
         var null_loc = span::instance();
         var ret_type = type::void_type();
         var arg_type = type::i8_type(1);
@@ -275,7 +272,6 @@ impl mir_context {
             arg_type.__ptr__()
         );
         defer {
-            name.delete();
             null_loc.delete();
             ret_type.delete();
             arg_type.delete();
@@ -284,7 +280,7 @@ impl mir_context {
         }
 
         var free_decl = mir_func::instance(
-            name.__ptr__(),
+            "free",
             null_loc.__ptr__(),
             ret_type.__ptr__()
         );
@@ -310,17 +306,15 @@ impl mir_context {
             }
         }
 
-        var name = str::from("main");
         var null_loc = span::instance();
         var ret_type = type::i32_type();
         defer {
-            name.delete();
             null_loc.delete();
             ret_type.delete();
         }
 
         var main_impl = mir_func::instance(
-            name.__ptr__(),
+            "main",
             null_loc.__ptr__(),
             ret_type.__ptr__()
         );

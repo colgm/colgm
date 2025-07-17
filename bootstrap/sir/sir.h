@@ -158,9 +158,9 @@ public:
 class sir_temp_ptr: public sir {
 /*
 used to get temporary pointer of numbering variable
-    %_1.real = alloca i32
+    %_1.r = alloca i32
 this operand will do this:
-    %1 = getelementptr i32, i32* %_1.real, i32 0
+    %1 = getelementptr i32, i32* %_1.r, i32 0
 and %1 is i32*
 */
 private:

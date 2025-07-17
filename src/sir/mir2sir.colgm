@@ -835,7 +835,7 @@ impl mir2sir {
         var temp_0 = self->ssa_gen.create();
         var temp_0_value = value_t::variable(temp_0.__ptr__());
         var temp_0_real = str::from("_");
-        temp_0_real.append_str(temp_0.__ptr__())->append(".real");
+        temp_0_real.append_str(temp_0.__ptr__())->append(".r");
         defer {
             i1_name.delete();
             temp_0.delete();
@@ -851,6 +851,7 @@ impl mir2sir {
             temp_0.__ptr__(),
             temp_0_real.__ptr__(),
             i1_name.__ptr__(),
+            self->generate_DI_location(n->base.location.__ptr__()),
             ""
         ) => sir*);
 
@@ -922,7 +923,7 @@ impl mir2sir {
         var temp_0 = self->ssa_gen.create();
         var temp_0_value = value_t::variable(temp_0.__ptr__());
         var temp_0_real = str::from("_");
-        temp_0_real.append_str(temp_0.__ptr__())->append(".real");
+        temp_0_real.append_str(temp_0.__ptr__())->append(".r");
         defer {
             i1_name.delete();
             temp_0.delete();
@@ -938,6 +939,7 @@ impl mir2sir {
             temp_0.__ptr__(),
             temp_0_real.__ptr__(),
             i1_name.__ptr__(),
+            self->generate_DI_location(n->base.location.__ptr__()),
             ""
         ) => sir*);
 
@@ -1403,7 +1405,7 @@ impl mir2sir {
         defer temp_var.delete();
 
         var temp_var_real = str::from("_");
-        temp_var_real.append_str(temp_var.__ptr__())->append(".real");
+        temp_var_real.append_str(temp_var.__ptr__())->append(".r");
         defer temp_var_real.delete();
 
         var temp_var_value = value_t::variable(temp_var.__ptr__());
@@ -1420,6 +1422,7 @@ impl mir2sir {
             temp_var.__ptr__(),
             temp_var_real.__ptr__(),
             n_ty.__ptr__(),
+            self->generate_DI_location(n->base.location.__ptr__()),
             ""
         ) => sir*);
         self->block->add_stmt(sir_zeroinitializer::new(
@@ -1920,7 +1923,7 @@ impl mir2sir {
             defer temp_var.delete();
 
             var real = str::from("_");
-            real.append_str(temp_var.__ptr__())->append(".real");
+            real.append_str(temp_var.__ptr__())->append(".r");
             defer real.delete();
 
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
@@ -1940,6 +1943,7 @@ impl mir2sir {
                 temp_var.__ptr__(),
                 real.__ptr__(),
                 n_ty.__ptr__(),
+                self->generate_DI_location(n->base.location.__ptr__()),
                 ""
             ) => sir*);
             self->block->add_stmt(sir_store::new(

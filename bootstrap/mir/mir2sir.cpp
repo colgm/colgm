@@ -179,8 +179,8 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
 
 void mir2sir::generate_and(mir_binary* node) {
     auto temp_0 = ssa_gen.create();
-    block->add_move_register(new sir_alloca("_" + temp_0 + ".real", "i1"));
-    block->add_stmt(new sir_temp_ptr(temp_0, "_" + temp_0 + ".real", "i1"));
+    block->add_move_register(new sir_alloca("_" + temp_0 + ".r", "i1"));
+    block->add_stmt(new sir_temp_ptr(temp_0, "_" + temp_0 + ".r", "i1"));
 
     node->get_left()->accept(this);
     auto left = value_stack.back();
@@ -228,8 +228,8 @@ void mir2sir::generate_and(mir_binary* node) {
 
 void mir2sir::generate_or(mir_binary* node) {
     auto temp_0 = ssa_gen.create();
-    block->add_move_register(new sir_alloca("_" + temp_0 + ".real", "i1"));
-    block->add_stmt(new sir_temp_ptr(temp_0, "_" + temp_0 + ".real", "i1"));
+    block->add_move_register(new sir_alloca("_" + temp_0 + ".r", "i1"));
+    block->add_stmt(new sir_temp_ptr(temp_0, "_" + temp_0 + ".r", "i1"));
 
     node->get_left()->accept(this);
     auto left = value_stack.back();
@@ -637,12 +637,12 @@ void mir2sir::visit_mir_call(mir_call* node) {
 void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
     const auto temp_var = ssa_gen.create();
     block->add_move_register(new sir_alloca(
-        "_" + temp_var + ".real",
+        "_" + temp_var + ".r",
         type_mapping(node->get_type())
     ));
     block->add_stmt(new sir_temp_ptr(
         temp_var,
-        "_" + temp_var + ".real",
+        "_" + temp_var + ".r",
         type_mapping(node->get_type())
     ));
     block->add_stmt(new sir_zeroinitializer(
@@ -901,12 +901,12 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
     if (node->get_type()!=type::void_type()) {
         auto temp_var = ssa_gen.create();
         block->add_move_register(new sir_alloca(
-            "_" + temp_var + ".real",
+            "_" + temp_var + ".r",
             type_mapping(node->get_type())
         ));
         block->add_stmt(new sir_temp_ptr(
             temp_var,
-            "_" + temp_var + ".real",
+            "_" + temp_var + ".r",
             type_mapping(node->get_type())
         ));
         block->add_stmt(new sir_store(

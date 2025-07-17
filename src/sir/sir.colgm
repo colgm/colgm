@@ -493,25 +493,27 @@ impl sir_alloca {
 pub struct sir_temp_ptr {
 //
 // used to get temporary pointer of numbering variable
-//     %_1.real = alloca i32
+//     %_1.r = alloca i32
 // this operand will do this:
-//     %1 = getelementptr i32, i32* %_1.real, i32 0
+//     %1 = getelementptr i32, i32* %_1.r, i32 0
 // and %1 is i32*
 //
     base: sir,
     target: str,
     source: str,
     type: str,
+    debug_info_index: u64,
     comment: str // for tail comment
 }
 
 impl sir_temp_ptr {
-    pub func new(target: str*, source: str*, ty: str*, comment: i8*) -> sir_temp_ptr* {
+    pub func new(target: str*, source: str*, ty: str*, dii: u64, comment: i8*) -> sir_temp_ptr* {
         var n = sir_temp_ptr::__alloc__();
         n->base = sir::instance(sir_kind::sir_temp_ptr);
         n->target = target->copy_instance();
         n->source = source->copy_instance();
         n->type = ty->copy_instance();
+        n->debug_info_index = dii;
         if (comment != nil) {
             n->comment = str::from(comment);
         } else {
@@ -532,6 +534,9 @@ impl sir_temp_ptr {
         out.out("getelementptr ").out(self->type.c_str).out(", ");
         out.out(self->type.c_str).out("* %").out(self->source.c_str);
         out.out(", i32 0");
+        if (self->debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self->debug_info_index);
+        }
         if (self->comment.empty()) {
             out.out(" ; %").out(self->source.c_str).out(" -> %").out(self->target.c_str).endln();
         } else {
