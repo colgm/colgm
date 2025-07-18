@@ -11,7 +11,6 @@ use dwarf::dwarf::{ DI_ERROR_INDEX };
 
 pub enum sir_kind {
     sir_null,
-    sir_nop,
     sir_block,
     sir_alloca,
     sir_temp_ptr,
@@ -63,10 +62,6 @@ impl sir {
 
     pub func delete(self) {
         match (self->kind) {
-            sir_kind::sir_nop => {
-                var n = self => sir_nop*;
-                n->delete();
-            }
             sir_kind::sir_block => {
                 var n = self => sir_block*;
                 n->delete();
@@ -189,9 +184,6 @@ impl sir {
 
     pub func dump(self, out: io) {
         match (self->kind) {
-            sir_kind::sir_nop => {
-                out.out("  ; nop\n");
-            }
             sir_kind::sir_block => {
                 var n = self => sir_block*;
                 n->dump(out);
@@ -313,35 +305,6 @@ impl sir {
                 unreachable();
             }
         }
-    }
-}
-
-pub struct sir_nop {
-    base: sir,
-    info: str
-}
-
-impl sir_nop {
-    pub func new(info: str*) -> sir_nop* {
-        var n = sir_nop::__alloc__();
-        n->base = sir::instance(sir_kind::sir_nop);
-        if (info != nil) {
-            n->info = info->copy_instance();
-        } else {
-            n->info = str::instance();
-        }
-        return n;
-    }
-
-    pub func delete(self) {
-        self->info.delete();
-    }
-
-    pub func dump(self, out: io) {
-        if (!self->info.empty()) {
-            out.out("; ").out(self->info.c_str);
-        }
-        out.out("\n");
     }
 }
 

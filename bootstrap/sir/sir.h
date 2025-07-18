@@ -14,7 +14,6 @@ namespace colgm {
 
 enum class sir_kind {
     sir_null = 0,
-    sir_nop,
     sir_block,
     sir_alloca,
     sir_temp_ptr,
@@ -113,21 +112,6 @@ public:
     }
 };
 
-class sir_nop: public sir {
-private:
-    std::string info;
-
-public:
-    sir_nop(const std::string& i): sir(sir_kind::sir_nop), info(i) {}
-    ~sir_nop() override = default;
-    void dump(std::ostream& os) const override {
-        if (info.size()) {
-            os << "; " << info;
-        }
-        os << "\n";
-    }
-};
-
 class sir_alloca: public sir {
 public:
     struct array_type_info {
@@ -196,9 +180,6 @@ public:
     void add_alloca(sir_alloca* node) { allocas.push_back(node); }
     void add_move_register(sir_alloca* node) { move_register.push_back(node); }
     void add_stmt(sir* node) { stmts.push_back(node); }
-    void add_nop(const std::string& info = "") {
-        stmts.push_back(new sir_nop(info));
-    }
     auto stmt_size() const { return stmts.size(); }
     bool back_is_ret_stmt() const {
         return stmts.size() && stmts.back()->get_ir_type()==sir_kind::sir_ret;
