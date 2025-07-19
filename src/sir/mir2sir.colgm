@@ -3728,15 +3728,18 @@ impl mir2sir {
 }
 
 impl mir2sir {
-    func run_sir_pass(self, verbose: bool) {
+    func run_sir_pass(self, view_unused_func: bool, verbose: bool) {
         adjust_va_arg(self->sctx, verbose);
         replace_ptr_call(self->sctx, verbose);
         replace_size_call(self->sctx, verbose);
         detect_redef_extern(self->sctx, self->err, verbose);
-        remove_unused_func(self->sctx, verbose);
+        remove_unused_func(self->sctx, view_unused_func, verbose);
     }
 
-    pub func generate(self, mctx: mir_context*, verbose: bool, debug_mode: bool) {
+    pub func generate(self, mctx: mir_context*,
+                            view_unused_func: bool,
+                            verbose: bool,
+                            debug_mode: bool) {
         // debug mode is enabled by '-g'
         if (debug_mode) {
             self->dwarf_status.clear();
@@ -3750,6 +3753,6 @@ impl mir2sir {
         self->emit_func_decl(mctx);
         self->emit_func_impl(mctx);
         
-        self->run_sir_pass(verbose);
+        self->run_sir_pass(view_unused_func, verbose);
     }
 }

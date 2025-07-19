@@ -247,7 +247,12 @@ func compile(option: cli_option) -> i32 {
         mctx.dump(io::stdout(), cc.pkg.__ptr__());
     }
 
-    mir2sir_worker.generate(mctx.__ptr__(), option.VERBOSE, option.DEBUG_MODE);
+    mir2sir_worker.generate(
+        mctx.__ptr__(),
+        option.VIEW_UNUSED_FUNC,
+        option.VERBOSE,
+        option.DEBUG_MODE
+    );
     if (option.VIEW_SIR) {
         sctx.dump(io::stdout());
     }
@@ -360,6 +365,8 @@ func main(argc: i32, argv: i8**) -> i32 {
             option.VIEW_RESOLVED_AST = true;
         } elsif (streq(argv[i], "--view-type-replace")) {
             option.VIEW_TYPE_REPLACE_INFO = true;
+        } elsif (streq(argv[i], "--view-unused-func")) {
+            option.VIEW_UNUSED_FUNC = true;
         } elsif (streq(argv[i], "--mir")) {
             option.VIEW_MIR = true;
         } elsif (streq(argv[i], "--sir")) {

@@ -22,7 +22,7 @@ func check_main(func_map: hashmap<str, sir_func*>*) -> bool {
     return main_func->body != nil && !main_func->body->stmts.empty();
 }
 
-pub func remove_unused_func(ctx: sir_context*, verbose: bool) {
+pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: bool) {
     var func_map = hashmap<str, sir_func*>::instance();
     defer func_map.delete();
 
@@ -88,7 +88,10 @@ pub func remove_unused_func(ctx: sir_context*, verbose: bool) {
             // mark as eliminated, avoid too many copy operations
             f->eliminated = true;
             delete_count += 1;
-            // io::stdout().out("remove ").out(f->name.c_str).endln();
+            if (view_unused_func) {
+                io::stdout().out("[remove unused func] remove ");
+                io::stdout().cyan().out(f->name.c_str).reset().endln();
+            }
         }
     }
 

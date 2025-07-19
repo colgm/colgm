@@ -4,7 +4,7 @@ use std::vec::{ vec };
 
 func supported_clang_version() -> vec<str> {
     var res = vec<str>::instance();
-    // generate strings
+    // always try to find the latest clang version
     // clang-13 ~ clang-20
     // clang++-13 ~ clang++-20
     for (var i = 20; i >= 13; i -= 1) {
@@ -32,10 +32,8 @@ func supported_clang_version() -> vec<str> {
 pub func find_clang() -> str {
     var path = fs::getpath();
     var version = supported_clang_version();
-    defer {
-        path.delete();
-        version.delete();
-    }
+    defer path.delete();
+    defer version.delete();
 
     var res = str::from("");
     foreach (var p; path) {
