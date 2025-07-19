@@ -513,6 +513,7 @@ impl regist_pass {
             return false;
         }
         var num = to_f64(literal->c_str);
+        // inf and nan is definitely floating point
         if (isinf(num) || isnan(num)) {
             return false;
         }
@@ -530,8 +531,8 @@ impl regist_pass {
         var has_specified_value = false;
         var has_non_specified_value = false;
         var v = node->members.__ptr__();
-        for (var i: u64 = 0; i < v->size; i += 1) {
-            var n = v->get(i);
+        foreach (var i; node->members) {
+            var n = i.get();
             if (!n->is(ast_kind::ast_enum_member)) {
                 self->err->error(n->location.__ptr__(),
                     "invalid ast node, expect enum member"
@@ -553,10 +554,23 @@ impl regist_pass {
             );
             return;
         }
+
+        foreach (var i; node->members) {
+            var n = i.get() => ast_enum_member*;
+            if (n->value == nil) {
+                continue;
+            }
+            if (!self->check_is_valid_enum_value(n->value)) {
+                self->err->report_invalid_enum_value(
+                    n->value->base.location.__ptr__(),
+                    n->name->content.c_str
+                );
+            }
+        }
         
-        for (var i: u64 = 0; i < v->size; i += 1) {
-            var n_ast = v->get(i) => ast_enum_member*;
-            var value = i => i64;
+        foreach (var i; node->members) {
+            var n_ast = i.get()=> ast_enum_member*;
+            var value = i.index() => i64;
             var member_name = n_ast->name->content.__ptr__();
             if (n_ast->value != nil) {
                 var nl = n_ast->value => ast_number_literal*;

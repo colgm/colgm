@@ -501,7 +501,8 @@ impl sir_temp_ptr {
             out.out(", !dbg !").out_u64(self->debug_info_index);
         }
         if (self->comment.empty()) {
-            out.out(" ; %").out(self->source.c_str).out(" -> %").out(self->target.c_str).endln();
+            out.out(" ; %").out(self->source.c_str);
+            out.out(" -> %").out(self->target.c_str).endln();
         } else {
             out.out(" ; ").out(self->comment.c_str).endln();
         }
@@ -1330,12 +1331,17 @@ impl sir_cmp {
         out.out("  ");
         self->target.dump(out);
         out.out(" = ");
+
+        // for integer, use icmp
+        // for float, use fcmp
         if (self->is_integer) {
             out.out("icmp ");
         } else {
             out.out("fcmp ");
         }
 
+        // signed integer will use sge, sgt, sle, slt
+        // float and unsigned integer will use uge, ugt, ule, ult
         var head = 's';
         if (self->is_integer && self->is_signed) {
             head = 's';
@@ -1345,6 +1351,8 @@ impl sir_cmp {
 
         match (self->kind) {
             sir_cmp_kind::cmp_eq => {
+                // signed/unsigned integer: icmp eq
+                // float:                   fcmp ueq
                 if (self->is_integer) {
                     out.out("eq");
                 } else {
@@ -1352,6 +1360,8 @@ impl sir_cmp {
                 }
             }
             sir_cmp_kind::cmp_neq => {
+                // signed/unsigned integer: icmp ne
+                // float:                   fcmp une
                 if (self->is_integer) {
                     out.out("ne");
                 } else {
