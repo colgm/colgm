@@ -3,6 +3,26 @@ use std::str::{ str };
 use std::io::{ io };
 use std::libc::{ free };
 
+func test_json_parse() {
+    var input = str::instance();
+    defer input.delete();
+
+    var tokenizer = json::tokenizer(input.__ptr__());
+    defer tokenizer.delete();
+
+    input.append("{\"vec<num>\": [0, 0.0, -1.01, +2e4]}");
+    tokenizer.tokenize();
+    input.clear();
+
+    input.append("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
+    tokenizer.tokenize();
+    input.clear();
+
+    input.append("[\"\\\"\\\'\"]");
+    tokenizer.tokenize();
+    input.clear();
+}
+
 func make_num_arr() -> json* {
     var arr = json::arr();
     for (var i = 0; i < 10; i += 1) {
@@ -67,5 +87,7 @@ func main() -> i32 {
     var res = obj->to_string();
     defer res.delete();
     io::stdout().out(res.c_str).endln();
+
+    test_json_parse();
     return 0;
 }

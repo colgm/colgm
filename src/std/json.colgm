@@ -3,6 +3,7 @@ use std::str::{ str };
 use std::vec::{ vec };
 use std::map::{ hashmap };
 use std::libc::{ free };
+use std::string_utils::{ is_alpha_letter, is_digit };
 
 pub enum json_kind {
     json_object,
@@ -139,6 +140,10 @@ impl json {
         }
         return str::from("null");
     }
+
+    pub func tokenizer(src: str*) -> tokenizer {
+        return tokenizer::instance(src);
+    }
 }
 
 enum json_token_kind {
@@ -148,10 +153,12 @@ enum json_token_kind {
     tok_right_bracket,
     tok_comma,
     tok_colon,
+    tok_identifier,
     tok_string,
     tok_number,
     tok_bool,
     tok_null,
+    tok_empty_result,
     tok_eof
 }
 
@@ -161,26 +168,206 @@ struct json_token {
 }
 
 impl json_token {
-    pub func instance() -> json_token {
+    pub func instance(k: json_token_kind, s: const i8*) -> json_token {
         return json_token {
-            kind: json_token_kind::tok_eof,
-            value: str::instance()
+            kind: k,
+            value: str::from(s)
+        };
+    }
+
+    pub func delete(self) {
+        self->value.delete();
+    }
+
+    pub func copy_instance(self) -> json_token {
+        return json_token {
+            kind: self->kind,
+            value: self->value.copy_instance()
         };
     }
 }
 
-struct json_lexer {
-    tokens: vec<json_token>
+struct tokenizer {
+    tokens: vec<json_token>,
+    index: u64,
+    source: str*
 }
 
-impl json_lexer {
-    pub func instance() -> json_lexer {
-        return json_lexer {
-            tokens: vec<json_token>::instance()
+impl tokenizer {
+    pub func instance(src: str*) -> tokenizer {
+        return tokenizer {
+            tokens: vec<json_token>::instance(),
+            index: 0,
+            source: src
         };
     }
 
     pub func delete(self) {
         self->tokens.delete();
+    }
+}
+
+impl tokenizer {
+    func is_string_quote(c: i8) -> bool {
+        return c == '"' || c == '\'';
+    }
+
+    func is_identifier_head(c: i8) -> bool {
+        return is_alpha_letter(c) || c == '_';
+    }
+
+    func is_number_head(c: i8) -> bool {
+        return is_digit(c) || c == '-' || c == '+';
+    }
+
+    func is_number_body(c: i8) -> bool {
+        return is_digit(c) || c == '.' || c == 'e' || c == 'E';
+    }
+
+    func next_token(self) -> json_token {
+        var input = self->source;
+        var i = self->index;
+
+        if (i >= input->size || input->c_str[i] == 0) {
+            return json_token::instance(json_token_kind::tok_eof, "<eof>");
+        }
+
+        defer self->index = i + 1;
+
+        if (input->c_str[i] == '{') {
+            return json_token::instance(json_token_kind::tok_left_brace, "{");
+        } elsif (input->c_str[i] == '}') {
+            return json_token::instance(json_token_kind::tok_right_brace, "}");
+        } elsif (input->c_str[i] == '[') {
+            return json_token::instance(json_token_kind::tok_left_bracket, "[");
+        } elsif (input->c_str[i] == ']') {
+            return json_token::instance(json_token_kind::tok_right_bracket, "]");
+        } elsif (input->c_str[i] == ',') {
+            return json_token::instance(json_token_kind::tok_comma, ",");
+        } elsif (input->c_str[i] == ':') {
+            return json_token::instance(json_token_kind::tok_colon, ":");
+        } elsif (tokenizer::is_string_quote(input->c_str[i])) {
+            var start = input->c_str[i];
+            i += 1;
+            var content = str::instance();
+            defer content.delete();
+            while (input->c_str[i] != 0 && input->c_str[i] != start) {
+                content.append_char(input->c_str[i]);
+                if (input->c_str[i] == '\\') {
+                    i += 1;
+                    if (input->c_str[i] == 0) {
+                        // TODO: report error
+                        content.append_char('\\');
+                        break;
+                    }
+                    if (input->c_str[i] == 'n') {
+                        content.append_char('\n');
+                    } elsif (input->c_str[i] == 't') {
+                        content.append_char('\t');
+                    } elsif (input->c_str[i] == 'r') {
+                        content.append_char('\r');
+                    } elsif (input->c_str[i] == '\\') {
+                        content.append_char('\\');
+                    } elsif (input->c_str[i] == '"') {
+                        content.append_char('"');
+                    } else {
+                        content.append_char(input->c_str[i]);
+                    }
+                }
+                i += 1;
+            }
+            if (input->c_str[i] == 0) {
+                // TODO: report error
+            }
+            var tok = json_token::instance(json_token_kind::tok_string, content.c_str);
+            return tok;
+        } elsif (tokenizer::is_number_head(input->c_str[i])) {
+            var content = str::instance();
+            defer content.delete();
+
+            content.append_char(input->c_str[i]);
+            i += 1;
+
+            while (input->c_str[i] != 0 && tokenizer::is_number_body(input->c_str[i])) {
+                content.append_char(input->c_str[i]);
+                i += 1;
+            }
+            if (input->c_str[i] != 0) {
+                i -= 1;
+            }
+            var tok = json_token::instance(json_token_kind::tok_number, content.c_str);
+            return tok;
+        } elsif (tokenizer::is_identifier_head(input->c_str[i])) {
+            var content = str::instance();
+            defer content.delete();
+
+            content.append_char(input->c_str[i]);
+            i += 1;
+
+            while (input->c_str[i] != 0 &&
+                    (tokenizer::is_identifier_head(input->c_str[i]) ||
+                    is_digit(input->c_str[i]))) {
+                content.append_char(input->c_str[i]);
+                i += 1;
+            }
+
+            if (content.eq_const("true")) {
+                return json_token::instance(json_token_kind::tok_bool, "true");
+            } elsif (content.eq_const("false")) {
+                return json_token::instance(json_token_kind::tok_bool, "false");
+            } elsif (content.eq_const("null")) {
+                return json_token::instance(json_token_kind::tok_null, "null");
+            }
+            
+            var tok = json_token::instance(json_token_kind::tok_identifier, content.c_str);
+            return tok;
+        }
+
+        return json_token::instance(json_token_kind::tok_empty_result, "<empty>");
+    }
+
+    func next(self) {
+        var tok = self->next_token();
+        defer tok.delete();
+
+        if (tok.kind == json_token_kind::tok_eof) {
+            if (self->tokens.empty() || self->tokens.back()->kind != json_token_kind::tok_eof) {
+                self->tokens.push(tok.__ptr__());
+            }
+            return;
+        }
+
+        while (tok.kind == json_token_kind::tok_empty_result) {
+            tok.delete();
+            tok = self->next_token();
+        }
+
+        self->tokens.push(tok.__ptr__());
+    }
+
+    pub func tokenize(self) {
+        self->tokens.clear();
+        self->index = 0;
+
+        var prev_size = self->tokens.size;
+        while (self->tokens.empty() || self->tokens.back()->kind != json_token_kind::tok_eof) {
+            self->next();
+
+            if (self->tokens.size == prev_size) {
+                continue;
+            }
+            prev_size = self->tokens.size;
+
+            var tok = self->tokens.back();
+            if (tok->kind == json_token_kind::tok_string) {
+                io::stdout().out("\"");
+            }
+            io::stdout().out(tok->value.c_str);
+            if (tok->kind == json_token_kind::tok_string) {
+                io::stdout().out("\"");
+            }
+            io::stdout().out(" ");
+        }
+        io::stdout().out("\n");
     }
 }
