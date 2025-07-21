@@ -153,12 +153,12 @@ enum json_token_kind {
     tok_right_bracket,
     tok_comma,
     tok_colon,
-    tok_identifier,
     tok_string,
     tok_number,
     tok_bool,
     tok_null,
     tok_empty_result,
+    tok_error,
     tok_eof
 }
 
@@ -185,10 +185,47 @@ impl json_token {
             value: self->value.copy_instance()
         };
     }
+
+    pub func is_error(self) -> bool {
+        return self->kind == json_token_kind::tok_error;
+    }
+
+    pub func is_eof(self) -> bool {
+        return self->kind == json_token_kind::tok_eof;
+    }
+
+    pub func is_empty(self) -> bool {
+        return self->kind == json_token_kind::tok_empty_result;
+    }
+
+    pub func dump(self) {
+        if (self->kind == json_token_kind::tok_string) {
+            io::stdout().out("\"");
+            foreach (var i; self->value) {
+                if (i.get() == '"') {
+                    io::stdout().out("\\\"");
+                } elsif (i.get() == '\\') {
+                    io::stdout().out("\\\\");
+                } elsif (i.get() == '\n') {
+                    io::stdout().out("\\n");
+                } elsif (i.get() == '\r') {
+                    io::stdout().out("\\r");
+                } elsif (i.get() == '\t') {
+                    io::stdout().out("\\t");
+                } else {
+                    var buff = [i.get(), '\0'];
+                    io::stdout().out(buff);
+                }
+            }
+            io::stdout().out("\" ");
+            return;
+        }
+        io::stdout().out(self->value.c_str);
+        io::stdout().out(" ");
+    }
 }
 
 struct tokenizer {
-    tokens: vec<json_token>,
     index: u64,
     source: str*
 }
@@ -196,14 +233,9 @@ struct tokenizer {
 impl tokenizer {
     pub func instance(src: str*) -> tokenizer {
         return tokenizer {
-            tokens: vec<json_token>::instance(),
             index: 0,
             source: src
         };
-    }
-
-    pub func delete(self) {
-        self->tokens.delete();
     }
 }
 
@@ -256,9 +288,10 @@ impl tokenizer {
                 if (input->c_str[i] == '\\') {
                     i += 1;
                     if (input->c_str[i] == 0) {
-                        // TODO: report error
-                        content.append_char('\\');
-                        break;
+                        return json_token::instance(
+                            json_token_kind::tok_error,
+                            "invalid escape sequence"
+                        );
                     }
                     if (input->c_str[i] == 'n') {
                         content.append_char('\n');
@@ -277,7 +310,10 @@ impl tokenizer {
                 i += 1;
             }
             if (input->c_str[i] == 0) {
-                // TODO: report error
+                return json_token::instance(
+                    json_token_kind::tok_error,
+                    "unterminated string"
+                );
             }
             var tok = json_token::instance(json_token_kind::tok_string, content.c_str);
             return tok;
@@ -310,6 +346,9 @@ impl tokenizer {
                 content.append_char(input->c_str[i]);
                 i += 1;
             }
+            if (input->c_str[i] != 0) {
+                i -= 1;
+            }
 
             if (content.eq_const("true")) {
                 return json_token::instance(json_token_kind::tok_bool, "true");
@@ -319,54 +358,37 @@ impl tokenizer {
                 return json_token::instance(json_token_kind::tok_null, "null");
             }
             
-            var tok = json_token::instance(json_token_kind::tok_identifier, content.c_str);
-            return tok;
+            return json_token::instance(json_token_kind::tok_error, "invalid token");
         }
 
         return json_token::instance(json_token_kind::tok_empty_result, "<empty>");
     }
 
-    func next(self) {
+    func next(self) -> json_token {
         var tok = self->next_token();
-        defer tok.delete();
 
-        if (tok.kind == json_token_kind::tok_eof) {
-            if (self->tokens.empty() || self->tokens.back()->kind != json_token_kind::tok_eof) {
-                self->tokens.push(tok.__ptr__());
-            }
-            return;
+        if (tok.is_eof()) {
+            return tok;
         }
 
-        while (tok.kind == json_token_kind::tok_empty_result) {
+        while (tok.is_empty()) {
             tok.delete();
             tok = self->next_token();
         }
-
-        self->tokens.push(tok.__ptr__());
+        return tok;
     }
 
     pub func tokenize(self) {
-        self->tokens.clear();
         self->index = 0;
 
-        var prev_size = self->tokens.size;
-        while (self->tokens.empty() || self->tokens.back()->kind != json_token_kind::tok_eof) {
-            self->next();
+        var tok = self->next();
+        tok.dump();
+        defer tok.delete();
 
-            if (self->tokens.size == prev_size) {
-                continue;
-            }
-            prev_size = self->tokens.size;
-
-            var tok = self->tokens.back();
-            if (tok->kind == json_token_kind::tok_string) {
-                io::stdout().out("\"");
-            }
-            io::stdout().out(tok->value.c_str);
-            if (tok->kind == json_token_kind::tok_string) {
-                io::stdout().out("\"");
-            }
-            io::stdout().out(" ");
+        while (!tok.is_eof() && !tok.is_error()) {
+            tok.delete();
+            tok = self->next();
+            tok.dump();
         }
         io::stdout().out("\n");
     }

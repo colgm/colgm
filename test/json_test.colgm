@@ -8,17 +8,26 @@ func test_json_parse() {
     defer input.delete();
 
     var tokenizer = json::tokenizer(input.__ptr__());
-    defer tokenizer.delete();
 
     input.append("{\"vec<num>\": [0, 0.0, -1.01, +2e4]}");
     tokenizer.tokenize();
     input.clear();
 
-    input.append("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]");
+    input.append("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null, true, false, \"\\\"\\\\\\/\\b\\f\\n\\r\\t\"]");
     tokenizer.tokenize();
     input.clear();
 
     input.append("[\"\\\"\\\'\"]");
+    tokenizer.tokenize();
+    input.clear();
+
+    // unterminated string
+    input.append("[\"\\ \\\'");
+    tokenizer.tokenize();
+    input.clear();
+
+    // invalid escape sequence
+    input.append("[\"\\");
     tokenizer.tokenize();
     input.clear();
 }
