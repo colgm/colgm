@@ -30,6 +30,11 @@ func test_json_parse() {
     input.append("[\"\\");
     tokenizer.tokenize();
     input.clear();
+
+    // invalid escape sequence
+    input.append("[  \n\n\n\r\r\r\t\t\t  ]");
+    tokenizer.tokenize();
+    input.clear();
 }
 
 func make_num_arr() -> json* {
@@ -51,8 +56,8 @@ func make_bool_arr() -> json* {
 func make_str_arr() -> json* {
     var arr = json::arr();
     for (var i = 0; i < 10; i += 1) {
-        var s = json::str();
-        s->json_string.append("hello world - ")->append_i64(i);
+        var s = json::str("hello world - ");
+        s->json_string.append_i64(i);
         arr->json_array.push(s);
     }
     return arr;
@@ -90,8 +95,7 @@ func main() -> i32 {
 
     var key_str = str::from("json_str");
     defer key_str.delete();
-    obj->json_object.insert(key_str.__ptr__(), json::str());
-    obj->json_object.get(key_str.__ptr__())->json_string.append("hello world");
+    obj->json_object.insert(key_str.__ptr__(), json::str("hello world"));
 
     var res = obj->to_string();
     defer res.delete();

@@ -5,13 +5,18 @@ use std::map::{ hashmap };
 use std::libc::{ free };
 use std::string_utils::{ is_alpha_letter, is_digit };
 
+use err::panic::{ panic };
+
+use util::to_num::{ to_f64 };
+
 pub enum json_kind {
     json_object,
     json_array,
     json_string,
     json_number,
     json_bool,
-    json_null
+    json_null,
+    json_error
 }
 
 pub union(json_kind) json {
@@ -20,7 +25,8 @@ pub union(json_kind) json {
     json_string: str,
     json_number: f64,
     json_bool: bool,
-    json_null: i8
+    json_null: i8,
+    json_error: str
 }
 
 impl json {
@@ -43,6 +49,9 @@ impl json {
             json_kind::json_string => {
                 self->json_string.delete();
             }
+            json_kind::json_error => {
+                self->json_error.delete();
+            }
             _ => {}
         }
     }
@@ -61,9 +70,9 @@ impl json {
         return res;
     }
 
-    pub func str() -> json* {
+    pub func str(s: const i8*) -> json* {
         var res = json::__alloc__();
-        res[0] = json { json_string: str::instance() };
+        res[0] = json { json_string: str::from(s) };
         return res;
     }
 
@@ -82,6 +91,12 @@ impl json {
     pub func null() -> json* {
         var res = json::__alloc__();
         res[0] = json { json_null: 0 };
+        return res;
+    }
+
+    pub func error(s: const i8*) -> json* {
+        var res = json::__alloc__();
+        res[0] = json { json_error: str::from(s) };
         return res;
     }
 }
@@ -136,6 +151,9 @@ impl json {
             }
             json_kind::json_null => {
                 return str::from("null");
+            }
+            _ => {
+                panic("json::to_string: reach json error");
             }
         }
         return str::from("null");
@@ -194,12 +212,44 @@ impl json_token {
         return self->kind == json_token_kind::tok_eof;
     }
 
+    pub func is_null(self) -> bool {
+        return self->kind == json_token_kind::tok_null;
+    }
+
     pub func is_empty(self) -> bool {
         return self->kind == json_token_kind::tok_empty_result;
     }
 
+    pub func is_string(self) -> bool {
+        return self->kind == json_token_kind::tok_string;
+    }
+
+    pub func is_number(self) -> bool {
+        return self->kind == json_token_kind::tok_number;
+    }
+
+    pub func is_bool(self) -> bool {
+        return self->kind == json_token_kind::tok_bool;
+    }
+
+    pub func is_object_start(self) -> bool {
+        return self->kind == json_token_kind::tok_left_brace;
+    }
+
+    pub func is_object_end(self) -> bool {
+        return self->kind == json_token_kind::tok_right_brace;
+    }
+
+    pub func is_array_start(self) -> bool {
+        return self->kind == json_token_kind::tok_left_bracket;
+    }
+
+    pub func is_array_end(self) -> bool {
+        return self->kind == json_token_kind::tok_right_bracket;
+    }
+
     pub func dump(self) {
-        if (self->kind == json_token_kind::tok_string) {
+        if (self->is_string()) {
             io::stdout().out("\"");
             foreach (var i; self->value) {
                 if (i.get() == '"') {
@@ -241,7 +291,7 @@ impl tokenizer {
 
 impl tokenizer {
     func is_string_quote(c: i8) -> bool {
-        return c == '"' || c == '\'';
+        return c == '"';
     }
 
     func is_identifier_head(c: i8) -> bool {
@@ -359,12 +409,27 @@ impl tokenizer {
             }
             
             return json_token::instance(json_token_kind::tok_error, "invalid token");
+        } else {
+            while (input->c_str[i] != 0 &&
+                   input->c_str[i] != '{' &&
+                   input->c_str[i] != '}' &&
+                   input->c_str[i] != '[' &&
+                   input->c_str[i] != ']' &&
+                   input->c_str[i] != ',' &&
+                   input->c_str[i] != ':' &&
+                   !tokenizer::is_string_quote(input->c_str[i]) &&
+                   !tokenizer::is_number_head(input->c_str[i]) &&
+                   !tokenizer::is_identifier_head(input->c_str[i])) {
+                i += 1;
+            }
+            i -= 1;
+            return json_token::instance(json_token_kind::tok_empty_result, "<empty>");
         }
 
-        return json_token::instance(json_token_kind::tok_empty_result, "<empty>");
+        return json_token::instance(json_token_kind::tok_error, "invalid token");
     }
 
-    func next(self) -> json_token {
+    pub func next(self) -> json_token {
         var tok = self->next_token();
 
         if (tok.is_eof()) {
@@ -391,5 +456,73 @@ impl tokenizer {
             tok.dump();
         }
         io::stdout().out("\n");
+    }
+}
+
+struct parser {
+    tkn: tokenizer
+}
+
+impl parser {
+    func parse_object(self) -> json* {
+        var result = json::obj();
+        
+        var tok = self->tkn.next();
+        defer tok.delete();
+
+        while (!tok.is_eof() && !tok.is_error() && !tok.is_object_end()) {
+            // TODO: parse key
+        }
+
+        return result;
+    }
+
+    func parse_array(self) -> json* {
+        var result = json::arr();
+
+        var tok = self->tkn.next();
+        defer tok.delete();
+
+        while (!tok.is_eof() && !tok.is_error() && !tok.is_array_end()) {
+            // TODO: parse value
+        }
+
+        return result;
+    }
+
+    func parse_value(self) -> json* {
+        var tok = self->tkn.next();
+        defer tok.delete();
+
+        if (tok.is_error()) {
+            var result = json::error(tok.value.c_str);
+            return result;
+        }
+
+        if (tok.is_bool()) {
+            var result = json::bool(tok.value.eq_const("true"));
+            return result;
+        } elsif (tok.is_null()) {
+            var result = json::null();
+            return result;
+        } elsif (tok.is_number()) {
+            var result = json::num(to_f64(tok.value.c_str));
+            return result;
+        } elsif (tok.is_string()) {
+            var result = json::str(tok.value.c_str);
+            return result;
+        } elsif (tok.is_object_start()) {
+            return self->parse_object();
+        } elsif (tok.is_array_start()) {
+            return self->parse_array();
+        }
+
+        var result = json::error("invalid token");
+        return result;
+    }
+
+    func parse(self, s: str*) -> json* {
+        self->tkn = tokenizer::instance(s);
+        return self->parse_value();
     }
 }
