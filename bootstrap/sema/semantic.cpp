@@ -2061,7 +2061,7 @@ void semantic::resolve_in_stmt_expr(in_stmt_expr* node, const colgm_func& func_s
 }
 
 void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
-    if (!node->get_value() && func_self.return_type!=type::void_type()) {
+    if (!node->get_value() && func_self.return_type != type::void_type()) {
         rp.report(node,
             "expected return type \"" + func_self.return_type.to_string() +
             "\" but get \"void\""
@@ -2075,22 +2075,13 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
     if (infer.is_error()) {
         return;
     }
-    if (infer.is_pointer() && func_self.return_type.is_pointer()) {
-        if (infer != func_self.return_type &&
-            !check_can_be_converted(node->get_value(), func_self.return_type)) {
-            rp.warn(node,
-                "expected return type \"" + func_self.return_type.to_string() +
-                "\" but get \"" + infer.to_string() + "\""
-            );
-        }
-    } else if (infer != func_self.return_type) {
-        if (!check_can_be_converted(node->get_value(), func_self.return_type)) {
-            rp.report(node,
-                "expected return type \"" +
-                func_self.return_type.to_string() +
-                "\" but get \"" + infer.to_string() + "\""
-            );
-        }
+
+    if (infer != func_self.return_type &&
+        !check_can_be_converted(node->get_value(), func_self.return_type)) {
+        rp.report(node,
+            "expected return type \"" + func_self.return_type.to_string() +
+            "\" but get \"" + infer.to_string() + "\""
+        );
     }
 }
 

@@ -3,37 +3,51 @@ use std::str::{ str };
 use std::io::{ io };
 use std::libc::{ free };
 
+func dump_json_value(input: str*) {
+    var j = json::parse(input);
+    defer {
+        j->delete();
+        free(j => i8*);
+    }
+
+    io::stdout().out("[json test] raw  : ").out(input->c_str).endln();
+    if (j->is_invalid()) {
+        io::stdout().out("[json test] error: ").out(j->get_error()->c_str).endln();
+    } else {
+        var s = j->to_string();
+        defer s.delete();
+        io::stdout().out("[json test] json : ").out(s.c_str).endln();
+    }
+}
+
 func test_json_parse() {
     var input = str::instance();
     defer input.delete();
 
-    var tokenizer = json::tokenizer(input.__ptr__());
-
     input.append("{\"vec<num>\": [0, 0.0, -1.01, +2e4]}");
-    tokenizer.tokenize();
+    dump_json_value(input.__ptr__());
     input.clear();
 
     input.append("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null, true, false, \"\\\"\\\\\\/\\b\\f\\n\\r\\t\"]");
-    tokenizer.tokenize();
+    dump_json_value(input.__ptr__());
     input.clear();
 
     input.append("[\"\\\"\\\'\"]");
-    tokenizer.tokenize();
+    dump_json_value(input.__ptr__());
     input.clear();
 
     // unterminated string
     input.append("[\"\\ \\\'");
-    tokenizer.tokenize();
+    dump_json_value(input.__ptr__());
     input.clear();
 
     // invalid escape sequence
     input.append("[\"\\");
-    tokenizer.tokenize();
+    dump_json_value(input.__ptr__());
     input.clear();
 
-    // invalid escape sequence
     input.append("[  \n\n\n\r\r\r\t\t\t  ]");
-    tokenizer.tokenize();
+    dump_json_value(input.__ptr__());
     input.clear();
 }
 

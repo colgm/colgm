@@ -3067,25 +3067,15 @@ impl sema {
         if (infer.is_error()) {
             return;
         }
-        if (infer.is_pointer() && func_self->return_type.is_pointer()) {
-            if (!func_self->return_type.eq(infer.__ptr__()) &&
-                !self->check_can_be_converted(n->value, func_self->return_type.__ptr__())) {
-                self->err->out("expected return type \"")
-                         ->out_type(func_self->return_type.__ptr__(), self->pkg)
-                         ->out("\", but get \"")
-                         ->out_type(infer.__ptr__(), self->pkg)
-                         ->out("\"")
-                         ->emit_warn(n->base.location.__ptr__());
-            }
-        } else if (!func_self->return_type.eq(infer.__ptr__())) {
-            if (!self->check_can_be_converted(n->value, func_self->return_type.__ptr__())) {
-                self->err->out("expected return type \"")
-                         ->out_type(func_self->return_type.__ptr__(), self->pkg)
-                         ->out("\", but get \"")
-                         ->out_type(infer.__ptr__(), self->pkg)
-                         ->out("\"")
-                         ->emit_err(n->base.location.__ptr__());
-            }
+
+        if (!func_self->return_type.eq(infer.__ptr__()) &&
+            !self->check_can_be_converted(n->value, func_self->return_type.__ptr__())) {
+            self->err->out("expected return type \"")
+                        ->out_type(func_self->return_type.__ptr__(), self->pkg)
+                        ->out("\", but get \"")
+                        ->out_type(infer.__ptr__(), self->pkg)
+                        ->out("\"")
+                        ->emit_err(n->base.location.__ptr__());
         }
     }
 
