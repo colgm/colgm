@@ -3,6 +3,24 @@ use std::str::{ str };
 use std::io::{ io };
 use std::libc::{ free };
 
+func dump_raw_str(input: str*) {
+    for (var i: u64 = 0; i < input->size; i += 1) {
+        if (input->c_str[i] == '\n') {
+            io::stdout().out("\\n");
+        } else if (input->c_str[i] == '\r') {
+            io::stdout().out("\\r");
+        } else if (input->c_str[i] == '\t') {
+            io::stdout().out("\\t");
+        } else if (input->c_str[i] == '\"') {
+            io::stdout().out("\\\"");
+        } else if (input->c_str[i] == '\\') {
+            io::stdout().out("\\\\");
+        } else {
+            io::stdout().out_ch(input->c_str[i]);
+        }
+    }
+}
+
 func dump_json_value(input: str*) {
     var j = json::parse(input);
     defer {
@@ -10,13 +28,17 @@ func dump_json_value(input: str*) {
         free(j => i8*);
     }
 
-    io::stdout().out("[json test] raw  : ").out(input->c_str).endln();
+    io::stdout().out("[json test] raw  : ");
+    dump_raw_str(input);
+    io::stdout().endln();
     if (j->is_invalid()) {
         io::stdout().out("[json test] error: ").out(j->get_error()->c_str).endln();
     } else {
         var s = j->to_string();
         defer s.delete();
-        io::stdout().out("[json test] json : ").out(s.c_str).endln();
+        io::stdout().out("[json test] json : ");
+        dump_raw_str(s.__ptr__());
+        io::stdout().endln();
     }
 }
 
@@ -24,7 +46,7 @@ func test_json_parse() {
     var input = str::instance();
     defer input.delete();
 
-    input.append("{\"vec<num>\": [0, 0.0, -1.01, +2e4]}");
+    input.append("{\"vec<num>\": [0, 0.0, -1.01, +2.0e4, 2.1e+2, 2.2e-2]}");
     dump_json_value(input.__ptr__());
     input.clear();
 

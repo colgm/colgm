@@ -144,7 +144,8 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [ ] String and Unicode Helpers
     - [x] Math Utils
     - [ ] map, filter, reduce, sort, reverse, etc
-    - [ ] JSON, TOML, YAML and other formats parsing
+    - [x] JSON
+    - [ ] TOML, YAML and other formats parsing
     - [x] networking (socket, TCP/UDP Server and Client)
     - [ ] HTTP Utilities
     - [x] OS Utils (exec, env, args, etc)

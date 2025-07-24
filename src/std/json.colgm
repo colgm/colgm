@@ -124,7 +124,7 @@ impl json {
                 var res = str::from("{");
                 foreach (var i; self->json_object) {
                     if (!res.eq_const("{")) {
-                        res.append(",");
+                        res.append(", ");
                     }
                     res.append("\"");
                     res.append(i.key()->c_str);
@@ -140,7 +140,7 @@ impl json {
                 var res = str::from("[");
                 foreach (var i; self->json_array) {
                     if (!res.eq_const("[")) {
-                        res.append(",");
+                        res.append(", ");
                     }
                     var temp = i.get()->to_string();
                     defer temp.delete();
@@ -277,7 +277,7 @@ impl tokenizer {
     }
 
     func is_number_body(c: i8) -> bool {
-        return is_digit(c) || c == '.' || c == 'e' || c == 'E';
+        return is_digit(c) || c == '.' || c == 'e' || c == 'E' || c == '-' || c == '+';
     }
 
     func next_token(self) -> json_token {
@@ -479,7 +479,7 @@ impl parser {
         } else {
             result->delete();
             free(result => i8*);
-            return json::error("invalid object");
+            return json::error("invalid object, expect '{'");
         }
         
         var tok = self->tkn.next();
@@ -491,7 +491,7 @@ impl parser {
             if (!self->lookahead(json_token_kind::tok_string)) {
                 result->delete();
                 free(result => i8*);
-                return json::error("invalid object");
+                return json::error("invalid object, expect string");
             }
 
             var key = self->this_tok()->value.copy_instance();
@@ -501,7 +501,7 @@ impl parser {
             if (!self->lookahead(json_token_kind::tok_colon)) {
                 result->delete();
                 free(result => i8*);
-                return json::error("invalid object");
+                return json::error("invalid object, expect ':'");
             } else {
                 self->next();
             }
@@ -519,7 +519,7 @@ impl parser {
         if (!self->lookahead(json_token_kind::tok_right_brace)) {
             result->delete();
             free(result => i8*);
-            return json::error("invalid object");
+            return json::error("invalid object, expect '}'");
         } else {
             self->next();
         }
@@ -534,7 +534,7 @@ impl parser {
         } else {
             result->delete();
             free(result => i8*);
-            return json::error("invalid array");
+            return json::error("invalid array, expect '['");
         }
         
         var tok = self->tkn.next();
@@ -556,7 +556,7 @@ impl parser {
         if (!self->lookahead(json_token_kind::tok_right_bracket)) {
             result->delete();
             free(result => i8*);
-            return json::error("invalid array");
+            return json::error("invalid array, expect ']'");
         } else {
             self->next();
         }
@@ -603,9 +603,9 @@ impl parser {
     pub func parse(s: str*) -> json* {
         var parse = parser::instance(s);
         defer parse.delete();
-
+        // tokenize
         parse.tkn.tokenize();
-
+        // parse
         var res = parse.parse_value();
         return res;
     }
