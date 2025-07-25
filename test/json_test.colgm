@@ -3,6 +3,8 @@ use std::str::{ str };
 use std::io::{ io };
 use std::libc::{ free };
 
+use util::timestamp::{ maketimestamp };
+
 func dump_raw_str(input: str*) {
     for (var i: u64 = 0; i < input->size; i += 1) {
         if (input->c_str[i] == '\n') {
@@ -71,6 +73,10 @@ func test_json_parse() {
     input.append("[  \n\n\n\r\r\r\t\t\t  ]");
     dump_json_value(input.__ptr__());
     input.clear();
+
+    input.append("[\"\\n\\r\\t\"]");
+    dump_json_value(input.__ptr__());
+    input.clear();
 }
 
 func make_num_arr() -> json* {
@@ -97,6 +103,44 @@ func make_str_arr() -> json* {
         arr->json_array.push(s);
     }
     return arr;
+}
+
+func smoke_testing_parse(input: str*) {
+    io::stdout().out("[json test] smoke test: ").out_u64(input->size / 1024 / 1024).out(" MB");
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var j = json::parse(input);
+    defer {
+        j->delete();
+        free(j => i8*);
+    }
+
+    var sec = ts.elapsed_sec();
+    var mbps = (input->size => f64) / 1024.0 / 1024.0 / sec;
+    io::stdout().out(", ").out_f64(mbps).out(" MB/s\n");
+}
+
+func generate_vec_str(input: str*) {
+    input->append("[0,");
+    for (var i = 1; i < 8192; i += 1) {
+        input->append(", ")->append_i64(i);
+    }
+    input->append("]");
+}
+
+func smoke_testing() {
+    for (var outer = 1; outer <= 10; outer += 1) {
+        var input = str::from("{\"vec\": []");
+        defer input.delete();
+        for (var i = 0; i < 256 * outer; i += 1) {
+            input.append(", \"vec-");
+            input.append_i64(i)->append("\": ");
+            generate_vec_str(input.__ptr__());
+        }
+        input.append("}");
+        smoke_testing_parse(input.__ptr__());
+    }
 }
 
 func main() -> i32 {
@@ -138,5 +182,6 @@ func main() -> i32 {
     io::stdout().out(res.c_str).endln();
 
     test_json_parse();
+    smoke_testing();
     return 0;
 }

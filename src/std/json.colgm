@@ -308,7 +308,6 @@ impl tokenizer {
             var content = str::instance();
             defer content.delete();
             while (input->c_str[i] != 0 && input->c_str[i] != start) {
-                content.append_char(input->c_str[i]);
                 if (input->c_str[i] == '\\') {
                     i += 1;
                     if (input->c_str[i] == 0) {
@@ -328,8 +327,11 @@ impl tokenizer {
                     } elsif (input->c_str[i] == '"') {
                         content.append_char('"');
                     } else {
+                        content.append_char('\\');
                         content.append_char(input->c_str[i]);
                     }
+                } else {
+                    content.append_char(input->c_str[i]);
                 }
                 i += 1;
             }
