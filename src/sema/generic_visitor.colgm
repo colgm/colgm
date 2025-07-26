@@ -762,17 +762,23 @@ impl generic_visitor {
             var t_name = t->generic_name(self->pkg);
             defer t_name.delete();
 
-            if (!domain->structs.has(t_name.__ptr__())) {
-                continue;
-            }
-
-            var s = domain->structs.get(t_name.__ptr__());
             var delete_func = str::from("delete");
             defer delete_func.delete();
 
-            // with delete methopd, it's non-trivial
-            if (s->method.has(delete_func.__ptr__())) {
-                return false;
+            if (domain->structs.has(t_name.__ptr__())) {
+                var s = domain->structs.get(t_name.__ptr__());
+
+                // with delete methopd, it's non-trivial
+                if (s->method.has(delete_func.__ptr__())) {
+                    return false;
+                }
+            } else if (domain->tagged_unions.has(t_name.__ptr__())) {
+                var u = domain->tagged_unions.get(t_name.__ptr__());
+
+                // with delete methopd, it's non-trivial
+                if (u->method.has(delete_func.__ptr__())) {
+                    return false;
+                }
             }
         }
         return true;
@@ -813,16 +819,24 @@ impl generic_visitor {
             var t_name = t->generic_name(self->pkg);
             defer t_name.delete();
 
-            if (!domain->structs.has(t_name.__ptr__())) {
-                return false;
-            }
-
-            var s = domain->structs.get(t_name.__ptr__());
             var delete_func = str::from("delete");
             defer delete_func.delete();
 
-            // without delete methopd, it's trivial
-            if (!s->method.has(delete_func.__ptr__())) {
+            if (domain->structs.has(t_name.__ptr__())) {
+                var s = domain->structs.get(t_name.__ptr__());
+
+                // without delete methopd, it's trivial
+                if (!s->method.has(delete_func.__ptr__())) {
+                    return false;
+                }
+            } else if (domain->tagged_unions.has(t_name.__ptr__())) {
+                var u = domain->tagged_unions.get(t_name.__ptr__());
+
+                // without delete methopd, it's trivial
+                if (!u->method.has(delete_func.__ptr__())) {
+                    return false;
+                }
+            } else {
                 return false;
             }
         }

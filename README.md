@@ -136,9 +136,8 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 1. feature: fuzzy match when field or method name is not found
 2. feature: to_string method for struct/enum/tagged union
 3. feature: reference type
-4. feature: [Tuple](./doc/spec/tuple.md)
-5. feature: smart pointer
-6. feature: std
+4. feature: smart pointer
+5. feature: std
     - [x] Filesystem API (read, write, join, exists, etc)
     - [x] Datetime utils
     - [ ] String and Unicode Helpers
@@ -154,7 +153,7 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [ ] Regex
     - [ ] Package manager
     - [ ] Docs generator
-7. SIR refactor
-8. constant fold
-9. DCE opt
-10. CSE opt
+6. SIR refactor
+7. constant fold
+8. DCE opt
+9. CSE opt

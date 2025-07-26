@@ -312,14 +312,19 @@ bool generic_visitor::check_is_trivial(ast::cond_compile* node,
             continue;
         }
         const auto& domain = ctx.get_domain(t.loc_file);
-        // not a struct, must be trivial
-        if (!domain.structs.count(t.generic_name())) {
-            continue;
-        }
-        const auto& s = domain.structs.at(t.generic_name());
-        // with delete method, it's non-trivial
-        if (s.method.count("delete")) {
-            return false;
+        // if not a struct or tagged union, must be trivial
+        if (domain.structs.count(t.generic_name())) {
+            const auto& s = domain.structs.at(t.generic_name());
+            // with delete method, it's non-trivial
+            if (s.method.count("delete")) {
+                return false;
+            }
+        } else if (domain.tagged_unions.count(t.generic_name())) {
+            const auto& u = domain.tagged_unions.at(t.generic_name());
+            // with delete method, it's non-trivial
+            if (u.method.count("delete")) {
+                return false;
+            }
         }
     }
     return true;
@@ -344,12 +349,19 @@ bool generic_visitor::check_is_non_trivial(ast::cond_compile* node,
             return false;
         }
         const auto& domain = ctx.get_domain(t.loc_file);
-        if (!domain.structs.count(t.generic_name())) {
-            return false;
-        }
-        const auto& s = domain.structs.at(t.generic_name());
-        // without delete method, it's trivial
-        if (!s.method.count("delete")) {
+        if (domain.structs.count(t.generic_name())) {
+            const auto& s = domain.structs.at(t.generic_name());
+            // without delete method, it's trivial
+            if (!s.method.count("delete")) {
+                return false;
+            }
+        } else if (domain.tagged_unions.count(t.generic_name())) {
+            const auto& u = domain.tagged_unions.at(t.generic_name());
+            // without delete method, it's trivial
+            if (!u.method.count("delete")) {
+                return false;
+            }
+        } else {
             return false;
         }
     }

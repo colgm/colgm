@@ -139,6 +139,57 @@ impl tagged_union_with_ref_enum {
     }
 }
 
+union (enum) trivial_union { a: i32 }
+
+impl trivial_union {
+    pub func test_trivial() -> bool {
+        return true;
+    }
+}
+
+union (enum) non_trivial_union { a: i32 }
+
+impl non_trivial_union {
+    pub func test_trivial() -> bool {
+        return false;
+    }
+
+    pub func delete(self) {
+        // do nothing but mark it as non-trivial
+    }
+}
+
+struct trivial_test<T> {}
+
+impl trivial_test<T> {
+    #[is_trivial(T)]
+    pub func test(info: const i8*) {
+        var i = str::from(info);
+        i.append(" is not trivial");
+        defer i.delete();
+
+        assert(T::test_trivial(), i.c_str);
+    }
+
+    #[is_non_trivial(T)]
+    pub func test(info: const i8*) {
+        var i = str::from(info);
+        i.append(" is trivial");
+        defer i.delete();
+
+        assert(!T::test_trivial(), i.c_str);
+    }
+}
+
+func trivial_union_test() {
+    // trivial
+    trivial_test<trivial_union>::test("trivial_union");
+    // non-trivial
+    trivial_test<non_trivial_union>::test("non_trivial_union");
+
+    io::stdout().out("[tagged_union.colgm] trivial test passed").endln();
+}
+
 func main() -> i32 {
     test();
 
@@ -216,6 +267,8 @@ func main() -> i32 {
     }
 
     io::stdout().out("[tagged_union.colgm] ").out(ptr->ddd.c_str).endln();
+
+    trivial_union_test();
 
     return tagged_union_without_ref_enum::static() +
            tagged_union_with_ref_enum::static();
