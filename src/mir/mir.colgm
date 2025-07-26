@@ -379,7 +379,7 @@ impl mir_block {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRBlock").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         self->base.location.dump(out);
 
         tm->push_indent();
@@ -426,7 +426,7 @@ impl mir_unary {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRUnary").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         match (self->op) {
             mir_unary_opr::neg => out.green().out("-").reset();
@@ -483,7 +483,7 @@ impl mir_binary {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRBinary").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         match (self->op) {
             mir_binary_opr::add => out.green().out("+").reset();
@@ -541,7 +541,7 @@ impl mir_type_convert {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRTypeConvert").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->target.__ptr__());
         self->base.location.dump(out);
 
@@ -572,7 +572,7 @@ impl mir_nil {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRNil").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         self->base.location.dump(out);
     }
@@ -601,7 +601,7 @@ impl mir_number {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRNumber").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
 
         out.green().out(self->value.c_str).reset().out(" ");
@@ -633,7 +633,7 @@ impl mir_string {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRString").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         
         var tmp = llvm_raw_string(self->value.__ptr__());
@@ -668,7 +668,7 @@ impl mir_char {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRCharacter").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         
         var tmp = llvm_raw_string(self->value.__ptr__());
@@ -702,7 +702,7 @@ impl mir_bool {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRBoolean").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset();
+        out.light_orange().out(" 0x").out_hex(self => u64).reset();
         if (self->value) {
             out.green().out(" true").reset();
         } else {
@@ -743,7 +743,7 @@ impl mir_array {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRArray").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         self->base.location.dump(out);
 
@@ -785,7 +785,7 @@ impl init_field {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRInitField");
-        out.light_orange().out(" 0x").out_hex(self => i64).reset();
+        out.light_orange().out(" 0x").out_hex(self => u64).reset();
         out.out(" ").green().out(self->name.c_str).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         out.endln();
@@ -834,7 +834,7 @@ impl mir_struct_init {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRStructInitializer").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         self->base.location.dump(out);
 
@@ -876,7 +876,7 @@ impl mir_call {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRCall").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         self->base.location.dump(out);
 
@@ -910,7 +910,7 @@ impl mir_call_id {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRCallId").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         out.green().out(self->name.c_str).reset().out(" ");
         self->base.location.dump(out);
@@ -944,7 +944,7 @@ impl mir_call_index {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRCallIndex").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         self->base.location.dump(out);
 
@@ -982,7 +982,7 @@ impl mir_call_func {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRCallFunc").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         self->base.location.dump(out);
 
@@ -1016,7 +1016,7 @@ impl mir_get_field {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRGetField").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         out.green().out(self->name.c_str).reset().out(" ");
         self->base.location.dump(out);
@@ -1046,7 +1046,7 @@ impl mir_ptr_get_field {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRPtrGetField").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         out.green().out(self->name.c_str).reset().out(" ");
         self->base.location.dump(out);
@@ -1076,7 +1076,7 @@ impl mir_get_path {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRGetPath").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         out.green().out(self->name.c_str).reset().out(" ");
         self->base.location.dump(out);
@@ -1113,7 +1113,7 @@ impl mir_define {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRDefine").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         dump_resolved_type(out, pkg, self->resolved_type.__ptr__());
         out.green().out(self->name.c_str).reset().out(" ");
         self->base.location.dump(out);
@@ -1161,7 +1161,7 @@ impl mir_assign {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRAssign").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset();
+        out.light_orange().out(" 0x").out_hex(self => u64).reset();
 
         match (self->opr) {
             mir_assign_opr::eq => out.green().out(" = ").reset();
@@ -1216,7 +1216,7 @@ impl mir_if {
         tm->dump_indent(out);
         if (self->condition != nil) {
             out.purple().out("MIRIf").reset();
-            out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+            out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
             self->base.location.dump(out);
 
             tm->push_indent();
@@ -1226,7 +1226,7 @@ impl mir_if {
             self->condition->dump(out, pkg, tm);
         } else {
             out.purple().out("MIRElse").reset();
-            out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+            out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
             self->base.location.dump(out);
 
             tm->push_indent();
@@ -1266,7 +1266,7 @@ impl mir_branch {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRBranch").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset();
+        out.light_orange().out(" 0x").out_hex(self => u64).reset();
         out.out(" ");
         self->base.location.dump(out);
 
@@ -1307,7 +1307,7 @@ impl mir_switch_case {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRSwitchCase").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset();
+        out.light_orange().out(" 0x").out_hex(self => u64).reset();
         out.green().out(" ").out_i64(self->value).reset().out(" ");
         self->base.location.dump(out);
 
@@ -1357,7 +1357,7 @@ impl mir_switch {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRSwitch").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         self->base.location.dump(out);
 
         tm->push_indent();
@@ -1397,7 +1397,7 @@ impl mir_break {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRBreak").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         self->base.location.dump(out);
     }
 }
@@ -1418,7 +1418,7 @@ impl mir_continue {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRContinue").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         self->base.location.dump(out);
     }
 }
@@ -1464,7 +1464,7 @@ impl mir_loop {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRLoop").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         self->base.location.dump(out);
 
         tm->push_indent();
@@ -1512,7 +1512,7 @@ impl mir_return {
     pub func dump(self, out: io, pkg: package*, tm: tree_maker*) {
         tm->dump_indent(out);
         out.purple().out("MIRRet").reset();
-        out.light_orange().out(" 0x").out_hex(self => i64).reset().out(" ");
+        out.light_orange().out(" 0x").out_hex(self => u64).reset().out(" ");
         self->base.location.dump(out);
 
         if (self->value != nil) {

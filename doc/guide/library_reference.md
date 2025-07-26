@@ -16,6 +16,8 @@
   - [std::map::hashmap](#stdmaphashmapk-v)
 - [Standard Trivial Type Wrapper](#standard-trivial-type-wrapper)
   - [std::basic::basic](#stdbasicbasict)
+- [File Formats](#file-formats)
+  - [std::json::json](#stdjsonjson)
 - [TCP/UDP Utils](#tcpudp-utils)
   - [std::tcp](#stdtcp)
   - [std::udp](#stdudp)
@@ -239,6 +241,41 @@ func main() -> i32 {
     var a = hashset<basic<i32>>::instance();
     a.insert(basic<i32>::wrap(1));
     a.delete();
+    return 0;
+}
+```
+
+## File Formats
+
+### `std::json::json`
+
+Source: [`json`](../../src/std/json.colgm)
+
+Not stable, methods may change.
+
+```rs
+use std::json::{ json };
+use std::str::{ str };
+use std::libc::{ free };
+use std::io::{ io };
+
+func main() -> i32 {
+    var input = str::from("{ \"a\": 1, \"b\": 2 }");
+    defer input.delete();
+
+    var j = json::parse(input.__ptr__());
+    defer {
+        j->delete();
+        free(j => i8*);
+    }
+
+    if (!j->is_invalid()) {
+        var s = j->to_string();
+        defer s.delete();
+
+        io::stdout().out(s.c_str).endln();
+    }
+
     return 0;
 }
 ```
