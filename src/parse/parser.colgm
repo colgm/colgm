@@ -1382,7 +1382,7 @@ impl parser {
         return false;
     }
 
-    pub func parse(self, lex: lexer*) {
+    pub func parse(self, lex: lexer*, view_defer_replace: bool) {
         self->index = 0;
         self->toks = lex->toks.__ptr__();
         self->root = root::new(self->this_tok_loc());
@@ -1509,7 +1509,7 @@ impl parser {
         // scan ast and remove conditional-disabled nodes
         remove_disabled_node(self->err, self->root, self->co);
         // copy defer to block exits and remove it
-        replace_defer::scan(self->err, self->root);
+        replace_defer::scan(self->err, self->root, view_defer_replace);
     }
 }
 

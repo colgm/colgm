@@ -193,7 +193,7 @@ func compile(option: cli_option) -> i32 {
     }
 
     t_stamp.stamp();
-    cc.par.parse(cc.lex.__ptr__());
+    cc.par.parse(cc.lex.__ptr__(), option.VIEW_DEFER_REPLACE);
     if (option.VERBOSE) {
         io::stdout().green().out("[   PARSER ] ").reset();
         io::stdout().out("Parse syntax ");
@@ -365,6 +365,8 @@ func main(argc: i32, argv: i8**) -> i32 {
             option.VIEW_TYPE_REPLACE_INFO = true;
         } elsif (streq(argv[i], "--view-unused-func")) {
             option.VIEW_UNUSED_FUNC = true;
+        } elsif (streq(argv[i], "--view-defer-replace")) {
+            option.VIEW_DEFER_REPLACE = true;
         } elsif (streq(argv[i], "--mir")) {
             option.VIEW_MIR = true;
         } elsif (streq(argv[i], "--sir")) {
@@ -380,7 +382,7 @@ func main(argc: i32, argv: i8**) -> i32 {
             option.set_opt_level(argv[i]);
         } elsif (argv[i][0]=='-') {
             report_invalid_argument(argv[i]);
-        } else if (option.input_file == nil) {
+        } elsif (option.input_file == nil) {
             option.input_file = argv[i];
         } else {
             report_invalid_argument(argv[i]);

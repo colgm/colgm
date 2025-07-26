@@ -55,15 +55,17 @@ impl scope {
 pub struct replace_defer {
     err: report*,
     in_defer_block: bool,
-    top_scopes: vec<scope>
+    top_scopes: vec<scope>,
+    verbose: bool
 }
 
 impl replace_defer {
-    pub func instance(e: report*) -> replace_defer {
+    pub func instance(e: report*, verbose: bool) -> replace_defer {
         return replace_defer {
             err: e,
             in_defer_block: false,
-            top_scopes: vec<scope>::instance()
+            top_scopes: vec<scope>::instance(),
+            verbose: verbose
         };
     }
 
@@ -71,8 +73,8 @@ impl replace_defer {
         self->top_scopes.delete();
     }
 
-    pub func scan(e: report*, n: root*) {
-        var rd = replace_defer::instance(e);
+    pub func scan(e: report*, n: root*, verbose: bool) {
+        var rd = replace_defer::instance(e, verbose);
         defer rd.delete();
 
         rd.visit_root(n);
@@ -117,30 +119,53 @@ impl replace_defer {
         }
     }
 
-    func insert_defer_on_subscope_exit(self, v: vec<ast*>*) {
+    func insert_defer_on_subscope_exit(self, v: vec<ast*>*, n: ast*) {
         if (self->top_scopes.empty() || self->top_scopes.back()->empty()) {
             return;
         }
+
+        self->log_when_insert("subscope exit", self->top_scopes.back()->scopes.back(), n);
         foreach (var i; self->top_scopes.back()->scopes.back()) {
             self->insert_defer(i.get(), v);
         }
     }
 
-    func insert_defer_on_block_exit(self, v: vec<ast*>*) {
+    func insert_defer_on_block_exit(self, v: vec<ast*>*, n: ast*) {
         foreach (var sub_scope; self->top_scopes.back()->scopes) {
+            self->log_when_insert("block exit", sub_scope.get(), n);
             foreach (var i; sub_scope.get()) {
                 self->insert_defer(i.get(), v);
             }
         }
     }
 
-    func insert_defer_on_return(self, v: vec<ast*>*) {
+    func insert_defer_on_return(self, v: vec<ast*>*, n: ast*) {
         foreach (var this_top_scope; self->top_scopes) {
             foreach (var sub_scope; this_top_scope.get()->scopes) {
+                self->log_when_insert("return", sub_scope.get(), n);
                 foreach (var i; sub_scope.get()) {
                     self->insert_defer(i.get(), v);
                 }
             }
+        }
+    }
+
+    func log_when_insert(self, msg: const i8*, scope: vec<ast_defer_stmt*>*, n: ast*) {
+        if (!self->verbose || scope->empty()) {
+            return;
+        }
+
+        io::stdout().green().out("[defer] ").reset();
+        io::stdout().orange().out("[0x").out_hex(n => i64).out("] ").reset();
+        io::stdout().light_blue().out("(").out(msg).out(")").reset().out(" insert at ");
+        io::stdout().light_cyan().out(n->location.file.c_str).out(":");
+        io::stdout().out_i64(n->location.end_line + 1).reset().endln();
+
+        foreach (var i; scope) {
+            io::stdout().green().out("[defer] ").reset().out("  => ");
+            io::stdout().orange().out("[0x").out_hex(i.get() => i64).out("] ").reset();
+            io::stdout().light_cyan().out(i.get()->base.location.file.c_str).out(":");
+            io::stdout().out_i64(i.get()->base.location.end_line + 1).reset().endln();
         }
     }
 }
@@ -297,10 +322,10 @@ impl replace_defer {
             }
             if (i.get()->kind == ast_kind::ast_continue_stmt ||
                 i.get()->kind == ast_kind::ast_break_stmt) {
-                self->insert_defer_on_block_exit(new_stmts.__ptr__());
+                self->insert_defer_on_block_exit(new_stmts.__ptr__(), i.get());
                 new_stmts.push(i.get());
             } else if (i.get()->kind == ast_kind::ast_ret_stmt) {
-                self->insert_defer_on_return(new_stmts.__ptr__());
+                self->insert_defer_on_return(new_stmts.__ptr__(), i.get());
                 new_stmts.push(i.get());
             } else {
                 new_stmts.push(i.get());
@@ -309,11 +334,11 @@ impl replace_defer {
         // insert defer when top scope exits
         if (self->in_top_scope()) {
             if (n->back_is_not_block_exit()) {
-                self->insert_defer_on_block_exit(new_stmts.__ptr__());
+                self->insert_defer_on_block_exit(new_stmts.__ptr__(), n => ast*);
             }
         } else if (has_defer_in_this_sub_scope) {
             if (n->back_is_not_block_exit()) {
-                self->insert_defer_on_subscope_exit(new_stmts.__ptr__());
+                self->insert_defer_on_subscope_exit(new_stmts.__ptr__(), n => ast*);
             }
         }
         n->reset_stmt_with(new_stmts.__ptr__());
