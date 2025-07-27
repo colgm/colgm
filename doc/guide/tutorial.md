@@ -13,6 +13,7 @@
   - [Bitwise Operator](#bitwise-operator)
   - [Logical Operator](#logical-operator)
 - [Definition](#definition)
+  - [Name Shadowing](#name-shadowing)
 - [Assignment](#assignment)
 - [Control Flow](#control-flow)
   - [While Loop](#while-loop)
@@ -204,6 +205,28 @@ so make sure the init value's type is what you want.
 ```rust
 var variable: type = expression; // with type
 var variable = expression;       // without type
+```
+
+### Name Shadowing
+
+Colgm does not allow variable shadowing.
+
+```rust
+var a: i32 = 1;
+if (1 == 1) {
+    var a: f64 = 1;
+    //  ^^^^^^ name shadowing, will trigger an error
+}
+```
+
+But this case is acceptable.
+
+```rust
+if (1 == 1) {
+    var b = 1;
+} else {
+    var b = 1.0;
+}
 ```
 
 ## Assignment

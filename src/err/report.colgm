@@ -130,10 +130,10 @@ impl report {
         var omit_line_printed = false;
 
         while (index <= location->end_line) {
-            // if total span includes more than 5 lines, omit the middle lines
+            // if total span includes more than 4 lines, omit the middle lines
             if (index > location->begin_line &&
                 index < location->end_line &&
-                location->end_line - location->begin_line > 5) {
+                location->end_line - location->begin_line > 4) {
                 if (!omit_line_printed) {
                     io::stderr().cyan().out(pad_str.c_str).out(" | ").reset();
                     io::stderr().out("  ...").endln();
@@ -515,5 +515,24 @@ impl report {
             ->highlight()->out("\"")->out(value)->out("\"")->cancel_highlight()
             ->out(" cannot be specified with floating point number")
             ->emit_err(loc);
+    }
+
+    pub func report_name_shadowing(self,
+                                   loc: span*,
+                                   name: const i8*,
+                                   shadowed_loc: span*) {
+        self->endwith_enter = false;
+        self->out("redefinition of variable ")
+            ->highlight()->out("\"")->out(name)->out("\"")->cancel_highlight()
+            ->emit_err(loc);
+        self->endwith_enter = true;
+        self->out_note("shadows previous definition here")
+            ->emit_headless(shadowed_loc);
+    }
+
+    pub func report_unused_variable(self, loc: span*, name: const i8*) {
+        self->out("unused variable ")
+            ->highlight()->out("\"")->out(name)->out("\"")->cancel_highlight()
+            ->emit_warn(loc);
     }
 }

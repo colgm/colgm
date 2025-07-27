@@ -74,7 +74,7 @@ impl regist_pass {
 }
 
 impl regist_pass {
-    func import_all(self, node: ast_use_stmt*, dm: colgm_module*) {
+    func import_all(self, dm: colgm_module*) {
         foreach (var i; dm->enums) {
             if (!i.value()->is_public) {
                 continue;
@@ -259,7 +259,7 @@ impl regist_pass {
         }
         var dm = self->ctx->get_domain(path);
         if (node->import_symbol.empty()) {
-            self->import_all(node, dm);
+            self->import_all(dm);
         } else {
             self->import_specified(node, dm, path);
         }
@@ -530,7 +530,6 @@ impl regist_pass {
 
         var has_specified_value = false;
         var has_non_specified_value = false;
-        var v = node->members.__ptr__();
         foreach (var i; node->members) {
             var n = i.get();
             if (!n->is(ast_kind::ast_enum_member)) {
@@ -681,6 +680,7 @@ impl regist_pass {
 
                 f->param_name.push(param_name);
                 f->param_type.push(param_type.__ptr__());
+                f->param_location.insert(param_name, n->location.__ptr__());
                 f->unordered_params.insert(param_name, param_type.__ptr__());                
                 param_loc_map.insert(param_name, n_ast->base.location.__ptr__());
             } else {
@@ -689,6 +689,7 @@ impl regist_pass {
 
                 f->param_name.push(param_name);
                 f->param_type.push(param_type.__ptr__());
+                f->param_location.insert(param_name, n->location.__ptr__());
                 f->unordered_params.insert(param_name, param_type.__ptr__());
                 param_loc_map.insert(param_name, n_ast->base.location.__ptr__());
             }
