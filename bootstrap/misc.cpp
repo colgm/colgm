@@ -347,7 +347,7 @@ std::string llvm_raw_string(const std::string& str) {
             continue;
         }
         ss << "\\";
-        ss << std::hex << std::setw(2) << std::setfill('0') << u32(c) << std::dec;
+        ss << std::hex << std::setw(2) << std::setfill('0') << (u32(c) & 0xff) << std::dec;
     }
     ss << "\\00";
     return ss.str();

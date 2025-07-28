@@ -1,5 +1,5 @@
 use std::io::{ io };
-use std::libc::{ exit, streq };
+use std::libc::{ exit, streq, strlen };
 use std::fs::{ fs };
 use std::time::{ chrono };
 
@@ -150,6 +150,20 @@ pub func help() {
     .endln();
 }
 
+func gradient_output(s: const i8*) {
+    var fine_red_gradient = [88, 124, 160, 196, 202, 208, 214, 220];
+    var len = strlen(s);
+    var stdout = io::stdout();
+
+    stdout.out("     ");
+    for (var i = 0; i < len; i += 1) {
+        var index = i * 8 / len;
+        var color = fine_red_gradient[index];
+        stdout.out("\e[1;38;5;").out_i64(color).out("m").out_ch(s[i]).reset();
+    }
+    stdout.endln();
+}
+
 pub func logo(executable: i8*) {
     var possible_clang = find_clang();
     var current_time = chrono::localtime();
@@ -158,14 +172,14 @@ pub func logo(executable: i8*) {
         current_time.delete();
     }
 
-    io::stdout().green()
-    .out("                __              \n")
-    .out("    _________  / //___ _____ _ \n")
-    .out("   / ___/ __ \\/ // __ `/ _ `_ \\\n")
-    .out("  / /__/ /_/ / // /_/ / // // /\n")
-    .out("  \\___/\\____/_//\\__, /_//_//_/ \n")
-    .out("  -------------/____/---------- \n\n")
-    .reset()
+    gradient_output("                __             ");
+    gradient_output("    _________  / /___  ___ __  ");
+    gradient_output("   / ___/ __ \\/ / __ `/ _ `_ \\ ");
+    gradient_output("  / /__/ /_/ / / /_/ / // // / ");
+    gradient_output("  \\___/\\____/_/\\__, /_//_//_/  ");
+    gradient_output(" -------------/____/-----------");
+
+    io::stdout().out("\n")
     .out("version : ").out(version()).out(" ")
     .out(get_platform()).out(" ").out(get_arch())
     .out(" (self-host ").out(__time__()).out(")").out("\n")
