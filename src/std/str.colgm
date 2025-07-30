@@ -28,40 +28,7 @@ impl str {
         return res;
     }
 
-    pub func from(src: i8*) -> str {
-        if (src == nil) {
-            panic("cannot create string from nil");
-        }
-        var res = str::instance();
-        res.append(src);
-        return res;
-    }
-
-    pub func from_i64(src: i64) -> str {
-        var res = str::instance();
-        var buffer: [i8; 128] = [];
-        itoa(src, buffer, 10);
-        res.append(buffer);
-        return res;
-    }
-
-    pub func from_u64(src: u64) -> str {
-        var res = str::instance();
-        var buffer: [i8; 128] = [];
-        utoa(src, buffer, 10);
-        res.append(buffer);
-        return res;
-    }
-
-    pub func from_f64(src: f64) -> str {
-        var res = str::instance();
-        var buffer: [i8; 256] = [];
-        gcvt(src, 10, buffer);
-        res.append(buffer);
-        return res;
-    }
-
-    pub func init(self) {
+    func init(self) {
         self->c_str = malloc(8);
         self->c_str[0] = '\0';
 
@@ -94,6 +61,41 @@ impl str {
         self->c_str = nil;
         self->size = 0;
         self->capacity = 0;
+    }
+}
+
+impl str {
+    pub func from(src: i8*) -> str {
+        if (src == nil) {
+            panic("cannot create string from nil");
+        }
+        var res = str::instance();
+        res.append(src);
+        return res;
+    }
+
+    pub func from_i64(src: i64) -> str {
+        var res = str::instance();
+        var buffer: [i8; 128] = [];
+        itoa(src, buffer, 10);
+        res.append(buffer);
+        return res;
+    }
+
+    pub func from_u64(src: u64) -> str {
+        var res = str::instance();
+        var buffer: [i8; 128] = [];
+        utoa(src, buffer, 10);
+        res.append(buffer);
+        return res;
+    }
+
+    pub func from_f64(src: f64) -> str {
+        var res = str::instance();
+        var buffer: [i8; 256] = [];
+        gcvt(src, 10, buffer);
+        res.append(buffer);
+        return res;
     }
 }
 
