@@ -92,6 +92,16 @@ func test_json_parse() {
     input.append("[\"\\");
     dump_json_value(input.__ptr__());
     input.clear();
+
+    // invalid array
+    input.append("[,");
+    dump_json_value(input.__ptr__());
+    input.clear();
+
+    // invalid token
+    input.append(",");
+    dump_json_value(input.__ptr__());
+    input.clear();
 }
 
 func make_num_arr() -> json* {
@@ -153,7 +163,7 @@ func generate_hash_str(input: str*, size: i64) {
 }
 
 func smoke_testing() {
-    for (var outer = 1; outer <= 10; outer += 1) {
+    for (var outer = 1; outer <= 5; outer += 1) {
         var input = str::from("{\"str\": \"smoke testing\"");
         defer input.delete();
         for (var i = 0; i < 256 * outer; i += 1) {

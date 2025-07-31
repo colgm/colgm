@@ -88,21 +88,7 @@ pub struct token {
 }
 
 impl token {
-    func no_need_to_store_string(k: tok_kind) -> bool {
-        return k == tok_kind::tok_lbrace || k == tok_kind::tok_rbrace ||
-               k == tok_kind::tok_lparen || k == tok_kind::tok_rparen ||
-               k == tok_kind::tok_lbracket || k == tok_kind::tok_rbracket ||
-               k == tok_kind::tok_comma || k == tok_kind::tok_semi ||
-               k == tok_kind::tok_colon || k == tok_kind::tok_dot;
-    }
-
     pub func instance(k: tok_kind, c: str*, loc: span*) -> token {
-        if (token::no_need_to_store_string(k)) {
-            return token {
-                kind: k,
-                location: loc->copy_instance()
-            };
-        }
         return token {
             kind: k,
             // str::from(c->c_str) will trigger a panic if c is "\0"
@@ -113,12 +99,6 @@ impl token {
     }
 
     pub func copy_instance(self) -> token {
-        if (token::no_need_to_store_string(self->kind)) {
-            return token {
-                kind: self->kind,
-                location: self->location.copy_instance()
-            };
-        }
         return token {
             kind: self->kind,
             content: self->content.copy_instance(),
@@ -127,12 +107,8 @@ impl token {
     }
 
     pub func delete(self) {
-        if (token::no_need_to_store_string(self->kind)) {
-            self->location.delete();
-        } else {
-            self->content.delete();
-            self->location.delete();
-        }
+        self->content.delete();
+        self->location.delete();
     }
 
     pub func is_keyword(self) -> bool {

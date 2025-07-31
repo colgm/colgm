@@ -259,6 +259,10 @@ impl json_token {
         return json_token::instance(json_token_kind::tok_error, info);
     }
 
+    pub func eof() -> json_token {
+        return json_token { kind: json_token_kind::tok_eof };
+    }
+
     pub func delete(self) {
         if (self->kind == json_token_kind::tok_string ||
             self->kind == json_token_kind::tok_number ||
@@ -321,7 +325,7 @@ impl tokenizer {
         var i = self->index;
 
         if (i >= input->size || input->c_str[i] == 0) {
-            return json_token::instance(json_token_kind::tok_eof, "<eof>");
+            return json_token::eof();
         }
 
         defer self->index = i + 1;
@@ -604,41 +608,74 @@ impl parser {
     }
 
     func parse_value(self) -> json* {
-        if (self->lookahead(json_token_kind::tok_error)) {
-            var result = json::error(self->this_tok()->value.c_str);
-            self->next();
-            return result;
+        match (self->this_tok()->kind) {
+            json_token_kind::tok_left_brace => {
+                return self->parse_object();
+            }
+            json_token_kind::tok_right_brace => {
+                var result = json::error("invalid token '}'");
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_left_bracket => {
+                return self->parse_array();
+            }
+            json_token_kind::tok_right_bracket => {
+                var result = json::error("invalid token ']'");
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_comma => {
+                var result = json::error("invalid token ','");
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_colon => {
+                var result = json::error("invalid token ':'");
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_string => {
+                var result = json::str(self->this_tok()->value.c_str);
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_number => {
+                var result = json::num(to_f64(self->this_tok()->value.c_str));
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_true => {
+                var result = json::bool(true);
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_false => {
+                var result = json::bool(false);
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_null => {
+                var result = json::null();
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_empty_result => {
+                panic("empty result token");
+            }
+            json_token_kind::tok_error => {
+                var result = json::error(self->this_tok()->value.c_str);
+                self->next();
+                return result;
+            }
+            json_token_kind::tok_eof => {
+                var result = json::error("invalid token '<eof>'");
+                self->next();
+                return result;
+            }
         }
 
-        if (self->lookahead(json_token_kind::tok_true)) {
-            var result = json::bool(true);
-            self->next();
-            return result;
-        } elsif (self->lookahead(json_token_kind::tok_false)) {
-            var result = json::bool(false);
-            self->next();
-            return result;
-        } elsif (self->lookahead(json_token_kind::tok_null)) {
-            var result = json::null();
-            self->next();
-            return result;
-        } elsif (self->lookahead(json_token_kind::tok_number)) {
-            var result = json::num(to_f64(self->this_tok()->value.c_str));
-            self->next();
-            return result;
-        } elsif (self->lookahead(json_token_kind::tok_string)) {
-            var result = json::str(self->this_tok()->value.c_str);
-            self->next();
-            return result;
-        } elsif (self->lookahead(json_token_kind::tok_left_brace)) {
-            return self->parse_object();
-        } elsif (self->lookahead(json_token_kind::tok_left_bracket)) {
-            return self->parse_array();
-        }
-
-        var result = json::error("invalid token `");
-        result->json_error.append(self->this_tok()->value.c_str);
-        result->json_error.append("`");
+        var result = json::error("unreachable");
         self->next();
         return result;
     }

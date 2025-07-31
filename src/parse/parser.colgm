@@ -444,24 +444,14 @@ impl parser {
     }
 
     func bool_gen(self) -> ast_bool_literal* {
-        var res: ast_bool_literal* = nil;
-        if (streq(self->this_tok()->content.c_str, "true")) {
-            res = ast_bool_literal::new(
-                self->this_tok_loc(),
-                true
-            );
+        var res = ast_bool_literal::new(
+            self->this_tok_loc(),
+            self->this_tok()->kind == tok_kind::tok_true
+        );
+        if (self->this_tok()->kind == tok_kind::tok_true) {
             self->match_token(tok_kind::tok_true);
-        } else if (streq(self->this_tok()->content.c_str, "false")) {
-            res = ast_bool_literal::new(
-                self->this_tok_loc(),
-                false
-            );
+        } else if (self->this_tok()->kind == tok_kind::tok_false) {
             self->match_token(tok_kind::tok_false);
-        } else {
-            self->err->error(
-                self->this_tok_loc(),
-                "expected \"true\" or \"false\" here."
-            );
         }
         return res;
     }
