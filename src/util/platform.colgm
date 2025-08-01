@@ -5,7 +5,7 @@ use std::str::{ str };
 pub extern func sysctlbyname(name: const i8*, oldp: i8*, oldlenp: u64*, newp: i8*, newlen: u64) -> i32;
 
 #[enable_if(target_os = "macos")]
-pub func mac_version() -> str {
+func mac_version() -> str {
     var os_temp: [i8; 20] = [];
     var os_temp_len = [20 => u64];
     var res = sysctlbyname("kern.osproductversion", os_temp, os_temp_len, nil, 0);
@@ -16,11 +16,11 @@ pub func mac_version() -> str {
 }
 
 #[enable_if(target_os = "linux")]
-pub func mac_version() -> str {
+func mac_version() -> str {
     return str::from("");
 }
 
-pub func mac_main_version() -> str {
+func mac_major_version() -> str {
     var v = mac_version();
     defer v.delete();
 
@@ -70,19 +70,29 @@ pub func is_windows() -> bool {
     return streq(get_platform(), "windows");
 }
 
-pub func get_target_triple() -> i8* {
+pub func get_target_triple() -> str {
     var platform = get_platform();
     var arch = get_arch();
     if (streq(platform, "linux") && streq(arch, "x86_64")) {
-        return "x86_64-pc-linux-gnu";
+        return str::from("x86_64-pc-linux-gnu");
     }
 
     if (streq(platform, "linux") && streq(arch, "aarch64")) {
-        return "aarch64-unknown-linux-gnu";
+        return str::from("aarch64-unknown-linux-gnu");
     }
 
     if (streq(platform, "macos") && streq(arch, "aarch64")) {
-        return "arm64-apple-macosx12.0.0";
+        var os_version = mac_major_version();
+        defer os_version.delete();
+
+        var result = str::from("arm64-apple-macosx");
+        if (os_version.empty()) {
+            result.append("12.0.0");
+        } else {
+            result.append(os_version.c_str);
+            result.append(".0.0");
+        }
+        return result;
     }
-    return "unknown-unknown-unknown";
+    return str::from("unknown-unknown-unknown");
 }

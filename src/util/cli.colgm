@@ -166,11 +166,10 @@ func gradient_output(s: const i8*) {
 
 pub func logo(executable: i8*) {
     var possible_clang = find_clang();
-    var current_time = chrono::localtime();
-    defer {
-        possible_clang.delete();
-        current_time.delete();
-    }
+    defer possible_clang.delete();
+
+    var target = get_target_triple();
+    defer target.delete();
 
     gradient_output("                __             ");
     gradient_output("    _________  / /___  ___ __  ");
@@ -183,7 +182,7 @@ pub func logo(executable: i8*) {
     .out("version : ").out(version()).out(" ")
     .out(get_platform()).out(" ").out(get_arch())
     .out(" (self-host ").out(__time__()).out(")").out("\n")
-    .out("target  : ").out(get_target_triple()).out("\n")
+    .out("target  : ").out(target.c_str).out("\n")
     .out("repo    : https://github.com/colgm/colgm\n")
     .out("license : Apache 2.0\n");
 
