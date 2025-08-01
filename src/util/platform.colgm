@@ -1,4 +1,37 @@
 use std::libc::{ streq };
+use std::str::{ str };
+
+#[enable_if(target_os = "macos")]
+pub extern func sysctlbyname(name: const i8*, oldp: i8*, oldlenp: u64*, newp: i8*, newlen: u64) -> i32;
+
+#[enable_if(target_os = "macos")]
+pub func mac_version() -> str {
+    var os_temp: [i8; 20] = [];
+    var os_temp_len = [20 => u64];
+    var res = sysctlbyname("kern.osproductversion", os_temp, os_temp_len, nil, 0);
+    if (res != 0) {
+        return str::from("");
+    }
+    return str::from(os_temp);
+}
+
+#[enable_if(target_os = "linux")]
+pub func mac_version() -> str {
+    return str::from("");
+}
+
+pub func mac_main_version() -> str {
+    var v = mac_version();
+    defer v.delete();
+
+    var pos = v.find('.');
+    if (pos == str::npos()) {
+        return str::from("");
+    }
+
+    var res = v.substr(0, pos);
+    return res;
+}
 
 #[enable_if(target_os = "macos")]
 pub func get_platform() -> i8* {
