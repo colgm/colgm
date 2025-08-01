@@ -3,10 +3,10 @@
 ![just a picture](../jpg/llvm-maybe.jpg)
 
 - [Error Handling](#error-handling)
-  - [err::panic::assert](#errpanicassert)
-  - [err::panic::panic](#errpanicpanic)
-  - [err::panic::unreachable](#errpanicunreachable)
-  - [err::panic::unimplemented](#errpanicunimplemented)
+  - [std::panic::assert](#stdpanicassert)
+  - [std::panic::panic](#stdpanicpanic)
+  - [std::panic::unreachable](#stdpanicunreachable)
+  - [std::panic::unimplemented](#stdpanicunimplemented)
 - [Standard Containers](#standard-containers)
   - [std::list::list](#stdlistlistt)
   - [std::queue::queue](#stdqueuequeuet)
@@ -24,7 +24,7 @@
 
 ## Error Handling
 
-### err::panic::assert
+### std::panic::assert
 
 If condition is false, the program will panic with the error message.
 
@@ -32,7 +32,7 @@ If condition is false, the program will panic with the error message.
 assert(condition, "error message");
 ```
 
-### err::panic::panic
+### std::panic::panic
 
 Panic with the error message.
 
@@ -40,7 +40,7 @@ Panic with the error message.
 panic("error message");
 ```
 
-### err::panic::unreachable
+### std::panic::unreachable
 
 Panic with the error message "unreachable".
 
@@ -48,7 +48,7 @@ Panic with the error message "unreachable".
 unreachable();
 ```
 
-### err::panic::unimplemented
+### std::panic::unimplemented
 
 Panic with the error message "unimplemented".
 
