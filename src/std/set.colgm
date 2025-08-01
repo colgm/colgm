@@ -1,5 +1,5 @@
 use std::str::{ str };
-use std::libc::{ malloc, free };
+use std::libc::{ malloc, realloc, free };
 use std::list::{ list, list_iter };
 use std::io::{ io };
 
@@ -37,7 +37,7 @@ impl hashset<T> {
 
     func init(self) {
         self->size = 0;
-        self->bucket_capacity = 256;
+        self->bucket_capacity = 16;
         self->bucket = malloc(self->bucket_capacity * list<T>::__size__()) => list<T>*;
         for (var i: u64 = 0; i < self->bucket_capacity; i += 1) {
             self->bucket[i] = list<T>::instance();
@@ -110,6 +110,10 @@ impl hashset<T> {
         }
         bucket->insert(item);
         self->size += 1;
+
+        if (self->size / self->bucket_capacity > 8) {
+            self->rehash();
+        }
     }
 
     #[is_trivial(T)]
@@ -127,6 +131,39 @@ impl hashset<T> {
         }
         bucket->insert(item);
         self->size += 1;
+
+        if (self->size / self->bucket_capacity > 8) {
+            self->rehash();
+        }
+    }
+
+    func rehash_pre_work(self) -> list<T> {
+        var temp = list<T>::instance();
+        foreach (var i; self) {
+            temp.insert(i.elem());
+        }
+
+        self->clear();
+        self->bucket_capacity *= 2;
+        self->bucket = realloc(
+            self->bucket => i8*,
+            self->bucket_capacity *
+            list<T>::__size__()
+        ) => list<T>*;
+        for (var i = self->bucket_capacity / 2; i < self->bucket_capacity; i += 1) {
+            self->bucket[i] = list<T>::instance();
+        }
+
+        return temp;
+    }
+
+    func rehash(self) {
+        var temp = self->rehash_pre_work();
+        defer temp.delete();
+
+        foreach (var i; temp) {
+            self->insert(i.elem());
+        }
     }
 }
 

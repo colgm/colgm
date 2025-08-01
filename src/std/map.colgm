@@ -1,5 +1,5 @@
 use std::str::{ str };
-use std::libc::{ malloc, free };
+use std::libc::{ malloc, realloc, free };
 use std::list::{ list, list_iter };
 use std::io::{ io };
 use std::pair::{ pair };
@@ -46,7 +46,7 @@ impl hashmap<K, V> {
 
     func init(self) {
         self->size = 0;
-        self->bucket_capacity = 256;
+        self->bucket_capacity = 16;
         self->bucket = malloc(
             self->bucket_capacity *
             list<pair<K, V>>::__size__()
@@ -153,6 +153,10 @@ impl hashmap<K, V> {
         // do copy in insert method
         bucket->insert(tmp_pair.__ptr__());
         self->size += 1;
+
+        if (self->size / self->bucket_capacity > 8) {
+            self->rehash();
+        }
     }
 
     #[is_trivial(V)]
@@ -172,6 +176,52 @@ impl hashmap<K, V> {
         // do copy in insert method
         bucket->insert(tmp_pair.__ptr__());
         self->size += 1;
+
+        if (self->size / self->bucket_capacity > 8) {
+            self->rehash();
+        }
+    }
+
+    func rehash_pre_work(self) -> list<pair<K, V>> {
+        var temp = list<pair<K, V>>::instance();
+        foreach (var i; self) {
+            var tmp_pair = pair<K, V>::instance(i.key(), i.value());
+            defer tmp_pair.delete();
+            temp.insert(tmp_pair.__ptr__());
+        }
+
+        self->clear();
+        self->bucket_capacity *= 2;
+        self->bucket = realloc(
+            self->bucket => i8*,
+            self->bucket_capacity *
+            list<pair<K, V>>::__size__()
+        ) => list<pair<K, V>>*;
+        for (var i = self->bucket_capacity / 2; i < self->bucket_capacity; i += 1) {
+            self->bucket[i] = list<pair<K, V>>::instance();
+        }
+
+        return temp;
+    }
+
+    #[is_non_trivial(V)]
+    func rehash(self) {
+        var temp = self->rehash_pre_work();
+        defer temp.delete();
+
+        foreach (var i; temp) {
+            self->insert(i.elem()->key.__ptr__(), i.elem()->value.__ptr__());
+        }
+    }
+
+    #[is_trivial(V)]
+    func rehash(self) {
+        var temp = self->rehash_pre_work();
+        defer temp.delete();
+
+        foreach (var i; temp) {
+            self->insert(i.elem()->key.__ptr__(), i.elem()->value);
+        }
     }
 
     pub func remove(self, key: K*) {
