@@ -1583,6 +1583,9 @@ impl mir2sir {
             return;
         }
 
+        // left-value for assignment will not need to load value from address
+        // reference type also does not need to load value
+        // both of them are pointer type actually
         if (need_address) {
             return;
         }
@@ -1609,6 +1612,11 @@ impl mir2sir {
             var source_ref_ref_ty = self->type_mapping(source_ref_ref.__ptr__());
             defer source_ref_ref_ty.delete();
 
+            // for example:
+            //   var a: [i8; 8] = [];
+            // `a` in fact is `i8*`
+            // so we need to:
+            //   %0 = bitcast [8 x i8]* %arr.a.ptr to i8*
             self->block->add_stmt(sir_array_cast::new(
                 source_value.__ptr__(),
                 temp_var_value.__ptr__(),
@@ -1617,6 +1625,7 @@ impl mir2sir {
                 self->generate_DI_location(n->base.location.__ptr__())
             ) => sir*);
         } else {
+            // load value from pointer
             self->block->add_stmt(sir_load::new(
                 source_ref_ty.__ptr__(),
                 source_value.__ptr__(),

@@ -1,0 +1,58 @@
+use std::io::{ io };
+use std::str::{ str };
+use std::vec::{ vec };
+use std::libc::{ free };
+use std::panic::{ unimplemented };
+
+use dwarf::dwarf::{ DI_kind };
+
+pub union(DI_kind) dwarf_node {
+    DI_null: u64,
+    DI_named_metadata: dwarf_named_metadata,
+    DI_ref_index: dwarf_ref_index,
+    DI_list: dwarf_list,
+    DI_i32: dwarf_i32,
+    DI_string: dwarf_string,
+    DI_file: dwarf_file,
+    DI_compile_unit: dwarf_compile_unit
+}
+
+struct dwarf_named_metadata {
+    index: u64,
+    name: str,
+    nodes: vec<dwarf_node*>
+}
+
+struct dwarf_ref_index {
+    index: u64,
+    ref_index: u64
+}
+
+struct dwarf_list {
+    index: u64,
+    nodes: vec<dwarf_node*>
+}
+
+struct dwarf_i32 {
+    index: u64,
+    value: i32
+}
+
+struct dwarf_string {
+    index: u64,
+    value: str
+}
+
+struct dwarf_file {
+    index: u64,
+    filename: str,
+    directory: str
+}
+
+struct dwarf_compile_unit {
+    index: u64,
+    producer: str,
+    file_index: u64,
+    imports_index: u64,
+    enums_index: u64
+}
