@@ -4,75 +4,170 @@ use std::vec::{ vec };
 use std::libc::{ free };
 use std::panic::{ unimplemented };
 
-use dwarf::dwarf::{ DI_kind };
+use dwarf::dwarf::{ DI_kind, DI_ERROR_INDEX };
 
-pub union(DI_kind) dwarf_node {
-    DI_null: u64,
-    DI_named_metadata: dwarf_named_metadata,
-    DI_ref_index: dwarf_ref_index,
-    DI_list: dwarf_list,
-    DI_i32: dwarf_i32,
-    DI_string: dwarf_string,
-    DI_file: dwarf_file,
-    DI_compile_unit: dwarf_compile_unit,
-    DI_basic_type: dwarf_basic_type,
-    DI_structure_type: dwarf_structure_type,
-    DI_union_type: dwarf_union_type,
-    DI_enum_type: dwarf_enum_type,
-    DI_enumerator: dwarf_enumerator,
-    DI_subprogram: dwarf_subprogram,
-    DI_subroutine: dwarf_subroutine,
-    DI_location: dwarf_location,
-    DW_TAG_pointer_type: dwarf_tag_pointer_type,
-    DW_TAG_member: dwarf_tag_member
+pub union(DI_kind) DI_node {
+    DI_null: DI_null,
+    DI_named_metadata: DI_named_metadata,
+    DI_ref_index: DI_ref_index,
+    DI_list: DI_list,
+    DI_i32: DI_i32,
+    DI_string: DI_string,
+    DI_file: DI_file,
+    DI_compile_unit: DI_compile_unit,
+    DI_basic_type: DI_basic_type,
+    DI_structure_type: DI_structure_type,
+    DI_union_type: DI_union_type,
+    DI_enum_type: DI_enum_type,
+    DI_enumerator: DI_enumerator,
+    DI_subprogram: DI_subprogram,
+    DI_subroutine: DI_subroutine,
+    DI_location: DI_location,
+    DW_TAG_pointer_type: DI_tag_pointer_type,
+    DW_TAG_member: DI_tag_member
+}
+
+impl DI_node {
+    pub func dump(self, out: io) {
+        match (self) {
+            DI_kind::DI_null => {
+                out.out("null");
+            }
+            DI_kind::DI_named_metadata => {
+                self->DI_named_metadata.dump(out);
+            }
+            DI_kind::DI_ref_index => {
+                self->DI_ref_index.dump(out);
+            }
+            _ => { unimplemented(); }
+        }
+    }
+
+    pub func delete(self) {
+        // TODO
+        match (self) {
+            DI_kind::DI_null => {}
+            DI_kind::DI_named_metadata => {
+                self->DI_named_metadata.delete();
+            }
+            DI_kind::DI_ref_index => {}
+            _ => { unimplemented(); }
+        }
+    }
+}
+
+// for example:
+//   null
+// expect not to have an index
+struct DI_null {}
+
+impl DI_null {
+    pub func new() -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node { DI_null: DI_null {} };
+        return res;
+    }
 }
 
 // for example:
 //   !llvm.ident = !{!0}
 //    ^^^^^^^^^^ named metadata uses identifier as the name, not index
-struct dwarf_named_metadata {
+struct DI_named_metadata {
     index: u64,
     name: str,
-    nodes: vec<dwarf_node*>
+    nodes: vec<DI_node*>
+}
+
+impl DI_named_metadata {
+    pub func new(name: i8*) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_named_metadata: DI_named_metadata {
+                index: DI_ERROR_INDEX(),
+                name: str::from(name),
+                nodes: vec<DI_node*>::instance()
+            }
+        };
+        return res;
+    }
+
+    pub func delete(self) {
+        self->name.delete();
+        foreach (var i; self->nodes) {
+            var n = i.get();
+            n->delete();
+            free(n => i8*);
+        }
+        self->nodes.delete();
+    }
+
+    pub func add(self, n: DI_node*) {
+        self->nodes.push(n);
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!").out(self->name.c_str).out(" = !{");
+        foreach (var i; self->nodes) {
+            i.get()->dump(out);
+            if (i.index() != self->nodes.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out("}");
+    }
 }
 
 // for example
 //   !1
 // expect not to have an index
-struct dwarf_ref_index {
+struct DI_ref_index {
     ref_index: u64
+}
+
+impl DI_ref_index {
+    pub func new(index: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_ref_index: DI_ref_index { ref_index: index }
+        };
+        return res;
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!").out_u64(self->ref_index);
+    }
 }
 
 // for example
 //   !0 = !{ !1, !2, !3 }
-struct dwarf_list {
+struct DI_list {
     index: u64,
-    nodes: vec<dwarf_node*>
+    nodes: vec<DI_node*>
 }
 
 // for example
 //   i32 42
 // expect not to have an index
-struct dwarf_i32 {
+struct DI_i32 {
     value: i32
 }
 
 // for example
 //   !"foo"
 // expect not to have an index
-struct dwarf_string {
+struct DI_string {
     value: str
 }
 
 // for example
 //   !0 = !DIFile(filename: "src/std/libc.colgm", directory: "/usr/lib/colgm")
-struct dwarf_file {
+struct DI_file {
     index: u64,
     filename: str,
     directory: str
 }
 
-struct dwarf_compile_unit {
+struct DI_compile_unit {
     index: u64,
     producer: str,
     file_index: u64,
@@ -80,14 +175,14 @@ struct dwarf_compile_unit {
     enums_index: u64
 }
 
-struct dwarf_basic_type {
+struct DI_basic_type {
     index: u64,
     name: str,
     size_in_bits: u64,
     encoding: str
 }
 
-struct dwarf_structure_type {
+struct DI_structure_type {
     index: u64,
     name: str,
     identifier: str,
@@ -96,7 +191,7 @@ struct dwarf_structure_type {
     elements: u64
 }
 
-struct dwarf_union_type {
+struct DI_union_type {
     index: u64,
     name: str,
     identifier: str,
@@ -105,7 +200,7 @@ struct dwarf_union_type {
     elements: u64
 }
 
-struct dwarf_enum_type {
+struct DI_enum_type {
     index: u64,
     name: str,
     identifier: str,
@@ -115,13 +210,13 @@ struct dwarf_enum_type {
     elements_index: u64
 }
 
-struct dwarf_enumerator {
+struct DI_enumerator {
     index: u64,
     name: str,
     value: i64
 }
 
-struct dwarf_subprogram {
+struct DI_subprogram {
     index: u64,
     name: str,
     file_index: u64,
@@ -130,12 +225,12 @@ struct dwarf_subprogram {
     compile_unit_index: u64
 }
 
-struct dwarf_subroutine {
+struct DI_subroutine {
     index: u64,
     types_index: u64
 }
 
-struct dwarf_location {
+struct DI_location {
     index: u64,
     file: str,
     line: i64,
@@ -143,14 +238,14 @@ struct dwarf_location {
     scope_index: u64
 }
 
-struct dwarf_tag_pointer_type {
+struct DI_tag_pointer_type {
     index: u64,
     base_type_index: u64,
     size: u64,
     name: str
 }
 
-struct dwarf_tag_member {
+struct DI_tag_member {
     index: u64,
     name: str,
     scope_index: u64,
