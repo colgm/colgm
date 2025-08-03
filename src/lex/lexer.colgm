@@ -694,13 +694,14 @@ impl lexer {
     func generate_ellipsis(self, src: str*) {
         var loc = span::instance();
         defer loc.delete();
+
         loc.file.copy_const(self->filename.c_str);
         loc.begin_line = self->line;
         loc.begin_column = self->column;
 
-        var tmp = str::instance();
+        var tmp = str::from(".");
         defer tmp.delete();
-        tmp.append_char('.');
+
         self->pos += 1;
         self->column += 1;
 
@@ -738,13 +739,14 @@ impl lexer {
     }
 
     func generate_eof_token(self) {
-        var eof_span = span::instance();
+        var eof_span = span::create_full(
+            self->line,
+            self->column,
+            self->line,
+            self->column,
+            self->filename.__ptr__()
+        );
         defer eof_span.delete();
-        eof_span.file.copy_const(self->filename.c_str);
-        eof_span.begin_line = self->line;
-        eof_span.begin_column = self->column;
-        eof_span.end_line = self->line;
-        eof_span.end_column = self->column;
 
         var eof_content = str::from("<eof>");
         defer eof_content.delete();

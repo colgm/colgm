@@ -14,35 +14,58 @@ pub union(DI_kind) dwarf_node {
     DI_i32: dwarf_i32,
     DI_string: dwarf_string,
     DI_file: dwarf_file,
-    DI_compile_unit: dwarf_compile_unit
+    DI_compile_unit: dwarf_compile_unit,
+    DI_basic_type: dwarf_basic_type,
+    DI_structure_type: dwarf_structure_type,
+    DI_union_type: dwarf_union_type,
+    DI_enum_type: dwarf_enum_type,
+    DI_enumerator: dwarf_enumerator,
+    DI_subprogram: dwarf_subprogram,
+    DI_subroutine: dwarf_subroutine,
+    DI_location: dwarf_location,
+    DW_TAG_pointer_type: dwarf_tag_pointer_type,
+    DW_TAG_member: dwarf_tag_member
 }
 
+// for example:
+//   !llvm.ident = !{!0}
+//    ^^^^^^^^^^ named metadata uses identifier as the name, not index
 struct dwarf_named_metadata {
     index: u64,
     name: str,
     nodes: vec<dwarf_node*>
 }
 
+// for example
+//   !1
+// expect not to have an index
 struct dwarf_ref_index {
-    index: u64,
     ref_index: u64
 }
 
+// for example
+//   !0 = !{ !1, !2, !3 }
 struct dwarf_list {
     index: u64,
     nodes: vec<dwarf_node*>
 }
 
+// for example
+//   i32 42
+// expect not to have an index
 struct dwarf_i32 {
-    index: u64,
     value: i32
 }
 
+// for example
+//   !"foo"
+// expect not to have an index
 struct dwarf_string {
-    index: u64,
     value: str
 }
 
+// for example
+//   !0 = !DIFile(filename: "src/std/libc.colgm", directory: "/usr/lib/colgm")
 struct dwarf_file {
     index: u64,
     filename: str,
@@ -55,4 +78,83 @@ struct dwarf_compile_unit {
     file_index: u64,
     imports_index: u64,
     enums_index: u64
+}
+
+struct dwarf_basic_type {
+    index: u64,
+    name: str,
+    size_in_bits: u64,
+    encoding: str
+}
+
+struct dwarf_structure_type {
+    index: u64,
+    name: str,
+    identifier: str,
+    file_index: u64,
+    line: i64,
+    elements: u64
+}
+
+struct dwarf_union_type {
+    index: u64,
+    name: str,
+    identifier: str,
+    file_index: u64,
+    line: i64,
+    elements: u64
+}
+
+struct dwarf_enum_type {
+    index: u64,
+    name: str,
+    identifier: str,
+    file_index: u64,
+    line: i64,
+    base_type_index: u64,
+    elements_index: u64
+}
+
+struct dwarf_enumerator {
+    index: u64,
+    name: str,
+    value: i64
+}
+
+struct dwarf_subprogram {
+    index: u64,
+    name: str,
+    file_index: u64,
+    line: i64,
+    type_index: u64,
+    compile_unit_index: u64
+}
+
+struct dwarf_subroutine {
+    index: u64,
+    types_index: u64
+}
+
+struct dwarf_location {
+    index: u64,
+    file: str,
+    line: i64,
+    column: i64,
+    scope_index: u64
+}
+
+struct dwarf_tag_pointer_type {
+    index: u64,
+    base_type_index: u64,
+    size: u64,
+    name: str
+}
+
+struct dwarf_tag_member {
+    index: u64,
+    name: str,
+    scope_index: u64,
+    file_index: u64,
+    line: i64,
+    base_type_index: u64
 }
