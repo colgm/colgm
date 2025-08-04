@@ -4,6 +4,25 @@
 
 #include <iomanip>
 
+#if defined __APPLE__
+#include <sys/sysctl.h>
+
+std::string mac_version() {
+    char os_temp[20];
+    auto os_temp_len = sizeof(os_temp);
+    auto res = sysctlbyname("kern.osproductversion", os_temp, &os_temp_len, nullptr, 0);
+
+    return res == 0 ? std::string(os_temp) : "";
+}
+
+std::string mac_major_version() {
+    auto v = mac_version();
+    auto pos = v.find('.');
+    return pos != std::string::npos ? v.substr(0, pos) : "";
+}
+
+#endif
+
 namespace colgm {
 
 const auto sir_struct::get_mangled_name() const {
@@ -112,7 +131,16 @@ void sir_context::dump_target_tripple(std::ostream& out) const {
         out << "target triple = \"aarch64-unknown-linux-gnu\"\n\n";
     }
     if (platform == "macos" && arch == "aarch64") {
+#if defined __APPLE__
+        auto major = mac_major_version();
+        if (!major.empty()) {
+            out << "target triple = \"arm64-apple-macosx" << major << ".0.0\"\n\n";
+        } else {
+            out << "target triple = \"arm64-apple-macosx12.0.0\"\n\n";
+        }
+#else
         out << "target triple = \"arm64-apple-macosx12.0.0\"\n\n";
+#endif
     }
 }
 
