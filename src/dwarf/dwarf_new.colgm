@@ -39,6 +39,21 @@ impl DI_node {
             DI_kind::DI_ref_index => {
                 self->DI_ref_index.dump(out);
             }
+            DI_kind::DI_list => {
+                self->DI_list.dump(out);
+            }
+            DI_kind::DI_i32 => {
+                self->DI_i32.dump(out);
+            }
+            DI_kind::DI_string => {
+                self->DI_string.dump(out);
+            }
+            DI_kind::DI_file => {
+                self->DI_file.dump(out);
+            }
+            DI_kind::DI_compile_unit => {
+                self->DI_compile_unit.dump(out);
+            }
             _ => { unimplemented(); }
         }
     }
@@ -51,6 +66,19 @@ impl DI_node {
                 self->DI_named_metadata.delete();
             }
             DI_kind::DI_ref_index => {}
+            DI_kind::DI_list => {
+                self->DI_list.delete();
+            }
+            DI_kind::DI_i32 => {}
+            DI_kind::DI_string => {
+                self->DI_string.delete();
+            }
+            DI_kind::DI_file => {
+                self->DI_file.delete();
+            }
+            DI_kind::DI_compile_unit => {
+                self->DI_compile_unit.delete();
+            }
             _ => { unimplemented(); }
         }
     }
@@ -145,6 +173,43 @@ struct DI_list {
     nodes: vec<DI_node*>
 }
 
+impl DI_list {
+    pub func new(i: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_list: DI_list {
+                index: i,
+                nodes: vec<DI_node*>::instance()
+            }
+        };
+        return res;
+    }
+
+    pub func delete(self) {
+        foreach (var i; self->nodes) {
+            var n = i.get();
+            n->delete();
+            free(n => i8*);
+        }
+        self->nodes.delete();
+    }
+
+    pub func add(self, n: DI_node*) {
+        self->nodes.push(n);
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!{");
+        foreach (var i; self->nodes) {
+            i.get()->dump(out);
+            if (i.index() != self->nodes.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out("}");
+    }
+}
+
 // for example
 //   i32 42
 // expect not to have an index
@@ -152,11 +217,43 @@ struct DI_i32 {
     value: i32
 }
 
+impl DI_i32 {
+    pub func new(value: i32) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_i32: DI_i32 { value: value }
+        };
+        return res;
+    }
+
+    pub func dump(self, out: io) {
+        out.out("i32 ").out_i64(self->value => i64);
+    }
+}
+
 // for example
 //   !"foo"
 // expect not to have an index
 struct DI_string {
     value: str
+}
+
+impl DI_string {
+    pub func new(value: i8*) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_string: DI_string { value: str::from(value) }
+        };
+        return res;
+    }
+
+    pub func delete(self) {
+        self->value.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!\"").out(self->value.c_str).out("\"");
+    }
 }
 
 // for example
@@ -167,12 +264,70 @@ struct DI_file {
     directory: str
 }
 
+impl DI_file {
+    pub func new(i: u64, f: i8*, d: i8*) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_file: DI_file {
+                index: i,
+                filename: str::from(f),
+                directory: str::from(d)
+            }
+        };
+        return res;
+    }
+
+    pub func delete(self) {
+        self->filename.delete();
+        self->directory.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("!DIFile(filename: \"").out(self->filename.c_str);
+        out.out("\", directory: \"").out(self->directory.c_str).out("\")");
+    }
+}
+
 struct DI_compile_unit {
     index: u64,
     producer: str,
     file_index: u64,
     imports_index: u64,
     enums_index: u64
+}
+
+impl DI_compile_unit {
+    pub func new(i: u64, p: i8*, fi: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_compile_unit: DI_compile_unit {
+                index: i,
+                producer: str::from(p),
+                file_index: fi,
+                imports_index: DI_ERROR_INDEX(),
+                enums_index: DI_ERROR_INDEX()
+            }
+        };
+        return res;
+    }
+
+    pub func delete(self) {
+        self->producer.delete();
+    }
+
+    pub func dump(self, out: io) {
+        out.out("distinct !DICompileUnit(");
+        out.out("language: DW_LANG_C99, ");
+        out.out("file: !").out_u64(self->file_index).out(", ");
+        out.out("producer: \"").out(self->producer.c_str).out("\", ");
+        if (self->imports_index != DI_ERROR_INDEX()) {
+            out.out("imports: !").out_u64(self->imports_index).out(", ");
+        }
+        if (self->enums_index != DI_ERROR_INDEX()) {
+            out.out("enums: !").out_u64(self->enums_index).out(", ");
+        }
+        out.out("isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)");
+    }
 }
 
 struct DI_basic_type {
