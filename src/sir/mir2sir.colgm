@@ -3150,14 +3150,14 @@ impl mir2sir {
         defer temp.delete();
 
         // recursively generate DI type for pointer type
-        var p: DW_TAG_pointer_type* = nil;
+        var p: DI_node* = nil;
         while (temp.back() == '*') {
             if (self->sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
-                p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__());
+                p->get_DW_TAG_pointer_type()->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__());
                 break;
             }
             if (p != nil) {
-                p->base_type_index = self->dwarf_status.DI_counter;
+                p->get_DW_TAG_pointer_type()->base_type_index = self->dwarf_status.DI_counter;
             }
             p = DW_TAG_pointer_type::new(
                 self->dwarf_status.DI_counter,
@@ -3172,7 +3172,7 @@ impl mir2sir {
         }
 
         if (self->sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
-            p->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__());
+            p->get_DW_TAG_pointer_type()->base_type_index = self->sctx->DI_type_map.get(temp.__ptr__());
         } else {
             var info = str::from("cannot generate DI_type for \"");
             info.append(n->c_str)->append("\"");
@@ -3227,7 +3227,7 @@ impl mir2sir {
         // will do DI_counter + 1 here
         var DI_loc = self->dwarf_status.new_DI_location(loc);
         self->sctx->debug_info.push(DI_loc => DI_node*);
-        return DI_loc->get_index();
+        return DI_loc->index();
     }
 
     func generate_llvm_ident(self) {
@@ -3339,7 +3339,7 @@ impl mir2sir {
         }
     }
 
-    func generate_llvm_dbg_cu(self) -> DI_compile_unit* {
+    func generate_llvm_dbg_cu(self) -> DI_node* {
         var llvm_dbg_cu = DI_named_metadata::new("llvm.dbg.cu");
         self->sctx->named_metadata.push(llvm_dbg_cu);
 
@@ -3491,7 +3491,7 @@ impl mir2sir {
 
         var enum_list = DI_list::new(self->dwarf_status.DI_counter);
         self->sctx->debug_info.push(enum_list => DI_node*);
-        tmp->elements_index = self->dwarf_status.DI_counter;
+        tmp->get_DI_enum_type()->elements_index = self->dwarf_status.DI_counter;
         self->dwarf_status.DI_counter += 1;
 
         foreach (var i; e->ordered_member) {
@@ -3504,7 +3504,7 @@ impl mir2sir {
             self->dwarf_status.DI_counter += 1;
         }
 
-        return tmp->base.index;
+        return tmp->index();
     }
 
     func generate_DI_enum_type(self) -> u64 {
@@ -3519,7 +3519,7 @@ impl mir2sir {
             }
         }
 
-        return enums_list->base.index;
+        return enums_list->index();
     }
 
     func generate_single_DI_struct(self, s: colgm_struct*) {
@@ -3594,7 +3594,7 @@ impl mir2sir {
         var s_node = self->sctx->DI_struct_map.get(id.__ptr__());
 
         var element = DI_list::new(self->dwarf_status.DI_counter);
-        s_node->elements = self->dwarf_status.DI_counter;
+        s_node->get_DI_structure_type()->elements = self->dwarf_status.DI_counter;
         self->sctx->debug_info.push(element => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
@@ -3606,7 +3606,7 @@ impl mir2sir {
             var field_node = DW_TAG_member::new(
                 self->dwarf_status.DI_counter,
                 member->c_str,
-                s_node->base.index,
+                s_node->index(),
                 self->sctx->DI_file_map.get(member_span->file.__ptr__()),
                 member_span->begin_line + 1,
                 member_type_index
@@ -3637,7 +3637,7 @@ impl mir2sir {
         var u_node = self->sctx->DI_union_map.get(id.__ptr__());
 
         var element = DI_list::new(self->dwarf_status.DI_counter);
-        u_node->elements = self->dwarf_status.DI_counter;
+        u_node->get_DI_union_type()->elements = self->dwarf_status.DI_counter;
         self->sctx->debug_info.push(element => DI_node*);
         self->dwarf_status.DI_counter += 1;
 
@@ -3649,7 +3649,7 @@ impl mir2sir {
             var field_node = DW_TAG_member::new(
                 self->dwarf_status.DI_counter,
                 member->c_str,
-                u_node->base.index,
+                u_node->index(),
                 self->sctx->DI_file_map.get(member_span->file.__ptr__()),
                 member_span->begin_line + 1,
                 member_type_index
@@ -3726,7 +3726,7 @@ impl mir2sir {
 
         // generate info for base types
         self->generate_basic_type();
-        cu->enums_index = self->generate_DI_enum_type();
+        cu->get_DI_compile_unit()->enums_index = self->generate_DI_enum_type();
         self->generate_DI_structure_type();
         self->generate_DI_tagged_union_type();
 

@@ -314,12 +314,12 @@ pub struct sir_context {
     func_impls: vec<sir_func>,
     const_strings: hashmap<str, u64>,
 
-    named_metadata: vec<DI_named_metadata*>,
+    named_metadata: vec<DI_node*>,
     debug_info: vec<DI_node*>,
     DI_file_map: hashmap<str, u64>,
     DI_type_map: hashmap<str, u64>,
-    DI_struct_map: hashmap<str, DI_structure_type*>,
-    DI_union_map: hashmap<str, DI_union_type*>,
+    DI_struct_map: hashmap<str, DI_node*>,
+    DI_union_map: hashmap<str, DI_node*>,
 
     pkg: package*
 }
@@ -332,12 +332,12 @@ impl sir_context {
             func_decls: vec<sir_func>::instance(),
             func_impls: vec<sir_func>::instance(),
             const_strings: hashmap<str, u64>::instance(),
-            named_metadata: vec<DI_named_metadata*>::instance(),
+            named_metadata: vec<DI_node*>::instance(),
             debug_info: vec<DI_node*>::instance(),
             DI_file_map: hashmap<str, u64>::instance(),
             DI_type_map: hashmap<str, u64>::instance(),
-            DI_struct_map: hashmap<str, DI_structure_type*>::instance(),
-            DI_union_map: hashmap<str, DI_union_type*>::instance(),
+            DI_struct_map: hashmap<str, DI_node*>::instance(),
+            DI_union_map: hashmap<str, DI_node*>::instance(),
             pkg: pkg
         };
     }
@@ -375,24 +375,18 @@ impl sir_context {
         self->DI_type_map.insert(temp.__ptr__(), index);
     }
 
-    pub func add_DI_struct(self, name: i8*, node: DI_structure_type*) {
+    pub func add_DI_struct(self, name: i8*, node: DI_node*) {
         var temp = str::from(name);
         defer temp.delete();
 
-        self->DI_struct_map.insert(
-            temp.__ptr__(),
-            node
-        );
+        self->DI_struct_map.insert(temp.__ptr__(), node);
     }
 
-    pub func add_DI_union(self, name: i8*, node: DI_union_type*) {
+    pub func add_DI_union(self, name: i8*, node: DI_node*) {
         var temp = str::from(name);
         defer temp.delete();
 
-        self->DI_union_map.insert(
-            temp.__ptr__(),
-            node
-        );
+        self->DI_union_map.insert(temp.__ptr__(), node);
     }
 }
 

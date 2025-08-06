@@ -2,7 +2,7 @@ use std::io::{ io };
 use std::str::{ str };
 use std::vec::{ vec };
 use std::libc::{ free };
-use std::panic::{ unimplemented };
+use std::panic::{ panic, unimplemented };
 
 pub enum DI_kind {
     DI_null,
@@ -29,184 +29,251 @@ pub func DI_ERROR_INDEX() -> u64 {
     return 0xffffffffffffffff;
 }
 
-pub struct DI_node {
-    kind: DI_kind,
-    index: u64
+pub union(DI_kind) DI_node {
+    DI_null: DI_null,
+    DI_named_metadata: DI_named_metadata,
+    DI_ref_index: DI_ref_index,
+    DI_list: DI_list,
+    DI_i32: DI_i32,
+    DI_string: DI_string,
+    DI_file: DI_file,
+    DI_compile_unit: DI_compile_unit,
+    DI_basic_type: DI_basic_type,
+    DI_structure_type: DI_structure_type,
+    DI_union_type: DI_union_type,
+    DI_enum_type: DI_enum_type,
+    DI_enumerator: DI_enumerator,
+    DI_subprogram: DI_subprogram,
+    DI_subroutine: DI_subroutine,
+    DI_location: DI_location,
+    DW_TAG_pointer_type: DW_TAG_pointer_type,
+    DW_TAG_member: DW_TAG_member
 }
 
 impl DI_node {
-    pub func instance(k: DI_kind, i: u64) -> DI_node {
-        return DI_node {
-            kind: k,
-            index: i
-        };
+    pub func add(self, n: DI_node*) {
+        match (self) {
+            DI_kind::DI_named_metadata => {
+                self->DI_named_metadata.add(n);
+            }
+            DI_kind::DI_list => {
+                self->DI_list.add(n);
+            }
+            _ => { panic("DI_node::add: invalid DI_node kind"); }
+        }
+    }
+
+    pub func index(self) -> u64 {
+        match (self) {
+            DI_kind::DI_null => {}
+            DI_kind::DI_named_metadata => return self->DI_named_metadata.index;
+            DI_kind::DI_ref_index => {}
+            DI_kind::DI_list => return self->DI_list.index;
+            DI_kind::DI_i32 => {}
+            DI_kind::DI_string => {}
+            DI_kind::DI_file => return self->DI_file.index;
+            DI_kind::DI_compile_unit => return self->DI_compile_unit.index;
+            DI_kind::DI_basic_type => return self->DI_basic_type.index;
+            DI_kind::DI_structure_type => return self->DI_structure_type.index;
+            DI_kind::DI_union_type => return self->DI_union_type.index;
+            DI_kind::DI_enum_type => return self->DI_enum_type.index;
+            DI_kind::DI_enumerator => return self->DI_enumerator.index;
+            DI_kind::DI_subprogram => return self->DI_subprogram.index;
+            DI_kind::DI_subroutine => return self->DI_subroutine.index;
+            DI_kind::DI_location => return self->DI_location.index;
+            DI_kind::DW_TAG_pointer_type => return self->DW_TAG_pointer_type.index;
+            DI_kind::DW_TAG_member => return self->DW_TAG_member.index;
+        }
+        return DI_ERROR_INDEX();
+    }
+
+    pub func dump(self, out: io) {
+        var index = self->index();
+        if (index != DI_ERROR_INDEX()) {
+            out.out("!").out_u64(index).out(" = ");
+        }
+        match (self) {
+            DI_kind::DI_null => {
+                out.out("null");
+            }
+            DI_kind::DI_named_metadata => {
+                self->DI_named_metadata.dump(out);
+            }
+            DI_kind::DI_ref_index => {
+                self->DI_ref_index.dump(out);
+            }
+            DI_kind::DI_list => {
+                self->DI_list.dump(out);
+            }
+            DI_kind::DI_i32 => {
+                self->DI_i32.dump(out);
+            }
+            DI_kind::DI_string => {
+                self->DI_string.dump(out);
+            }
+            DI_kind::DI_file => {
+                self->DI_file.dump(out);
+            }
+            DI_kind::DI_compile_unit => {
+                self->DI_compile_unit.dump(out);
+            }
+            DI_kind::DI_basic_type => {
+                self->DI_basic_type.dump(out);
+            }
+            DI_kind::DI_structure_type => {
+                self->DI_structure_type.dump(out);
+            }
+            DI_kind::DI_union_type => {
+                self->DI_union_type.dump(out);
+            }
+            DI_kind::DI_enum_type => {
+                self->DI_enum_type.dump(out);
+            }
+            DI_kind::DI_enumerator => {
+                self->DI_enumerator.dump(out);
+            }
+            DI_kind::DI_subprogram => {
+                self->DI_subprogram.dump(out);
+            }
+            DI_kind::DI_subroutine => {
+                self->DI_subroutine.dump(out);
+            }
+            DI_kind::DI_location => {
+                self->DI_location.dump(out);
+            }
+            DI_kind::DW_TAG_pointer_type => {
+                self->DW_TAG_pointer_type.dump(out);
+            }
+            DI_kind::DW_TAG_member => {
+                self->DW_TAG_member.dump(out);
+            }
+        }
     }
 
     pub func delete(self) {
-        match (self->kind) {
+        match (self) {
             DI_kind::DI_null => {}
             DI_kind::DI_named_metadata => {
-                var n = self => DI_named_metadata*;
-                n->delete();
+                self->DI_named_metadata.delete();
             }
             DI_kind::DI_ref_index => {}
             DI_kind::DI_list => {
-                var n = self => DI_list*;
-                n->delete();
+                self->DI_list.delete();
             }
             DI_kind::DI_i32 => {}
             DI_kind::DI_string => {
-                var n = self => DI_string*;
-                n->delete();
+                self->DI_string.delete();
             }
             DI_kind::DI_file => {
-                var n = self => DI_file*;
-                n->delete();
+                self->DI_file.delete();
             }
             DI_kind::DI_compile_unit => {
-                var n = self => DI_compile_unit*;
-                n->delete();
+                self->DI_compile_unit.delete();
             }
             DI_kind::DI_basic_type => {
-                var n = self => DI_basic_type*;
-                n->delete();
+                self->DI_basic_type.delete();
             }
             DI_kind::DI_structure_type => {
-                var n = self => DI_structure_type*;
-                n->delete();
+                self->DI_structure_type.delete();
             }
             DI_kind::DI_union_type => {
-                var n = self => DI_union_type*;
-                n->delete();
+                self->DI_union_type.delete();
             }
             DI_kind::DI_enum_type => {
-                var n = self => DI_enum_type*;
-                n->delete();
+                self->DI_enum_type.delete();
             }
             DI_kind::DI_enumerator => {
-                var n = self => DI_enumerator*;
-                n->delete();
+                self->DI_enumerator.delete();
             }
             DI_kind::DI_subprogram => {
-                var n = self => DI_subprogram*;
-                n->delete();
+                self->DI_subprogram.delete();
             }
             DI_kind::DI_subroutine => {}
             DI_kind::DI_location => {
-                var n = self => DI_location*;
-                n->delete();
+                self->DI_location.delete();
             }
             DI_kind::DW_TAG_pointer_type => {
-                var n = self => DW_TAG_pointer_type*;
-                n->delete();
+                self->DW_TAG_pointer_type.delete();
             }
             DI_kind::DW_TAG_member => {
-                var n = self => DW_TAG_member*;
-                n->delete();
+                self->DW_TAG_member.delete();
             }
-            _ => unimplemented();
         }
     }
+}
 
-    pub func dump_index(self, out: io) {
-        if (self->index != DI_ERROR_INDEX()) {
-            out.out("!").out_u64(self->index).out(" = ");
+impl DI_node {
+    pub func get_DW_TAG_pointer_type(self) -> DW_TAG_pointer_type* {
+        match (self) {
+            DI_kind::DW_TAG_pointer_type => {
+                return self->DW_TAG_pointer_type.__ptr__();
+            }
+            _ => {
+                panic("get_pointer_type: not a DW_TAG_pointer_type");
+            }
         }
+        return nil;
     }
 
-    pub func dump(self, out: io) {
-        self->dump_index(out);
-        match (self->kind) {
-            DI_kind::DI_null => {
-                var n = self => DI_null*;
-                n->dump(out);
-            }
-            DI_kind::DI_named_metadata => {
-                var n = self => DI_named_metadata*;
-                n->dump(out);
-            }
-            DI_kind::DI_ref_index => {
-                var n = self => DI_ref_index*;
-                n->dump(out);
-            }
-            DI_kind::DI_list => {
-                var n = self => DI_list*;
-                n->dump(out);
-            }
-            DI_kind::DI_i32 => {
-                var n = self => DI_i32*;
-                n->dump(out);
-            }
-            DI_kind::DI_string => {
-                var n = self => DI_string*;
-                n->dump(out);
-            }
-            DI_kind::DI_file => {
-                var n = self => DI_file*;
-                n->dump(out);
-            }
-            DI_kind::DI_compile_unit => {
-                var n = self => DI_compile_unit*;
-                n->dump(out);
-            }
-            DI_kind::DI_basic_type => {
-                var n = self => DI_basic_type*;
-                n->dump(out);
-            }
-            DI_kind::DI_structure_type => {
-                var n = self => DI_structure_type*;
-                n->dump(out);
-            }
-            DI_kind::DI_union_type => {
-                var n = self => DI_union_type*;
-                n->dump(out);
-            }
+    pub func get_DI_enum_type(self) -> DI_enum_type* {
+        match (self) {
             DI_kind::DI_enum_type => {
-                var n = self => DI_enum_type*;
-                n->dump(out);
+                return self->DI_enum_type.__ptr__();
             }
-            DI_kind::DI_enumerator => {
-                var n = self => DI_enumerator*;
-                n->dump(out);
+            _ => {
+                panic("get_DI_enum_type: not a DI_enum_type");
             }
-            DI_kind::DI_subprogram => {
-                var n = self => DI_subprogram*;
-                n->dump(out);
-            }
-            DI_kind::DI_subroutine => {
-                var n = self => DI_subroutine*;
-                n->dump(out);
-            }
-            DI_kind::DI_location => {
-                var n = self => DI_location*;
-                n->dump(out);
-            }
-            DI_kind::DW_TAG_pointer_type => {
-                var n = self => DW_TAG_pointer_type*;
-                n->dump(out);
-            }
-            DI_kind::DW_TAG_member => {
-                var n = self => DW_TAG_member*;
-                n->dump(out);
-            }
-            _ => unimplemented();
         }
+        return nil;
+    }
+
+    pub func get_DI_structure_type(self) -> DI_structure_type* {
+        match (self) {
+            DI_kind::DI_structure_type => {
+                return self->DI_structure_type.__ptr__();
+            }
+            _ => {
+                panic("get_DI_structure_type: not a DI_structure_type");
+            }
+        }
+        return nil;
+    }
+
+    pub func get_DI_union_type(self) -> DI_union_type* {
+        match (self) {
+            DI_kind::DI_union_type => {
+                return self->DI_union_type.__ptr__();
+            }
+            _ => {
+                panic("get_DI_union_type: not a DI_union_type");
+            }
+        }
+        return nil;
+    }
+
+    pub func get_DI_compile_unit(self) -> DI_compile_unit* {
+        match (self) {
+            DI_kind::DI_compile_unit => {
+                return self->DI_compile_unit.__ptr__();
+            }
+            _ => {
+                panic("get_DI_compile_unit: not a DI_compile_unit");
+            }
+        }
+        return nil;
     }
 }
 
-pub struct DI_null {
-    base: DI_node
-}
+// for example:
+//   null
+// expect not to have an index
+pub struct DI_null {}
 
 impl DI_null {
-    pub func new() -> DI_null* {
-        var res = DI_null::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_null, DI_ERROR_INDEX());
+    pub func new() -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node { DI_null: DI_null {} };
         return res;
-    }
-
-    pub func dump(self, out: io) {
-        out.out("null");
     }
 }
 
@@ -214,17 +281,21 @@ impl DI_null {
 //   !llvm.ident = !{!0}
 //    ^^^^^^^^^^ named metadata uses identifier as the name, not index
 pub struct DI_named_metadata {
-    base: DI_node,
+    index: u64,
     name: str,
     nodes: vec<DI_node*>
 }
 
 impl DI_named_metadata {
-    pub func new(name: i8*) -> DI_named_metadata* {
-        var res = DI_named_metadata::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_named_metadata, DI_ERROR_INDEX());
-        res->name = str::from(name);
-        res->nodes = vec<DI_node*>::instance();
+    pub func new(name: i8*) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_named_metadata: DI_named_metadata {
+                index: DI_ERROR_INDEX(),
+                name: str::from(name),
+                nodes: vec<DI_node*>::instance()
+            }
+        };
         return res;
     }
 
@@ -258,35 +329,39 @@ impl DI_named_metadata {
 //   !1
 // expect not to have an index
 pub struct DI_ref_index {
-    base: DI_node,
-    index: u64
+    ref_index: u64
 }
 
 impl DI_ref_index {
-    pub func new(index: u64) -> DI_ref_index* {
-        var res = DI_ref_index::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_ref_index, DI_ERROR_INDEX());
-        res->index = index;
+    pub func new(index: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_ref_index: DI_ref_index { ref_index: index }
+        };
         return res;
     }
 
     pub func dump(self, out: io) {
-        out.out("!").out_u64(self->index);
+        out.out("!").out_u64(self->ref_index);
     }
 }
 
 // for example
 //   !0 = !{ !1, !2, !3 }
 pub struct DI_list {
-    base: DI_node,
+    index: u64,
     nodes: vec<DI_node*>
 }
 
 impl DI_list {
-    pub func new(i: u64) -> DI_list* {
-        var res = DI_list::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_list, i);
-        res->nodes = vec<DI_node*>::instance();
+    pub func new(i: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_list: DI_list {
+                index: i,
+                nodes: vec<DI_node*>::instance()
+            }
+        };
         return res;
     }
 
@@ -319,15 +394,15 @@ impl DI_list {
 //   i32 42
 // expect not to have an index
 pub struct DI_i32 {
-    base: DI_node,
     value: i32
 }
 
 impl DI_i32 {
-    pub func new(value: i32) -> DI_i32* {
-        var res = DI_i32::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_i32, DI_ERROR_INDEX());
-        res->value = value;
+    pub func new(value: i32) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_i32: DI_i32 { value: value }
+        };
         return res;
     }
 
@@ -340,15 +415,15 @@ impl DI_i32 {
 //   !"foo"
 // expect not to have an index
 pub struct DI_string {
-    base: DI_node,
     value: str
 }
 
 impl DI_string {
-    pub func new(value: i8*) -> DI_string* {
-        var res = DI_string::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_string, DI_ERROR_INDEX());
-        res->value = str::from(value);
+    pub func new(value: i8*) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_string: DI_string { value: str::from(value) }
+        };
         return res;
     }
 
@@ -364,17 +439,21 @@ impl DI_string {
 // for example
 //   !0 = !DIFile(filename: "src/std/libc.colgm", directory: "/usr/lib/colgm")
 pub struct DI_file {
-    base: DI_node,
+    index: u64,
     filename: str,
     directory: str
 }
 
 impl DI_file {
-    pub func new(i: u64, f: i8*, d: i8*) -> DI_file* {
-        var res = DI_file::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_file, i);
-        res->filename = str::from(f);
-        res->directory = str::from(d);
+    pub func new(i: u64, f: i8*, d: i8*) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_file: DI_file {
+                index: i,
+                filename: str::from(f),
+                directory: str::from(d)
+            }
+        };
         return res;
     }
 
@@ -390,7 +469,7 @@ impl DI_file {
 }
 
 pub struct DI_compile_unit {
-    base: DI_node,
+    index: u64,
     producer: str,
     file_index: u64,
     imports_index: u64,
@@ -398,13 +477,17 @@ pub struct DI_compile_unit {
 }
 
 impl DI_compile_unit {
-    pub func new(i: u64, p: i8*, fi: u64) -> DI_compile_unit* {
-        var res = DI_compile_unit::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_compile_unit, i);
-        res->producer = str::from(p);
-        res->file_index = fi;
-        res->imports_index = DI_ERROR_INDEX();
-        res->enums_index = DI_ERROR_INDEX();
+    pub func new(i: u64, p: i8*, fi: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_compile_unit: DI_compile_unit {
+                index: i,
+                producer: str::from(p),
+                file_index: fi,
+                imports_index: DI_ERROR_INDEX(),
+                enums_index: DI_ERROR_INDEX()
+            }
+        };
         return res;
     }
 
@@ -428,19 +511,23 @@ impl DI_compile_unit {
 }
 
 pub struct DI_basic_type {
-    base: DI_node,
+    index: u64,
     name: str,
     size_in_bits: u64,
     encoding: str
 }
 
 impl DI_basic_type {
-    pub func new(i: u64, n: i8*, s: u64, e: i8*) -> DI_basic_type* {
-        var res = DI_basic_type::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_basic_type, i);
-        res->name = str::from(n);
-        res->size_in_bits = s;
-        res->encoding = str::from(e);
+    pub func new(i: u64, n: i8*, s: u64, e: i8*) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_basic_type: DI_basic_type {
+                index: i,
+                name: str::from(n),
+                size_in_bits: s,
+                encoding: str::from(e)
+            }
+        };
         return res;
     }
 
@@ -457,7 +544,7 @@ impl DI_basic_type {
 }
 
 pub struct DI_structure_type {
-    base: DI_node,
+    index: u64,
     name: str,
     identifier: str,
     file_index: u64,
@@ -466,14 +553,18 @@ pub struct DI_structure_type {
 }
 
 impl DI_structure_type {
-    pub func new(i: u64, n: i8*, id: i8*, fi: u64, l: i64) -> DI_structure_type* {
-        var res = DI_structure_type::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_structure_type, i);
-        res->name = str::from(n);
-        res->identifier = str::from(id);
-        res->file_index = fi;
-        res->line = l;
-        res->elements = DI_ERROR_INDEX();
+    pub func new(i: u64, n: i8*, id: i8*, fi: u64, l: i64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_structure_type: DI_structure_type {
+                index: i,
+                name: str::from(n),
+                identifier: str::from(id),
+                file_index: fi,
+                line: l,
+                elements: DI_ERROR_INDEX()
+            }
+        };
         return res;
     }
 
@@ -496,7 +587,7 @@ impl DI_structure_type {
 }
 
 pub struct DI_union_type {
-    base: DI_node,
+    index: u64,
     name: str,
     identifier: str,
     file_index: u64,
@@ -505,14 +596,18 @@ pub struct DI_union_type {
 }
 
 impl DI_union_type {
-    pub func new(i: u64, n: i8*, id: i8*, fi: u64, l: i64) -> DI_union_type* {
-        var res = DI_union_type::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_union_type, i);
-        res->name = str::from(n);
-        res->identifier = str::from(id);
-        res->file_index = fi;
-        res->line = l;
-        res->elements = DI_ERROR_INDEX();
+    pub func new(i: u64, n: i8*, id: i8*, fi: u64, l: i64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_union_type: DI_union_type {
+                index: i,
+                name: str::from(n),
+                identifier: str::from(id),
+                file_index: fi,
+                line: l,
+                elements: DI_ERROR_INDEX()
+            }
+        };
         return res;
     }
 
@@ -535,7 +630,7 @@ impl DI_union_type {
 }
 
 pub struct DI_enum_type {
-    base: DI_node,
+    index: u64,
     name: str,
     identifier: str,
     file_index: u64,
@@ -545,15 +640,19 @@ pub struct DI_enum_type {
 }
 
 impl DI_enum_type {
-    pub func new(i: u64, n: i8*, id: i8*, fi: u64, l: i64, bti: u64) -> DI_enum_type* {
-        var res = DI_enum_type::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_enum_type, i);
-        res->name = str::from(n);
-        res->identifier = str::from(id);
-        res->file_index = fi;
-        res->line = l;
-        res->base_type_index = bti;
-        res->elements_index = DI_ERROR_INDEX();
+    pub func new(i: u64, n: i8*, id: i8*, fi: u64, l: i64, bti: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_enum_type: DI_enum_type {
+                index: i,
+                name: str::from(n),
+                identifier: str::from(id),
+                file_index: fi,
+                line: l,
+                base_type_index: bti,
+                elements_index: DI_ERROR_INDEX()
+            }
+        };
         return res;
     }
 
@@ -576,17 +675,21 @@ impl DI_enum_type {
 }
 
 pub struct DI_enumerator {
-    base: DI_node,
+    index: u64,
     name: str,
     value: i64
 }
 
 impl DI_enumerator {
-    pub func new(i: u64, n: i8*, v: i64) -> DI_enumerator* {
-        var res = DI_enumerator::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_enumerator, i);
-        res->name = str::from(n);
-        res->value = v;
+    pub func new(i: u64, n: i8*, v: i64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_enumerator: DI_enumerator {
+                index: i,
+                name: str::from(n),
+                value: v
+            }
+        };
         return res;
     }
 
@@ -601,7 +704,7 @@ impl DI_enumerator {
 }
 
 pub struct DI_subprogram {
-    base: DI_node,
+    index: u64,
     name: str,
     file_index: u64,
     line: i64,
@@ -610,14 +713,18 @@ pub struct DI_subprogram {
 }
 
 impl DI_subprogram {
-    pub func new(i: u64, n: i8*, fi: u64, l: i64, ti: u64, cu: u64) -> DI_subprogram* {
-        var res = DI_subprogram::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_subprogram, i);
-        res->name = str::from(n);
-        res->file_index = fi;
-        res->line = l;
-        res->type_index = ti;
-        res->compile_unit_index = cu;
+    pub func new(i: u64, n: i8*, fi: u64, l: i64, ti: u64, cu: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_subprogram: DI_subprogram {
+                index: i,
+                name: str::from(n),
+                file_index: fi,
+                line: l,
+                type_index: ti,
+                compile_unit_index: cu
+            }
+        };
         return res;
     }
 
@@ -635,15 +742,19 @@ impl DI_subprogram {
 }
 
 pub struct DI_subroutine {
-    base: DI_node,
+    index: u64,
     types_index: u64
 }
 
 impl DI_subroutine {
-    pub func new(i: u64, ti: u64) -> DI_subroutine* {
-        var res = DI_subroutine::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_subroutine, i);
-        res->types_index = ti;
+    pub func new(i: u64, ti: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_subroutine: DI_subroutine {
+                index: i,
+                types_index: ti
+            }
+        };
         return res;
     }
 
@@ -653,7 +764,7 @@ impl DI_subroutine {
 }
 
 pub struct DI_location {
-    base: DI_node,
+    index: u64,
     file: str,
     line: i64,
     column: i64,
@@ -661,22 +772,22 @@ pub struct DI_location {
 }
 
 impl DI_location {
-    pub func new(i: u64, f: i8*, l: i64, c: i64, si: u64) -> DI_location* {
-        var res = DI_location::__alloc__();
-        res->base = DI_node::instance(DI_kind::DI_location, i);
-        res->file = str::from(f);
-        res->line = l;
-        res->column = c;
-        res->scope_index = si;
+    pub func new(i: u64, f: i8*, l: i64, c: i64, si: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DI_location: DI_location {
+                index: i,
+                file: str::from(f),
+                line: l,
+                column: c,
+                scope_index: si
+            }
+        };
         return res;
     }
 
     pub func delete(self) {
         self->file.delete();
-    }
-
-    pub func get_index(self) -> u64 {
-        return self->base.index;
     }
 
     pub func dump(self, out: io) {
@@ -690,19 +801,23 @@ impl DI_location {
 }
 
 pub struct DW_TAG_pointer_type {
-    base: DI_node,
+    index: u64,
     base_type_index: u64,
     size: u64,
     name: str
 }
 
 impl DW_TAG_pointer_type {
-    pub func new(i: u64, bti: u64, s: u64, n: i8*) -> DW_TAG_pointer_type* {
-        var res = DW_TAG_pointer_type::__alloc__();
-        res->base = DI_node::instance(DI_kind::DW_TAG_pointer_type, i);
-        res->base_type_index = bti;
-        res->size = s;
-        res->name = str::from(n);
+    pub func new(i: u64, bti: u64, s: u64, n: i8*) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DW_TAG_pointer_type: DW_TAG_pointer_type {
+                index: i,
+                base_type_index: bti,
+                size: s,
+                name: str::from(n)
+            }
+        };
         return res;
     }
 
@@ -718,7 +833,7 @@ impl DW_TAG_pointer_type {
 }
 
 pub struct DW_TAG_member {
-    base: DI_node,
+    index: u64,
     name: str,
     scope_index: u64,
     file_index: u64,
@@ -727,14 +842,18 @@ pub struct DW_TAG_member {
 }
 
 impl DW_TAG_member {
-    pub func new(i: u64, n: i8*, si: u64, fi: u64, l: i64, bti: u64) -> DW_TAG_member* {
-        var res = DW_TAG_member::__alloc__();
-        res->base = DI_node::instance(DI_kind::DW_TAG_member, i);
-        res->name = str::from(n);
-        res->scope_index = si;
-        res->file_index = fi;
-        res->line = l;
-        res->base_type_index = bti;
+    pub func new(i: u64, n: i8*, si: u64, fi: u64, l: i64, bti: u64) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DW_TAG_member: DW_TAG_member {
+                index: i,
+                name: str::from(n),
+                scope_index: si,
+                file_index: fi,
+                line: l,
+                base_type_index: bti
+            }
+        };
         return res;
     }
 

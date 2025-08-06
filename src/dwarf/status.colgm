@@ -3,7 +3,7 @@ use std::str::{ str };
 use std::panic::{ panic };
 
 use err::span::{ span };
-use dwarf::dwarf::{ DI_ERROR_INDEX, DI_location };
+use dwarf::dwarf::{ DI_ERROR_INDEX, DI_node, DI_location };
 
 pub struct DWARF_status {
     DI_counter: u64,
@@ -61,12 +61,12 @@ impl DWARF_status {
         return res;
     }
 
-    pub func new_DI_location(self, loc: span*) -> DI_location* {
+    pub func new_DI_location(self, loc: span*) -> DI_node* {
         var loc_str = self->generate_DI_location_key(loc);
         defer loc_str.delete();
 
         var index = self->DI_counter;
-        var DI_loc = DI_location::new(
+        var dwarf_loc = DI_location::new(
             index,
             loc->file.c_str,
             loc->begin_line + 1,
@@ -81,6 +81,6 @@ impl DWARF_status {
 
         self->locations.insert(loc_str.__ptr__(), index);
         self->DI_counter += 1;
-        return DI_loc;
+        return dwarf_loc;
     }
 }
