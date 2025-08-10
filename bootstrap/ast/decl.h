@@ -70,6 +70,8 @@ private:
     number_literal* array_length;
     bool is_array; // mark if the type is array
 
+    bool is_reference; // mark if the type is a reference
+
 public:
     type_def(const span& loc):
         decl(ast_type::ast_type_def, loc),
@@ -91,6 +93,8 @@ public:
     void set_array(number_literal* len) { array_length = len; is_array = true; }
     bool get_is_array() const { return is_array; }
     auto get_array_length() const { return array_length; }
+    void set_reference() { is_reference = true; }
+    bool get_is_reference() const { return is_reference; }
 };
 
 class generic_type_list: public decl {

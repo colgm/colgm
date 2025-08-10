@@ -590,6 +590,10 @@ type_def* parse::type_def_gen() {
         res->add_pointer_level();
         match(tok::tk_mult);
     }
+    if (look_ahead(tok::tk_btand)) {
+        res->set_reference();
+        match(tok::tk_btand);
+    }
     update_location(res);
     return res;
 }

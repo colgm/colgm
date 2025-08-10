@@ -89,6 +89,7 @@ type_def* type_def::clone() const {
         ret->array_length = array_length->clone();
     }
     ret->is_array = is_array;
+    ret->is_reference = is_reference;
     return ret;
 }
 
