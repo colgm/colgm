@@ -104,6 +104,9 @@ type type_resolver::resolve(ast::type_def* node) {
         res.pointer_depth ++;
         res.array_length = get_array_length(node->get_array_length());
     }
+    if (node->get_is_reference()) {
+        res.is_reference = true;
+    }
 
     // if node has generics and we can find it, set it as the place holder
     if (ctx.generics.size() && ctx.generics.count(name)) {

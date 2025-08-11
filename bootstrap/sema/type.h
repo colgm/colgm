@@ -43,6 +43,8 @@ struct type {
     u64 array_length = 0;        // array length
     bool is_array = false;       // array type
 
+    bool is_reference = false;   // reference type
+
     struct_method_info stm_info; // struct methods
     struct_method_info prm_info; // primitive methods
     std::vector<type> generics = {};
