@@ -28,6 +28,9 @@ std::string type::to_string() const {
     for (i64 i = 0; i < pointer_depth; ++i) {
         result += "*";
     }
+    if (is_reference) {
+        result += "*";
+    }
     return result;
 }
 

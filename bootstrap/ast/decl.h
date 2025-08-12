@@ -77,7 +77,8 @@ public:
         decl(ast_type::ast_type_def, loc),
         name(nullptr), generic_types(nullptr),
         pointer_depth(0), is_const(false),
-        array_length(nullptr), is_array(false) {}
+        array_length(nullptr), is_array(false),
+        is_reference(false) {}
     ~type_def() override;
     void accept(visitor*) override;
     type_def* clone() const override;

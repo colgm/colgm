@@ -124,7 +124,6 @@ Source: [`vec<T>`](../../src/std/vec.colgm)
 Vector that accepts both trivial and non-trivial types.
 
 - If `T` is non-trivial type, it accepts types with these methods:
-  - `func copy(self) -> T*`
   - `func copy_instance(self) -> T`
   - `func delete(self)`
 - If `T` is trivial type, it could be used directly.
@@ -154,7 +153,6 @@ Source: [`hashset<T>`](../../src/std/set.colgm)
 
 Hashset, `T` accepts types with these methods:
 
-- `func copy(self) -> T*`
 - `func copy_instance(self) -> T`
 - `func delete(self)`
 - `func hash(self) -> u64`
@@ -202,7 +200,6 @@ Source: [`hashmap<K, V>`](../../src/std/map.colgm)
 
 Hashmap, `K` and `V` accepts types with these methods:
 
-- `func copy(self) -> K*`
 - `func copy_instance(self) -> K`
 - `func delete(self)`
 
