@@ -34,7 +34,8 @@ func dump_json_value(input: str*) {
     dump_raw_str(input);
     io::stdout().endln();
     if (j->is_invalid()) {
-        io::stdout().out("[json test] error: ").out(j->get_error()->c_str).endln();
+        io::stdout().out("[json test] error: ");
+        io::stdout().out(j->get_error()->c_str).endln();
     } else {
         var s = j->to_string();
         defer s.delete();
@@ -143,7 +144,7 @@ func smoke_testing_parse(input: str*) {
 
     var sec = ts.elapsed_sec();
     var mbps = (input->size => f64) / 1024.0 / 1024.0 / sec;
-    io::stdout().out(", ").out_f64(mbps).out(" MB/s\n");
+    io::stdout().out("\t").out_f64(mbps).out(" MB/s\n");
 }
 
 func generate_vec_str(input: str*, size: i64) {
@@ -163,15 +164,15 @@ func generate_hash_str(input: str*, size: i64) {
 }
 
 func smoke_testing() {
-    for (var outer = 1; outer <= 5; outer += 1) {
+    for (var outer = 1; outer <= 10; outer += 1) {
         var input = str::from("{\"str\": \"smoke testing\"");
         defer input.delete();
-        for (var i = 0; i < 256 * outer; i += 1) {
+        for (var i = 0; i < 128 * outer; i += 1) {
             input.append(", \"vec-");
             input.append_i64(i)->append("\": ");
             generate_vec_str(input.__ptr__(), 8192);
         }
-        for (var i = 0; i < 256 * outer; i += 1) {
+        for (var i = 0; i < 128 * outer; i += 1) {
             input.append(", \"hash-");
             input.append_i64(i)->append("\": ");
             generate_hash_str(input.__ptr__(), 4096);
@@ -215,7 +216,15 @@ func main() -> i32 {
     defer key_str.delete();
     obj->json_object.insert(key_str.__ptr__(), json::str("hello world"));
 
-    var res = obj->to_string();
+    var key_empty_obj = str::from("empty_object");
+    defer key_empty_obj.delete();
+    obj->json_object.insert(key_empty_obj.__ptr__(), json::obj());
+
+    var key_empty_arr = str::from("empty_array");
+    defer key_empty_arr.delete();
+    obj->json_object.insert(key_empty_arr.__ptr__(), json::arr());
+
+    var res = obj->to_string_indented(2);
     defer res.delete();
     io::stdout().out(res.c_str).endln();
 

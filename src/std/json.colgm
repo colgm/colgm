@@ -117,33 +117,85 @@ impl json {
 }
 
 impl json {
-    pub func to_string(self) -> str {
+    func add_indent(self, target: str*, indent: i32) {
+        for (var i: i32 = 0; i < indent; i += 1) {
+            target->append_char(' ');
+        }
+    }
+
+    func to_string_core(self, current_indent: i32, indent_level: i32) -> str {
         match (self) {
             json_kind::json_object => {
+                if (self->json_object.empty()) {
+                    return str::from("{}");
+                }
+
                 var res = str::from("{");
                 foreach (var i; self->json_object) {
                     if (!res.eq_const("{")) {
-                        res.append(", ");
+                        res.append(",");
+                        if (indent_level == 0) {
+                            res.append_char(' ');
+                        }
+                    }
+                    if (indent_level != 0) {
+                        res.append_char('\n');
+                        self->add_indent(res.__ptr__(), current_indent);
                     }
                     res.append("\"");
                     res.append(i.key()->c_str);
-                    res.append("\":");
-                    var temp = i.value()->to_string();
-                    defer temp.delete();
-                    res.append(temp.c_str);
+                    res.append("\": ");
+                    if (indent_level == 0) {
+                        var temp = i.value()->to_string_core(0, 0);
+                        defer temp.delete();
+                        res.append(temp.c_str);
+                    } else {
+                        var temp = i.value()->to_string_core(
+                            current_indent + indent_level,
+                            indent_level
+                        );
+                        defer temp.delete();
+                        res.append(temp.c_str);
+                    }
+                }
+                if (indent_level != 0) {
+                    res.append_char('\n');
+                    self->add_indent(res.__ptr__(), current_indent - indent_level);
                 }
                 res.append("}");
                 return res;
             }
             json_kind::json_array => {
+                if (self->json_array.empty()) {
+                    return str::from("[]");
+                }
+
                 var res = str::from("[");
                 foreach (var i; self->json_array) {
                     if (!res.eq_const("[")) {
-                        res.append(", ");
+                        res.append(",");
+                        if (indent_level == 0) {
+                            res.append_char(' ');
+                        }
                     }
-                    var temp = i.get()->to_string();
-                    defer temp.delete();
-                    res.append(temp.c_str);
+                    if (indent_level == 0) {
+                        var temp = i.get()->to_string_core(0, 0);
+                        defer temp.delete();
+                        res.append(temp.c_str);
+                    } else {
+                        res.append_char('\n');
+                        self->add_indent(res.__ptr__(), current_indent);
+                        var temp = i.get()->to_string_core(
+                            current_indent + indent_level,
+                            indent_level
+                        );
+                        defer temp.delete();
+                        res.append(temp.c_str);
+                    }
+                }
+                if (indent_level != 0) {
+                    res.append_char('\n');
+                    self->add_indent(res.__ptr__(), current_indent - indent_level);
                 }
                 res.append("]");
                 return res;
@@ -172,6 +224,14 @@ impl json {
             }
         }
         return str::from("null");
+    }
+
+    pub func to_string(self) -> str {
+        return self->to_string_core(0, 0);
+    }
+
+    pub func to_string_indented(self, indent_level: i32) -> str {
+        return self->to_string_core(indent_level, indent_level);
     }
 
     pub func parse(src: str*) -> json* {
