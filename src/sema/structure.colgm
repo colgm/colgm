@@ -75,33 +75,6 @@ impl colgm_struct {
         self->generic_struct_impl.delete();
     }
 
-    pub func copy(self) -> colgm_struct* {
-        var res = colgm_struct::__alloc__();
-        if (res == nil) {
-            panic("failed to allocate memory");
-        }
-        res->name = self->name.copy_instance();
-        res->location = self->location.copy_instance();
-        res->fields = self->fields.copy_instance();
-        res->ordered_fields = self->ordered_fields.copy_instance();
-        res->fields_span = self->fields_span.copy_instance();
-        res->static_method = self->static_method.copy_instance();
-        res->method = self->method.copy_instance();
-        res->generic_template = self->generic_template.copy_instance();
-        if (self->generic_struct_decl != nil) {
-            res->generic_struct_decl = self->generic_struct_decl->copy();
-        } else {
-            res->generic_struct_decl = nil;
-        }
-        res->generic_struct_impl = vec<ast_impl*>::instance();
-        foreach (var i; self->generic_struct_impl) {
-            res->generic_struct_impl.push(i.get()->copy());
-        }
-        res->is_public = self->is_public;
-        res->is_extern = self->is_extern;
-        return res;
-    }
-
     pub func copy_instance(self) -> colgm_struct {
         var res = colgm_struct {
             name: self->name.copy_instance(),

@@ -623,21 +623,20 @@ impl generic_visitor {
             return;
         }
 
-        var struct_info = dm->generic_structs.get(gd->generic_type.name.__ptr__())->copy();
-        struct_info->name.clear();
-        struct_info->name.append_str(gn);
-        struct_info->generic_template.clear();
-        defer {
-            struct_info->delete();
-            free(struct_info => i8*);
-        }
+        var struct_info = dm->generic_structs
+                            .get(gd->generic_type.name.__ptr__())
+                            ->copy_instance();
+        struct_info.name.clear();
+        struct_info.name.append_str(gn);
+        struct_info.generic_template.clear();
+        defer struct_info.delete();
 
-        dm->structs.insert(gn, struct_info);
+        dm->structs.insert(gn, struct_info.__ptr__());
 
         var sym_info = symbol_info::instance(
             symbol_kind::struct_kind,
-            struct_info->location.file.c_str,
-            struct_info->is_public,
+            struct_info.location.file.c_str,
+            struct_info.is_public,
         );
         defer sym_info.delete();
 
@@ -650,21 +649,20 @@ impl generic_visitor {
             return;
         }
 
-        var func_info = dm->generic_functions.get(gd->generic_type.name.__ptr__())->copy();
-        func_info->name.clear();
-        func_info->name.append_str(gn);
-        func_info->generic_template.clear();
-        defer {
-            func_info->delete();
-            free(func_info => i8*);
-        }
+        var func_info = dm->generic_functions
+                          .get(gd->generic_type.name.__ptr__())
+                          ->copy_instance();
+        func_info.name.clear();
+        func_info.name.append_str(gn);
+        func_info.generic_template.clear();
+        defer func_info.delete();
 
-        dm->functions.insert(gn, func_info);
+        dm->functions.insert(gn, func_info.__ptr__());
 
         var sym_info = symbol_info::instance(
             symbol_kind::func_kind,
-            func_info->location.file.c_str,
-            func_info->is_public
+            func_info.location.file.c_str,
+            func_info.is_public
         );
         defer sym_info.delete();
 

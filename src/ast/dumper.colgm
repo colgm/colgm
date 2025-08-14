@@ -527,6 +527,9 @@ impl ast_dumper {
         if (node->is_array) {
             out.blue().out("[array]").reset();
         }
+        if (node->is_reference) {
+            out.blue().out("[ref]").reset();
+        }
         out.cyan().out("[ptr-depth=").out_i64(node->pointer_depth).out("] ").reset();
         out.green().out(node->name->content.c_str).reset().out(" -> ");
         node->base.location.dump(out);
@@ -730,7 +733,7 @@ impl ast_dumper {
 
     func dump_func_decl(self, node: ast_func_decl*, out: io) {
         self->dump_indent(out);
-        out.purple().out("Func ").reset();
+        out.purple().out("Function ").reset();
         out.light_orange().out("0x").out_hex(node=> u64).out(" ");
         if (node->is_public) {
             out.cyan().out("[pub]").reset();
