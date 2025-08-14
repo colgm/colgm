@@ -106,7 +106,7 @@ pub struct mir {
 
 impl mir {
     pub func instance(k: mir_kind, l: span*) -> mir {
-        return mir { kind: k, location: l->copy_instance() };
+        return mir { kind: k, location: l->clone() };
     }
 
     pub func delete(self) {
@@ -409,7 +409,7 @@ impl mir_unary {
         var res = mir_unary::__alloc__();
         res->base = mir::instance(mir_kind::mir_unary, l);
         res->op = op;
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         res->value = v;
         return res;
     }
@@ -460,7 +460,7 @@ impl mir_binary {
         var res = mir_binary::__alloc__();
         res->base = mir::instance(mir_kind::mir_binary, l);
         res->op = op;
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         res->left = lhs;
         res->right = rhs;
         return res;
@@ -525,7 +525,7 @@ impl mir_type_convert {
         var res = mir_type_convert::__alloc__();
         res->base = mir::instance(mir_kind::mir_type_convert, l);
         res->source = src;
-        res->target = t->copy_instance();
+        res->target = t->clone();
         return res;
     }
 
@@ -561,7 +561,7 @@ impl mir_nil {
     pub func new(l: span*, t: type*) -> mir_nil* {
         var res = mir_nil::__alloc__();
         res->base = mir::instance(mir_kind::mir_nil, l);
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -588,8 +588,8 @@ impl mir_number {
     pub func new(l: span*, num: str*, t: type*) -> mir_number* {
         var res = mir_number::__alloc__();
         res->base = mir::instance(mir_kind::mir_number, l);
-        res->value = num->copy_instance();
-        res->resolved_type = t->copy_instance();
+        res->value = num->clone();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -620,8 +620,8 @@ impl mir_string {
     pub func new(l: span*, s: str*, t: type*) -> mir_string* {
         var res = mir_string::__alloc__();
         res->base = mir::instance(mir_kind::mir_string, l);
-        res->value = s->copy_instance();
-        res->resolved_type = t->copy_instance();
+        res->value = s->clone();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -655,8 +655,8 @@ impl mir_char {
     pub func new(l: span*, s: str*, t: type*) -> mir_char* {
         var res = mir_char::__alloc__();
         res->base = mir::instance(mir_kind::mir_char, l);
-        res->value = s->copy_instance();
-        res->resolved_type = t->copy_instance();
+        res->value = s->clone();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -691,7 +691,7 @@ impl mir_bool {
         var res = mir_bool::__alloc__();
         res->base = mir::instance(mir_kind::mir_bool, l);
         res->value = flag;
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -727,7 +727,7 @@ impl mir_array {
         res->base = mir::instance(mir_kind::mir_array, l);
         res->size = s;
         res->value = nil;
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -763,11 +763,11 @@ struct init_field {
 }
 
 impl init_field {
-    pub func copy_instance(self) -> init_field {
+    pub func clone(self) -> init_field {
         var res = init_field {};
-        res.name = self->name.copy_instance();
+        res.name = self->name.clone();
         res.content = self->content;
-        res.resolved_type = self->resolved_type.copy_instance();
+        res.resolved_type = self->resolved_type.clone();
         return res;
     }
 
@@ -807,7 +807,7 @@ impl mir_struct_init {
     pub func new(l: span*, t: type*) -> mir_struct_init* {
         var res = mir_struct_init::__alloc__();
         res->base = mir::instance(mir_kind::mir_struct_init, l);
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         res->fields = vec<init_field>::instance();
         return res;
     }
@@ -819,9 +819,9 @@ impl mir_struct_init {
 
     pub func add_field(self, n: str*, b: mir_block*, t: type*) {
         var in_fld = init_field {
-            name: n->copy_instance(),
+            name: n->clone(),
             content: b,
-            resolved_type: t->copy_instance()
+            resolved_type: t->clone()
         };
         defer {
             in_fld.content = nil;
@@ -860,7 +860,7 @@ impl mir_call {
         var res = mir_call::__alloc__();
         res->base = mir::instance(mir_kind::mir_call, l);
         res->content = b;
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -897,8 +897,8 @@ impl mir_call_id {
     pub func new(l: span*, n: str*, t: type*) -> mir_call_id* {
         var res = mir_call_id::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_id, l);
-        res->name = n->copy_instance();
-        res->resolved_type = t->copy_instance();
+        res->name = n->clone();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -928,7 +928,7 @@ impl mir_call_index {
         var res = mir_call_index::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_index, l);
         res->index = idx;
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -966,7 +966,7 @@ impl mir_call_func {
         var res = mir_call_func::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_func, l);
         res->args = a;
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -1003,8 +1003,8 @@ impl mir_get_field {
     pub func new(l: span*, n: str*, t: type*) -> mir_get_field* {
         var res = mir_get_field::__alloc__();
         res->base = mir::instance(mir_kind::mir_get_field, l);
-        res->name = n->copy_instance();
-        res->resolved_type = t->copy_instance();
+        res->name = n->clone();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -1033,8 +1033,8 @@ impl mir_ptr_get_field {
     pub func new(l: span*, n: str*, t: type*) -> mir_ptr_get_field* {
         var res = mir_ptr_get_field::__alloc__();
         res->base = mir::instance(mir_kind::mir_ptr_get_field, l);
-        res->name = n->copy_instance();
-        res->resolved_type = t->copy_instance();
+        res->name = n->clone();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -1063,8 +1063,8 @@ impl mir_get_path {
     pub func new(l: span*, n: str*, t: type*) -> mir_get_path* {
         var res = mir_get_path::__alloc__();
         res->base = mir::instance(mir_kind::mir_get_path, l);
-        res->name = n->copy_instance();
-        res->resolved_type = t->copy_instance();
+        res->name = n->clone();
+        res->resolved_type = t->clone();
         return res;
     }
 
@@ -1094,9 +1094,9 @@ impl mir_define {
     pub func new(l: span*, n: str*, v: mir_block*, t: type*) -> mir_define* {
         var res = mir_define::__alloc__();
         res->base = mir::instance(mir_kind::mir_define, l);
-        res->name = n->copy_instance();
+        res->name = n->clone();
         res->init_value = v;
-        res->resolved_type = t->copy_instance();
+        res->resolved_type = t->clone();
         return res;
     }
 

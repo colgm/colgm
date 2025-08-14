@@ -9,8 +9,8 @@ impl pair<K, V> {
     #[is_non_trivial(K, V)]
     pub func instance(key: K*, value: V*) -> pair<K, V> {
         return pair<K, V> {
-            key: key->copy_instance(),
-            value: value->copy_instance()
+            key: key->clone(),
+            value: value->clone()
         };
     }
 
@@ -18,7 +18,7 @@ impl pair<K, V> {
     #[is_trivial(V)]
     pub func instance(key: K*, value: V) -> pair<K, V> {
         return pair<K, V> {
-            key: key->copy_instance(),
+            key: key->clone(),
             value: value
         };
     }
@@ -28,7 +28,7 @@ impl pair<K, V> {
     pub func instance(key: K, value: V*) -> pair<K, V> {
         return pair<K, V> {
             key: key,
-            value: value->copy_instance()
+            value: value->clone()
         };
     }
 
@@ -67,7 +67,7 @@ impl pair<K, V> {
 impl pair<K, V> {
     #[is_non_trivial(K)]
     func copy_key(self) -> K {
-        return self->key.copy_instance();
+        return self->key.clone();
     }
     
     #[is_trivial(K)]
@@ -77,7 +77,7 @@ impl pair<K, V> {
 
     #[is_non_trivial(V)]
     func copy_value(self) -> V {
-        return self->value.copy_instance();
+        return self->value.clone();
     }
 
     #[is_trivial(V)]
@@ -85,7 +85,7 @@ impl pair<K, V> {
         return self->value;
     }
 
-    pub func copy_instance(self) -> pair<K, V> {
+    pub func clone(self) -> pair<K, V> {
         return pair<K, V> {
             key: self->copy_key(),
             value: self->copy_value()

@@ -75,7 +75,7 @@ func test() -> str {
 
     ...
 
-    return a.copy(); // use after free
+    return a.clone(); // use after free
 }
 ```
 
@@ -88,6 +88,6 @@ func test() -> str {
     ...
 
     a.delete(); // a is freed here
-    return a.copy(); // use after free
+    return a.clone(); // use after free
 }
 ```

@@ -24,8 +24,8 @@ pub struct mir_struct {
 impl mir_struct {
     pub func instance(name: str*, loc: span*) -> mir_struct {
         return mir_struct {
-            name: name->copy_instance(),
-            location: loc->copy_instance(),
+            name: name->clone(),
+            location: loc->clone(),
             field_type: vec<type>::instance(),
             size_calculated: false,
             size: 0,
@@ -33,11 +33,11 @@ impl mir_struct {
         };
     }
 
-    pub func copy_instance(self) -> mir_struct {
+    pub func clone(self) -> mir_struct {
         return mir_struct {
-            name: self->name.copy_instance(),
-            location: self->location.copy_instance(),
-            field_type: self->field_type.copy_instance(),
+            name: self->name.clone(),
+            location: self->location.clone(),
+            field_type: self->field_type.clone(),
             size_calculated: self->size_calculated,
             size: self->size,
             align: self->align
@@ -68,8 +68,8 @@ pub struct mir_tagged_union {
 impl mir_tagged_union {
     pub func instance(name: str*, loc: span*) -> mir_tagged_union {
         return mir_tagged_union {
-            name: name->copy_instance(),
-            location: loc->copy_instance(),
+            name: name->clone(),
+            location: loc->clone(),
             member_type: vec<type>::instance(),
             size_calculated: false,
             total_size: 0,
@@ -80,16 +80,16 @@ impl mir_tagged_union {
         };
     }
 
-    pub func copy_instance(self) -> mir_tagged_union {
+    pub func clone(self) -> mir_tagged_union {
         return mir_tagged_union {
-            name: self->name.copy_instance(),
-            location: self->location.copy_instance(),
-            member_type: self->member_type.copy_instance(),
+            name: self->name.clone(),
+            location: self->location.clone(),
+            member_type: self->member_type.clone(),
             size_calculated: self->size_calculated,
             total_size: self->total_size,
             union_size: self->union_size,
             align: self->align,
-            max_align_type: self->max_align_type.copy_instance(),
+            max_align_type: self->max_align_type.clone(),
             max_align_type_size: self->max_align_type_size
         };
     }
@@ -116,23 +116,23 @@ impl mir_func {
     pub func instance(name: const i8*, loc: span*, ret_ty: type*) -> mir_func {
         return mir_func {
             name: str::from(name),
-            location: loc->copy_instance(),
+            location: loc->clone(),
             params: vec<pair<str, type>>::instance(),
             with_va_args: false,
             attributes: vec<str>::instance(),
-            return_type: ret_ty->copy_instance(),
+            return_type: ret_ty->clone(),
             block: nil
         };
     }
 
-    pub func copy_instance(self) -> mir_func {
+    pub func clone(self) -> mir_func {
         var res = mir_func {};
-        res.name = self->name.copy_instance();
-        res.location = self->location.copy_instance();
-        res.params = self->params.copy_instance();
+        res.name = self->name.clone();
+        res.location = self->location.clone();
+        res.params = self->params.clone();
         res.with_va_args = self->with_va_args;
-        res.attributes = self->attributes.copy_instance();
-        res.return_type = self->return_type.copy_instance();
+        res.attributes = self->attributes.clone();
+        res.return_type = self->return_type.clone();
         
         res.block = self->block; // shallow copy
         self->block = nil; // clear source func block

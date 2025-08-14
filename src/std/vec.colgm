@@ -56,7 +56,7 @@ impl vec<T> {
     }
 
     #[is_non_trivial(T)]
-    pub func copy_instance(self) -> vec<T> {
+    pub func clone(self) -> vec<T> {
         var res = vec<T>::instance();
         for (var i: u64 = 0; i < self->size; i += 1) {
             res.push(self->data[i].__ptr__());
@@ -65,7 +65,7 @@ impl vec<T> {
     }
 
     #[is_trivial(T)]
-    pub func copy_instance(self) -> vec<T> {
+    pub func clone(self) -> vec<T> {
         var res = vec<T>::instance();
         for (var i: u64 = 0; i < self->size; i += 1) {
             res.push(self->data[i]);
@@ -132,7 +132,7 @@ impl vec<T> {
         if (self->size >= self->capacity) {
             self->extend_capacity();
         }
-        self->data[self->size] = item->copy_instance();
+        self->data[self->size] = item->clone();
         self->size += 1;
     }
 

@@ -170,7 +170,7 @@ impl ast {
         }
         return ast {
             kind: k,
-            location: loc->copy_instance(),
+            location: loc->clone(),
             redirect_location: str::from(""),
             resolved_type: type::instance()
         };
@@ -806,7 +806,7 @@ impl ast_identifier {
     pub func new(loc: span*, name: str*) -> ast_identifier* {
         var res = ast_identifier::__alloc__();
         res->base = ast::instance(ast_kind::ast_identifier, loc);
-        res->content = name->copy_instance();
+        res->content = name->clone();
         return res;
     }
 
@@ -816,7 +816,7 @@ impl ast_identifier {
             ast_kind::ast_identifier,
             self->base.location.__ptr__()
         );
-        res->content = self->content.copy_instance();
+        res->content = self->content.clone();
         return res;
     }
 
@@ -860,7 +860,7 @@ impl ast_number_literal {
             ast_kind::ast_number_literal,
             self->base.location.__ptr__()
         );
-        res->literal = self->literal.copy_instance();
+        res->literal = self->literal.clone();
         return res;
     }
 
@@ -888,7 +888,7 @@ impl ast_string_literal {
             ast_kind::ast_string_literal,
             self->base.location.__ptr__()
         );
-        res->literal = self->literal.copy_instance();
+        res->literal = self->literal.clone();
         return res;
     }
 
@@ -906,7 +906,7 @@ impl ast_char_literal {
     pub func new(loc: span*, literal: str*) -> ast_char_literal* {
         var res = ast_char_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_char_literal, loc);
-        res->literal = literal->copy_instance();
+        res->literal = literal->clone();
         return res;
     }
 
@@ -916,7 +916,7 @@ impl ast_char_literal {
             ast_kind::ast_char_literal,
             self->base.location.__ptr__()
         );
-        res->literal = self->literal.copy_instance();
+        res->literal = self->literal.clone();
         return res;
     }
 
@@ -1059,7 +1059,7 @@ impl ast_get_field {
     pub func new(loc: span*, opr_loc: span*, name: const i8*) -> ast_get_field* {
         var res = ast_get_field::__alloc__();
         res->base = ast::instance(ast_kind::ast_get_field, loc);
-        res->operator_location = opr_loc->copy_instance();
+        res->operator_location = opr_loc->clone();
         res->name = str::from(name);
         return res;
     }
@@ -1070,8 +1070,8 @@ impl ast_get_field {
             ast_kind::ast_get_field,
             self->base.location.__ptr__()
         );
-        res->operator_location = self->operator_location.copy_instance();
-        res->name = self->name.copy_instance();
+        res->operator_location = self->operator_location.clone();
+        res->name = self->name.clone();
         return res;
     }
 
@@ -1091,7 +1091,7 @@ impl ast_ptr_get_field {
     pub func new(loc: span*, opr_loc: span*, name: const i8*) -> ast_ptr_get_field* {
         var res = ast_ptr_get_field::__alloc__();
         res->base = ast::instance(ast_kind::ast_ptr_get_field, loc);
-        res->operator_location = opr_loc->copy_instance();
+        res->operator_location = opr_loc->clone();
         res->name = str::from(name);
         return res;
     }
@@ -1102,8 +1102,8 @@ impl ast_ptr_get_field {
             ast_kind::ast_ptr_get_field,
             self->base.location.__ptr__()
         );
-        res->operator_location = self->operator_location.copy_instance();
-        res->name = self->name.copy_instance();
+        res->operator_location = self->operator_location.clone();
+        res->name = self->name.clone();
         return res;
     }
 
@@ -1204,7 +1204,7 @@ impl ast_call_path {
     pub func new(loc: span*, name: str*) -> ast_call_path* {
         var res = ast_call_path::__alloc__();
         res->base = ast::instance(ast_kind::ast_call_path, loc);
-        res->name = name->copy_instance();
+        res->name = name->clone();
         return res;
     }
 
@@ -1214,7 +1214,7 @@ impl ast_call_path {
             ast_kind::ast_call_path,
             self->base.location.__ptr__()
         );
-        res->name = self->name.copy_instance();
+        res->name = self->name.clone();
         return res;
     }
 
@@ -1380,7 +1380,7 @@ impl ast_cond_compile {
     pub func new(loc: span*, cond_name: str*) -> ast_cond_compile* {
         var res = ast_cond_compile::__alloc__();
         res->base = ast::instance(ast_kind::ast_cond_compile, loc);
-        res->cond_name = cond_name->copy_instance();
+        res->cond_name = cond_name->clone();
         res->ordered_conds = vec<str>::instance();
         res->conds = hashmap<str, str>::instance();
         return res;
@@ -1392,9 +1392,9 @@ impl ast_cond_compile {
             ast_kind::ast_cond_compile,
             self->base.location.__ptr__()
         );
-        res->cond_name = self->cond_name.copy_instance();
-        res->ordered_conds = self->ordered_conds.copy_instance();
-        res->conds = self->conds.copy_instance();
+        res->cond_name = self->cond_name.clone();
+        res->ordered_conds = self->ordered_conds.clone();
+        res->conds = self->conds.clone();
         return res;
     }
 
@@ -1600,7 +1600,7 @@ impl ast_enum_decl {
         var res = ast_enum_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_enum_decl, loc);
         res->members = vec<ast*>::instance();
-        res->name = name->copy_instance();
+        res->name = name->clone();
         res->conds = vec<ast_cond_compile*>::instance();
         res->is_public = false;
         return res;
@@ -1620,7 +1620,7 @@ impl ast_enum_decl {
         foreach (var i; self->conds) {
             res->conds.push(i.get()->copy());
         }
-        res->name = self->name.copy_instance();
+        res->name = self->name.clone();
         res->is_public = self->is_public;
         return res;
     }
@@ -1710,7 +1710,7 @@ impl ast_struct_decl {
         var res = ast_struct_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_struct_decl, loc);
         res->fields = vec<ast_field_pair*>::instance();
-        res->name = name->copy_instance();
+        res->name = name->clone();
         res->generic_types = nil;
         res->conds = vec<ast_cond_compile*>::instance();
         res->is_public = false;
@@ -1728,7 +1728,7 @@ impl ast_struct_decl {
         foreach (var i; self->fields) {
             res->fields.push(i.get()->copy());
         }
-        res->name = self->name.copy_instance();
+        res->name = self->name.clone();
         if (self->generic_types != nil) {
             res->generic_types = self->generic_types->copy();
         } else {
@@ -1814,8 +1814,8 @@ impl ast_tagged_union_decl {
         foreach (var i; self->members) {
             res->members.push(i.get()->copy());
         }
-        res->name = self->name.copy_instance();
-        res->ref_enum_name = self->ref_enum_name.copy_instance();
+        res->name = self->name.clone();
+        res->ref_enum_name = self->ref_enum_name.clone();
         res->conds = vec<ast_cond_compile*>::instance();
         foreach (var i; self->conds) {
             res->conds.push(i.get()->copy());
@@ -1949,7 +1949,7 @@ impl ast_func_decl {
     pub func new(loc: span*, name: str*) -> ast_func_decl* {
         var res = ast_func_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_func_decl, loc);
-        res->name = name->copy_instance();
+        res->name = name->clone();
         res->monomorphic_name = str::from("");
         res->generic_types = nil;
         res->params = nil;
@@ -1967,7 +1967,7 @@ impl ast_func_decl {
             ast_kind::ast_func_decl,
             self->base.location.__ptr__()
         );
-        res->name = self->name.copy_instance();
+        res->name = self->name.clone();
         res->monomorphic_name = str::from("");
         if (self->generic_types != nil) {
             res->generic_types = self->generic_types->copy();
@@ -2166,7 +2166,7 @@ impl ast_impl {
     pub func new(loc: span*, name: str*) -> ast_impl* {
         var res = ast_impl::__alloc__();
         res->base = ast::instance(ast_kind::ast_impl, loc);
-        res->name = name->copy_instance();
+        res->name = name->clone();
         res->generic_types = nil;
         res->methods = vec<ast*>::instance();
         res->conds = vec<ast_cond_compile*>::instance();
@@ -2179,7 +2179,7 @@ impl ast_impl {
             ast_kind::ast_impl,
             self->base.location.__ptr__()
         );
-        res->name = self->name.copy_instance();
+        res->name = self->name.clone();
         if (self->generic_types != nil) {
             res->generic_types = self->generic_types->copy();
         } else {
@@ -2299,7 +2299,7 @@ impl ast_definition {
     pub func new(loc: span*, name: str*) -> ast_definition* {
         var res = ast_definition::__alloc__();
         res->base = ast::instance(ast_kind::ast_definition, loc);
-        res->name = name->copy_instance();
+        res->name = name->clone();
         res->type = nil;
         res->value = nil;
         return res;
@@ -2311,7 +2311,7 @@ impl ast_definition {
             ast_kind::ast_definition,
             self->base.location.__ptr__()
         );
-        res->name = self->name.copy_instance();
+        res->name = self->name.clone();
         if (self->type != nil) {
             res->type = self->type->copy();
         } else {

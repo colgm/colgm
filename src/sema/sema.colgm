@@ -233,7 +233,7 @@ impl sema {
             return type::error_type();
         }
 
-        var res = infer.copy_instance();
+        var res = infer.clone();
         return res;
     }
 
@@ -252,7 +252,7 @@ impl sema {
             return type::error_type();
         }
 
-        var res = infer.copy_instance();
+        var res = infer.clone();
         return res;
     }
 
@@ -500,7 +500,7 @@ impl sema {
         }
 
         n->base.resolved_type.reset_with(left.__ptr__());
-        var res = left.copy_instance();
+        var res = left.clone();
         return res;
     }
 
@@ -552,7 +552,7 @@ impl sema {
         }
 
         n->base.resolved_type.reset_with(left.__ptr__());
-        var res = left.copy_instance();
+        var res = left.clone();
         return res;
     }
 
@@ -710,7 +710,7 @@ impl sema {
         }
 
         n->base.resolved_type.reset_with(type_res.__ptr__());
-        var ret = type_res.copy_instance();
+        var ret = type_res.clone();
         return ret;
     }
 
@@ -718,7 +718,7 @@ impl sema {
         var name = n->content.__ptr__();
         if (self->ctx->find_local(name)) {
             self->ctx->add_var_used(name);
-            return self->ctx->get_local(name)->copy_instance();
+            return self->ctx->get_local(name)->clone();
         }
 
         var dm: colgm_module* = nil;
@@ -782,7 +782,7 @@ impl sema {
                 types.push(ty.__ptr__());
             }
 
-            var name = n->id->content.copy_instance();
+            var name = n->id->content.clone();
             defer name.delete();
             name.append_char('<');
 
@@ -812,9 +812,9 @@ impl sema {
             if (dm->structs.has(name.__ptr__()) ||
                 dm->functions.has(name.__ptr__())) {
                 infer.name.delete();
-                infer.name = n->id->content.copy_instance();
+                infer.name = n->id->content.clone();
                 infer.generics.delete();
-                infer.generics = types.copy_instance();
+                infer.generics = types.clone();
             } else {
                 var info = str::from("error resolving generic symbol \"");
                 defer info.delete();
@@ -884,7 +884,7 @@ impl sema {
     }
 
     func struct_method_infer(self, prev: type*, fn_name: str*) -> type {
-        var infer = prev->copy_instance();
+        var infer = prev->clone();
         infer.pointer_depth = 0;
         infer.is_global_sym = true;
         infer.stm_info.flag_is_static = false;
@@ -894,7 +894,7 @@ impl sema {
     }
 
     func struct_static_method_infer(self, prev: type*, fn_name: str*) -> type {
-        var infer = prev->copy_instance();
+        var infer = prev->clone();
         infer.pointer_depth = 0;
         infer.is_global_sym = true;
         infer.stm_info.flag_is_static = true;
@@ -973,7 +973,7 @@ impl sema {
         defer prev_name_for_search.delete();
 
         if (struct_self->fields.has(n->name.__ptr__())) {
-            var infer = struct_self->fields.get(n->name.__ptr__())->copy_instance();
+            var infer = struct_self->fields.get(n->name.__ptr__())->clone();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
@@ -1018,7 +1018,7 @@ impl sema {
         defer prev_name_for_search.delete();
 
         if (union_self->members.has(n->name.__ptr__())) {
-            var infer = union_self->members.get(n->name.__ptr__())->copy_instance();
+            var infer = union_self->members.get(n->name.__ptr__())->clone();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
@@ -1148,7 +1148,7 @@ impl sema {
             var func_self = dm->functions.get(prev_name_for_search.__ptr__());
             self->check_static_call_args(func_self, n);
 
-            var infer = func_self->return_type.copy_instance();
+            var infer = func_self->return_type.clone();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
@@ -1161,7 +1161,7 @@ impl sema {
             );
             self->check_static_call_args(method, n);
 
-            var infer = method->return_type.copy_instance();
+            var infer = method->return_type.clone();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
@@ -1176,7 +1176,7 @@ impl sema {
                 );
                 self->check_static_call_args(method, n);
 
-                var infer = method->return_type.copy_instance();
+                var infer = method->return_type.clone();
                 n->base.resolved_type.reset_with(infer.__ptr__());
                 return infer;
             } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
@@ -1186,7 +1186,7 @@ impl sema {
                 );
                 self->check_static_call_args(method, n);
 
-                var infer = method->return_type.copy_instance();
+                var infer = method->return_type.clone();
                 n->base.resolved_type.reset_with(infer.__ptr__());
                 return infer;
             }
@@ -1207,7 +1207,7 @@ impl sema {
                 );
                 self->check_method_call_args(method, n);
 
-                var infer = method->return_type.copy_instance();
+                var infer = method->return_type.clone();
                 n->base.resolved_type.reset_with(infer.__ptr__());
                 return infer;
             } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
@@ -1217,7 +1217,7 @@ impl sema {
                 );
                 self->check_method_call_args(method, n);
 
-                var infer = method->return_type.copy_instance();
+                var infer = method->return_type.clone();
                 n->base.resolved_type.reset_with(infer.__ptr__());
                 return infer;
             }
@@ -1305,7 +1305,7 @@ impl sema {
         } else if (dm->enums.has(prev_name_for_search.__ptr__())) {
             var en = dm->enums.get(prev_name_for_search.__ptr__());
             if (en->members.has(n->name.__ptr__())) {
-                var infer = prev->copy_instance();
+                var infer = prev->clone();
                 infer.is_global_sym = false;
                 infer.is_enum = true;
                 n->base.resolved_type.reset_with(infer.__ptr__());
@@ -1363,7 +1363,7 @@ impl sema {
             return type::error_type();
         }
 
-        var infer = prev->copy_instance();
+        var infer = prev->clone();
         infer.pointer_depth = 0;
         infer.is_global_sym = true;
         infer.prm_info.flag_is_static = true;
@@ -1507,7 +1507,7 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self->pkg);
         defer prev_name_for_search.delete();
 
-        var copy = prev->copy_instance();
+        var copy = prev->clone();
         copy.is_global_sym = false;
         n->base.resolved_type.reset_with(copy.__ptr__());
 
@@ -1569,7 +1569,7 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self->pkg);
         defer prev_name_for_search.delete();
 
-        var copy = prev->copy_instance();
+        var copy = prev->clone();
         copy.is_global_sym = false;
         n->base.resolved_type.reset_with(copy.__ptr__());
 
@@ -1717,7 +1717,7 @@ impl sema {
         defer prev_name_for_search.delete();
         
         if (struct_self->fields.has(n->name.__ptr__())) {
-            var infer = struct_self->fields.get(n->name.__ptr__())->copy_instance();
+            var infer = struct_self->fields.get(n->name.__ptr__())->clone();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
@@ -1762,7 +1762,7 @@ impl sema {
         defer prev_name_for_search.delete();
         
         if (union_self->members.has(n->name.__ptr__())) {
-            var infer = union_self->members.get(n->name.__ptr__())->copy_instance();
+            var infer = union_self->members.get(n->name.__ptr__())->clone();
             n->base.resolved_type.reset_with(infer.__ptr__());
             return infer;
         }
@@ -1812,7 +1812,7 @@ impl sema {
                 return type::error_type();
             }
 
-            var prev = infer.copy_instance();
+            var prev = infer.clone();
             defer prev.delete();
 
             match (c->kind) {
@@ -1885,7 +1885,7 @@ impl sema {
                      ->emit_err(n->base.location.__ptr__());
         }
 
-        var res = infer.copy_instance();
+        var res = infer.clone();
         return res;
     }
 
@@ -2403,11 +2403,11 @@ impl sema {
         // means this tag is not referenced from enum
         // so the call head's identifier is the tag
         if (un->ref_enum_type.is_empty()) {
-            return name->copy_instance();
+            return name->clone();
         }
 
         var call_path_node = n->chain.get(0) => ast_call_path*;
-        return call_path_node->name.copy_instance();
+        return call_path_node->name.clone();
     }
 
     func resolve_match_stmt(self, n: ast_match_stmt*, func_self: colgm_func*) {
@@ -2753,7 +2753,7 @@ impl sema {
         defer method_name.delete();
 
         var m = s->method.get(method_name.__ptr__());
-        return m->return_type.copy_instance();
+        return m->return_type.clone();
     }
 
     func lowering_forindex(self, n: ast_forindex*, iter_ty: type*) {
@@ -3167,7 +3167,7 @@ impl sema {
         }
 
         var unreachable_location = unreachable_statements
-                                   .get(0)->location.copy_instance();
+                                   .get(0)->location.clone();
         defer unreachable_location.delete();
 
         foreach (var i; unreachable_statements) {

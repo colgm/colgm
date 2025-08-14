@@ -385,7 +385,7 @@ pub struct array_type_t {
 impl array_type_t {
     pub func instance(base: str*, size: u64) -> array_type_t {
         return array_type_t {
-            base_type: base->copy_instance(),
+            base_type: base->clone(),
             size: size
         };
     }
@@ -397,9 +397,9 @@ impl array_type_t {
         };
     }
 
-    pub func copy_instance(self) -> array_type_t {
+    pub func clone(self) -> array_type_t {
         return array_type_t {
-            base_type: self->base_type.copy_instance(),
+            base_type: self->base_type.clone(),
             size: self->size
         };
     }
@@ -420,8 +420,8 @@ impl sir_alloca {
     pub func new(variable: str*, type: str*) -> sir_alloca* {
         var n = sir_alloca::__alloc__();
         n->base = sir::instance(sir_kind::sir_alloca);
-        n->variable = variable->copy_instance();
-        n->type = type->copy_instance();
+        n->variable = variable->clone();
+        n->type = type->clone();
         n->array_info = array_type_t::default_instance();
         return n;
     }
@@ -429,9 +429,9 @@ impl sir_alloca {
     pub func new_array(variable: str*, at: array_type_t*) -> sir_alloca* {
         var n = sir_alloca::__alloc__();
         n->base = sir::instance(sir_kind::sir_alloca);
-        n->variable = variable->copy_instance();
+        n->variable = variable->clone();
         n->type = str::instance();
-        n->array_info = at->copy_instance();
+        n->array_info = at->clone();
         return n;
     }
 
@@ -472,9 +472,9 @@ impl sir_temp_ptr {
     pub func new(target: str*, source: str*, ty: str*, dii: u64, comment: i8*) -> sir_temp_ptr* {
         var n = sir_temp_ptr::__alloc__();
         n->base = sir::instance(sir_kind::sir_temp_ptr);
-        n->target = target->copy_instance();
-        n->source = source->copy_instance();
-        n->type = ty->copy_instance();
+        n->target = target->clone();
+        n->source = source->clone();
+        n->type = ty->clone();
         n->debug_info_index = dii;
         if (comment != nil) {
             n->comment = str::from(comment);
@@ -519,8 +519,8 @@ impl sir_ret {
     pub func new(type: str*, v: value_t*, dii: u64) -> sir_ret* {
         var n = sir_ret::__alloc__();
         n->base = sir::instance(sir_kind::sir_ret);
-        n->type = type->copy_instance();
-        n->value = v->copy_instance();
+        n->type = type->clone();
+        n->value = v->clone();
         n->debug_info_index = dii;
         return n;
     }
@@ -557,7 +557,7 @@ impl sir_str {
         n->base = sir::instance(sir_kind::sir_str);
         n->index = index;
         n->length = length;
-        n->target = tgt->copy_instance();
+        n->target = tgt->clone();
         n->debug_info_index = dii;
         return n;
     }
@@ -589,8 +589,8 @@ impl sir_zeroinitializer {
     pub func new(tgt: value_t*, type: str*, dii: u64) -> sir_zeroinitializer* {
         var n = sir_zeroinitializer::__alloc__();
         n->base = sir::instance(sir_kind::sir_zeroinitializer);
-        n->type = type->copy_instance();
-        n->target = tgt->copy_instance();
+        n->type = type->clone();
+        n->target = tgt->clone();
         n->debug_info_index = dii;
         return n;
     }
@@ -630,11 +630,11 @@ impl sir_get_index {
                  dii: u64) -> sir_get_index* {
         var n = sir_get_index::__alloc__();
         n->base = sir::instance(sir_kind::sir_get_index);
-        n->source = src->copy_instance();
-        n->target = tgt->copy_instance();
-        n->index = idx->copy_instance();
-        n->type = t->copy_instance();
-        n->index_type = it->copy_instance();
+        n->source = src->clone();
+        n->target = tgt->clone();
+        n->index = idx->clone();
+        n->type = t->clone();
+        n->index_type = it->clone();
         n->debug_info_index = dii;
         return n;
     }
@@ -675,9 +675,9 @@ impl sir_get_field {
     pub func new(tgt: value_t*, src: value_t*, sn: str*, i: i64, dii: u64) -> sir_get_field* {
         var n = sir_get_field::__alloc__();
         n->base = sir::instance(sir_kind::sir_get_field);
-        n->target = tgt->copy_instance();
-        n->source = src->copy_instance();
-        n->struct_name = sn->copy_instance();
+        n->target = tgt->clone();
+        n->source = src->clone();
+        n->struct_name = sn->clone();
         n->index = i;
         n->debug_info_index = dii;
         return n;
@@ -720,9 +720,9 @@ impl sir_call {
     pub func new(name: str*, return_type: str*, tgt: value_t*, dii: u64) -> sir_call* {
         var n = sir_call::__alloc__();
         n->base = sir::instance(sir_kind::sir_call);
-        n->name = name->copy_instance();
-        n->return_type = return_type->copy_instance();
-        n->target = tgt->copy_instance();
+        n->name = name->clone();
+        n->return_type = return_type->clone();
+        n->target = tgt->clone();
         n->args_type = vec<str>::instance();
         n->args = vec<value_t>::instance();
         n->with_va_args = false;
@@ -792,10 +792,10 @@ impl sir_neg {
                  type: str*) -> sir_neg* {
         var n = sir_neg::__alloc__();
         n->base = sir::instance(sir_kind::sir_neg);
-        n->target = tgt->copy_instance();
-        n->source = src->copy_instance();
+        n->target = tgt->clone();
+        n->source = src->clone();
         n->is_integer = is_int;
-        n->type = type->copy_instance();
+        n->type = type->clone();
         return n;
     }
 
@@ -836,9 +836,9 @@ impl sir_bnot {
     pub func new(src: value_t*, tgt: value_t*, type: str*) -> sir_bnot* {
         var n = sir_bnot::__alloc__();
         n->base = sir::instance(sir_kind::sir_bnot);
-        n->target = tgt->copy_instance();
-        n->source = src->copy_instance();
-        n->type = type->copy_instance();
+        n->target = tgt->clone();
+        n->source = src->clone();
+        n->type = type->clone();
         return n;
     }
 
@@ -868,9 +868,9 @@ impl sir_lnot {
     pub func new(src: value_t*, tgt: value_t*, type: str*) -> sir_lnot* {
         var n = sir_lnot::__alloc__();
         n->base = sir::instance(sir_kind::sir_lnot);
-        n->target = tgt->copy_instance();
-        n->source = src->copy_instance();
-        n->type = type->copy_instance();
+        n->target = tgt->clone();
+        n->source = src->clone();
+        n->type = type->clone();
         return n;
     }
 
@@ -910,11 +910,11 @@ impl sir_add {
                  comment: const i8*) -> sir_add* {
         var n = sir_add::__alloc__();
         n->base = sir::instance(sir_kind::sir_add);
-        n->target = tgt->copy_instance();
-        n->left = l->copy_instance();
-        n->right = r->copy_instance();
+        n->target = tgt->clone();
+        n->left = l->clone();
+        n->right = r->clone();
         n->is_integer = is_int;
-        n->type = type->copy_instance();
+        n->type = type->clone();
         n->debug_info_index = dii;
         if (comment != nil) {
             n->comment = str::from(comment);
@@ -972,11 +972,11 @@ impl sir_sub {
                  type: str*) -> sir_sub* {
         var n = sir_sub::__alloc__();
         n->base = sir::instance(sir_kind::sir_sub);
-        n->target = tgt->copy_instance();
-        n->left = l->copy_instance();
-        n->right = r->copy_instance();
+        n->target = tgt->clone();
+        n->left = l->clone();
+        n->right = r->clone();
         n->is_integer = is_int;
-        n->type = type->copy_instance();
+        n->type = type->clone();
         return n;
     }
 
@@ -1021,11 +1021,11 @@ impl sir_mul {
                  type: str*) -> sir_mul* {
         var n = sir_mul::__alloc__();
         n->base = sir::instance(sir_kind::sir_mul);
-        n->target = tgt->copy_instance();
-        n->left = l->copy_instance();
-        n->right = r->copy_instance();
+        n->target = tgt->clone();
+        n->left = l->clone();
+        n->right = r->clone();
         n->is_integer = is_int;
-        n->type = type->copy_instance();
+        n->type = type->clone();
         return n;
     }
 
@@ -1072,12 +1072,12 @@ impl sir_div {
                  type: str*) -> sir_div* {
         var n = sir_div::__alloc__();
         n->base = sir::instance(sir_kind::sir_div);
-        n->target = tgt->copy_instance();
-        n->left = l->copy_instance();
-        n->right = r->copy_instance();
+        n->target = tgt->clone();
+        n->left = l->clone();
+        n->right = r->clone();
         n->is_integer = is_int;
         n->is_signed = is_signed;
-        n->type = type->copy_instance();
+        n->type = type->clone();
         return n;
     }
 
@@ -1128,12 +1128,12 @@ impl sir_rem {
                  type: str*) -> sir_rem* {
         var n = sir_rem::__alloc__();
         n->base = sir::instance(sir_kind::sir_rem);
-        n->target = tgt->copy_instance();
-        n->left = l->copy_instance();
-        n->right = r->copy_instance();
+        n->target = tgt->clone();
+        n->left = l->clone();
+        n->right = r->clone();
         n->is_integer = is_int;
         n->is_signed = is_signed;
-        n->type = type->copy_instance();
+        n->type = type->clone();
         return n;
     }
 
@@ -1180,10 +1180,10 @@ impl sir_band {
                  type: str*) -> sir_band* {
         var n = sir_band::__alloc__();
         n->base = sir::instance(sir_kind::sir_band);
-        n->target = tgt->copy_instance();
-        n->left = l->copy_instance();
-        n->right = r->copy_instance();
-        n->type = type->copy_instance();
+        n->target = tgt->clone();
+        n->left = l->clone();
+        n->right = r->clone();
+        n->type = type->clone();
         return n;
     }
 
@@ -1221,10 +1221,10 @@ impl sir_bxor {
                  type: str*) -> sir_bxor* {
         var n = sir_bxor::__alloc__();
         n->base = sir::instance(sir_kind::sir_bxor);
-        n->target = tgt->copy_instance();
-        n->left = l->copy_instance();
-        n->right = r->copy_instance();
-        n->type = type->copy_instance();
+        n->target = tgt->clone();
+        n->left = l->clone();
+        n->right = r->clone();
+        n->type = type->clone();
         return n;
     }
 
@@ -1262,10 +1262,10 @@ impl sir_bor {
                  type: str*) -> sir_bor* {
         var n = sir_bor::__alloc__();
         n->base = sir::instance(sir_kind::sir_bor);
-        n->target = tgt->copy_instance();
-        n->left = l->copy_instance();
-        n->right = r->copy_instance();
-        n->type = type->copy_instance();
+        n->target = tgt->clone();
+        n->left = l->clone();
+        n->right = r->clone();
+        n->type = type->clone();
         return n;
     }
 
@@ -1309,13 +1309,13 @@ impl sir_cmp {
                  type: str*) -> sir_cmp* {
         var n = sir_cmp::__alloc__();
         n->base = sir::instance(sir_kind::sir_cmp);
-        n->target = tgt->copy_instance();
-        n->left = l->copy_instance();
-        n->right = r->copy_instance();
+        n->target = tgt->clone();
+        n->left = l->clone();
+        n->right = r->clone();
         n->kind = op;
         n->is_integer = is_int;
         n->is_signed = is_sign;
-        n->type = type->copy_instance();
+        n->type = type->clone();
         return n;
     }
 
@@ -1420,9 +1420,9 @@ impl sir_store {
     pub func new(type: str*, src: value_t*, tgt: value_t*) -> sir_store* {
         var n = sir_store::__alloc__();
         n->base = sir::instance(sir_kind::sir_store);
-        n->target = tgt->copy_instance();
-        n->source = src->copy_instance();
-        n->type = type->copy_instance();
+        n->target = tgt->clone();
+        n->source = src->clone();
+        n->type = type->clone();
         return n;
     }
 
@@ -1452,9 +1452,9 @@ impl sir_load {
     pub func new(type: str*, src: value_t*, tgt: value_t*) -> sir_load* {
         var n = sir_load::__alloc__();
         n->base = sir::instance(sir_kind::sir_load);
-        n->source = src->copy_instance();
-        n->target = tgt->copy_instance();
-        n->type = type->copy_instance();
+        n->source = src->clone();
+        n->target = tgt->clone();
+        n->type = type->clone();
         return n;
     }
 
@@ -1505,7 +1505,7 @@ impl sir_br_cond {
     pub func new(c: value_t*, label_true: u64, label_false: u64) -> sir_br_cond* {
         var n = sir_br_cond::__alloc__();
         n->base = sir::instance(sir_kind::sir_br_cond);
-        n->cond = c->copy_instance();
+        n->cond = c->clone();
         n->label_true = label_true;
         n->label_false = label_false;
         return n;
@@ -1535,7 +1535,7 @@ impl sir_switch {
     pub func new(src: value_t*) -> sir_switch* {
         var n = sir_switch::__alloc__();
         n->base = sir::instance(sir_kind::sir_switch);
-        n->source = src->copy_instance();
+        n->source = src->clone();
         n->default_label = 0;
         n->case_value = vec<i64>::instance();
         n->case_label = vec<u64>::instance();
@@ -1585,10 +1585,10 @@ impl sir_type_convert {
                  dii: u64) -> sir_type_convert* {
         var n = sir_type_convert::__alloc__();
         n->base = sir::instance(sir_kind::sir_type_convert);
-        n->target =tgt->copy_instance();
-        n->source = src->copy_instance();
-        n->src_type = st->copy_instance();
-        n->dst_type = dt->copy_instance();
+        n->target =tgt->clone();
+        n->source = src->clone();
+        n->src_type = st->clone();
+        n->dst_type = dt->clone();
         n->src_unsigned = su;
         n->dst_unsigned = du;
         n->debug_info_index = dii;
@@ -1803,9 +1803,9 @@ impl sir_array_cast {
     pub func new(src: value_t*, tgt: value_t*, type: str*, size: u64, dii: u64) -> sir_array_cast* {
         var n = sir_array_cast::__alloc__();
         n->base = sir::instance(sir_kind::sir_array_cast);
-        n->source = src->copy_instance();
-        n->target = tgt->copy_instance();
-        n->type = type->copy_instance();
+        n->source = src->clone();
+        n->target = tgt->clone();
+        n->type = type->clone();
         n->array_size = size;
         n->debug_info_index = dii;
         return n;

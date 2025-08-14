@@ -330,13 +330,13 @@ impl json_token {
         }
     }
 
-    pub func copy_instance(self) -> json_token {
+    pub func clone(self) -> json_token {
         if (self->kind == json_token_kind::tok_string ||
             self->kind == json_token_kind::tok_number ||
             self->kind == json_token_kind::tok_error) {
             return json_token {
                 kind: self->kind,
-                value: self->value.copy_instance()
+                value: self->value.clone()
             };
         }
         return json_token { kind: self->kind };
@@ -599,7 +599,7 @@ impl parser {
                 return json::error("invalid object, expect string");
             }
 
-            var key = self->this_tok()->value.copy_instance();
+            var key = self->this_tok()->value.clone();
             defer key.delete();
             self->next();
 
