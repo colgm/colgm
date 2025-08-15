@@ -1,7 +1,6 @@
 use std::libc::{ free };
 use std::panic::{ panic };
 
-use lex::lexer::{ lexer };
 use parse::parser::{ parser };
 use err::report::{ report };
 
@@ -12,7 +11,6 @@ pub struct frontend {
     copt: cli_option*,
     err: report*,
     pkg: package,
-    lex: lexer,
     par: parser
 }
 
@@ -24,7 +22,6 @@ impl frontend {
             copt: co,
             err: err,
             pkg: package::instance(),
-            lex: lexer::instance(err),
             par: parser::instance(err, co)
         };
     }
@@ -33,7 +30,6 @@ impl frontend {
         self->err->delete();
         free(self->err => i8*);
         self->pkg.delete();
-        self->lex.delete();
         self->par.delete();
     }
 }

@@ -14,13 +14,13 @@ use std::queue::{ queue };
 use std::math::{ isinf, isnan, floor };
 
 use util::package::{ package, p_status };
-use ast::ast::*;
-use lex::lexer::{ lexer };
-use parse::parser::{ parser };
-
 use util::cli::{ cli_option };
 use util::timestamp::{ maketimestamp };
 use util::to_num::{ to_f64 };
+
+use ast::ast::*;
+use parse::lexer::{ lexer };
+use parse::parser::{ parser };
 
 use sema::symbol_info::{ symbol_kind, symbol_info };
 use sema::enumerate::{ colgm_enum };
@@ -273,7 +273,6 @@ impl regist_pass {
         var info = self->pkg->get_package_info(name);
         info->status = p_status::analysing;
 
-        var lex = lexer::instance(self->err);
         var par = parser::instance(self->err, self->co);
         var rp = regist_pass::instance(
             self->err,
@@ -290,19 +289,13 @@ impl regist_pass {
             self->mctx
         );
         defer {
-            lex.delete();
             par.delete();
             rp.delete();
             semantic.delete();
             ast2mir_worker.delete();
         }
 
-        lex.scan(path->c_str);
-        if (self->err->error_count > 0) {
-            return false;
-        }
-
-        par.parse(lex.__ptr__(), self->co->VIEW_DEFER_REPLACE);
+        par.parse(path->c_str, self->co->VIEW_DEFER_REPLACE);
         if (self->err->error_count > 0) {
             return false;
         }

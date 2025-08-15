@@ -4,8 +4,8 @@ use ast::dumper::{ ast_dumper };
 use err::report::*;
 use err::span::{ span };
 
-use lex::lexer::{ lexer };
-use lex::token::{ token, tok_kind };
+use parse::lexer::{ lexer };
+use parse::token::{ token, tok_kind };
 
 use std::panic::{ unreachable };
 use std::libc::{ free, streq };
@@ -21,6 +21,7 @@ use parse::replace_defer::{ replace_defer };
 
 pub struct parser {
     err: report*,
+    lex: lexer,
     co: cli_option*,
     toks: vec<token>*,
     root: root*,
@@ -114,6 +115,7 @@ impl parser {
     pub func instance(e: report*, co: cli_option*) -> parser {
         return parser {
             err: e,
+            lex: lexer::instance(e),
             co: co,
             toks: nil,
             root: nil,
@@ -122,10 +124,11 @@ impl parser {
     }
 
     pub func delete(self) {
+        self->lex.delete();
+
         if (self->root == nil) {
             return;
         }
-
         var n = self->root => ast*;
         n->delete();
         free(n => i8*);
@@ -1376,9 +1379,14 @@ impl parser {
         return false;
     }
 
-    pub func parse(self, lex: lexer*, view_defer_replace: bool) {
+    pub func parse(self, filename: const i8*, view_defer_replace: bool) {
+        self->lex.scan(filename);
+        if (self->err->error_count > 0) {
+            return;
+        }
+
         self->index = 0;
-        self->toks = lex->toks.__ptr__();
+        self->toks = self->lex.toks.__ptr__();
         self->root = root::new(self->this_tok_loc());
         // directy return if the first token is EOF
         if (self->lookahead(tok_kind::tok_eof)) {
