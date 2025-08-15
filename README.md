@@ -5,12 +5,16 @@
 [![nightly-build](https://github.com/colgm/colgm/actions/workflows/release.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/release.yml)
 [![discord](https://img.shields.io/discord/1369992600853020693?logo=discord&label=Colgm)](https://discord.gg/v8Uta6K8)
 
+Colgm aims to be a simple, easy-to-use and easy-to-maintain programming language.
+It will let you write relatively safe code without too much cognitive load.
+Targets supported now are [__LLVM IR__](https://llvm.org/) and [__nasal-lang__ [WIP]](https://github.com/ValKmjolnir/Nasal-Interpreter).
+
 - [__macos-aarch64-nightly-build__](https://github.com/colgm/colgm/releases/tag/macOS_nightly)
 - [__linux-x86_64-nightly-build__](https://github.com/colgm/colgm/releases/tag/linux_nightly)
 - [__windows-x86_64-nightly-build__ [WIP]](https://github.com/colgm/colgm/releases/tag/windows_nightly)
 
 ```rust
-use std::io::io;
+use std::io::{ io };
 
 pub func main() -> i32 {
     io::stdout().out("hello world!").endln();
@@ -20,7 +24,7 @@ pub func main() -> i32 {
 
 ## Repo Content
 
-- [bootstrap](./bootstrap/README.md) : bootstrap compiler.
+- [bootstrap](./bootstrap/main.cpp) : bootstrap compiler.
 - [src](./src/main.colgm) : self-host compiler.
 - [test](./test): test cases.
 
@@ -28,12 +32,13 @@ pub func main() -> i32 {
 
 See simple language guide in:
 
-- [doc/guide/tutorial.md](./doc/guide/tutorial.md)
-- [中文版语言指南](./doc/guide/tutorial_zh.md).
+- [language guide (English)](./doc/guide/tutorial.md)
+- [语言指南（中文版）](./doc/guide/tutorial_zh.md).
 
-See compiler library reference in:
+See library reference in:
 
-- [doc/guide/library_reference.md](./doc/guide/library_reference.md)
+- [standard library reference](./doc/guide/std_library_reference.md)
+- [compiler library reference](./doc/guide/compiler_library_reference.md)
 
 ### Usage
 
@@ -134,10 +139,11 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 ## Features and Roadmap
 
 1. feature: fuzzy match when variable is not found
-2. feature: reference type
-3. feature: to_string method for struct/enum/tagged union
-4. feature: smart pointer
-5. feature: std
+2. feature: new target: [nasal](https://github.com/ValKmjolnir/Nasal-Interpreter)
+3. feature: reference type
+4. feature: to_string method for struct/enum/tagged union
+5. feature: smart pointer
+6. feature: std
     - [x] Filesystem API (read, write, join, exists, etc)
     - [x] Datetime utils
     - [ ] String and Unicode Helpers
@@ -153,7 +159,7 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [ ] Regex
     - [ ] Package manager
     - [ ] Docs generator
-6. SIR refactor
-7. constant fold
-8. DCE opt
-9. CSE opt
+7. SIR refactor
+8. constant fold
+9. DCE opt
+10. CSE opt

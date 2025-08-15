@@ -1,4 +1,4 @@
-# Compiler Library Reference
+# Standard Library Reference
 
 ![just a picture](../jpg/llvm-maybe.jpg)
 
@@ -14,6 +14,8 @@
   - [std::set::hashset](#stdsethashsett)
   - [std::pair::pair](#stdpairpairk-v)
   - [std::map::hashmap](#stdmaphashmapk-v)
+- [Time Utils](#time-utils)
+  - [std::time::chrono](#stdtimechrono)
 - [Standard Trivial Type Wrapper](#standard-trivial-type-wrapper)
   - [std::basic::basic](#stdbasicbasict)
 - [File Formats](#file-formats)
@@ -219,6 +221,31 @@ func main() -> i32 {
     return 0;
 }
 ```
+
+## Time Utils
+
+### `std::time::chrono`
+
+Source: [`chrono`](../../src/std/time.colgm)
+
+- `chrono::timestamp() -> time_t`:
+
+return the current timestamp in 64 bit `time_t`.
+
+- `chrono::localtime() -> str`:
+
+return string of local time, for example `"2025-08-15 00:00:00"`.
+
+- `chrono::high_resolution_time() -> timespec`:
+
+return current `timespec` (64 bit sec, 64 bit nsec).
+
+- `chrono::duration_s(start: timespec, end: timespec) -> f64`
+- `chrono::duration_ms(start: timespec, end: timespec) -> f64`
+- `chrono::duration_us(start: timespec, end: timespec) -> f64`
+- `chrono::duration_ns(start: timespec, end: timespec) -> f64`
+
+return duration in seconds, milliseconds, microseconds and nanoseconds.
 
 ## Standard Trivial Type Wrapper
 
