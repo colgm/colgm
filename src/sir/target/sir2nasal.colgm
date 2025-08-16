@@ -1,4 +1,6 @@
 use sir::context::*;
+use sir::sir::*;
+use sir::value::{ value_t, value_kind };
 
 use std::io::{ io };
 use std::vec::{ vec };
@@ -112,11 +114,44 @@ impl sir2nasal {
         }
     }
 
+    func dump_variable_name(self, out: io, arg: str*) {
+        var tmp = arg->clone();
+        defer tmp.delete();
+
+        for (var i: u64 = 0; i < tmp.size; i += 1) {
+            if (tmp.c_str[i] == '.') {
+                tmp.c_str[i] = '_';
+            }
+        }
+
+        out.out(tmp.c_str);
+    }
+
+    func dump_func_args(self, out: io, f: sir_func*) {
+        out.out("func(");
+        foreach (var i; f->params) {
+            self->dump_variable_name(out, i.get()->key.__ptr__());
+            if (i.index() < f->params.size - 1) {
+                out.out(", ");
+            }
+        }
+        if (f->with_va_args) {
+            out.out(", _...");
+        }
+        out.out(")");
+    }
+
     func dump_func_decls(self, out: io) {
         foreach (var i; self->ctx->func_decls) {
+            if (i.get()->eliminated) {
+                continue;
+            }
+
             out.out("colgm_F[\"");
             self->dump_raw_nasal_string(out, i.get()->name.__ptr__());
-            out.out("\"] = nil;\n");
+            out.out("\"] = ");
+            self->dump_func_args(out, i.get());
+            out.out(" {}\n");
         }
 
         if (self->ctx->func_decls.size > 0) {
@@ -126,9 +161,21 @@ impl sir2nasal {
 
     func dump_func_impls(self, out: io) {
         foreach (var i; self->ctx->func_impls) {
+            if (i.get()->eliminated) {
+                continue;
+            }
+
             out.out("colgm_F[\"");
             self->dump_raw_nasal_string(out, i.get()->name.__ptr__());
-            out.out("\"] = func {}\n\n");
+            out.out("\"] = ");
+            self->dump_func_args(out, i.get());
+            if (i.get()->body == nil) {
+                out.out(" {}\n\n");
+                continue;
+            }
+            out.out(" {\n");
+            self->dump_sir_block(out, i.get()->body);
+            out.out("}\n\n");
         }
     }
 
@@ -145,5 +192,184 @@ impl sir2nasal {
         out.out("var colgm_F = {};\n");
         self->dump_func_decls(out);
         self->dump_func_impls(out);
+
+        out.out("if (contains(colgm_F, \"main\")) {\n");
+        out.out("  var argv = [\"<colgm-generated>\"];\n");
+        out.out("  foreach (var i; arg) {\n");
+        out.out("    append(argv, i);\n");
+        out.out("  }\n");
+        out.out("  colgm_F[\"main\"](size(argv), argv);\n");
+        out.out("}\n");
+    }
+}
+
+impl sir2nasal {
+    func dump_sir(self, out: io, inst: sir*) {
+        match (inst->kind) {
+            sir_kind::sir_block => self->dump_sir_block(out, inst => sir_block*);
+            sir_kind::sir_alloca => self->dump_sir_alloca(out, inst => sir_alloca*);
+            sir_kind::sir_temp_ptr => {}
+            sir_kind::sir_ret => self->dump_sir_ret(out, inst => sir_ret*);
+            sir_kind::sir_str => self->dump_sir_str(out, inst => sir_str*);
+            sir_kind::sir_zeroinitializer =>
+                self->dump_sir_zeroinitializer(out, inst => sir_zeroinitializer*);
+            // sir_kind::sir_get_index => {
+            //     var n = inst => sir_get_index*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_get_field => {
+            //     var n = inst => sir_get_field*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_call => {
+            //     var n = inst => sir_call*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_neg => {
+            //     var n = inst => sir_neg*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_bnot => {
+            //     var n = inst => sir_bnot*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_lnot => {
+            //     var n = inst => sir_lnot*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_add => {
+            //     var n = inst => sir_add*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_sub => {
+            //     var n = inst => sir_sub*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_mul => {
+            //     var n = inst => sir_mul*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_div => {
+            //     var n = inst => sir_div*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_rem => {
+            //     var n = inst => sir_rem*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_band => {
+            //     var n = inst => sir_band*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_bxor => {
+            //     var n = inst => sir_bxor*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_bor => {
+            //     var n = inst => sir_bor*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_cmp => {
+            //     var n = inst => sir_cmp*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_label => {
+            //     var n = inst => sir_label*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_store => {
+            //     var n = inst => sir_store*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_load => {
+            //     var n = inst => sir_load*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_br => {
+            //     var n = inst => sir_br*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_br_cond => {
+            //     var n = inst => sir_br_cond*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_switch => {
+            //     var n = inst => sir_switch*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_type_convert => {
+            //     var n = inst => sir_type_convert*;
+            //     n->dump(out);
+            // }
+            // sir_kind::sir_array_cast => {
+            //     var n = inst => sir_array_cast*;
+            //     n->dump(out);
+            // }
+            _ => {
+                out.out("  # unsupported ");
+                out.out_i64(inst->kind => i64).endln();
+            }
+        }
+    }
+
+    func dump_value_t(self, out: io, value: value_t*) {
+        match (value->kind) {
+            value_kind::null => {
+                if (!value->content.empty()) {
+                    out.out("\"<null: ").out(value->content.c_str).out(">\"");
+                }
+            }
+            value_kind::variable => {
+                out.out("colgm_Locals[\"").out(value->content.c_str).out("\"]");
+            }
+            value_kind::literal => {
+                if (value->content.eq_const("null")) {
+                    out.out("nil");
+                } else {
+                    out.out(value->content.c_str);
+                }
+            }
+        }
+    }
+
+    func dump_sir_alloca(self, out: io, alloca: sir_alloca*) {
+        out.out("  colgm_Locals[\"").out(alloca->variable.c_str);
+        out.out("\"] = nil;\n");
+    }
+
+    func dump_sir_block(self, out: io, block: sir_block*) {
+        out.out("  var colgm_Locals = {};\n");
+        foreach (var i; block->allocas) {
+            self->dump_sir_alloca(out, i.get());
+        }
+
+        foreach (var i; block->stmts) {
+            self->dump_sir(out, i.get());
+        }
+    }
+
+    func dump_sir_ret(self, out: io, ret: sir_ret*) {
+        out.out("  return");
+        if (ret->type.eq_const("void")) {
+            out.out(";\n");
+            return;
+        }
+        out.out(" ");
+        self->dump_value_t(out, ret->value.__ptr__());
+        out.out(";\n");
+    }
+
+    func dump_sir_str(self, out: io, n: sir_str*) {
+        out.out("  ");
+        self->dump_value_t(out, n->target.__ptr__());
+        out.out(" = colgm_S[").out_u64(n->index).out("];\n");
+    }
+
+    func dump_sir_zeroinitializer(self, out: io, n: sir_zeroinitializer*) {
+        out.out("  ");
+        self->dump_value_t(out, n->target.__ptr__());
+        out.out(" = colgm_T[\"");
+        self->dump_raw_nasal_string(out, n->type.__ptr__());
+        out.out("\"]();\n");
     }
 }
