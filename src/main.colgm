@@ -15,11 +15,11 @@ use sema::sema::{ sema };
 use mir::mir::*;
 use mir::context::{ mir_context };
 use mir::ast2mir::{ ast2mir };
+use mir::mir2nasal::{ mir2nasal };
 
 use sir::sir::*;
 use sir::context::{ sir_context };
 use sir::mir2sir::{ mir2sir };
-use sir::target::sir2nasal::{ sir2nasal };
 
 func clang_compile(co: cli_option*) -> i32 {
     if (co->EMIT_LLVM_ONLY) {
@@ -87,22 +87,18 @@ func clang_compile(co: cli_option*) -> i32 {
     return ret_code;
 }
 
-func nasal_target_output(option: cli_option, sctx: sir_context*) {
+func nasal_target_output(option: cli_option, mctx: mir_context*) {
     var t_stamp = maketimestamp();
     var nas_file = str::from(option.output_file);
     nas_file.append(".nas");
     defer nas_file.delete();
 
-    if (option.VERBOSE) {
-        io::stdout().green().out("[ SIR-PASS ] ").reset();
-        io::stdout().out("Generating ");
-        io::stdout().light_cyan().out("<").out(option.output_file).out(".nas> ").reset();
-    }
+    io::stdout().green().out("[ MIR-PASS ] ").reset();
+    io::stdout().out("Generating ");
+    io::stdout().light_cyan().out("<").out(option.output_file).out(".nas> ").reset();
     t_stamp.stamp();
-    sir2nasal::instance(sctx).dump(nas_file.c_str);
-    if (option.VERBOSE) {
-        io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
-    }
+    mir2nasal::instance(mctx).dump(nas_file.c_str);
+    io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
 }
 
 func compile(option: cli_option) -> i32 {
@@ -238,6 +234,10 @@ func compile(option: cli_option) -> i32 {
     if (option.VIEW_MIR) {
         mctx.dump(io::stdout(), cc.pkg.__ptr__());
     }
+    if (option.EMIT_NASAL_ONLY) {
+        nasal_target_output(option, mctx.__ptr__());
+        return 0;
+    }
 
     mir2sir_worker.generate(
         mctx.__ptr__(),
@@ -250,11 +250,6 @@ func compile(option: cli_option) -> i32 {
     }
     if (cc.err->error_count > 0) {
         return -1;
-    }
-
-    if (option.EMIT_NASAL_ONLY) {
-        nasal_target_output(option, sctx.__ptr__());
-        return 0;
     }
 
     var ll_file = str::from(option.output_file);
