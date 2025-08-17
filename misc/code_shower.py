@@ -1,5 +1,43 @@
 import time
 import argparse
+import os
+
+def gradient_output():
+    logo = [
+        "╔══════════════════════════════════╗",
+        "║                 __               ║",
+        "║     _________  / /___  ___ __    ║",
+        "║    / ___/ __ \\/ / __ `/ _ `_ \\   ║",
+        "║   / /__/ /_/ / / /_/ / // // /   ║",
+        "║   \\___/\\____/_/\\__, /_//_//_/    ║",
+        "║  -------------/____/-----------  ║",
+        "╚══════════════════════════════════╝"
+    ]
+    length = len(logo[0])
+    for line in logo:
+        if len(line) != length:
+            raise ValueError("All lines must be the same length")
+
+    fine_red_gradient = [88, 124, 160, 196, 202, 208, 214, 220]
+    ts = os.get_terminal_size()
+    width = (ts.columns - length) // 2
+    height = (ts.lines - len(logo)) // 2
+    for i in range(length):
+        index = i * 8 // length
+        color = fine_red_gradient[index]
+        for j, line in enumerate(logo):
+            print(f"\033[?25l\033[{j + height};{i + width}H\033[1;38;5;{color}m{line[i]}", end="", flush=True)
+        time.sleep(0.03)
+    time.sleep(2)
+    for i in range(length):
+        for j, line in enumerate(logo):
+            print(f"\033[?25l\033[{j + height};{i + width}H ", end="", flush=True)
+        time.sleep(0.03)
+
+def dump_logo():
+    print("\033c")
+    gradient_output()
+    time.sleep(1)
 
 class Colors:
     LINE = '\033[?25l\033[94;1m'
@@ -194,9 +232,10 @@ if __name__ == '__main__':
         parser.add_argument('file', help='file to read')
         args = parser.parse_args()
 
+        dump_logo()
         code_shower = CodeShower(file_path=args.file)
         code_shower.show()
-        input()
+        time.sleep(10)
         print("\033[?25h")
     except KeyboardInterrupt as e:
         print("\033[?25h")
