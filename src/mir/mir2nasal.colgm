@@ -96,7 +96,11 @@ impl mir2nasal {
             return;
         }
         out.out("{\n");
-        self->dump_block(out, f->block, 1);
+        foreach (var i; f->block->content) {
+            self->dump_indent(out, 1);
+            self->dump_mir(out, i.get(), 1);
+            out.out("\n");
+        }
         out.out("}\n");
     }
 }
@@ -110,51 +114,85 @@ impl mir2nasal {
 
     func dump_mir(self, out: io, n: mir*, indent: i64) {
         match (n->kind) {
-            mir_kind::mir_block => self->dump_block(out, n => mir_block*, indent + 1);
-            mir_kind::mir_unary => self->dump_unary(out, n => mir_unary*, indent + 1);
-            mir_kind::mir_binary => self->dump_binary(out, n => mir_binary*, indent + 1);
+            mir_kind::mir_block => self->dump_block(out, n => mir_block*, indent);
+            mir_kind::mir_unary => self->dump_unary(out, n => mir_unary*, indent);
+            mir_kind::mir_binary => self->dump_binary(out, n => mir_binary*, indent);
             mir_kind::mir_type_convert => {}
-            mir_kind::mir_nil => out.out("# nil;\n");
-            // mir_kind::mir_number =>
-            // mir_kind::mir_string =>
-            // mir_kind::mir_char =>
-            // mir_kind::mir_bool =>
-            // mir_kind::mir_array =>
-            // mir_kind::mir_struct_init =>
-            // mir_kind::mir_call =>
-            // mir_kind::mir_call_id =>
-            // mir_kind::mir_call_index =>
-            // mir_kind::mir_call_func =>
-            // mir_kind::mir_get_field =>
-            // mir_kind::mir_get_path =>
-            // mir_kind::mir_ptr_get_field =>
-            // mir_kind::mir_define =>
-            // mir_kind::mir_assign =>
-            // mir_kind::mir_if =>
-            // mir_kind::mir_branch =>
+            mir_kind::mir_nil => out.out("nil");
+            mir_kind::mir_number => {
+                var t = n => mir_number*;
+                out.out(t->value.c_str);
+            }
+            mir_kind::mir_string => {
+                var t = n => mir_string*;
+                out.out("\"");
+                self->dump_raw_nasal_string(out, t->value.__ptr__());
+                out.out("\"");
+            }
+            mir_kind::mir_char => {
+                var t = n => mir_char*;
+                out.out("'");
+                self->dump_raw_nasal_string(out, t->value.__ptr__());
+                out.out("'");
+            }
+            mir_kind::mir_bool => {
+                var t = n => mir_bool*;
+                if (t->value) {
+                    out.out("true");
+                } else {
+                    out.out("false");
+                }
+            }
+            mir_kind::mir_array => out.out("[]");
+            mir_kind::mir_struct_init => out.out("{}");
+            mir_kind::mir_call => self->dump_call(out, n => mir_call*, indent);
+            mir_kind::mir_call_id => {
+                var t = n => mir_call_id*;
+                out.out(t->name.c_str);
+            }
+            mir_kind::mir_call_index => {
+                var t = n => mir_call_index*;
+                out.out("[");
+                self->dump_block(out, t->index, indent);
+                out.out("]");
+            }
+            mir_kind::mir_call_func => self->dump_call_func(out, n => mir_call_func*, indent);
+            mir_kind::mir_get_field => {
+                var t = n => mir_get_field*;
+                out.out(".").out(t->name.c_str);
+            }
+            mir_kind::mir_get_path => {
+                var t = n => mir_get_path*;
+                out.out(".").out(t->name.c_str);
+            }
+            mir_kind::mir_ptr_get_field => {
+                var t = n => mir_ptr_get_field*;
+                out.out(".").out(t->name.c_str);
+            }
+            mir_kind::mir_define => self->dump_define(out, n => mir_define*, indent);
+            mir_kind::mir_assign => self->dump_assign(out, n => mir_assign*, indent);
+            mir_kind::mir_if => self->dump_if(out, n => mir_if*, indent);
+            mir_kind::mir_branch => self->dump_branch(out, n => mir_branch*, indent);
             // mir_kind::mir_switch_case =>
             // mir_kind::mir_switch =>
-            // mir_kind::mir_break =>
-            // mir_kind::mir_continue =>
+            mir_kind::mir_break => out.out("break;");
+            mir_kind::mir_continue => out.out("continue;");
             // mir_kind::mir_loop =>
-            // mir_kind::mir_return =>
+            mir_kind::mir_return => self->dump_return(out, n => mir_return*, indent);
             _ => {
-                self->dump_indent(out, indent);
-                out.out("# node kind ").out_i64(n->kind => i64).endln();
+                out.out("# ").out_i64(n->kind => i64).endln();
             }
         }
     }
 
     func dump_block(self, out: io, n: mir_block*, indent: i64) {
-        self->dump_indent(out, indent);
         foreach (var i; n->content) {
-            self->dump_mir(out, i.get(), indent + 1);
+            self->dump_mir(out, i.get(), indent);
         }
     }
 
     func dump_unary(self, out: io, n: mir_unary*, indent: i64) {
-        self->dump_indent(out, indent);
-        out.out("# ");
+        out.out("(");
         match (n->op) {
             mir_unary_opr::neg => out.out("-");
             mir_unary_opr::bnot => out.out("~");
@@ -162,12 +200,11 @@ impl mir2nasal {
         }
         out.out("(");
         self->dump_mir(out, n->value => mir*, indent + 1);
-        out.out(")\n");
+        out.out("))");
     }
 
     func dump_binary(self, out: io, n: mir_binary*, indent: i64) {
-        self->dump_indent(out, indent);
-        out.out("# (");
+        out.out("(");
         self->dump_mir(out, n->left => mir*, indent + 1);
         out.out(") ");
         match (n->op) {
@@ -182,14 +219,93 @@ impl mir2nasal {
             mir_binary_opr::leq => out.out("<=");
             mir_binary_opr::grt => out.out(">");
             mir_binary_opr::geq => out.out(">=");
-            mir_binary_opr::cmpand => out.out("&&");
-            mir_binary_opr::cmpor => out.out("||");
+            mir_binary_opr::cmpand => out.out("and");
+            mir_binary_opr::cmpor => out.out("or");
             mir_binary_opr::band => out.out("&");
             mir_binary_opr::bor => out.out("|");
             mir_binary_opr::bxor => out.out("^");
         }
         out.out(" (");
         self->dump_mir(out, n->right => mir*, indent + 1);
-        out.out(")\n");
+        out.out(")");
+    }
+
+    func dump_call(self, out: io, n: mir_call*, indent: i64) {
+        foreach (var i; n->content->content) {
+            self->dump_mir(out, i.get(), indent);
+        }
+    }
+
+    func dump_call_func(self, out: io, n: mir_call_func*, indent: i64) {
+        out.out("(");
+        foreach (var i; n->args->content) {
+            self->dump_mir(out, i.get(), indent);
+            if (i.index() != n->args->content.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out(")");
+    }
+
+    func dump_define(self, out: io, n: mir_define*, indent: i64) {
+        out.out("var ").out(n->name.c_str).out(" = ");
+        self->dump_mir(out, n->init_value => mir*, indent);
+        out.out(";\n");
+    }
+
+    func dump_assign(self, out: io, n: mir_assign*, indent: i64) {
+        self->dump_mir(out, n->left => mir*, indent);
+        match (n->opr) {
+            mir_assign_opr::eq => out.out(" = ");
+            mir_assign_opr::addeq => out.out(" += ");
+            mir_assign_opr::subeq => out.out(" -= ");
+            mir_assign_opr::muleq => out.out(" *= ");
+            mir_assign_opr::diveq => out.out(" /= ");
+            mir_assign_opr::remeq => out.out(" %= ");
+            mir_assign_opr::andeq => out.out(" &= ");
+            mir_assign_opr::oreq => out.out(" |= ");
+            mir_assign_opr::xoreq => out.out(" ^= ");
+        }
+        self->dump_mir(out, n->right => mir*, indent);
+        out.out(";\n");
+    }
+
+    func dump_if(self, out: io, n: mir_if*, indent: i64) {
+        if (n->condition != nil) {
+            out.out(" (");
+            self->dump_block(out, n->condition, indent);
+            out.out(")");
+        }
+        out.out(" {\n");
+        foreach (var i; n->content->content) {
+            self->dump_indent(out, indent + 1);
+            self->dump_mir(out, i.get(), indent + 1);
+            out.out("\n");
+        }
+        self->dump_indent(out, indent);
+        out.out("}");
+    }
+
+    func dump_branch(self, out: io, n: mir_branch*, indent: i64) {
+        foreach (var i; n->branch) {
+            if (i.index() == 0) {
+                out.out("if");
+            } elsif (i.get()->condition != nil) {
+                out.out(" else if");
+            } else {
+                out.out(" else");
+            }
+            self->dump_if(out, i.get(), indent);
+        }
+        out.out("\n");
+    }
+
+    func dump_return(self, out: io, n: mir_return*, indent: i64) {
+        out.out("return");
+        if (n->value != nil) {
+            out.out(" ");
+            self->dump_block(out, n->value, indent);
+        }
+        out.out(";\n");
     }
 }
