@@ -21,6 +21,8 @@ impl mir2nasal {
             var c = s->c_str[i];
             if (c == '\"') {
                 tmp.append("\\\"");
+            } elsif (c == '\'') {
+                tmp.append("\\\'");
             } elsif (c == '\\') {
                 tmp.append("\\\\");
             } elsif (c == '\n') {
@@ -31,6 +33,10 @@ impl mir2nasal {
                 tmp.append("\\t");
             } elsif (c == '\e') {
                 tmp.append("\\e");
+            } elsif (c == '\v') {
+                tmp.append("\\v");
+            } elsif (c == '\f') {
+                tmp.append("\\f");
             } else {
                 tmp.append_char(c);
             }
@@ -96,11 +102,7 @@ impl mir2nasal {
             return;
         }
         out.out("{\n");
-        foreach (var i; f->block->content) {
-            self->dump_indent(out, 1);
-            self->dump_mir(out, i.get(), 1);
-            out.out("\n");
-        }
+        self->dump_code_block(out, f->block, 1);
         out.out("}\n");
     }
 }
@@ -117,7 +119,7 @@ impl mir2nasal {
             mir_kind::mir_block => self->dump_block(out, n => mir_block*, indent);
             mir_kind::mir_unary => self->dump_unary(out, n => mir_unary*, indent);
             mir_kind::mir_binary => self->dump_binary(out, n => mir_binary*, indent);
-            mir_kind::mir_type_convert => {}
+            mir_kind::mir_type_convert => self->dump_type_convert(out, n => mir_type_convert*, indent);
             mir_kind::mir_nil => out.out("nil");
             mir_kind::mir_number => {
                 var t = n => mir_number*;
@@ -163,7 +165,7 @@ impl mir2nasal {
             }
             mir_kind::mir_get_path => {
                 var t = n => mir_get_path*;
-                out.out(".").out(t->name.c_str);
+                out.out("::").out(t->name.c_str);
             }
             mir_kind::mir_ptr_get_field => {
                 var t = n => mir_ptr_get_field*;
@@ -173,14 +175,29 @@ impl mir2nasal {
             mir_kind::mir_assign => self->dump_assign(out, n => mir_assign*, indent);
             mir_kind::mir_if => self->dump_if(out, n => mir_if*, indent);
             mir_kind::mir_branch => self->dump_branch(out, n => mir_branch*, indent);
-            // mir_kind::mir_switch_case =>
-            // mir_kind::mir_switch =>
+            mir_kind::mir_switch_case => self->dump_switch_case(out, n => mir_switch_case*, indent);
+            mir_kind::mir_switch => self->dump_switch(out, n => mir_switch*, indent);
             mir_kind::mir_break => out.out("break;");
             mir_kind::mir_continue => out.out("continue;");
-            // mir_kind::mir_loop =>
+            mir_kind::mir_loop => self->dump_loop(out, n => mir_loop*, indent);
             mir_kind::mir_return => self->dump_return(out, n => mir_return*, indent);
             _ => {
                 out.out("# ").out_i64(n->kind => i64).endln();
+            }
+        }
+    }
+
+    func dump_code_block(self, out: io, n: mir_block*, indent: i64) {
+        foreach (var i; n->content) {
+            if (i.get()->kind == mir_kind::mir_block) {
+                self->dump_code_block(out, i.get() => mir_block*, indent);
+            } else {
+                self->dump_indent(out, indent);
+                self->dump_mir(out, i.get(), indent);
+                if (i.get()->kind == mir_kind::mir_call) {
+                    out.out(";");
+                }
+                out.out("\n");
             }
         }
     }
@@ -191,6 +208,22 @@ impl mir2nasal {
         }
     }
 
+    func dump_expr(self, out: io, n: mir_block*, indent: i64) {
+        if (n->content.size == 1 && (
+            n->content.get(0)->kind == mir_kind::mir_call ||
+            n->content.get(0)->kind == mir_kind::mir_number ||
+            n->content.get(0)->kind == mir_kind::mir_string ||
+            n->content.get(0)->kind == mir_kind::mir_nil ||
+            n->content.get(0)->kind == mir_kind::mir_bool ||
+            n->content.get(0)->kind == mir_kind::mir_char)) {
+            self->dump_block(out, n, indent);
+            return;
+        }
+        out.out("(");
+        self->dump_block(out, n, indent);
+        out.out(")");
+    }
+
     func dump_unary(self, out: io, n: mir_unary*, indent: i64) {
         out.out("(");
         match (n->op) {
@@ -198,21 +231,28 @@ impl mir2nasal {
             mir_unary_opr::bnot => out.out("~");
             mir_unary_opr::lnot => out.out("!");
         }
-        out.out("(");
-        self->dump_mir(out, n->value => mir*, indent + 1);
-        out.out("))");
+        self->dump_expr(out, n->value, indent);
+        out.out(")");
     }
 
     func dump_binary(self, out: io, n: mir_binary*, indent: i64) {
-        out.out("(");
-        self->dump_mir(out, n->left => mir*, indent + 1);
-        out.out(") ");
+        if (n->op == mir_binary_opr::rem) {
+            out.out("math.mod(");
+            self->dump_expr(out, n->left, indent);
+            out.out(", ");
+            self->dump_expr(out, n->right, indent);
+            out.out(")");
+            return;
+        }
+
+        self->dump_expr(out, n->left, indent);
+        out.out(" ");
         match (n->op) {
             mir_binary_opr::add => out.out("+");
             mir_binary_opr::sub => out.out("-");
             mir_binary_opr::mul => out.out("*");
             mir_binary_opr::div => out.out("/");
-            mir_binary_opr::rem => out.out("%");
+            mir_binary_opr::rem => {}
             mir_binary_opr::cmpeq => out.out("==");
             mir_binary_opr::cmpne => out.out("!=");
             mir_binary_opr::less => out.out("<");
@@ -225,9 +265,12 @@ impl mir2nasal {
             mir_binary_opr::bor => out.out("|");
             mir_binary_opr::bxor => out.out("^");
         }
-        out.out(" (");
-        self->dump_mir(out, n->right => mir*, indent + 1);
-        out.out(")");
+        out.out(" ");
+        self->dump_expr(out, n->right, indent + 1);
+    }
+
+    func dump_type_convert(self, out: io, n: mir_type_convert*, indent: i64) {
+        self->dump_block(out, n->source, indent);
     }
 
     func dump_call(self, out: io, n: mir_call*, indent: i64) {
@@ -250,7 +293,7 @@ impl mir2nasal {
     func dump_define(self, out: io, n: mir_define*, indent: i64) {
         out.out("var ").out(n->name.c_str).out(" = ");
         self->dump_mir(out, n->init_value => mir*, indent);
-        out.out(";\n");
+        out.out(";");
     }
 
     func dump_assign(self, out: io, n: mir_assign*, indent: i64) {
@@ -267,7 +310,7 @@ impl mir2nasal {
             mir_assign_opr::xoreq => out.out(" ^= ");
         }
         self->dump_mir(out, n->right => mir*, indent);
-        out.out(";\n");
+        out.out(";");
     }
 
     func dump_if(self, out: io, n: mir_if*, indent: i64) {
@@ -277,11 +320,7 @@ impl mir2nasal {
             out.out(")");
         }
         out.out(" {\n");
-        foreach (var i; n->content->content) {
-            self->dump_indent(out, indent + 1);
-            self->dump_mir(out, i.get(), indent + 1);
-            out.out("\n");
-        }
+        self->dump_code_block(out, n->content, indent + 1);
         self->dump_indent(out, indent);
         out.out("}");
     }
@@ -297,15 +336,61 @@ impl mir2nasal {
             }
             self->dump_if(out, i.get(), indent);
         }
-        out.out("\n");
+    }
+
+    func dump_switch_case(self, out: io, n: mir_switch_case*, indent: i64) {
+        out.out("(_ == ").out_i64(n->value).out(") {\n");
+        self->dump_code_block(out, n->content, indent + 1);
+        self->dump_indent(out, indent);
+        out.out("}");
+    }
+
+    func dump_switch(self, out: io, n: mir_switch*, indent: i64) {
+        out.out("var _ = ");
+        self->dump_block(out, n->condition, indent);
+        out.out(";\n");
+        self->dump_indent(out, indent);
+        foreach (var i; n->cases) {
+            if (i.index() == 0) {
+                out.out("if ");
+            } else {
+                out.out(" elsif ");
+            }
+            self->dump_switch_case(out, i.get(), indent);
+        }
+        if (n->default_case != nil) {
+            out.out(" else {\n");
+            self->dump_code_block(out, n->default_case, indent + 1);
+            self->dump_indent(out, indent);
+            out.out("}");
+        }
+    }
+
+    func dump_loop(self, out: io, n: mir_loop*, indent: i64) {
+        if (n->update != nil) {
+            out.out("for (; ");
+        } else {
+            out.out("while (");
+        }
+        if (n->condition != nil) {
+            self->dump_block(out, n->condition, indent);
+        }
+        if (n->update != nil) {
+            out.out("; ");
+            self->dump_block(out, n->update, indent);
+        }
+        out.out(") {\n");
+        self->dump_code_block(out, n->content, indent + 1);
+        self->dump_indent(out, indent);
+        out.out("}");
     }
 
     func dump_return(self, out: io, n: mir_return*, indent: i64) {
         out.out("return");
-        if (n->value != nil) {
+        if (n->value != nil && !n->value->content.empty()) {
             out.out(" ");
             self->dump_block(out, n->value, indent);
         }
-        out.out(";\n");
+        out.out(";");
     }
 }
