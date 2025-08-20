@@ -28,9 +28,6 @@ std::string type::to_string() const {
     for (i64 i = 0; i < pointer_depth; ++i) {
         result += "*";
     }
-    if (is_reference) {
-        result += "*";
-    }
     return result;
 }
 
@@ -46,17 +43,17 @@ std::string type::array_type_to_string() const {
     return "[" + std::to_string(array_length) + " x " + result + "]";
 }
 
-std::string type::full_path_name(bool with_generics) const {
+std::string type::full_path_name() const {
     const auto pkg = package_manager::singleton();
     const auto module_name = pkg->get_module_name(loc_file);
     if (module_name.empty()) {
-        return with_generics? generic_name() : name;
+        return generic_name();
     }
-    return module_name + "::" + (with_generics? generic_name() : name);
+    return module_name + "::" + generic_name();
 }
 
-std::string type::full_path_name_with_pointer(bool with_generics) const {
-    auto result = full_path_name(with_generics);
+std::string type::full_path_name_with_pointer() const {
+    auto result = full_path_name();
     for (i64 i = 0; i < pointer_depth; ++i) {
         result += "*";
     }
@@ -64,19 +61,18 @@ std::string type::full_path_name_with_pointer(bool with_generics) const {
 }
 
 std::string type::generic_name() const {
-    auto result = name;
     if (generics.empty()) {
-        return result;
+        return name;
     }
-    result += "<";
-    for (const auto& g: generics) {
-        result += g.full_path_name();
-        for (auto i = 0; i<g.pointer_depth; ++i) {
-            result += "*";
-        }
+    auto result = name + "<";
+    for (const auto& g : generics) {
+        // should use full path name with pointer info
+        // for generic arguments
+        // also, full path name will generate generic arguments recursively
+        result += g.full_path_name_with_pointer();
         result += ",";
     }
-    if (result.back()==',') {
+    if (result.back() == ',') {
         result.pop_back();
     }
     result += ">";

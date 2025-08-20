@@ -627,15 +627,15 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
     }
 
     const auto& domain = ctx.get_domain(prev.loc_file);
-    if (domain.structs.count(prev.name_for_search())) {
+    if (domain.structs.count(prev.generic_name())) {
         return resolve_struct_get_field(
-            domain.structs.at(prev.name_for_search()),
+            domain.structs.at(prev.generic_name()),
             prev,
             node
         );
-    } else if (domain.tagged_unions.count(prev.name_for_search())) {
+    } else if (domain.tagged_unions.count(prev.generic_name())) {
         return resolve_tagged_union_get_field(
-            domain.tagged_unions.at(prev.name_for_search()),
+            domain.tagged_unions.at(prev.generic_name()),
             prev,
             node
         );
@@ -665,13 +665,13 @@ type semantic::resolve_struct_get_field(const colgm_struct& struct_self,
     if (struct_self.static_method.count(node->get_name())) {
         rp.report(node,
             "method \"" + node->get_name() +
-            "\" in \"" + prev.name_for_search() + "\" is static"
+            "\" in \"" + prev.generic_name() + "\" is static"
         );
         return type::error_type();
     }
     rp.report(node,
         "cannot find field \"" + node->get_name() +
-        "\" in \"" + prev.name_for_search() + "\"",
+        "\" in \"" + prev.generic_name() + "\"",
         "maybe you mean \"" + struct_self.fuzzy_match_field(node->get_name()) + "\"?"
     );
     return type::error_type();
@@ -693,13 +693,13 @@ type semantic::resolve_tagged_union_get_field(const colgm_tagged_union& un,
     if (un.static_method.count(node->get_name())) {
         rp.report(node,
             "method \"" + node->get_name() +
-            "\" in \"" + prev.name_for_search() + "\" is static"
+            "\" in \"" + prev.generic_name() + "\" is static"
         );
         return type::error_type();
     }
     rp.report(node,
         "cannot find field \"" + node->get_name() +
-        "\" in \"" + prev.name_for_search() + "\"",
+        "\" in \"" + prev.generic_name() + "\"",
         "maybe you mean \"" + un.fuzzy_match_field(node->get_name()) + "\"?"
     );
     return type::error_type();
@@ -811,27 +811,27 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // global function call
     if (prev.is_global_func) {
         const auto& domain = ctx.get_domain(prev.loc_file);
-        if (!domain.functions.count(prev.name_for_search())) {
+        if (!domain.functions.count(prev.generic_name())) {
             rp.report(node,
-                "cannot find function \"" + prev.name_for_search() + "\""
+                "cannot find function \"" + prev.generic_name() + "\""
             );
             return type::error_type();
         }
-        const auto& func = domain.functions.at(prev.name_for_search());
+        const auto& func = domain.functions.at(prev.generic_name());
         check_static_call_args(func, node);
         node->set_resolve_type(func.return_type);
         return func.return_type;
     }
     // static method call of primitive type
     if (prev.prm_info.flag_is_static) {
-        if (!ctx.global.primitives.count(prev.name_for_search())) {
+        if (!ctx.global.primitives.count(prev.generic_name())) {
             rp.report(node,
                 "cannot call static method of primitive type \"" +
-                prev.name_for_search() + "\""
+                prev.generic_name() + "\""
             );
             return type::error_type();
         }
-        const auto& p = ctx.global.primitives.at(prev.name_for_search());
+        const auto& p = ctx.global.primitives.at(prev.generic_name());
         const auto& method = p.static_methods.at(prev.prm_info.method_name);
         check_static_call_args(method, node);
         node->set_resolve_type(method.return_type);
@@ -840,14 +840,14 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
     // static method call of struct
     if (prev.stm_info.flag_is_static) {
         const auto& domain = ctx.get_domain(prev.loc_file);
-        if (domain.structs.count(prev.name_for_search())) {
-            const auto& st = domain.structs.at(prev.name_for_search());
+        if (domain.structs.count(prev.generic_name())) {
+            const auto& st = domain.structs.at(prev.generic_name());
             const auto& method = st.static_method.at(prev.stm_info.method_name);
             check_static_call_args(method, node);
             node->set_resolve_type(method.return_type);
             return method.return_type;
-        } else if (domain.tagged_unions.count(prev.name_for_search())) {
-            const auto& un = domain.tagged_unions.at(prev.name_for_search());
+        } else if (domain.tagged_unions.count(prev.generic_name())) {
+            const auto& un = domain.tagged_unions.at(prev.generic_name());
             const auto& method = un.static_method.at(prev.stm_info.method_name);
             check_static_call_args(method, node);
             node->set_resolve_type(method.return_type);
@@ -855,21 +855,21 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         }
         
         rp.report(node,
-            "cannot find \"" + prev.name_for_search() + "\""
+            "cannot find \"" + prev.generic_name() + "\""
         );
         return type::error_type();
     }
     // method call of struct
     if (prev.stm_info.flag_is_normal) {
         const auto& domain = ctx.get_domain(prev.loc_file);
-        if (domain.structs.count(prev.name_for_search())) {
-            const auto& st = domain.structs.at(prev.name_for_search());
+        if (domain.structs.count(prev.generic_name())) {
+            const auto& st = domain.structs.at(prev.generic_name());
             const auto& method = st.method.at(prev.stm_info.method_name);
             check_method_call_args(method, node);
             node->set_resolve_type(method.return_type);
             return method.return_type;
-        } else if (domain.tagged_unions.count(prev.name_for_search())) {
-            const auto& un = domain.tagged_unions.at(prev.name_for_search());
+        } else if (domain.tagged_unions.count(prev.generic_name())) {
+            const auto& un = domain.tagged_unions.at(prev.generic_name());
             const auto& method = un.method.at(prev.stm_info.method_name);
             check_method_call_args(method, node);
             node->set_resolve_type(method.return_type);
@@ -877,7 +877,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         }
 
         rp.report(node,
-            "cannot find \"" + prev.name_for_search() + "\""
+            "cannot find \"" + prev.generic_name() + "\""
         );
         return type::error_type();
     }
@@ -930,22 +930,22 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
     }
 
     const auto& domain = ctx.get_domain(prev.loc_file);
-    if (domain.structs.count(prev.name_for_search())) {
+    if (domain.structs.count(prev.generic_name())) {
         return resolve_struct_initializer(
-            domain.structs.at(prev.name_for_search()),
+            domain.structs.at(prev.generic_name()),
             prev,
             node
         );
-    } else if (domain.tagged_unions.count(prev.name_for_search())) {
+    } else if (domain.tagged_unions.count(prev.generic_name())) {
         return resolve_tagged_union_initializer(
-            domain.tagged_unions.at(prev.name_for_search()),
+            domain.tagged_unions.at(prev.generic_name()),
             prev,
             node
         );
     }
 
     rp.report(node,
-        "\"" + prev.name_for_search() +
+        "\"" + prev.generic_name() +
         "\" is not struct or tagged union, cannot initialize"
     );
     return type::error_type();
@@ -963,7 +963,7 @@ type semantic::resolve_struct_initializer(const colgm_struct& st,
         if (!st.field.count(field)) {
             rp.report(i,
                 "cannot find field \"" + field +
-                "\" in \"" + prev.name_for_search() + "\""
+                "\" in \"" + prev.generic_name() + "\""
             );
             continue;
         }
@@ -1016,7 +1016,7 @@ type semantic::resolve_tagged_union_initializer(const colgm_tagged_union& un,
     if (!un.member.count(member)) {
         rp.report(i,
             "cannot find member \"" + member +
-            "\" in \"" + prev.name_for_search() + "\""
+            "\" in \"" + prev.generic_name() + "\""
         );
         return copy;
     }
@@ -1056,14 +1056,14 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
 
     // prev resolved type is a primitive type
     if (prev.loc_file.empty()) {
-        if (!ctx.global.primitives.count(prev.name_for_search())) {
+        if (!ctx.global.primitives.count(prev.generic_name())) {
             rp.report(node,
                 "cannot get static method \"" + node->get_name() +
                 "\" from \"" + prev.to_string() + "\""
             );
             return type::error_type();
         }
-        const auto& p = ctx.global.primitives.at(prev.name_for_search());
+        const auto& p = ctx.global.primitives.at(prev.generic_name());
         if (!p.static_methods.count(node->get_name())) {
             rp.report(node,
                 "cannot get static method \"" + node->get_name() +
@@ -1083,8 +1083,8 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
     }
 
     const auto& domain = ctx.get_domain(prev.loc_file);
-    if (domain.structs.count(prev.name_for_search()) && prev.is_global) {
-        const auto& st = domain.structs.at(prev.name_for_search());
+    if (domain.structs.count(prev.generic_name()) && prev.is_global) {
+        const auto& st = domain.structs.at(prev.generic_name());
         if (st.static_method.count(node->get_name())) {
             check_pub_static_method(node, node->get_name(), st);
             const auto res = struct_static_method_infer(prev, node->get_name());
@@ -1093,19 +1093,19 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         } else if (st.method.count(node->get_name())) {
             rp.report(node,
                 "\"" + node->get_name() +
-                "\" in \"" + prev.name_for_search() + "\" is not static method"
+                "\" in \"" + prev.generic_name() + "\" is not static method"
             );
             return type::error_type();
         } else {
             rp.report(node,
                 "cannot find static method \"" + node->get_name() +
-                "\" in \"" + prev.name_for_search() + "\"",
+                "\" in \"" + prev.generic_name() + "\"",
                 "maybe you mean \"" + st.fuzzy_match_field(node->get_name()) + "\"?"
             );
             return type::error_type();
         }
-    } else if (domain.enums.count(prev.name_for_search()) && prev.is_global) {
-        const auto& en = domain.enums.at(prev.name_for_search());
+    } else if (domain.enums.count(prev.generic_name()) && prev.is_global) {
+        const auto& en = domain.enums.at(prev.generic_name());
         if (en.members.count(node->get_name())) {
             auto res = prev;
             res.is_global = false;
@@ -1115,11 +1115,11 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         }
         rp.report(node,
             "cannot find enum member \"" + node->get_name() +
-            "\" in \"" + prev.name_for_search() + "\""
+            "\" in \"" + prev.generic_name() + "\""
         );
         return type::error_type();
-    } else if (domain.tagged_unions.count(prev.name_for_search()) && prev.is_global) {
-        const auto& tu = domain.tagged_unions.at(prev.name_for_search());
+    } else if (domain.tagged_unions.count(prev.generic_name()) && prev.is_global) {
+        const auto& tu = domain.tagged_unions.at(prev.generic_name());
         if (tu.static_method.count(node->get_name())) {
             check_pub_static_method(node, node->get_name(), tu);
             const auto res = struct_static_method_infer(prev, node->get_name());
@@ -1128,13 +1128,13 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         } else if (tu.method.count(node->get_name())) {
             rp.report(node,
                 "\"" + node->get_name() +
-                "\" in \"" + prev.name_for_search() + "\" is not static method"
+                "\" in \"" + prev.generic_name() + "\" is not static method"
             );
             return type::error_type();
         } else {
             rp.report(node,
                 "cannot find static method \"" + node->get_name() +
-                "\" in \"" + prev.name_for_search() + "\"",
+                "\" in \"" + prev.generic_name() + "\"",
                 "maybe you mean \"" + tu.fuzzy_match_field(node->get_name()) + "\"?"
             );
             return type::error_type();
@@ -1174,15 +1174,15 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
     }
 
     const auto& domain = ctx.get_domain(prev.loc_file);
-    if (domain.structs.count(prev.name_for_search())) {
+    if (domain.structs.count(prev.generic_name())) {
         return resolve_struct_ptr_get_field(
-            domain.structs.at(prev.name_for_search()),
+            domain.structs.at(prev.generic_name()),
             prev,
             node
         );
-    } else if (domain.tagged_unions.count(prev.name_for_search())) {
+    } else if (domain.tagged_unions.count(prev.generic_name())) {
         return resolve_tagged_union_ptr_get_field(
-            domain.tagged_unions.at(prev.name_for_search()),
+            domain.tagged_unions.at(prev.generic_name()),
             prev,
             node
         );
@@ -1208,13 +1208,13 @@ type semantic::resolve_struct_ptr_get_field(const colgm_struct& struct_self,
     if (struct_self.static_method.count(node->get_name())) {
         rp.report(node,
             "method \"" + node->get_name() +
-            "\" in \"" + prev.name_for_search() + "\" is static"
+            "\" in \"" + prev.generic_name() + "\" is static"
         );
         return type::error_type();
     }
     rp.report(node,
         "cannot find field \"" + node->get_name() +
-        "\" in \"" + prev.name_for_search() + "\"",
+        "\" in \"" + prev.generic_name() + "\"",
         "maybe you mean \"" + struct_self.fuzzy_match_field(node->get_name()) + "\"?"
     );
     return type::error_type();
@@ -1236,13 +1236,13 @@ type semantic::resolve_tagged_union_ptr_get_field(const colgm_tagged_union& un,
     if (un.static_method.count(node->get_name())) {
         rp.report(node,
             "method \"" + node->get_name() +
-            "\" in \"" + prev.name_for_search() + "\" is static"
+            "\" in \"" + prev.generic_name() + "\" is static"
         );
         return type::error_type();
     }
     rp.report(node,
         "cannot find field \"" + node->get_name() +
-        "\" in \"" + prev.name_for_search() + "\"",
+        "\" in \"" + prev.generic_name() + "\"",
         "maybe you mean \"" + un.fuzzy_match_field(node->get_name()) + "\"?"
     );
     return type::error_type();

@@ -95,23 +95,23 @@ public:
 
 public:
     sym_kind search_symbol_kind(const type& t) const {
-        if (global.primitives.count(t.name_for_search())) {
+        if (global.primitives.count(t.generic_name())) {
             return sym_kind::basic_kind;
         }
         if (!global.domain.count(t.loc_file)) {
             return sym_kind::error_kind;
         }
         const auto& domain = global.domain.at(t.loc_file);
-        if (domain.enums.count(t.name_for_search())) {
+        if (domain.enums.count(t.generic_name())) {
             return sym_kind::enum_kind;
         }
-        if (domain.structs.count(t.name_for_search())) {
+        if (domain.structs.count(t.generic_name())) {
             return sym_kind::struct_kind;
         }
-        if (domain.tagged_unions.count(t.name_for_search())) {
+        if (domain.tagged_unions.count(t.generic_name())) {
             return sym_kind::tagged_union_kind;
         }
-        if (domain.functions.count(t.name_for_search())) {
+        if (domain.functions.count(t.generic_name())) {
             return sym_kind::func_kind;
         }
         return sym_kind::error_kind;

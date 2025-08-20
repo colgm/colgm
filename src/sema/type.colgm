@@ -395,21 +395,27 @@ impl type {
         out.reset();
     }
 
+    // type name with generic info, without pointer info, without module info
     pub func generic_name(self, pkg: package*) -> str {
-        var res = str::from(self->name.c_str);
-        if (self->generics.size > 0) {
-            res.append_char('<');
-            foreach (var i; self->generics) {
-                var t_fpn = i.get()->full_path_name(pkg, true);
-                defer t_fpn.delete();
-
-                res.append(t_fpn.c_str);
-                if (i.index() != self->generics.size - 1) {
-                    res.append_char(',');
-                }
-            }
-            res.append_char('>');
+        if (self->generics.empty()) {
+            return self->name.clone();
         }
+
+        var res = str::from(self->name.c_str);
+        res.append_char('<');
+        foreach (var i; self->generics) {
+            // should use full path name with pointer info
+            // for generic arguments
+            // also, full path name will generate generic arguments recursively
+            var generic_arg_name = i.get()->full_path_name(pkg, true);
+            defer generic_arg_name.delete();
+
+            res.append(generic_arg_name.c_str);
+            if (i.index() != self->generics.size - 1) {
+                res.append_char(',');
+            }
+        }
+        res.append_char('>');
         return res;
     }
 
@@ -452,9 +458,6 @@ impl type {
             for (var i = 0; i < self->pointer_depth; i += 1) {
                 res.append_char('*');
             }
-        }
-        if (self->is_reference) {
-            res.append_char('*');
         }
         return res;
     }

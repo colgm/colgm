@@ -47,19 +47,31 @@ std::string mir2sir::type_mapping(const type& t) {
     }
     switch(type_mapper.at(full_name)) {
         case sym_kind::struct_kind:
-            // here we use full path name without generic info
+            copy.name = "%struct." + mangle(full_name);
+            // need to clear loc_file info
             // otherwise for example:
             // std::vec<data::foo>
             //
             // will be wrongly mapped to
-            // %struct.std.vec<data.foo><data::foo>
+            // std::%struct.std.vec<data::foo>
+            // but expect to be
+            // %struct.std.vec<data::foo>
+            copy.loc_file.clear();
+            // here we need to clear generic info
+            // otherwise for example:
+            // std::vec<data::foo>
+            //
+            // will be wrongly mapped to
+            // %struct.std.vec<data::foo><data::foo>
+            //         ^^^^^^^^^^^^^^^^^^ name
+            //                           ^^^^^^^^^^^ generated from generics
             //
             // but expect to be
             // %struct.std.vec<data::foo>
-            copy.name = "%struct." + mangle(t.full_path_name(false));
+            copy.generics.clear();
             break;
         case sym_kind::tagged_union_kind:
-            copy.name = "%tagged_union." + mangle(t.full_path_name(false));
+            copy.name = "%tagged_union." + mangle(full_name);
             break;
         case sym_kind::enum_kind:
             // should copy pointer depth too
@@ -652,8 +664,8 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
 
     const auto& dm = ctx.get_domain(node->get_type().loc_file);
 
-    if (dm.structs.count(node->get_type().name_for_search())) {
-        const auto& st = dm.structs.at(node->get_type().name_for_search());
+    if (dm.structs.count(node->get_type().generic_name())) {
+        const auto& st = dm.structs.at(node->get_type().generic_name());
         for (const auto& i : node->get_fields()) {
             const auto target = ssa_gen.create();
             const auto index = st.field_index(i.name);
@@ -677,8 +689,8 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
             temp_var,
             node->get_type().get_pointer_copy()
         ));
-    } else if (dm.tagged_unions.count(node->get_type().name_for_search())) {
-        const auto& un = dm.tagged_unions.at(node->get_type().name_for_search());
+    } else if (dm.tagged_unions.count(node->get_type().generic_name())) {
+        const auto& un = dm.tagged_unions.at(node->get_type().generic_name());
         for (const auto& i : node->get_fields()) {
             const auto tag = ssa_gen.create();
             block->add_stmt(new sir_get_field(
@@ -737,12 +749,12 @@ void mir2sir::push_global_func(const type& t) {
     const auto& dm = ctx.get_domain(t.loc_file);
 
     // avoid out of range error
-    if (!dm.functions.count(t.name_for_search())) {
+    if (!dm.functions.count(t.generic_name())) {
         value_stack.push_back(mir_value_t::func_kind(t.name, t));
         return;
     }
 
-    const auto& fn = dm.functions.at(t.name_for_search());
+    const auto& fn = dm.functions.at(t.generic_name());
 
     // extern function will reserve raw name, others are mangled
     if (fn.is_extern) {
@@ -932,8 +944,8 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
 
     const auto& dm = ctx.get_domain(prev.resolve_type.loc_file);
 
-    if (dm.structs.count(prev.resolve_type.name_for_search())) {
-        const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
+    if (dm.structs.count(prev.resolve_type.generic_name())) {
+        const auto& st = dm.structs.at(prev.resolve_type.generic_name());
 
         // get method
         if (st.method.count(node->get_name())) {
@@ -959,8 +971,8 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
             target,
             node->get_type().get_pointer_copy()
         ));
-    } else if (dm.tagged_unions.count(prev.resolve_type.name_for_search())) {
-        const auto& un = dm.tagged_unions.at(prev.resolve_type.name_for_search());
+    } else if (dm.tagged_unions.count(prev.resolve_type.generic_name())) {
+        const auto& un = dm.tagged_unions.at(prev.resolve_type.generic_name());
 
         // get method
         if (un.method.count(node->get_name())) {
@@ -1035,8 +1047,8 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
 
     const auto& dm = ctx.get_domain(prev.resolve_type.loc_file);
 
-    if (dm.structs.count(prev.resolve_type.name_for_search())) {
-        const auto& st = dm.structs.at(prev.resolve_type.name_for_search());
+    if (dm.structs.count(prev.resolve_type.generic_name())) {
+        const auto& st = dm.structs.at(prev.resolve_type.generic_name());
 
         // get method
         if (st.method.count(node->get_name())) {
@@ -1076,8 +1088,8 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
             temp_1,
             node->get_type().get_pointer_copy()
         ));
-    } else if (dm.tagged_unions.count(prev.resolve_type.name_for_search())) {
-        const auto& un = dm.tagged_unions.at(prev.resolve_type.name_for_search());
+    } else if (dm.tagged_unions.count(prev.resolve_type.generic_name())) {
+        const auto& un = dm.tagged_unions.at(prev.resolve_type.generic_name());
 
         // get method
         if (un.method.count(node->get_name())) {
@@ -1412,7 +1424,7 @@ void mir2sir::visit_mir_switch(mir_switch* node) {
 
     const auto& dm = ctx.get_domain(value.resolve_type.loc_file);
     sir_switch* switch_inst = nullptr;
-    if (dm.tagged_unions.count(value.resolve_type.name_for_search())) {
+    if (dm.tagged_unions.count(value.resolve_type.generic_name())) {
         const auto tag = ssa_gen.create();
         const auto tag_value = ssa_gen.create();
         // if value type is not a pointer, means the value is tagged union value
