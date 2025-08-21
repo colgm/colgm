@@ -822,8 +822,7 @@ void regist_pass::regist_builtin_funcs() {
     auto time_func = colgm_func();
     time_func.name = "__time__";
     time_func.location = span::null();
-    time_func.return_type = type::i8_type(1);
-    time_func.return_type.is_const = true;
+    time_func.return_type = type::const_str_literal_type();
     time_func.is_public = false;
     time_func.is_extern = true;
 

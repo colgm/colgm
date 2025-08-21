@@ -16,7 +16,6 @@ private:
     reporter rp;
 
 private:
-    bool is_generic(const type&);
     u64 get_array_length(ast::number_literal*);
 
 public:

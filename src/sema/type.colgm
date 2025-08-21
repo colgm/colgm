@@ -44,7 +44,6 @@ pub struct type {
     is_global_func: bool,         // global function
     is_enum: bool,                // enum type
     is_const: bool,               // const type
-    is_generic_placeholder: bool, // generic placeholder
 
     array_length: u64,            // array length
     is_array: bool,               // array type
@@ -78,7 +77,6 @@ impl type {
         self->is_array = t->is_array;
         self->is_reference = t->is_reference;
         self->is_const = t->is_const;
-        self->is_generic_placeholder = t->is_generic_placeholder;
         self->stm_info = t->stm_info.clone();
         self->prm_info = t->prm_info.clone();
         self->generics = t->generics.clone();
@@ -96,7 +94,6 @@ impl type {
             is_array: self->is_array,
             is_reference: self->is_reference,
             is_const: self->is_const,
-            is_generic_placeholder: self->is_generic_placeholder,
             stm_info: self->stm_info.clone(),
             prm_info: self->prm_info.clone(),
             generics: self->generics.clone()
@@ -143,7 +140,6 @@ impl type {
         self->is_array = false;
         self->is_reference = false;
         self->is_const = false;
-        self->is_generic_placeholder = false;
         self->stm_info = method_info::instance();
         self->prm_info = method_info::instance();
         self->generics = vec<type>::instance();
@@ -407,7 +403,7 @@ impl type {
             // should use full path name with pointer info
             // for generic arguments
             // also, full path name will generate generic arguments recursively
-            var generic_arg_name = i.get()->full_path_name(pkg, true);
+            var generic_arg_name = i.get()->full_path_name_with_pointer(pkg);
             defer generic_arg_name.delete();
 
             res.append(generic_arg_name.c_str);
@@ -434,37 +430,31 @@ impl type {
         return result + max_depth;
     }
 
-    pub func full_path_name(self, pkg: package*, with_pointer: bool) -> str {
+    pub func full_path_name(self, pkg: package*) -> str {
         var res = str::instance();
         if (pkg != nil && pkg->has_file(self->loc_file.__ptr__())) {
             res.append_str(pkg->get_module_name(self->loc_file.__ptr__()));
             res.append("::");
         }
-        res.append_str(self->name.__ptr__());
-        if (self->generics.size > 0) {
-            res.append_char('<');
-            foreach (var i; self->generics) {
-                var t_fpn = i.get()->full_path_name(pkg, true);
-                defer t_fpn.delete();
 
-                res.append(t_fpn.c_str);
-                if (i.index() != self->generics.size - 1) {
-                    res.append_char(',');
-                }
-            }
-            res.append_char('>');
-        }
-        if (with_pointer) {
-            for (var i = 0; i < self->pointer_depth; i += 1) {
-                res.append_char('*');
-            }
+        var generic_name = self->generic_name(pkg);
+        defer generic_name.delete();
+        res.append_str(generic_name.__ptr__());
+        return res;
+    }
+
+    pub func full_path_name_with_pointer(self, pkg: package*) -> str {
+        var res = self->full_path_name(pkg);
+
+        for (var i = 0; i < self->pointer_depth; i += 1) {
+            res.append_char('*');
         }
         return res;
     }
 
     pub func array_type_full_name(self, pkg: package*) -> str {
         if (!self->is_array) {
-            return self->full_path_name(pkg, true);
+            return self->full_path_name_with_pointer(pkg);
         }
 
         var res = str::from("[");
@@ -478,7 +468,7 @@ impl type {
         if (self->generics.size > 0) {
             res.append_char('<');
             foreach (var i; self->generics) {
-                var t_fpn = i.get()->full_path_name(pkg, true);
+                var t_fpn = i.get()->full_path_name_with_pointer(pkg);
                 defer t_fpn.delete();
 
                 res.append(t_fpn.c_str);

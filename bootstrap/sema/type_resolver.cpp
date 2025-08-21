@@ -8,18 +8,6 @@
 
 namespace colgm {
 
-bool type_resolver::is_generic(const type& t) {
-    if (t.is_generic_placeholder) {
-        return true;
-    }
-    for (auto& g : t.generics) {
-        if (is_generic(g)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 u64 type_resolver::get_array_length(ast::number_literal* n) {
     const auto& literal_string = n->get_number();
 
@@ -108,11 +96,6 @@ type type_resolver::resolve(ast::type_def* node) {
         res.is_reference = true;
     }
 
-    // if node has generics and we can find it, set it as the place holder
-    if (ctx.generics.size() && ctx.generics.count(name)) {
-        res.is_generic_placeholder = true;
-    }
-
     // resolve generics
     if (node->get_generic_types()) {
         res.generics = {};
@@ -120,10 +103,6 @@ type type_resolver::resolve(ast::type_def* node) {
         for (auto& g : node->get_generic_types()->get_types()) {
             res.generics.push_back(resolve(g));
         }
-    }
-
-    if (!is_generic(res)) {
-        ctx.global.all_used_types[res.full_path_name_with_pointer()] = res;
     }
     return res;
 }

@@ -10,13 +10,16 @@ pub func print_backtrace() {
     var number_buffer: [i8; 128] = [];
     itoa(stack_trace_size => i64, number_buffer, 10);
 
-    write(2, "stack trace", strlen("stack trace"));
-    write(2, " with ", strlen(" with "));
+    var stack_trace_head = "[colgm] stack trace with ";
+    write(2, stack_trace_head, strlen(stack_trace_head));
     write(2, number_buffer, strlen(number_buffer));
     write(2, " frames:\n", strlen(" frames:\n"));
 
     for (var i: i32 = 0; i < stack_trace_size; i += 1) {
+        itoa((stack_trace_size - i) => i64, number_buffer, 10);
         write(2, "  ", 2);
+        write(2, number_buffer, strlen(number_buffer));
+        write(2, ":\t", 2);
         write(2, stack_trace_strings[i], strlen(stack_trace_strings[i]));
         write(2, "\n", 1);
     }
@@ -26,7 +29,7 @@ pub func print_backtrace() {
 }
 
 pub func panic(info: i8*) {
-    var panic_head = "\npanic: ";
+    var panic_head = "[colgm] panic: ";
     write(2, panic_head, strlen(panic_head));
     write(2, info, strlen(info));
     write(2, "\n", 1);

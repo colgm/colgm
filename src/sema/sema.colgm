@@ -194,13 +194,13 @@ impl sema {
                 var info = str::from("expect \"");
                 defer info.delete();
 
-                var e_name = marked_base_type->full_path_name(self->pkg, true);
+                var e_name = marked_base_type->full_path_name_with_pointer(self->pkg);
                 defer e_name.delete();
 
                 info.append_str(e_name.__ptr__());
                 info.append("\" but get \"");
 
-                var i_name = list_type.get(i)->full_path_name(self->pkg, true);
+                var i_name = list_type.get(i)->full_path_name_with_pointer(self->pkg);
                 defer i_name.delete();
 
                 info.append_str(i_name.__ptr__());
@@ -268,7 +268,7 @@ impl sema {
             var info = str::from("logical operator cannot be used on \"");
             defer info.delete();
 
-            var i_name = infer.full_path_name(self->pkg, true);
+            var i_name = infer.full_path_name_with_pointer(self->pkg);
             defer i_name.delete();
 
             info.append_str(i_name.__ptr__());
@@ -320,8 +320,8 @@ impl sema {
             if (!self->check_can_be_converted(n->right, left.__ptr__()) &&
                 !self->check_can_be_converted(n->left, right.__ptr__())) {
                 var info = str::from("cannot compare \"");
-                var l_name = left.full_path_name(self->pkg, true);
-                var r_name = right.full_path_name(self->pkg, true);
+                var l_name = left.full_path_name_with_pointer(self->pkg);
+                var r_name = right.full_path_name_with_pointer(self->pkg);
                 defer {
                     info.delete();
                     l_name.delete();
@@ -353,8 +353,8 @@ impl sema {
         } else if (!left.is_integer() && !left.is_float() &&
                    !left.is_pointer() && !left.is_bool()) {
             var info = str::from("cannot compare uncomparable type \"");
-            var l_name = left.full_path_name(self->pkg, true);
-            var r_name = right.full_path_name(self->pkg, true);
+            var l_name = left.full_path_name_with_pointer(self->pkg);
+            var r_name = right.full_path_name_with_pointer(self->pkg);
             defer {
                 info.delete();
                 l_name.delete();
@@ -374,8 +374,8 @@ impl sema {
 
         if (left.is_pointer() && left.pointer_depth != right.pointer_depth) {
             var info = str::from("cannot compare pointer \"");
-            var l_name = left.full_path_name(self->pkg, true);
-            var r_name = right.full_path_name(self->pkg, true);
+            var l_name = left.full_path_name_with_pointer(self->pkg);
+            var r_name = right.full_path_name_with_pointer(self->pkg);
             defer {
                 info.delete();
                 l_name.delete();
@@ -421,7 +421,7 @@ impl sema {
             var info = str::from("expect \"bool\" but get \"");
             defer info.delete();
 
-            var name = left.full_path_name(self->pkg, true);
+            var name = left.full_path_name_with_pointer(self->pkg);
             defer name.delete();
 
             info.append_str(name.__ptr__());
@@ -432,7 +432,7 @@ impl sema {
             var info = str::from("expect \"bool\" but get \"");
             defer info.delete();
 
-            var name = right.full_path_name(self->pkg, true);
+            var name = right.full_path_name_with_pointer(self->pkg);
             defer name.delete();
 
             info.append_str(name.__ptr__());
@@ -461,8 +461,8 @@ impl sema {
             if (!self->check_can_be_converted(n->right, left.__ptr__()) &&
                 !self->check_can_be_converted(n->left, right.__ptr__())) {
                 var info = str::from("cannot calculate \"");
-                var l_name = left.full_path_name(self->pkg, true);
-                var r_name = right.full_path_name(self->pkg, true);
+                var l_name = left.full_path_name_with_pointer(self->pkg);
+                var r_name = right.full_path_name_with_pointer(self->pkg);
                 defer {
                     info.delete();
                     l_name.delete();
@@ -481,7 +481,7 @@ impl sema {
             var info = str::from("cannot calculate enum \"");
             defer info.delete();
 
-            var name = left.full_path_name(self->pkg, true);
+            var name = left.full_path_name_with_pointer(self->pkg);
             defer name.delete();
 
             info.append_str(name.__ptr__())->append("\"");
@@ -491,7 +491,7 @@ impl sema {
             var info = str::from("cannot calculate enum \"");
             defer info.delete();
 
-            var name = right.full_path_name(self->pkg, true);
+            var name = right.full_path_name_with_pointer(self->pkg);
             defer name.delete();
 
             info.append_str(name.__ptr__())->append("\"");
@@ -536,8 +536,8 @@ impl sema {
             if (!self->check_can_be_converted(n->right, left.__ptr__()) &&
                 !self->check_can_be_converted(n->left, right.__ptr__())) {
                 var info = str::from("cannot calculate \"");
-                var l_name = left.full_path_name(self->pkg, true);
-                var r_name = right.full_path_name(self->pkg, true);
+                var l_name = left.full_path_name_with_pointer(self->pkg);
+                var r_name = right.full_path_name_with_pointer(self->pkg);
                 defer {
                     info.delete();
                     l_name.delete();
@@ -659,8 +659,8 @@ impl sema {
         if ((res.is_float() && !res.is_pointer() && type_res.is_pointer()) ||
             (res.is_pointer() && type_res.is_float() && !type_res.is_pointer())) {
             var info = str::from("cannot cast floating point number to pointer: \"");
-            var r_name = res.full_path_name(self->pkg, true);
-            var t_name = type_res.full_path_name(self->pkg, true);
+            var r_name = res.full_path_name_with_pointer(self->pkg);
+            var t_name = type_res.full_path_name_with_pointer(self->pkg);
             defer {
                 info.delete();
                 r_name.delete();
@@ -677,8 +677,8 @@ impl sema {
         // struct type is not allowed to be casted
         if (self->is_struct_type(res.__ptr__()) && !res.is_pointer()) {
             var info = str::from("cannot cast struct \"");
-            var r_name = res.full_path_name(self->pkg, true);
-            var t_name = type_res.full_path_name(self->pkg, true);
+            var r_name = res.full_path_name_with_pointer(self->pkg);
+            var t_name = type_res.full_path_name_with_pointer(self->pkg);
             defer {
                 info.delete();
                 r_name.delete();
@@ -694,8 +694,8 @@ impl sema {
 
         if (self->is_struct_type(type_res.__ptr__()) && !type_res.is_pointer()) {
             var info = str::from("cannot cast \"");
-            var r_name = res.full_path_name(self->pkg, true);
-            var t_name = type_res.full_path_name(self->pkg, true);
+            var r_name = res.full_path_name_with_pointer(self->pkg);
+            var t_name = type_res.full_path_name_with_pointer(self->pkg);
             defer {
                 info.delete();
                 r_name.delete();
@@ -787,7 +787,7 @@ impl sema {
             name.append_char('<');
 
             foreach (var i; types) {
-                var full_name = i.get()->full_path_name(self->pkg, true);
+                var full_name = i.get()->full_path_name_with_pointer(self->pkg);
                 defer full_name.delete();
 
                 name.append_str(full_name.__ptr__());
@@ -904,7 +904,7 @@ impl sema {
     }
 
     func resolve_get_field(self, prev: type*, n: ast_get_field*) -> type {
-        var prev_name = prev->full_path_name(self->pkg, true);
+        var prev_name = prev->full_path_name_with_pointer(self->pkg);
         defer prev_name.delete();
 
         var prev_name_for_search = prev->generic_name(self->pkg);
@@ -966,7 +966,7 @@ impl sema {
                                   struct_self: colgm_struct*,
                                   prev: type*,
                                   n: ast_get_field*) -> type {
-        var prev_name = prev->full_path_name(self->pkg, true);
+        var prev_name = prev->full_path_name_with_pointer(self->pkg);
         defer prev_name.delete();
 
         var prev_name_for_search = prev->generic_name(self->pkg);
@@ -1011,7 +1011,7 @@ impl sema {
                                         union_self: colgm_tagged_union*,
                                         prev: type*,
                                         n: ast_get_field*) -> type {
-        var prev_name = prev->full_path_name(self->pkg, true);
+        var prev_name = prev->full_path_name_with_pointer(self->pkg);
         defer prev_name.delete();
 
         var prev_name_for_search = prev->generic_name(self->pkg);
@@ -1079,12 +1079,12 @@ impl sema {
                     var info = str::from("expect \"");
                     defer info.delete();
 
-                    var param_name = param->full_path_name(self->pkg, true);
+                    var param_name = param->full_path_name_with_pointer(self->pkg);
                     defer param_name.delete();
 
                     info.append_str(param_name.__ptr__());
                     info.append("\" but get \"");
-                    var infer_name = infer.full_path_name(self->pkg, true);
+                    var infer_name = infer.full_path_name_with_pointer(self->pkg);
                     defer infer_name.delete();
 
                     info.append_str(infer_name.__ptr__());
@@ -1122,12 +1122,12 @@ impl sema {
                     var info = str::from("expect \"");
                     defer info.delete();
 
-                    var param_name = param->full_path_name(self->pkg, true);
+                    var param_name = param->full_path_name_with_pointer(self->pkg);
                     defer param_name.delete();
 
                     info.append_str(param_name.__ptr__());
                     info.append("\" but get \"");
-                    var infer_name = infer.full_path_name(self->pkg, true);
+                    var infer_name = infer.full_path_name_with_pointer(self->pkg);
                     defer infer_name.delete();
 
                     info.append_str(infer_name.__ptr__());
@@ -1251,7 +1251,7 @@ impl sema {
             var info = str::from("cannot get index from \"");
             defer info.delete();
 
-            var prev_name = prev->full_path_name(self->pkg, true);
+            var prev_name = prev->full_path_name_with_pointer(self->pkg);
             defer prev_name.delete();
 
             info.append_str(prev_name.__ptr__());
@@ -1269,7 +1269,7 @@ impl sema {
                 var info = str::from("cannot get index with \"");
                 defer info.delete();
 
-                var ii_name = index_infer.full_path_name(self->pkg, true);
+                var ii_name = index_infer.full_path_name_with_pointer(self->pkg);
                 defer ii_name.delete();
 
                 info.append_str(ii_name.__ptr__());
@@ -1538,8 +1538,8 @@ impl sema {
             if (!infer.eq(expect)) {
                 if (!self->check_can_be_converted(tmp->value, expect)) {
                     var info = str::from("expect \"");
-                    var e_name = expect->full_path_name(self->pkg, true);
-                    var i_name = infer.full_path_name(self->pkg, true);
+                    var e_name = expect->full_path_name_with_pointer(self->pkg);
+                    var i_name = infer.full_path_name_with_pointer(self->pkg);
                     defer {
                         info.delete();
                         e_name.delete();
@@ -1613,8 +1613,8 @@ impl sema {
         if (!infer.eq(expect)) {
             if (!self->check_can_be_converted(tmp->value, expect)) {
                 var info = str::from("expect \"");
-                var e_name = expect->full_path_name(self->pkg, true);
-                var i_name = infer.full_path_name(self->pkg, true);
+                var e_name = expect->full_path_name_with_pointer(self->pkg);
+                var i_name = infer.full_path_name_with_pointer(self->pkg);
                 defer {
                     info.delete();
                     e_name.delete();
@@ -1640,7 +1640,7 @@ impl sema {
     }
 
     func resolve_ptr_get_field(self, prev: type*, n: ast_ptr_get_field*) -> type {
-        var prev_name = prev->full_path_name(self->pkg, true);
+        var prev_name = prev->full_path_name_with_pointer(self->pkg);
         defer prev_name.delete();
 
         var prev_name_for_search = prev->generic_name(self->pkg);
@@ -1710,7 +1710,7 @@ impl sema {
                                       struct_self: colgm_struct*,
                                       prev: type*,
                                       n: ast_ptr_get_field*) -> type {
-        var prev_name = prev->full_path_name(self->pkg, true);
+        var prev_name = prev->full_path_name_with_pointer(self->pkg);
         defer prev_name.delete();
 
         var prev_name_for_search = prev->generic_name(self->pkg);
@@ -1755,7 +1755,7 @@ impl sema {
                                             union_self: colgm_tagged_union*,
                                             prev: type*,
                                             n: ast_ptr_get_field*) -> type {
-        var prev_name = prev->full_path_name(self->pkg, true);
+        var prev_name = prev->full_path_name_with_pointer(self->pkg);
         defer prev_name.delete();
 
         var prev_name_for_search = prev->generic_name(self->pkg);
@@ -2247,8 +2247,8 @@ impl sema {
             if (!expect_type.eq(real_type.__ptr__()) &&
                 !self->check_can_be_converted(n->value, expect_type.__ptr__())) {
                 var info = str::from("expect \"");
-                var expect_type_name = expect_type.full_path_name(self->pkg, true);
-                var real_type_name = real_type.full_path_name(self->pkg, true);
+                var expect_type_name = expect_type.full_path_name_with_pointer(self->pkg);
+                var real_type_name = real_type.full_path_name_with_pointer(self->pkg);
                 defer {
                     info.delete();
                     expect_type_name.delete();
@@ -2263,8 +2263,8 @@ impl sema {
         } else if (!expect_type.eq(real_type.__ptr__()) &&
             !self->check_can_be_converted(n->value, expect_type.__ptr__())) {
             var info = str::from("def: expect \"");
-            var expect_type_name = expect_type.full_path_name(self->pkg, true);
-            var real_type_name = real_type.full_path_name(self->pkg, true);
+            var expect_type_name = expect_type.full_path_name_with_pointer(self->pkg);
+            var real_type_name = real_type.full_path_name_with_pointer(self->pkg);
             defer {
                 info.delete();
                 expect_type_name.delete();
@@ -2475,8 +2475,8 @@ impl sema {
             if (!case_type.eq(infer)) {
                 if (!case_type.is_error()) {
                     var info = str::from("case value should be \"");
-                    var c_name = case_type.full_path_name(self->pkg, true);
-                    var i_name = infer->full_path_name(self->pkg, true);
+                    var c_name = case_type.full_path_name_with_pointer(self->pkg);
+                    var i_name = infer->full_path_name_with_pointer(self->pkg);
                     defer {
                         info.delete();
                         c_name.delete();
@@ -2552,7 +2552,7 @@ impl sema {
 
         if (generated_warning.size > 0) {
             var info = str::from("match statement with enum \"");
-            var i_name = infer->full_path_name(self->pkg, true);
+            var i_name = infer->full_path_name_with_pointer(self->pkg);
             defer {
                 info.delete();
                 i_name.delete();
@@ -2652,7 +2652,7 @@ impl sema {
 
         if (generated_warning.size > 0) {
             var info = str::from("match statement with union \"");
-            var i_name = infer->full_path_name(self->pkg, true);
+            var i_name = infer->full_path_name_with_pointer(self->pkg);
             defer {
                 info.delete();
                 i_name.delete();

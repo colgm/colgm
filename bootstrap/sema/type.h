@@ -38,7 +38,6 @@ struct type {
     bool is_global_func = false; // global func
     bool is_enum = false;        // enum type
     bool is_const = false;       // const type
-    bool is_generic_placeholder = false; // generic placeholder
 
     u64 array_length = 0;        // array length
     bool is_array = false;       // array type
