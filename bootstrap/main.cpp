@@ -49,17 +49,17 @@ std::ostream& help(std::ostream& out) {
 
 std::ostream& logo(std::ostream& out) {
     out
-    << "                __              \n"
-    << "    _________  / /___ _____ ___ \n"
-    << "   / ___/ __ \\/ / __ `/ __ `__ \\\n"
-    << "  / /__/ /_/ / / /_/ / / / / / /\n"
-    << "  \\___/\\____/_/\\__, /_/ /_/ /_/ \n"
-    << "              /____/            \n\n"
-    << "ver : " << __colgm_ver__
+    << "                     __             \n"
+    << "         _________  / /___  ___ __  \n"
+    << "        / ___/ __ \\/ / __ `/ _ `_ \\ \n"
+    << "       / /__/ /_/ / / /_/ / // // / \n"
+    << "       \\___/\\____/_/\\__, /_//_//_/  \n"
+    << "      -------------/____/-----------\n\n"
+    << "version : " << __colgm_ver__
     << " " << colgm::get_platform() << " " << colgm::get_arch()
     << " (" << __DATE__ << " " << __TIME__ << ")\n"
-    << "std : c++ " << __cplusplus << "\n"
-    << "core: " << std::thread::hardware_concurrency() << " core(s)\n"
+    << "repo    : https://github.com/colgm/colgm\n"
+    << "license : Apache 2.0\n"
     << "\n"
     << "input <colgm -h> to get help.\n\n";
     return out;
