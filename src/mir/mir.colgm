@@ -27,7 +27,11 @@ func dump_resolved_type(out: io, pkg: package*, ty: type*) {
     var name = ty->full_path_name_with_pointer(pkg);
     defer name.delete();
 
-    out.cyan().out("[type: ").out(name.c_str).out("] ").reset();
+    out.cyan().out("[type: ").out(name.c_str);
+    if (ty->is_reference) {
+        out.out("&");
+    }
+    out.out("] ").reset();
 }
 
 pub enum mir_kind {
