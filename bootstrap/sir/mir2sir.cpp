@@ -1,4 +1,4 @@
-#include "mir/mir2sir.h"
+#include "sir/mir2sir.h"
 
 #include <fstream>
 #include <cassert>
@@ -37,7 +37,7 @@ std::string mir2sir::type_mapping(const type& t) {
     // basic type mapping
     if (basic_type_mapper.count(copy.name)) {
         copy.name = basic_type_mapper.at(copy.name);
-        return copy.to_string();
+        return copy.to_string() + (copy.is_reference? "*" : "");
     }
 
     const auto full_name = t.full_path_name();
@@ -79,7 +79,7 @@ std::string mir2sir::type_mapping(const type& t) {
             break;
         default: break;
     }
-    return copy.to_string();
+    return copy.to_string() + (copy.is_reference? "*" : "");
 }
 
 std::string mir2sir::array_type_mapping(const type& t) {
@@ -609,7 +609,7 @@ void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
     if (!source.resolve_type.is_pointer()) {
         return;
     }
-    if (source.resolve_type==type::void_type()) {
+    if (source.resolve_type == type::void_type()) {
         value_stack.pop_back();
         return;
     }
@@ -1182,6 +1182,22 @@ void mir2sir::visit_mir_assign(mir_assign* node) {
     auto right = value_stack.back();
     value_stack.pop_back();
 
+    if (left.resolve_type.is_reference) {
+        auto temp = ssa_gen.create();
+        block->add_stmt(new sir_load(
+            type_mapping(left.resolve_type.get_ref_copy()),
+            left.to_value_t(),
+            value_t::variable(temp)
+        ));
+        mir_assign_gen(mir_value_t::variable(temp, right.resolve_type), right, node);
+    } else {
+        mir_assign_gen(left, right, node);
+    }
+}
+
+void mir2sir::mir_assign_gen(const mir_value_t& left,
+                              const mir_value_t& right,
+                              mir_assign* node) {
     switch(node->get_opr()) {
         case mir_assign::opr_kind::addeq: {
             auto temp_0 = ssa_gen.create();

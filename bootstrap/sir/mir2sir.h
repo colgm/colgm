@@ -243,6 +243,7 @@ private:
     void visit_mir_ptr_get_field(mir_ptr_get_field*) override;
     void visit_mir_define(mir_define*) override;
     void visit_mir_assign(mir_assign*) override;
+    void mir_assign_gen(const mir_value_t&, const mir_value_t&, mir_assign*);
     void visit_mir_if(mir_if*) override;
     void visit_mir_branch(mir_branch*) override;
     void visit_mir_switch_case(mir_switch_case*) override;

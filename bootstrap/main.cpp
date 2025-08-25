@@ -5,7 +5,7 @@
 #include "sema/semantic.h"
 #include "mir/ast2mir.h"
 #include "mir/pass_manager.h"
-#include "mir/mir2sir.h"
+#include "sir/mir2sir.h"
 #include "sir/pass_manager.h"
 #include "package/package.h"
 

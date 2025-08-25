@@ -31,26 +31,26 @@ set(COLGM_AST
     ${CMAKE_SOURCE_DIR}/ast/replace_defer.cpp
     ${CMAKE_SOURCE_DIR}/ast/stmt.cpp
     ${CMAKE_SOURCE_DIR}/ast/visitor.cpp)
+set(COLGM_MIR
+    ${CMAKE_SOURCE_DIR}/mir/add_default_func.cpp
+    ${CMAKE_SOURCE_DIR}/mir/adjust_va_arg_func.cpp
+    ${CMAKE_SOURCE_DIR}/mir/ast2mir.cpp
+    ${CMAKE_SOURCE_DIR}/mir/mir.cpp
+    ${CMAKE_SOURCE_DIR}/mir/pass_manager.cpp
+    ${CMAKE_SOURCE_DIR}/mir/type_cast_number_pass.cpp
+    ${CMAKE_SOURCE_DIR}/mir/visitor.cpp)
 set(COLGM_SIR
     ${CMAKE_SOURCE_DIR}/sir/adjust_va_arg_func.cpp
     ${CMAKE_SOURCE_DIR}/sir/context.cpp
     ${CMAKE_SOURCE_DIR}/sir/debug_info.cpp
     ${CMAKE_SOURCE_DIR}/sir/delete_useless_label.cpp
     ${CMAKE_SOURCE_DIR}/sir/detect_redef_extern.cpp
+    ${CMAKE_SOURCE_DIR}/sir/mir2sir.cpp
     ${CMAKE_SOURCE_DIR}/sir/pass_manager.cpp
     ${CMAKE_SOURCE_DIR}/sir/primitive_size_opt.cpp
     ${CMAKE_SOURCE_DIR}/sir/remove_alloca.cpp
     ${CMAKE_SOURCE_DIR}/sir/replace_ptr_call.cpp
     ${CMAKE_SOURCE_DIR}/sir/sir.cpp)
-set(COLGM_MIR
-    ${CMAKE_SOURCE_DIR}/mir/add_default_func.cpp
-    ${CMAKE_SOURCE_DIR}/mir/adjust_va_arg_func.cpp
-    ${CMAKE_SOURCE_DIR}/mir/ast2mir.cpp
-    ${CMAKE_SOURCE_DIR}/mir/mir.cpp
-    ${CMAKE_SOURCE_DIR}/mir/mir2sir.cpp
-    ${CMAKE_SOURCE_DIR}/mir/pass_manager.cpp
-    ${CMAKE_SOURCE_DIR}/mir/type_cast_number_pass.cpp
-    ${CMAKE_SOURCE_DIR}/mir/visitor.cpp)
 set(COLGM_PACKAGE
     ${CMAKE_SOURCE_DIR}/package/package.cpp)
 set(COLGM_SEMA
@@ -70,10 +70,10 @@ set(COLGM_OBJECT
 
 add_library(colgm-ast STATIC ${COLGM_AST})
 target_include_directories(colgm-ast PRIVATE ${CMAKE_SOURCE_DIR})
-add_library(colgm-sir STATIC ${COLGM_SIR})
-target_include_directories(colgm-sir PRIVATE ${CMAKE_SOURCE_DIR})
 add_library(colgm-mir STATIC ${COLGM_MIR})
 target_include_directories(colgm-mir PRIVATE ${CMAKE_SOURCE_DIR})
+add_library(colgm-sir STATIC ${COLGM_SIR})
+target_include_directories(colgm-sir PRIVATE ${CMAKE_SOURCE_DIR})
 add_library(colgm-package STATIC ${COLGM_PACKAGE})
 target_include_directories(colgm-package PRIVATE ${CMAKE_SOURCE_DIR})
 add_library(colgm-sema STATIC ${COLGM_SEMA})
