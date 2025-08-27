@@ -619,6 +619,18 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
 
     // prev resolved type is natvie type
     if (prev.loc_file.empty()) {
+        const auto& pm = ctx.global.primitives.at(prev.name);
+        if (pm.methods.count(node->get_name())) {
+            auto infer = prev;
+            infer.pointer_depth = 0;
+            infer.is_global = true;
+            infer.prm_info = {
+                .flag_is_static = false,
+                .flag_is_normal = true,
+                .method_name = node->get_name()
+            };
+            return infer;
+        }
         rp.report(node,
             "cannot get method \"" + node->get_name() +
             "\" from \"" + prev.to_string() + "\""
@@ -834,6 +846,21 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         const auto& p = ctx.global.primitives.at(prev.generic_name());
         const auto& method = p.static_methods.at(prev.prm_info.method_name);
         check_static_call_args(method, node);
+        node->set_resolve_type(method.return_type);
+        return method.return_type;
+    }
+    // method call of primitive type
+    if (prev.prm_info.flag_is_normal) {
+        if (!ctx.global.primitives.count(prev.generic_name())) {
+            rp.report(node,
+                "cannot call method of primitive type \"" +
+                prev.generic_name() + "\""
+            );
+            return type::error_type();
+        }
+        const auto& p = ctx.global.primitives.at(prev.generic_name());
+        const auto& method = p.methods.at(prev.prm_info.method_name);
+        check_method_call_args(method, node);
         node->set_resolve_type(method.return_type);
         return method.return_type;
     }
@@ -1166,6 +1193,18 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
 
     // prev resolved type is natvie type
     if (prev.loc_file.empty()) {
+        const auto& pm = ctx.global.primitives.at(prev.name);
+        if (pm.methods.count(node->get_name())) {
+            auto infer = prev;
+            infer.pointer_depth = 0;
+            infer.is_global = true;
+            infer.prm_info = {
+                .flag_is_static = false,
+                .flag_is_normal = true,
+                .method_name = node->get_name()
+            };
+            return infer;
+        }
         rp.report(node,
             "cannot get method \"" + node->get_name() +
             "\" from \"" + prev.to_string() + "\""

@@ -12,6 +12,10 @@ var task = func() {
         }
     }
     println("[", os.time(), "] git push successfully.");
+    for (var i = 0; i < 4; i += 1) {
+        print("\a");
+        unix.sleep(1.5);
+    }
 }
 
 task();

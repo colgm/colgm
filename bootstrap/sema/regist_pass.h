@@ -146,6 +146,7 @@ private: // primitive types
     // bool, i8, i16, i32, i64, u8, u16, u32, u64, f32, f64, void
     void regist_primitive_types();
     colgm_func generate_primitive_size_method();
+    colgm_func generate_primitive_ptr_method(const char*);
     void regist_builtin_funcs();
 
 private: // import symbols

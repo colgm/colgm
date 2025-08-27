@@ -942,6 +942,22 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
     auto prev = value_stack.back();
     value_stack.pop_back();
 
+    // primitive type does not have loc_file
+    if (prev.resolve_type.loc_file.empty()) {
+        const auto& pm = ctx.global.primitives.at(prev.resolve_type.generic_name());
+        if (pm.methods.count(node->get_name())) {
+            // push self into the stack
+            value_stack.push_back(prev);
+            value_stack.push_back(mir_value_t::method(
+                prev.resolve_type.full_path_name() + "." + node->get_name(),
+                node->get_type()
+            ));
+            return;
+        }
+        unimplemented(node);
+        return;
+    }
+
     const auto& dm = ctx.get_domain(prev.resolve_type.loc_file);
 
     if (dm.structs.count(prev.resolve_type.generic_name())) {
@@ -1044,6 +1060,31 @@ void mir2sir::visit_mir_get_path(mir_get_path* node) {
 void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
     auto prev = value_stack.back();
     value_stack.pop_back();
+
+    // primitive type does not have loc_file
+    if (prev.resolve_type.loc_file.empty()) {
+        const auto& pm = ctx.global.primitives.at(prev.resolve_type.generic_name());
+        if (pm.methods.count(node->get_name())) {
+            // push self into the stack
+            auto temp_var = ssa_gen.create();
+            block->add_stmt(new sir_load(
+                type_mapping(prev.resolve_type.get_ref_copy()),
+                prev.to_value_t(),
+                value_t::variable(temp_var)
+            ));
+            value_stack.push_back(mir_value_t::variable(
+                temp_var,
+                prev.resolve_type.get_ref_copy()
+            ));
+            value_stack.push_back(mir_value_t::method(
+                prev.resolve_type.full_path_name() + "." + node->get_name(),
+                node->get_type()
+            ));
+            return;
+        }
+        unimplemented(node);
+        return;
+    }
 
     const auto& dm = ctx.get_domain(prev.resolve_type.loc_file);
 

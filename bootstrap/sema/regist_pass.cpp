@@ -799,6 +799,10 @@ void regist_pass::regist_primitive_types() {
             "__size__",
             generate_primitive_size_method()
         });
+        cp.methods.insert({
+            "__ptr__",
+            generate_primitive_ptr_method(i)
+        });
     }
 }
 
@@ -807,6 +811,17 @@ colgm_func regist_pass::generate_primitive_size_method() {
     func.name = "__size__";
     func.location = span::null();
     func.return_type = type::u64_type();
+    func.is_public = true;
+    return func;
+}
+
+colgm_func regist_pass::generate_primitive_ptr_method(const char* type_name) {
+    auto func = colgm_func();
+    func.name = "__ptr__";
+    func.location = span::null();
+    auto self_type = type {type_name, "", 1};
+    func.add_parameter("self", self_type);
+    func.return_type = self_type;
     func.is_public = true;
     return func;
 }

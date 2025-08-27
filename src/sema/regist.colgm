@@ -443,6 +443,7 @@ impl regist_pass {
 
             gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
             self->regist_primitive_size_method(gt->primitives.get(prim_name.__ptr__()));
+            self->regist_primitive_ptr_method(gt->primitives.get(prim_name.__ptr__()));
         }
     }
 
@@ -464,6 +465,34 @@ impl regist_pass {
         }
 
         pt->static_method.insert(name.__ptr__(), func_info.__ptr__());
+    }
+
+    func regist_primitive_ptr_method(self, pt: colgm_primitive*) {
+        var name = str::from("__ptr__");
+        var self_name = str::from("self");
+        var loc = span::null();
+        var ret = type::instance();
+        ret.name.append(pt->name.c_str);
+        ret.pointer_depth = 1;
+        defer {
+            name.delete();
+            self_name.delete();
+            loc.delete();
+            ret.delete();
+        }
+
+        var func_info = colgm_func::instance(
+            name.__ptr__(),
+            loc.__ptr__(),
+            ret.__ptr__()
+        );
+        func_info.is_public = true;
+        func_info.param_name.push(self_name.__ptr__());
+        func_info.param_type.push(ret.__ptr__());
+        func_info.unordered_params.insert(self_name.__ptr__(), ret.__ptr__());
+        defer func_info.delete();
+
+        pt->method.insert(name.__ptr__(), func_info.__ptr__());
     }
 
     func regist_builtin_funcs(self, root: root*) {

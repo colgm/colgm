@@ -929,13 +929,11 @@ impl sema {
 
         // loc_file is empty means prev is native type
         if (prev->loc_file.empty()) {
-            self->err->out("cannot get method \"")
-                     ->out(n->name.c_str)
-                     ->out("\" from native type \"")
-                     ->out(prev_name.c_str)
-                     ->out("\"")
-                     ->emit_err(n->base.location.__ptr__());
-            return type::error_type();
+            return self->resolve_primitive_get_field(
+                prev,
+                n->name.__ptr__(),
+                n->base.location.__ptr__()
+            );
         }
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
@@ -960,6 +958,42 @@ impl sema {
                  ->out("\"")
                  ->emit_err(n->base.location.__ptr__());
         return type::error_type();
+    }
+
+    func resolve_primitive_get_field(self, prev: type*, method_name: str*, loc: span*) -> type {
+        var prev_name_for_search = prev->generic_name(self->pkg);
+        defer prev_name_for_search.delete();
+
+        if (!self->ctx->global->primitives.has(prev_name_for_search.__ptr__())) {
+            var info = str::from("cannot get method from primitive type \"");
+            defer info.delete();
+
+            info.append_str(prev_name_for_search.__ptr__());
+            info.append("\"");
+            self->err->error(loc, info.c_str);
+            return type::error_type();
+        }
+
+        var p = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
+        if (!p->method.has(method_name)) {
+            var info = str::from("cannot find method \"");
+            defer info.delete();
+
+            info.append_str(method_name);
+            info.append("\" in \"");
+            info.append_str(prev_name_for_search.__ptr__());
+            info.append("\"");
+            self->err->error(loc, info.c_str);
+            return type::error_type();
+        }
+
+        var infer = prev->clone();
+        infer.pointer_depth = 0;
+        infer.is_global_sym = true;
+        infer.prm_info.flag_is_static = false;
+        infer.prm_info.flag_is_normal = true;
+        infer.prm_info.method_name.append_str(method_name);
+        return infer;
     }
 
     func resolve_struct_get_field(self,
@@ -1160,6 +1194,19 @@ impl sema {
                 prev->prm_info.method_name.__ptr__()
             );
             self->check_static_call_args(method, n);
+
+            var infer = method->return_type.clone();
+            n->base.resolved_type.reset_with(infer.__ptr__());
+            return infer;
+        }
+
+        // method call of native type
+        if (prev->prm_info.flag_is_normal) {
+            var primitive = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
+            var method = primitive->method.get(
+                prev->prm_info.method_name.__ptr__()
+            );
+            self->check_method_call_args(method, n);
 
             var infer = method->return_type.clone();
             n->base.resolved_type.reset_with(infer.__ptr__());
@@ -1671,13 +1718,11 @@ impl sema {
 
         // loc_file is empty means prev is native type
         if (prev->loc_file.empty()) {
-            self->err->out("cannot get method \"")
-                     ->out(n->name.c_str)
-                     ->out("\" from native type \"")
-                     ->out(prev_name.c_str)
-                     ->out("\"")
-                     ->emit_err(n->base.location.__ptr__());
-            return type::error_type();
+            return self->resolve_primitive_get_field(
+                prev,
+                n->name.__ptr__(),
+                n->base.location.__ptr__()
+            );
         }
 
         var dm = self->ctx->get_domain(prev->loc_file.__ptr__());

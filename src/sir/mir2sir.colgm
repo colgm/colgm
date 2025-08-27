@@ -1969,6 +1969,29 @@ impl mir2sir {
 
         self->value_stack.pop_back();
 
+        // primitive type does not have loc_file
+        if (prev.resolved_type.loc_file.empty()) {
+            var pm = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
+            if (pm->method.has(n->name.__ptr__())) {
+                // push self into stack
+                self->value_stack.push(prev.__ptr__());
+                var method_name = prev.resolved_type.full_path_name(self->pkg);
+                method_name.append_char('.')->append_str(n->name.__ptr__());
+                defer method_name.delete();
+
+                var v = mir_value_t::method(
+                    method_name.__ptr__(),
+                    n->resolved_type.__ptr__()
+                );
+                defer v.delete();
+
+                self->value_stack.push(v.__ptr__());
+                return;
+            }
+            unreachable();
+            return;
+        }
+
         var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
 
         if (dm->structs.has(prev_name_for_search.__ptr__())) {
@@ -2119,6 +2142,51 @@ impl mir2sir {
         defer prev_name_for_search.delete();
 
         self->value_stack.pop_back();
+
+        // primitive type does not have loc_file
+        if (prev.resolved_type.loc_file.empty()) {
+            var pm = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
+            if (pm->method.has(n->name.__ptr__())) {
+                var temp_var = self->ssa_gen.create();
+                var temp_var_value = value_t::variable(temp_var.__ptr__());
+                var prev_ref = prev.resolved_type.ref_copy();
+                var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
+                var prev_value = prev.to_value_t();
+                defer {
+                    temp_var.delete();
+                    temp_var_value.delete();
+                    prev_ref.delete();
+                    prev_ref_ty.delete();
+                    prev_value.delete();
+                }
+                self->block->add_stmt(sir_load::new(
+                    prev_ref_ty.__ptr__(),
+                    prev_value.__ptr__(),
+                    temp_var_value.__ptr__()
+                ) => sir*);
+
+                // push self into stack
+                var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
+                defer v_self.delete();
+
+                self->value_stack.push(v_self.__ptr__());
+
+                var method_name = prev.resolved_type.full_path_name(self->pkg);
+                method_name.append_char('.')->append_str(n->name.__ptr__());
+                defer method_name.delete();
+
+                var v = mir_value_t::method(
+                    method_name.__ptr__(),
+                    n->resolved_type.__ptr__()
+                );
+                defer v.delete();
+
+                self->value_stack.push(v.__ptr__());
+                return;
+            }
+            unreachable();
+            return;
+        }
 
         var dm = self->ctx->get_domain(prev.resolved_type.loc_file.__ptr__());
         

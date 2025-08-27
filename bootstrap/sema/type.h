@@ -44,8 +44,8 @@ struct type {
 
     bool is_reference = false;   // reference type
 
-    struct_method_info stm_info; // struct methods
-    struct_method_info prm_info; // primitive methods
+    struct_method_info stm_info; // mark this is struct method type
+    struct_method_info prm_info; // mark this is primitive method type
     std::vector<type> generics = {};
 
 private:

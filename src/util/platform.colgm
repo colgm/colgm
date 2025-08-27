@@ -7,8 +7,8 @@ pub extern func sysctlbyname(name: const i8*, oldp: i8*, oldlenp: u64*, newp: i8
 #[enable_if(target_os = "macos")]
 func mac_version() -> str {
     var os_temp: [i8; 20] = [];
-    var os_temp_len = [20 => u64];
-    var res = sysctlbyname("kern.osproductversion", os_temp, os_temp_len, nil, 0);
+    var os_temp_len = 20;
+    var res = sysctlbyname("kern.osproductversion", os_temp, os_temp_len.__ptr__(), nil, 0);
     if (res != 0) {
         return str::from("");
     }
