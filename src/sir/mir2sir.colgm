@@ -222,7 +222,7 @@ impl mir2sir {
             dwarf_status: DWARF_status::instance()
         };
         res.init_basic_type_mapper();
-        res.init_primitive__size_methods();
+        res.init_primitive_size_methods();
         return res;
     }
 
@@ -244,106 +244,51 @@ impl mir2sir {
     }
 
     func init_basic_type_mapper(self) {
-        var i64_s = str::from("i64");
-        var i32_s = str::from("i32");
-        var i16_s = str::from("i16");
-        var i8_s = str::from("i8");
-        var i1_s = str::from("i1");
-        var u64_s = str::from("u64");
-        var u32_s = str::from("u32");
-        var u16_s = str::from("u16");
-        var u8_s = str::from("u8");
-        var f64_s = str::from("f64");
-        var f32_s = str::from("f32");
-        var void_s = str::from("void");
-        var bool_s = str::from("bool");
-        defer {
-            i64_s.delete();
-            i32_s.delete();
-            i16_s.delete();
-            i8_s.delete();
-            i1_s.delete();
-            u64_s.delete();
-            u32_s.delete();
-            u16_s.delete();
-            u8_s.delete();
-            f64_s.delete();
-            f32_s.delete();
-            void_s.delete();
-            bool_s.delete();
+        var type_list = [
+            "i64", "i32", "i16", "i8",
+            "u64", "u32", "u16", "u8",
+            "f64", "f32", "void", "bool",
+            nil
+        ];
+        var real_type_list = [
+            "i64", "i32", "i16", "i8",
+            "u64", "u32", "u16", "u8",
+            "double", "float", "void", "i1",
+            nil
+        ];
+        for (var i = 0; type_list[i] != nil; i += 1) {
+            var type_name = str::from(type_list[i]);
+            var real_name = str::from(real_type_list[i]);
+            defer {
+                type_name.delete();
+                real_name.delete();
+            }
+            self->basic_type_mapper.insert(type_name.__ptr__(), real_name.__ptr__());
         }
-
-        var double_s = str::from("double");
-        var float_s = str::from("float");
-        defer {
-            double_s.delete();
-            float_s.delete();
-        }
-
-        self->basic_type_mapper.insert(i64_s.__ptr__(), i64_s.__ptr__());
-        self->basic_type_mapper.insert(i32_s.__ptr__(), i32_s.__ptr__());
-        self->basic_type_mapper.insert(i16_s.__ptr__(), i16_s.__ptr__());
-        self->basic_type_mapper.insert(i8_s.__ptr__(), i8_s.__ptr__());
-        self->basic_type_mapper.insert(u64_s.__ptr__(), i64_s.__ptr__());
-        self->basic_type_mapper.insert(u32_s.__ptr__(), i32_s.__ptr__());
-        self->basic_type_mapper.insert(u16_s.__ptr__(), i16_s.__ptr__());
-        self->basic_type_mapper.insert(u8_s.__ptr__(), i8_s.__ptr__());
-        self->basic_type_mapper.insert(f64_s.__ptr__(), double_s.__ptr__());
-        self->basic_type_mapper.insert(f32_s.__ptr__(), float_s.__ptr__());
-        self->basic_type_mapper.insert(void_s.__ptr__(), void_s.__ptr__());
-        self->basic_type_mapper.insert(bool_s.__ptr__(), i1_s.__ptr__());
     }
 
-    func init_primitive__size_methods(self) {
-        var size_1 = str::from("1");
-        var size_2 = str::from("2");
-        var size_4 = str::from("4");
-        var size_8 = str::from("8");
-        defer {
-            size_1.delete();
-            size_2.delete();
-            size_4.delete();
-            size_8.delete();
-        }
+    func init_primitive_size_methods(self) {
+        var type_list = [
+            "i64", "i32", "i16", "i8",
+            "u64", "u32", "u16", "u8",
+            "f64", "f32", "bool", nil
+        ];
+        var size_list = [
+            "8", "4", "2", "1",
+            "8", "4", "2", "1",
+            "8", "4", "1", nil
+        ];
+        for (var i = 0; type_list[i] != nil; i += 1) {
+            var name = str::from(type_list[i]);
+            name.append(".__size__");
+            var size_str = str::from(size_list[i]);
+            defer {
+                name.delete();
+                size_str.delete();
+            }
 
-        var i64_s = str::from("i64.__size__");
-        var i32_s = str::from("i32.__size__");
-        var i16_s = str::from("i16.__size__");
-        var i8_s = str::from("i8.__size__");
-        var i1_s = str::from("i1.__size__");
-        var u64_s = str::from("u64.__size__");
-        var u32_s = str::from("u32.__size__");
-        var u16_s = str::from("u16.__size__");
-        var u8_s = str::from("u8.__size__");
-        var f64_s = str::from("f64.__size__");
-        var f32_s = str::from("f32.__size__");
-        var bool_s = str::from("bool.__size__");
-        defer {
-            i64_s.delete();
-            i32_s.delete();
-            i16_s.delete();
-            i8_s.delete();
-            i1_s.delete();
-            u64_s.delete();
-            u32_s.delete();
-            u16_s.delete();
-            u8_s.delete();
-            f64_s.delete();
-            f32_s.delete();
-            bool_s.delete();
+            self->primitive_methods.insert(name.__ptr__(), size_str.__ptr__());
         }
-
-        self->primitive_methods.insert(i64_s.__ptr__(), size_8.__ptr__());
-        self->primitive_methods.insert(i32_s.__ptr__(), size_4.__ptr__());
-        self->primitive_methods.insert(i16_s.__ptr__(), size_2.__ptr__());
-        self->primitive_methods.insert(i8_s.__ptr__(), size_1.__ptr__());
-        self->primitive_methods.insert(u64_s.__ptr__(), size_8.__ptr__());
-        self->primitive_methods.insert(u32_s.__ptr__(), size_4.__ptr__());
-        self->primitive_methods.insert(u16_s.__ptr__(), size_2.__ptr__());
-        self->primitive_methods.insert(u8_s.__ptr__(), size_1.__ptr__());
-        self->primitive_methods.insert(f64_s.__ptr__(), size_8.__ptr__());
-        self->primitive_methods.insert(f32_s.__ptr__(), size_4.__ptr__());
-        self->primitive_methods.insert(bool_s.__ptr__(), size_1.__ptr__());
     }
 }
 
