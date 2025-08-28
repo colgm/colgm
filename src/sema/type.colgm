@@ -129,26 +129,22 @@ impl type {
 }
 
 impl type {
-    func default_init(self) {
-        self->name = str::from("");
-        self->loc_file = str::from("");
-        self->pointer_depth = 0;
-        self->is_global_sym = false;
-        self->is_global_func = false;
-        self->is_enum = false;
-        self->array_length = 0;
-        self->is_array = false;
-        self->is_reference = false;
-        self->is_const = false;
-        self->stm_info = method_info::instance();
-        self->prm_info = method_info::instance();
-        self->generics = vec<type>::instance();
-    }
-
-    pub func instance() -> type {
-        var res = type {};
-        res.default_init();
-        return res;
+    pub func instance(name: const i8*, loc_file: const i8*) -> type {
+        return type {
+            name: str::from(name),
+            loc_file: str::from(loc_file),
+            pointer_depth: 0,
+            is_global_sym: false,
+            is_global_func: false,
+            is_enum: false,
+            array_length: 0,
+            is_array: false,
+            is_reference: false,
+            is_const: false,
+            stm_info: method_info::instance(),
+            prm_info: method_info::instance(),
+            generics: vec<type>::instance()
+        };
     }
 
     pub func eq(self, t: type*) -> bool {
@@ -255,114 +251,84 @@ impl type {
     }
 
     pub func error_type() -> type {
-        var res = type::instance();
-        res.name.append("<error>");
-        return res;
+        return type::instance("<error>", "");
     }
 
     // return type of assignment must be <restrict>
     pub func restrict_type() -> type {
-        var res = type::instance();
-        res.name.append("<restrict>");
-        return res;
+        return type::instance("<restrict>", "");
     }
 
     // default match type
     pub func default_match_type() -> type {
-        var res = type::instance();
-        res.name.append("<match-default>");
-        return res;
+        return type::instance("<match-default>", "");
     }
 
     // empty array type
     pub func empty_array_type() -> type {
-        var res = type::instance();
-        res.name.append("<empty-array>");
+        var res = type::instance("<empty-array>", "");
         res.is_array = true;
         res.array_length = 0;
         return res;
     }
 
     pub func const_str_literal_type() -> type {
-        var res = type::instance();
-        res.name.append("i8");
+        var res = type::instance("i8", "");
         res.pointer_depth = 1;
         res.is_const = true;
         return res;
     }
 
     pub func void_type() -> type {
-        var res = type::instance();
-        res.name.append("void");
-        return res;
+        return type::instance("void", "");
     }
 
     pub func bool_type() -> type {
-        var res = type::instance();
-        res.name.append("bool");
-        return res;
+        return type::instance("bool", "");
     }
 
     pub func i8_type(pointer_depth: i64) -> type {
-        var res = type::instance();
-        res.name.append("i8");
+        var res = type::instance("i8", "");
         res.pointer_depth = pointer_depth;
         return res;
     }
 
     pub func i16_type() -> type {
-        var res = type::instance();
-        res.name.append("i16");
-        return res;
+        return type::instance("i16", "");
     }
 
     pub func i32_type() -> type {
-        var res = type::instance();
-        res.name.append("i32");
-        return res;
+        return type::instance("i32", "");
     }
 
     pub func i64_type() -> type {
-        var res = type::instance();
-        res.name.append("i64");
-        return res;
+        return type::instance("i64", "");
     }
 
     pub func u8_type(pointer_depth: i64) -> type {
-        var res = type::instance();
-        res.name.append("u8");
+        var res = type::instance("u8", "");
         res.pointer_depth = pointer_depth;
         return res;
     }
 
     pub func u16_type() -> type {
-        var res = type::instance();
-        res.name.append("u16");
-        return res;
+        return type::instance("u16", "");
     }
 
     pub func u32_type() -> type {
-        var res = type::instance();
-        res.name.append("u32");
-        return res;
+        return type::instance("u32", "");
     }
 
     pub func u64_type() -> type {
-        var res = type::instance();
-        res.name.append("u64");
-        return res;
+        return type::instance("u64", "");
     }
 
     pub func f32_type() -> type {
-        var res = type::instance();
-        res.name.append("f32");
-        return res;
+        return type::instance("f32", "");
     }
 
     pub func f64_type() -> type {
-        var res = type::instance();
-        res.name.append("f64");
-        return res;
+        return type::instance("f64", "");
     }
 }
 

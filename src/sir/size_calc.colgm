@@ -211,9 +211,7 @@ impl size_calc {
         self->struct_mapper.clear();
         self->tagged_union_mapper.clear();
         foreach (var i; mctx->structs) {
-            var s_ty = type::instance();
-            s_ty.name.append_str(i.get()->name.__ptr__());
-            s_ty.loc_file.append_str(i.get()->location.file.__ptr__());
+            var s_ty = type::instance(i.get()->name.c_str, i.get()->location.file.c_str);
             defer s_ty.delete();
 
             var s_full_name = s_ty.full_path_name(self->pkg);
@@ -222,9 +220,7 @@ impl size_calc {
             self->struct_mapper.insert(s_full_name.__ptr__(), i.get());
         }
         foreach (var i; mctx->tagged_unions) {
-            var s_ty = type::instance();
-            s_ty.name.append_str(i.get()->name.__ptr__());
-            s_ty.loc_file.append_str(i.get()->location.file.__ptr__());
+            var s_ty = type::instance(i.get()->name.c_str, i.get()->location.file.c_str);
             defer s_ty.delete();
 
             var s_full_name = s_ty.full_path_name(self->pkg);

@@ -736,10 +736,8 @@ impl ast2mir {
 
 impl ast2mir {
     func generate_full_name(self, n: str*, loc: span*) -> str {
-        var ty = type::instance();
+        var ty = type::instance(n->c_str, loc->file.c_str);
         defer ty.delete();
-        ty.name.append_str(n);
-        ty.loc_file.append_str(loc->file.__ptr__());
 
         var name = ty.full_path_name(self->pkg);
         return name;
@@ -822,8 +820,9 @@ impl ast2mir {
         }
 
         
-        var ret_ty = type::instance();
+        var ret_ty = type::instance("", "");
         defer ret_ty.delete();
+
         if (n->return_type != nil) {
             var t = self->tr.resolve(n->return_type);
             defer t.delete();

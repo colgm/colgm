@@ -297,9 +297,7 @@ impl mir2sir {
         foreach (var i; mctx->tagged_unions) {
             var m_un = i.get();
 
-            var s_ty = type::instance();
-            s_ty.name.append_str(m_un->name.__ptr__());
-            s_ty.loc_file.append_str(m_un->location.file.__ptr__());
+            var s_ty = type::instance(m_un->name.c_str, m_un->location.file.c_str);
             defer s_ty.delete();
             
             var s_ty_name = s_ty.full_path_name(self->pkg);
@@ -351,9 +349,7 @@ impl mir2sir {
         foreach (var i; mctx->structs) {
             var m_stct = i.get();
 
-            var s_ty = type::instance();
-            s_ty.name.append_str(m_stct->name.__ptr__());
-            s_ty.loc_file.append_str(m_stct->location.file.__ptr__());
+            var s_ty = type::instance(m_stct->name.c_str, m_stct->location.file.c_str);
             defer s_ty.delete();
             
             var s_ty_name = s_ty.full_path_name(self->pkg);
@@ -537,9 +533,7 @@ impl mir2sir {
         foreach (var i; self->ctx->global->domain) {
             var dm = i.value();
             foreach (var j; dm->enums) {
-                var e_type = type::instance();
-                e_type.name.append_str(j.value()->name.__ptr__());
-                e_type.loc_file.append_str(j.value()->location.file.__ptr__());
+                var e_type = type::instance(j.value()->name.c_str, j.value()->location.file.c_str);
                 defer e_type.delete();
                 
                 var e_name = e_type.full_path_name(self->pkg);
@@ -548,9 +542,7 @@ impl mir2sir {
                 self->type_mapper.insert(e_name.__ptr__(), symbol_kind::enum_kind);
             }
             foreach (var j; dm->structs) {
-                var s_type = type::instance();
-                s_type.name.append_str(j.value()->name.__ptr__());
-                s_type.loc_file.append_str(j.value()->location.file.__ptr__());
+                var s_type = type::instance(j.value()->name.c_str, j.value()->location.file.c_str);
                 defer s_type.delete();
 
                 var s_name = s_type.full_path_name(self->pkg);
@@ -559,9 +551,7 @@ impl mir2sir {
                 self->type_mapper.insert(s_name.__ptr__(), symbol_kind::struct_kind);
             }
             foreach (var j; dm->tagged_unions) {
-                var tu_type = type::instance();
-                tu_type.name.append_str(j.value()->name.__ptr__());
-                tu_type.loc_file.append_str(j.value()->location.file.__ptr__());
+                var tu_type = type::instance(j.value()->name.c_str, j.value()->location.file.c_str);
                 defer tu_type.delete();
 
                 var tu_name = tu_type.full_path_name(self->pkg);
@@ -3478,9 +3468,7 @@ impl mir2sir {
     }
 
     func generate_single_DI_enum(self, e: colgm_enum*) -> u64 {
-        var ty = type::instance();
-        ty.name.append(e->name.c_str);
-        ty.loc_file.append(e->location.file.c_str);
+        var ty = type::instance(e->name.c_str, e->location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self->pkg);
@@ -3535,9 +3523,7 @@ impl mir2sir {
     }
 
     func generate_single_DI_struct(self, s: colgm_struct*) {
-        var ty = type::instance();
-        ty.name.append(s->name.c_str);
-        ty.loc_file.append(s->location.file.c_str);
+        var ty = type::instance(s->name.c_str, s->location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self->pkg);
@@ -3565,9 +3551,7 @@ impl mir2sir {
     }
 
     func generate_single_DI_tagged_union(self, u: colgm_tagged_union*) {
-        var ty = type::instance();
-        ty.name.append(u->name.c_str);
-        ty.loc_file.append(u->location.file.c_str);
+        var ty = type::instance(u->name.c_str, u->location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self->pkg);
@@ -3595,9 +3579,7 @@ impl mir2sir {
     }
 
     func generate_single_struct_member_dwarf(self, s: colgm_struct*) {
-        var ty = type::instance();
-        ty.name.append(s->name.c_str);
-        ty.loc_file.append(s->location.file.c_str);
+        var ty = type::instance(s->name.c_str, s->location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self->pkg);
@@ -3638,9 +3620,7 @@ impl mir2sir {
     }
 
     func generate_single_tagged_union_member_dwarf(self, u: colgm_tagged_union*) {
-        var ty = type::instance();
-        ty.name.append(u->name.c_str);
-        ty.loc_file.append(u->location.file.c_str);
+        var ty = type::instance(u->name.c_str, u->location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self->pkg);

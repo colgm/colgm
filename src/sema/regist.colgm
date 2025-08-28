@@ -471,8 +471,7 @@ impl regist_pass {
         var name = str::from("__ptr__");
         var self_name = str::from("self");
         var loc = span::null();
-        var ret = type::instance();
-        ret.name.append(pt->name.c_str);
+        var ret = type::instance(pt->name.c_str, "");
         ret.pointer_depth = 1;
         defer {
             name.delete();
@@ -898,9 +897,7 @@ impl regist_pass {
             struct_info->fields_span.insert(fld_name, fld->base.location.__ptr__());            
         }
 
-        var struct_self_type = type::instance();
-        struct_self_type.name.append_str(name);
-        struct_self_type.loc_file.append_str(node->base.location.file.__ptr__());
+        var struct_self_type = type::instance(name->c_str, node->base.location.file.c_str);
         defer struct_self_type.delete();
 
         if (node->generic_types != nil) {
@@ -1054,11 +1051,9 @@ impl regist_pass {
             return;
         }
 
-        var ty = type::instance();
-        defer ty.delete();
-        ty.name.append_str(node->ref_enum_name.__ptr__());
-        ty.loc_file.append_str(enum_info->loc_file.__ptr__());
+        var ty = type::instance(node->ref_enum_name.c_str, enum_info->loc_file.c_str);
         ty.is_enum = true;
+        defer ty.delete();
 
         un->ref_enum_type.reset_with(ty.__ptr__());
 
@@ -1137,10 +1132,9 @@ impl regist_pass {
             return;
         }
 
-        var un_type = type::instance();
-        un_type.name.append_str(name);
-        un_type.loc_file.append_str(node->base.location.file.__ptr__());
+        var un_type = type::instance(name->c_str, node->base.location.file.c_str);
         defer un_type.delete();
+
         self->regist_tagged_union_size_method(union_info);
         self->regist_tagged_union_alloc_method(union_info, un_type.__ptr__());
         self->regist_tagged_union_ptr_method(union_info, un_type.__ptr__());
