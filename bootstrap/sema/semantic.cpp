@@ -149,13 +149,7 @@ type semantic::struct_static_method_infer(const type& prev,
     auto infer = prev;
     infer.pointer_depth = 0;
     infer.is_global = true;
-    infer.m_info = {
-        .is_struct_method = true,
-        .is_primitive_method = false,
-        .flag_is_static = true,
-        .flag_is_normal = false,
-        .method_name = fn_name
-    };
+    infer.m_info.set_static_struct_method(fn_name);
     return infer;
 }
 
@@ -164,13 +158,7 @@ type semantic::struct_method_infer(const type& prev,
     auto infer = prev;
     infer.pointer_depth = 0;
     infer.is_global = true;
-    infer.m_info = {
-        .is_struct_method = true,
-        .is_primitive_method = false,
-        .flag_is_static = false,
-        .flag_is_normal = true,
-        .method_name = fn_name
-    };
+    infer.m_info.set_normal_struct_method(fn_name);
     return infer;
 }
 
@@ -628,13 +616,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
             auto infer = prev;
             infer.pointer_depth = 0;
             infer.is_global = true;
-            infer.m_info = {
-                .is_struct_method = false,
-                .is_primitive_method = true,
-                .flag_is_static = false,
-                .flag_is_normal = true,
-                .method_name = node->get_name()
-            };
+            infer.m_info.set_normal_primitive_method(node->get_name());
             return infer;
         }
         rp.report(node,
@@ -1107,13 +1089,7 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         auto infer = prev;
         infer.pointer_depth = 0;
         infer.is_global = true;
-        infer.m_info = {
-            .is_struct_method = false,
-            .is_primitive_method = true,
-            .flag_is_static = true,
-            .flag_is_normal = false,
-            .method_name = node->get_name()
-        };
+        infer.m_info.set_static_primitive_method(node->get_name());
         return infer;
     }
 
@@ -1206,13 +1182,7 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
             auto infer = prev;
             infer.pointer_depth = 0;
             infer.is_global = true;
-            infer.m_info = {
-                .is_struct_method = false,
-                .is_primitive_method = true,
-                .flag_is_static = false,
-                .flag_is_normal = true,
-                .method_name = node->get_name()
-            };
+            infer.m_info.set_normal_primitive_method(node->get_name());
             return infer;
         }
         rp.report(node,

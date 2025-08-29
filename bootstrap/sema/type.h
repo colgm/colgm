@@ -30,6 +30,30 @@ struct method_info {
     bool flag_is_static = false;      // mark static method
     bool flag_is_normal = false;      // mark normal method
     std::string method_name;
+
+    void set_static_struct_method(const std::string& n) {
+        method_name = n;
+        is_struct_method = true;
+        flag_is_static = true;
+    }
+
+    void set_normal_struct_method(const std::string& n) {
+        method_name = n;
+        is_struct_method = true;
+        flag_is_normal = true;
+    }
+
+    void set_static_primitive_method(const std::string& n) {
+        method_name = n;
+        is_primitive_method = true;
+        flag_is_static = true;
+    }
+
+    void set_normal_primitive_method(const std::string& n) {
+        method_name = n;
+        is_primitive_method = true;
+        flag_is_normal = true;
+    }
 };
 
 struct type {
