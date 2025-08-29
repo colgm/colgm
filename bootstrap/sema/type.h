@@ -24,9 +24,11 @@ enum class sym_kind {
     module_kind
 };
 
-struct struct_method_info {
-    bool flag_is_static = false; // mark static method
-    bool flag_is_normal = false; // mark normal method
+struct method_info {
+    bool is_struct_method = false;    // mark this is struct method type
+    bool is_primitive_method = false; // mark this is primitive method type
+    bool flag_is_static = false;      // mark static method
+    bool flag_is_normal = false;      // mark normal method
     std::string method_name;
 };
 
@@ -44,8 +46,7 @@ struct type {
 
     bool is_reference = false;   // reference type
 
-    struct_method_info stm_info; // mark this is struct method type
-    struct_method_info prm_info; // mark this is primitive method type
+    method_info m_info;          // mark this is method infotype
     std::vector<type> generics = {};
 
 private:
@@ -145,10 +146,8 @@ public:
     bool is_void() const { return *this == type::void_type(0); }
     bool is_pointer() const { return pointer_depth > 0; }
     bool is_function() const {
-        return stm_info.flag_is_normal ||
-               stm_info.flag_is_static ||
-               prm_info.flag_is_normal ||
-               prm_info.flag_is_static ||
+        return m_info.flag_is_normal ||
+               m_info.flag_is_static ||
                is_global_func;
     }
 

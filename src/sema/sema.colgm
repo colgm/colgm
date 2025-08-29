@@ -885,9 +885,9 @@ impl sema {
         var infer = prev->clone();
         infer.pointer_depth = 0;
         infer.is_global_sym = true;
-        infer.stm_info.flag_is_static = false;
-        infer.stm_info.flag_is_normal = true;
-        infer.stm_info.method_name.append_str(fn_name);
+        infer.m_info.is_struct_method = true;
+        infer.m_info.flag_is_normal = true;
+        infer.m_info.method_name.append_str(fn_name);
         return infer;
     }
 
@@ -895,9 +895,9 @@ impl sema {
         var infer = prev->clone();
         infer.pointer_depth = 0;
         infer.is_global_sym = true;
-        infer.stm_info.flag_is_static = true;
-        infer.stm_info.flag_is_normal = false;
-        infer.stm_info.method_name.append_str(fn_name);
+        infer.m_info.is_struct_method = true;
+        infer.m_info.flag_is_static = true;
+        infer.m_info.method_name.append_str(fn_name);
         return infer;
     }
 
@@ -988,9 +988,9 @@ impl sema {
         var infer = prev->clone();
         infer.pointer_depth = 0;
         infer.is_global_sym = true;
-        infer.prm_info.flag_is_static = false;
-        infer.prm_info.flag_is_normal = true;
-        infer.prm_info.method_name.append_str(method_name);
+        infer.m_info.is_primitive_method = true;
+        infer.m_info.flag_is_normal = true;
+        infer.m_info.method_name.append_str(method_name);
         return infer;
     }
 
@@ -1186,10 +1186,10 @@ impl sema {
         }
 
         // static method call of native type
-        if (prev->prm_info.flag_is_static) {
+        if (prev->m_info.is_primitive_method && prev->m_info.flag_is_static) {
             var primitive = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
             var method = primitive->static_method.get(
-                prev->prm_info.method_name.__ptr__()
+                prev->m_info.method_name.__ptr__()
             );
             self->check_static_call_args(method, n);
 
@@ -1199,10 +1199,10 @@ impl sema {
         }
 
         // method call of native type
-        if (prev->prm_info.flag_is_normal) {
+        if (prev->m_info.is_primitive_method && prev->m_info.flag_is_normal) {
             var primitive = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
             var method = primitive->method.get(
-                prev->prm_info.method_name.__ptr__()
+                prev->m_info.method_name.__ptr__()
             );
             self->check_method_call_args(method, n);
 
@@ -1212,12 +1212,12 @@ impl sema {
         }
 
         // static method call of struct
-        if (prev->stm_info.flag_is_static) {
+        if (prev->m_info.is_struct_method && prev->m_info.flag_is_static) {
             var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
             if (dm->structs.has(prev_name_for_search.__ptr__())) {
                 var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
                 var method = struct_self->static_method.get(
-                    prev->stm_info.method_name.__ptr__()
+                    prev->m_info.method_name.__ptr__()
                 );
                 self->check_static_call_args(method, n);
 
@@ -1227,7 +1227,7 @@ impl sema {
             } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
                 var union_self = dm->tagged_unions.get(prev_name_for_search.__ptr__());
                 var method = union_self->static_method.get(
-                    prev->stm_info.method_name.__ptr__()
+                    prev->m_info.method_name.__ptr__()
                 );
                 self->check_static_call_args(method, n);
 
@@ -1243,12 +1243,12 @@ impl sema {
         }
 
         // normal method call of struct
-        if (prev->stm_info.flag_is_normal) {
+        if (prev->m_info.is_struct_method && prev->m_info.flag_is_normal) {
             var dm = self->ctx->get_domain(prev->loc_file.__ptr__());
             if (dm->structs.has(prev_name_for_search.__ptr__())) {
                 var struct_self = dm->structs.get(prev_name_for_search.__ptr__());
                 var method = struct_self->method.get(
-                    prev->stm_info.method_name.__ptr__()
+                    prev->m_info.method_name.__ptr__()
                 );
                 self->check_method_call_args(method, n);
 
@@ -1258,7 +1258,7 @@ impl sema {
             } else if (dm->tagged_unions.has(prev_name_for_search.__ptr__())) {
                 var union_self = dm->tagged_unions.get(prev_name_for_search.__ptr__());
                 var method = union_self->method.get(
-                    prev->stm_info.method_name.__ptr__()
+                    prev->m_info.method_name.__ptr__()
                 );
                 self->check_method_call_args(method, n);
 
@@ -1411,9 +1411,9 @@ impl sema {
         var infer = prev->clone();
         infer.pointer_depth = 0;
         infer.is_global_sym = true;
-        infer.prm_info.flag_is_static = true;
-        infer.prm_info.flag_is_normal = false;
-        infer.prm_info.method_name.append_str(n->name.__ptr__());
+        infer.m_info.is_primitive_method = true;
+        infer.m_info.flag_is_static = true;
+        infer.m_info.method_name.append_str(n->name.__ptr__());
         return infer;
     }
 

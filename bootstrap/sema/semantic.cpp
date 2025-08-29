@@ -149,7 +149,9 @@ type semantic::struct_static_method_infer(const type& prev,
     auto infer = prev;
     infer.pointer_depth = 0;
     infer.is_global = true;
-    infer.stm_info = {
+    infer.m_info = {
+        .is_struct_method = true,
+        .is_primitive_method = false,
         .flag_is_static = true,
         .flag_is_normal = false,
         .method_name = fn_name
@@ -162,7 +164,9 @@ type semantic::struct_method_infer(const type& prev,
     auto infer = prev;
     infer.pointer_depth = 0;
     infer.is_global = true;
-    infer.stm_info = {
+    infer.m_info = {
+        .is_struct_method = true,
+        .is_primitive_method = false,
         .flag_is_static = false,
         .flag_is_normal = true,
         .method_name = fn_name
@@ -624,7 +628,9 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
             auto infer = prev;
             infer.pointer_depth = 0;
             infer.is_global = true;
-            infer.prm_info = {
+            infer.m_info = {
+                .is_struct_method = false,
+                .is_primitive_method = true,
                 .flag_is_static = false,
                 .flag_is_normal = true,
                 .method_name = node->get_name()
@@ -835,7 +841,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         return func.return_type;
     }
     // static method call of primitive type
-    if (prev.prm_info.flag_is_static) {
+    if (prev.m_info.is_primitive_method && prev.m_info.flag_is_static) {
         if (!ctx.global.primitives.count(prev.generic_name())) {
             rp.report(node,
                 "cannot call static method of primitive type \"" +
@@ -844,13 +850,13 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
             return type::error_type();
         }
         const auto& p = ctx.global.primitives.at(prev.generic_name());
-        const auto& method = p.static_methods.at(prev.prm_info.method_name);
+        const auto& method = p.static_methods.at(prev.m_info.method_name);
         check_static_call_args(method, node);
         node->set_resolve_type(method.return_type);
         return method.return_type;
     }
     // method call of primitive type
-    if (prev.prm_info.flag_is_normal) {
+    if (prev.m_info.is_primitive_method && prev.m_info.flag_is_normal) {
         if (!ctx.global.primitives.count(prev.generic_name())) {
             rp.report(node,
                 "cannot call method of primitive type \"" +
@@ -859,23 +865,23 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
             return type::error_type();
         }
         const auto& p = ctx.global.primitives.at(prev.generic_name());
-        const auto& method = p.methods.at(prev.prm_info.method_name);
+        const auto& method = p.methods.at(prev.m_info.method_name);
         check_method_call_args(method, node);
         node->set_resolve_type(method.return_type);
         return method.return_type;
     }
     // static method call of struct
-    if (prev.stm_info.flag_is_static) {
+    if (prev.m_info.is_struct_method && prev.m_info.flag_is_static) {
         const auto& domain = ctx.get_domain(prev.loc_file);
         if (domain.structs.count(prev.generic_name())) {
             const auto& st = domain.structs.at(prev.generic_name());
-            const auto& method = st.static_method.at(prev.stm_info.method_name);
+            const auto& method = st.static_method.at(prev.m_info.method_name);
             check_static_call_args(method, node);
             node->set_resolve_type(method.return_type);
             return method.return_type;
         } else if (domain.tagged_unions.count(prev.generic_name())) {
             const auto& un = domain.tagged_unions.at(prev.generic_name());
-            const auto& method = un.static_method.at(prev.stm_info.method_name);
+            const auto& method = un.static_method.at(prev.m_info.method_name);
             check_static_call_args(method, node);
             node->set_resolve_type(method.return_type);
             return method.return_type;
@@ -887,17 +893,17 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         return type::error_type();
     }
     // method call of struct
-    if (prev.stm_info.flag_is_normal) {
+    if (prev.m_info.is_struct_method && prev.m_info.flag_is_normal) {
         const auto& domain = ctx.get_domain(prev.loc_file);
         if (domain.structs.count(prev.generic_name())) {
             const auto& st = domain.structs.at(prev.generic_name());
-            const auto& method = st.method.at(prev.stm_info.method_name);
+            const auto& method = st.method.at(prev.m_info.method_name);
             check_method_call_args(method, node);
             node->set_resolve_type(method.return_type);
             return method.return_type;
         } else if (domain.tagged_unions.count(prev.generic_name())) {
             const auto& un = domain.tagged_unions.at(prev.generic_name());
-            const auto& method = un.method.at(prev.stm_info.method_name);
+            const auto& method = un.method.at(prev.m_info.method_name);
             check_method_call_args(method, node);
             node->set_resolve_type(method.return_type);
             return method.return_type;
@@ -1101,7 +1107,9 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         auto infer = prev;
         infer.pointer_depth = 0;
         infer.is_global = true;
-        infer.prm_info = {
+        infer.m_info = {
+            .is_struct_method = false,
+            .is_primitive_method = true,
             .flag_is_static = true,
             .flag_is_normal = false,
             .method_name = node->get_name()
@@ -1198,7 +1206,9 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
             auto infer = prev;
             infer.pointer_depth = 0;
             infer.is_global = true;
-            infer.prm_info = {
+            infer.m_info = {
+                .is_struct_method = false,
+                .is_primitive_method = true,
                 .flag_is_static = false,
                 .flag_is_normal = true,
                 .method_name = node->get_name()

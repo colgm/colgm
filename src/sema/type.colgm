@@ -6,7 +6,9 @@ use std::panic::{ panic };
 use err::span::{ span };
 use util::package::{ package };
 
-pub struct method_info {
+struct method_info {
+    is_struct_method: bool,
+    is_primitive_method: bool,
     flag_is_static: bool,
     flag_is_normal: bool,
     method_name: str
@@ -14,21 +16,23 @@ pub struct method_info {
 
 impl method_info {
     pub func instance() -> method_info {
-        var res = method_info {
+       return method_info {
+            is_struct_method: false,
+            is_primitive_method: false,
             flag_is_static: false,
             flag_is_normal: false,
             method_name: str::from("")
         };
-        return res;
     }
 
     pub func clone(self) -> method_info {
-        var res = method_info {
+        return method_info {
+            is_struct_method: self->is_struct_method,
+            is_primitive_method: self->is_primitive_method,
             flag_is_static: self->flag_is_static,
             flag_is_normal: self->flag_is_normal,
             method_name: self->method_name.clone()
         };
-        return res;
     }
 
     pub func delete(self) {
@@ -40,18 +44,17 @@ pub struct type {
     name: str,
     loc_file: str,
     pointer_depth: i64,
-    is_global_sym: bool,          // global symbol
-    is_global_func: bool,         // global function
-    is_enum: bool,                // enum type
-    is_const: bool,               // const type
+    is_global_sym: bool,  // global symbol
+    is_global_func: bool, // global function
+    is_enum: bool,        // enum type
+    is_const: bool,       // const type
 
-    array_length: u64,            // array length
-    is_array: bool,               // array type
+    array_length: u64,    // array length
+    is_array: bool,       // array type
 
-    is_reference: bool,           // reference type
+    is_reference: bool,   // reference type
 
-    stm_info: method_info,        // struct methods
-    prm_info: method_info,        // primitive type methods(intrinsic)
+    m_info: method_info,  // mark this is method info type
 
     generics: vec<type>
 }
@@ -60,8 +63,7 @@ impl type {
     pub func delete(self) {
         self->name.delete();
         self->loc_file.delete();
-        self->stm_info.delete();
-        self->prm_info.delete();
+        self->m_info.delete();
         self->generics.delete();
     }
 
@@ -77,8 +79,7 @@ impl type {
         self->is_array = t->is_array;
         self->is_reference = t->is_reference;
         self->is_const = t->is_const;
-        self->stm_info = t->stm_info.clone();
-        self->prm_info = t->prm_info.clone();
+        self->m_info = t->m_info.clone();
         self->generics = t->generics.clone();
     }
 
@@ -94,8 +95,7 @@ impl type {
             is_array: self->is_array,
             is_reference: self->is_reference,
             is_const: self->is_const,
-            stm_info: self->stm_info.clone(),
-            prm_info: self->prm_info.clone(),
+            m_info: self->m_info.clone(),
             generics: self->generics.clone()
         };
     }
@@ -141,8 +141,7 @@ impl type {
             is_array: false,
             is_reference: false,
             is_const: false,
-            stm_info: method_info::instance(),
-            prm_info: method_info::instance(),
+            m_info: method_info::instance(),
             generics: vec<type>::instance()
         };
     }
@@ -239,10 +238,8 @@ impl type {
     }
 
     pub func is_function(self) -> bool {
-        return self->stm_info.flag_is_normal ||
-               self->stm_info.flag_is_static ||
-               self->prm_info.flag_is_normal ||
-               self->prm_info.flag_is_static ||
+        return self->m_info.flag_is_normal ||
+               self->m_info.flag_is_static ||
                self->is_global_func;
     }
 
