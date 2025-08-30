@@ -15,7 +15,7 @@ mir_number* type_cast_number::do_optimize(mir_type_convert* node) {
 
 bool type_cast_number::cast_const_number(mir_type_convert* node) {
     if (!node->get_source()->get_content().size() ||
-        node->get_source()->get_content().size()>1) {
+        node->get_source()->get_content().size() > 1) {
         return false;
     }
 
@@ -26,13 +26,13 @@ bool type_cast_number::cast_const_number(mir_type_convert* node) {
     }
 
     auto ir_node = node->get_source()->get_content().front();
-    return ir_node->get_kind()==kind::mir_number;
+    return ir_node->get_kind() == kind::mir_number;
 }
 
 void type_cast_number::visit_mir_block(mir_block* node) {
     for (auto& i : node->get_mutable_content()) {
         i->accept(this);
-        if (i->get_kind()==kind::mir_type_convert &&
+        if (i->get_kind() == kind::mir_type_convert &&
             cast_const_number(reinterpret_cast<mir_type_convert*>(i))) {
             auto temp = i;
             i = do_optimize(reinterpret_cast<mir_type_convert*>(i));
