@@ -144,6 +144,15 @@ bool semantic::check_can_be_converted(node* n, const type& expect) {
     return false;
 }
 
+bool semantic::check_can_be_referenced(node* n) {
+    return !(n->is(ast_type::ast_nil_literal) ||
+             n->is(ast_type::ast_bool_literal) ||
+             n->is(ast_type::ast_number_literal) ||
+             n->is(ast_type::ast_string_literal) ||
+             n->is(ast_type::ast_char_literal) ||
+             n->is(ast_type::ast_array_list));
+}
+
 type semantic::struct_static_method_infer(const type& prev,
                                           const std::string& fn_name) {
     auto infer = prev;
@@ -719,15 +728,22 @@ void semantic::check_static_call_args(const colgm_func& func,
         const auto infer = resolve_expression(i);
         const auto& param = func.params.at(func.ordered_params[index]);
         // do not report if infer is error, because it must be reported before
-        if (infer != param && !infer.is_error()) {
+        if (infer.is_error()) {
+            ++ index;
+            continue;
+        }
+
+        if (infer != param) {
             if (!check_can_be_converted(i, param)) {
                 rp.report(i,
                     "expect \"" + param.to_string() +
                     "\" but get \"" + infer.to_string() + "\""
                 );
             }
+        } else if (param.is_reference && !check_can_be_referenced(i)) {
+            rp.report(i, "cannot pass literal as reference");
         }
-        ++index;
+        ++ index;
     }
 }
 
@@ -747,15 +763,22 @@ void semantic::check_method_call_args(const colgm_func& func,
         const auto infer = resolve_expression(i);
         const auto& param = func.params.at(func.ordered_params[index]);
         // do not report if infer is error, because it must be reported before
-        if (infer != param && !infer.is_error()) {
+        if (infer.is_error()) {
+            ++ index;
+            continue;
+        }
+
+        if (infer != param) {
             if (!check_can_be_converted(i, param)) {
                 rp.report(i,
                     "expect \"" + param.to_string() +
                     "\" but get \"" + infer.to_string() + "\""
                 );
             }
+        } else if (param.is_reference && !check_can_be_referenced(i)) {
+            rp.report(i, "cannot pass literal as reference");
         }
-        ++index;
+        ++ index;
     }
 }
 

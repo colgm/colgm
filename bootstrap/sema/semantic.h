@@ -41,6 +41,7 @@ private:
     bool unary_number_can_be_converted(node*, const type&);
     bool nil_can_be_converted(node*, const type&);
     bool check_can_be_converted(node*, const type&);
+    bool check_can_be_referenced(node*);
 
 private:
     type struct_static_method_infer(const type&, const std::string&);

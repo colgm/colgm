@@ -386,6 +386,10 @@ impl type {
     }
 
     // type name with generic info, without pointer info, without module info
+    // for example:
+    //   in file src/example.colgm:
+    //     struct foo<T> with T = i32
+    // will return "foo<i32>"
     pub func generic_name(self, pkg: package*) -> str {
         if (self->generics.empty()) {
             return self->name.clone();
@@ -424,6 +428,11 @@ impl type {
         return result + max_depth;
     }
 
+    // full path name without pointer info
+    // for example:
+    //   in file src/example.colgm:
+    //     foo<T>** with T = i32
+    // will return "example::foo<i32>"
     pub func full_path_name(self, pkg: package*) -> str {
         var res = str::instance();
         if (pkg != nil && pkg->has_file(self->loc_file.__ptr__())) {
@@ -437,6 +446,11 @@ impl type {
         return res;
     }
 
+    // full path name with pointer info
+    // for example:
+    //   in file src/example.colgm:
+    //     foo<T>** with T = i32
+    // will return "example::foo<i32>**"
     pub func full_path_name_with_pointer(self, pkg: package*) -> str {
         var res = self->full_path_name(pkg);
 
