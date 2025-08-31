@@ -98,6 +98,20 @@ impl sema {
         }
         return false;
     }
+
+    func is_function_type(self, ty: type*) -> bool {
+        if (ty->loc_file.empty()) {
+            return false;
+        }
+        var dm = self->ctx->get_domain(ty->loc_file.__ptr__());
+        var n = ty->generic_name(self->pkg);
+        defer n.delete();
+
+        if (dm->functions.has(n.__ptr__())) {
+            return true;
+        }
+        return false;
+    }
 }
 
 impl sema {
@@ -476,9 +490,12 @@ impl sema {
             }
         }
 
-        // cannot calculate enum
-        if (self->is_enum_type(left.__ptr__())) {
-            var info = str::from("cannot calculate enum \"");
+        // cannot calculate these types
+        if (self->is_enum_type(left.__ptr__()) ||
+            self->is_struct_type(left.__ptr__()) ||
+            self->is_tagged_union_type(left.__ptr__()) ||
+            self->is_function_type(left.__ptr__())) {
+            var info = str::from("cannot calculate \"");
             defer info.delete();
 
             var name = left.full_path_name_with_pointer(self->pkg);
@@ -487,8 +504,11 @@ impl sema {
             info.append_str(name.__ptr__())->append("\"");
             self->err->error(n->left->location.__ptr__(), info.c_str);
             return type::error_type();
-        } else if (self->is_enum_type(right.__ptr__())) {
-            var info = str::from("cannot calculate enum \"");
+        } else if (self->is_enum_type(right.__ptr__()) ||
+                   self->is_struct_type(right.__ptr__()) ||
+                   self->is_tagged_union_type(right.__ptr__()) ||
+                   self->is_function_type(right.__ptr__())) {
+            var info = str::from("cannot calculate \"");
             defer info.delete();
 
             var name = right.full_path_name_with_pointer(self->pkg);

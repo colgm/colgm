@@ -261,12 +261,18 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
         }
     }
 
-    // cannot calculate enum
-    if (ctx.search_symbol_kind(left)==sym_kind::enum_kind) {
-        rp.report(node->get_left(), "cannot calculate enum \"" + left.to_string() + "\"");
+    // cannot calculate these types
+    if (ctx.search_symbol_kind(left) == sym_kind::enum_kind ||
+        ctx.search_symbol_kind(left) == sym_kind::struct_kind ||
+        ctx.search_symbol_kind(left) == sym_kind::tagged_union_kind ||
+        ctx.search_symbol_kind(left) == sym_kind::func_kind) {
+        rp.report(node->get_left(), "cannot calculate \"" + left.to_string() + "\"");
         return type::error_type();
-    } else if (ctx.search_symbol_kind(right)==sym_kind::enum_kind) {
-        rp.report(node->get_right(), "cannot calculate enum \"" + right.to_string() + "\"");
+    } else if (ctx.search_symbol_kind(right) == sym_kind::enum_kind ||
+               ctx.search_symbol_kind(right) == sym_kind::struct_kind ||
+               ctx.search_symbol_kind(right) == sym_kind::tagged_union_kind ||
+               ctx.search_symbol_kind(right) == sym_kind::func_kind) {
+        rp.report(node->get_right(), "cannot calculate \"" + right.to_string() + "\"");
         return type::error_type();
     }
 
