@@ -862,15 +862,21 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
     value_stack.pop_back();
 
     std::vector<mir_value_t> args;
-    if (prev.value_kind==mir_value_t::kind::method) {
+    if (prev.value_kind == mir_value_t::kind::method) {
         args.push_back(value_stack.back());
         value_stack.pop_back();
     }
 
+    size_t index = 0;
     for (auto i : node->get_args()->get_content()) {
-        i->accept(this);
+        if (i->get_kind() == kind::mir_call && node->get_args_is_ref()[index]) {
+            call_expression_generation(reinterpret_cast<mir_call*>(i), true);
+        } else {
+            i->accept(this);
+        }
         args.push_back(value_stack.back());
-        value_stack.pop_back();        
+        value_stack.pop_back();
+        ++ index;
     }
 
     std::string target = "";

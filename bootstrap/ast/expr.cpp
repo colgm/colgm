@@ -144,6 +144,7 @@ call_func_args* call_func_args::clone() const {
     for (auto i : args) {
         copy->args.push_back(i->clone());
     }
+    copy->args_is_ref = args_is_ref;
     return copy;
 }
 

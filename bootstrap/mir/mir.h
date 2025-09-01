@@ -382,6 +382,7 @@ public:
 public:
     auto get_args() const { return args; }
     const auto& get_type() const { return resolve_type; }
+    const auto& get_args_is_ref() const { return args_is_ref; }
 };
 
 class mir_get_field: public mir {

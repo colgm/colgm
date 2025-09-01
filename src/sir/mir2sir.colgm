@@ -1788,7 +1788,11 @@ impl mir2sir {
         }
         // load arguments
         foreach (var i; n->args->content) {
-            self->visit(i.get());
+            if (i.get()->kind == mir_kind::mir_call && n->args_is_ref.get(i.index())) {
+                self->call_expr_gen(i.get() => mir_call*, true);
+            } else {
+                self->visit(i.get());
+            }
             args.push(self->value_stack.back());
             self->value_stack.pop_back();
         }
