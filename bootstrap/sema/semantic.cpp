@@ -749,6 +749,9 @@ void semantic::check_static_call_args(const colgm_func& func,
         } else if (param.is_reference && !check_can_be_referenced(i)) {
             rp.report(i, "cannot pass literal as reference");
         }
+        if (param.is_reference) {
+            node->set_arg_is_ref(index, true);
+        }
         ++ index;
     }
 }
@@ -783,6 +786,9 @@ void semantic::check_method_call_args(const colgm_func& func,
             }
         } else if (param.is_reference && !check_can_be_referenced(i)) {
             rp.report(i, "cannot pass literal as reference");
+        }
+        if (param.is_reference) {
+            node->set_arg_is_ref(index, true);
         }
         ++ index;
     }

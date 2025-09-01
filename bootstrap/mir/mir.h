@@ -365,11 +365,16 @@ public:
 class mir_call_func: public mir {
 private:
     mir_block* args;
+    std::vector<bool> args_is_ref;
     type resolve_type;
 
 public:
-    mir_call_func(const span& loc, mir_block* a, const type& t):
-        mir(kind::mir_call_func, loc), args(a), resolve_type(t) {}
+    mir_call_func(const span& loc,
+                  mir_block* a,
+                  const std::vector<bool>& ref_table,
+                  const type& t):
+        mir(kind::mir_call_func, loc), args(a),
+        args_is_ref(ref_table), resolve_type(t) {}
     ~mir_call_func() override { delete args; }
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;

@@ -269,6 +269,7 @@ bool ast2mir::visit_call_func_args(ast::call_func_args* node) {
     block->add_content(new mir_call_func(
         node->get_location(),
         args_block,
+        node->get_args_is_ref(),
         node->get_resolve()
     ));
     return true;

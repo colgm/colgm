@@ -962,14 +962,16 @@ impl mir_call_index {
 pub struct mir_call_func {
     base: mir,
     args: mir_block*,
+    args_is_ref: vec<bool>,
     resolved_type: type
 }
 
 impl mir_call_func {
-    pub func new(l: span*, a: mir_block*, t: type*) -> mir_call_func* {
+    pub func new(l: span*, a: mir_block*, ref_table: vec<bool>*, t: type*) -> mir_call_func* {
         var res = mir_call_func::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_func, l);
         res->args = a;
+        res->args_is_ref = ref_table->clone();
         res->resolved_type = t->clone();
         return res;
     }
@@ -980,6 +982,7 @@ impl mir_call_func {
             n->delete();
             free(n => i8*);
         }
+        self->args_is_ref.delete();
         self->resolved_type.delete();
     }
 

@@ -256,6 +256,7 @@ public:
 class call_func_args: public expr {
 private:
     std::vector<expr*> args;
+    std::vector<bool> args_is_ref;
 
 public:
     call_func_args(const span& loc):
@@ -263,9 +264,13 @@ public:
     ~call_func_args() override;
     void accept(visitor*) override;
     call_func_args* clone() const override;
-
-    void add_arg(expr* node) { args.push_back(node); }
+    void add_arg(expr* node) {
+        args.push_back(node);
+        args_is_ref.push_back(false);
+    }
     const auto& get_args() const { return args; }
+    void set_arg_is_ref(size_t index, bool is_ref) { args_is_ref[index] = is_ref; }
+    const auto& get_args_is_ref() const { return args_is_ref; }
 };
 
 class get_field: public expr {

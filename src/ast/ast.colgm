@@ -1016,7 +1016,8 @@ impl ast_call_index {
 
 pub struct ast_call_func_args {
     base: ast,
-    args: vec<ast*>
+    args: vec<ast*>,
+    args_is_ref: vec<bool>
 }
 
 impl ast_call_func_args {
@@ -1024,6 +1025,7 @@ impl ast_call_func_args {
         var res = ast_call_func_args::__alloc__();
         res->base = ast::instance(ast_kind::ast_call_func_args, loc);
         res->args = vec<ast*>::instance();
+        res->args_is_ref = vec<bool>::instance();
         return res;
     }
 
@@ -1034,8 +1036,10 @@ impl ast_call_func_args {
             self->base.location.__ptr__()
         );
         res->args = vec<ast*>::instance();
+        res->args_is_ref = vec<bool>::instance();
         foreach (var i; self->args) {
             res->args.push(i.get()->copy());
+            res->args_is_ref.push(self->args_is_ref.get(i.index()));
         }
         return res;
     }
@@ -1046,6 +1050,7 @@ impl ast_call_func_args {
             free(i.get() => i8*);
         }
         self->args.delete();
+        self->args_is_ref.delete();
     }
 }
 
