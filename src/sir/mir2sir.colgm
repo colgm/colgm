@@ -1508,8 +1508,45 @@ impl mir2sir {
         }
     }
 
+    func de_reference(self) {
+        if (self->value_stack.empty()) {
+            return;
+        }
+
+        if (!self->value_stack.back()->resolved_type.is_reference) {
+            return;
+        }
+
+        var source = self->value_stack.back()->clone();
+        defer source.delete();
+        self->value_stack.pop_back();
+
+        var source_ref = source.resolved_type.ref_copy();
+        defer source_ref.delete();
+        var source_ref_ty = self->type_mapping(source_ref.__ptr__());
+        defer source_ref_ty.delete();
+        var source_value = source.to_value_t();
+        defer source_value.delete();
+
+        var temp = self->ssa_gen.create();
+        defer temp.delete();
+        var temp_var_value = value_t::variable(temp.__ptr__());
+        defer temp_var_value.delete();
+
+        self->block->add_stmt(sir_load::new(
+            source_ref_ty.__ptr__(),
+            source_value.__ptr__(),
+            temp_var_value.__ptr__()
+        ) => sir*);
+
+        var v = mir_value_t::variable(temp.__ptr__(), source_ref.__ptr__());
+        defer v.delete();
+        self->value_stack.push(v.__ptr__());
+    }
+
     func call_expr_gen(self, n: mir_call*, need_address: bool) {
         self->visit(n->content => mir*);
+        self->de_reference();
 
         var source = self->value_stack.back()->clone();
         defer source.delete();
@@ -1677,6 +1714,8 @@ impl mir2sir {
     }
 
     func visit_mir_call_index(self, n: mir_call_index*) {
+        self->de_reference();
+
         var prev = self->value_stack.back()->clone();
         defer prev.delete();
         self->value_stack.pop_back();
@@ -1783,6 +1822,7 @@ impl mir2sir {
 
         // load "self" argument
         if (prev.value_kind == mir_value_kind::method) {
+            self->de_reference();
             args.push(self->value_stack.back());
             self->value_stack.pop_back();
         }
@@ -1906,6 +1946,7 @@ impl mir2sir {
     }
 
     func visit_mir_get_field(self, n: mir_get_field*) {
+        self->de_reference();
         var prev = self->value_stack.back()->clone();
         defer prev.delete();
 
@@ -2080,6 +2121,8 @@ impl mir2sir {
     }
 
     func visit_mir_ptr_get_field(self, n: mir_ptr_get_field*) {
+        self->de_reference();
+
         var prev = self->value_stack.back()->clone();
         defer prev.delete();
 

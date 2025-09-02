@@ -601,8 +601,32 @@ void mir2sir::visit_mir_array(mir_array* node) {
     value_stack.push_back(mir_value_t::variable(temp_1, node->get_type()));
 }
 
+void mir2sir::de_reference() {
+    if (value_stack.empty()) {
+        return;
+    }
+
+    if (!value_stack.back().resolve_type.is_reference) {
+        return;
+    }
+
+    auto source = value_stack.back();
+    value_stack.pop_back();
+    auto temp_var = ssa_gen.create();
+    block->add_stmt(new sir_load(
+        type_mapping(source.resolve_type.get_ref_copy()),
+        source.to_value_t(),
+        value_t::variable(temp_var)
+    ));
+    value_stack.push_back(mir_value_t::variable(
+        temp_var,
+        source.resolve_type.get_ref_copy()
+    ));
+}
+
 void mir2sir::call_expression_generation(mir_call* node, bool need_address) {
     node->get_content()->accept(this);
+    de_reference();
 
     auto source = value_stack.back();
     // for enum member
@@ -819,6 +843,8 @@ void mir2sir::visit_mir_call_id(mir_call_id* node) {
 }
 
 void mir2sir::visit_mir_call_index(mir_call_index* node) {
+    de_reference();
+
     auto prev = value_stack.back();
     value_stack.pop_back();
 
@@ -862,7 +888,9 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
     value_stack.pop_back();
 
     std::vector<mir_value_t> args;
+    // load "self" argument
     if (prev.value_kind == mir_value_t::kind::method) {
+        de_reference();
         args.push_back(value_stack.back());
         value_stack.pop_back();
     }
@@ -945,6 +973,8 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
 }
 
 void mir2sir::visit_mir_get_field(mir_get_field* node) {
+    de_reference();
+
     auto prev = value_stack.back();
     value_stack.pop_back();
 
@@ -1064,6 +1094,8 @@ void mir2sir::visit_mir_get_path(mir_get_path* node) {
 }
 
 void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
+    de_reference();
+
     auto prev = value_stack.back();
     value_stack.pop_back();
 

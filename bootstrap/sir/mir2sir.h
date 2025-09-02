@@ -231,6 +231,7 @@ private:
     void visit_mir_char(mir_char*) override;
     void visit_mir_bool(mir_bool*) override;
     void visit_mir_array(mir_array*) override;
+    void de_reference();
     void call_expression_generation(mir_call*, bool);
     void visit_mir_call(mir_call*) override;
     void visit_mir_struct_init(mir_struct_init*) override;
