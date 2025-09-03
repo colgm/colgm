@@ -612,15 +612,20 @@ void mir2sir::de_reference() {
 
     auto source = value_stack.back();
     value_stack.pop_back();
+
+    // need a de-referenced type, directly change is_reference to false
+    auto source_type = source.resolve_type;
+    source_type.is_reference = false;
+
     auto temp_var = ssa_gen.create();
     block->add_stmt(new sir_load(
-        type_mapping(source.resolve_type.get_ref_copy()),
+        type_mapping(source_type),
         source.to_value_t(),
         value_t::variable(temp_var)
     ));
     value_stack.push_back(mir_value_t::variable(
         temp_var,
-        source.resolve_type.get_ref_copy()
+        source_type
     ));
 }
 

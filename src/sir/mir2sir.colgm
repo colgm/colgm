@@ -1521,8 +1521,11 @@ impl mir2sir {
         defer source.delete();
         self->value_stack.pop_back();
 
-        var source_ref = source.resolved_type.ref_copy();
+        // need a de-referenced type, directly change is_reference to false
+        var source_ref = source.resolved_type.clone();
+        source_ref.is_reference = false;
         defer source_ref.delete();
+
         var source_ref_ty = self->type_mapping(source_ref.__ptr__());
         defer source_ref_ty.delete();
         var source_value = source.to_value_t();
