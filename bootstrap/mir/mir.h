@@ -625,16 +625,19 @@ public:
 class mir_return: public mir {
 private:
     mir_block* value;
+    bool return_ref_type;
 
 public:
-    mir_return(const span& loc, mir_block* v):
-        mir(kind::mir_return, loc), value(v) {}
+    mir_return(const span& loc, mir_block* v, bool rt):
+        mir(kind::mir_return, loc), value(v),
+        return_ref_type(rt) {}
     ~mir_return() override { delete value; }
     void dump(const std::string&, std::ostream&) override;
     void accept(visitor*) override;
 
 public:
     auto get_value() const { return value; }
+    auto get_return_ref_type() const { return return_ref_type; }
 };
 
 }

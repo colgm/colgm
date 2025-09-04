@@ -37,7 +37,7 @@ void add_default_func::add_main_impl() {
     default_main->name = "main";
     default_main->return_type = type::i32_type();
     default_main->block = new mir_block(span::null());
-    auto return_stmt = new mir_return(span::null(), new mir_block(span::null()));
+    auto return_stmt = new mir_return(span::null(), new mir_block(span::null()), false);
     return_stmt->get_value()->add_content(
         new mir_number(span::null(), "0", type::i32_type())
     );

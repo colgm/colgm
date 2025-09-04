@@ -2906,7 +2906,8 @@ impl ast_defer_stmt {
 
 pub struct ast_ret_stmt {
     base: ast,
-    value: ast*
+    value: ast*,
+    return_ref_type: bool
 }
 
 impl ast_ret_stmt {
@@ -2914,6 +2915,7 @@ impl ast_ret_stmt {
         var res = ast_ret_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_ret_stmt, loc);
         res->value = nil;
+        res->return_ref_type = false;
         return res;
     }
 
@@ -2928,6 +2930,7 @@ impl ast_ret_stmt {
         } else {
             res->value = nil;
         }
+        res->return_ref_type = self->return_ref_type;
         return res;
     }
 

@@ -1381,6 +1381,7 @@ bool semantic::check_valid_left_value(expr* node) {
         }
         if ((i->is(ast_type::ast_call_path) ||
             i->is(ast_type::ast_call_func_args)) &&
+            !i->get_resolve().is_reference &&
             i == mem_get_node->get_chain().back()) {
             rp.report(i, "bad left value: should not end with function call");
             return false;
@@ -1391,7 +1392,8 @@ bool semantic::check_valid_left_value(expr* node) {
     bool maybe_invalid_assignment = false;
     for (auto i : mem_get_node->get_chain()) {
         if (i->is(ast_type::ast_call_func_args) &&
-            !i->get_resolve().is_pointer()) {
+            !i->get_resolve().is_pointer() &&
+            !i->get_resolve().is_reference) {
             seg = i;
             maybe_invalid_assignment = true;
         } else if (i->is(ast_type::ast_ptr_get_field)) {
@@ -2136,6 +2138,10 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
             "expected return type \"" + func_self.return_type.to_string() +
             "\" but get \"" + infer.to_string() + "\""
         );
+    }
+
+    if (func_self.return_type.is_reference) {
+        node->set_return_ref_type(true);
     }
 }
 

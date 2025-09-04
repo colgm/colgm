@@ -679,7 +679,8 @@ bool ast2mir::visit_ret_stmt(ast::ret_stmt* node) {
 
     block->add_content(new mir_return(
         node->get_location(),
-        value_block
+        value_block,
+        node->get_return_ref_type()
     ));
     return true;
 }

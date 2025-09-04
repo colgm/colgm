@@ -71,6 +71,11 @@ impl type_resolve {
         var DM = G->domain.get(file);
         var GN = self->ctx->generics.__ptr__();
 
+        if (name->eq_const("void") && node->pointer_depth == 0 && node->is_reference) {
+            self->err->error(node->base.location.__ptr__(), "cannot use reference void type");
+            return type::error_type();
+        }
+
         // cannot find type
         if (!DM->global_symbol.has(name) && !GN->has(name)) {
             var info = str::from("undefined type \"");

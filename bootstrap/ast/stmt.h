@@ -283,10 +283,12 @@ public:
 class ret_stmt: public stmt {
 private:
     expr* value;
+    bool return_ref_type;
 
 public:
     ret_stmt(const span& loc):
-        stmt(ast_type::ast_ret_stmt, loc), value(nullptr) {}
+        stmt(ast_type::ast_ret_stmt, loc),
+        value(nullptr), return_ref_type(false) {}
     ~ret_stmt() override;
     void accept(visitor*) override;
     ret_stmt* clone() const override {
@@ -294,11 +296,14 @@ public:
         if (value) {
             ret->value = value->clone();
         }
+        ret->return_ref_type = return_ref_type;
         return ret;
     }
 
     void set_value(expr* node) { value = node; }
     auto get_value() const { return value; }
+    void set_return_ref_type(bool val) { return_ref_type = val; }
+    bool get_return_ref_type() const { return return_ref_type; }
 };
 
 class continue_stmt: public stmt {

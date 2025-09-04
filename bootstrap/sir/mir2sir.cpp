@@ -1684,7 +1684,16 @@ void mir2sir::visit_mir_return(mir_return* node) {
         return;
     }
 
-    node->get_value()->accept(this);
+    if (node->get_value()->get_content().size() == 1 &&
+        node->get_value()->get_content().front()->get_kind() == kind::mir_call) {
+        call_expression_generation(
+            reinterpret_cast<mir_call*>(node->get_value()->get_content().front()),
+            node->get_return_ref_type()
+        );
+    } else {
+        node->get_value()->accept(this);
+    }
+
     auto ret = value_stack.back();
     value_stack.pop_back();
 

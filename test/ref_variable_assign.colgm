@@ -33,6 +33,14 @@ func test_ref_struct(a: s&) {
     a.a = 114514;
 }
 
+func test_ref_return(a: s&) -> i64& {
+    return a.a;
+}
+
+func test_ref_arg(a: i64&) -> i64& {
+    return a;
+}
+
 func main() -> i32 {
     var a = 1;
     test_sub(a);
@@ -60,6 +68,27 @@ func main() -> i32 {
     test_ref_struct(b);
     assert(b.a == 114514, "b.a != 114514");
     test_replace_struct(b);
+    assert(b.a == 1919810, "b.a != 1919810");
+
+    test_ref_return(b) = 114514;
+    assert(b.a == 114514, "b.a != 114514");
+    test_ref_return(b) = 1919810;
+    assert(b.a == 1919810, "b.a != 1919810");
+
+    test_ref_arg(test_ref_return(b)) = 0;
+    assert(b.a == 0, "b.a != 0");
+    test_add(test_ref_arg(test_ref_return(b)));
+    assert(b.a == 1, "b.a != 1");
+    test_mul(test_ref_arg(test_ref_return(b)));
+    assert(b.a == 2, "b.a != 2");
+    test_div(test_ref_arg(test_ref_return(b)));
+    assert(b.a == 1, "b.a != 1");
+    test_sub(test_ref_arg(test_ref_return(b)));
+    assert(b.a == 0, "b.a != 0");
+
+    test_ref_arg(test_ref_return(b)) = 114514;
+    assert(b.a == 114514, "b.a != 114514");
+    test_ref_arg(test_ref_return(b)) = 1919810;
     assert(b.a == 1919810, "b.a != 1919810");
 
     io::stdout().out("[ref_variable_assign] ok\n");

@@ -1991,6 +1991,7 @@ impl sema {
                 return false;
             }
             if (tmp->kind == ast_kind::ast_call_func_args &&
+                !tmp->resolved_type.is_reference &&
                 i.index() == n->chain.size - 1) {
                 self->err->error(
                     tmp->location.__ptr__(),
@@ -2005,7 +2006,8 @@ impl sema {
         foreach (var i; n->chain) {
             var tmp = i.get();
             if (tmp->kind == ast_kind::ast_call_func_args &&
-                !tmp->resolved_type.is_pointer()) {
+                !tmp->resolved_type.is_pointer() &&
+                !tmp->resolved_type.is_reference) {
                 seg = tmp;
                 maybe_invalid_assignment = true;
             } else if (tmp->kind == ast_kind::ast_ptr_get_field) {
@@ -3157,6 +3159,10 @@ impl sema {
                         ->out_type(infer.__ptr__(), self->pkg)
                         ->out("\"")
                         ->emit_err(n->base.location.__ptr__());
+        }
+
+        if (func_self->return_type.is_reference) {
+            n->return_ref_type = true;
         }
     }
 

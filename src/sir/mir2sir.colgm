@@ -3093,7 +3093,13 @@ impl mir2sir {
             return;
         }
 
-        self->visit(n->value => mir*);
+        if (n->value->content.size == 1 &&
+            n->value->content.get(0)->kind == mir_kind::mir_call) {
+            self->call_expr_gen(n->value->content.get(0) => mir_call*, n->return_ref_type);
+        } else {
+            self->visit(n->value => mir*);
+        }
+
         var ret = self->value_stack.back()->clone();
         self->value_stack.pop_back();
         defer ret.delete();
