@@ -38,14 +38,14 @@ impl DWARF_status {
 }
 
 impl DWARF_status {
-    func generate_DI_location_key(self, loc: span*) -> str {
-        var loc_str = loc->to_string();
+    func generate_DI_location_key(self, loc: span&) -> str {
+        var loc_str = loc.to_string();
         loc_str.append("@");
         loc_str.append_u64(self->scope_index);
         return loc_str;
     }
 
-    pub func has_DI_location(self, loc: span*) -> bool {
+    pub func has_DI_location(self, loc: span&) -> bool {
         var loc_str = self->generate_DI_location_key(loc);
         defer loc_str.delete();
 
@@ -53,7 +53,7 @@ impl DWARF_status {
         return res;
     }
 
-    pub func get_DI_location_index(self, loc: span*) -> u64 {
+    pub func get_DI_location_index(self, loc: span&) -> u64 {
         var loc_str = self->generate_DI_location_key(loc);
         defer loc_str.delete();
 
@@ -61,16 +61,16 @@ impl DWARF_status {
         return res;
     }
 
-    pub func new_DI_location(self, loc: span*) -> DI_node* {
+    pub func new_DI_location(self, loc: span&) -> DI_node* {
         var loc_str = self->generate_DI_location_key(loc);
         defer loc_str.delete();
 
         var index = self->DI_counter;
         var dwarf_loc = DI_location::new(
             index,
-            loc->file.c_str,
-            loc->begin_line + 1,
-            loc->begin_column + 1,
+            loc.file.c_str,
+            loc.begin_line + 1,
+            loc.begin_column + 1,
             self->scope_index
         );
 

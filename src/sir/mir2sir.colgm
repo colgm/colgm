@@ -781,7 +781,7 @@ impl mir2sir {
             temp_0.__ptr__(),
             temp_0_real.__ptr__(),
             i1_name.__ptr__(),
-            self->generate_DI_location(n->base.location.__ptr__()),
+            self->generate_DI_location(n->base.location),
             ""
         ) => sir*);
 
@@ -869,7 +869,7 @@ impl mir2sir {
             temp_0.__ptr__(),
             temp_0_real.__ptr__(),
             i1_name.__ptr__(),
-            self->generate_DI_location(n->base.location.__ptr__()),
+            self->generate_DI_location(n->base.location),
             ""
         ) => sir*);
 
@@ -984,7 +984,7 @@ impl mir2sir {
                     temp_var_value.__ptr__(),
                     left.resolved_type.is_integer(),
                     left_ty.__ptr__(),
-                    self->generate_DI_location(n->base.location.__ptr__()),
+                    self->generate_DI_location(n->base.location),
                     "+"
                 ) => sir*);
             }
@@ -1154,7 +1154,7 @@ impl mir2sir {
             n_ty.__ptr__(),
             source.resolved_type.is_unsigned(),
             n->target.is_unsigned(),
-            self->generate_DI_location(n->base.location.__ptr__())
+            self->generate_DI_location(n->base.location)
         ) => sir*);
 
         var v = mir_value_t::variable(
@@ -1205,7 +1205,7 @@ impl mir2sir {
             self->sctx->const_strings.get(n->value.__ptr__()),
             n->value.size + 1,
             v.__ptr__(),
-            self->generate_DI_location(n->base.location.__ptr__())
+            self->generate_DI_location(n->base.location)
         ) => sir*);
 
         var sv = mir_value_t::variable(temp.__ptr__(), n->resolved_type.__ptr__());
@@ -1278,7 +1278,7 @@ impl mir2sir {
             v_temp_1.__ptr__(),
             array_elem_type.__ptr__(),
             n->size,
-            self->generate_DI_location(n->base.location.__ptr__())
+            self->generate_DI_location(n->base.location)
         );
         self->block->add_stmt(cv => sir*);
 
@@ -1305,7 +1305,7 @@ impl mir2sir {
                     index_value.__ptr__(),
                     array_elem_type.__ptr__(),
                     i64_type.__ptr__(),
-                    self->generate_DI_location(n->base.location.__ptr__())
+                    self->generate_DI_location(n->base.location)
                 ) => sir*);
 
                 self->visit(vn);
@@ -1352,13 +1352,13 @@ impl mir2sir {
             temp_var.__ptr__(),
             temp_var_real.__ptr__(),
             n_ty.__ptr__(),
-            self->generate_DI_location(n->base.location.__ptr__()),
+            self->generate_DI_location(n->base.location),
             ""
         ) => sir*);
         self->block->add_stmt(sir_zeroinitializer::new(
             temp_var_value.__ptr__(),
             n_ty.__ptr__(),
-            self->generate_DI_location(n->base.location.__ptr__())
+            self->generate_DI_location(n->base.location)
         ) => sir*);
 
         var name_for_search = n->resolved_type.generic_name(self->pkg);
@@ -1382,7 +1382,7 @@ impl mir2sir {
                     temp_var_value.__ptr__(),
                     n_ty.__ptr__(),
                     index,
-                    self->generate_DI_location(i.get()->content->base.location.__ptr__())
+                    self->generate_DI_location(i.get()->content->base.location)
                 ) => sir*);
 
                 self->visit(i.get()->content => mir*);
@@ -1423,7 +1423,7 @@ impl mir2sir {
                     temp_var_value.__ptr__(),
                     n_ty.__ptr__(),
                     0,
-                    self->generate_DI_location(i.get()->content->base.location.__ptr__())
+                    self->generate_DI_location(i.get()->content->base.location)
                 ) => sir*);
 
                 var i64_t = str::from("i64");
@@ -1453,7 +1453,7 @@ impl mir2sir {
                     temp_var_value.__ptr__(),
                     n_ty.__ptr__(),
                     1,
-                    self->generate_DI_location(i.get()->content->base.location.__ptr__())
+                    self->generate_DI_location(i.get()->content->base.location)
                 ) => sir*);
 
                 // get max align type, it's the base type of union
@@ -1477,7 +1477,7 @@ impl mir2sir {
                     target_type_name.__ptr__(),
                     true,
                     true,
-                    self->generate_DI_location(i.get()->content->base.location.__ptr__())
+                    self->generate_DI_location(i.get()->content->base.location)
                 ) => sir*);
 
                 self->visit(i.get()->content => mir*);
@@ -1602,7 +1602,7 @@ impl mir2sir {
                 temp_var_value.__ptr__(),
                 source_ref_ref_ty.__ptr__(),
                 source.resolved_type.array_length,
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             ) => sir*);
         } else {
             // load value from pointer
@@ -1756,7 +1756,7 @@ impl mir2sir {
                 temp_var_value.__ptr__(),
                 prev_ref_ref_ty.__ptr__(),
                 prev.resolved_type.array_length,
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             ) => sir*);
         } else {
             self->block->add_stmt(sir_load::new(
@@ -1790,7 +1790,7 @@ impl mir2sir {
             index_value.__ptr__(),
             prev_ref_ref_ty.__ptr__(),
             index_ty.__ptr__(),
-            self->generate_DI_location(n->base.location.__ptr__())
+            self->generate_DI_location(n->base.location)
         ) => sir*);
 
         var n_ptr = n->resolved_type.pointer_copy();
@@ -1863,7 +1863,7 @@ impl mir2sir {
                 mangled_name.__ptr__(),
                 n_ty.__ptr__(),
                 target_value.__ptr__(),
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             );            
         } else {
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
@@ -1879,7 +1879,7 @@ impl mir2sir {
                 mangled_name.__ptr__(),
                 n_ty.__ptr__(),
                 target_value.__ptr__(),
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             );
         }
 
@@ -1929,7 +1929,7 @@ impl mir2sir {
                 temp_var.__ptr__(),
                 real.__ptr__(),
                 n_ty.__ptr__(),
-                self->generate_DI_location(n->base.location.__ptr__()),
+                self->generate_DI_location(n->base.location),
                 ""
             ) => sir*);
             self->block->add_stmt(sir_store::new(
@@ -2027,7 +2027,7 @@ impl mir2sir {
                 prev_value.__ptr__(),
                 prev_ref_ty.__ptr__(),
                 index,
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             ) => sir*);
 
             var n_ty = n->resolved_type.pointer_copy();
@@ -2084,7 +2084,7 @@ impl mir2sir {
                 prev_value.__ptr__(),
                 prev_ref_ty.__ptr__(),
                 1,
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             ) => sir*);
 
             // get max align type, it's the base type of union
@@ -2109,7 +2109,7 @@ impl mir2sir {
                 target_type_name.__ptr__(),
                 true,
                 true,
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             ) => sir*);
 
             var n_ty = n->resolved_type.pointer_copy();
@@ -2260,7 +2260,7 @@ impl mir2sir {
                 temp_0_value.__ptr__(),
                 prev_ref_ref_ty.__ptr__(),
                 index,
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             ) => sir*);
 
             var n_ty = n->resolved_type.pointer_copy();
@@ -2353,7 +2353,7 @@ impl mir2sir {
                 temp_0_value.__ptr__(),
                 prev_ref_ref_ty.__ptr__(),
                 1,
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             ) => sir*);
 
             // get max align type, it's the base type of union
@@ -2378,7 +2378,7 @@ impl mir2sir {
                 target_type_name.__ptr__(),
                 true,
                 true,
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             ) => sir*);
 
             var n_ty = n->resolved_type.pointer_copy();
@@ -2545,7 +2545,7 @@ impl mir2sir {
                     temp_1_value.__ptr__(),
                     right.resolved_type.is_integer(),
                     right_ty.__ptr__(),
-                    self->generate_DI_location(n->base.location.__ptr__()),
+                    self->generate_DI_location(n->base.location),
                     "+="
                 ) => sir*);
                 self->block->add_stmt(sir_store::new(
@@ -2876,7 +2876,7 @@ impl mir2sir {
                     load_inst->source.__ptr__(),
                     value_type_name.__ptr__(),
                     0,
-                    self->generate_DI_location(n->condition->base.location.__ptr__())
+                    self->generate_DI_location(n->condition->base.location)
                 ) => sir*);
             } else {
                 var value_type_ref = value.resolved_type.ref_copy();
@@ -2889,7 +2889,7 @@ impl mir2sir {
                     value_val.__ptr__(),
                     value_type_ref_name.__ptr__(),
                     0,
-                    self->generate_DI_location(n->condition->base.location.__ptr__())
+                    self->generate_DI_location(n->condition->base.location)
                 ) => sir*);
             }
 
@@ -3088,7 +3088,7 @@ impl mir2sir {
             self->block->add_stmt(sir_ret::new(
                 void_name.__ptr__(),
                 null_val.__ptr__(),
-                self->generate_DI_location(n->base.location.__ptr__())
+                self->generate_DI_location(n->base.location)
             ) => sir*);
             return;
         }
@@ -3113,7 +3113,7 @@ impl mir2sir {
         self->block->add_stmt(sir_ret::new(
             ret_ty.__ptr__(),
             ret_val.__ptr__(),
-            self->generate_DI_location(n->base.location.__ptr__())
+            self->generate_DI_location(n->base.location)
         ) => sir*);
     }
 
@@ -3276,7 +3276,7 @@ impl mir2sir {
         return index;
     }
 
-    func generate_DI_location(self, loc: span*) -> u64 {
+    func generate_DI_location(self, loc: span&) -> u64 {
         // if scope index is invalid, we can't add location info
         // if debug mode is not enabled, scope_index must be DI_ERROR_INDEX
         if (self->dwarf_status.scope_index == DI_ERROR_INDEX()) {

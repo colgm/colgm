@@ -87,7 +87,7 @@ impl DI_node {
         return DI_ERROR_INDEX();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         var index = self->index();
         if (index != DI_ERROR_INDEX()) {
             out.out("!").out_u64(index).out(" = ");
@@ -313,7 +313,7 @@ impl DI_named_metadata {
         self->nodes.push(n);
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!").out(self->name.c_str).out(" = !{");
         foreach (var i; self->nodes) {
             i.get()->dump(out);
@@ -341,7 +341,7 @@ impl DI_ref_index {
         return res;
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!").out_u64(self->ref_index);
     }
 }
@@ -378,7 +378,7 @@ impl DI_list {
         self->nodes.push(n);
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!{");
         foreach (var i; self->nodes) {
             i.get()->dump(out);
@@ -406,7 +406,7 @@ impl DI_i32 {
         return res;
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("i32 ").out_i64(self->value => i64);
     }
 }
@@ -431,7 +431,7 @@ impl DI_string {
         self->value.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!\"").out(self->value.c_str).out("\"");
     }
 }
@@ -462,7 +462,7 @@ impl DI_file {
         self->directory.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DIFile(filename: \"").out(self->filename.c_str);
         out.out("\", directory: \"").out(self->directory.c_str).out("\")");
     }
@@ -495,7 +495,7 @@ impl DI_compile_unit {
         self->producer.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("distinct !DICompileUnit(");
         out.out("language: DW_LANG_C99, ");
         out.out("file: !").out_u64(self->file_index).out(", ");
@@ -536,7 +536,7 @@ impl DI_basic_type {
         self->encoding.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DIBasicType(name: \"").out(self->name.c_str);
         out.out("\", size: ").out_u64(self->size_in_bits).out(", encoding: ");
         out.out(self->encoding.c_str).out(")");
@@ -573,7 +573,7 @@ impl DI_structure_type {
         self->identifier.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DICompositeType(tag: DW_TAG_structure_type, ");
         out.out("name: \"").out(self->name.c_str).out("\", ");
         out.out("file: !").out_u64(self->file_index).out(", ");
@@ -616,7 +616,7 @@ impl DI_union_type {
         self->identifier.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DICompositeType(tag: DW_TAG_union_type, ");
         out.out("name: \"").out(self->name.c_str).out("\", ");
         out.out("file: !").out_u64(self->file_index).out(", ");
@@ -661,7 +661,7 @@ impl DI_enum_type {
         self->identifier.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DICompositeType(tag: DW_TAG_enumeration_type, ");
         out.out("name: \"").out(self->name.c_str).out("\", ");
         out.out("file: !").out_u64(self->file_index).out(", ");
@@ -697,7 +697,7 @@ impl DI_enumerator {
         self->name.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DIEnumerator(name: \"").out(self->name.c_str).out("\", ");
         out.out("value: ").out_i64(self->value).out(")");
     }
@@ -732,7 +732,7 @@ impl DI_subprogram {
         self->name.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("distinct !DISubprogram(name: \"").out(self->name.c_str).out("\", ");
         out.out("file: !").out_u64(self->file_index).out(", ");
         out.out("line: ").out_i64(self->line).out(", ");
@@ -758,7 +758,7 @@ impl DI_subroutine {
         return res;
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DISubroutineType(types: !").out_u64(self->types_index).out(")");
     }
 }
@@ -790,7 +790,7 @@ impl DI_location {
         self->file.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DILocation(line: ").out_i64(self->line).out(", ");
         out.out("column: ").out_i64(self->column).out(", ");
         out.out("scope: !").out_u64(self->scope_index).out(")");
@@ -825,7 +825,7 @@ impl DW_TAG_pointer_type {
         self->name.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DIDerivedType(tag: DW_TAG_pointer_type, ");
         out.out("baseType: !").out_u64(self->base_type_index).out(", ");
         out.out("size: ").out_u64(self->size).out(") ; ").out(self->name.c_str);
@@ -861,7 +861,7 @@ impl DW_TAG_member {
         self->name.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("!DIDerivedType(tag: DW_TAG_member, ");
         out.out("name: \"").out(self->name.c_str).out("\", ");
         out.out("scope: !").out_u64(self->scope_index).out(", ");
