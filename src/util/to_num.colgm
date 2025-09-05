@@ -177,26 +177,26 @@ pub func to_f64(s: i8*) -> f64 {
     return nan("");
 }
 
-pub func to_u64(s: str*) -> result<u64> {
-    if (s->contains('.')) {
+pub func to_u64(s: str&) -> result<u64> {
+    if (s.contains('.')) {
         return result<u64>::err();
     }
 
     var res: u64 = 0;
-    if (s->size > 2 && s->c_str[0] == '0' && s->c_str[1] == 'o') {
-        var r = oct_to_u64((s->c_str => u64 + 2) => i8*);
+    if (s.size > 2 && s.c_str[0] == '0' && s.c_str[1] == 'o') {
+        var r = oct_to_u64((s.c_str => u64 + 2) => i8*);
         if (!r.is_ok()) {
             return r;
         }
         res = r.unwrap();
-    } else if (s->size > 2 && s->c_str[0] == '0' && s->c_str[1] == 'x') {
-        var r = hex_to_u64((s->c_str => u64 + 2) => i8*);
+    } else if (s.size > 2 && s.c_str[0] == '0' && s.c_str[1] == 'x') {
+        var r = hex_to_u64((s.c_str => u64 + 2) => i8*);
         if (!r.is_ok()) {
             return r;
         }
         res = r.unwrap();
     } else {
-        var r = dec_to_u64(s->c_str);
+        var r = dec_to_u64(s.c_str);
         if (!r.is_ok()) {
             return r;
         }

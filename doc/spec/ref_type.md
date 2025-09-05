@@ -12,7 +12,7 @@ is equivalent to:
 func foo(a: i64*);
 ```
 
-So we need an ast-lowering pass to convert `i64&` to `i64*`.
+So in mir2sir pass, we should convert `i64&` to `i64*`.
 
 For example:
 
@@ -20,24 +20,28 @@ For example:
 func main() -> i32 {
     var a = 1;
     foo(a);
+    //  ^ at semantic stage
+    //    we will mark this argument as a reference
     return 0;
 }
 ```
 
-will be lowered to:
+will be converted to (equivalent to):
 
 ```rs
 func main() -> i32 {
     var a = 1;
     foo(a.__ptr__());
-    //   ^^^^^^^^^^
+    //   ^^^^^^^^^^ at mir2sir stage
+    //   we will not dereference the pointer of the argument
     return 0;
 }
 ```
 
 ## Error
 
-This will trigger an error:
+This will trigger an error,
+because of trying to convert a literal to a reference:
 
 ```rs
 func main() -> i32 {

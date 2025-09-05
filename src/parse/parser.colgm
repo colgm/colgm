@@ -826,6 +826,22 @@ impl parser {
             res->is_reference = true;
             self->match_token(tok_kind::tok_bit_and);
         }
+
+        // type def only allow type like str&
+        // any type like str&& or str&&&& is not allowed
+        var report_once = true;
+        while (self->lookahead(tok_kind::tok_op_and) &&
+               self->this_tok()->content.eq_const("&&") ||
+               self->lookahead(tok_kind::tok_bit_and)) {
+            if (report_once) {
+                self->err->error(
+                    self->this_tok_loc(),
+                    "reference type can not be referenced"
+                );
+                report_once = false;
+            }
+            self->next();
+        }
         self->update_location(res => ast*);
         return res;
     }

@@ -301,7 +301,7 @@ impl mir2sir {
             defer s_ty.delete();
             
             var s_ty_name = s_ty.full_path_name(self->pkg);
-            var s_ty_llvm_name = mangle_tagged_union_name(s_ty_name.__ptr__());
+            var s_ty_llvm_name = mangle_tagged_union_name(s_ty_name);
             defer {
                 s_ty_name.delete();
                 s_ty_llvm_name.delete();
@@ -353,7 +353,7 @@ impl mir2sir {
             defer s_ty.delete();
             
             var s_ty_name = s_ty.full_path_name(self->pkg);
-            var s_ty_llvm_name = mangle_struct_name(s_ty_name.__ptr__());
+            var s_ty_llvm_name = mangle_struct_name(s_ty_name);
             defer {
                 s_ty_name.delete();
                 s_ty_llvm_name.delete();
@@ -460,7 +460,7 @@ impl mir2sir {
         foreach (var i; mctx->impls) {
             self->process_print(i.index(), mctx->impls.size, ts.__ptr__());
             var m_func = i.get();
-            var m_mangled_name = mangle_function_name(m_func->name.__ptr__());
+            var m_mangled_name = mangle_function_name(m_func->name);
             defer m_mangled_name.delete();
 
             var s_func = sir_func::instance(
@@ -595,7 +595,7 @@ impl mir2sir {
 
         match (self->type_mapper.get(full_name.__ptr__())) {
             symbol_kind::struct_kind => {
-                var new_name = mangle_struct_name(full_name.__ptr__());
+                var new_name = mangle_struct_name(full_name);
                 defer new_name.delete();
 
                 copy.name.clear();
@@ -623,7 +623,7 @@ impl mir2sir {
                 copy.generics.clear();
             }
             symbol_kind::tagged_union_kind => {
-                var new_name = mangle_tagged_union_name(full_name.__ptr__());
+                var new_name = mangle_tagged_union_name(full_name);
                 defer new_name.delete();
 
                 copy.name.clear();
@@ -1852,7 +1852,7 @@ impl mir2sir {
 
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
             var target_value = value_t::variable(target.__ptr__());
-            var mangled_name = mangle_function_name(prev.content.__ptr__());
+            var mangled_name = mangle_function_name(prev.content);
             defer {
                 n_ty.delete();
                 target_value.delete();
@@ -1868,7 +1868,7 @@ impl mir2sir {
         } else {
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
             var target_value = value_t::null(nil);
-            var mangled_name = mangle_function_name(prev.content.__ptr__());
+            var mangled_name = mangle_function_name(prev.content);
             defer {
                 n_ty.delete();
                 target_value.delete();

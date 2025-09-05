@@ -21,6 +21,7 @@
   - [Match](#match)
   - [For Loop](#for-loop)
   - [Foreach/ForIndex Loop](#foreachforindex-loop)
+- [Reference Type](../spec/ref_type.md)
 - [Type Conversion](#type-conversion)
 - [Structure](#structure)
   - [Struct Initializer](#struct-initializer)

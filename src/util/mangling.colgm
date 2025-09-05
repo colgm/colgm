@@ -6,10 +6,10 @@ use std::str::{ str };
 //   std::vec::vec<std::str::str>
 // will be mangled to
 //   std.vec.vec<std::str::str>
-pub func mangle(name: str*) -> str {
-    var pos = name->find('<');
+pub func mangle(name: str&) -> str {
+    var pos = name.find('<');
 
-    var prefix = name->clone();
+    var prefix = name.clone();
     var suffix = str::from("");
     defer {
         prefix.delete();
@@ -20,8 +20,8 @@ pub func mangle(name: str*) -> str {
         // if get name is std::vec::vec<std::str::str>
         // the prefix will be std::vec::vec
         // the suffix will be <std::str::str>
-        var temp_prefix = name->substr(0, pos);
-        var temp_suffix = name->substr(pos, name->size);
+        var temp_prefix = name.substr(0, pos);
+        var temp_suffix = name.substr(pos, name.size);
         defer {
             temp_prefix.delete();
             temp_suffix.delete();
@@ -65,7 +65,7 @@ pub func mangle(name: str*) -> str {
 //   std::timestamp::timestamp
 // will be mangled to
 //   %struct.std.timestamp.timestamp (without double quote)
-pub func mangle_struct_name(name: str*) -> str {
+pub func mangle_struct_name(name: str&) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("%\"struct.");
@@ -86,7 +86,7 @@ pub func mangle_struct_name(name: str*) -> str {
 }
 
 // same as struct name mangling
-pub func mangle_tagged_union_name(name: str*) -> str {
+pub func mangle_tagged_union_name(name: str&) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("%\"tagged_union.");
@@ -109,7 +109,7 @@ pub func mangle_tagged_union_name(name: str*) -> str {
 // mangle function name
 // for example: std::to_hex -> std.to_hex
 // for example: std::generic_func<i32> -> "std.generic_func<i32>"
-pub func mangle_function_name(name: str*) -> str {
+pub func mangle_function_name(name: str&) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("\"");
@@ -145,11 +145,11 @@ func llvm_visible_char(c: i8) -> bool {
 
 // convert string to llvm acceptable string
 // if character is not llvm visible, convert it to hexadecimal
-pub func llvm_raw_string(s: str*) -> str {
+pub func llvm_raw_string(s: str&) -> str {
     var table = "0123456789abcdef";
     var res = str::from("");
-    for (var i: u64 = 0; i < s->size; i += 1) {
-        var c = s->get(i);
+    for (var i: u64 = 0; i < s.size; i += 1) {
+        var c = s.get(i);
         if (llvm_visible_char(c)) {
             res.append_char(c);
             continue;
