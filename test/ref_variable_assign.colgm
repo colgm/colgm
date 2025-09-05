@@ -25,6 +25,12 @@ struct s {
     a: i64
 }
 
+impl s {
+    pub func test_method(self, a: i64&) {
+        a += 1;
+    }
+}
+
 func test_replace_struct(a: s&) {
     a = s { a: 1919810 };
 }
@@ -42,6 +48,7 @@ func test_ref_arg(a: i64&) -> i64& {
 }
 
 func main() -> i32 {
+    // test ref of primitive type
     var a = 1;
     test_sub(a);
     assert(a == 0, "a != 0");
@@ -54,6 +61,7 @@ func main() -> i32 {
     test_assign(a);
     assert(a == 114, "a != 114");
 
+    // test ref of struct
     var b = s { a: 1 };
     test_sub(b.a);
     assert(b.a == 0, "b.a != 0");
@@ -70,11 +78,13 @@ func main() -> i32 {
     test_replace_struct(b);
     assert(b.a == 1919810, "b.a != 1919810");
 
+    // test return ref type
     test_ref_return(b) = 114514;
     assert(b.a == 114514, "b.a != 114514");
     test_ref_return(b) = 1919810;
     assert(b.a == 1919810, "b.a != 1919810");
 
+    // test ref type argument of static function call
     test_ref_arg(test_ref_return(b)) = 0;
     assert(b.a == 0, "b.a != 0");
     test_add(test_ref_arg(test_ref_return(b)));
@@ -90,6 +100,11 @@ func main() -> i32 {
     assert(b.a == 114514, "b.a != 114514");
     test_ref_arg(test_ref_return(b)) = 1919810;
     assert(b.a == 1919810, "b.a != 1919810");
+
+    // test ref type argument of method call
+    a = 0;
+    b.test_method(a);
+    assert(a == 1, "a != 1");
 
     io::stdout().out("[ref_variable_assign] ok\n");
     return 0;

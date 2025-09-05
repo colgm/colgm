@@ -358,15 +358,17 @@ impl ast_dumper {
         self->dump_indent(out);
         out.purple().out("CallFuncArgs ").reset();
         out.light_orange().out("0x").out_hex(node=> u64).reset().out(" ");
-        out.light_green().out("[");
-        foreach (var i; node->args_is_ref) {
-            if (i.get()) {
-                out.out("1");
-            } else {
-                out.out("0");
+        if (!node->args_is_ref.empty()) {
+            out.light_green().out("[");
+            foreach (var i; node->args_is_ref) {
+                if (i.get()) {
+                    out.out("1");
+                } else {
+                    out.out("0");
+                }
             }
+            out.out("] ").reset();
         }
-        out.out("] ").reset();
         self->dump_resolved_type(out, node->base.resolved_type.__ptr__());
         out.out("-> ");
         node->base.location.dump(out);
