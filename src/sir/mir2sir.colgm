@@ -433,23 +433,21 @@ impl mir2sir {
             / ((curr + 1) => f64)
             / 1000.0
         ) => i64;
+        var percent = (curr => f64 + 1.0) * 100.0 / (total => f64);
+        var stdout = io::stdout();
 
-        io::stdout().green().out("[  MIR2SIR ] ").reset();
-        io::stdout().out("Generating function ");
-        io::stdout().light_cyan().out("(").reset();
+        stdout.out("\e[2K").green().out("   MIR2SIR ").reset();
+        stdout.out("Generating function ");
         if (curr + 1 != total) {
-            io::stdout().light_orange();
+            stdout.light_orange();
         } else {
-            io::stdout().light_cyan();
+            stdout.light_cyan();
         }
-        io::stdout().out_u64(curr + 1).reset();
-        io::stdout().light_cyan().out("/").out_u64(total).out(")").reset();
+        stdout.out_u64(percent => u64).out("%").reset();
         if (curr + 1 != total) {
-            io::stdout().out(" in ").cyan().out_i64(remaining_sec).reset().out(" s");
-            io::stdout().out("                  \r");
+            stdout.out(" in ").cyan().out_i64(remaining_sec).reset().out(" s\r");
         } else {
-            io::stdout().out(" ").out_f64(ts->elapsed_msec()).out(" ms");
-            io::stdout().out("                  \n");
+            stdout.out(" ").out_f64(ts->elapsed_msec()).out(" ms\n");
         }
     }
 

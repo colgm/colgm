@@ -24,7 +24,7 @@ use sir::mir2sir::{ mir2sir };
 
 func clang_compile(co: cli_option&) -> i32 {
     if (co.EMIT_LLVM_ONLY) {
-        io::stdout().green().out("[    CLANG ] ").reset();
+        io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Compilation disabled by option\n");
         return 0;
     }
@@ -36,11 +36,11 @@ func clang_compile(co: cli_option&) -> i32 {
     defer clang.delete();
 
     if (clang.empty()) {
-        io::stdout().red().out("[    CLANG ] ").reset();
+        io::stdout().red().out("     CLANG ").reset();
         io::stdout().out("Cannot find suitable clang\n");
         return -1;
     } else if (co.VERBOSE) {
-        io::stdout().green().out("[    CLANG ] ").reset();
+        io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Find clang ");
         io::stdout().light_cyan().out("<").out(clang.c_str).out("> ").reset();
         io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
@@ -66,21 +66,21 @@ func clang_compile(co: cli_option&) -> i32 {
     cmd.append(co.output_file);
     cmd.append(" -rdynamic -lm");
     if (co.VERBOSE) {
-        io::stdout().green().out("[    CLANG ] ").reset();
+        io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Executing ");
         io::stdout().light_cyan().out("\"").out(cmd.c_str).out("\"\n").reset();
     } else {
-        io::stdout().green().out("[    CLANG ] ").reset();
+        io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Compiling...\r");
     }
 
     t_stamp.stamp();
     var ret_code = system(cmd.c_str);
     if (ret_code == 0) {
-        io::stdout().green().out("[    CLANG ] ").reset();
+        io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Compilation ").light_cyan().out("succeeded ").reset();
     } else {
-        io::stdout().red().out("[    CLANG ] ").reset();
+        io::stdout().red().out("     CLANG ").reset();
         io::stdout().out("Compilation ").light_red().out("failed ").reset();
     }
     io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
@@ -94,7 +94,7 @@ func nasal_target_output(option: cli_option, mctx: mir_context*, pkg: package*) 
     nas_file.append(".nas");
     defer nas_file.delete();
 
-    io::stdout().green().out("[ MIR-PASS ] ").reset();
+    io::stdout().green().out("  MIR-PASS ").reset();
     io::stdout().out("Generating ");
     io::stdout().light_cyan().out("<").out(option.output_file).out(".nas> ").reset();
     t_stamp.stamp();
@@ -126,7 +126,7 @@ func compile(option: cli_option&) -> i32 {
     var cwd = fs::getcwd();
     defer cwd.delete();
     if (!cwd.empty()) {
-        io::stdout().green().out("[    COLGM ] ").reset();
+        io::stdout().green().out("     COLGM ").reset();
         io::stdout().out("In directory ");
         io::stdout().light_cyan().out("<").out(cwd.c_str).out(">").reset().endln();
     }
@@ -192,7 +192,7 @@ func compile(option: cli_option&) -> i32 {
     t_stamp.stamp();
     cc.par.parse(option.input_file, option.VIEW_DEFER_REPLACE);
     if (option.VERBOSE) {
-        io::stdout().green().out("[   PARSER ] ").reset();
+        io::stdout().green().out("    PARSER ").reset();
         io::stdout().out("Parse syntax ");
         io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
     }
@@ -211,7 +211,7 @@ func compile(option: cli_option&) -> i32 {
     }
 
     semantic.analyse(cc.par.root);
-    io::stdout().green().out("[ SEMANTIC ] ").reset();
+    io::stdout().green().out("  SEMANTIC ").reset();
     io::stdout().out("Finish module ");
     io::stdout().light_cyan().out("<").out(option.input_file).out("> ").reset();
     io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
@@ -262,7 +262,7 @@ func compile(option: cli_option&) -> i32 {
 
     var file_output = io::fileout(ll_file.c_str);
     if (option.VERBOSE) {
-        io::stdout().green().out("[ SIR-PASS ] ").reset();
+        io::stdout().green().out("  SIR-PASS ").reset();
         io::stdout().out("Generating ");
         io::stdout().light_cyan().out("<").out(option.output_file).out(".ll> ").reset();
     }
