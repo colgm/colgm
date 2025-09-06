@@ -42,7 +42,7 @@ func clang_compile(co: cli_option&) -> i32 {
     } else if (co.VERBOSE) {
         io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Find clang ");
-        io::stdout().light_cyan().out("<").out(clang.c_str).out("> ").reset();
+        io::stdout().cyan().out("<").out(clang.c_str).out("> ").reset();
         io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
     }
 
@@ -68,7 +68,7 @@ func clang_compile(co: cli_option&) -> i32 {
     if (co.VERBOSE) {
         io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Executing ");
-        io::stdout().light_cyan().out("\"").out(cmd.c_str).out("\"\n").reset();
+        io::stdout().cyan().out("\"").out(cmd.c_str).out("\"\n").reset();
     } else {
         io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Compiling...\r");
@@ -78,10 +78,10 @@ func clang_compile(co: cli_option&) -> i32 {
     var ret_code = system(cmd.c_str);
     if (ret_code == 0) {
         io::stdout().green().out("     CLANG ").reset();
-        io::stdout().out("Compilation ").light_cyan().out("succeeded ").reset();
+        io::stdout().out("Compilation ").cyan().out("succeeded ").reset();
     } else {
         io::stdout().red().out("     CLANG ").reset();
-        io::stdout().out("Compilation ").light_red().out("failed ").reset();
+        io::stdout().out("Compilation ").red().out("failed ").reset();
     }
     io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
 
@@ -96,7 +96,7 @@ func nasal_target_output(option: cli_option, mctx: mir_context*, pkg: package*) 
 
     io::stdout().green().out("  MIR-PASS ").reset();
     io::stdout().out("Generating ");
-    io::stdout().light_cyan().out("<").out(option.output_file).out(".nas> ").reset();
+    io::stdout().cyan().out("<").out(option.output_file).out(".nas> ").reset();
     t_stamp.stamp();
     mir2nasal::instance(mctx, pkg).dump(nas_file.c_str);
     io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
@@ -128,7 +128,7 @@ func compile(option: cli_option&) -> i32 {
     if (!cwd.empty()) {
         io::stdout().green().out("     COLGM ").reset();
         io::stdout().out("In directory ");
-        io::stdout().light_cyan().out("<").out(cwd.c_str).out(">").reset().endln();
+        io::stdout().cyan().out("<").out(cwd.c_str).out(">").reset().endln();
     }
 
     var cc = frontend::instance(option.__ptr__());
@@ -213,7 +213,7 @@ func compile(option: cli_option&) -> i32 {
     semantic.analyse(cc.par.root);
     io::stdout().green().out("  SEMANTIC ").reset();
     io::stdout().out("Finish module ");
-    io::stdout().light_cyan().out("<").out(option.input_file).out("> ").reset();
+    io::stdout().cyan().out("<").out(option.input_file).out("> ").reset();
     io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
 
     if (cc.err->error_count > 0) {
@@ -264,7 +264,7 @@ func compile(option: cli_option&) -> i32 {
     if (option.VERBOSE) {
         io::stdout().green().out("  SIR-PASS ").reset();
         io::stdout().out("Generating ");
-        io::stdout().light_cyan().out("<").out(option.output_file).out(".ll> ").reset();
+        io::stdout().cyan().out("<").out(option.output_file).out(".ll> ").reset();
     }
     t_stamp.stamp();
     sctx.dump(file_output);
