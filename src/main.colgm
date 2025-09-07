@@ -211,10 +211,16 @@ func compile(option: cli_option&) -> i32 {
     }
 
     semantic.analyse(cc.par.root);
+    var sema_duration = t_stamp.elapsed_msec();
+
     io::stdout().green().out("  SEMANTIC ").reset();
     io::stdout().out("Finish module ");
     io::stdout().cyan().out("<").out(option.input_file).out("> ").reset();
-    io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
+    if (sema_duration < 1000.0) {
+        io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
+    } else {
+        io::stdout().out_f64(sema_duration / 1000.0).out(" s\n");
+    }
 
     if (cc.err->error_count > 0) {
         return -1;
@@ -236,7 +242,7 @@ func compile(option: cli_option&) -> i32 {
     mctx.add_default_func(option.VERBOSE);
 
     if (option.VIEW_MIR) {
-        mctx.dump(io::stdout(), cc.pkg.__ptr__());
+        mctx.dump(io::stdout(), cc.pkg);
     }
     if (option.EMIT_NASAL_ONLY) {
         nasal_target_output(option, mctx.__ptr__(), cc.pkg.__ptr__());

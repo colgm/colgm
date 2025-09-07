@@ -2,7 +2,7 @@ use std::str::{ str };
 use std::libc::{ free };
 use std::io::{ io };
 use std::pair::{ pair };
-use std::panic::{ panic, unreachable };
+use std::panic::{ panic, assert, unreachable };
 
 use err::report::{ report };
 use err::span::{ span };
@@ -718,6 +718,9 @@ impl ast2mir {
             self->visit(n->value);
         }
         self->block = temp;
+
+        // expect only one mir node or nothing inside the block
+        assert(new_block->content.size <= 1, "ret stmt can only have one value or less");
 
         self->block->add(mir_return::new(
             n->base.location.__ptr__(),

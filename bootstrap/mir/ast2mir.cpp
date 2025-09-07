@@ -677,6 +677,9 @@ bool ast2mir::visit_ret_stmt(ast::ret_stmt* node) {
     }
     block = temp;
 
+    // expect only one mir node or nothing inside the block
+    assert(block->get_content().size() <= 1);
+
     block->add_content(new mir_return(
         node->get_location(),
         value_block,
