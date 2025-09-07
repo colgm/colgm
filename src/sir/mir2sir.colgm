@@ -80,13 +80,13 @@ impl mir_value_t {
         match (self->value_kind) {
             mir_value_kind::null => return value_t::null("null");
             mir_value_kind::nil_value => {
-                return value_t::literal(self->content.__ptr__());
+                return value_t::literal(self->content);
             }
             mir_value_kind::literal => {
-                return value_t::literal(self->content.__ptr__());
+                return value_t::literal(self->content);
             }
             mir_value_kind::variable => {
-                return value_t::variable(self->content.__ptr__());
+                return value_t::variable(self->content);
             }
             mir_value_kind::primitive => return value_t::null("primitive");
             mir_value_kind::func_symbol => return value_t::null("func");
@@ -421,12 +421,12 @@ impl mir2sir {
         }
     }
 
-    func process_print(self, curr: u64, total: u64, ts: timestamp*) {
+    func process_print(self, curr: u64, total: u64, ts: timestamp&) {
         if (curr + 1 != total && (curr + 1) % 50 != 0) {
             return;
         }
 
-        var elapsed_msec = ts->elapsed_msec();
+        var elapsed_msec = ts.elapsed_msec();
         var remaining_sec = (
             elapsed_msec
             * ((total - curr - 1) => f64)
@@ -447,7 +447,7 @@ impl mir2sir {
         if (curr + 1 != total) {
             stdout.out(" in ").cyan().out_i64(remaining_sec).reset().out(" s\r");
         } else {
-            stdout.out(" ").out_f64(ts->elapsed_msec()).out(" ms\n");
+            stdout.out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
         }
     }
 
@@ -456,7 +456,7 @@ impl mir2sir {
         ts.stamp();
 
         foreach (var i; mctx->impls) {
-            self->process_print(i.index(), mctx->impls.size, ts.__ptr__());
+            self->process_print(i.index(), mctx->impls.size, ts);
             var m_func = i.get();
             var m_mangled_name = mangle_function_name(m_func->name);
             defer m_mangled_name.delete();
@@ -683,8 +683,8 @@ impl mir2sir {
                 sir_alloca::new(m_param->key.__ptr__(), mapped_type.__ptr__())
             );
 
-            var source = value_t::variable(param_name.__ptr__());
-            var target = value_t::variable(m_param->key.__ptr__());
+            var source = value_t::variable(param_name);
+            var target = value_t::variable(m_param->key);
             defer {
                 source.delete();
                 target.delete();
@@ -728,7 +728,7 @@ impl mir2sir {
 
         var temp_var = self->ssa_gen.create();
         defer temp_var.delete();
-        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        var temp_var_value = value_t::variable(temp_var);
         defer temp_var_value.delete();
 
         if (n->op == mir_unary_opr::neg) {
@@ -761,7 +761,7 @@ impl mir2sir {
     func generate_and(self, n: mir_binary*) {
         var i1_name = str::from("i1");
         var temp_0 = self->ssa_gen.create();
-        var temp_0_value = value_t::variable(temp_0.__ptr__());
+        var temp_0_value = value_t::variable(temp_0);
         var temp_0_real = str::from("_");
         temp_0_real.append_str(temp_0.__ptr__())->append(".r");
         defer {
@@ -829,7 +829,7 @@ impl mir2sir {
         self->block->add_stmt(sir_label::new(next_label_index, "and.false") => sir*);
 
         var temp_1 = self->ssa_gen.create();
-        var temp_1_value = value_t::variable(temp_1.__ptr__());
+        var temp_1_value = value_t::variable(temp_1);
         defer {
             temp_1.delete();
             temp_1_value.delete();
@@ -849,7 +849,7 @@ impl mir2sir {
     func generate_or(self, n: mir_binary*) {
         var i1_name = str::from("i1");
         var temp_0 = self->ssa_gen.create();
-        var temp_0_value = value_t::variable(temp_0.__ptr__());
+        var temp_0_value = value_t::variable(temp_0);
         var temp_0_real = str::from("_");
         temp_0_real.append_str(temp_0.__ptr__())->append(".r");
         defer {
@@ -916,7 +916,7 @@ impl mir2sir {
         self->block->add_stmt(sir_label::new(next_label_index, "or.true") => sir*);
 
         var temp_1 = self->ssa_gen.create();
-        var temp_1_value = value_t::variable(temp_1.__ptr__());
+        var temp_1_value = value_t::variable(temp_1);
         defer {
             temp_1.delete();
             temp_1_value.delete();
@@ -963,7 +963,7 @@ impl mir2sir {
         self->value_stack.pop_back();
 
         var temp_var = self->ssa_gen.create();
-        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        var temp_var_value = value_t::variable(temp_var);
         defer {
             temp_var.delete();
             temp_var_value.delete();
@@ -1135,7 +1135,7 @@ impl mir2sir {
         defer temp_var.delete();
 
         var source_value = source.to_value_t();
-        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        var temp_var_value = value_t::variable(temp_var);
         var source_ty = self->type_mapping(source.resolved_type.__ptr__());
         var n_ty = self->type_mapping(n->target.__ptr__());
         defer {
@@ -1190,7 +1190,7 @@ impl mir2sir {
         var temp = self->ssa_gen.create();
         defer temp.delete();
 
-        var v = value_t::variable(temp.__ptr__());
+        var v = value_t::variable(temp);
         defer v.delete();
 
         if (!self->sctx->const_strings.has(n->value.__ptr__())) {
@@ -1266,9 +1266,9 @@ impl mir2sir {
         );
         self->block->add_alloca(array_new);
 
-        var v_temp_0 = value_t::variable(temp_0.__ptr__());
+        var v_temp_0 = value_t::variable(temp_0);
         defer v_temp_0.delete();
-        var v_temp_1 = value_t::variable(temp_1.__ptr__());
+        var v_temp_1 = value_t::variable(temp_1);
         defer v_temp_1.delete();
 
         var cv = sir_array_cast::new(
@@ -1289,12 +1289,12 @@ impl mir2sir {
                 var temp = self->ssa_gen.create();
                 defer temp.delete();
 
-                var v_temp = value_t::variable(temp.__ptr__());
+                var v_temp = value_t::variable(temp);
                 defer v_temp.delete();
 
                 var index_str = str::from_u64(i.index());
                 defer index_str.delete();
-                var index_value = value_t::literal(index_str.__ptr__());
+                var index_value = value_t::literal(index_str);
                 defer index_value.delete();
 
                 self->block->add_stmt(sir_get_index::new(
@@ -1336,7 +1336,7 @@ impl mir2sir {
         temp_var_real.append_str(temp_var.__ptr__())->append(".r");
         defer temp_var_real.delete();
 
-        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        var temp_var_value = value_t::variable(temp_var);
         defer temp_var_value.delete();
 
         var n_ty = self->type_mapping(n->resolved_type.__ptr__());
@@ -1371,7 +1371,7 @@ impl mir2sir {
                 var target = self->ssa_gen.create();
                 defer target.delete();
 
-                var target_value = value_t::variable(target.__ptr__());
+                var target_value = value_t::variable(target);
                 defer target_value.delete();
 
                 var index = st->field_index(i.get()->name.__ptr__());
@@ -1413,7 +1413,7 @@ impl mir2sir {
 
             foreach (var i; n->fields) {
                 var tag = self->ssa_gen.create();
-                var tag_value = value_t::variable(tag.__ptr__());
+                var tag_value = value_t::variable(tag);
                 defer tag.delete();
                 defer tag_value.delete();
                 self->block->add_stmt(sir_get_field::new(
@@ -1426,7 +1426,7 @@ impl mir2sir {
 
                 var i64_t = str::from("i64");
                 var tag_value_str = str::from_i64(un->member_int_map.get(i.get()->name.__ptr__()));
-                var tag_value_v = value_t::literal(tag_value_str.__ptr__());
+                var tag_value_v = value_t::literal(tag_value_str);
                 defer i64_t.delete();
                 defer tag_value_str.delete();
                 defer tag_value_v.delete();
@@ -1441,8 +1441,8 @@ impl mir2sir {
                 defer source.delete();
                 defer target.delete();
 
-                var source_value = value_t::variable(source.__ptr__());
-                var target_value = value_t::variable(target.__ptr__());
+                var source_value = value_t::variable(source);
+                var target_value = value_t::variable(target);
                 defer source_value.delete();
                 defer target_value.delete();
 
@@ -1531,7 +1531,7 @@ impl mir2sir {
 
         var temp = self->ssa_gen.create();
         defer temp.delete();
-        var temp_var_value = value_t::variable(temp.__ptr__());
+        var temp_var_value = value_t::variable(temp);
         defer temp_var_value.delete();
 
         self->block->add_stmt(sir_load::new(
@@ -1571,7 +1571,7 @@ impl mir2sir {
         self->value_stack.pop_back();
 
         var temp_var = self->ssa_gen.create();
-        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        var temp_var_value = value_t::variable(temp_var);
         var source_ref = source.resolved_type.ref_copy();
         var source_ref_ty = self->type_mapping(source_ref.__ptr__());
         var source_value = source.to_value_t();
@@ -1739,7 +1739,7 @@ impl mir2sir {
         var prev_value = prev.to_value_t();
         defer prev_value.delete();
 
-        var temp_var_value = value_t::variable(temp_var.__ptr__());
+        var temp_var_value = value_t::variable(temp_var);
         defer temp_var_value.delete();
 
         if (prev.resolved_type.is_array) {
@@ -1767,7 +1767,7 @@ impl mir2sir {
         var target = self->ssa_gen.create();
         defer target.delete();
 
-        var target_value = value_t::variable(target.__ptr__());
+        var target_value = value_t::variable(target);
         defer target_value.delete();
 
         var index_value = index.to_value_t();
@@ -1849,7 +1849,7 @@ impl mir2sir {
             target.append_str(temp.__ptr__());
 
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
-            var target_value = value_t::variable(target.__ptr__());
+            var target_value = value_t::variable(target);
             var mangled_name = mangle_function_name(prev.content);
             defer {
                 n_ty.delete();
@@ -1911,8 +1911,8 @@ impl mir2sir {
             defer real.delete();
 
             var n_ty = self->type_mapping(n->resolved_type.__ptr__());
-            var target_value = value_t::variable(target.__ptr__());
-            var temp_var_value = value_t::variable(temp_var.__ptr__());
+            var target_value = value_t::variable(target);
+            var temp_var_value = value_t::variable(temp_var);
             defer {
                 n_ty.delete();
                 target_value.delete();
@@ -2003,7 +2003,7 @@ impl mir2sir {
             }
 
             var target = self->ssa_gen.create();
-            var target_value = value_t::variable(target.__ptr__());
+            var target_value = value_t::variable(target);
             defer {
                 target.delete();
                 target_value.delete();
@@ -2058,9 +2058,9 @@ impl mir2sir {
             }
 
             var source = self->ssa_gen.create();
-            var source_value = value_t::variable(source.__ptr__());
+            var source_value = value_t::variable(source);
             var target = self->ssa_gen.create();
-            var target_value = value_t::variable(target.__ptr__());
+            var target_value = value_t::variable(target);
             defer {
                 source.delete();
                 source_value.delete();
@@ -2137,7 +2137,7 @@ impl mir2sir {
             var pm = self->ctx->global->primitives.get(prev_name_for_search.__ptr__());
             if (pm->method.has(n->name.__ptr__())) {
                 var temp_var = self->ssa_gen.create();
-                var temp_var_value = value_t::variable(temp_var.__ptr__());
+                var temp_var_value = value_t::variable(temp_var);
                 var prev_ref = prev.resolved_type.ref_copy();
                 var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
                 var prev_value = prev.to_value_t();
@@ -2185,7 +2185,7 @@ impl mir2sir {
             // get method
             if (st->method.has(n->name.__ptr__())) {
                 var temp_var = self->ssa_gen.create();
-                var temp_var_value = value_t::variable(temp_var.__ptr__());
+                var temp_var_value = value_t::variable(temp_var);
                 var prev_ref = prev.resolved_type.ref_copy();
                 var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
                 var prev_value = prev.to_value_t();
@@ -2225,8 +2225,8 @@ impl mir2sir {
             var index = st->field_index(n->name.__ptr__());
             var temp_0 = self->ssa_gen.create();
             var temp_1 = self->ssa_gen.create();
-            var temp_0_value = value_t::variable(temp_0.__ptr__());
-            var temp_1_value = value_t::variable(temp_1.__ptr__());
+            var temp_0_value = value_t::variable(temp_0);
+            var temp_1_value = value_t::variable(temp_1);
             defer {
                 temp_0.delete();
                 temp_0_value.delete();
@@ -2275,7 +2275,7 @@ impl mir2sir {
             // get method
             if (un->method.has(n->name.__ptr__())) {
                 var temp_var = self->ssa_gen.create();
-                var temp_var_value = value_t::variable(temp_var.__ptr__());
+                var temp_var_value = value_t::variable(temp_var);
                 var prev_ref = prev.resolved_type.ref_copy();
                 var prev_ref_ty = self->type_mapping(prev_ref.__ptr__());
                 var prev_value = prev.to_value_t();
@@ -2315,9 +2315,9 @@ impl mir2sir {
             var temp_0 = self->ssa_gen.create();
             var temp_1 = self->ssa_gen.create();
             var target = self->ssa_gen.create();
-            var temp_0_value = value_t::variable(temp_0.__ptr__());
-            var temp_1_value = value_t::variable(temp_1.__ptr__());
-            var target_value = value_t::variable(target.__ptr__());
+            var temp_0_value = value_t::variable(temp_0);
+            var temp_1_value = value_t::variable(temp_1);
+            var target_value = value_t::variable(target);
             defer {
                 temp_0.delete();
                 temp_0_value.delete();
@@ -2485,7 +2485,7 @@ impl mir2sir {
         var source_value = source.to_value_t();
         defer source_value.delete();
 
-        var name_value = value_t::variable(name.__ptr__());
+        var name_value = value_t::variable(name);
         defer name_value.delete();
 
         self->block->add_stmt(sir_store::new(
@@ -2523,8 +2523,8 @@ impl mir2sir {
             mir_assign_opr::addeq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0.__ptr__());
-                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                var temp_0_value = value_t::variable(temp_0);
+                var temp_1_value = value_t::variable(temp_1);
                 defer {
                     temp_0.delete();
                     temp_1.delete();
@@ -2555,8 +2555,8 @@ impl mir2sir {
             mir_assign_opr::subeq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0.__ptr__());
-                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                var temp_0_value = value_t::variable(temp_0);
+                var temp_1_value = value_t::variable(temp_1);
                 defer {
                     temp_0.delete();
                     temp_1.delete();
@@ -2585,8 +2585,8 @@ impl mir2sir {
             mir_assign_opr::muleq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0.__ptr__());
-                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                var temp_0_value = value_t::variable(temp_0);
+                var temp_1_value = value_t::variable(temp_1);
                 defer {
                     temp_0.delete();
                     temp_1.delete();
@@ -2615,8 +2615,8 @@ impl mir2sir {
             mir_assign_opr::diveq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0.__ptr__());
-                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                var temp_0_value = value_t::variable(temp_0);
+                var temp_1_value = value_t::variable(temp_1);
                 defer {
                     temp_0.delete();
                     temp_1.delete();
@@ -2646,8 +2646,8 @@ impl mir2sir {
             mir_assign_opr::remeq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0.__ptr__());
-                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                var temp_0_value = value_t::variable(temp_0);
+                var temp_1_value = value_t::variable(temp_1);
                 defer {
                     temp_0.delete();
                     temp_1.delete();
@@ -2684,8 +2684,8 @@ impl mir2sir {
             mir_assign_opr::andeq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0.__ptr__());
-                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                var temp_0_value = value_t::variable(temp_0);
+                var temp_1_value = value_t::variable(temp_1);
                 defer {
                     temp_0.delete();
                     temp_1.delete();
@@ -2713,8 +2713,8 @@ impl mir2sir {
             mir_assign_opr::xoreq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0.__ptr__());
-                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                var temp_0_value = value_t::variable(temp_0);
+                var temp_1_value = value_t::variable(temp_1);
                 defer {
                     temp_0.delete();
                     temp_1.delete();
@@ -2742,8 +2742,8 @@ impl mir2sir {
             mir_assign_opr::oreq => {
                 var temp_0 = self->ssa_gen.create();
                 var temp_1 = self->ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0.__ptr__());
-                var temp_1_value = value_t::variable(temp_1.__ptr__());
+                var temp_0_value = value_t::variable(temp_0);
+                var temp_1_value = value_t::variable(temp_1);
                 defer {
                     temp_0.delete();
                     temp_1.delete();
@@ -2852,9 +2852,9 @@ impl mir2sir {
         var switch_inst: sir_switch* = nil;
         if (dm->tagged_unions.has(name_for_search.__ptr__())) {
             var tag = self->ssa_gen.create();
-            var tag_v = value_t::variable(tag.__ptr__());
+            var tag_v = value_t::variable(tag);
             var tag_value = self->ssa_gen.create();
-            var tag_value_v = value_t::variable(tag_value.__ptr__());
+            var tag_value_v = value_t::variable(tag_value);
             defer tag.delete();
             defer tag_v.delete();
             defer tag_value.delete();

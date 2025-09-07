@@ -1,6 +1,5 @@
 use std::str::{ str };
 use std::io::{ io };
-use std::panic::{ panic };
 
 pub enum value_kind {
     null,
@@ -32,7 +31,7 @@ impl value_t {
         };
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         match (self->kind) {
             value_kind::null => {
                 if (!self->content.empty()) {
@@ -59,23 +58,17 @@ impl value_t {
         return res;
     }
 
-    pub func variable(name: str*) -> value_t {
+    pub func variable(name: str&) -> value_t {
         var res = value_t::instance();
         res.kind = value_kind::variable;
-        if (name == nil) {
-            panic("variable name is null");
-        }
-        res.content.append_str(name);
+        res.content.append(name.c_str);
         return res;
     }
 
-    pub func literal(name: str*) -> value_t {
+    pub func literal(name: str&) -> value_t {
         var res = value_t::instance();
         res.kind = value_kind::literal;
-        if (name == nil) {
-            panic("literal name is null");
-        }
-        res.content.append_str(name);
+        res.content.append(name.c_str);
         return res;
     }
 }
