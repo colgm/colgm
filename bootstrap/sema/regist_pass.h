@@ -150,8 +150,8 @@ private: // primitive types
     void regist_builtin_funcs();
 
 private: // import symbols
-    void regist_single_import(ast::use_stmt*);
-    void regist_imported_types(ast::root*);
+    void regist_single_import(ast::use_stmt*, bool);
+    void regist_imported_types(ast::root*, bool);
 
 private: // enums
     void regist_enums(ast::root*);
@@ -195,7 +195,7 @@ private: // implementations
 public:
     regist_pass(error& e, sema_context& c):
         err(e), ctx(c), rp(e), tr(err, ctx), gnv(err, ctx) {}
-    void run(ast::root*);
+    void run(ast::root*, bool);
 };
 
 }

@@ -123,7 +123,7 @@ void execute(const std::string& input_file,
     }
 
     // simple semantic
-    const auto& r = sema.analyse(parser.get_result());
+    const auto& r = sema.analyse(parser.get_result(), cmd & COMPILE_VIEW_PASS);
     // still dump semantic symbol whatever happened
     if (cmd & COMPILE_VIEW_SEMA) {
         sema.dump();

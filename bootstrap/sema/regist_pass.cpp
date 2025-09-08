@@ -845,7 +845,7 @@ void regist_pass::regist_builtin_funcs() {
     this_domain.functions.insert({"__time__", time_func});
 }
 
-void regist_pass::regist_single_import(ast::use_stmt* node) {
+void regist_pass::regist_single_import(ast::use_stmt* node, bool verbose) {
     if (node->get_module_path().empty()) {
         rp.report(node, "must import at least one symbol from this module");
         return;
@@ -885,9 +885,13 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
             pkgman->set_analyse_status(file, package_manager::status::analysed);
             return;
         }
-        if (sema.analyse(par.get_result()).geterr()) {
+        if (sema.analyse(par.get_result(), verbose).geterr()) {
             pkgman->set_analyse_status(file, package_manager::status::analysed);
             return;
+        }
+        if (verbose) {
+            std::clog << " " << green << "SEMA" << reset;
+            std::clog << " finish module " << cyan << "<" << file << ">" << reset << "\n";
         }
         pkgman->set_analyse_status(file, package_manager::status::analysed);
         // generate mir
@@ -1011,9 +1015,9 @@ void regist_pass::regist_single_import(ast::use_stmt* node) {
     }
 }
 
-void regist_pass::regist_imported_types(ast::root* node) {
+void regist_pass::regist_imported_types(ast::root* node, bool verbose) {
     for (auto i : node->get_use_stmts()) {
-        regist_single_import(i);
+        regist_single_import(i, verbose);
     }
 }
 
@@ -1860,7 +1864,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
     }
 }
 
-void regist_pass::run(ast::root* ast_root) {
+void regist_pass::run(ast::root* ast_root, bool verbose) {
     regist_primitive_types();
 
     ctx.get_domain(ctx.this_file).enums.clear();
@@ -1871,7 +1875,7 @@ void regist_pass::run(ast::root* ast_root) {
     ctx.get_domain(ctx.this_file).generic_functions.clear();
 
     regist_builtin_funcs();
-    regist_imported_types(ast_root);
+    regist_imported_types(ast_root, verbose);
     if (err.geterr()) {
         return;
     }

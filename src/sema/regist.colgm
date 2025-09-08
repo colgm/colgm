@@ -264,7 +264,7 @@ impl regist_pass {
         }
     }
 
-    func compile_module(self, name: str*, path: str*) -> bool {
+    func compile_module(self, name: str&, path: str&) -> bool {
         var ts = maketimestamp();
         ts.stamp();
 
@@ -294,7 +294,7 @@ impl regist_pass {
             ast2mir_worker.delete();
         }
 
-        par.parse(path->c_str, self->co->VIEW_DEFER_REPLACE);
+        par.parse(path.c_str, self->co->VIEW_DEFER_REPLACE);
         if (self->err->error_count > 0) {
             return false;
         }
@@ -316,7 +316,7 @@ impl regist_pass {
             var sema_duration = ts.elapsed_msec();
             io::stdout().green().out("  SEMANTIC ").reset();
             io::stdout().out("Finish module ");
-            io::stdout().cyan().out("<").out(name->c_str).out("> ").reset();
+            io::stdout().cyan().out("<").out(name.c_str).out("> ").reset();
             if (sema_duration < 1000.0) {
                 io::stdout().out_f64(ts.elapsed_msec()).out(" ms\n");
             } else {
@@ -376,10 +376,10 @@ impl regist_pass {
             return;
         }
 
-        self->pkg->insert(expect_name.__ptr__(), expect_path.__ptr__());
+        self->pkg->insert(expect_name, expect_path);
 
-        if (self->pkg->get_status(expect_name.__ptr__()) == p_status::not_used &&
-            !self->compile_module(expect_name.__ptr__(), expect_path.__ptr__())) {
+        if (self->pkg->get_status(expect_name) == p_status::not_used &&
+            !self->compile_module(expect_name, expect_path)) {
             // failed to compile, skip importing this module
             return;
         }

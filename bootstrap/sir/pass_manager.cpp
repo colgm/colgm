@@ -27,9 +27,9 @@ void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
             break;
         }
         if (verbose) {
-            std::clog << "[" << green << "sir" << reset;
-            std::clog << "] run " << i->name() << " pass: ";
-            std::clog << i->info() << "\n";
+            std::clog << "  " << green << "SIR" << reset;
+            std::clog << " run pass " << cyan << "<" << i->name() << ">" << reset;
+            std::clog << ": " << i->info() << "\n";
         }
     }
 }

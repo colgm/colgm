@@ -131,7 +131,7 @@ public:
     semantic(error& e):
         err(e), ctx(), rp(err), tr(err, ctx),
         in_loop_level(0), impl_struct_name("") {}
-    const error& analyse(root*);
+    const error& analyse(root*, bool);
     void dump();
     const auto& get_context() const { return ctx; }
     void set_main_input_file(const std::string& input_file) {

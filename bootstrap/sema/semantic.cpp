@@ -2333,13 +2333,13 @@ void semantic::resolve_function_block(root* ast_root) {
     }
 }
 
-const error& semantic::analyse(root* ast_root) {
+const error& semantic::analyse(root* ast_root, bool verbose) {
     ctx.this_file = ast_root->get_file();
     if (!ctx.global.domain.count(ctx.this_file)) {
         ctx.global.domain.insert({ctx.this_file, {}});
     }
 
-    regist_pass(err, ctx).run(ast_root);
+    regist_pass(err, ctx).run(ast_root, verbose);
     if (err.geterr()) {
         return err;
     }

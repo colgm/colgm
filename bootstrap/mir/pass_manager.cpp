@@ -24,8 +24,9 @@ void pass_manager::execute(mir_context* mctx, bool verbose) {
             break;
         }
         if (verbose) {
-            std::clog << "[" << green << "mir" << reset;
-            std::clog << "] run " << i->name() << " pass finished\n";
+            std::clog << "  " << green << "MIR" << reset;
+            std::clog << " run pass " << cyan << "<" << i->name() << ">" << reset;
+            std::clog << ": finished\n";
         }
     }
 }

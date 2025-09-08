@@ -1040,7 +1040,7 @@ impl sema {
             return type::error_type();
         }
 
-        var fuzzy_field = struct_self->fuzzy_match_field(n->name.__ptr__());
+        var fuzzy_field = struct_self->fuzzy_match_field(n->name);
         defer fuzzy_field.delete();
 
         self->err->report_field_not_found(
@@ -1085,7 +1085,7 @@ impl sema {
             return type::error_type();
         }
 
-        var fuzzy_field = union_self->fuzzy_match_field(n->name.__ptr__());
+        var fuzzy_field = union_self->fuzzy_match_field(n->name);
         defer fuzzy_field.delete();
 
         self->err->report_field_not_found(
@@ -1491,7 +1491,7 @@ impl sema {
             var note = str::from("maybe you mean \"");
             defer note.delete();
 
-            var fuzzy = st->fuzzy_match_field(n->name.__ptr__());
+            var fuzzy = st->fuzzy_match_field(n->name);
             defer fuzzy.delete();
 
             note.append_str(fuzzy.__ptr__());
@@ -1539,7 +1539,7 @@ impl sema {
             var note = str::from("maybe you mean \"");
             defer note.delete();
 
-            var fuzzy = tu->fuzzy_match_field(n->name.__ptr__());
+            var fuzzy = tu->fuzzy_match_field(n->name);
             defer fuzzy.delete();
 
             note.append_str(fuzzy.__ptr__());
@@ -1824,7 +1824,7 @@ impl sema {
             return type::error_type();
         }
 
-        var fuzzy_field = struct_self->fuzzy_match_field(n->name.__ptr__());
+        var fuzzy_field = struct_self->fuzzy_match_field(n->name);
         defer fuzzy_field.delete();
 
         self->err->report_field_not_found(
@@ -1869,7 +1869,7 @@ impl sema {
             return type::error_type();
         }
 
-        var fuzzy_field = union_self->fuzzy_match_field(n->name.__ptr__());
+        var fuzzy_field = union_self->fuzzy_match_field(n->name);
         defer fuzzy_field.delete();
 
         self->err->report_field_not_found(
@@ -2018,7 +2018,7 @@ impl sema {
         }
 
         if (maybe_invalid_assignment && seg != nil) {
-            self->err->out("function returning non-pointer type, ")
+            self->err->out("function returning non-pointer/non-reference type, ")
                      ->out("will do shallow copy, ")
                      ->out("may cause invalid assignment")
                      ->emit_warn(seg->location.__ptr__());
