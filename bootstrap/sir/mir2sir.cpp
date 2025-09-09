@@ -1243,7 +1243,16 @@ void mir2sir::visit_mir_define(mir_define* node) {
         type_mapping(node_type)
     ));
 
-    node->get_init_value()->accept(this);
+    if (node->get_init_value()->get_content().size() == 1 &&
+        node->get_init_value()->get_content().front()->get_kind() == kind::mir_call) {
+        call_expression_generation(
+            reinterpret_cast<mir_call*>(node->get_init_value()->get_content().front()),
+            node->get_type().is_reference
+        );
+    } else {
+        node->get_init_value()->accept(this);
+    }
+
     auto source = value_stack.back();
     value_stack.pop_back();
 

@@ -213,7 +213,7 @@ impl parser {
             self.next();
             return;
         }
-        var loc = self.this_tok_loc().__ptr__();
+        var loc = self.this_tok_loc();
 
         var message = str::from("expected ");
         defer message.delete();
@@ -241,7 +241,7 @@ impl parser {
             message.append_str(self.this_tok()->content.__ptr__());
             message.append("\"");
         }
-        self.err->error(loc, message.c_str);
+        self.err->error(loc.__ptr__(), message.c_str);
 
         self.next();
     }
@@ -249,11 +249,11 @@ impl parser {
 
 impl parser {
     func conditional_compilation(self) -> ast_cond_compile* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         self.match_token(tok_kind::tok_sharp);
         self.match_token(tok_kind::tok_lbracket);
         var res = ast_cond_compile::new(
-            begin_loc[0],
+            begin_loc,
             self.this_tok()->content.__ptr__()
         );
         self.match_token(tok_kind::tok_id);
@@ -371,7 +371,7 @@ impl parser {
                     res->chain.push(self.initializer_gen() => ast*);
                 }
                 tok_kind::tok_dot => {
-                    var dot_location = self.this_tok_loc().__ptr__();
+                    var dot_location = self.this_tok_loc();
                     self.match_token(tok_kind::tok_dot);
                     var get_field = ast_get_field::new(
                         self.this_tok_loc(),
@@ -382,7 +382,7 @@ impl parser {
                     res->chain.push(get_field => ast*);
                 }
                 tok_kind::tok_arrow => {
-                    var arrow_location = self.this_tok_loc().__ptr__();
+                    var arrow_location = self.this_tok_loc();
                     self.match_token(tok_kind::tok_arrow);
                     var ptr_get_field = ast_ptr_get_field::new(
                         self.this_tok_loc(),
@@ -532,11 +532,11 @@ impl parser {
     }
 
     func type_convert_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var result = self.scalar_gen();
         if (self.lookahead(tok_kind::tok_wide_arrow)) {
             self.match_token(tok_kind::tok_wide_arrow);
-            var type_cast_node = ast_type_convert::new(begin_loc[0]);
+            var type_cast_node = ast_type_convert::new(begin_loc);
             type_cast_node->from = result;
             type_cast_node->to = self.type_def_gen();
             self.update_location(type_cast_node => ast*);
@@ -546,7 +546,7 @@ impl parser {
     }
 
     func multive_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var res = self.type_convert_gen();
         while (self.lookahead(tok_kind::tok_mul) ||
                self.lookahead(tok_kind::tok_div) ||
@@ -558,7 +558,7 @@ impl parser {
                 tok_kind::tok_rem => kind = binary_kind::rem;
                 _ => { unreachable(); }
             }
-            var binary = ast_binary_operator::new(begin_loc[0], kind);
+            var binary = ast_binary_operator::new(begin_loc, kind);
             self.match_token(self.this_tok()->kind);
             binary->left = res;
             binary->right = self.type_convert_gen();
@@ -569,7 +569,7 @@ impl parser {
     }
 
     func additive_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var res = self.multive_gen();
         while (self.lookahead(tok_kind::tok_add) ||
                self.lookahead(tok_kind::tok_sub)) {
@@ -577,13 +577,13 @@ impl parser {
             match (self.this_tok()->kind) {
                 tok_kind::tok_add => {
                     binary = ast_binary_operator::new(
-                        begin_loc[0],
+                        begin_loc,
                         binary_kind::add
                     );
                 }
                 tok_kind::tok_sub => {
                     binary = ast_binary_operator::new(
-                        begin_loc[0],
+                        begin_loc,
                         binary_kind::sub
                     );
                 }
@@ -599,11 +599,11 @@ impl parser {
     }
 
     func bitwise_and_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var res = self.additive_gen();
         while (self.lookahead(tok_kind::tok_bit_and)) {
             var binary = ast_binary_operator::new(
-                begin_loc[0],
+                begin_loc,
                 binary_kind::band
             );
             self.match_token(tok_kind::tok_bit_and);
@@ -616,11 +616,11 @@ impl parser {
     }
 
     func bitwise_xor_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var res = self.bitwise_and_gen();
         while (self.lookahead(tok_kind::tok_bit_xor)) {
             var binary = ast_binary_operator::new(
-                begin_loc[0],
+                begin_loc,
                 binary_kind::bxor
             );
             self.match_token(tok_kind::tok_bit_xor);
@@ -633,11 +633,11 @@ impl parser {
     }
 
     func bitwise_or_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var res = self.bitwise_xor_gen();
         while (self.lookahead(tok_kind::tok_bit_or)) {
             var binary = ast_binary_operator::new(
-                begin_loc[0],
+                begin_loc,
                 binary_kind::bor
             );
             self.match_token(tok_kind::tok_bit_or);
@@ -650,7 +650,7 @@ impl parser {
     }
 
     func compare_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var res = self.bitwise_or_gen();
         while (self.lookahead(tok_kind::tok_cmp_eq) ||
                self.lookahead(tok_kind::tok_neq) ||
@@ -668,7 +668,7 @@ impl parser {
                 tok_kind::tok_geq => kind = binary_kind::geq;
                 _ => {}
             }
-            var binary = ast_binary_operator::new(begin_loc[0], kind);
+            var binary = ast_binary_operator::new(begin_loc, kind);
             self.match_token(self.this_tok()->kind);
             binary->left = res;
             binary->right = self.bitwise_or_gen();
@@ -679,26 +679,26 @@ impl parser {
     }
 
     func not_expression_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         if (!self.lookahead(tok_kind::tok_op_not)) {
             return self.compare_gen();
         }
         self.match_token(tok_kind::tok_op_not);
         var value = self.compare_gen();
-        var res = ast_unary_operator::new(begin_loc[0], unary_kind::lnot);
+        var res = ast_unary_operator::new(begin_loc, unary_kind::lnot);
         res->value = value;
         self.update_location(res => ast*);
         return res => ast*;
     }
 
     func and_expression_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var res = self.not_expression_gen();
         if (!self.lookahead(tok_kind::tok_op_and)) {
             return res;
         }
         var binary = ast_binary_operator::new(
-            begin_loc[0],
+            begin_loc,
             binary_kind::cmpand
         );
         binary->left = res;
@@ -709,13 +709,13 @@ impl parser {
     }
 
     func or_expression_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var res = self.and_expression_gen();
         if (!self.lookahead(tok_kind::tok_op_or)) {
             return res;
         }
         var binary = ast_binary_operator::new(
-            begin_loc[0],
+            begin_loc,
             binary_kind::cmpor
         );
         binary->left = res;
@@ -726,7 +726,7 @@ impl parser {
     }
 
     func calculation_gen(self) -> ast* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         var res = self.or_expression_gen();
         // if is not ast_call, do not check assignment syntax
         if (!res->is(ast_kind::ast_call)) {
@@ -742,7 +742,7 @@ impl parser {
             self.lookahead(tok_kind::tok_bit_xor_eq) ||
             self.lookahead(tok_kind::tok_bit_or_eq) ||
             self.lookahead(tok_kind::tok_eq)) {
-            var assignment = ast_assignment::new(begin_loc[0]);
+            var assignment = ast_assignment::new(begin_loc);
             assignment->left = res => ast_call*;
             match (self.this_tok()->kind) {
                 tok_kind::tok_addeq => assignment->kind = assignment_kind::addeq;
@@ -867,10 +867,10 @@ impl parser {
     }
 
     func struct_decl_gen(self) -> ast_struct_decl* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         self.match_token(tok_kind::tok_struct);
         var res = ast_struct_decl::new(
-            begin_loc[0],
+            begin_loc,
             self.this_tok()->content.__ptr__()
         );
         self.match_token(tok_kind::tok_id);
@@ -896,9 +896,9 @@ impl parser {
     }
 
     func tagged_union_gen(self) -> ast_tagged_union_decl* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         self.match_token(tok_kind::tok_union);
-        var res = ast_tagged_union_decl::new(begin_loc[0]);
+        var res = ast_tagged_union_decl::new(begin_loc);
 
         self.match_token(tok_kind::tok_lparen);
         if (self.lookahead(tok_kind::tok_enum)) {
@@ -942,10 +942,10 @@ impl parser {
     }
 
     func enum_decl_gen(self) -> ast_enum_decl* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         self.match_token(tok_kind::tok_enum);
         var res = ast_enum_decl::new(
-            begin_loc[0],
+            begin_loc,
             self.this_tok()->content.__ptr__()
         );
         self.match_token(tok_kind::tok_id);
@@ -1030,10 +1030,10 @@ impl parser {
     }
 
     func function_decl_gen(self) -> ast_func_decl* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         self.match_token(tok_kind::tok_func);
         var res = ast_func_decl::new(
-            begin_loc[0],
+            begin_loc,
             self.this_tok()->content.__ptr__()
         );
         self.match_token(tok_kind::tok_id);
@@ -1072,10 +1072,10 @@ impl parser {
     }
 
     func impl_gen(self) -> ast_impl* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         self.match_token(tok_kind::tok_impl);
         var res = ast_impl::new(
-            begin_loc[0],
+            begin_loc,
             self.this_tok()->content.__ptr__()
         );
         self.match_token(tok_kind::tok_id);
@@ -1170,10 +1170,10 @@ impl parser {
     }
 
     func definition_gen(self) -> ast_definition* {
-        var begin_loc = self.this_tok_loc().__ptr__();
+        var begin_loc = self.this_tok_loc();
         self.match_token(tok_kind::tok_var);
         var res = ast_definition::new(
-            begin_loc[0],
+            begin_loc,
             self.this_tok()->content.__ptr__()
         );
         self.match_token(tok_kind::tok_id);

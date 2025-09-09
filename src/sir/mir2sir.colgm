@@ -2476,7 +2476,15 @@ impl mir2sir {
             type_name.__ptr__()
         ));
 
-        self.visit(n->init_value => mir*);
+        if (n->init_value->content.size == 1 &&
+            n->init_value->content.get(0)->kind == mir_kind::mir_call) {
+            self.call_expr_gen(
+                n->init_value->content.get(0) => mir_call*,
+                n->resolved_type.is_reference
+            );
+        } else {
+            self.visit(n->init_value => mir*);
+        }
 
         var source = self.value_stack.back()->clone();
         defer source.delete();
