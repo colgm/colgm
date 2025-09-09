@@ -47,54 +47,54 @@ impl colgm_tagged_union {
     }
 
     pub func delete(self) {
-        self->name.delete();
-        self->ref_enum_type.delete();
-        self->location.delete();
-        self->members.delete();
-        self->member_int_map.delete();
-        self->ordered_members.delete();
-        self->members_span.delete();
-        self->method.delete();
-        self->static_method.delete();
+        self.name.delete();
+        self.ref_enum_type.delete();
+        self.location.delete();
+        self.members.delete();
+        self.member_int_map.delete();
+        self.ordered_members.delete();
+        self.members_span.delete();
+        self.method.delete();
+        self.static_method.delete();
     }
 
     pub func clone(self) -> colgm_tagged_union {
         return colgm_tagged_union {
-            name: self->name.clone(),
-            ref_enum_type: self->ref_enum_type.clone(),
-            location: self->location.clone(),
-            members: self->members.clone(),
-            member_int_map: self->member_int_map.clone(),
-            ordered_members: self->ordered_members.clone(),
-            members_span: self->members_span.clone(),
-            method: self->method.clone(),
-            static_method: self->static_method.clone(),
-            is_public: self->is_public,
-            is_extern: self->is_extern
+            name: self.name.clone(),
+            ref_enum_type: self.ref_enum_type.clone(),
+            location: self.location.clone(),
+            members: self.members.clone(),
+            member_int_map: self.member_int_map.clone(),
+            ordered_members: self.ordered_members.clone(),
+            members_span: self.members_span.clone(),
+            method: self.method.clone(),
+            static_method: self.static_method.clone(),
+            is_public: self.is_public,
+            is_extern: self.is_extern
         };
     }
 }
 
 impl colgm_tagged_union {
     pub func has_ref_enum(self) -> bool {
-        return !self->ref_enum_type.name.empty();
+        return !self.ref_enum_type.name.empty();
     }
 
     pub func check_member_exists(self, name: str*) -> bool {
-        return self->members.has(name) ||
-               self->method.has(name) ||
-               self->static_method.has(name);
+        return self.members.has(name) ||
+               self.method.has(name) ||
+               self.static_method.has(name);
     }
 
     pub func get_member_span(self, name: str*) -> span* {
-        if (self->members_span.has(name)) {
-            return self->members_span.get(name);
+        if (self.members_span.has(name)) {
+            return self.members_span.get(name);
         }
-        if (self->method.has(name)) {
-            return self->method.get(name)->location.__ptr__();
+        if (self.method.has(name)) {
+            return self.method.get(name)->location.__ptr__();
         }
-        if (self->static_method.has(name)) {
-            return self->static_method.get(name)->location.__ptr__();
+        if (self.static_method.has(name)) {
+            return self.static_method.get(name)->location.__ptr__();
         }
         return nil;
     }
@@ -106,17 +106,17 @@ impl colgm_tagged_union {
         var collection = vec<str>::instance();
         defer collection.delete();
 
-        foreach (var i; self->members) {
+        foreach (var i; self.members) {
             if (i.key()->startswith(name.c_str)) {
                 collection.push(i.key());
             }
         }
-        foreach (var i; self->method) {
+        foreach (var i; self.method) {
             if (i.key()->startswith(name.c_str)) {
                 collection.push(i.key());
             }
         }
-        foreach (var i; self->static_method) {
+        foreach (var i; self.static_method) {
             if (i.key()->startswith(name.c_str)) {
                 collection.push(i.key());
             }
@@ -133,7 +133,7 @@ impl colgm_tagged_union {
             return res;
         }
 
-        foreach (var i; self->members) {
+        foreach (var i; self.members) {
             var distance = levenshtein_distance(name, i.key());
             if (distance < min_distance) {
                 min_distance = distance;
@@ -141,7 +141,7 @@ impl colgm_tagged_union {
                 res.append_str(i.key());
             }
         }
-        foreach (var i; self->method) {
+        foreach (var i; self.method) {
             var distance = levenshtein_distance(name, i.key());
             if (distance < min_distance) {
                 min_distance = distance;
@@ -149,7 +149,7 @@ impl colgm_tagged_union {
                 res.append_str(i.key());
             }
         }
-        foreach (var i; self->static_method) {
+        foreach (var i; self.static_method) {
             var distance = levenshtein_distance(name, i.key());
             if (distance < min_distance) {
                 min_distance = distance;
@@ -163,39 +163,39 @@ impl colgm_tagged_union {
 
     pub func dump(self, out: io, pkg: package*) {
         out.out("  ");
-        if (self->is_extern) {
+        if (self.is_extern) {
             out.green().out("extern ").reset();
         }
-        if (self->is_public) {
+        if (self.is_public) {
             out.green().out("pub ").reset();
         }
         out.cyan().out("union ").reset();
-        if (self->has_ref_enum()) {
+        if (self.has_ref_enum()) {
             out.light_orange().out("(").reset();
-            self->ref_enum_type.dump(out, pkg);
+            self.ref_enum_type.dump(out, pkg);
             out.light_orange().out(") ").reset();
         }
-        out.white().out(self->name.c_str).reset();
+        out.white().out(self.name.c_str).reset();
 
-        if (self->ordered_members.empty()) {
+        if (self.ordered_members.empty()) {
             out.out(" {}\n");
             return;
         }
         out.out(" {\n");
-        forindex (var i; self->ordered_members) {
-            var member = self->ordered_members.get(i);
+        forindex (var i; self.ordered_members) {
+            var member = self.ordered_members.get(i);
             out.out("    ").out(member->c_str);
             // dump mapped int
-            out.light_green().out("(").out_i64(self->member_int_map.get(member));
+            out.light_green().out("(").out_i64(self.member_int_map.get(member));
             out.out(")").reset().out(": ");
             // dump type
-            self->members.get(member)->dump(out, pkg);
+            self.members.get(member)->dump(out, pkg);
             out.out("\n");
         }
-        foreach (var i; self->method) {
+        foreach (var i; self.method) {
             i.value()->dump(out, pkg, "  ");
         }
-        foreach (var i; self->static_method) {
+        foreach (var i; self.static_method) {
             i.value()->dump(out, pkg, "  ");
         }
         out.out("  }\n");

@@ -20,8 +20,8 @@ pub struct udp_server {
 
 impl udp_server {
     pub func delete(self) {
-        if (self->sockfd > 0) {
-            close(self->sockfd);
+        if (self.sockfd > 0) {
+            close(self.sockfd);
         }
     }
 
@@ -58,11 +58,11 @@ impl udp_server {
 
         var buffer: [i8; 1024] = [];
         var len = recvfrom(
-            self->sockfd,
+            self.sockfd,
             buffer,
             1023,
             0,
-            self->client_addr.__ptr__(),
+            self.client_addr.__ptr__(),
             addr_len.__ptr__()
         );
         if (len < 0) {
@@ -76,11 +76,11 @@ impl udp_server {
 
     pub func send(self, data: str*) {
         var len = sendto(
-            self->sockfd,
+            self.sockfd,
             data->c_str,
             data->size,
             0,
-            self->client_addr.__ptr__(),
+            self.client_addr.__ptr__(),
             sockaddr_in::__size__() => u32
         );
         if (len < 0) {
@@ -98,8 +98,8 @@ pub struct udp_client {
 
 impl udp_client {
     pub func delete(self) {
-        if (self->sockfd > 0) {
-            close(self->sockfd);
+        if (self.sockfd > 0) {
+            close(self.sockfd);
         }
     }
 
@@ -136,11 +136,11 @@ impl udp_client {
 
         var buffer: [i8; 1024] = [];
         var len = recvfrom(
-            self->sockfd,
+            self.sockfd,
             buffer,
             1023,
             0,
-            self->server_addr.__ptr__(),
+            self.server_addr.__ptr__(),
             addr_len
         );
         if (len < 0) {
@@ -154,11 +154,11 @@ impl udp_client {
 
     pub func send(self, data: str*) {
         var len = sendto(
-            self->sockfd,
+            self.sockfd,
             data->c_str,
             data->size,
             0,
-            self->server_addr.__ptr__(),
+            self.server_addr.__ptr__(),
             sockaddr_in::__size__() => u32
         );
         if (len < 0) {

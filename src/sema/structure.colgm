@@ -53,60 +53,60 @@ impl colgm_struct {
     }
 
     pub func delete(self) {
-        self->name.delete();
-        self->location.delete();
-        self->fields.delete();
-        self->ordered_fields.delete();
-        self->fields_span.delete();
-        self->static_method.delete();
-        self->method.delete();
-        self->generic_template.delete();
-        if (self->generic_struct_decl != nil) {
-            var to_ast = self->generic_struct_decl => ast*;
+        self.name.delete();
+        self.location.delete();
+        self.fields.delete();
+        self.ordered_fields.delete();
+        self.fields_span.delete();
+        self.static_method.delete();
+        self.method.delete();
+        self.generic_template.delete();
+        if (self.generic_struct_decl != nil) {
+            var to_ast = self.generic_struct_decl => ast*;
             to_ast->delete();
             free(to_ast => i8*);
-            self->generic_struct_decl = nil;
+            self.generic_struct_decl = nil;
         }
-        foreach (var i; self->generic_struct_impl) {
+        foreach (var i; self.generic_struct_impl) {
             var to_ast = i.get() => ast*;
             to_ast->delete();
             free(to_ast => i8*);
         }
-        self->generic_struct_impl.delete();
+        self.generic_struct_impl.delete();
     }
 
     pub func clone(self) -> colgm_struct {
         var res = colgm_struct {
-            name: self->name.clone(),
-            location: self->location.clone(),
-            fields: self->fields.clone(),
-            ordered_fields: self->ordered_fields.clone(),
-            fields_span: self->fields_span.clone(),
-            static_method: self->static_method.clone(),
-            method: self->method.clone(),
-            generic_template: self->generic_template.clone(),
+            name: self.name.clone(),
+            location: self.location.clone(),
+            fields: self.fields.clone(),
+            ordered_fields: self.ordered_fields.clone(),
+            fields_span: self.fields_span.clone(),
+            static_method: self.static_method.clone(),
+            method: self.method.clone(),
+            generic_template: self.generic_template.clone(),
             generic_struct_decl: nil,
             generic_struct_impl: vec<ast_impl*>::instance(),
-            is_public: self->is_public,
-            is_extern: self->is_extern
+            is_public: self.is_public,
+            is_extern: self.is_extern
         };
-        if (self->generic_struct_decl != nil) {
-            res.generic_struct_decl = self->generic_struct_decl->copy();
+        if (self.generic_struct_decl != nil) {
+            res.generic_struct_decl = self.generic_struct_decl->copy();
         }
-        foreach (var i; self->generic_struct_impl) {
+        foreach (var i; self.generic_struct_impl) {
             res.generic_struct_impl.push(i.get()->copy());
         }
         return res;
     }
 
     pub func check_field_exists(self, name: str*) -> bool {
-        return self->fields.has(name) ||
-               self->method.has(name) ||
-               self->static_method.has(name);
+        return self.fields.has(name) ||
+               self.method.has(name) ||
+               self.static_method.has(name);
     }
 
     pub func field_index(self, name: str*) -> i64 {
-        foreach (var i; self->ordered_fields) {
+        foreach (var i; self.ordered_fields) {
             if (i.get()->eq(name)) {
                 return i.index() => i64;
             }
@@ -115,14 +115,14 @@ impl colgm_struct {
     }
 
     pub func get_field_span(self, name: str*) -> span* {
-        if (self->fields_span.has(name)) {
-            return self->fields_span.get(name);
+        if (self.fields_span.has(name)) {
+            return self.fields_span.get(name);
         }
-        if (self->method.has(name)) {
-            return self->method.get(name)->location.__ptr__();
+        if (self.method.has(name)) {
+            return self.method.get(name)->location.__ptr__();
         }
-        if (self->static_method.has(name)) {
-            return self->static_method.get(name)->location.__ptr__();
+        if (self.static_method.has(name)) {
+            return self.static_method.get(name)->location.__ptr__();
         }
         return nil;
     }
@@ -134,17 +134,17 @@ impl colgm_struct {
         var collection = vec<str>::instance();
         defer collection.delete();
 
-        foreach (var i; self->fields) {
+        foreach (var i; self.fields) {
             if (i.key()->startswith(name.c_str)) {
                 collection.push(i.key());
             }
         }
-        foreach (var i; self->method) {
+        foreach (var i; self.method) {
             if (i.key()->startswith(name.c_str)) {
                 collection.push(i.key());
             }
         }
-        foreach (var i; self->static_method) {
+        foreach (var i; self.static_method) {
             if (i.key()->startswith(name.c_str)) {
                 collection.push(i.key());
             }
@@ -161,7 +161,7 @@ impl colgm_struct {
             return res;
         }
 
-        foreach (var i; self->fields) {
+        foreach (var i; self.fields) {
             var distance = levenshtein_distance(name, i.key());
             if (distance < min_distance) {
                 min_distance = distance;
@@ -169,7 +169,7 @@ impl colgm_struct {
                 res.append_str(i.key());
             }
         }
-        foreach (var i; self->method) {
+        foreach (var i; self.method) {
             var distance = levenshtein_distance(name, i.key());
             if (distance < min_distance) {
                 min_distance = distance;
@@ -177,7 +177,7 @@ impl colgm_struct {
                 res.append_str(i.key());
             }
         }
-        foreach (var i; self->static_method) {
+        foreach (var i; self.static_method) {
             var distance = levenshtein_distance(name, i.key());
             if (distance < min_distance) {
                 min_distance = distance;
@@ -193,44 +193,44 @@ impl colgm_struct {
 impl colgm_struct {
     pub func dump(self, out: io, pkg: package*) {
         out.out("  ");
-        if (self->is_extern) {
+        if (self.is_extern) {
             out.green().out("extern ").reset();
         }
-        if (self->is_public) {
+        if (self.is_public) {
             out.green().out("pub ").reset();
         }
         out.cyan().out("struct ").reset();
-        out.white().out(self->name.c_str).reset();
+        out.white().out(self.name.c_str).reset();
 
         // print generic template
-        if (self->generic_template.size > 0) {
+        if (self.generic_template.size > 0) {
             out.out("<");
-            foreach (var i; self->generic_template) {
+            foreach (var i; self.generic_template) {
                 out.out(i.get()->c_str);
-                if (i.index() != self->generic_template.size - 1) {
+                if (i.index() != self.generic_template.size - 1) {
                     out.out(", ");
                 }
             }
             out.out(">");
         }
 
-        if (self->ordered_fields.empty() &&
-            self->static_method.empty() &&
-            self->method.empty()) {
+        if (self.ordered_fields.empty() &&
+            self.static_method.empty() &&
+            self.method.empty()) {
             out.out(" {}\n");
             return;
         }
         out.out(" {\n");
-        forindex (var i; self->ordered_fields) {
-            var field = self->ordered_fields.get(i);
+        forindex (var i; self.ordered_fields) {
+            var field = self.ordered_fields.get(i);
             out.out("    ").out(field->c_str).out(": ");
-            self->fields.get(field)->dump(out, pkg);
+            self.fields.get(field)->dump(out, pkg);
             out.out("\n");
         }
-        foreach (var i; self->method) {
+        foreach (var i; self.method) {
             i.value()->dump(out, pkg, "  ");
         }
-        foreach (var i; self->static_method) {
+        foreach (var i; self.static_method) {
             i.value()->dump(out, pkg, "  ");
         }
         out.out("  }\n");

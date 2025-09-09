@@ -762,7 +762,9 @@ colgm_func regist_pass::builtin_ptr(const span& loc, const type& ty) {
     auto func = colgm_func();
     func.name = "__ptr__";
     func.location = loc;
-    func.add_parameter("self", ty);
+    auto self_type = ty.get_ref_copy();
+    self_type.is_reference = true;
+    func.add_parameter("self", self_type);
     func.return_type = ty;
     func.is_public = true;
     return func;
@@ -819,9 +821,10 @@ colgm_func regist_pass::generate_primitive_ptr_method(const char* type_name) {
     auto func = colgm_func();
     func.name = "__ptr__";
     func.location = span::null();
-    auto self_type = type {type_name, "", 1};
+    auto self_type = type {type_name, "", 0};
+    self_type.is_reference = true;
     func.add_parameter("self", self_type);
-    func.return_type = self_type;
+    func.return_type = type {type_name, "", 1};
     func.is_public = true;
     return func;
 }
@@ -1778,7 +1781,7 @@ void regist_pass::generate_self_parameter(ast::param* node,
             new_type_def->get_generic_types()->add_type(t);
         }
     }
-    new_type_def->add_pointer_level();
+    new_type_def->set_reference();
     node->set_type(new_type_def);
 }
 
@@ -1790,7 +1793,7 @@ void regist_pass::generate_self_parameter(ast::param* node,
         un.name
     ));
 
-    new_type_def->add_pointer_level();
+    new_type_def->set_reference();
     node->set_type(new_type_def);
 }
 
@@ -1803,7 +1806,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
             rp.report(i->get_name(), "\"self\" must be the first parameter");
         }
         if (is_self && i->get_type()) {
-            rp.warn(i->get_type(), "\"self\" does not need type");
+            rp.report(i->get_type(), "\"self\" does not need type");
         }
         if (is_self && !i->get_type()) {
             generate_self_parameter(i, stct);
@@ -1814,18 +1817,6 @@ void regist_pass::generate_method_parameter_list(param_list* node,
     if (self.ordered_params.empty() ||
         self.ordered_params.front() != "self") {
         return;
-    }
-
-    // we still need to check self type, for user may specify a wrong type
-    // check self type is the pointer of implemented struct
-    const auto& self_type = self.params.at(self.ordered_params.front());
-    if (self_type.name != stct.name ||
-        self_type.loc_file != stct.location.file ||
-        self_type.pointer_depth != 1) {
-        rp.report(node->get_params().front(),
-            "\"self\" should be \"" + stct.name + "*\", but get \"" +
-            self_type.to_string() + "\""
-        );
     }
 }
 
@@ -1838,7 +1829,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
             rp.report(i->get_name(), "\"self\" must be the first parameter");
         }
         if (is_self && i->get_type()) {
-            rp.warn(i->get_type(), "\"self\" does not need type");
+            rp.report(i->get_type(), "\"self\" does not need type");
         }
         if (is_self && !i->get_type()) {
             generate_self_parameter(i, un);
@@ -1849,18 +1840,6 @@ void regist_pass::generate_method_parameter_list(param_list* node,
     if (self.ordered_params.empty() ||
         self.ordered_params.front() != "self") {
         return;
-    }
-
-    // we still need to check self type, for user may specify a wrong type
-    // check self type is the pointer of implemented struct
-    const auto& self_type = self.params.at(self.ordered_params.front());
-    if (self_type.name != un.name ||
-        self_type.loc_file != un.location.file ||
-        self_type.pointer_depth != 1) {
-        rp.report(node->get_params().front(),
-            "\"self\" should be \"" + un.name + "*\", but get \"" +
-            self_type.to_string() + "\""
-        );
     }
 }
 

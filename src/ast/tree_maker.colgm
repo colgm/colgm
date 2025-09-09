@@ -18,68 +18,68 @@ impl tree_maker {
     }
 
     pub func delete(self) {
-        self->indent.delete();
+        self.indent.delete();
     }
 
     func indent_back(self) -> indent_state {
-        var s = self->indent.size;
+        var s = self.indent.size;
         if (s == 0) {
             return indent_state::indent_none;
         }
-        if (self->indent.c_str[s - 1] == '-' &&
-            self->indent.c_str[s - 2] == '|') {
+        if (self.indent.c_str[s - 1] == '-' &&
+            self.indent.c_str[s - 2] == '|') {
             return indent_state::indent_middle;
         }
-        if (self->indent.c_str[s - 1] == ' ' &&
-            self->indent.c_str[s - 2] == '|') {
+        if (self.indent.c_str[s - 1] == ' ' &&
+            self.indent.c_str[s - 2] == '|') {
             return indent_state::indent_bar;
         }
-        if (self->indent.c_str[s - 1] == '-' &&
-            self->indent.c_str[s - 2] == '`') {
+        if (self.indent.c_str[s - 1] == '-' &&
+            self.indent.c_str[s - 2] == '`') {
             return indent_state::indent_end;
         }
         return indent_state::indent_none;
     }
 
     pub func push_indent(self) {
-        if (self->indent.size > 0) {
-            var state = self->indent_back();
+        if (self.indent.size > 0) {
+            var state = self.indent_back();
             match (state) {
                 indent_state::indent_none => {}
                 indent_state::indent_middle => {
-                    self->indent.pop_back();
-                    self->indent.pop_back();
-                    self->indent.append("| ");
+                    self.indent.pop_back();
+                    self.indent.pop_back();
+                    self.indent.append("| ");
                 }
                 indent_state::indent_bar => {}
                 indent_state::indent_end => {
-                    self->indent.pop_back();
-                    self->indent.pop_back();
-                    self->indent.append("  ");
+                    self.indent.pop_back();
+                    self.indent.pop_back();
+                    self.indent.append("  ");
                 }
             }
         }
-        self->indent.append("|-");
+        self.indent.append("|-");
     }
 
     pub func set_last(self) {
-        self->indent.pop_back();
-        self->indent.pop_back();
-        self->indent.append("`-");
+        self.indent.pop_back();
+        self.indent.pop_back();
+        self.indent.append("`-");
     }
 
     pub func pop_indent(self) {
-        self->indent.pop_back();
-        self->indent.pop_back();
+        self.indent.pop_back();
+        self.indent.pop_back();
     }
 
     pub func dump_indent(self, out: io&) {
-        if (self->indent.size > 0 &&
-            self->indent_back() == indent_state::indent_bar) {
-            self->indent.pop_back();
-            self->indent.pop_back();
-            self->indent.append("|-");
+        if (self.indent.size > 0 &&
+            self.indent_back() == indent_state::indent_bar) {
+            self.indent.pop_back();
+            self.indent.pop_back();
+            self.indent.append("|-");
         }
-        out.out(self->indent.c_str);
+        out.out(self.indent.c_str);
     }
 }

@@ -25,15 +25,15 @@ impl DWARF_status {
     }
 
     pub func delete(self) {
-        self->impl_debug_info.delete();
-        self->locations.delete();
+        self.impl_debug_info.delete();
+        self.locations.delete();
     }
 
     pub func clear(self) {
-        self->DI_counter = 0;
-        self->compile_unit_index = DI_ERROR_INDEX();
-        self->scope_index = DI_ERROR_INDEX();
-        self->impl_debug_info.clear();
+        self.DI_counter = 0;
+        self.compile_unit_index = DI_ERROR_INDEX();
+        self.scope_index = DI_ERROR_INDEX();
+        self.impl_debug_info.clear();
     }
 }
 
@@ -41,46 +41,46 @@ impl DWARF_status {
     func generate_DI_location_key(self, loc: span&) -> str {
         var loc_str = loc.to_string();
         loc_str.append("@");
-        loc_str.append_u64(self->scope_index);
+        loc_str.append_u64(self.scope_index);
         return loc_str;
     }
 
     pub func has_DI_location(self, loc: span&) -> bool {
-        var loc_str = self->generate_DI_location_key(loc);
+        var loc_str = self.generate_DI_location_key(loc);
         defer loc_str.delete();
 
-        var res = self->locations.has(loc_str.__ptr__());
+        var res = self.locations.has(loc_str.__ptr__());
         return res;
     }
 
     pub func get_DI_location_index(self, loc: span&) -> u64 {
-        var loc_str = self->generate_DI_location_key(loc);
+        var loc_str = self.generate_DI_location_key(loc);
         defer loc_str.delete();
 
-        var res = self->locations.get(loc_str.__ptr__());
+        var res = self.locations.get(loc_str.__ptr__());
         return res;
     }
 
     pub func new_DI_location(self, loc: span&) -> DI_node* {
-        var loc_str = self->generate_DI_location_key(loc);
+        var loc_str = self.generate_DI_location_key(loc);
         defer loc_str.delete();
 
-        var index = self->DI_counter;
+        var index = self.DI_counter;
         var dwarf_loc = DI_location::new(
             index,
             loc.file.c_str,
             loc.begin_line + 1,
             loc.begin_column + 1,
-            self->scope_index
+            self.scope_index
         );
 
         // check if location already exists, we should try out best to avoid duplicates
-        if (self->locations.has(loc_str.__ptr__())) {
+        if (self.locations.has(loc_str.__ptr__())) {
             panic("DWARF_status::new_DI_location: location already exists");
         }
 
-        self->locations.insert(loc_str.__ptr__(), index);
-        self->DI_counter += 1;
+        self.locations.insert(loc_str.__ptr__(), index);
+        self.DI_counter += 1;
         return dwarf_loc;
     }
 }

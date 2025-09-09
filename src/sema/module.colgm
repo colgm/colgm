@@ -45,82 +45,82 @@ impl colgm_module {
     }
 
     pub func delete(self) {
-        self->file_name.delete();
-        self->enums.delete();
-        self->structs.delete();
-        self->tagged_unions.delete();
-        self->functions.delete();
-        self->generic_structs.delete();
-        self->generic_functions.delete();
-        self->global_symbol.delete();
-        self->generic_symbol.delete();
+        self.file_name.delete();
+        self.enums.delete();
+        self.structs.delete();
+        self.tagged_unions.delete();
+        self.functions.delete();
+        self.generic_structs.delete();
+        self.generic_functions.delete();
+        self.global_symbol.delete();
+        self.generic_symbol.delete();
     }
 
     pub func clone(self) -> colgm_module {
         return colgm_module {
-            file_name: self->file_name.clone(),
-            enums: self->enums.clone(),
-            structs: self->structs.clone(),
-            tagged_unions: self->tagged_unions.clone(),
-            functions: self->functions.clone(),
-            generic_structs: self->generic_structs.clone(),
-            generic_functions: self->generic_functions.clone(),
-            global_symbol: self->global_symbol.clone(),
-            generic_symbol: self->generic_symbol.clone()
+            file_name: self.file_name.clone(),
+            enums: self.enums.clone(),
+            structs: self.structs.clone(),
+            tagged_unions: self.tagged_unions.clone(),
+            functions: self.functions.clone(),
+            generic_structs: self.generic_structs.clone(),
+            generic_functions: self.generic_functions.clone(),
+            global_symbol: self.global_symbol.clone(),
+            generic_symbol: self.generic_symbol.clone()
         };
     }
 }
 
 impl colgm_module {
     pub func has_symbol(self) -> bool {
-        return self->enums.size > 0 ||
-               self->structs.size > 0 ||
-               self->tagged_unions.size > 0 ||
-               self->functions.size > 0 ||
-               self->generic_structs.size > 0 ||
-               self->generic_functions.size > 0;
+        return self.enums.size > 0 ||
+               self.structs.size > 0 ||
+               self.tagged_unions.size > 0 ||
+               self.functions.size > 0 ||
+               self.generic_structs.size > 0 ||
+               self.generic_functions.size > 0;
     }
 
     pub func dump(self, out: io, pkg: package*) {
         out.cyan().out("domain ").reset();
-        out.white().out(self->file_name.c_str).reset();
-        if (!self->has_symbol()) {
+        out.white().out(self.file_name.c_str).reset();
+        if (!self.has_symbol()) {
             out.out(" contains 0 symbol\n");
             return;
         }
         out.out(":\n");
-        if (self->enums.size > 0) {
-            foreach (var i; self->enums) {
+        if (self.enums.size > 0) {
+            foreach (var i; self.enums) {
                 i.value()->dump(out);
             }
         }
 
-        if (self->structs.size > 0) {
-            foreach (var i; self->structs) {
+        if (self.structs.size > 0) {
+            foreach (var i; self.structs) {
                 i.value()->dump(out, pkg);
             }
         }
 
-        if (self->generic_structs.size > 0) {
-            foreach (var i; self->generic_structs) {
+        if (self.generic_structs.size > 0) {
+            foreach (var i; self.generic_structs) {
                 i.value()->dump(out, pkg);
             }
         }
 
-        if (self->tagged_unions.size > 0) {
-            foreach (var i; self->tagged_unions) {
+        if (self.tagged_unions.size > 0) {
+            foreach (var i; self.tagged_unions) {
                 i.value()->dump(out, pkg);
             }
         }
 
-        if (self->functions.size > 0) {
-            foreach (var i; self->functions) {
+        if (self.functions.size > 0) {
+            foreach (var i; self.functions) {
                 i.value()->dump(out, pkg, "");
             }
         }
 
-        if (self->generic_functions.size > 0) {
-            foreach (var i; self->generic_functions) {
+        if (self.generic_functions.size > 0) {
+            foreach (var i; self.generic_functions) {
                 i.value()->dump(out, pkg, "");
             }
         }

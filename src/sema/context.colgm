@@ -33,21 +33,21 @@ impl global_symbol_table {
     }
 
     pub func delete(self) {
-        self->main_input_file.delete();
-        self->constant_string.delete();
-        self->primitives.delete();
-        self->domain.delete();
+        self.main_input_file.delete();
+        self.constant_string.delete();
+        self.primitives.delete();
+        self.domain.delete();
     }
 
     pub func create_domain_if_not_exist(self, name: str*) {
-        if (self->domain.has(name)) {
+        if (self.domain.has(name)) {
             return;
         }
 
         var res = colgm_module::instance();
         defer res.delete();
 
-        self->domain.insert(name, res.__ptr__());
+        self.domain.insert(name, res.__ptr__());
     }
 }
 
@@ -67,15 +67,15 @@ impl local_variable {
     }
 
     pub func delete(self) {
-        self->type.delete();
-        self->location.delete();
+        self.type.delete();
+        self.location.delete();
     }
 
     pub func clone(self) -> local_variable {
         return local_variable {
-            type: self->type.clone(),
-            location: self->location.clone(),
-            used: self->used
+            type: self.type.clone(),
+            location: self.location.clone(),
+            used: self.used
         };
     }
 }
@@ -93,11 +93,11 @@ impl sema_context {
         var res = hashmap<str, local_variable>::instance();
         defer res.delete();
 
-        self->local_scope.push(res.__ptr__());
+        self.local_scope.push(res.__ptr__());
     }
 
     pub func pop_scope_level(self, err: report*) {
-        foreach (var v; self->local_scope.back()) {
+        foreach (var v; self.local_scope.back()) {
             var name = v.key();
             var lv = v.value();
             if (lv->used) {
@@ -108,58 +108,58 @@ impl sema_context {
             }
             err->report_unused_variable(lv->location.__ptr__(), name->c_str);
         }
-        self->local_scope.pop_back();
+        self.local_scope.pop_back();
     }
 
     pub func add_local_var(self, name: str*, t: type*, loc: span*) {
         var lv = local_variable::instance(t, loc);
         defer lv.delete();
         
-        self->local_scope.back()->insert(name, lv.__ptr__());
+        self.local_scope.back()->insert(name, lv.__ptr__());
     }
 
     pub func add_var_used(self, name: str*) {
-        if (self->local_scope.empty()) {
+        if (self.local_scope.empty()) {
             return;
         }
-        for (var i = self->local_scope.size - 1; (i => i64) >= 0; i -= 1) {
-            if (self->local_scope.get(i)->has(name)) {
-                self->local_scope.get(i)->get(name)->used = true;
+        for (var i = self.local_scope.size - 1; (i => i64) >= 0; i -= 1) {
+            if (self.local_scope.get(i)->has(name)) {
+                self.local_scope.get(i)->get(name)->used = true;
                 return;
             }
         }
     }
 
     pub func get_local(self, name: str*) -> type* {
-        if (self->local_scope.empty()) {
+        if (self.local_scope.empty()) {
             return nil;
         }
-        for (var i = self->local_scope.size - 1; (i => i64) >= 0; i -= 1) {
-            if (self->local_scope.get(i)->has(name)) {
-                return self->local_scope.get(i)->get(name)->type.__ptr__();
+        for (var i = self.local_scope.size - 1; (i => i64) >= 0; i -= 1) {
+            if (self.local_scope.get(i)->has(name)) {
+                return self.local_scope.get(i)->get(name)->type.__ptr__();
             }
         }
         return nil;
     }
 
     pub func get_local_def_location(self, name: str*) -> span* {
-        if (self->local_scope.empty()) {
+        if (self.local_scope.empty()) {
             return nil;
         }
-        for (var i = self->local_scope.size - 1; (i => i64) >= 0; i -= 1) {
-            if (self->local_scope.get(i)->has(name)) {
-                return self->local_scope.get(i)->get(name)->location.__ptr__();
+        for (var i = self.local_scope.size - 1; (i => i64) >= 0; i -= 1) {
+            if (self.local_scope.get(i)->has(name)) {
+                return self.local_scope.get(i)->get(name)->location.__ptr__();
             }
         }
         return nil;
     }
 
     pub func find_local(self, name: str*) -> bool {
-        if (self->local_scope.empty()) {
+        if (self.local_scope.empty()) {
             return false;
         }
-        for (var i = self->local_scope.size - 1; (i => i64) >= 0; i -= 1) {
-            if (self->local_scope.get(i)->has(name)) {
+        for (var i = self.local_scope.size - 1; (i => i64) >= 0; i -= 1) {
+            if (self.local_scope.get(i)->has(name)) {
                 return true;
             }
         }
@@ -169,13 +169,13 @@ impl sema_context {
 
 impl sema_context {
     pub func global_symbol(self) -> hashmap<str, symbol_info>* {
-        return self->get_domain(self->this_file.__ptr__())
+        return self.get_domain(self.this_file.__ptr__())
                    ->global_symbol
                    .__ptr__();
     }
 
     pub func generic_symbol(self) -> hashmap<str, symbol_info>* {
-        return self->get_domain(self->this_file.__ptr__())
+        return self.get_domain(self.this_file.__ptr__())
                    ->generic_symbol
                    .__ptr__();
     }
@@ -193,14 +193,14 @@ impl sema_context {
     }
 
     pub func delete(self) {
-        self->this_file.delete();
-        self->generics.delete();
-        self->constant_string.delete();
-        self->local_scope.delete();
+        self.this_file.delete();
+        self.generics.delete();
+        self.constant_string.delete();
+        self.local_scope.delete();
     }
 
     pub func dump(self, out: io, pkg: package*) {
-        var gt = self->global;
+        var gt = self.global;
         if (gt->primitives.size > 0) {
             out.cyan().out("primitives:\n").reset();
         }
@@ -218,16 +218,16 @@ impl sema_context {
 
 impl sema_context {
     pub func create_domain_if_not_exist(self, name: str*) {
-        self->global->create_domain_if_not_exist(name);
+        self.global->create_domain_if_not_exist(name);
     }
 
     pub func has_domain(self, name: str*) -> bool {
-        return self->global->domain.has(name);
+        return self.global->domain.has(name);
     }
 
     pub func get_domain(self, name: str*) -> colgm_module* {
-        if (self->has_domain(name)) {
-            return self->global->domain.get(name);
+        if (self.has_domain(name)) {
+            return self.global->domain.get(name);
         }
 
         panic("domain does not exist");

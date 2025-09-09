@@ -30,19 +30,19 @@ impl colgm_enum {
     }
 
     pub func delete(self) {
-        self->name.delete();
-        self->location.delete();
-        self->ordered_member.delete();
-        self->members.delete();
+        self.name.delete();
+        self.location.delete();
+        self.ordered_member.delete();
+        self.members.delete();
     }
 
     pub func clone(self) ->colgm_enum {
         return colgm_enum {
-            name: self->name.clone(),
-            location: self->location.clone(),
-            ordered_member: self->ordered_member.clone(),
-            members: self->members.clone(),
-            is_public: self->is_public
+            name: self.name.clone(),
+            location: self.location.clone(),
+            ordered_member: self.ordered_member.clone(),
+            members: self.members.clone(),
+            is_public: self.is_public
         };
     }
 }
@@ -50,19 +50,19 @@ impl colgm_enum {
 impl colgm_enum {
     pub func dump(self, out: io) {
         out.out("  ");
-        if (self->is_public) {
+        if (self.is_public) {
             out.green().out("pub ").reset();
         }
         out.cyan().out("enum ").reset();
-        out.white().out(self->name.c_str).reset();
-        if (self->ordered_member.empty()) {
+        out.white().out(self.name.c_str).reset();
+        if (self.ordered_member.empty()) {
             out.out(" {}\n");
             return;
         }
         out.out(" {\n");
-        foreach (var i; self->ordered_member) {
+        foreach (var i; self.ordered_member) {
             out.out("    ").out(i.get()->c_str).out(": ");
-            var v = self->members.get(i.get());
+            var v = self.members.get(i.get());
             out.orange().out_i64(v).reset().out("\n");
         }
         out.out("  }\n");

@@ -27,23 +27,23 @@ impl list_iter<T> {
     }
 
     pub func is_end(self) -> bool {
-        return self->current == nil;
+        return self.current == nil;
     }
 
     #[is_non_trivial(T)]
     pub func elem(self) -> T* {
-        return self->current->elem.__ptr__();
+        return self.current->elem.__ptr__();
     }
 
     #[is_trivial(T)]
     pub func elem(self) -> T {
-        return self->current->elem;
+        return self.current->elem;
     }
 
     pub func next(self) -> list_iter<T> {
         return list_iter<T> {
-            list: self->list,
-            current: self->current->next
+            list: self.list,
+            current: self.current->next
         };
     }
 }
@@ -70,37 +70,37 @@ impl list<T> {
 
     #[is_non_trivial(T)]
     pub func delete(self) {
-        var curr = self->head;
+        var curr = self.head;
         while (curr != nil) {
             var next = curr->next;
             curr->elem.delete();
             free(curr => i8*);
             curr = next;
         }
-        self->head = nil;
-        self->tail = nil;
-        self->size = 0;
+        self.head = nil;
+        self.tail = nil;
+        self.size = 0;
     }
 
     #[is_trivial(T)]
     pub func delete(self) {
-        var curr = self->head;
+        var curr = self.head;
         while (curr != nil) {
             var next = curr->next;
             free(curr => i8*);
             curr = next;
         }
-        self->head = nil;
-        self->tail = nil;
-        self->size = 0;
+        self.head = nil;
+        self.tail = nil;
+        self.size = 0;
     }
 
     pub func clear(self) {
-        self->delete();
+        self.delete();
     }
 
     pub func empty(self) -> bool {
-        return self->size == 0;
+        return self.size == 0;
     }
 
     #[is_non_trivial(T)]
@@ -111,16 +111,16 @@ impl list<T> {
         }
         new_node->elem = elem->clone();
         new_node->next = nil;
-        new_node->prev = self->tail;
+        new_node->prev = self.tail;
 
-        if (self->tail != nil) {
-            self->tail->next = new_node;
+        if (self.tail != nil) {
+            self.tail->next = new_node;
         } else {
-            self->head = new_node;
+            self.head = new_node;
         }
 
-        self->tail = new_node;
-        self->size += 1;
+        self.tail = new_node;
+        self.size += 1;
     }
 
     #[is_trivial(T)]
@@ -131,88 +131,88 @@ impl list<T> {
         }
         new_node->elem = elem;
         new_node->next = nil;
-        new_node->prev = self->tail;
+        new_node->prev = self.tail;
 
-        if (self->tail != nil) {
-            self->tail->next = new_node;
+        if (self.tail != nil) {
+            self.tail->next = new_node;
         } else {
-            self->head = new_node;
+            self.head = new_node;
         }
 
-        self->tail = new_node;
-        self->size += 1;
+        self.tail = new_node;
+        self.size += 1;
         return;
     }
 
     #[is_non_trivial(T)]
     pub func push_back(self, elem: T*) {
-        self->insert(elem);
+        self.insert(elem);
     }
 
     #[is_trivial(T)]
     pub func push_back(self, elem: T) {
-        self->insert(elem);
+        self.insert(elem);
     }
 
     #[is_non_trivial(T)]
     pub func pop_front(self) {
-        if (self->head == nil) {
+        if (self.head == nil) {
             return;
         }
 
-        if (self->head == self->tail) {
-            self->head->elem.delete();
-            free(self->head => i8*);
-            self->head = nil;
-            self->tail = nil;
+        if (self.head == self.tail) {
+            self.head->elem.delete();
+            free(self.head => i8*);
+            self.head = nil;
+            self.tail = nil;
         } else {
-            var next = self->head->next;
-            self->head->elem.delete();
-            free(self->head => i8*);
+            var next = self.head->next;
+            self.head->elem.delete();
+            free(self.head => i8*);
             next->prev = nil;
-            self->head = next;
+            self.head = next;
         }
 
-        self->size -= 1;
+        self.size -= 1;
     }
 
     #[is_trivial(T)]
     pub func pop_front(self) {
-        if (self->head == nil) {
+        if (self.head == nil) {
             return;
         }
 
-        if (self->head == self->tail) {
-            free(self->head => i8*);
-            self->head = nil;
-            self->tail = nil;
+        if (self.head == self.tail) {
+            free(self.head => i8*);
+            self.head = nil;
+            self.tail = nil;
         } else {
-            var next = self->head->next;
-            free(self->head => i8*);
-            self->head = next;
+            var next = self.head->next;
+            free(self.head => i8*);
+            self.head = next;
             next->prev = nil;
         }
 
-        self->size -= 1;
+        self.size -= 1;
     }
 
     #[is_non_trivial(T)]
     pub func front(self) -> T* {
-        if (self->head == nil) {
+        if (self.head == nil) {
             panic("list is empty");
         }
-        return self->head->elem.__ptr__();
+        return self.head->elem.__ptr__();
     }
 
     #[is_trivial(T)]
     pub func front(self) -> T {
-        if (self->head == nil) {
+        if (self.head == nil) {
             panic("list is empty");
         }
-        return self->head->elem;
+        return self.head->elem;
     }
 
     pub func iter(self) -> list_iter<T> {
-        return list_iter<T>::instance(self);
+        return list_iter<T>::instance(self.__ptr__());
     }
 }

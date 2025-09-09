@@ -58,8 +58,8 @@ impl vec<T> {
     #[is_non_trivial(T)]
     pub func clone(self) -> vec<T> {
         var res = vec<T>::instance();
-        for (var i: u64 = 0; i < self->size; i += 1) {
-            res.push(self->data[i].__ptr__());
+        for (var i: u64 = 0; i < self.size; i += 1) {
+            res.push(self.data[i].__ptr__());
         }
         return res;
     }
@@ -67,143 +67,143 @@ impl vec<T> {
     #[is_trivial(T)]
     pub func clone(self) -> vec<T> {
         var res = vec<T>::instance();
-        for (var i: u64 = 0; i < self->size; i += 1) {
-            res.push(self->data[i]);
+        for (var i: u64 = 0; i < self.size; i += 1) {
+            res.push(self.data[i]);
         }
         return res;
     }
 
     #[is_non_trivial(T)]
     pub func clear(self) {
-        for (var i: u64 = 0; i < self->size; i += 1) {
-            self->data[i].delete();
+        for (var i: u64 = 0; i < self.size; i += 1) {
+            self.data[i].delete();
         }
-        self->size = 0;
+        self.size = 0;
     }
 
     #[is_trivial(T)]
     pub func clear(self) {
-        self->size = 0;
+        self.size = 0;
     }
 
     #[is_non_trivial(T)]
     pub func delete(self) {
-        for (var i: u64 = 0; i < self->size; i += 1) {
-            self->data[i].delete();
+        for (var i: u64 = 0; i < self.size; i += 1) {
+            self.data[i].delete();
         }
-        free(self->data => i8*);
-        self->data = nil;
-        self->size = 0;
-        self->capacity = 0;
+        free(self.data => i8*);
+        self.data = nil;
+        self.size = 0;
+        self.capacity = 0;
     }
 
     #[is_trivial(T)]
     pub func delete(self) {
-        free(self->data => i8*);
-        self->data = nil;
-        self->size = 0;
-        self->capacity = 0;
+        free(self.data => i8*);
+        self.data = nil;
+        self.size = 0;
+        self.capacity = 0;
     }
 
     pub func empty(self) -> bool {
-        return self->size == 0;
+        return self.size == 0;
     }
 
     #[is_non_pointer(T)]
     func extend_capacity(self) {
-        self->capacity *= 2;
-        self->data = realloc(
-            self->data => i8*,
-            self->capacity * T::__size__()
+        self.capacity *= 2;
+        self.data = realloc(
+            self.data => i8*,
+            self.capacity * T::__size__()
         ) => T*;
     }
 
     #[is_pointer(T)]
     func extend_capacity(self) {
-        self->capacity *= 2;
-        self->data = realloc(
-            self->data => i8*,
-            self->capacity * __ptr_size()
+        self.capacity *= 2;
+        self.data = realloc(
+            self.data => i8*,
+            self.capacity * __ptr_size()
         ) => T*;
     }
 
     #[is_non_trivial(T)]
     pub func push(self, item: T*) {
-        if (self->size >= self->capacity) {
-            self->extend_capacity();
+        if (self.size >= self.capacity) {
+            self.extend_capacity();
         }
-        self->data[self->size] = item->clone();
-        self->size += 1;
+        self.data[self.size] = item->clone();
+        self.size += 1;
     }
 
     #[is_trivial(T)]
     pub func push(self, item: T) {
-        if (self->size >= self->capacity) {
-            self->extend_capacity();
+        if (self.size >= self.capacity) {
+            self.extend_capacity();
         }
-        self->data[self->size] = item;
-        self->size += 1;
+        self.data[self.size] = item;
+        self.size += 1;
     }
 
     #[is_non_trivial(T)]
     pub func pop_back(self) {
-        if (self->size == 0) {
+        if (self.size == 0) {
             return;
         }
-        self->size -= 1;
-        self->data[self->size].delete();
+        self.size -= 1;
+        self.data[self.size].delete();
     }
 
     #[is_trivial(T)]
     pub func pop_back(self) {
-        if (self->size == 0) {
+        if (self.size == 0) {
             panic("empty vector");
         }
-        self->size -= 1;
+        self.size -= 1;
     }
 
     #[is_non_trivial(T)]
     pub func back(self) -> T* {
-        if (self->size == 0) {
+        if (self.size == 0) {
             panic("empty vector");
         }
-        return self->data[self->size - 1].__ptr__();
+        return self.data[self.size - 1].__ptr__();
     }
 
     #[is_trivial(T)]
     pub func back(self) -> T {
-        if (self->size == 0) {
+        if (self.size == 0) {
             panic("empty vector");
         }
-        return self->data[self->size - 1];
+        return self.data[self.size - 1];
     }
 
     #[is_non_trivial(T)]
     pub func get(self, index: u64) -> T* {
-        if (index >= self->size) {
+        if (index >= self.size) {
             panic("index out of bounds");
         }
-        return self->data[index].__ptr__();
+        return self.data[index].__ptr__();
     }
 
     #[is_trivial(T)]
     pub func get(self, index: u64) -> T {
-        if (index >= self->size) {
+        if (index >= self.size) {
             panic("index out of bounds");
         }
-        return self->data[index];
+        return self.data[index];
     }
 
     pub func c_data(self) -> T* {
-        return self->data;
+        return self.data;
     }
 
     pub func iter(self) -> iter<T> {
-        return iter<T>::instance(self);
+        return iter<T>::instance(self.__ptr__());
     }
 
     pub func iter_size(self) -> u64 {
-        return self->size;
+        return self.size;
     }
 }
 
@@ -221,33 +221,33 @@ impl iter<T> {
     }
 
     pub func is_end(self) -> bool {
-        return self->_index >= self->_vec->size;
+        return self._index >= self._vec->size;
     }
 
     pub func next(self) -> iter<T> {
-        if (self->_index >= self->_vec->size) {
+        if (self._index >= self._vec->size) {
             return iter<T> {
-                _vec: self->_vec,
-                _index: self->_index
+                _vec: self._vec,
+                _index: self._index
             };
         }
         return iter<T> {
-            _vec: self->_vec,
-            _index: self->_index + 1
+            _vec: self._vec,
+            _index: self._index + 1
         };
     }
 
     #[is_non_trivial(T)]
     pub func get(self) -> T* {
-        return self->_vec->get(self->_index);
+        return self._vec->get(self._index);
     }
 
     #[is_trivial(T)]
     pub func get(self) -> T {
-        return self->_vec->get(self->_index);
+        return self._vec->get(self._index);
     }
 
     pub func index(self) -> u64 {
-        return self->_index;
+        return self._index;
     }
 }

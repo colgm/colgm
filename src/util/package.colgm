@@ -24,13 +24,13 @@ impl package_info {
     }
 
     pub func delete(self) {
-        self->path.delete();
+        self.path.delete();
     }
 
     pub func clone(self) -> package_info {
         return  package_info {
-            path: self->path.clone(),
-            status: self->status
+            path: self.path.clone(),
+            status: self.status
         };
     }
 }
@@ -53,58 +53,58 @@ impl package {
     }
 
     pub func delete(self) {
-        self->library_path.delete();
-        self->file_mapper.delete();
-        self->file_to_module.delete();
-        self->module_to_file.delete();
+        self.library_path.delete();
+        self.file_mapper.delete();
+        self.file_to_module.delete();
+        self.module_to_file.delete();
     }
 
     pub func insert(self, module_name: str&, file_path: str&) {
-        if (self->file_mapper.has(module_name.__ptr__())) {
+        if (self.file_mapper.has(module_name.__ptr__())) {
             return;
         }
 
         var info = package_info::instance(file_path, p_status::not_used);
         defer info.delete();
 
-        self->file_mapper.insert(module_name.__ptr__(), info.__ptr__());
-        self->file_to_module.insert(file_path.__ptr__(), module_name.__ptr__());
-        self->module_to_file.insert(module_name.__ptr__(), file_path.__ptr__());
+        self.file_mapper.insert(module_name.__ptr__(), info.__ptr__());
+        self.file_to_module.insert(file_path.__ptr__(), module_name.__ptr__());
+        self.module_to_file.insert(module_name.__ptr__(), file_path.__ptr__());
     }
 
     pub func get_status(self, name: str&) -> p_status {
-        if (!self->file_mapper.has(name.__ptr__())) {
+        if (!self.file_mapper.has(name.__ptr__())) {
             return p_status::not_exist;
         }
-        return self->file_mapper.get(name.__ptr__())->status;
+        return self.file_mapper.get(name.__ptr__())->status;
     }
 
     pub func get_package_info(self, name: str&) -> package_info* {
-        if (!self->file_mapper.has(name.__ptr__())) {
+        if (!self.file_mapper.has(name.__ptr__())) {
             panic("package info not found");
         }
-        return self->file_mapper.get(name.__ptr__());
+        return self.file_mapper.get(name.__ptr__());
     }
 
     pub func has_file(self, file_path: str&) -> bool {
-        return self->file_to_module.has(file_path.__ptr__());
+        return self.file_to_module.has(file_path.__ptr__());
     }
 
     pub func has_module(self, module_name: str&) -> bool {
-        return self->module_to_file.has(module_name.__ptr__());
+        return self.module_to_file.has(module_name.__ptr__());
     }
 
     pub func get_file_path(self, module_name: str&) -> str* {
-        if (!self->module_to_file.has(module_name.__ptr__())) {
+        if (!self.module_to_file.has(module_name.__ptr__())) {
             panic("file path not found");
         }
-        return self->module_to_file.get(module_name.__ptr__());
+        return self.module_to_file.get(module_name.__ptr__());
     }
 
     pub func get_module_name(self, file_path: str&) -> str* {
-        if (!self->file_to_module.has(file_path.__ptr__())) {
+        if (!self.file_to_module.has(file_path.__ptr__())) {
             panic("module name not found");
         }
-        return self->file_to_module.get(file_path.__ptr__());
+        return self.file_to_module.get(file_path.__ptr__());
     }
 }

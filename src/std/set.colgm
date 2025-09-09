@@ -35,37 +35,37 @@ impl hashset<T> {
     }
 
     func init(self) {
-        self->size = 0;
-        self->bucket_capacity = 16;
-        self->bucket = malloc(self->bucket_capacity * list<T>::__size__()) => list<T>*;
-        for (var i: u64 = 0; i < self->bucket_capacity; i += 1) {
-            self->bucket[i] = list<T>::instance();
+        self.size = 0;
+        self.bucket_capacity = 16;
+        self.bucket = malloc(self.bucket_capacity * list<T>::__size__()) => list<T>*;
+        for (var i: u64 = 0; i < self.bucket_capacity; i += 1) {
+            self.bucket[i] = list<T>::instance();
         }
     }
 
     pub func delete(self) {
-        for (var i: u64 = 0; i < self->bucket_capacity; i += 1) {
-            self->bucket[i].delete();
+        for (var i: u64 = 0; i < self.bucket_capacity; i += 1) {
+            self.bucket[i].delete();
         }
-        free(self->bucket => i8*);
-        self->size = 0;
-        self->bucket_capacity = 0;
-        self->bucket = nil;
+        free(self.bucket => i8*);
+        self.size = 0;
+        self.bucket_capacity = 0;
+        self.bucket = nil;
     }
 
     pub func clear(self) {
-        for (var i: u64 = 0; i < self->bucket_capacity; i += 1) {
-            self->bucket[i].clear();
+        for (var i: u64 = 0; i < self.bucket_capacity; i += 1) {
+            self.bucket[i].clear();
         }
-        self->size = 0;
+        self.size = 0;
     }
 }
 
 impl hashset<T> {
     #[is_non_trivial(T)]
     pub func has(self, item: T*) -> bool {
-        var hash = item->hash() % self->bucket_capacity;
-        var bucket = self->bucket[hash].__ptr__();
+        var hash = item->hash() % self.bucket_capacity;
+        var bucket = self.bucket[hash].__ptr__();
         var tmp = bucket->head;
         while (tmp != nil) {
             if (tmp->elem.eq(item)) {
@@ -78,8 +78,8 @@ impl hashset<T> {
 
     #[is_trivial(T)]
     pub func has(self, item: T) -> bool {
-        var hash = item.hash() % self->bucket_capacity;
-        var bucket = self->bucket[hash].__ptr__();
+        var hash = item.hash() % self.bucket_capacity;
+        var bucket = self.bucket[hash].__ptr__();
         var tmp = bucket->head;
         while (tmp != nil) {
             if (tmp->elem.eq(item)) {
@@ -91,15 +91,15 @@ impl hashset<T> {
     }
 
     pub func empty(self) -> bool {
-        return self->size == 0;
+        return self.size == 0;
     }
 
     #[is_non_trivial(T)]
     pub func insert(self, item: T*) {
-        var hash = item->hash() % self->bucket_capacity;
+        var hash = item->hash() % self.bucket_capacity;
         // must use pointer/reference, otherwise changes will not
         // be reflected in the hashset
-        var bucket = self->bucket[hash].__ptr__();
+        var bucket = self.bucket[hash].__ptr__();
         var tmp = bucket->head;
         while (tmp != nil) {
             if (tmp->elem.eq(item)) {
@@ -108,19 +108,19 @@ impl hashset<T> {
             tmp = tmp->next;
         }
         bucket->insert(item);
-        self->size += 1;
+        self.size += 1;
 
-        if (self->size / self->bucket_capacity > 8) {
-            self->rehash();
+        if (self.size / self.bucket_capacity > 8) {
+            self.rehash();
         }
     }
 
     #[is_trivial(T)]
     pub func insert(self, item: T) {
-        var hash = item.hash() % self->bucket_capacity;
+        var hash = item.hash() % self.bucket_capacity;
         // must use pointer/reference, otherwise changes will not
         // be reflected in the hashset
-        var bucket = self->bucket[hash].__ptr__();
+        var bucket = self.bucket[hash].__ptr__();
         var tmp = bucket->head;
         while (tmp != nil) {
             if (tmp->elem.eq(item)) {
@@ -129,10 +129,10 @@ impl hashset<T> {
             tmp = tmp->next;
         }
         bucket->insert(item);
-        self->size += 1;
+        self.size += 1;
 
-        if (self->size / self->bucket_capacity > 8) {
-            self->rehash();
+        if (self.size / self.bucket_capacity > 8) {
+            self.rehash();
         }
     }
 
@@ -142,26 +142,26 @@ impl hashset<T> {
             temp.insert(i.elem());
         }
 
-        self->clear();
-        self->bucket_capacity *= 2;
-        self->bucket = realloc(
-            self->bucket => i8*,
-            self->bucket_capacity *
+        self.clear();
+        self.bucket_capacity *= 2;
+        self.bucket = realloc(
+            self.bucket => i8*,
+            self.bucket_capacity *
             list<T>::__size__()
         ) => list<T>*;
-        for (var i = self->bucket_capacity / 2; i < self->bucket_capacity; i += 1) {
-            self->bucket[i] = list<T>::instance();
+        for (var i = self.bucket_capacity / 2; i < self.bucket_capacity; i += 1) {
+            self.bucket[i] = list<T>::instance();
         }
 
         return temp;
     }
 
     func rehash(self) {
-        var temp = self->rehash_pre_work();
+        var temp = self.rehash_pre_work();
         defer temp.delete();
 
         foreach (var i; temp) {
-            self->insert(i.elem());
+            self.insert(i.elem());
         }
     }
 }
@@ -191,43 +191,43 @@ impl iter<T> {
     }
 
     pub func is_end(self) -> bool {
-        return self->bucket_index >= self->set->bucket_capacity &&
-               self->bucket_iter.is_end();
+        return self.bucket_index >= self.set->bucket_capacity &&
+               self.bucket_iter.is_end();
     }
 
     #[is_non_trivial(T)]
     pub func elem(self) -> T* {
-        return self->bucket_iter.elem();
+        return self.bucket_iter.elem();
     }
 
     #[is_trivial(T)]
     pub func elem(self) -> T {
-        return self->bucket_iter.elem();
+        return self.bucket_iter.elem();
     }
 
     pub func next(self) -> iter<T> {
-        if (!self->bucket_iter.is_end()) {
-            self->bucket_iter = self->bucket_iter.next();
+        if (!self.bucket_iter.is_end()) {
+            self.bucket_iter = self.bucket_iter.next();
         }
 
-        while (self->bucket_iter.is_end()) {
-            self->bucket_index += 1;
-            if (self->bucket_index >= self->set->bucket_capacity) {
+        while (self.bucket_iter.is_end()) {
+            self.bucket_index += 1;
+            if (self.bucket_index >= self.set->bucket_capacity) {
                 break;
             }
-            self->bucket_iter = self->set->bucket[self->bucket_index].iter();
+            self.bucket_iter = self.set->bucket[self.bucket_index].iter();
         }
 
         return iter<T> {
-            set: self->set,
-            bucket_index: self->bucket_index,
-            bucket_iter: self->bucket_iter,
+            set: self.set,
+            bucket_index: self.bucket_index,
+            bucket_iter: self.bucket_iter,
         };
     }
 }
 
 impl hashset<T> {
     pub func iter(self) -> iter<T> {
-        return iter<T>::instance(self);
+        return iter<T>::instance(self.__ptr__());
     }
 }

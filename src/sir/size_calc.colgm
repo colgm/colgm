@@ -31,14 +31,14 @@ impl size_calc {
     }
 
     pub func delete(self) {
-        self->struct_mapper.delete();
-        self->tagged_union_mapper.delete();
+        self.struct_mapper.delete();
+        self.tagged_union_mapper.delete();
     }
 }
 
 impl size_calc {
     func get_size_align(self, t: type*) -> size_align_pair {
-        var name = t->full_path_name(self->pkg);
+        var name = t->full_path_name(self.pkg);
         defer name.delete();
 
         var field_size: u64 = 0;
@@ -52,17 +52,17 @@ impl size_calc {
             // pointer array, set base size here
             field_size = __ptr_size();
             alignment = __ptr_size();
-        } else if (self->struct_mapper.has(name.__ptr__())) {
-            var st = self->struct_mapper.get(name.__ptr__());
+        } else if (self.struct_mapper.has(name.__ptr__())) {
+            var st = self.struct_mapper.get(name.__ptr__());
             if (!st->size_calculated) {
-                self->calculate_single_struct_size(st);
+                self.calculate_single_struct_size(st);
             }
             field_size = st->size;
             alignment = st->align;
-        } else if (self->tagged_union_mapper.has(name.__ptr__())) {
-            var un = self->tagged_union_mapper.get(name.__ptr__());
+        } else if (self.tagged_union_mapper.has(name.__ptr__())) {
+            var un = self.tagged_union_mapper.get(name.__ptr__());
             if (!un->size_calculated) {
-                self->calculate_single_tagged_union_size(un);
+                self.calculate_single_tagged_union_size(un);
             }
             field_size = un->total_size;
             alignment = un->align;
@@ -126,7 +126,7 @@ impl size_calc {
         var offset: u64 = 0;
         var max_align: u64 = 1;
         foreach (var i; s->field_type) {
-            var res = self->get_size_align(i.get());
+            var res = self.get_size_align(i.get());
 
             if (res.align > max_align) {
                 max_align = res.align;
@@ -170,7 +170,7 @@ impl size_calc {
         var max_size: u64 = 0;
         var max_align: u64 = 1;
         foreach (var i; u->member_type) {
-            var res = self->get_size_align(i.get());
+            var res = self.get_size_align(i.get());
 
             if (res.size > max_size) {
                 max_size = res.size;
@@ -208,43 +208,43 @@ impl size_calc {
         var ts = maketimestamp();
         ts.stamp();
 
-        self->struct_mapper.clear();
-        self->tagged_union_mapper.clear();
+        self.struct_mapper.clear();
+        self.tagged_union_mapper.clear();
         foreach (var i; mctx->structs) {
             var s_ty = type::instance(i.get()->name.c_str, i.get()->location.file.c_str);
             defer s_ty.delete();
 
-            var s_full_name = s_ty.full_path_name(self->pkg);
+            var s_full_name = s_ty.full_path_name(self.pkg);
             defer s_full_name.delete();
 
-            self->struct_mapper.insert(s_full_name.__ptr__(), i.get());
+            self.struct_mapper.insert(s_full_name.__ptr__(), i.get());
         }
         foreach (var i; mctx->tagged_unions) {
             var s_ty = type::instance(i.get()->name.c_str, i.get()->location.file.c_str);
             defer s_ty.delete();
 
-            var s_full_name = s_ty.full_path_name(self->pkg);
+            var s_full_name = s_ty.full_path_name(self.pkg);
             defer s_full_name.delete();
 
-            self->tagged_union_mapper.insert(s_full_name.__ptr__(), i.get());
+            self.tagged_union_mapper.insert(s_full_name.__ptr__(), i.get());
         }
 
         foreach (var i; mctx->structs) {
-            self->calculate_single_struct_size(i.get());
+            self.calculate_single_struct_size(i.get());
         }
         foreach (var i; mctx->tagged_unions) {
-            self->calculate_single_tagged_union_size(i.get());
+            self.calculate_single_tagged_union_size(i.get());
         }
 
         if (verbose) {
             io::stdout().green().out("   MIR2SIR ").reset();
-            io::stdout().out("Run pass");
+            io::stdout().out("Run MIR pass");
             io::stdout().blue().out(" <calculate struct size>").reset().out(": ");
             io::stdout().cyan().out_u64(mctx->structs.size).reset();
             io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
 
             io::stdout().green().out("   MIR2SIR ").reset();
-            io::stdout().out("Run pass");
+            io::stdout().out("Run MIR pass");
             io::stdout().blue().out(" <calculate tagged union size>").reset().out(": ");
             io::stdout().cyan().out_u64(mctx->tagged_unions.size).reset();
             io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");

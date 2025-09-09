@@ -64,16 +64,16 @@ impl colgm_func {
     }
 
     pub func delete(self) {
-        self->name.delete();
-        self->location.delete();
-        self->return_type.delete();
-        self->param_name.delete();
-        self->param_type.delete();
-        self->param_location.delete();
-        self->unordered_params.delete();
-        self->generic_template.delete();
-        if (self->generic_func_decl != nil) {
-            var tmp = self->generic_func_decl => ast*;
+        self.name.delete();
+        self.location.delete();
+        self.return_type.delete();
+        self.param_name.delete();
+        self.param_type.delete();
+        self.param_location.delete();
+        self.unordered_params.delete();
+        self.generic_template.delete();
+        if (self.generic_func_decl != nil) {
+            var tmp = self.generic_func_decl => ast*;
             tmp->delete();
             free(tmp => i8*);
         }
@@ -81,20 +81,20 @@ impl colgm_func {
 
     pub func clone(self) -> colgm_func {
         var res = colgm_func {
-            name: self->name.clone(),
-            location: self->location.clone(),
-            return_type: self->return_type.clone(),
-            param_name: self->param_name.clone(),
-            param_type: self->param_type.clone(),
-            param_location: self->param_location.clone(),
-            unordered_params: self->unordered_params.clone(),
-            generic_template:self->generic_template.clone(),
+            name: self.name.clone(),
+            location: self.location.clone(),
+            return_type: self.return_type.clone(),
+            param_name: self.param_name.clone(),
+            param_type: self.param_type.clone(),
+            param_location: self.param_location.clone(),
+            unordered_params: self.unordered_params.clone(),
+            generic_template:self.generic_template.clone(),
             generic_func_decl: nil,
-            is_public: self->is_public,
-            is_extern: self->is_extern
+            is_public: self.is_public,
+            is_extern: self.is_extern
         };
-        if (self->generic_func_decl != nil) {
-            res.generic_func_decl = self->generic_func_decl->copy();
+        if (self.generic_func_decl != nil) {
+            res.generic_func_decl = self.generic_func_decl->copy();
         }
         return res;
     }
@@ -103,21 +103,21 @@ impl colgm_func {
 impl colgm_func {
     pub func dump(self, out: io, pkg: package*, indent: i8*) {
         out.out(indent).out("  ");
-        if (self->is_extern) {
+        if (self.is_extern) {
             out.green().out("extern ").reset();
         }
-        if (self->is_public) {
+        if (self.is_public) {
             out.green().out("pub ").reset();
         }
         out.cyan().out("func ").reset();
-        out.white().out(self->name.c_str).reset();
+        out.white().out(self.name.c_str).reset();
 
         // print generic template
-        if (self->generic_template.size > 0) {
+        if (self.generic_template.size > 0) {
             out.out("<");
-            foreach (var i; self->generic_template) {
+            foreach (var i; self.generic_template) {
                 out.out(i.get()->c_str);
-                if (i.index() != self->generic_template.size - 1) {
+                if (i.index() != self.generic_template.size - 1) {
                     out.out(", ");
                 }
             }
@@ -125,15 +125,15 @@ impl colgm_func {
         }
 
         out.out("(");
-        foreach (var i; self->param_name) {
+        foreach (var i; self.param_name) {
             out.out(i.get()->c_str).out(": ");
-            self->param_type.get(i.index())->dump(out, pkg);
-            if (i.index() != self->param_name.size - 1) {
+            self.param_type.get(i.index())->dump(out, pkg);
+            if (i.index() != self.param_name.size - 1) {
                 out.out(", ");
             }
         }
         out.out(") -> ");
-        self->return_type.dump(out, pkg);
+        self.return_type.dump(out, pkg);
         out.out("\n");
     }
 }

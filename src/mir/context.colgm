@@ -37,21 +37,21 @@ impl mir_struct {
 
     pub func clone(self) -> mir_struct {
         return mir_struct {
-            name: self->name.clone(),
-            location: self->location.clone(),
-            field_name: self->field_name.clone(),
-            field_type: self->field_type.clone(),
-            size_calculated: self->size_calculated,
-            size: self->size,
-            align: self->align
+            name: self.name.clone(),
+            location: self.location.clone(),
+            field_name: self.field_name.clone(),
+            field_type: self.field_type.clone(),
+            size_calculated: self.size_calculated,
+            size: self.size,
+            align: self.align
         };
     }
 
     pub func delete(self) {
-        self->name.delete();
-        self->location.delete();
-        self->field_name.delete();
-        self->field_type.delete();
+        self.name.delete();
+        self.location.delete();
+        self.field_name.delete();
+        self.field_type.delete();
     }
 }
 
@@ -86,23 +86,23 @@ impl mir_tagged_union {
 
     pub func clone(self) -> mir_tagged_union {
         return mir_tagged_union {
-            name: self->name.clone(),
-            location: self->location.clone(),
-            member_type: self->member_type.clone(),
-            size_calculated: self->size_calculated,
-            total_size: self->total_size,
-            union_size: self->union_size,
-            align: self->align,
-            max_align_type: self->max_align_type.clone(),
-            max_align_type_size: self->max_align_type_size
+            name: self.name.clone(),
+            location: self.location.clone(),
+            member_type: self.member_type.clone(),
+            size_calculated: self.size_calculated,
+            total_size: self.total_size,
+            union_size: self.union_size,
+            align: self.align,
+            max_align_type: self.max_align_type.clone(),
+            max_align_type_size: self.max_align_type_size
         };
     }
 
     pub func delete(self) {
-        self->name.delete();
-        self->location.delete();
-        self->member_type.delete();
-        self->max_align_type.delete();
+        self.name.delete();
+        self.location.delete();
+        self.member_type.delete();
+        self.max_align_type.delete();
     }
 }
 
@@ -131,26 +131,26 @@ impl mir_func {
 
     pub func clone(self) -> mir_func {
         var res = mir_func {};
-        res.name = self->name.clone();
-        res.location = self->location.clone();
-        res.params = self->params.clone();
-        res.with_va_args = self->with_va_args;
-        res.attributes = self->attributes.clone();
-        res.return_type = self->return_type.clone();
+        res.name = self.name.clone();
+        res.location = self.location.clone();
+        res.params = self.params.clone();
+        res.with_va_args = self.with_va_args;
+        res.attributes = self.attributes.clone();
+        res.return_type = self.return_type.clone();
         
-        res.block = self->block; // shallow copy
-        self->block = nil; // clear source func block
+        res.block = self.block; // shallow copy
+        self.block = nil; // clear source func block
         return res;
     }
 
     pub func delete(self) {
-        self->name.delete();
-        self->location.delete();
-        self->params.delete();
-        self->attributes.delete();
-        self->return_type.delete();
-        if (self->block != nil) {
-            var n = self->block => mir*;
+        self.name.delete();
+        self.location.delete();
+        self.params.delete();
+        self.attributes.delete();
+        self.return_type.delete();
+        if (self.block != nil) {
+            var n = self.block => mir*;
             n->delete();
             free(n => i8*);
         }
@@ -175,17 +175,17 @@ impl mir_context {
     }
 
     pub func delete(self) {
-        self->structs.delete();
-        self->tagged_unions.delete();
-        self->decls.delete();
-        self->impls.delete();
+        self.structs.delete();
+        self.tagged_unions.delete();
+        self.decls.delete();
+        self.impls.delete();
     }
 
     pub func dump(self, out: io&, pkg: package&) {
         var tm = tree_maker::instance();
         defer tm.delete();
 
-        foreach (var i; self->impls) {
+        foreach (var i; self.impls) {
             out.blue().out("<").out(i.get()->name.c_str).out(">:").reset().endln();
             if (i.get()->block != nil) {
                 var m = i.get()->block => mir*;
@@ -199,7 +199,7 @@ impl mir_context {
         var ts = maketimestamp();
         ts.stamp();
 
-        foreach (var i; self->decls) {
+        foreach (var i; self.decls) {
             if (!i.get()->name.eq_const("open")) {
                 continue;
             }
@@ -214,7 +214,7 @@ impl mir_context {
 
         if (verbose) {
             io::stdout().green().out("  MIR-PASS ").reset();
-            io::stdout().out("Run pass");
+            io::stdout().out("Run MIR pass");
             io::stdout().blue().out(" <adjust posix open>").reset().out(": ");
             io::stdout().cyan().out("success ").reset();
             io::stdout().out_f64(ts.elapsed_msec()).out(" ms\n");
@@ -222,7 +222,7 @@ impl mir_context {
     }
 
     func add_malloc_decl(self) {
-        foreach (var i; self->decls) {
+        foreach (var i; self.decls) {
             if (i.get()->name.eq_const("malloc")) {
                 return;
             }
@@ -256,11 +256,11 @@ impl mir_context {
 
         malloc_decl.attributes.push(nounwind_attr.__ptr__());
         malloc_decl.params.push(arg_pair.__ptr__());
-        self->decls.push(malloc_decl.__ptr__());
+        self.decls.push(malloc_decl.__ptr__());
     }
 
     func add_free_decl(self) {
-        foreach (var i; self->decls) {
+        foreach (var i; self.decls) {
             if (i.get()->name.eq_const("free")) {
                 return;
             }
@@ -294,16 +294,16 @@ impl mir_context {
 
         free_decl.attributes.push(nounwind_attr.__ptr__());
         free_decl.params.push(arg_pair.__ptr__());
-        self->decls.push(free_decl.__ptr__());
+        self.decls.push(free_decl.__ptr__());
     }
 
     func add_main_impl(self) {
-        foreach (var i; self->decls) {
+        foreach (var i; self.decls) {
             if (i.get()->name.eq_const("main")) {
                 return;
             }
         }
-        foreach (var i; self->impls) {
+        foreach (var i; self.impls) {
             if (i.get()->name.eq_const("main")) {
                 return;
             }
@@ -339,20 +339,20 @@ impl mir_context {
             ret_type.__ptr__()
         ) => mir*);
         main_impl.block->add(ret_stmt => mir*);
-        self->impls.push(main_impl.__ptr__());
+        self.impls.push(main_impl.__ptr__());
     }
 
     pub func add_default_func(self, verbose: bool) {
         var ts = maketimestamp();
         ts.stamp();
 
-        self->add_malloc_decl();
-        self->add_free_decl();
-        self->add_main_impl();
+        self.add_malloc_decl();
+        self.add_free_decl();
+        self.add_main_impl();
 
         if (verbose) {
             io::stdout().green().out("  MIR-PASS ").reset();
-            io::stdout().out("Run pass");
+            io::stdout().out("Run MIR pass");
             io::stdout().blue().out(" <insert default function>").reset().out(": ");
             io::stdout().cyan().out("success ").reset();
             io::stdout().out_f64(ts.elapsed_msec()).out(" ms\n");

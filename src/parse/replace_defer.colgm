@@ -19,12 +19,12 @@ impl scope {
     }
 
     pub func delete(self) {
-        self->scopes.delete();
+        self.scopes.delete();
     }
 
     pub func clone(self) -> scope {
         return scope {
-            scopes: self->scopes.clone()
+            scopes: self.scopes.clone()
         };
     }
 
@@ -32,18 +32,18 @@ impl scope {
         var v = vec<ast_defer_stmt*>::instance();
         defer v.delete();
 
-        self->scopes.push(v.__ptr__());
+        self.scopes.push(v.__ptr__());
     }
 
     pub func pop_scope(self) {
-        if (self->scopes.empty()) {
+        if (self.scopes.empty()) {
             return;
         }
-        self->scopes.pop_back();
+        self.scopes.pop_back();
     }
 
     pub func empty(self) -> bool {
-        foreach (var s; self->scopes) {
+        foreach (var s; self.scopes) {
             if (!s.get()->empty()) {
                 return false;
             }
@@ -70,7 +70,7 @@ impl replace_defer {
     }
 
     pub func delete(self) {
-        self->top_scopes.delete();
+        self.top_scopes.delete();
     }
 
     pub func scan(e: report*, n: root*, verbose: bool) {
@@ -86,31 +86,31 @@ impl replace_defer {
         var s = scope::instance();
         defer s.delete();
 
-        self->top_scopes.push(s.__ptr__());
+        self.top_scopes.push(s.__ptr__());
     }
 
     func add_sub_scope(self) {
-        self->top_scopes.back()->new_scope();
+        self.top_scopes.back()->new_scope();
     }
 
     func pop_top_scope(self) {
-        if (self->top_scopes.empty()) {
+        if (self.top_scopes.empty()) {
             return;
         }
-        self->top_scopes.pop_back();
+        self.top_scopes.pop_back();
     }
 
     func pop_sub_scope(self) {
-        self->top_scopes.back()->pop_scope();
+        self.top_scopes.back()->pop_scope();
     }
 
     func add_defer_stmt(self, n: ast_defer_stmt*) {
-        self->top_scopes.back()->scopes.back()->push(n);
+        self.top_scopes.back()->scopes.back()->push(n);
     }
 
     func in_top_scope(self) -> bool {
-        return !self->top_scopes.empty() &&
-               self->top_scopes.back()->scopes.size == 1;
+        return !self.top_scopes.empty() &&
+               self.top_scopes.back()->scopes.size == 1;
     }
 
     func insert_defer(self, ds: ast_defer_stmt*, v: vec<ast*>*) {
@@ -120,38 +120,38 @@ impl replace_defer {
     }
 
     func insert_defer_on_subscope_exit(self, v: vec<ast*>*, n: ast*) {
-        if (self->top_scopes.empty() || self->top_scopes.back()->empty()) {
+        if (self.top_scopes.empty() || self.top_scopes.back()->empty()) {
             return;
         }
 
-        self->log_when_insert("subscope exit", self->top_scopes.back()->scopes.back(), n);
-        foreach (var i; self->top_scopes.back()->scopes.back()) {
-            self->insert_defer(i.get(), v);
+        self.log_when_insert("subscope exit", self.top_scopes.back()->scopes.back(), n);
+        foreach (var i; self.top_scopes.back()->scopes.back()) {
+            self.insert_defer(i.get(), v);
         }
     }
 
     func insert_defer_on_block_exit(self, v: vec<ast*>*, n: ast*) {
-        foreach (var sub_scope; self->top_scopes.back()->scopes) {
-            self->log_when_insert("block exit", sub_scope.get(), n);
+        foreach (var sub_scope; self.top_scopes.back()->scopes) {
+            self.log_when_insert("block exit", sub_scope.get(), n);
             foreach (var i; sub_scope.get()) {
-                self->insert_defer(i.get(), v);
+                self.insert_defer(i.get(), v);
             }
         }
     }
 
     func insert_defer_on_return(self, v: vec<ast*>*, n: ast*) {
-        foreach (var this_top_scope; self->top_scopes) {
+        foreach (var this_top_scope; self.top_scopes) {
             foreach (var sub_scope; this_top_scope.get()->scopes) {
-                self->log_when_insert("return", sub_scope.get(), n);
+                self.log_when_insert("return", sub_scope.get(), n);
                 foreach (var i; sub_scope.get()) {
-                    self->insert_defer(i.get(), v);
+                    self.insert_defer(i.get(), v);
                 }
             }
         }
     }
 
     func log_when_insert(self, msg: const i8*, scope: vec<ast_defer_stmt*>*, n: ast*) {
-        if (!self->verbose || scope->empty()) {
+        if (!self.verbose || scope->empty()) {
             return;
         }
 
@@ -172,48 +172,48 @@ impl replace_defer {
 
 impl replace_defer {
     func visit_while_stmt(self, n: ast_while_stmt*) {
-        self->add_top_scope();
-        self->visit_code_block(n->body);
-        self->pop_top_scope();
+        self.add_top_scope();
+        self.visit_code_block(n->body);
+        self.pop_top_scope();
     }
 
     func visit_for_stmt(self, n: ast_for_stmt*) {
-        self->add_top_scope();
-        self->visit_code_block(n->body);
-        self->pop_top_scope();
+        self.add_top_scope();
+        self.visit_code_block(n->body);
+        self.pop_top_scope();
     }
 
     func visit_forindex_stmt(self, n: ast_forindex*) {
-        self->add_top_scope();
-        self->visit_code_block(n->body);
-        self->pop_top_scope();
+        self.add_top_scope();
+        self.visit_code_block(n->body);
+        self.pop_top_scope();
     }
 
     func visit_foreach_stmt(self, n: ast_foreach*) {
-        self->add_top_scope();
-        self->visit_code_block(n->body);
-        self->pop_top_scope();
+        self.add_top_scope();
+        self.visit_code_block(n->body);
+        self.pop_top_scope();
     }
 
     func visit_defer_stmt(self, n: ast_defer_stmt*) {
-        if (self->in_defer_block) {
-            self->err->error(
+        if (self.in_defer_block) {
+            self.err->error(
                 n->base.location.__ptr__(),
                 "defer statement cannot be nested in defer block"
             );
             return;
         }
 
-        self->in_defer_block = true;
-        self->add_top_scope();
-        self->visit_code_block(n->block);
-        self->pop_top_scope();
-        self->in_defer_block = false;
+        self.in_defer_block = true;
+        self.add_top_scope();
+        self.visit_code_block(n->block);
+        self.pop_top_scope();
+        self.in_defer_block = false;
     }
 
     func visit_ret_stmt(self, n: ast_ret_stmt*) {
-        if (self->in_defer_block) {
-            self->err->error(
+        if (self.in_defer_block) {
+            self.err->error(
                 n->base.location.__ptr__(),
                 "return statement cannot be nested in defer block"
             );
@@ -222,8 +222,8 @@ impl replace_defer {
     }
 
     func visit_continue_stmt(self, n: ast_continue_stmt*) {
-        if (self->in_defer_block) {
-            self->err->error(
+        if (self.in_defer_block) {
+            self.err->error(
                 n->base.location.__ptr__(),
                 "continue statement cannot be nested in defer block"
             );
@@ -232,8 +232,8 @@ impl replace_defer {
     }
 
     func visit_break_stmt(self, n: ast_break_stmt*) {
-        if (self->in_defer_block) {
-            self->err->error(
+        if (self.in_defer_block) {
+            self.err->error(
                 n->base.location.__ptr__(),
                 "break statement cannot be nested in defer block"
             );
@@ -243,7 +243,7 @@ impl replace_defer {
 
     func visit_cond_stmt(self, n: ast_cond_stmt*) {
         foreach (var i; n->stmts) {
-            self->visit_stmt(i.get());
+            self.visit_stmt(i.get());
         }
     }
 
@@ -251,12 +251,12 @@ impl replace_defer {
         if (n->body == nil) {
             return;
         }
-        self->visit_code_block(n->body);
+        self.visit_code_block(n->body);
     }
 
     func visit_match_stmt(self, n: ast_match_stmt*) {
         foreach (var i; n->cases) {
-            self->visit_stmt(i.get());
+            self.visit_stmt(i.get());
         }
     }
 
@@ -264,39 +264,39 @@ impl replace_defer {
         if (n->body == nil) {
             return;
         }
-        self->visit_code_block(n->body);
+        self.visit_code_block(n->body);
     }
 
     func visit_stmt(self, n: ast*) {
         match (n->kind) {
             ast_kind::ast_null => {}
             ast_kind::ast_while_stmt =>
-                self->visit_while_stmt(n => ast_while_stmt*);
+                self.visit_while_stmt(n => ast_while_stmt*);
             ast_kind::ast_for_stmt =>
-                self->visit_for_stmt(n => ast_for_stmt*);
+                self.visit_for_stmt(n => ast_for_stmt*);
             ast_kind::ast_forindex =>
-                self->visit_forindex_stmt(n => ast_forindex*);
+                self.visit_forindex_stmt(n => ast_forindex*);
             ast_kind::ast_foreach =>
-                self->visit_foreach_stmt(n => ast_foreach*);
+                self.visit_foreach_stmt(n => ast_foreach*);
             ast_kind::ast_defer_stmt =>
-                self->visit_defer_stmt(n => ast_defer_stmt*);
+                self.visit_defer_stmt(n => ast_defer_stmt*);
             ast_kind::ast_ret_stmt =>
-                self->visit_ret_stmt(n => ast_ret_stmt*);
+                self.visit_ret_stmt(n => ast_ret_stmt*);
             ast_kind::ast_continue_stmt =>
-                self->visit_continue_stmt(n => ast_continue_stmt*);
+                self.visit_continue_stmt(n => ast_continue_stmt*);
             ast_kind::ast_break_stmt =>
-                self->visit_break_stmt(n => ast_break_stmt*);
+                self.visit_break_stmt(n => ast_break_stmt*);
             ast_kind::ast_cond_stmt =>
-                self->visit_cond_stmt(n => ast_cond_stmt*);
+                self.visit_cond_stmt(n => ast_cond_stmt*);
             ast_kind::ast_if_stmt =>
-                self->visit_if_stmt(n => ast_if_stmt*);
+                self.visit_if_stmt(n => ast_if_stmt*);
             ast_kind::ast_in_stmt_expr => {}
             ast_kind::ast_definition => {}
             ast_kind::ast_assignment => {}
             ast_kind::ast_match_stmt =>
-                self->visit_match_stmt(n => ast_match_stmt*);
+                self.visit_match_stmt(n => ast_match_stmt*);
             ast_kind::ast_match_case =>
-                self->visit_match_case(n => ast_match_case*);
+                self.visit_match_case(n => ast_match_case*);
             _ => {
                 io::stdout().out(ast_kind_name(n->kind)).out(" is not supported\n");
                 panic("unsupported ast node");
@@ -305,7 +305,7 @@ impl replace_defer {
     }
 
     func visit_code_block(self, n: ast_code_block*) {
-        self->add_sub_scope();
+        self.add_sub_scope();
 
         // collect defers and generate new block
         var new_stmts = vec<ast*>::instance();
@@ -313,37 +313,37 @@ impl replace_defer {
 
         var has_defer_in_this_sub_scope = false;
         foreach (var i; n->stmts) {
-            self->visit_stmt(i.get());
+            self.visit_stmt(i.get());
             if (i.get()->kind == ast_kind::ast_defer_stmt) {
                 has_defer_in_this_sub_scope = true;
-                self->add_defer_stmt(i.get() => ast_defer_stmt*);
+                self.add_defer_stmt(i.get() => ast_defer_stmt*);
                 new_stmts.push(i.get());
                 continue;
             }
             if (i.get()->kind == ast_kind::ast_continue_stmt ||
                 i.get()->kind == ast_kind::ast_break_stmt) {
-                self->insert_defer_on_block_exit(new_stmts.__ptr__(), i.get());
+                self.insert_defer_on_block_exit(new_stmts.__ptr__(), i.get());
                 new_stmts.push(i.get());
             } else if (i.get()->kind == ast_kind::ast_ret_stmt) {
-                self->insert_defer_on_return(new_stmts.__ptr__(), i.get());
+                self.insert_defer_on_return(new_stmts.__ptr__(), i.get());
                 new_stmts.push(i.get());
             } else {
                 new_stmts.push(i.get());
             }
         }
         // insert defer when top scope exits
-        if (self->in_top_scope()) {
+        if (self.in_top_scope()) {
             if (n->back_is_not_block_exit()) {
-                self->insert_defer_on_block_exit(new_stmts.__ptr__(), n => ast*);
+                self.insert_defer_on_block_exit(new_stmts.__ptr__(), n => ast*);
             }
         } else if (has_defer_in_this_sub_scope) {
             if (n->back_is_not_block_exit()) {
-                self->insert_defer_on_subscope_exit(new_stmts.__ptr__(), n => ast*);
+                self.insert_defer_on_subscope_exit(new_stmts.__ptr__(), n => ast*);
             }
         }
         n->reset_stmt_with(new_stmts.__ptr__());
 
-        self->pop_sub_scope();
+        self.pop_sub_scope();
 
         // delete defer now
         new_stmts.clear();
@@ -363,16 +363,16 @@ impl replace_defer {
             return;
         }
 
-        self->top_scopes.clear();
-        self->add_top_scope();
-        self->visit_code_block(n->body);
-        self->pop_top_scope();
-        self->top_scopes.clear();
+        self.top_scopes.clear();
+        self.add_top_scope();
+        self.visit_code_block(n->body);
+        self.pop_top_scope();
+        self.top_scopes.clear();
     }
 
     func visit_impl(self, n: ast_impl*) {
         foreach (var i; n->methods) {
-            self->visit_func_decl(i.get() => ast_func_decl*);
+            self.visit_func_decl(i.get() => ast_func_decl*);
         }
     }
 
@@ -381,9 +381,9 @@ impl replace_defer {
             var d = i.get();
             match (d->kind) {
                 ast_kind::ast_func_decl =>
-                    self->visit_func_decl(d => ast_func_decl*);
+                    self.visit_func_decl(d => ast_func_decl*);
                 ast_kind::ast_impl =>
-                    self->visit_impl(d => ast_impl*);
+                    self.visit_impl(d => ast_impl*);
                 _ => {}
             }
         }

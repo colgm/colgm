@@ -27,40 +27,40 @@ impl method_info {
 
     pub func clone(self) -> method_info {
         return method_info {
-            is_struct_method: self->is_struct_method,
-            is_primitive_method: self->is_primitive_method,
-            flag_is_static: self->flag_is_static,
-            flag_is_normal: self->flag_is_normal,
-            method_name: self->method_name.clone()
+            is_struct_method: self.is_struct_method,
+            is_primitive_method: self.is_primitive_method,
+            flag_is_static: self.flag_is_static,
+            flag_is_normal: self.flag_is_normal,
+            method_name: self.method_name.clone()
         };
     }
 
     pub func delete(self) {
-        self->method_name.delete();
+        self.method_name.delete();
     }
 
     pub func set_static_struct_method(self, name: const i8*) {
-        self->is_struct_method = true;
-        self->flag_is_static = true;
-        self->method_name.append(name);
+        self.is_struct_method = true;
+        self.flag_is_static = true;
+        self.method_name.append(name);
     }
 
     pub func set_normal_struct_method(self, name: const i8*) {
-        self->is_struct_method = true;
-        self->flag_is_normal = true;
-        self->method_name.append(name);
+        self.is_struct_method = true;
+        self.flag_is_normal = true;
+        self.method_name.append(name);
     }
 
     pub func set_static_primitive_method(self, name: const i8*) {
-        self->is_primitive_method = true;
-        self->flag_is_static = true;
-        self->method_name.append(name);
+        self.is_primitive_method = true;
+        self.flag_is_static = true;
+        self.method_name.append(name);
     }
 
     pub func set_normal_primitive_method(self, name: const i8*) {
-        self->is_primitive_method = true;
-        self->flag_is_normal = true;
-        self->method_name.append(name);
+        self.is_primitive_method = true;
+        self.flag_is_normal = true;
+        self.method_name.append(name);
     }
 }
 
@@ -85,47 +85,47 @@ pub struct type {
 
 impl type {
     pub func delete(self) {
-        self->name.delete();
-        self->loc_file.delete();
-        self->m_info.delete();
-        self->generics.delete();
+        self.name.delete();
+        self.loc_file.delete();
+        self.m_info.delete();
+        self.generics.delete();
     }
 
     pub func reset_with(self, t: type*) {
-        self->delete();
-        self->name = t->name.clone();
-        self->loc_file = t->loc_file.clone();
-        self->pointer_depth = t->pointer_depth;
-        self->is_global_sym = t->is_global_sym;
-        self->is_global_func = t->is_global_func;
-        self->is_enum = t->is_enum;
-        self->array_length = t->array_length;
-        self->is_array = t->is_array;
-        self->is_reference = t->is_reference;
-        self->is_const = t->is_const;
-        self->m_info = t->m_info.clone();
-        self->generics = t->generics.clone();
+        self.delete();
+        self.name = t->name.clone();
+        self.loc_file = t->loc_file.clone();
+        self.pointer_depth = t->pointer_depth;
+        self.is_global_sym = t->is_global_sym;
+        self.is_global_func = t->is_global_func;
+        self.is_enum = t->is_enum;
+        self.array_length = t->array_length;
+        self.is_array = t->is_array;
+        self.is_reference = t->is_reference;
+        self.is_const = t->is_const;
+        self.m_info = t->m_info.clone();
+        self.generics = t->generics.clone();
     }
 
     pub func clone(self) -> type {
         return type {
-            name: self->name.clone(),
-            loc_file: self->loc_file.clone(),
-            pointer_depth: self->pointer_depth,
-            is_global_sym: self->is_global_sym,
-            is_global_func: self->is_global_func,
-            is_enum: self->is_enum,
-            array_length: self->array_length,
-            is_array: self->is_array,
-            is_reference: self->is_reference,
-            is_const: self->is_const,
-            m_info: self->m_info.clone(),
-            generics: self->generics.clone()
+            name: self.name.clone(),
+            loc_file: self.loc_file.clone(),
+            pointer_depth: self.pointer_depth,
+            is_global_sym: self.is_global_sym,
+            is_global_func: self.is_global_func,
+            is_enum: self.is_enum,
+            array_length: self.array_length,
+            is_array: self.is_array,
+            is_reference: self.is_reference,
+            is_const: self.is_const,
+            m_info: self.m_info.clone(),
+            generics: self.generics.clone()
         };
     }
 
     pub func ref_copy(self) -> type {
-        var res = self->clone();
+        var res = self.clone();
         if (res.pointer_depth == 0) {
             panic("get ref copy from non-pointer type");
         }
@@ -136,7 +136,7 @@ impl type {
     }
 
     pub func pointer_copy(self) -> type {
-        var res = self->clone();
+        var res = self.clone();
         res.pointer_depth += 1;
         return res;
     }
@@ -144,10 +144,10 @@ impl type {
 
 impl type {
     pub func check_pointer_depth(self) {
-        if (self->pointer_depth >= 0) {
+        if (self.pointer_depth >= 0) {
             return;
         }
-        io::stderr().out("invalid pointer depth: ").out_i64(self->pointer_depth);
+        io::stderr().out("invalid pointer depth: ").out_i64(self.pointer_depth);
         panic("invalid pointer depth");
     }
 }
@@ -171,16 +171,16 @@ impl type {
     }
 
     pub func eq(self, t: type*) -> bool {
-        if (!self->name.eq(t->name.__ptr__())) {
+        if (!self.name.eq(t->name.__ptr__())) {
             return false;
         }
-        if (self->pointer_depth != t->pointer_depth) {
+        if (self.pointer_depth != t->pointer_depth) {
             return false;
         }
-        if (self->generics.size != t->generics.size) {
+        if (self.generics.size != t->generics.size) {
             return false;
         }
-        foreach (var i; self->generics) {
+        foreach (var i; self.generics) {
             var t_g = t->generics.get(i.index());
             if (!i.get()->eq(t_g)) {
                 return false;
@@ -190,85 +190,85 @@ impl type {
     }
 
     pub func is_pointer(self) -> bool {
-        return self->pointer_depth > 0;
+        return self.pointer_depth > 0;
     }
 
     pub func is_empty(self) -> bool {
-        return self->name.empty() && self->loc_file.empty();
+        return self.name.empty() && self.loc_file.empty();
     }
 
     pub func is_error(self) -> bool {
-        return self->name.eq_const("<error>");
+        return self.name.eq_const("<error>");
     }
 
     pub func is_empty_array(self) -> bool {
-        return self->name.eq_const("<empty-array>");
+        return self.name.eq_const("<empty-array>");
     }
 
     pub func is_void(self) -> bool {
-        return self->name.eq_const("void") &&
-               self->pointer_depth == 0;
+        return self.name.eq_const("void") &&
+               self.pointer_depth == 0;
     }
 
     pub func is_bool(self) -> bool {
-        return self->name.eq_const("bool") &&
-               self->pointer_depth == 0;
+        return self.name.eq_const("bool") &&
+               self.pointer_depth == 0;
     }
 
     pub func is_bool_base(self) -> bool {
-        return self->name.eq_const("bool");
+        return self.name.eq_const("bool");
     }
 
     pub func is_integer(self) -> bool {
-        return self->pointer_depth == 0 && self->is_integer_base();
+        return self.pointer_depth == 0 && self.is_integer_base();
     }
 
     pub func is_integer_base(self) -> bool {
-        return self->name.eq_const("i8") ||
-               self->name.eq_const("i16") ||
-               self->name.eq_const("i32") ||
-               self->name.eq_const("i64") ||
-               self->name.eq_const("u8") ||
-               self->name.eq_const("u16") ||
-               self->name.eq_const("u32") ||
-               self->name.eq_const("u64") ||
-               self->is_enum;
+        return self.name.eq_const("i8") ||
+               self.name.eq_const("i16") ||
+               self.name.eq_const("i32") ||
+               self.name.eq_const("i64") ||
+               self.name.eq_const("u8") ||
+               self.name.eq_const("u16") ||
+               self.name.eq_const("u32") ||
+               self.name.eq_const("u64") ||
+               self.is_enum;
     }
 
     pub func is_unsigned(self) -> bool {
-        return self->pointer_depth == 0 && (
-            self->name.eq_const("u8") ||
-            self->name.eq_const("u16") ||
-            self->name.eq_const("u32") ||
-            self->name.eq_const("u64")
+        return self.pointer_depth == 0 && (
+            self.name.eq_const("u8") ||
+            self.name.eq_const("u16") ||
+            self.name.eq_const("u32") ||
+            self.name.eq_const("u64")
         );
     }
 
     pub func is_float(self) -> bool {
-        return self->pointer_depth == 0 && (
-            self->name.eq_const("f32") ||
-            self->name.eq_const("f64")
+        return self.pointer_depth == 0 && (
+            self.name.eq_const("f32") ||
+            self.name.eq_const("f64")
         );
     }
 
     pub func can_bitwise_calculate(self) -> bool {
-        return self->pointer_depth == 0 &&
-               (self->is_integer() || self->is_bool());
+        return self.pointer_depth == 0 &&
+               (self.is_integer() || self.is_bool());
     }
 
     pub func is_float_base(self) -> bool {
-        return self->name.eq_const("f32") ||
-               self->name.eq_const("f64");
+        return self.name.eq_const("f32") ||
+               self.name.eq_const("f64");
     }
 
     pub func is_function(self) -> bool {
-        return self->m_info.flag_is_normal ||
-               self->m_info.flag_is_static ||
-               self->is_global_func;
+        return self.m_info.flag_is_normal ||
+               self.m_info.flag_is_static ||
+               self.is_global_func;
     }
 
     pub func is_default_match(self) -> bool {
-        return self->name.eq_const("<match-default>");
+        return self.name.eq_const("<match-default>");
     }
 
     pub func error_type() -> type {
@@ -357,18 +357,18 @@ impl type {
     pub func dump(self, out: io, pkg: package*) {
         out.light_orange();
         // print module path
-        if (pkg != nil && pkg->has_file(self->loc_file)) {
-            var module = pkg->get_module_name(self->loc_file);
+        if (pkg != nil && pkg->has_file(self.loc_file)) {
+            var module = pkg->get_module_name(self.loc_file);
             out.out(module->c_str).out("::");
         }
         // print type name
-        out.out(self->name.c_str).reset();
+        out.out(self.name.c_str).reset();
         // print generic arguments
-        if (self->generics.size > 0) {
+        if (self.generics.size > 0) {
             out.light_cyan().out("<").reset();
-            foreach (var i; self->generics) {
+            foreach (var i; self.generics) {
                 i.get()->dump(out, pkg);
-                if (i.index() != self->generics.size - 1) {
+                if (i.index() != self.generics.size - 1) {
                     out.out(",");
                 }
             }
@@ -376,10 +376,10 @@ impl type {
         }
         // print pointer depth
         out.light_orange();
-        for (var i = 0; i < self->pointer_depth; i += 1) {
+        for (var i = 0; i < self.pointer_depth; i += 1) {
             out.out("*");
         }
-        if (self->is_reference) {
+        if (self.is_reference) {
             out.out("&");
         }
         out.reset();
@@ -391,13 +391,13 @@ impl type {
     //     struct foo<T> with T = i32
     // will return "foo<i32>"
     pub func generic_name(self, pkg: package*) -> str {
-        if (self->generics.empty()) {
-            return self->name.clone();
+        if (self.generics.empty()) {
+            return self.name.clone();
         }
 
-        var res = str::from(self->name.c_str);
+        var res = str::from(self.name.c_str);
         res.append_char('<');
-        foreach (var i; self->generics) {
+        foreach (var i; self.generics) {
             // should use full path name with pointer info
             // for generic arguments
             // also, full path name will generate generic arguments recursively
@@ -405,7 +405,7 @@ impl type {
             defer generic_arg_name.delete();
 
             res.append(generic_arg_name.c_str);
-            if (i.index() != self->generics.size - 1) {
+            if (i.index() != self.generics.size - 1) {
                 res.append_char(',');
             }
         }
@@ -414,12 +414,12 @@ impl type {
     }
 
     pub func generic_depth(self) -> i64 {
-        if (self->generics.empty()) {
+        if (self.generics.empty()) {
             return 0;
         }
         var result = 1;
         var max_depth = 0;
-        foreach (var i; self->generics) {
+        foreach (var i; self.generics) {
             var depth = i.get()->generic_depth();
             if (depth > max_depth) {
                 max_depth = depth;
@@ -435,12 +435,12 @@ impl type {
     // will return "example::foo<i32>"
     pub func full_path_name(self, pkg: package*) -> str {
         var res = str::instance();
-        if (pkg != nil && pkg->has_file(self->loc_file)) {
-            res.append_str(pkg->get_module_name(self->loc_file));
+        if (pkg != nil && pkg->has_file(self.loc_file)) {
+            res.append_str(pkg->get_module_name(self.loc_file));
             res.append("::");
         }
 
-        var generic_name = self->generic_name(pkg);
+        var generic_name = self.generic_name(pkg);
         defer generic_name.delete();
         res.append_str(generic_name.__ptr__());
         return res;
@@ -452,41 +452,41 @@ impl type {
     //     foo<T>** with T = i32
     // will return "example::foo<i32>**"
     pub func full_path_name_with_pointer(self, pkg: package*) -> str {
-        var res = self->full_path_name(pkg);
+        var res = self.full_path_name(pkg);
 
-        for (var i = 0; i < self->pointer_depth; i += 1) {
+        for (var i = 0; i < self.pointer_depth; i += 1) {
             res.append_char('*');
         }
         return res;
     }
 
     pub func array_type_full_name(self, pkg: package*) -> str {
-        if (!self->is_array) {
-            return self->full_path_name_with_pointer(pkg);
+        if (!self.is_array) {
+            return self.full_path_name_with_pointer(pkg);
         }
 
         var res = str::from("[");
-        res.append_u64(self->array_length);
+        res.append_u64(self.array_length);
         res.append(" x ");
-        if (pkg != nil && pkg->has_file(self->loc_file)) {
-            res.append_str(pkg->get_module_name(self->loc_file));
+        if (pkg != nil && pkg->has_file(self.loc_file)) {
+            res.append_str(pkg->get_module_name(self.loc_file));
             res.append("::");
         }
-        res.append_str(self->name.__ptr__());
-        if (self->generics.size > 0) {
+        res.append_str(self.name.__ptr__());
+        if (self.generics.size > 0) {
             res.append_char('<');
-            foreach (var i; self->generics) {
+            foreach (var i; self.generics) {
                 var t_fpn = i.get()->full_path_name_with_pointer(pkg);
                 defer t_fpn.delete();
 
                 res.append(t_fpn.c_str);
-                if (i.index() != self->generics.size - 1) {
+                if (i.index() != self.generics.size - 1) {
                     res.append_char(',');
                 }
             }
             res.append_char('>');
         }
-        for (var i = 0; i < self->pointer_depth - 1; i += 1) {
+        for (var i = 0; i < self.pointer_depth - 1; i += 1) {
             res.append_char('*');
         }
         res.append("]");

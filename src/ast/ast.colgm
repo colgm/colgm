@@ -164,216 +164,213 @@ pub struct ast {
 }
 
 impl ast {
-    pub func instance(k: ast_kind, loc: span*) -> ast {
-        if (loc == nil) {
-            panic("span pointer is null");
-        }
+    pub func instance(k: ast_kind, loc: span&) -> ast {
         return ast {
             kind: k,
-            location: loc->clone(),
+            location: loc.clone(),
             redirect_location: str::from(""),
             resolved_type: type::instance("", "")
         };
     }
 
     pub func is_redirected(self) -> bool {
-        return !self->redirect_location.empty();
+        return !self.redirect_location.empty();
     }
 
     pub func set_redirect_location(self, loc: str*) {
-        self->redirect_location.clear();
-        self->redirect_location.append_str(loc);
+        self.redirect_location.clear();
+        self.redirect_location.append_str(loc);
     }
 
     pub func delete(self) {
-        self->location.delete();
-        self->redirect_location.delete();
-        self->resolved_type.delete();
+        self.location.delete();
+        self.redirect_location.delete();
+        self.resolved_type.delete();
 
-        match (self->kind) {
+        match (self.kind) {
             ast_kind::ast_null => {}
             ast_kind::ast_root => {
-                var tmp = self => root*;
+                var tmp = self.__ptr__() => root*;
                 tmp->delete();
             }
             ast_kind::ast_unary_operator => {
-                var tmp = self => ast_unary_operator*;
+                var tmp = self.__ptr__() => ast_unary_operator*;
                 tmp->delete();
             }
             ast_kind::ast_binary_operator => {
-                var tmp = self => ast_binary_operator*;
+                var tmp = self.__ptr__() => ast_binary_operator*;
                 tmp->delete();
             }
             ast_kind::ast_type_convert => {
-                var tmp = self => ast_type_convert*;
+                var tmp = self.__ptr__() => ast_type_convert*;
                 tmp->delete();
             }
             ast_kind::ast_identifier => {
-                var tmp = self => ast_identifier*;
+                var tmp = self.__ptr__() => ast_identifier*;
                 tmp->delete();
             }
             ast_kind::ast_nil_literal => {}
             ast_kind::ast_number_literal => {
-                var tmp = self => ast_number_literal*;
+                var tmp = self.__ptr__() => ast_number_literal*;
                 tmp->delete();
             }
             ast_kind::ast_string_literal => {
-                var tmp = self => ast_string_literal*;
+                var tmp = self.__ptr__() => ast_string_literal*;
                 tmp->delete();
             }
             ast_kind::ast_char_literal => {
-                var tmp = self => ast_char_literal*;
+                var tmp = self.__ptr__() => ast_char_literal*;
                 tmp->delete();
             }
             ast_kind::ast_bool_literal => {}
             ast_kind::ast_array_list => {
-                var tmp = self => ast_array_list*;
+                var tmp = self.__ptr__() => ast_array_list*;
                 tmp->delete();
             }
             ast_kind::ast_call_index => {
-                var tmp = self => ast_call_index*;
+                var tmp = self.__ptr__() => ast_call_index*;
                 tmp->delete();
             }
             ast_kind::ast_call_func_args => {
-                var tmp = self => ast_call_func_args*;
+                var tmp = self.__ptr__() => ast_call_func_args*;
                 tmp->delete();
             }
             ast_kind::ast_get_field => {
-                var tmp = self => ast_get_field*;
+                var tmp = self.__ptr__() => ast_get_field*;
                 tmp->delete();
             }
             ast_kind::ast_ptr_get_field => {
-                var tmp = self => ast_ptr_get_field*;
+                var tmp = self.__ptr__() => ast_ptr_get_field*;
                 tmp->delete();
             }
             ast_kind::ast_init_pair => {
-                var tmp = self => ast_init_pair*;
+                var tmp = self.__ptr__() => ast_init_pair*;
                 tmp->delete();
             }
             ast_kind::ast_initializer => {
-                var tmp = self => ast_initializer*;
+                var tmp = self.__ptr__() => ast_initializer*;
                 tmp->delete();
             }
             ast_kind::ast_call_path => {
-                var tmp = self => ast_call_path*;
+                var tmp = self.__ptr__() => ast_call_path*;
                 tmp->delete();
             }
             ast_kind::ast_call_id => {
-                var tmp = self => ast_call_id*;
+                var tmp = self.__ptr__() => ast_call_id*;
                 tmp->delete();
             }
             ast_kind::ast_call => {
-                var tmp = self => ast_call*;
+                var tmp = self.__ptr__() => ast_call*;
                 tmp->delete();
             }
             ast_kind::ast_assignment => {
-                var tmp = self => ast_assignment*;
+                var tmp = self.__ptr__() => ast_assignment*;
                 tmp->delete();
             }
             ast_kind::ast_cond_compile => {
-                var tmp = self => ast_cond_compile*;
+                var tmp = self.__ptr__() => ast_cond_compile*;
                 tmp->delete();
             }
             ast_kind::ast_type_def => {
-                var tmp = self => ast_type_def*;
+                var tmp = self.__ptr__() => ast_type_def*;
                 tmp->delete();
             }
             ast_kind::ast_generic_type_list => {
-                var tmp = self => ast_generic_type_list*;
+                var tmp = self.__ptr__() => ast_generic_type_list*;
                 tmp->delete();
             }
             ast_kind::ast_enum_member => {
-                var tmp = self => ast_enum_member*;
+                var tmp = self.__ptr__() => ast_enum_member*;
                 tmp->delete();
             }
             ast_kind::ast_enum_decl => {
-                var tmp = self => ast_enum_decl*;
+                var tmp = self.__ptr__() => ast_enum_decl*;
                 tmp->delete();
             }
             ast_kind::ast_field_pair => {
-                var tmp = self =>ast_field_pair*;
+                var tmp = self.__ptr__() =>ast_field_pair*;
                 tmp->delete();
             }
             ast_kind::ast_struct_decl => {
-                var tmp = self => ast_struct_decl*;
+                var tmp = self.__ptr__() => ast_struct_decl*;
                 tmp->delete();
             }
             ast_kind::ast_tagged_union_decl => {
-                var tmp = self => ast_tagged_union_decl*;
+                var tmp = self.__ptr__() => ast_tagged_union_decl*;
                 tmp->delete();
             }
             ast_kind::ast_param => {
-                var tmp = self => ast_param*;
+                var tmp = self.__ptr__() => ast_param*;
                 tmp->delete();
             }
             ast_kind::ast_param_list => {
-                var tmp = self => ast_param_list*;
+                var tmp = self.__ptr__() => ast_param_list*;
                 tmp->delete();
             }
             ast_kind::ast_func_decl => {
-                var tmp = self => ast_func_decl*;
+                var tmp = self.__ptr__() => ast_func_decl*;
                 tmp->delete();
             }
             ast_kind::ast_impl => {
-                var tmp = self => ast_impl*;
+                var tmp = self.__ptr__() => ast_impl*;
                 tmp->delete();
             }
             ast_kind::ast_use_stmt => {
-                var tmp = self => ast_use_stmt*;
+                var tmp = self.__ptr__() => ast_use_stmt*;
                 tmp->delete();
             }
             ast_kind::ast_definition => {
-                var tmp = self => ast_definition*;
+                var tmp = self.__ptr__() => ast_definition*;
                 tmp->delete();
             }
             ast_kind::ast_cond_stmt => {
-                var tmp = self => ast_cond_stmt*;
+                var tmp = self.__ptr__() => ast_cond_stmt*;
                 tmp->delete();
             }
             ast_kind::ast_if_stmt => {
-                var tmp = self => ast_if_stmt*;
+                var tmp = self.__ptr__() => ast_if_stmt*;
                 tmp->delete();
             }
             ast_kind::ast_match_case => {
-                var tmp = self => ast_match_case*;
+                var tmp = self.__ptr__() => ast_match_case*;
                 tmp->delete();
             }
             ast_kind::ast_match_stmt => {
-                var tmp = self => ast_match_stmt*;
+                var tmp = self.__ptr__() => ast_match_stmt*;
                 tmp->delete();
             }
             ast_kind::ast_while_stmt => {
-                var tmp = self => ast_while_stmt*;
+                var tmp = self.__ptr__() => ast_while_stmt*;
                 tmp->delete();
             }
             ast_kind::ast_for_stmt => {
-                var tmp = self => ast_for_stmt*;
+                var tmp = self.__ptr__() => ast_for_stmt*;
                 tmp->delete();
             }
             ast_kind::ast_forindex => {
-                var tmp = self => ast_forindex*;
+                var tmp = self.__ptr__() => ast_forindex*;
                 tmp->delete();
             }
             ast_kind::ast_foreach => {
-                var tmp = self => ast_foreach*;
+                var tmp = self.__ptr__() => ast_foreach*;
                 tmp->delete();
             }
             ast_kind::ast_in_stmt_expr => {
-                var tmp = self => ast_in_stmt_expr*;
+                var tmp = self.__ptr__() => ast_in_stmt_expr*;
                 tmp->delete();
             }
             ast_kind::ast_defer_stmt => {
-                var tmp = self => ast_defer_stmt*;
+                var tmp = self.__ptr__() => ast_defer_stmt*;
                 tmp->delete();
             }
             ast_kind::ast_ret_stmt => {
-                var tmp = self => ast_ret_stmt*;
+                var tmp = self.__ptr__() => ast_ret_stmt*;
                 tmp->delete();
             }
             ast_kind::ast_continue_stmt => {}
             ast_kind::ast_break_stmt => {}
             ast_kind::ast_code_block => {
-                var tmp = self => ast_code_block*;
+                var tmp = self.__ptr__() => ast_code_block*;
                 tmp->delete();
             }
             _ => { panic("unknown ast kind"); }
@@ -383,209 +380,209 @@ impl ast {
 
 impl ast {
     pub func is(self, kind: ast_kind) -> bool {
-        return self->kind == kind;
+        return self.kind == kind;
     }
 
     pub func copy(self) -> ast* {
-        match (self->kind) {
+        match (self.kind) {
             ast_kind::ast_null => {
-                var tmp = self => ast_null*;
+                var tmp = self.__ptr__() => ast_null*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_root => {
-                var tmp = self => root*;
+                var tmp = self.__ptr__() => root*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_unary_operator => {
-                var tmp = self => ast_unary_operator*;
+                var tmp = self.__ptr__() => ast_unary_operator*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_binary_operator => {
-                var tmp = self => ast_binary_operator*;
+                var tmp = self.__ptr__() => ast_binary_operator*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_type_convert => {
-                var tmp = self => ast_type_convert*;
+                var tmp = self.__ptr__() => ast_type_convert*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_identifier => {
-                var tmp = self => ast_identifier*;
+                var tmp = self.__ptr__() => ast_identifier*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_nil_literal => {
-                var tmp = self => ast_nil_literal*;
+                var tmp = self.__ptr__() => ast_nil_literal*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_number_literal => {
-                var tmp = self => ast_number_literal*;
+                var tmp = self.__ptr__() => ast_number_literal*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_string_literal => {
-                var tmp = self => ast_string_literal*;
+                var tmp = self.__ptr__() => ast_string_literal*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_char_literal => {
-                var tmp = self => ast_char_literal*;
+                var tmp = self.__ptr__() => ast_char_literal*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_bool_literal => {
-                var tmp = self => ast_bool_literal*;
+                var tmp = self.__ptr__() => ast_bool_literal*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_array_list => {
-                var tmp = self => ast_array_list*;
+                var tmp = self.__ptr__() => ast_array_list*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_call_index => {
-                var tmp = self => ast_call_index*;
+                var tmp = self.__ptr__() => ast_call_index*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_call_func_args => {
-                var tmp = self => ast_call_func_args*;
+                var tmp = self.__ptr__() => ast_call_func_args*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_get_field => {
-                var tmp = self => ast_get_field*;
+                var tmp = self.__ptr__() => ast_get_field*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_ptr_get_field => {
-                var tmp = self => ast_ptr_get_field*;
+                var tmp = self.__ptr__() => ast_ptr_get_field*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_init_pair => {
-                var tmp = self => ast_init_pair*;
+                var tmp = self.__ptr__() => ast_init_pair*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_initializer => {
-                var tmp = self => ast_initializer*;
+                var tmp = self.__ptr__() => ast_initializer*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_call_path => {
-                var tmp = self => ast_call_path*;
+                var tmp = self.__ptr__() => ast_call_path*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_call_id => {
-                var tmp = self => ast_call_id*;
+                var tmp = self.__ptr__() => ast_call_id*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_call => {
-                var tmp = self => ast_call*;
+                var tmp = self.__ptr__() => ast_call*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_assignment => {
-                var tmp = self => ast_assignment*;
+                var tmp = self.__ptr__() => ast_assignment*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_cond_compile => {
-                var tmp = self => ast_cond_compile*;
+                var tmp = self.__ptr__() => ast_cond_compile*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_type_def => {
-                var tmp = self => ast_type_def*;
+                var tmp = self.__ptr__() => ast_type_def*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_generic_type_list => {
-                var tmp = self => ast_generic_type_list*;
+                var tmp = self.__ptr__() => ast_generic_type_list*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_enum_member => {
-                var tmp = self => ast_enum_member*;
+                var tmp = self.__ptr__() => ast_enum_member*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_enum_decl => {
-                var tmp = self => ast_enum_decl*;
+                var tmp = self.__ptr__() => ast_enum_decl*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_field_pair => {
-                var tmp = self =>ast_field_pair*;
+                var tmp = self.__ptr__() =>ast_field_pair*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_struct_decl => {
-                var tmp = self => ast_struct_decl*;
+                var tmp = self.__ptr__() => ast_struct_decl*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_tagged_union_decl => {
-                var tmp = self => ast_tagged_union_decl*;
+                var tmp = self.__ptr__() => ast_tagged_union_decl*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_param => {
-                var tmp = self => ast_param*;
+                var tmp = self.__ptr__() => ast_param*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_param_list => {
-                var tmp = self => ast_param_list*;
+                var tmp = self.__ptr__() => ast_param_list*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_func_decl => {
-                var tmp = self => ast_func_decl*;
+                var tmp = self.__ptr__() => ast_func_decl*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_impl => {
-                var tmp = self => ast_impl*;
+                var tmp = self.__ptr__() => ast_impl*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_use_stmt => {
-                var tmp = self => ast_use_stmt*;
+                var tmp = self.__ptr__() => ast_use_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_definition => {
-                var tmp = self => ast_definition*;
+                var tmp = self.__ptr__() => ast_definition*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_cond_stmt => {
-                var tmp = self => ast_cond_stmt*;
+                var tmp = self.__ptr__() => ast_cond_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_if_stmt => {
-                var tmp = self => ast_if_stmt*;
+                var tmp = self.__ptr__() => ast_if_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_match_case => {
-                var tmp = self => ast_match_case*;
+                var tmp = self.__ptr__() => ast_match_case*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_match_stmt => {
-                var tmp = self => ast_match_stmt*;
+                var tmp = self.__ptr__() => ast_match_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_while_stmt => {
-                var tmp = self => ast_while_stmt*;
+                var tmp = self.__ptr__() => ast_while_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_for_stmt => {
-                var tmp = self => ast_for_stmt*;
+                var tmp = self.__ptr__() => ast_for_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_forindex => {
-                var tmp = self => ast_forindex*;
+                var tmp = self.__ptr__() => ast_forindex*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_foreach => {
-                var tmp = self => ast_foreach*;
+                var tmp = self.__ptr__() => ast_foreach*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_in_stmt_expr => {
-                var tmp = self => ast_in_stmt_expr*;
+                var tmp = self.__ptr__() => ast_in_stmt_expr*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_defer_stmt => {
-                var tmp = self => ast_defer_stmt*;
+                var tmp = self.__ptr__() => ast_defer_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_ret_stmt => {
-                var tmp = self => ast_ret_stmt*;
+                var tmp = self.__ptr__() => ast_ret_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_continue_stmt => {
-                var tmp = self => ast_continue_stmt*;
+                var tmp = self.__ptr__() => ast_continue_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_break_stmt => {
-                var tmp = self => ast_break_stmt*;
+                var tmp = self.__ptr__() => ast_break_stmt*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_code_block => {
-                var tmp = self => ast_code_block*;
+                var tmp = self.__ptr__() => ast_code_block*;
                 return tmp->copy() => ast*;
             }
             _ => { panic("unknown ast kind"); }
@@ -605,7 +602,7 @@ impl ast_null {
         var res = ast_null::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_null,
-            null_span.__ptr__()
+            null_span
         );
         return res;
     }
@@ -622,7 +619,7 @@ pub struct root {
 }
 
 impl root {
-    pub func new(loc: span*) -> root* {
+    pub func new(loc: span&) -> root* {
         var res = root::__alloc__();
         res->base = ast::instance(ast_kind::ast_root, loc);
         res->imports = vec<ast*>::instance();
@@ -634,30 +631,30 @@ impl root {
         var res = root::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_root,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->imports = vec<ast*>::instance();
-        foreach (var i; self->imports) {
+        foreach (var i; self.imports) {
             res->imports.push(i.get()->copy());
         }
         res->decls = vec<ast*>::instance();
-        foreach (var i; self->decls) {
+        foreach (var i; self.decls) {
             res->decls.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->imports) {
+        foreach (var i; self.imports) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->imports.delete();
-        foreach (var i; self->decls) {
+        self.imports.delete();
+        foreach (var i; self.decls) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->decls.delete();
+        self.decls.delete();
     }
 }
 
@@ -670,7 +667,7 @@ pub struct ast_unary_operator {
 }
 
 impl ast_unary_operator {
-    pub func new(loc: span*, kind: unary_kind) -> ast_unary_operator* {
+    pub func new(loc: span&, kind: unary_kind) -> ast_unary_operator* {
         var res = ast_unary_operator::__alloc__();
         res->base = ast::instance(ast_kind::ast_unary_operator, loc);
         res->kind = kind;
@@ -682,11 +679,11 @@ impl ast_unary_operator {
         var res = ast_unary_operator::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_unary_operator,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->kind = self->kind;
-        if (self->value != nil) {
-            res->value = self->value->copy();
+        res->kind = self.kind;
+        if (self.value != nil) {
+            res->value = self.value->copy();
         } else {
             res->value = nil;
         }
@@ -694,9 +691,9 @@ impl ast_unary_operator {
     }
 
     pub func delete(self) {
-        if (self->value != nil) {
-            self->value->delete();
-            free(self->value => i8*);
+        if (self.value != nil) {
+            self.value->delete();
+            free(self.value => i8*);
         }
     }
 }
@@ -709,7 +706,7 @@ pub struct ast_binary_operator {
 }
 
 impl ast_binary_operator {
-    pub func new(loc: span*, kind: binary_kind) -> ast_binary_operator* {
+    pub func new(loc: span&, kind: binary_kind) -> ast_binary_operator* {
         var res = ast_binary_operator::__alloc__();
         res->base = ast::instance(ast_kind::ast_binary_operator, loc);
         res->kind = kind;
@@ -722,16 +719,16 @@ impl ast_binary_operator {
         var res = ast_binary_operator::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_binary_operator,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->kind = self->kind;
-        if (self->left != nil) {
-            res->left = self->left->copy();
+        res->kind = self.kind;
+        if (self.left != nil) {
+            res->left = self.left->copy();
         } else {
             res->left = nil;
         }
-        if (self->right != nil) {
-            res->right = self->right->copy();
+        if (self.right != nil) {
+            res->right = self.right->copy();
         } else {
             res->right = nil;
         }
@@ -739,13 +736,13 @@ impl ast_binary_operator {
     }
 
     pub func delete(self) {
-        if (self->left != nil) {
-            self->left->delete();
-            free(self->left => i8*);
+        if (self.left != nil) {
+            self.left->delete();
+            free(self.left => i8*);
         }
-        if (self->right != nil) {
-            self->right->delete();
-            free(self->right => i8*);
+        if (self.right != nil) {
+            self.right->delete();
+            free(self.right => i8*);
         }
     }
 }
@@ -757,7 +754,7 @@ pub struct ast_type_convert {
 }
 
 impl ast_type_convert {
-    pub func new(loc: span*) -> ast_type_convert* {
+    pub func new(loc: span&) -> ast_type_convert* {
         var res = ast_type_convert::__alloc__();
         res->base = ast::instance(ast_kind::ast_type_convert, loc);
         res->from = nil;
@@ -769,15 +766,15 @@ impl ast_type_convert {
         var res = ast_type_convert::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_type_convert,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->from != nil) {
-            res->from = self->from->copy();
+        if (self.from != nil) {
+            res->from = self.from->copy();
         } else {
             res->from = nil;
         }
-        if (self->to != nil) {
-            res->to = self->to->copy();
+        if (self.to != nil) {
+            res->to = self.to->copy();
         } else {
             res->to = nil;
         }
@@ -785,12 +782,12 @@ impl ast_type_convert {
     }
 
     pub func delete(self) {
-        if (self->from != nil) {
-            self->from->delete();
-            free(self->from => i8*);
+        if (self.from != nil) {
+            self.from->delete();
+            free(self.from => i8*);
         }
-        if (self->to != nil) {
-            var n = self->to => ast*;
+        if (self.to != nil) {
+            var n = self.to => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -803,7 +800,7 @@ pub struct ast_identifier {
 }
 
 impl ast_identifier {
-    pub func new(loc: span*, name: str*) -> ast_identifier* {
+    pub func new(loc: span&, name: str*) -> ast_identifier* {
         var res = ast_identifier::__alloc__();
         res->base = ast::instance(ast_kind::ast_identifier, loc);
         res->content = name->clone();
@@ -814,14 +811,14 @@ impl ast_identifier {
         var res = ast_identifier::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_identifier,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->content = self->content.clone();
+        res->content = self.content.clone();
         return res;
     }
 
     pub func delete(self) {
-        self->content.delete();
+        self.content.delete();
     }
 }
 
@@ -830,14 +827,14 @@ pub struct ast_nil_literal {
 }
 
 impl ast_nil_literal {
-    pub func new(loc: span*) -> ast_nil_literal* {
+    pub func new(loc: span&) -> ast_nil_literal* {
         var res = ast_nil_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_nil_literal, loc);
         return res;
     }
 
     pub func copy(self) -> ast_nil_literal* {
-        return ast_nil_literal::new(self->base.location.__ptr__());
+        return ast_nil_literal::new(self.base.location);
     }
 }
 
@@ -847,7 +844,7 @@ pub struct ast_number_literal {
 }
 
 impl ast_number_literal {
-    pub func new(loc: span*, literal: const i8*) -> ast_number_literal* {
+    pub func new(loc: span&, literal: const i8*) -> ast_number_literal* {
         var res = ast_number_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_number_literal, loc);
         res->literal = str::from(literal);
@@ -858,14 +855,14 @@ impl ast_number_literal {
         var res = ast_number_literal::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_number_literal,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->literal = self->literal.clone();
+        res->literal = self.literal.clone();
         return res;
     }
 
     pub func delete(self) {
-        self->literal.delete();
+        self.literal.delete();
     }
 }
 
@@ -875,7 +872,7 @@ pub struct ast_string_literal {
 }
 
 impl ast_string_literal {
-    pub func new(loc: span*, literal: const i8*) -> ast_string_literal* {
+    pub func new(loc: span&, literal: const i8*) -> ast_string_literal* {
         var res = ast_string_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_string_literal, loc);
         res->literal = str::from(literal);
@@ -886,14 +883,14 @@ impl ast_string_literal {
         var res = ast_string_literal::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_string_literal,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->literal = self->literal.clone();
+        res->literal = self.literal.clone();
         return res;
     }
 
     pub func delete(self) {
-        self->literal.delete();
+        self.literal.delete();
     }
 }
 
@@ -903,7 +900,7 @@ pub struct ast_char_literal {
 }
 
 impl ast_char_literal {
-    pub func new(loc: span*, literal: str*) -> ast_char_literal* {
+    pub func new(loc: span&, literal: str*) -> ast_char_literal* {
         var res = ast_char_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_char_literal, loc);
         res->literal = literal->clone();
@@ -914,14 +911,14 @@ impl ast_char_literal {
         var res = ast_char_literal::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_char_literal,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->literal = self->literal.clone();
+        res->literal = self.literal.clone();
         return res;
     }
 
     pub func delete(self) {
-        self->literal.delete();
+        self.literal.delete();
     }
 }
 
@@ -931,7 +928,7 @@ pub struct ast_bool_literal {
 }
 
 impl ast_bool_literal {
-    pub func new(loc: span*, flag: bool) -> ast_bool_literal* {
+    pub func new(loc: span&, flag: bool) -> ast_bool_literal* {
         var res = ast_bool_literal::__alloc__();
         res->base = ast::instance(ast_kind::ast_bool_literal, loc);
         res->flag = flag;
@@ -939,7 +936,7 @@ impl ast_bool_literal {
     }
 
     pub func copy(self) -> ast_bool_literal* {
-        return ast_bool_literal::new(self->base.location.__ptr__(), self->flag);
+        return ast_bool_literal::new(self.base.location, self.flag);
     }
 }
 
@@ -949,7 +946,7 @@ pub struct ast_array_list {
 }
 
 impl ast_array_list {
-    pub func new(loc: span*) -> ast_array_list* {
+    pub func new(loc: span&) -> ast_array_list* {
         var res = ast_array_list::__alloc__();
         res->base = ast::instance(ast_kind::ast_array_list, loc);
         res->value = vec<ast*>::instance();
@@ -960,21 +957,21 @@ impl ast_array_list {
         var res = ast_array_list::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_array_list,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->value = vec<ast*>::instance();
-        foreach (var i; self->value) {
+        foreach (var i; self.value) {
             res->value.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->value) {
+        foreach (var i; self.value) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->value.delete();
+        self.value.delete();
     }
 }
 
@@ -985,7 +982,7 @@ pub struct ast_call_index {
 }
 
 impl ast_call_index {
-    pub func new(loc: span*) -> ast_call_index* {
+    pub func new(loc: span&) -> ast_call_index* {
         var res = ast_call_index::__alloc__();
         res->base = ast::instance(ast_kind::ast_call_index, loc);
         res->index = nil;
@@ -996,10 +993,10 @@ impl ast_call_index {
         var res = ast_call_index::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call_index,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->index != nil) {
-            res->index = self->index->copy();
+        if (self.index != nil) {
+            res->index = self.index->copy();
         } else {
             res->index = nil;
         }
@@ -1007,9 +1004,9 @@ impl ast_call_index {
     }
 
     pub func delete(self) {
-        if (self->index != nil) {
-            self->index->delete();
-            free(self->index => i8*);
+        if (self.index != nil) {
+            self.index->delete();
+            free(self.index => i8*);
         }
     }
 }
@@ -1021,7 +1018,7 @@ pub struct ast_call_func_args {
 }
 
 impl ast_call_func_args {
-    pub func new(loc: span*) -> ast_call_func_args* {
+    pub func new(loc: span&) -> ast_call_func_args* {
         var res = ast_call_func_args::__alloc__();
         res->base = ast::instance(ast_kind::ast_call_func_args, loc);
         res->args = vec<ast*>::instance();
@@ -1033,24 +1030,24 @@ impl ast_call_func_args {
         var res = ast_call_func_args::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call_func_args,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->args = vec<ast*>::instance();
         res->args_is_ref = vec<bool>::instance();
-        foreach (var i; self->args) {
+        foreach (var i; self.args) {
             res->args.push(i.get()->copy());
-            res->args_is_ref.push(self->args_is_ref.get(i.index()));
+            res->args_is_ref.push(self.args_is_ref.get(i.index()));
         }
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->args) {
+        foreach (var i; self.args) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->args.delete();
-        self->args_is_ref.delete();
+        self.args.delete();
+        self.args_is_ref.delete();
     }
 }
 
@@ -1061,7 +1058,7 @@ pub struct ast_get_field {
 }
 
 impl ast_get_field {
-    pub func new(loc: span*, opr_loc: span*, name: const i8*) -> ast_get_field* {
+    pub func new(loc: span&, opr_loc: span*, name: const i8*) -> ast_get_field* {
         var res = ast_get_field::__alloc__();
         res->base = ast::instance(ast_kind::ast_get_field, loc);
         res->operator_location = opr_loc->clone();
@@ -1073,16 +1070,16 @@ impl ast_get_field {
         var res = ast_get_field::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_get_field,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->operator_location = self->operator_location.clone();
-        res->name = self->name.clone();
+        res->operator_location = self.operator_location.clone();
+        res->name = self.name.clone();
         return res;
     }
 
     pub func delete(self) {
-        self->operator_location.delete();
-        self->name.delete();
+        self.operator_location.delete();
+        self.name.delete();
     }
 }
 
@@ -1093,7 +1090,7 @@ pub struct ast_ptr_get_field {
 }
 
 impl ast_ptr_get_field {
-    pub func new(loc: span*, opr_loc: span*, name: const i8*) -> ast_ptr_get_field* {
+    pub func new(loc: span&, opr_loc: span*, name: const i8*) -> ast_ptr_get_field* {
         var res = ast_ptr_get_field::__alloc__();
         res->base = ast::instance(ast_kind::ast_ptr_get_field, loc);
         res->operator_location = opr_loc->clone();
@@ -1105,16 +1102,16 @@ impl ast_ptr_get_field {
         var res = ast_ptr_get_field::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_ptr_get_field,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->operator_location = self->operator_location.clone();
-        res->name = self->name.clone();
+        res->operator_location = self.operator_location.clone();
+        res->name = self.name.clone();
         return res;
     }
 
     pub func delete(self) {
-        self->operator_location.delete();
-        self->name.delete();
+        self.operator_location.delete();
+        self.name.delete();
     }
 }
 
@@ -1125,7 +1122,7 @@ pub struct ast_init_pair {
 }
 
 impl ast_init_pair {
-    pub func new(loc: span*) -> ast_init_pair* {
+    pub func new(loc: span&) -> ast_init_pair* {
         var res = ast_init_pair::__alloc__();
         res->base = ast::instance(ast_kind::ast_init_pair, loc);
         res->field = nil;
@@ -1137,15 +1134,15 @@ impl ast_init_pair {
         var res = ast_init_pair::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_init_pair,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->field != nil) {
-            res->field = self->field->copy();
+        if (self.field != nil) {
+            res->field = self.field->copy();
         } else {
             res->field = nil;
         }
-        if (self->value != nil) {
-            res->value = self->value->copy();
+        if (self.value != nil) {
+            res->value = self.value->copy();
         } else {
             res->value = nil;
         }
@@ -1153,14 +1150,14 @@ impl ast_init_pair {
     }
 
     pub func delete(self) {
-        if (self->field != nil) {
-            var n = self->field => ast*;
+        if (self.field != nil) {
+            var n = self.field => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->value != nil) {
-            self->value->delete();
-            free(self->value => i8*);
+        if (self.value != nil) {
+            self.value->delete();
+            free(self.value => i8*);
         }
     }
 }
@@ -1171,7 +1168,7 @@ pub struct ast_initializer {
 }
 
 impl ast_initializer {
-    pub func new(loc: span*) -> ast_initializer* {
+    pub func new(loc: span&) -> ast_initializer* {
         var res = ast_initializer::__alloc__();
         res->base = ast::instance(ast_kind::ast_initializer, loc);
         res->pairs = vec<ast*>::instance();
@@ -1182,21 +1179,21 @@ impl ast_initializer {
         var res = ast_initializer::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_initializer,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->pairs = vec<ast*>::instance();
-        foreach (var i; self->pairs) {
+        foreach (var i; self.pairs) {
             res->pairs.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->pairs) {
+        foreach (var i; self.pairs) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->pairs.delete();
+        self.pairs.delete();
     }
 }
 
@@ -1206,7 +1203,7 @@ pub struct ast_call_path {
 }
 
 impl ast_call_path {
-    pub func new(loc: span*, name: str*) -> ast_call_path* {
+    pub func new(loc: span&, name: str*) -> ast_call_path* {
         var res = ast_call_path::__alloc__();
         res->base = ast::instance(ast_kind::ast_call_path, loc);
         res->name = name->clone();
@@ -1217,14 +1214,14 @@ impl ast_call_path {
         var res = ast_call_path::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call_path,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->name = self->name.clone();
+        res->name = self.name.clone();
         return res;
     }
 
     pub func delete(self) {
-        self->name.delete();
+        self.name.delete();
     }
 }
 
@@ -1235,7 +1232,7 @@ pub struct ast_call_id {
 }
 
 impl ast_call_id {
-    pub func new(loc: span*) -> ast_call_id* {
+    pub func new(loc: span&) -> ast_call_id* {
         var res = ast_call_id::__alloc__();
         res->base = ast::instance(ast_kind::ast_call_id, loc);
         res->id = nil;
@@ -1247,15 +1244,15 @@ impl ast_call_id {
         var res = ast_call_id::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call_id,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->id != nil) {
-            res->id = self->id->copy();
+        if (self.id != nil) {
+            res->id = self.id->copy();
         } else {
             res->id = nil;
         }
-        if (self->generic_types != nil) {
-            res->generic_types = self->generic_types->copy();
+        if (self.generic_types != nil) {
+            res->generic_types = self.generic_types->copy();
         } else {
             res->generic_types = nil;
         }
@@ -1263,13 +1260,13 @@ impl ast_call_id {
     }
 
     pub func delete(self) {
-        if (self->id != nil) {
-            var n = self->id => ast*;
+        if (self.id != nil) {
+            var n = self.id => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->generic_types != nil) {
-            var n = self->generic_types => ast*;
+        if (self.generic_types != nil) {
+            var n = self.generic_types => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -1283,7 +1280,7 @@ pub struct ast_call {
 }
 
 impl ast_call {
-    pub func new(loc: span*) -> ast_call* {
+    pub func new(loc: span&) -> ast_call* {
         var res = ast_call::__alloc__();
         res->base = ast::instance(ast_kind::ast_call, loc);
         res->head = nil;
@@ -1295,31 +1292,31 @@ impl ast_call {
         var res = ast_call::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_call,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->head != nil) {
-            res->head = self->head->copy();
+        if (self.head != nil) {
+            res->head = self.head->copy();
         } else {
             res->head = nil;
         }
         res->chain = vec<ast*>::instance();
-        foreach (var i; self->chain) {
+        foreach (var i; self.chain) {
             res->chain.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        if (self->head != nil) {
-            var n = self->head => ast*;
+        if (self.head != nil) {
+            var n = self.head => ast*;
             n->delete();
             free(n => i8*);
         }
-        foreach (var i; self->chain) {
+        foreach (var i; self.chain) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->chain.delete();
+        self.chain.delete();
     }
 }
 
@@ -1331,7 +1328,7 @@ pub struct ast_assignment {
 }
 
 impl ast_assignment {
-    pub func new(loc: span*) -> ast_assignment* {
+    pub func new(loc: span&) -> ast_assignment* {
         var res = ast_assignment::__alloc__();
         res->base = ast::instance(ast_kind::ast_assignment, loc);
         res->left = nil;
@@ -1343,16 +1340,16 @@ impl ast_assignment {
         var res = ast_assignment::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_assignment,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->kind = self->kind;
-        if (self->left != nil) {
-            res->left = self->left->copy();
+        res->kind = self.kind;
+        if (self.left != nil) {
+            res->left = self.left->copy();
         } else {
             res->left= nil;
         }
-        if (self->right != nil) {
-            res->right = self->right->copy();
+        if (self.right != nil) {
+            res->right = self.right->copy();
         } else {
             res->right = nil;
         }
@@ -1360,14 +1357,14 @@ impl ast_assignment {
     }
 
     pub func delete(self) {
-        if (self->left != nil) {
-            var n = self->left => ast*;
+        if (self.left != nil) {
+            var n = self.left => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->right != nil) {
-            self->right->delete();
-            free(self->right => i8*);
+        if (self.right != nil) {
+            self.right->delete();
+            free(self.right => i8*);
         }
     }
 }
@@ -1382,7 +1379,7 @@ pub struct ast_cond_compile {
 }
 
 impl ast_cond_compile {
-    pub func new(loc: span*, cond_name: str*) -> ast_cond_compile* {
+    pub func new(loc: span&, cond_name: str*) -> ast_cond_compile* {
         var res = ast_cond_compile::__alloc__();
         res->base = ast::instance(ast_kind::ast_cond_compile, loc);
         res->cond_name = cond_name->clone();
@@ -1395,33 +1392,33 @@ impl ast_cond_compile {
         var res = ast_cond_compile::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_cond_compile,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->cond_name = self->cond_name.clone();
-        res->ordered_conds = self->ordered_conds.clone();
-        res->conds = self->conds.clone();
+        res->cond_name = self.cond_name.clone();
+        res->ordered_conds = self.ordered_conds.clone();
+        res->conds = self.conds.clone();
         return res;
     }
 
     pub func delete(self) {
-        self->cond_name.delete();
-        self->ordered_conds.delete();
-        self->conds.delete();
+        self.cond_name.delete();
+        self.ordered_conds.delete();
+        self.conds.delete();
     }
 
     pub func add_condition(self, key: str*, value: str*) {
-        self->ordered_conds.push(key);
-        self->conds.insert(key, value);
+        self.ordered_conds.push(key);
+        self.conds.insert(key, value);
     }
 
     pub func get_text(self) -> str {
         var text = str::from("#[");
-        text.append_str(self->cond_name.__ptr__())->append_char('(');
-        foreach (var i; self->ordered_conds) {
+        text.append_str(self.cond_name.__ptr__()).append_char('(');
+        foreach (var i; self.ordered_conds) {
             text.append_str(i.get());
-            if (!self->conds.get(i.get())->empty()) {
+            if (!self.conds.get(i.get())->empty()) {
                 text.append(" = ");
-                text.append_str(self->conds.get(i.get()));
+                text.append_str(self.conds.get(i.get()));
             }
             text.append_char(',');
         }
@@ -1448,7 +1445,7 @@ pub struct ast_type_def {
 }
 
 impl ast_type_def {
-    pub func new(loc: span*) -> ast_type_def* {
+    pub func new(loc: span&) -> ast_type_def* {
         var res = ast_type_def::__alloc__();
         res->base = ast::instance(ast_kind::ast_type_def, loc);
         res->name = nil;
@@ -1465,44 +1462,44 @@ impl ast_type_def {
         var res = ast_type_def::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_type_def,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->name != nil) {
-            res->name = self->name->copy();
+        if (self.name != nil) {
+            res->name = self.name->copy();
         } else {
             res->name = nil;
         }
-        if (self->generic_types != nil) {
-            res->generic_types = self->generic_types->copy();
+        if (self.generic_types != nil) {
+            res->generic_types = self.generic_types->copy();
         } else {
             res->generic_types = nil;
         }
-        res->pointer_depth = self->pointer_depth;
-        res->is_const = self->is_const;
+        res->pointer_depth = self.pointer_depth;
+        res->is_const = self.is_const;
 
-        if (self->array_length != nil) {
-            res->array_length = self->array_length->copy();
+        if (self.array_length != nil) {
+            res->array_length = self.array_length->copy();
         } else {
             res->array_length = nil;
         }
-        res->is_array = self->is_array;
-        res->is_reference = self->is_reference;
+        res->is_array = self.is_array;
+        res->is_reference = self.is_reference;
         return res;
     }
 
     pub func delete(self) {
-        if (self->name != nil) {
-            var n = self->name => ast*;
+        if (self.name != nil) {
+            var n = self.name => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->generic_types != nil) {
-            var n = self->generic_types => ast*;
+        if (self.generic_types != nil) {
+            var n = self.generic_types => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->array_length != nil) {
-            var n = self->array_length => ast*;
+        if (self.array_length != nil) {
+            var n = self.array_length => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -1515,7 +1512,7 @@ pub struct ast_generic_type_list {
 }
 
 impl ast_generic_type_list {
-    pub func new(loc: span*) -> ast_generic_type_list* {
+    pub func new(loc: span&) -> ast_generic_type_list* {
         var res = ast_generic_type_list::__alloc__();
         res->base = ast::instance(ast_kind::ast_generic_type_list, loc);
         res->types = vec<ast*>::instance();
@@ -1526,21 +1523,21 @@ impl ast_generic_type_list {
         var res = ast_generic_type_list::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_generic_type_list,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->types = vec<ast*>::instance();
-        foreach (var i; self->types) {
+        foreach (var i; self.types) {
             res->types.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->types) {
+        foreach (var i; self.types) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->types.delete();
+        self.types.delete();
     }
 }
 
@@ -1551,7 +1548,7 @@ pub struct ast_enum_member {
 }
 
 impl ast_enum_member {
-    pub func new(loc: span*) -> ast_enum_member* {
+    pub func new(loc: span&) -> ast_enum_member* {
         var res = ast_enum_member::__alloc__();
         res->base = ast::instance(ast_kind::ast_enum_member, loc);
         res->name = nil;
@@ -1563,15 +1560,15 @@ impl ast_enum_member {
         var res = ast_enum_member::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_enum_member,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->name != nil) {
-            res->name = self->name->copy();
+        if (self.name != nil) {
+            res->name = self.name->copy();
         } else {
             res->name = nil;
         }
-        if (self->value != nil) {
-            res->value = self->value->copy();
+        if (self.value != nil) {
+            res->value = self.value->copy();
         } else {
             res->value = nil;
         }
@@ -1579,13 +1576,13 @@ impl ast_enum_member {
     }
 
     pub func delete(self) {
-        if (self->name != nil) {
-            var n = self->name => ast*;
+        if (self.name != nil) {
+            var n = self.name => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->value != nil) {
-            var n = self->value => ast*;
+        if (self.value != nil) {
+            var n = self.value => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -1601,7 +1598,7 @@ pub struct ast_enum_decl {
 }
 
 impl ast_enum_decl {
-    pub func new(loc: span*, name: str*) -> ast_enum_decl* {
+    pub func new(loc: span&, name: str*) -> ast_enum_decl* {
         var res = ast_enum_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_enum_decl, loc);
         res->members = vec<ast*>::instance();
@@ -1615,39 +1612,39 @@ impl ast_enum_decl {
         var res = ast_enum_decl::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_enum_decl,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->members = vec<ast*>::instance();
-        foreach (var i; self->members) {
+        foreach (var i; self.members) {
             res->members.push(i.get()->copy());
         }
         res->conds = vec<ast_cond_compile*>::instance();
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             res->conds.push(i.get()->copy());
         }
-        res->name = self->name.clone();
-        res->is_public = self->is_public;
+        res->name = self.name.clone();
+        res->is_public = self.is_public;
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->members) {
+        foreach (var i; self.members) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             var n = i.get() => ast*;
             n->delete();
             free(n => i8*);
         }
-        self->members.delete();
-        self->conds.delete();
-        self->name.delete();
+        self.members.delete();
+        self.conds.delete();
+        self.name.delete();
     }
 
     pub func set_conds(self, conds: vec<ast_cond_compile*>*) {
         foreach (var i; conds) {
-            self->conds.push(i.get());
+            self.conds.push(i.get());
         }
     }
 }
@@ -1659,7 +1656,7 @@ pub struct ast_field_pair {
 }
 
 impl ast_field_pair {
-    pub func new(loc: span*) -> ast_field_pair* {
+    pub func new(loc: span&) -> ast_field_pair* {
         var res = ast_field_pair::__alloc__();
         res->base = ast::instance(ast_kind::ast_field_pair, loc);
         res->name = nil;
@@ -1671,15 +1668,15 @@ impl ast_field_pair {
         var res = ast_field_pair::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_field_pair,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->name != nil) {
-            res->name = self->name->copy();
+        if (self.name != nil) {
+            res->name = self.name->copy();
         } else {
             res->name = nil;
         }
-        if (self->type != nil) {
-            res->type = self->type->copy();
+        if (self.type != nil) {
+            res->type = self.type->copy();
         } else {
             res->type = nil;
         }
@@ -1687,13 +1684,13 @@ impl ast_field_pair {
     }
 
     pub func delete(self) {
-        if (self->name != nil) {
-            var n = self->name => ast*;
+        if (self.name != nil) {
+            var n = self.name => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->type != nil) {
-            var n = self->type => ast*;
+        if (self.type != nil) {
+            var n = self.type => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -1711,7 +1708,7 @@ pub struct ast_struct_decl {
 }
 
 impl ast_struct_decl {
-    pub func new(loc: span*, name: str*) -> ast_struct_decl* {
+    pub func new(loc: span&, name: str*) -> ast_struct_decl* {
         var res = ast_struct_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_struct_decl, loc);
         res->fields = vec<ast_field_pair*>::instance();
@@ -1727,61 +1724,61 @@ impl ast_struct_decl {
         var res = ast_struct_decl::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_struct_decl,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->fields = vec<ast_field_pair*>::instance();
-        foreach (var i; self->fields) {
+        foreach (var i; self.fields) {
             res->fields.push(i.get()->copy());
         }
-        res->name = self->name.clone();
-        if (self->generic_types != nil) {
-            res->generic_types = self->generic_types->copy();
+        res->name = self.name.clone();
+        if (self.generic_types != nil) {
+            res->generic_types = self.generic_types->copy();
         } else {
             res->generic_types = nil;
         }
         res->conds = vec<ast_cond_compile*>::instance();
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             res->conds.push(i.get()->copy());
         }
-        res->is_public = self->is_public;
-        res->is_extern = self->is_extern;
+        res->is_public = self.is_public;
+        res->is_extern = self.is_extern;
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->fields) {
+        foreach (var i; self.fields) {
             var n = i.get() => ast*;
             n->delete();
             free(n => i8*);
         }
-        self->fields.delete();
-        foreach (var i; self->conds) {
+        self.fields.delete();
+        foreach (var i; self.conds) {
             var n = i.get() => ast*;
             n->delete();
             free(n => i8*);
         }
-        self->conds.delete();
-        self->name.delete();
-        if (self->generic_types != nil) {
-            var n = self->generic_types => ast*;
+        self.conds.delete();
+        self.name.delete();
+        if (self.generic_types != nil) {
+            var n = self.generic_types => ast*;
             n->delete();
             free(n => i8*);
         }
     }
 
     pub func clear_generic_types(self) {
-        if (self->generic_types == nil) {
+        if (self.generic_types == nil) {
             return;
         }
-        var to_ast = self->generic_types => ast*;
+        var to_ast = self.generic_types => ast*;
         to_ast->delete();
         free(to_ast => i8*);
-        self->generic_types = nil;
+        self.generic_types = nil;
     }
 
     pub func set_conds(self, conds: vec<ast_cond_compile*>*) {
         foreach (var i; conds) {
-            self->conds.push(i.get());
+            self.conds.push(i.get());
         }
     }
 }
@@ -1797,7 +1794,7 @@ pub struct ast_tagged_union_decl {
 }
 
 impl ast_tagged_union_decl {
-    pub func new(loc: span*) -> ast_tagged_union_decl* {
+    pub func new(loc: span&) -> ast_tagged_union_decl* {
         var res = ast_tagged_union_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_tagged_union_decl, loc);
         res->members = vec<ast_field_pair*>::instance();
@@ -1813,43 +1810,43 @@ impl ast_tagged_union_decl {
         var res = ast_tagged_union_decl::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_tagged_union_decl,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->members = vec<ast_field_pair*>::instance();
-        foreach (var i; self->members) {
+        foreach (var i; self.members) {
             res->members.push(i.get()->copy());
         }
-        res->name = self->name.clone();
-        res->ref_enum_name = self->ref_enum_name.clone();
+        res->name = self.name.clone();
+        res->ref_enum_name = self.ref_enum_name.clone();
         res->conds = vec<ast_cond_compile*>::instance();
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             res->conds.push(i.get()->copy());
         }
-        res->is_public = self->is_public;
-        res->is_extern = self->is_extern;
+        res->is_public = self.is_public;
+        res->is_extern = self.is_extern;
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->members) {
+        foreach (var i; self.members) {
             var n = i.get() => ast*;
             n->delete();
             free(n => i8*);
         }
-        self->members.delete();
-        foreach (var i; self->conds) {
+        self.members.delete();
+        foreach (var i; self.conds) {
             var n = i.get() => ast*;
             n->delete();
             free(n => i8*);
         }
-        self->conds.delete();
-        self->name.delete();
-        self->ref_enum_name.delete();
+        self.conds.delete();
+        self.name.delete();
+        self.ref_enum_name.delete();
     }
 
     pub func set_conds(self, conds: vec<ast_cond_compile*>*) {
         foreach (var i; conds) {
-            self->conds.push(i.get());
+            self.conds.push(i.get());
         }
     }
 }
@@ -1861,7 +1858,7 @@ pub struct ast_param {
 }
 
 impl ast_param {
-    pub func new(loc: span*) -> ast_param* {
+    pub func new(loc: span&) -> ast_param* {
         var res = ast_param::__alloc__();
         res->base = ast::instance(ast_kind::ast_param, loc);
         res->name = nil;
@@ -1873,15 +1870,15 @@ impl ast_param {
         var res = ast_param::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_param,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->name != nil) {
-            res->name = self->name->copy();
+        if (self.name != nil) {
+            res->name = self.name->copy();
         } else {
             res->name = nil;
         }
-        if (self->type != nil) {
-            res->type = self->type->copy();
+        if (self.type != nil) {
+            res->type = self.type->copy();
         } else {
             res->type = nil;
         }
@@ -1889,13 +1886,13 @@ impl ast_param {
     }
 
     pub func delete(self) {
-        if (self->name != nil) {
-            var n = self->name => ast*;
+        if (self.name != nil) {
+            var n = self.name => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->type != nil) {
-            var n = self->type => ast*;
+        if (self.type != nil) {
+            var n = self.type => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -1908,7 +1905,7 @@ pub struct ast_param_list {
 }
 
 impl ast_param_list {
-    pub func new(loc: span*) -> ast_param_list* {
+    pub func new(loc: span&) -> ast_param_list* {
         var res = ast_param_list::__alloc__();
         res->base = ast::instance(ast_kind::ast_param_list, loc);
         res->params = vec<ast*>::instance();
@@ -1919,21 +1916,21 @@ impl ast_param_list {
         var res = ast_param_list::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_param_list,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->params = vec<ast*>::instance();
-        foreach (var i; self->params) {
+        foreach (var i; self.params) {
             res->params.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->params) {
+        foreach (var i; self.params) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->params.delete();
+        self.params.delete();
    }
 }
 
@@ -1951,7 +1948,7 @@ pub struct ast_func_decl {
 }
 
 impl ast_func_decl {
-    pub func new(loc: span*, name: str*) -> ast_func_decl* {
+    pub func new(loc: span&, name: str*) -> ast_func_decl* {
         var res = ast_func_decl::__alloc__();
         res->base = ast::instance(ast_kind::ast_func_decl, loc);
         res->name = name->clone();
@@ -1970,88 +1967,88 @@ impl ast_func_decl {
         var res = ast_func_decl::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_func_decl,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->name = self->name.clone();
+        res->name = self.name.clone();
         res->monomorphic_name = str::from("");
-        if (self->generic_types != nil) {
-            res->generic_types = self->generic_types->copy();
+        if (self.generic_types != nil) {
+            res->generic_types = self.generic_types->copy();
         } else {
             res->generic_types = nil;
         }
-        if (self->params != nil) {
-            res->params = self->params->copy();
+        if (self.params != nil) {
+            res->params = self.params->copy();
         } else {
             res->params = nil;
         }
-        if (self->return_type != nil) {
-            res->return_type = self->return_type->copy();
+        if (self.return_type != nil) {
+            res->return_type = self.return_type->copy();
         } else {
             res->return_type = nil;
         }
-        if (self->body != nil) {
-            res->body = self->body->copy();
+        if (self.body != nil) {
+            res->body = self.body->copy();
         } else {
             res->body = nil;
         }
         res->conds = vec<ast_cond_compile*>::instance();
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             res->conds.push(i.get()->copy());
         }
-        res->is_public = self->is_public;
-        res->is_extern = self->is_extern;
+        res->is_public = self.is_public;
+        res->is_extern = self.is_extern;
         return res;
     }
 
     pub func delete(self) {
-        self->name.delete();
-        self->monomorphic_name.delete();
-        if (self->generic_types != nil) {
-            var n = self->generic_types => ast*;
+        self.name.delete();
+        self.monomorphic_name.delete();
+        if (self.generic_types != nil) {
+            var n = self.generic_types => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->params != nil) {
-            var n = self->params => ast*;
+        if (self.params != nil) {
+            var n = self.params => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->return_type != nil) {
-            var n = self->return_type => ast*;
+        if (self.return_type != nil) {
+            var n = self.return_type => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->body != nil) {
-            var n = self->body => ast*;
+        if (self.body != nil) {
+            var n = self.body => ast*;
             n->delete();
             free(n => i8*);
         }
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             var n = i.get() => ast*;
             n->delete();
             free(n => i8*);
         }
-        self->conds.delete();
+        self.conds.delete();
     }
 
     pub func clear_generic_types(self) {
-        if (self->generic_types == nil) {
+        if (self.generic_types == nil) {
             return;
         }
-        var to_ast = self->generic_types => ast*;
+        var to_ast = self.generic_types => ast*;
         to_ast->delete();
         free(to_ast => i8*);
-        self->generic_types = nil;
+        self.generic_types = nil;
     }
 
     pub func set_conds(self, conds: vec<ast_cond_compile*>*) {
         foreach (var i; conds) {
-            self->conds.push(i.get());
+            self.conds.push(i.get());
         }
     }
 
     pub func contain_cond(self) -> bool {
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             var c = i.get();
             if (c->cond_name.eq_const("is_trivial") ||
                 c->cond_name.eq_const("is_non_trivial") ||
@@ -2064,7 +2061,7 @@ impl ast_func_decl {
     }
 
     pub func get_trivial_cond(self) -> ast_cond_compile* {
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             var c = i.get();
             if (c->cond_name.eq_const("is_trivial")) {
                 return c;
@@ -2074,7 +2071,7 @@ impl ast_func_decl {
     }
 
     pub func get_non_trivial_cond(self) -> ast_cond_compile* {
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             var c = i.get();
             if (c->cond_name.eq_const("is_non_trivial")) {
                 return c;
@@ -2084,7 +2081,7 @@ impl ast_func_decl {
     }
 
     pub func get_is_pointer_cond(self) -> ast_cond_compile* {
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             var c = i.get();
             if (c->cond_name.eq_const("is_pointer")) {
                 return c;
@@ -2094,7 +2091,7 @@ impl ast_func_decl {
     }
 
     pub func get_is_non_pointer_cond(self) -> ast_cond_compile* {
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             var c = i.get();
             if (c->cond_name.eq_const("is_non_pointer")) {
                 return c;
@@ -2104,8 +2101,8 @@ impl ast_func_decl {
     }
 
     pub func get_monomorphic_name(self) -> str* {
-        if (!self->monomorphic_name.empty()) {
-            return self->monomorphic_name.__ptr__();
+        if (!self.monomorphic_name.empty()) {
+            return self.monomorphic_name.__ptr__();
         }
 
         var trivial_cond = str::from("");
@@ -2120,7 +2117,7 @@ impl ast_func_decl {
         var is_non_pointer_cond = str::from("");
         defer is_non_pointer_cond.delete();
 
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             var c = i.get();
 
             var tmp = c->get_text();
@@ -2138,24 +2135,24 @@ impl ast_func_decl {
         }
 
         if (!trivial_cond.empty()) {
-            self->monomorphic_name.append_str(trivial_cond.__ptr__());
-            self->monomorphic_name.append_char(' ');
+            self.monomorphic_name.append_str(trivial_cond.__ptr__());
+            self.monomorphic_name.append_char(' ');
         }
         if (!non_trivial_cond.empty()) {
-            self->monomorphic_name.append_str(non_trivial_cond.__ptr__());
-            self->monomorphic_name.append_char(' ');
+            self.monomorphic_name.append_str(non_trivial_cond.__ptr__());
+            self.monomorphic_name.append_char(' ');
         }
         if (!is_pointer_cond.empty()) {
-            self->monomorphic_name.append_str(is_pointer_cond.__ptr__());
-            self->monomorphic_name.append_char(' ');
+            self.monomorphic_name.append_str(is_pointer_cond.__ptr__());
+            self.monomorphic_name.append_char(' ');
         }
         if (!is_non_pointer_cond.empty()) {
-            self->monomorphic_name.append_str(is_non_pointer_cond.__ptr__());
-            self->monomorphic_name.append_char(' ');
+            self.monomorphic_name.append_str(is_non_pointer_cond.__ptr__());
+            self.monomorphic_name.append_char(' ');
         }
 
-        self->monomorphic_name.append_str(self->name.__ptr__());
-        return self->monomorphic_name.__ptr__();
+        self.monomorphic_name.append_str(self.name.__ptr__());
+        return self.monomorphic_name.__ptr__();
     }
 }
 
@@ -2168,7 +2165,7 @@ pub struct ast_impl {
 }
 
 impl ast_impl {
-    pub func new(loc: span*, name: str*) -> ast_impl* {
+    pub func new(loc: span&, name: str*) -> ast_impl* {
         var res = ast_impl::__alloc__();
         res->base = ast::instance(ast_kind::ast_impl, loc);
         res->name = name->clone();
@@ -2182,65 +2179,65 @@ impl ast_impl {
         var res = ast_impl::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_impl,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->name = self->name.clone();
-        if (self->generic_types != nil) {
-            res->generic_types = self->generic_types->copy();
+        res->name = self.name.clone();
+        if (self.generic_types != nil) {
+            res->generic_types = self.generic_types->copy();
         } else {
             res->generic_types = nil;
         }
         res->methods = vec<ast*>::instance();
-        foreach (var i; self->methods) {
+        foreach (var i; self.methods) {
             res->methods.push(i.get()->copy());
         }
         res->conds = vec<ast_cond_compile*>::instance();
-        foreach (var i; self->conds) {
+        foreach (var i; self.conds) {
             res->conds.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        self->name.delete();
-        if (self->generic_types != nil) {
-            var n = self->generic_types => ast*;
+        self.name.delete();
+        if (self.generic_types != nil) {
+            var n = self.generic_types => ast*;
             n->delete();
             free(n => i8*);
         }
-        foreach (var i; self->methods) {
+        foreach (var i; self.methods) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->methods.delete();
-        foreach (var i; self->conds) {
+        self.methods.delete();
+        foreach (var i; self.conds) {
             var n = i.get() => ast*;
             n->delete();
             free(n => i8*);
         }
-        self->conds.delete();
+        self.conds.delete();
     }
 
     pub func clear_generic_types(self) {
-        if (self->generic_types == nil) {
+        if (self.generic_types == nil) {
             return;
         }
-        var to_ast = self->generic_types => ast*;
+        var to_ast = self.generic_types => ast*;
         to_ast->delete();
         free(to_ast => i8*);
-        self->generic_types = nil;
+        self.generic_types = nil;
     }
 
     pub func set_conds(self, conds: vec<ast_cond_compile*>*) {
         foreach (var i; conds) {
-            self->conds.push(i.get());
+            self.conds.push(i.get());
         }
     }
 
     pub func reset_methods(self, v: vec<ast*>*) {
-        self->methods.clear();
+        self.methods.clear();
         foreach (var i; v) {
-            self->methods.push(i.get());
+            self.methods.push(i.get());
         }
     }
 }
@@ -2254,7 +2251,7 @@ pub struct ast_use_stmt {
 }
 
 impl ast_use_stmt {
-    pub func new(loc: span*) -> ast_use_stmt* {
+    pub func new(loc: span&) -> ast_use_stmt* {
         var res = ast_use_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_use_stmt, loc);
         res->module_path = vec<ast*>::instance();
@@ -2266,30 +2263,30 @@ impl ast_use_stmt {
         var res = ast_use_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_use_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->module_path = vec<ast*>::instance();
-        foreach (var i; self->module_path) {
+        foreach (var i; self.module_path) {
             res->module_path.push(i.get()->copy());
         }
         res->import_symbol = vec<ast*>::instance();
-        foreach (var i; self->import_symbol) {
+        foreach (var i; self.import_symbol) {
             res->import_symbol.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->module_path) {
+        foreach (var i; self.module_path) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->module_path.delete();
-        foreach (var i; self->import_symbol) {
+        self.module_path.delete();
+        foreach (var i; self.import_symbol) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->import_symbol.delete();
+        self.import_symbol.delete();
     }
 }
 
@@ -2301,7 +2298,7 @@ pub struct ast_definition {
 }
 
 impl ast_definition {
-    pub func new(loc: span*, name: str*) -> ast_definition* {
+    pub func new(loc: span&, name: str*) -> ast_definition* {
         var res = ast_definition::__alloc__();
         res->base = ast::instance(ast_kind::ast_definition, loc);
         res->name = name->clone();
@@ -2314,16 +2311,16 @@ impl ast_definition {
         var res = ast_definition::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_definition,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        res->name = self->name.clone();
-        if (self->type != nil) {
-            res->type = self->type->copy();
+        res->name = self.name.clone();
+        if (self.type != nil) {
+            res->type = self.type->copy();
         } else {
             res->type = nil;
         }
-        if (self->value != nil) {
-            res->value = self->value->copy();
+        if (self.value != nil) {
+            res->value = self.value->copy();
         } else {
             res->value = nil;
         }
@@ -2331,15 +2328,15 @@ impl ast_definition {
     }
 
     pub func delete(self) {
-        self->name.delete();
-        if (self->type != nil) {
-            var n = self->type => ast*;
+        self.name.delete();
+        if (self.type != nil) {
+            var n = self.type => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->value != nil) {
-            self->value->delete();
-            free(self->value => i8*);
+        if (self.value != nil) {
+            self.value->delete();
+            free(self.value => i8*);
         }
     }
 }
@@ -2350,7 +2347,7 @@ pub struct ast_cond_stmt {
 }
 
 impl ast_cond_stmt {
-    pub func new(loc: span*) -> ast_cond_stmt* {
+    pub func new(loc: span&) -> ast_cond_stmt* {
         var res = ast_cond_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_cond_stmt, loc);
         res->stmts = vec<ast*>::instance();
@@ -2361,21 +2358,21 @@ impl ast_cond_stmt {
         var res = ast_cond_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_cond_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->stmts = vec<ast*>::instance();
-        foreach (var i; self->stmts) {
+        foreach (var i; self.stmts) {
             res->stmts.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->stmts) {
+        foreach (var i; self.stmts) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->stmts.delete();
+        self.stmts.delete();
     }
 }
 
@@ -2386,7 +2383,7 @@ pub struct ast_if_stmt {
 }
 
 impl ast_if_stmt {
-    pub func new(loc: span*) -> ast_if_stmt* {
+    pub func new(loc: span&) -> ast_if_stmt* {
         var res = ast_if_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_if_stmt, loc);
         res->condition = nil;
@@ -2398,15 +2395,15 @@ impl ast_if_stmt {
         var res = ast_if_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_if_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->condition != nil) {
-            res->condition = self->condition->copy();
+        if (self.condition != nil) {
+            res->condition = self.condition->copy();
         } else {
             res->condition = nil;
         }
-        if (self->body != nil) {
-            res->body = self->body->copy();
+        if (self.body != nil) {
+            res->body = self.body->copy();
         } else {
             res->body = nil;
         }
@@ -2414,12 +2411,12 @@ impl ast_if_stmt {
     }
 
     pub func delete(self) {
-        if (self->condition != nil) {
-            self->condition->delete();
-            free(self->condition => i8*);
+        if (self.condition != nil) {
+            self.condition->delete();
+            free(self.condition => i8*);
         }
-        if (self->body != nil) {
-            var n = self->body => ast*;
+        if (self.body != nil) {
+            var n = self.body => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -2433,7 +2430,7 @@ pub struct ast_match_case {
 }
 
 impl ast_match_case {
-    pub func new(loc: span*) -> ast_match_case* {
+    pub func new(loc: span&) -> ast_match_case* {
         var res = ast_match_case::__alloc__();
         res->base = ast::instance(ast_kind::ast_match_case, loc);
         res->pattern = nil;
@@ -2445,15 +2442,15 @@ impl ast_match_case {
         var res = ast_match_case::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_match_case,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->pattern != nil) {
-            res->pattern = self->pattern->copy();
+        if (self.pattern != nil) {
+            res->pattern = self.pattern->copy();
         } else {
             res->pattern = nil;
         }
-        if (self->body != nil) {
-            res->body = self->body->copy();
+        if (self.body != nil) {
+            res->body = self.body->copy();
         } else {
             res->body = nil;
         }
@@ -2461,13 +2458,13 @@ impl ast_match_case {
     }
 
     pub func delete(self) {
-        if (self->pattern != nil) {
-            var n = self->pattern => ast*;
+        if (self.pattern != nil) {
+            var n = self.pattern => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->body != nil) {
-            var n = self->body => ast*;
+        if (self.body != nil) {
+            var n = self.body => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -2481,7 +2478,7 @@ pub struct ast_match_stmt {
 }
 
 impl ast_match_stmt {
-    pub func new(loc: span*) -> ast_match_stmt* {
+    pub func new(loc: span&) -> ast_match_stmt* {
         var res = ast_match_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_match_stmt, loc);
         res->value = nil;
@@ -2493,30 +2490,30 @@ impl ast_match_stmt {
         var res = ast_match_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_match_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->value != nil) {
-            res->value = self->value->copy();
+        if (self.value != nil) {
+            res->value = self.value->copy();
         } else {
             res->value = nil;
         }
         res->cases = vec<ast*>::instance();
-        foreach (var i; self->cases) {
+        foreach (var i; self.cases) {
             res->cases.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        if (self->value != nil) {
-            self->value->delete();
-            free(self->value => i8*);
+        if (self.value != nil) {
+            self.value->delete();
+            free(self.value => i8*);
         }
-        foreach (var i; self->cases) {
+        foreach (var i; self.cases) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->cases.delete();
+        self.cases.delete();
     }
 }
 
@@ -2527,7 +2524,7 @@ pub struct ast_while_stmt {
 }
 
 impl ast_while_stmt {
-    pub func new(loc: span*) -> ast_while_stmt* {
+    pub func new(loc: span&) -> ast_while_stmt* {
         var res = ast_while_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_while_stmt, loc);
         res->condition = nil;
@@ -2539,15 +2536,15 @@ impl ast_while_stmt {
         var res = ast_while_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_while_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->condition != nil) {
-            res->condition = self->condition->copy();
+        if (self.condition != nil) {
+            res->condition = self.condition->copy();
         } else {
             res->condition = nil;
         }
-        if (self->body != nil) {
-            res->body = self->body->copy();
+        if (self.body != nil) {
+            res->body = self.body->copy();
         } else {
             res->body = nil;
         }
@@ -2555,12 +2552,12 @@ impl ast_while_stmt {
     }
 
     pub func delete(self) {
-        if (self->condition != nil) {
-            self->condition->delete();
-            free(self->condition => i8*);
+        if (self.condition != nil) {
+            self.condition->delete();
+            free(self.condition => i8*);
         }
-        if (self->body != nil) {
-            var n = self->body => ast*;
+        if (self.body != nil) {
+            var n = self.body => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -2576,7 +2573,7 @@ pub struct ast_for_stmt {
 }
 
 impl ast_for_stmt {
-    pub func new(loc: span*) -> ast_for_stmt* {
+    pub func new(loc: span&) -> ast_for_stmt* {
         var res = ast_for_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_for_stmt, loc);
         res->init = nil;
@@ -2590,25 +2587,25 @@ impl ast_for_stmt {
         var res = ast_for_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_for_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->init != nil) {
-            res->init = self->init->copy();
+        if (self.init != nil) {
+            res->init = self.init->copy();
         } else {
             res->init = nil;
         }
-        if (self->condition != nil) {
-            res->condition = self->condition->copy();
+        if (self.condition != nil) {
+            res->condition = self.condition->copy();
         } else {
             res->condition = nil;
         }
-        if (self->update != nil) {
-            res->update = self->update->copy();
+        if (self.update != nil) {
+            res->update = self.update->copy();
         } else {
             res->update = nil;
         }
-        if (self->body != nil) {
-            res->body = self->body->copy();
+        if (self.body != nil) {
+            res->body = self.body->copy();
         } else {
             res->body = nil;
         }
@@ -2616,21 +2613,21 @@ impl ast_for_stmt {
     }
 
     pub func delete(self) {
-        if (self->init != nil) {
-            var n = self->init => ast*;
+        if (self.init != nil) {
+            var n = self.init => ast*;
             n->delete();
             free(n => i8*);
         }
-        if (self->condition != nil) {
-            self->condition->delete();
-            free(self->condition => i8*);
+        if (self.condition != nil) {
+            self.condition->delete();
+            free(self.condition => i8*);
         }
-        if (self->update != nil) {
-            self->update->delete();
-            free(self->update => i8*);
+        if (self.update != nil) {
+            self.update->delete();
+            free(self.update => i8*);
         }
-        if (self->body != nil) {
-            var n = self->body => ast*;
+        if (self.body != nil) {
+            var n = self.body => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -2649,7 +2646,7 @@ pub struct ast_forindex {
 }
 
 impl ast_forindex {
-    pub func new(loc: span*) -> ast_forindex* {
+    pub func new(loc: span&) -> ast_forindex* {
         var res = ast_forindex::__alloc__();
         res->base = ast::instance(ast_kind::ast_forindex, loc);
         res->variable = nil;
@@ -2666,36 +2663,36 @@ impl ast_forindex {
         var res = ast_forindex::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_forindex,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->variable != nil) {
-            res->variable = self->variable->copy();
+        if (self.variable != nil) {
+            res->variable = self.variable->copy();
         } else {
             res->variable = nil;
         }
-        if (self->container != nil) {
-            res->container = self->container->copy();
+        if (self.container != nil) {
+            res->container = self.container->copy();
         } else {
             res->container = nil;
         }
-        if (self->body != nil) {
-            res->body = self->body->copy();
+        if (self.body != nil) {
+            res->body = self.body->copy();
         } else {
             res->body = nil;
         }
 
-        if (self->lowered_init != nil) {
-            res->lowered_init = self->lowered_init->copy();
+        if (self.lowered_init != nil) {
+            res->lowered_init = self.lowered_init->copy();
         } else {
             res->lowered_init = nil;
         }
-        if (self->lowered_condition != nil) {
-            res->lowered_condition = self->lowered_condition->copy();
+        if (self.lowered_condition != nil) {
+            res->lowered_condition = self.lowered_condition->copy();
         } else {
             res->lowered_condition = nil;
         }
-        if (self->lowered_update != nil) {
-            res->lowered_update = self->lowered_update->copy();
+        if (self.lowered_update != nil) {
+            res->lowered_update = self.lowered_update->copy();
         } else {
             res->lowered_update = nil;
         }
@@ -2703,34 +2700,34 @@ impl ast_forindex {
     }
 
     pub func delete(self) {
-        if (self->variable != nil) {
-            var tmp = self->variable => ast*;
+        if (self.variable != nil) {
+            var tmp = self.variable => ast*;
             tmp->delete();
             free(tmp => i8*);
         }
-        if (self->container != nil) {
-            var tmp = self->container => ast*;
+        if (self.container != nil) {
+            var tmp = self.container => ast*;
             tmp->delete();
             free(tmp => i8*);
         }
-        if (self->body != nil) {
-            var tmp = self->body => ast*;
+        if (self.body != nil) {
+            var tmp = self.body => ast*;
             tmp->delete();
             free(tmp => i8*);
         }
 
-        if (self->lowered_init != nil) {
-            var tmp = self->lowered_init => ast*;
+        if (self.lowered_init != nil) {
+            var tmp = self.lowered_init => ast*;
             tmp->delete();
             free(tmp => i8*);
         }
-        if (self->lowered_condition != nil) {
-            self->lowered_condition->delete();
-            free(self->lowered_condition => i8*);
+        if (self.lowered_condition != nil) {
+            self.lowered_condition->delete();
+            free(self.lowered_condition => i8*);
         }
-        if (self->lowered_update != nil) {
-            self->lowered_update->delete();
-            free(self->lowered_update => i8*);
+        if (self.lowered_update != nil) {
+            self.lowered_update->delete();
+            free(self.lowered_update => i8*);
         }
     }
 }
@@ -2747,7 +2744,7 @@ pub struct ast_foreach {
 }
 
 impl ast_foreach {
-    pub func new(loc: span*) -> ast_foreach* {
+    pub func new(loc: span&) -> ast_foreach* {
         var res = ast_foreach::__alloc__();
         res->base = ast::instance(ast_kind::ast_foreach, loc);
         res->variable = nil;
@@ -2764,36 +2761,36 @@ impl ast_foreach {
         var res = ast_foreach::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_foreach,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->variable != nil) {
-            res->variable = self->variable->copy();
+        if (self.variable != nil) {
+            res->variable = self.variable->copy();
         } else {
             res->variable = nil;
         }
-        if (self->container != nil) {
-            res->container = self->container->copy();
+        if (self.container != nil) {
+            res->container = self.container->copy();
         } else {
             res->container = nil;
         }
-        if (self->body != nil) {
-            res->body = self->body->copy();
+        if (self.body != nil) {
+            res->body = self.body->copy();
         } else {
             res->body = nil;
         }
 
-        if (self->lowered_init != nil) {
-            res->lowered_init = self->lowered_init->copy();
+        if (self.lowered_init != nil) {
+            res->lowered_init = self.lowered_init->copy();
         } else {
             res->lowered_init = nil;
         }
-        if (self->lowered_condition != nil) {
-            res->lowered_condition = self->lowered_condition->copy();
+        if (self.lowered_condition != nil) {
+            res->lowered_condition = self.lowered_condition->copy();
         } else {
             res->lowered_condition = nil;
         }
-        if (self->lowered_update != nil) {
-            res->lowered_update = self->lowered_update->copy();
+        if (self.lowered_update != nil) {
+            res->lowered_update = self.lowered_update->copy();
         } else {
             res->lowered_update = nil;
         }
@@ -2801,34 +2798,34 @@ impl ast_foreach {
     }
 
     pub func delete(self) {
-        if (self->variable != nil) {
-            var tmp = self->variable => ast*;
+        if (self.variable != nil) {
+            var tmp = self.variable => ast*;
             tmp->delete();
             free(tmp => i8*);
         }
-        if (self->container != nil) {
-            var tmp = self->container => ast*;
+        if (self.container != nil) {
+            var tmp = self.container => ast*;
             tmp->delete();
             free(tmp => i8*);
         }
-        if (self->body != nil) {
-            var tmp = self->body => ast*;
+        if (self.body != nil) {
+            var tmp = self.body => ast*;
             tmp->delete();
             free(tmp => i8*);
         }
 
-        if (self->lowered_init != nil) {
-            var tmp = self->lowered_init => ast*;
+        if (self.lowered_init != nil) {
+            var tmp = self.lowered_init => ast*;
             tmp->delete();
             free(tmp => i8*);
         }
-        if (self->lowered_condition != nil) {
-            self->lowered_condition->delete();
-            free(self->lowered_condition => i8*);
+        if (self.lowered_condition != nil) {
+            self.lowered_condition->delete();
+            free(self.lowered_condition => i8*);
         }
-        if (self->lowered_update != nil) {
-            self->lowered_update->delete();
-            free(self->lowered_update => i8*);
+        if (self.lowered_update != nil) {
+            self.lowered_update->delete();
+            free(self.lowered_update => i8*);
         }
     }
 }
@@ -2839,7 +2836,7 @@ pub struct ast_in_stmt_expr {
 }
 
 impl ast_in_stmt_expr {
-    pub func new(loc: span*) -> ast_in_stmt_expr* {
+    pub func new(loc: span&) -> ast_in_stmt_expr* {
         var res = ast_in_stmt_expr::__alloc__();
         res->base = ast::instance(ast_kind::ast_in_stmt_expr, loc);
         res->value = nil;
@@ -2850,10 +2847,10 @@ impl ast_in_stmt_expr {
         var res = ast_in_stmt_expr::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_in_stmt_expr,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->value != nil) {
-            res->value = self->value->copy();
+        if (self.value != nil) {
+            res->value = self.value->copy();
         } else {
             res->value = nil;
         }
@@ -2861,9 +2858,9 @@ impl ast_in_stmt_expr {
     }
 
     pub func delete(self) {
-        if (self->value != nil) {
-            self->value->delete();
-            free(self->value => i8*);
+        if (self.value != nil) {
+            self.value->delete();
+            free(self.value => i8*);
         }
     }
 }
@@ -2874,7 +2871,7 @@ pub struct ast_defer_stmt {
 }
 
 impl ast_defer_stmt {
-    pub func new(loc: span*) -> ast_defer_stmt* {
+    pub func new(loc: span&) -> ast_defer_stmt* {
         var res = ast_defer_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_defer_stmt, loc);
         res->block = nil;
@@ -2885,10 +2882,10 @@ impl ast_defer_stmt {
         var res = ast_defer_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_defer_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->block != nil) {
-            res->block = self->block->copy();
+        if (self.block != nil) {
+            res->block = self.block->copy();
         } else {
             res->block = nil;
         }
@@ -2896,8 +2893,8 @@ impl ast_defer_stmt {
     }
 
     pub func delete(self) {
-        if (self->block != nil) {
-            var n = self->block => ast*;
+        if (self.block != nil) {
+            var n = self.block => ast*;
             n->delete();
             free(n => i8*);
         }
@@ -2911,7 +2908,7 @@ pub struct ast_ret_stmt {
 }
 
 impl ast_ret_stmt {
-    pub func new(loc: span*) -> ast_ret_stmt* {
+    pub func new(loc: span&) -> ast_ret_stmt* {
         var res = ast_ret_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_ret_stmt, loc);
         res->value = nil;
@@ -2923,21 +2920,21 @@ impl ast_ret_stmt {
         var res = ast_ret_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_ret_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
-        if (self->value != nil) {
-            res->value = self->value->copy();
+        if (self.value != nil) {
+            res->value = self.value->copy();
         } else {
             res->value = nil;
         }
-        res->return_ref_type = self->return_ref_type;
+        res->return_ref_type = self.return_ref_type;
         return res;
     }
 
     pub func delete(self) {
-        if (self->value != nil) {
-            self->value->delete();
-            free(self->value => i8*);
+        if (self.value != nil) {
+            self.value->delete();
+            free(self.value => i8*);
         }
     }
 }
@@ -2945,7 +2942,7 @@ impl ast_ret_stmt {
 pub struct ast_continue_stmt { base: ast }
 
 impl ast_continue_stmt {
-    pub func new(loc: span*) -> ast_continue_stmt* {
+    pub func new(loc: span&) -> ast_continue_stmt* {
         var res = ast_continue_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_continue_stmt, loc);
         return res;
@@ -2955,7 +2952,7 @@ impl ast_continue_stmt {
         var res = ast_continue_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_continue_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
         return res;
     }
@@ -2964,7 +2961,7 @@ impl ast_continue_stmt {
 pub struct ast_break_stmt { base: ast }
 
 impl ast_break_stmt {
-    pub func new(loc: span*) -> ast_break_stmt* {
+    pub func new(loc: span&) -> ast_break_stmt* {
         var res = ast_break_stmt::__alloc__();
         res->base = ast::instance(ast_kind::ast_break_stmt, loc);
         return res;
@@ -2974,7 +2971,7 @@ impl ast_break_stmt {
         var res = ast_break_stmt::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_break_stmt,
-            self->base.location.__ptr__()
+            self.base.location
         );
         return res;
     }
@@ -2986,7 +2983,7 @@ pub struct ast_code_block {
 }
 
 impl ast_code_block {
-    pub func new(loc: span*) -> ast_code_block* {
+    pub func new(loc: span&) -> ast_code_block* {
         var res = ast_code_block::__alloc__();
         res->base = ast::instance(ast_kind::ast_code_block, loc);
         res->stmts = vec<ast*>::instance();
@@ -2997,35 +2994,35 @@ impl ast_code_block {
         var res = ast_code_block::__alloc__();
         res->base = ast::instance(
             ast_kind::ast_code_block,
-            self->base.location.__ptr__()
+            self.base.location
         );
         res->stmts = vec<ast*>::instance();
-        foreach (var i; self->stmts) {
+        foreach (var i; self.stmts) {
             res->stmts.push(i.get()->copy());
         }
         return res;
     }
 
     pub func delete(self) {
-        foreach (var i; self->stmts) {
+        foreach (var i; self.stmts) {
             i.get()->delete();
             free(i.get() => i8*);
         }
-        self->stmts.delete();
+        self.stmts.delete();
     }
 
     pub func reset_stmt_with(self, v: vec<ast*>*) {
-        self->stmts.clear();
+        self.stmts.clear();
         foreach (var i; v) {
-            self->stmts.push(i.get());
+            self.stmts.push(i.get());
         }
     }
 
     pub func back_is_not_block_exit(self) -> bool {
-        if (self->stmts.empty()) {
+        if (self.stmts.empty()) {
             return true;
         }
-        var back = self->stmts.back();
+        var back = self.stmts.back();
         return back->kind != ast_kind::ast_ret_stmt &&
                back->kind != ast_kind::ast_break_stmt &&
                back->kind != ast_kind::ast_continue_stmt;

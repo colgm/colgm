@@ -16,35 +16,35 @@ impl local_table {
     }
 
     pub func delete(self) {
-        self->elem.delete();
+        self.elem.delete();
     }
 
     pub func push(self) {
         var scope = hashmap<str, str>::instance();
         defer scope.delete();
 
-        self->elem.push(scope.__ptr__());
-        self->local_scope_depth += 1;
+        self.elem.push(scope.__ptr__());
+        self.local_scope_depth += 1;
     }
 
     pub func pop(self) {
-        self->elem.pop_back();
+        self.elem.pop_back();
     }
 
     pub func insert(self, name: str*, real_name: str*) {
-        self->elem.back()->insert(name, real_name);
+        self.elem.back()->insert(name, real_name);
     }
 
     pub func get_local(self, name: str*) -> str {
-        for (var i = (self->elem.size - 1) => i64; i >= 0; i -= 1) {
-            var scope = self->elem.get(i => u64);
+        for (var i = (self.elem.size - 1) => i64; i >= 0; i -= 1) {
+            var scope = self.elem.get(i => u64);
             if (scope->has(name)) {
                 return scope->get(name)->clone();
             }
         }
 
         var error_name = str::from("<");
-        error_name.append_str(name)->append("-not-found>");
+        error_name.append_str(name).append("-not-found>");
         return error_name;
     }
 }

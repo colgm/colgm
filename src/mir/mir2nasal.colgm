@@ -60,23 +60,23 @@ impl mir2nasal {
 
         out.out("var colgm_T = {};\n");
         out.out("\n# basic types\n");
-        self->dump_basic(out);
+        self.dump_basic(out);
         out.out("\n# tagged union types\n");
-        foreach (var i; self->ctx->tagged_unions) {
-            self->dump_tagged_union(out, i.get());
+        foreach (var i; self.ctx->tagged_unions) {
+            self.dump_tagged_union(out, i.get());
         }
         out.out("\n# struct types\n");
-        foreach (var i; self->ctx->structs) {
-            self->dump_struct(out, i.get());
+        foreach (var i; self.ctx->structs) {
+            self.dump_struct(out, i.get());
         }
 
         out.out("var colgm_F = {};\n");
-        foreach (var i; self->ctx->decls) {
-            self->dump_func(out, i.get());
+        foreach (var i; self.ctx->decls) {
+            self.dump_func(out, i.get());
         }
         out.out("\n");
-        foreach (var i; self->ctx->impls) {
-            self->dump_func(out, i.get());
+        foreach (var i; self.ctx->impls) {
+            self.dump_func(out, i.get());
             out.out("\n");
         }
     }
@@ -96,7 +96,7 @@ impl mir2nasal {
 
     func dump_tagged_union(self, out: io, t: mir_tagged_union*) {
         out.out("colgm_T[\"");
-        self->dump_raw_nasal_string(out, t->name.__ptr__());
+        self.dump_raw_nasal_string(out, t->name.__ptr__());
         out.out("\"] = func { return { tag: 0, value: nil }; }\n");
     }
 
@@ -105,9 +105,9 @@ impl mir2nasal {
         var s_ty = type::instance(s->name.c_str, s->location.file.c_str);
         defer s_ty.delete();
         
-        var s_ty_name = s_ty.full_path_name(self->pkg);
+        var s_ty_name = s_ty.full_path_name(self.pkg);
         defer s_ty_name.delete();
-        self->dump_raw_nasal_string(out, s_ty_name.__ptr__());
+        self.dump_raw_nasal_string(out, s_ty_name.__ptr__());
 
         out.out("\"] = ");
         if (s->field_name.empty()) {
@@ -121,7 +121,7 @@ impl mir2nasal {
             if (s->field_type.get(i.index())->is_pointer()) {
                 out.out("nil");
             } else {
-                var ty_name = s->field_type.get(i.index())->full_path_name(self->pkg);
+                var ty_name = s->field_type.get(i.index())->full_path_name(self.pkg);
                 defer ty_name.delete();
                 out.out("colgm_T[\"").out(ty_name.c_str).out("\"]()");
             }
@@ -136,7 +136,7 @@ impl mir2nasal {
 
     func dump_func(self, out: io, f: mir_func*) {
         out.out("colgm_F[\"");
-        self->dump_raw_nasal_string(out, f->name.__ptr__());
+        self.dump_raw_nasal_string(out, f->name.__ptr__());
         out.out("\"] = func(");
         foreach (var i; f->params) {
             out.out(i.get()->key.c_str);
@@ -153,7 +153,7 @@ impl mir2nasal {
             return;
         }
         out.out("{\n");
-        self->dump_code_block(out, f->block, 1);
+        self.dump_code_block(out, f->block, 1);
         out.out("}\n");
     }
 }
@@ -167,10 +167,10 @@ impl mir2nasal {
 
     func dump_mir(self, out: io, n: mir*, indent: i64) {
         match (n->kind) {
-            mir_kind::mir_block => self->dump_block(out, n => mir_block*, indent);
-            mir_kind::mir_unary => self->dump_unary(out, n => mir_unary*, indent);
-            mir_kind::mir_binary => self->dump_binary(out, n => mir_binary*, indent);
-            mir_kind::mir_type_convert => self->dump_type_convert(out, n => mir_type_convert*, indent);
+            mir_kind::mir_block => self.dump_block(out, n => mir_block*, indent);
+            mir_kind::mir_unary => self.dump_unary(out, n => mir_unary*, indent);
+            mir_kind::mir_binary => self.dump_binary(out, n => mir_binary*, indent);
+            mir_kind::mir_type_convert => self.dump_type_convert(out, n => mir_type_convert*, indent);
             mir_kind::mir_nil => out.out("nil");
             mir_kind::mir_number => {
                 var t = n => mir_number*;
@@ -179,13 +179,13 @@ impl mir2nasal {
             mir_kind::mir_string => {
                 var t = n => mir_string*;
                 out.out("\"");
-                self->dump_raw_nasal_string(out, t->value.__ptr__());
+                self.dump_raw_nasal_string(out, t->value.__ptr__());
                 out.out("\"");
             }
             mir_kind::mir_char => {
                 var t = n => mir_char*;
                 out.out("'");
-                self->dump_raw_nasal_string(out, t->value.__ptr__());
+                self.dump_raw_nasal_string(out, t->value.__ptr__());
                 out.out("'");
             }
             mir_kind::mir_bool => {
@@ -198,7 +198,7 @@ impl mir2nasal {
             }
             mir_kind::mir_array => out.out("[]");
             mir_kind::mir_struct_init => out.out("{}");
-            mir_kind::mir_call => self->dump_call(out, n => mir_call*, indent);
+            mir_kind::mir_call => self.dump_call(out, n => mir_call*, indent);
             mir_kind::mir_call_id => {
                 var t = n => mir_call_id*;
                 out.out(t->name.c_str);
@@ -206,10 +206,10 @@ impl mir2nasal {
             mir_kind::mir_call_index => {
                 var t = n => mir_call_index*;
                 out.out("[");
-                self->dump_block(out, t->index, indent);
+                self.dump_block(out, t->index, indent);
                 out.out("]");
             }
-            mir_kind::mir_call_func => self->dump_call_func(out, n => mir_call_func*, indent);
+            mir_kind::mir_call_func => self.dump_call_func(out, n => mir_call_func*, indent);
             mir_kind::mir_get_field => {
                 var t = n => mir_get_field*;
                 out.out(".").out(t->name.c_str);
@@ -222,16 +222,16 @@ impl mir2nasal {
                 var t = n => mir_ptr_get_field*;
                 out.out(".").out(t->name.c_str);
             }
-            mir_kind::mir_define => self->dump_define(out, n => mir_define*, indent);
-            mir_kind::mir_assign => self->dump_assign(out, n => mir_assign*, indent);
-            mir_kind::mir_if => self->dump_if(out, n => mir_if*, indent);
-            mir_kind::mir_branch => self->dump_branch(out, n => mir_branch*, indent);
-            mir_kind::mir_switch_case => self->dump_switch_case(out, n => mir_switch_case*, indent);
-            mir_kind::mir_switch => self->dump_switch(out, n => mir_switch*, indent);
+            mir_kind::mir_define => self.dump_define(out, n => mir_define*, indent);
+            mir_kind::mir_assign => self.dump_assign(out, n => mir_assign*, indent);
+            mir_kind::mir_if => self.dump_if(out, n => mir_if*, indent);
+            mir_kind::mir_branch => self.dump_branch(out, n => mir_branch*, indent);
+            mir_kind::mir_switch_case => self.dump_switch_case(out, n => mir_switch_case*, indent);
+            mir_kind::mir_switch => self.dump_switch(out, n => mir_switch*, indent);
             mir_kind::mir_break => out.out("break;");
             mir_kind::mir_continue => out.out("continue;");
-            mir_kind::mir_loop => self->dump_loop(out, n => mir_loop*, indent);
-            mir_kind::mir_return => self->dump_return(out, n => mir_return*, indent);
+            mir_kind::mir_loop => self.dump_loop(out, n => mir_loop*, indent);
+            mir_kind::mir_return => self.dump_return(out, n => mir_return*, indent);
             _ => {
                 out.out("# ").out_i64(n->kind => i64).endln();
             }
@@ -241,10 +241,10 @@ impl mir2nasal {
     func dump_code_block(self, out: io, n: mir_block*, indent: i64) {
         foreach (var i; n->content) {
             if (i.get()->kind == mir_kind::mir_block) {
-                self->dump_code_block(out, i.get() => mir_block*, indent);
+                self.dump_code_block(out, i.get() => mir_block*, indent);
             } else {
-                self->dump_indent(out, indent);
-                self->dump_mir(out, i.get(), indent);
+                self.dump_indent(out, indent);
+                self.dump_mir(out, i.get(), indent);
                 if (i.get()->kind == mir_kind::mir_call ||
                     i.get()->kind == mir_kind::mir_define ||
                     i.get()->kind == mir_kind::mir_assign ||
@@ -258,7 +258,7 @@ impl mir2nasal {
 
     func dump_block(self, out: io, n: mir_block*, indent: i64) {
         foreach (var i; n->content) {
-            self->dump_mir(out, i.get(), indent);
+            self.dump_mir(out, i.get(), indent);
         }
     }
 
@@ -270,11 +270,11 @@ impl mir2nasal {
             n->content.get(0)->kind == mir_kind::mir_nil ||
             n->content.get(0)->kind == mir_kind::mir_bool ||
             n->content.get(0)->kind == mir_kind::mir_char)) {
-            self->dump_block(out, n, indent);
+            self.dump_block(out, n, indent);
             return;
         }
         out.out("(");
-        self->dump_block(out, n, indent);
+        self.dump_block(out, n, indent);
         out.out(")");
     }
 
@@ -285,21 +285,21 @@ impl mir2nasal {
             mir_unary_opr::bnot => out.out("~");
             mir_unary_opr::lnot => out.out("!");
         }
-        self->dump_expr(out, n->value, indent);
+        self.dump_expr(out, n->value, indent);
         out.out(")");
     }
 
     func dump_binary(self, out: io, n: mir_binary*, indent: i64) {
         if (n->op == mir_binary_opr::rem) {
             out.out("math.mod(");
-            self->dump_expr(out, n->left, indent);
+            self.dump_expr(out, n->left, indent);
             out.out(", ");
-            self->dump_expr(out, n->right, indent);
+            self.dump_expr(out, n->right, indent);
             out.out(")");
             return;
         }
 
-        self->dump_expr(out, n->left, indent);
+        self.dump_expr(out, n->left, indent);
         out.out(" ");
         match (n->op) {
             mir_binary_opr::add => out.out("+");
@@ -320,23 +320,23 @@ impl mir2nasal {
             mir_binary_opr::bxor => out.out("^");
         }
         out.out(" ");
-        self->dump_expr(out, n->right, indent + 1);
+        self.dump_expr(out, n->right, indent + 1);
     }
 
     func dump_type_convert(self, out: io, n: mir_type_convert*, indent: i64) {
-        self->dump_block(out, n->source, indent);
+        self.dump_block(out, n->source, indent);
     }
 
     func dump_call(self, out: io, n: mir_call*, indent: i64) {
         foreach (var i; n->content->content) {
-            self->dump_mir(out, i.get(), indent);
+            self.dump_mir(out, i.get(), indent);
         }
     }
 
     func dump_call_func(self, out: io, n: mir_call_func*, indent: i64) {
         out.out("(");
         foreach (var i; n->args->content) {
-            self->dump_mir(out, i.get(), indent);
+            self.dump_mir(out, i.get(), indent);
             if (i.index() != n->args->content.size - 1) {
                 out.out(", ");
             }
@@ -346,11 +346,11 @@ impl mir2nasal {
 
     func dump_define(self, out: io, n: mir_define*, indent: i64) {
         out.out("var ").out(n->name.c_str).out(" = ");
-        self->dump_mir(out, n->init_value => mir*, indent);
+        self.dump_mir(out, n->init_value => mir*, indent);
     }
 
     func dump_assign(self, out: io, n: mir_assign*, indent: i64) {
-        self->dump_mir(out, n->left => mir*, indent);
+        self.dump_mir(out, n->left => mir*, indent);
         match (n->opr) {
             mir_assign_opr::eq => out.out(" = ");
             mir_assign_opr::addeq => out.out(" += ");
@@ -362,18 +362,18 @@ impl mir2nasal {
             mir_assign_opr::oreq => out.out(" |= ");
             mir_assign_opr::xoreq => out.out(" ^= ");
         }
-        self->dump_mir(out, n->right => mir*, indent);
+        self.dump_mir(out, n->right => mir*, indent);
     }
 
     func dump_if(self, out: io, n: mir_if*, indent: i64) {
         if (n->condition != nil) {
             out.out(" (");
-            self->dump_block(out, n->condition, indent);
+            self.dump_block(out, n->condition, indent);
             out.out(")");
         }
         out.out(" {\n");
-        self->dump_code_block(out, n->content, indent + 1);
-        self->dump_indent(out, indent);
+        self.dump_code_block(out, n->content, indent + 1);
+        self.dump_indent(out, indent);
         out.out("}");
     }
 
@@ -386,34 +386,34 @@ impl mir2nasal {
             } else {
                 out.out(" else");
             }
-            self->dump_if(out, i.get(), indent);
+            self.dump_if(out, i.get(), indent);
         }
     }
 
     func dump_switch_case(self, out: io, n: mir_switch_case*, indent: i64) {
         out.out("(_ == ").out_i64(n->value).out(") {\n");
-        self->dump_code_block(out, n->content, indent + 1);
-        self->dump_indent(out, indent);
+        self.dump_code_block(out, n->content, indent + 1);
+        self.dump_indent(out, indent);
         out.out("}");
     }
 
     func dump_switch(self, out: io, n: mir_switch*, indent: i64) {
         out.out("var _ = ");
-        self->dump_block(out, n->condition, indent);
+        self.dump_block(out, n->condition, indent);
         out.out(";\n");
-        self->dump_indent(out, indent);
+        self.dump_indent(out, indent);
         foreach (var i; n->cases) {
             if (i.index() == 0) {
                 out.out("if ");
             } else {
                 out.out(" elsif ");
             }
-            self->dump_switch_case(out, i.get(), indent);
+            self.dump_switch_case(out, i.get(), indent);
         }
         if (n->default_case != nil) {
             out.out(" else {\n");
-            self->dump_code_block(out, n->default_case, indent + 1);
-            self->dump_indent(out, indent);
+            self.dump_code_block(out, n->default_case, indent + 1);
+            self.dump_indent(out, indent);
             out.out("}");
         }
     }
@@ -425,15 +425,15 @@ impl mir2nasal {
             out.out("while (");
         }
         if (n->condition != nil) {
-            self->dump_block(out, n->condition, indent);
+            self.dump_block(out, n->condition, indent);
         }
         if (n->update != nil) {
             out.out("; ");
-            self->dump_block(out, n->update, indent);
+            self.dump_block(out, n->update, indent);
         }
         out.out(") {\n");
-        self->dump_code_block(out, n->content, indent + 1);
-        self->dump_indent(out, indent);
+        self.dump_code_block(out, n->content, indent + 1);
+        self.dump_indent(out, indent);
         out.out("}");
     }
 
@@ -441,7 +441,7 @@ impl mir2nasal {
         out.out("return");
         if (n->value != nil && !n->value->content.empty()) {
             out.out(" ");
-            self->dump_block(out, n->value, indent);
+            self.dump_block(out, n->value, indent);
         }
     }
 }
