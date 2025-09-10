@@ -67,7 +67,7 @@ impl sir_struct {
             if (i.index() != 0) {
                 out.out(", ");
             }
-            out.out(i.get()->c_str);
+            out.out(i.get().c_str);
         }
 
         out.out(" } ; size ").out_u64(self.size);
@@ -154,7 +154,7 @@ impl sir_tagged_union {
             if (i.index() != 0) {
                 out.out(", ");
             }
-            out.out(i.get()->c_str);
+            out.out(i.get().c_str);
         }
 
         out.out(" } ; size ").out_u64(self.size);
@@ -240,17 +240,17 @@ impl sir_func {
     pub func set_attributes(self, v: vec<str>*) {
         self.attributes.clear();
         foreach (var i; v) {
-            self.attributes.push(i.get());
+            self.attributes.push(i.get().__ptr__());
         }
     }
 
     func dump_attributes(self, out: io&) {
         var contain_frame_pointer_attribute = false;
         foreach (var i; self.attributes) {
-            out.out(" ").out(i.get()->c_str);
+            out.out(" ").out(i.get().c_str);
             // if frame-pointer attribute is found
             // do not generate frame-pointer=non-leaf for macos
-            if (i.get()->find_i8_vec("frame-pointer") != str::npos()) {
+            if (i.get().find_i8_vec("frame-pointer") != str::npos()) {
                 contain_frame_pointer_attribute = true;
             }
         }
@@ -281,8 +281,8 @@ impl sir_func {
             if (i.index() != 0) {
                 out.out(", ");
             }
-            out.out(i.get()->value.c_str).out(" %");
-            out.out(i.get()->key.c_str);
+            out.out(i.get().value.c_str).out(" %");
+            out.out(i.get().key.c_str);
         }
         if (self.with_va_args) {
             out.out(", ...");
@@ -400,7 +400,7 @@ impl sir_context {
 
     func dump_tagged_unions(self, out: io&) {
         foreach (var i; self.tagged_union_decls) {
-            i.get()->dump(out);
+            i.get().dump(out);
         }
 
         if (self.tagged_union_decls.size > 0) {
@@ -410,7 +410,7 @@ impl sir_context {
 
     func dump_structs(self, out: io&) {
         foreach (var i; self.struct_decls) {
-            i.get()->dump(out);
+            i.get().dump(out);
         }
 
         if (self.struct_decls.size > 0) {
@@ -420,7 +420,7 @@ impl sir_context {
 
     func dump_func_decls(self, out: io&) {
         foreach (var i; self.func_decls) {
-            i.get()->dump(out);
+            i.get().dump(out);
         }
 
         if (self.func_decls.size > 0) {
@@ -430,7 +430,7 @@ impl sir_context {
 
     func dump_func_impls(self, out: io&) {
         foreach (var i; self.func_impls) {
-            i.get()->dump(out);
+            i.get().dump(out);
             out.endln();
         }
     }
@@ -446,15 +446,15 @@ impl sir_context {
             ordered_const_string.push(temp.__ptr__());
         }
         foreach (var i; self.const_strings) {
-            ordered_const_string.get(i.value())->append_str(i.key());
+            ordered_const_string.get(i.value()).append_str(i.key());
         }
 
         foreach (var i; ordered_const_string) {
             out.out("@str.").out_u64(i.index());
             out.out(" = private unnamed_addr constant [");
-            out.out_u64(i.get()->size + 1).out(" x i8] c\"");
+            out.out_u64(i.get().size + 1).out(" x i8] c\"");
 
-            var raw_str = llvm_raw_string(i.get()[0]);
+            var raw_str = llvm_raw_string(i.get());
             defer raw_str.delete();
 
             out.out(raw_str.c_str).out("\"\n");
@@ -485,27 +485,27 @@ impl sir_context {
 
     func dump_intrinsic_alloc_method(self, out: io&) {
         foreach (var i; self.struct_decls) {
-            var st_name = i.get()->name.__ptr__();
-            var alloc_func_name = i.get()->get_intrinsic_method_name("__alloc__");
+            var st_name = i.get().name.__ptr__();
+            var alloc_func_name = i.get().get_intrinsic_method_name("__alloc__");
             defer alloc_func_name.delete();
 
             out.out("define ").out(st_name->c_str).out("* @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
             out.out("label.entry:\n");
-            out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get()->size).out(")\n");
+            out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get().size).out(")\n");
             out.out("  %1 = bitcast i8* %0 to ").out(st_name->c_str).out("*\n");
             out.out("  ret ").out(st_name->c_str).out("* %1\n}\n");
         }
 
         foreach (var i; self.tagged_union_decls) {
-            var un_name = i.get()->name.__ptr__();
-            var alloc_func_name = i.get()->get_intrinsic_method_name("__alloc__");
+            var un_name = i.get().name.__ptr__();
+            var alloc_func_name = i.get().get_intrinsic_method_name("__alloc__");
             defer alloc_func_name.delete();
 
             out.out("define ").out(un_name->c_str).out("* @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
             out.out("label.entry:\n");
-            out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get()->size).out(")\n");
+            out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get().size).out(")\n");
             out.out("  %1 = bitcast i8* %0 to ").out(un_name->c_str).out("*\n");
             out.out("  ret ").out(un_name->c_str).out("* %1\n}\n");
         }

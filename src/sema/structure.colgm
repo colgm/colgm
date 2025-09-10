@@ -107,7 +107,7 @@ impl colgm_struct {
 
     pub func field_index(self, name: str*) -> i64 {
         foreach (var i; self.ordered_fields) {
-            if (i.get()->eq(name)) {
+            if (i.get().eq(name)) {
                 return i.index() => i64;
             }
         }
@@ -151,11 +151,11 @@ impl colgm_struct {
         }
         if (!collection.empty()) {
             foreach (var i; collection) {
-                var distance = levenshtein_distance(name, i.get());
+                var distance = levenshtein_distance(name, i.get().__ptr__());
                 if (distance < min_distance) {
                     min_distance = distance;
                     res.clear();
-                    res.append_str(i.get());
+                    res.append(i.get().c_str);
                 }
             }
             return res;
@@ -206,7 +206,7 @@ impl colgm_struct {
         if (self.generic_template.size > 0) {
             out.out("<");
             foreach (var i; self.generic_template) {
-                out.out(i.get()->c_str);
+                out.out(i.get().c_str);
                 if (i.index() != self.generic_template.size - 1) {
                     out.out(", ");
                 }
@@ -223,8 +223,8 @@ impl colgm_struct {
         out.out(" {\n");
         forindex (var i; self.ordered_fields) {
             var field = self.ordered_fields.get(i);
-            out.out("    ").out(field->c_str).out(": ");
-            self.fields.get(field)->dump(out, pkg);
+            out.out("    ").out(field.c_str).out(": ");
+            self.fields.get(field.__ptr__())->dump(out, pkg);
             out.out("\n");
         }
         foreach (var i; self.method) {

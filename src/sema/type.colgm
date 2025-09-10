@@ -182,7 +182,7 @@ impl type {
         }
         foreach (var i; self.generics) {
             var t_g = t->generics.get(i.index());
-            if (!i.get()->eq(t_g)) {
+            if (!i.get().eq(t_g.__ptr__())) {
                 return false;
             }
         }
@@ -367,7 +367,7 @@ impl type {
         if (self.generics.size > 0) {
             out.light_cyan().out("<").reset();
             foreach (var i; self.generics) {
-                i.get()->dump(out, pkg);
+                i.get().dump(out, pkg);
                 if (i.index() != self.generics.size - 1) {
                     out.out(",");
                 }
@@ -401,7 +401,7 @@ impl type {
             // should use full path name with pointer info
             // for generic arguments
             // also, full path name will generate generic arguments recursively
-            var generic_arg_name = i.get()->full_path_name_with_pointer(pkg);
+            var generic_arg_name = i.get().full_path_name_with_pointer(pkg);
             defer generic_arg_name.delete();
 
             res.append(generic_arg_name.c_str);
@@ -420,7 +420,7 @@ impl type {
         var result = 1;
         var max_depth = 0;
         foreach (var i; self.generics) {
-            var depth = i.get()->generic_depth();
+            var depth = i.get().generic_depth();
             if (depth > max_depth) {
                 max_depth = depth;
             }
@@ -491,7 +491,7 @@ impl type {
         if (self.generics.size > 0) {
             res.append_char('<');
             foreach (var i; self.generics) {
-                var t_fpn = i.get()->full_path_name_with_pointer(pkg);
+                var t_fpn = i.get().full_path_name_with_pointer(pkg);
                 defer t_fpn.delete();
 
                 res.append(t_fpn.c_str);

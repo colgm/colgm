@@ -135,18 +135,18 @@ impl parser {
     }
 
     func get_tok(self, index: u64) -> token* {
-        return self.toks->get(index);
+        return self.toks->get(index).__ptr__();
     }
 
     func this_tok(self) -> token* {
-        return self.toks->get(self.index);
+        return self.toks->get(self.index).__ptr__();
     }
 
     func last_tok_loc(self) -> span& {
         if (self.index == 0) {
             return self.this_tok_loc();
         }
-        return self.toks->get(self.index - 1)->location;
+        return self.toks->get(self.index - 1).location;
     }
 
     func this_tok_loc(self) -> span& {
@@ -288,7 +288,7 @@ impl parser {
     func identifier_gen(self) -> ast_identifier* {
         var res = ast_identifier::new(
             self.this_tok_loc(),
-            self.this_tok()->content.__ptr__()
+            self.this_tok()->content
         );
         self.match_token(tok_kind::tok_id);
         return res;

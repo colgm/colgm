@@ -94,15 +94,15 @@ impl mir2nasal {
         }
     }
 
-    func dump_tagged_union(self, out: io&, t: mir_tagged_union*) {
+    func dump_tagged_union(self, out: io&, t: mir_tagged_union&) {
         out.out("colgm_T[\"");
-        self.dump_raw_nasal_string(out, t->name);
+        self.dump_raw_nasal_string(out, t.name);
         out.out("\"] = func { return { tag: 0, value: nil }; }\n");
     }
 
-    func dump_struct(self, out: io&, s: mir_struct*) {
+    func dump_struct(self, out: io&, s: mir_struct&) {
         out.out("colgm_T[\"");
-        var s_ty = type::instance(s->name.c_str, s->location.file.c_str);
+        var s_ty = type::instance(s.name.c_str, s.location.file.c_str);
         defer s_ty.delete();
         
         var s_ty_name = s_ty.full_path_name(self.pkg);
@@ -110,22 +110,22 @@ impl mir2nasal {
         self.dump_raw_nasal_string(out, s_ty_name);
 
         out.out("\"] = ");
-        if (s->field_name.empty()) {
+        if (s.field_name.empty()) {
             out.out("func { return {}; }\n");
             return;
         }
         out.out("func {\n");
         out.out("  return {\n");
-        foreach (var i; s->field_name) {
-            out.out("    \"").out(i.get()->c_str).out("\": ");
-            if (s->field_type.get(i.index())->is_pointer()) {
+        foreach (var i; s.field_name) {
+            out.out("    \"").out(i.get().c_str).out("\": ");
+            if (s.field_type.get(i.index()).is_pointer()) {
                 out.out("nil");
             } else {
-                var ty_name = s->field_type.get(i.index())->full_path_name(self.pkg);
+                var ty_name = s.field_type.get(i.index()).full_path_name(self.pkg);
                 defer ty_name.delete();
                 out.out("colgm_T[\"").out(ty_name.c_str).out("\"]()");
             }
-            if (i.index() < s->field_name.size - 1) {
+            if (i.index() < s.field_name.size - 1) {
                 out.out(",");
             }
             out.out("\n");
@@ -134,26 +134,26 @@ impl mir2nasal {
         out.out("}\n");
     }
 
-    func dump_func(self, out: io&, f: mir_func*) {
+    func dump_func(self, out: io&, f: mir_func&) {
         out.out("colgm_F[\"");
-        self.dump_raw_nasal_string(out, f->name);
+        self.dump_raw_nasal_string(out, f.name);
         out.out("\"] = func(");
-        foreach (var i; f->params) {
-            out.out(i.get()->key.c_str);
-            if (i.index() < f->params.size - 1) {
+        foreach (var i; f.params) {
+            out.out(i.get().key.c_str);
+            if (i.index() < f.params.size - 1) {
                 out.out(", ");
             }
         }
-        if (f->with_va_args) {
+        if (f.with_va_args) {
             out.out("...");
         }
         out.out(") ");
-        if (f->block == nil) {
+        if (f.block == nil) {
             out.out(" {}\n");
             return;
         }
         out.out("{\n");
-        self.dump_code_block(out, f->block, 1);
+        self.dump_code_block(out, f.block, 1);
         out.out("}\n");
     }
 }

@@ -37,49 +37,49 @@ impl size_calc {
 }
 
 impl size_calc {
-    func get_size_align(self, t: type*) -> size_align_pair {
-        var name = t->full_path_name(self.pkg);
+    func get_size_align(self, t: type&) -> size_align_pair {
+        var name = t.full_path_name(self.pkg);
         defer name.delete();
 
         var field_size: u64 = 0;
         var alignment: u64 = 1;
 
-        if (t->is_pointer() && !t->is_array) {
+        if (t.is_pointer() && !t.is_array) {
             // pointer but not array
             field_size = __ptr_size();
             alignment = __ptr_size();
-        } else if (t->pointer_depth >= 2 && t->is_array) {
+        } else if (t.pointer_depth >= 2 && t.is_array) {
             // pointer array, set base size here
             field_size = __ptr_size();
             alignment = __ptr_size();
         } else if (self.struct_mapper.has(name.__ptr__())) {
             var st = self.struct_mapper.get(name.__ptr__());
             if (!st->size_calculated) {
-                self.calculate_single_struct_size(st);
+                self.calculate_single_struct_size(st[0]);
             }
             field_size = st->size;
             alignment = st->align;
         } else if (self.tagged_union_mapper.has(name.__ptr__())) {
             var un = self.tagged_union_mapper.get(name.__ptr__());
             if (!un->size_calculated) {
-                self.calculate_single_tagged_union_size(un);
+                self.calculate_single_tagged_union_size(un[0]);
             }
             field_size = un->total_size;
             alignment = un->align;
-        } else if (t->is_bool_base()) {
+        } else if (t.is_bool_base()) {
             field_size = 1;
             alignment = 1;
-        } else if (t->is_integer_base()) {
-            if (t->name.eq_const("u8") || t->name.eq_const("i8")) {
+        } else if (t.is_integer_base()) {
+            if (t.name.eq_const("u8") || t.name.eq_const("i8")) {
                 field_size = 1;
                 alignment = 1;
-            } else if (t->name.eq_const("u16") || t->name.eq_const("i16")) {
+            } else if (t.name.eq_const("u16") || t.name.eq_const("i16")) {
                 field_size = 2;
                 alignment = 2;
-            } else if (t->name.eq_const("u32") || t->name.eq_const("i32")) {
+            } else if (t.name.eq_const("u32") || t.name.eq_const("i32")) {
                 field_size = 4;
                 alignment = 4;
-            } else if (t->name.eq_const("u64") || t->name.eq_const("i64")) {
+            } else if (t.name.eq_const("u64") || t.name.eq_const("i64")) {
                 field_size = 8;
                 alignment = 8;
             } else {
@@ -87,8 +87,8 @@ impl size_calc {
                 field_size = 8;
                 alignment = 8;
             }
-        } else if (t->is_float_base()) {
-            if (t->name.eq_const("f32")) {
+        } else if (t.is_float_base()) {
+            if (t.name.eq_const("f32")) {
                 field_size = 4;
                 alignment = 4;
             } else {
@@ -98,8 +98,8 @@ impl size_calc {
         }
 
         // array size
-        if (t->is_array) {
-            field_size *= t->array_length;
+        if (t.is_array) {
+            field_size *= t.array_length;
         }
 
         return size_align_pair {
@@ -110,22 +110,22 @@ impl size_calc {
 }
 
 impl size_calc {
-    func calculate_single_struct_size(self, s: mir_struct*) {
-        if (s->size_calculated) {
+    func calculate_single_struct_size(self, s: mir_struct&) {
+        if (s.size_calculated) {
             return;
         }
 
         // empty struct should have size 1 and alignment 1
-        if (s->field_type.empty()) {
-            s->size = 1;
-            s->align = 1;
-            s->size_calculated = true;
+        if (s.field_type.empty()) {
+            s.size = 1;
+            s.align = 1;
+            s.size_calculated = true;
             return;
         }
 
         var offset: u64 = 0;
         var max_align: u64 = 1;
-        foreach (var i; s->field_type) {
+        foreach (var i; s.field_type) {
             var res = self.get_size_align(i.get());
 
             if (res.align > max_align) {
@@ -144,22 +144,22 @@ impl size_calc {
             }
         }
 
-        s->size = offset;
-        s->align = max_align;
-        s->size_calculated = true;
+        s.size = offset;
+        s.align = max_align;
+        s.size_calculated = true;
     }
 
-    func calculate_single_tagged_union_size(self, u: mir_tagged_union*) {
-        if (u->size_calculated) {
+    func calculate_single_tagged_union_size(self, u: mir_tagged_union&) {
+        if (u.size_calculated) {
             return;
         }
 
-        if (u->member_type.empty()) {
+        if (u.member_type.empty()) {
             // tagged union must have a field with i64 type
-            u->total_size = 8;
-            u->union_size = 8;
-            u->align = 8;
-            u->size_calculated = true;
+            u.total_size = 8;
+            u.union_size = 8;
+            u.align = 8;
+            u.size_calculated = true;
             return;
         }
 
@@ -169,7 +169,7 @@ impl size_calc {
         // get max size and max alignment of all members
         var max_size: u64 = 0;
         var max_align: u64 = 1;
-        foreach (var i; u->member_type) {
+        foreach (var i; u.member_type) {
             var res = self.get_size_align(i.get());
 
             if (res.size > max_size) {
@@ -177,8 +177,8 @@ impl size_calc {
             }
             if (res.align > max_align) {
                 max_align = res.align;
-                u->max_align_type.reset_with(i.get());
-                u->max_align_type_size = res.size;
+                u.max_align_type.reset_with(i.get().__ptr__());
+                u.max_align_type_size = res.size;
             }
         }
 
@@ -198,10 +198,10 @@ impl size_calc {
             offset += 1;
         }
 
-        u->total_size = offset;
-        u->union_size = max_size;
-        u->align = tagged_union_align;
-        u->size_calculated = true;
+        u.total_size = offset;
+        u.union_size = max_size;
+        u.align = tagged_union_align;
+        u.size_calculated = true;
     }
 
     pub func calculate(self, mctx: mir_context*, verbose: bool) {
@@ -211,22 +211,22 @@ impl size_calc {
         self.struct_mapper.clear();
         self.tagged_union_mapper.clear();
         foreach (var i; mctx->structs) {
-            var s_ty = type::instance(i.get()->name.c_str, i.get()->location.file.c_str);
+            var s_ty = type::instance(i.get().name.c_str, i.get().location.file.c_str);
             defer s_ty.delete();
 
             var s_full_name = s_ty.full_path_name(self.pkg);
             defer s_full_name.delete();
 
-            self.struct_mapper.insert(s_full_name.__ptr__(), i.get());
+            self.struct_mapper.insert(s_full_name.__ptr__(), i.get().__ptr__());
         }
         foreach (var i; mctx->tagged_unions) {
-            var s_ty = type::instance(i.get()->name.c_str, i.get()->location.file.c_str);
+            var s_ty = type::instance(i.get().name.c_str, i.get().location.file.c_str);
             defer s_ty.delete();
 
             var s_full_name = s_ty.full_path_name(self.pkg);
             defer s_full_name.delete();
 
-            self.tagged_union_mapper.insert(s_full_name.__ptr__(), i.get());
+            self.tagged_union_mapper.insert(s_full_name.__ptr__(), i.get().__ptr__());
         }
 
         foreach (var i; mctx->structs) {

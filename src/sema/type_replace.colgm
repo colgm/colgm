@@ -37,16 +37,16 @@ impl type_replace_pass {
 }
 
 impl type_replace_pass {
-    func generate_generic_type(self, t: type*, loc: span&) -> ast_type_def* {
+    func generate_generic_type(self, t: type&, loc: span&) -> ast_type_def* {
         var new_def = ast_type_def::new(loc);
-        new_def->name = ast_identifier::new(loc, t->name.__ptr__());
-        new_def->name->base.redirect_location.append_str(t->loc_file.__ptr__());
-        new_def->base.redirect_location.append_str(t->loc_file.__ptr__());
-        new_def->is_const = t->is_const;
-        new_def->pointer_depth = t->pointer_depth;
-        if (t->generics.size > 0) {
+        new_def->name = ast_identifier::new(loc, t.name);
+        new_def->name->base.redirect_location.append_str(t.loc_file.__ptr__());
+        new_def->base.redirect_location.append_str(t.loc_file.__ptr__());
+        new_def->is_const = t.is_const;
+        new_def->pointer_depth = t.pointer_depth;
+        if (t.generics.size > 0) {
             new_def->generic_types = ast_generic_type_list::new(loc);
-            foreach (var i; t->generics) {
+            foreach (var i; t.generics) {
                 new_def->generic_types->types.push(
                     self.generate_generic_type(i.get(), loc) => ast*
                 );

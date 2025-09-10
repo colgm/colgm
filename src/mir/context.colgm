@@ -186,9 +186,9 @@ impl mir_context {
         defer tm.delete();
 
         foreach (var i; self.impls) {
-            out.blue().out("<").out(i.get()->name.c_str).out(">:").reset().endln();
-            if (i.get()->block != nil) {
-                var m = i.get()->block => mir*;
+            out.blue().out("<").out(i.get().name.c_str).out(">:").reset().endln();
+            if (i.get().block != nil) {
+                var m = i.get().block => mir*;
                 m->dump(out, pkg, tm);
             }
             out.endln();
@@ -200,15 +200,15 @@ impl mir_context {
         ts.stamp();
 
         foreach (var i; self.decls) {
-            if (!i.get()->name.eq_const("open")) {
+            if (!i.get().name.eq_const("open")) {
                 continue;
             }
 
             var open_func = i.get();
-            while (open_func->params.size > 2) {
-                open_func->params.pop_back();
+            while (open_func.params.size > 2) {
+                open_func.params.pop_back();
             }
-            open_func->with_va_args = true;
+            open_func.with_va_args = true;
             break;
         }
 
@@ -223,7 +223,7 @@ impl mir_context {
 
     func add_malloc_decl(self) {
         foreach (var i; self.decls) {
-            if (i.get()->name.eq_const("malloc")) {
+            if (i.get().name.eq_const("malloc")) {
                 return;
             }
         }
@@ -261,7 +261,7 @@ impl mir_context {
 
     func add_free_decl(self) {
         foreach (var i; self.decls) {
-            if (i.get()->name.eq_const("free")) {
+            if (i.get().name.eq_const("free")) {
                 return;
             }
         }
@@ -299,12 +299,12 @@ impl mir_context {
 
     func add_main_impl(self) {
         foreach (var i; self.decls) {
-            if (i.get()->name.eq_const("main")) {
+            if (i.get().name.eq_const("main")) {
                 return;
             }
         }
         foreach (var i; self.impls) {
-            if (i.get()->name.eq_const("main")) {
+            if (i.get().name.eq_const("main")) {
                 return;
             }
         }

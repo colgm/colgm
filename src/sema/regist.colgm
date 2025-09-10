@@ -1067,7 +1067,7 @@ impl regist_pass {
         if (node->ref_enum_name.empty()) {
             foreach (var i; un->ordered_members) {
                 un->member_int_map.insert(
-                    i.get(),
+                    i.get().__ptr__(),
                     un->member_int_map.size => i64
                 );
             }
@@ -1421,7 +1421,7 @@ impl regist_pass {
         }
 
         foreach (var s; need_check) {
-            self.check_single_self_reference(s.get());
+            self.check_single_self_reference(s.get().__ptr__());
         }
     }
 }
@@ -1456,7 +1456,7 @@ impl regist_pass {
         }
 
         var tn = ast_type_def::new(first_param->base.location);
-        tn->name = ast_identifier::new(first_param->base.location, struct_info->name.__ptr__());
+        tn->name = ast_identifier::new(first_param->base.location, struct_info->name);
         tn->is_reference = true;
         // copy generic template
         var GT = struct_info->generic_template.__ptr__();
@@ -1576,7 +1576,7 @@ impl regist_pass {
         }
 
         var tn = ast_type_def::new(first_param->base.location);
-        tn->name = ast_identifier::new(first_param->base.location, union_info->name.__ptr__());
+        tn->name = ast_identifier::new(first_param->base.location, union_info->name);
         tn->is_reference = true;
         first_param->type = tn;
     }

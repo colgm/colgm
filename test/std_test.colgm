@@ -65,8 +65,8 @@ func test_hashmap() -> bool {
     }
 
     var result = true;
-    for (var i = 0; i < 128; i += 1) {
-        var key = stored.get(i => u64);
+    for (var i: u64 = 0; i < 128; i += 1) {
+        var key = stored.get(i).__ptr__();
         if (map.has(key)) {
             io::stdout().green().out("[test]").reset().out(" hashmap: \"");
             io::stdout().out(key->c_str).out("\" found -> \"");
@@ -88,7 +88,7 @@ func test_hashmap() -> bool {
     }
 
     for (var i: u64 = 0; i < 128; i += 1) {
-        var key = stored.get(i);
+        var key = stored.get(i).__ptr__();
         map.remove(key);
         assert(!map.has(key), "remove failed!");
     }
@@ -173,7 +173,7 @@ func vec_dump(vec: vec<str>*) {
     foreach (var i; vec) {
         io::stdout().green().out("[test]").reset().out(" vec<str> [");
         io::stdout().out_u64(i.index()).out("]: ");
-        io::stdout().out(i.get()->c_str).endln();
+        io::stdout().out(i.get().c_str).endln();
     }
 }
 

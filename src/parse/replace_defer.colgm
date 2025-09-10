@@ -44,7 +44,7 @@ impl scope {
 
     pub func empty(self) -> bool {
         foreach (var s; self.scopes) {
-            if (!s.get()->empty()) {
+            if (!s.get().empty()) {
                 return false;
             }
         }
@@ -132,7 +132,7 @@ impl replace_defer {
 
     func insert_defer_on_block_exit(self, v: vec<ast*>*, n: ast*) {
         foreach (var sub_scope; self.top_scopes.back()->scopes) {
-            self.log_when_insert("block exit", sub_scope.get(), n);
+            self.log_when_insert("block exit", sub_scope.get().__ptr__(), n);
             foreach (var i; sub_scope.get()) {
                 self.insert_defer(i.get(), v);
             }
@@ -141,8 +141,8 @@ impl replace_defer {
 
     func insert_defer_on_return(self, v: vec<ast*>*, n: ast*) {
         foreach (var this_top_scope; self.top_scopes) {
-            foreach (var sub_scope; this_top_scope.get()->scopes) {
-                self.log_when_insert("return", sub_scope.get(), n);
+            foreach (var sub_scope; this_top_scope.get().scopes) {
+                self.log_when_insert("return", sub_scope.get().__ptr__(), n);
                 foreach (var i; sub_scope.get()) {
                     self.insert_defer(i.get(), v);
                 }

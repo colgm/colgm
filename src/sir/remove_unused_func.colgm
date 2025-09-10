@@ -28,7 +28,7 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
 
     foreach (var i; ctx->func_impls) {
         var f = i.get();
-        func_map.insert(f->name.__ptr__(), f);
+        func_map.insert(f.name.__ptr__(), f.__ptr__());
     }
 
     // if main function does not exist or has no statement, return
@@ -84,13 +84,13 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
     var delete_count = 0;
     foreach (var i; ctx->func_impls) {
         var f = i.get();
-        if (!used_func.has(f->name.__ptr__())) {
+        if (!used_func.has(f.name.__ptr__())) {
             // mark as eliminated, avoid too many copy operations
-            f->eliminated = true;
+            f.eliminated = true;
             delete_count += 1;
             if (view_unused_func) {
                 io::stdout().out("[remove unused func] remove ");
-                io::stdout().cyan().out(f->name.c_str).reset().endln();
+                io::stdout().cyan().out(f.name.c_str).reset().endln();
             }
         }
     }

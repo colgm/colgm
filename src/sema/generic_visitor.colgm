@@ -224,7 +224,7 @@ impl generic_visitor {
             defer r_type.delete();
 
             g_data.generic_type.generics.push(r_type.__ptr__());
-            g_data.types.insert(generic_template->get(i.index()), r_type.__ptr__());
+            g_data.types.insert(generic_template->get(i.index()).__ptr__(), r_type.__ptr__());
         }
 
         self.insert_count += self.insert_generic_type(g_data.__ptr__());
@@ -700,33 +700,33 @@ impl generic_visitor {
         return 1;
     }
 
-    func replace_type(self, t: type*, g_data: generic_data*) {
-        if (g_data->types.has(t->name.__ptr__())) {
-            var real = g_data->types.get(t->name.__ptr__());
-            t->name.clear();
-            t->name.append_str(real->name.__ptr__());
-            t->loc_file.clear();
-            t->loc_file.append_str(real->loc_file.__ptr__());
-            t->generics.clear();
+    func replace_type(self, t: type&, g_data: generic_data*) {
+        if (g_data->types.has(t.name.__ptr__())) {
+            var real = g_data->types.get(t.name.__ptr__());
+            t.name.clear();
+            t.name.append_str(real->name.__ptr__());
+            t.loc_file.clear();
+            t.loc_file.append_str(real->loc_file.__ptr__());
+            t.generics.clear();
             foreach (var i; real->generics) {
-                t->generics.push(i.get()); // will do deep copy
+                t.generics.push(i.get().__ptr__()); // will do deep copy
             }
             // should add to t.pointer_depth, for example: func foo(a: T*) {}
             // we should replace T with bar, expected result is: bar*
             // if we do not add pointer_depth, the result will be bar
-            t->pointer_depth += real->pointer_depth;
+            t.pointer_depth += real->pointer_depth;
         }
-        if (t->generics.empty()) {
+        if (t.generics.empty()) {
             return;
         }
-        foreach (var i; t->generics) {
+        foreach (var i; t.generics) {
             self.replace_type(i.get(), g_data);
         }
     }
 
     func check_is_trivial(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
         foreach (var i; n->ordered_conds) {
-            var cond = i.get();
+            var cond = i.get().__ptr__();
             if (!n->conds.get(cond)->empty()) {
                 self.err->warn(
                     n->base.location.__ptr__(),
@@ -784,7 +784,7 @@ impl generic_visitor {
 
     func check_is_non_trivial(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
         foreach (var i; n->ordered_conds) {
-            var cond = i.get();
+            var cond = i.get().__ptr__();
             if (!n->conds.get(cond)->empty()) {
                 self.err->warn(
                     n->base.location.__ptr__(),
@@ -843,7 +843,7 @@ impl generic_visitor {
 
     func check_is_pointer(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
         foreach (var i; n->ordered_conds) {
-            var cond = i.get();
+            var cond = i.get().__ptr__();
             if (!n->conds.get(cond)->empty()) {
                 self.err->warn(
                     n->base.location.__ptr__(),
@@ -873,7 +873,7 @@ impl generic_visitor {
 
     func check_is_non_pointer(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
         foreach (var i; n->ordered_conds) {
-            var cond = i.get();
+            var cond = i.get().__ptr__();
             if (!n->conds.get(cond)->empty()) {
                 self.err->warn(
                     n->base.location.__ptr__(),
@@ -997,7 +997,7 @@ impl generic_visitor {
     func replace_struct_type(self, s: colgm_struct*, g_data: generic_data*) {
         foreach (var i; s->fields) {
             var field = i.value();
-            self.replace_type(field, g_data);
+            self.replace_type(field[0], g_data);
         }
 
         // remove method by conditonal compile config like
@@ -1047,14 +1047,14 @@ impl generic_visitor {
     }
 
     func replace_func_type(self, f: colgm_func*, g_data: generic_data*) {
-        self.replace_type(f->return_type.__ptr__(), g_data);
+        self.replace_type(f->return_type, g_data);
         foreach (var i; f->param_type) {
             var param_type = i.get();
             self.replace_type(param_type, g_data);
         }
         foreach (var i; f->unordered_params) {
             var param_type = i.value();
-            self.replace_type(param_type, g_data);
+            self.replace_type(param_type[0], g_data);
         }
 
         if (f->generic_func_decl != nil) {

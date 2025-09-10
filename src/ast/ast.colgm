@@ -800,10 +800,10 @@ pub struct ast_identifier {
 }
 
 impl ast_identifier {
-    pub func new(loc: span&, name: str*) -> ast_identifier* {
+    pub func new(loc: span&, name: str&) -> ast_identifier* {
         var res = ast_identifier::__alloc__();
         res->base = ast::instance(ast_kind::ast_identifier, loc);
-        res->content = name->clone();
+        res->content = name.clone();
         return res;
     }
 
@@ -1415,10 +1415,10 @@ impl ast_cond_compile {
         var text = str::from("#[");
         text.append_str(self.cond_name.__ptr__()).append_char('(');
         foreach (var i; self.ordered_conds) {
-            text.append_str(i.get());
-            if (!self.conds.get(i.get())->empty()) {
+            text.append(i.get().c_str);
+            if (!self.conds.get(i.get().__ptr__())->empty()) {
                 text.append(" = ");
-                text.append_str(self.conds.get(i.get()));
+                text.append_str(self.conds.get(i.get().__ptr__()));
             }
             text.append_char(',');
         }

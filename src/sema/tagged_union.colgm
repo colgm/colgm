@@ -123,11 +123,11 @@ impl colgm_tagged_union {
         }
         if (!collection.empty()) {
             foreach (var i; collection) {
-                var distance = levenshtein_distance(name, i.get());
+                var distance = levenshtein_distance(name, i.get().__ptr__());
                 if (distance < min_distance) {
                     min_distance = distance;
                     res.clear();
-                    res.append_str(i.get());
+                    res.append(i.get().c_str);
                 }
             }
             return res;
@@ -184,12 +184,12 @@ impl colgm_tagged_union {
         out.out(" {\n");
         forindex (var i; self.ordered_members) {
             var member = self.ordered_members.get(i);
-            out.out("    ").out(member->c_str);
+            out.out("    ").out(member.c_str);
             // dump mapped int
-            out.light_green().out("(").out_i64(self.member_int_map.get(member));
+            out.light_green().out("(").out_i64(self.member_int_map.get(member.__ptr__()));
             out.out(")").reset().out(": ");
             // dump type
-            self.members.get(member)->dump(out, pkg);
+            self.members.get(member.__ptr__())->dump(out, pkg);
             out.out("\n");
         }
         foreach (var i; self.method) {

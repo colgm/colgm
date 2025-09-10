@@ -191,7 +191,7 @@ impl sema {
             list_type.push(t.__ptr__());
         }
         foreach (var i; list_type) {
-            if (i.get()->is_error()) {
+            if (i.get().is_error()) {
                 return type::error_type();
             }
         }
@@ -200,10 +200,10 @@ impl sema {
             return type::empty_array_type();
         }
 
-        var marked_base_type = list_type.get(0);
+        var marked_base_type = list_type.get(0).__ptr__();
         for (var i: u64 = 1; i < list_type.size; i += 1) {
             var this_node = n->value.get(i);
-            if (!list_type.get(i)->eq(marked_base_type) &&
+            if (!list_type.get(i).eq(marked_base_type) &&
                 !self.check_can_be_converted(this_node, marked_base_type)) {
                 var info = str::from("expect \"");
                 defer info.delete();
@@ -214,7 +214,7 @@ impl sema {
                 info.append_str(e_name.__ptr__());
                 info.append("\" but get \"");
 
-                var i_name = list_type.get(i)->full_path_name_with_pointer(self.pkg);
+                var i_name = list_type.get(i).full_path_name_with_pointer(self.pkg);
                 defer i_name.delete();
 
                 info.append_str(i_name.__ptr__());
@@ -805,7 +805,7 @@ impl sema {
             name.append_char('<');
 
             foreach (var i; types) {
-                var full_name = i.get()->full_path_name_with_pointer(self.pkg);
+                var full_name = i.get().full_path_name_with_pointer(self.pkg);
                 defer full_name.delete();
 
                 name.append_str(full_name.__ptr__());
@@ -1133,12 +1133,12 @@ impl sema {
                 continue;
             }
             var param = func_self->param_type.get(i.index());
-            if (!infer.eq(param)) {
-                if (!self.check_can_be_converted(arg, param)) {
+            if (!infer.eq(param.__ptr__())) {
+                if (!self.check_can_be_converted(arg, param.__ptr__())) {
                     var info = str::from("expect \"");
                     defer info.delete();
 
-                    var param_name = param->full_path_name_with_pointer(self.pkg);
+                    var param_name = param.full_path_name_with_pointer(self.pkg);
                     defer param_name.delete();
 
                     info.append_str(param_name.__ptr__());
@@ -1150,13 +1150,13 @@ impl sema {
                     info.append("\"");
                     self.err->error(arg->location.__ptr__(), info.c_str);
                 }
-            } elsif (param->is_reference && !self.check_can_be_referenced(arg)) {
+            } elsif (param.is_reference && !self.check_can_be_referenced(arg)) {
                 self.err->error(
                     arg->location.__ptr__(),
                     "cannot pass literal as reference"
                 );
             }
-            if (param->is_reference) {
+            if (param.is_reference) {
                 n->args_is_ref.c_data()[i.index()] = true;
             }
         }
@@ -1184,12 +1184,12 @@ impl sema {
                 continue;
             }
             var param = func_self->param_type.get(i.index() + 1);
-            if (!infer.eq(param)) {
-                if (!self.check_can_be_converted(arg, param)) {
+            if (!infer.eq(param.__ptr__())) {
+                if (!self.check_can_be_converted(arg, param.__ptr__())) {
                     var info = str::from("expect \"");
                     defer info.delete();
 
-                    var param_name = param->full_path_name_with_pointer(self.pkg);
+                    var param_name = param.full_path_name_with_pointer(self.pkg);
                     defer param_name.delete();
 
                     info.append_str(param_name.__ptr__());
@@ -1201,13 +1201,13 @@ impl sema {
                     info.append("\"");
                     self.err->error(arg->location.__ptr__(), info.c_str);
                 }
-            } elsif (param->is_reference && !self.check_can_be_referenced(arg)) {
+            } elsif (param.is_reference && !self.check_can_be_referenced(arg)) {
                 self.err->error(
                     arg->location.__ptr__(),
                     "cannot pass literal as reference"
                 );
             }
-            if (param->is_reference) {
+            if (param.is_reference) {
                 // method call do not need to pass the reference of 'self'
                 // so there's no need to add 1 to the index
                 n->args_is_ref.c_data()[i.index()] = true;
@@ -2854,7 +2854,7 @@ impl sema {
         lowered_init->type = ast_type_def::new(n->variable->base.location);
         lowered_init->type->name = ast_identifier::new(
             n->variable->base.location,
-            iter_ty->name.__ptr__()
+            iter_ty->name
         );
 
         lowered_init->value = ast_number_literal::new(

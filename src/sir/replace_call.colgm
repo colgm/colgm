@@ -11,7 +11,7 @@ use std::libc::{ free };
 use util::timestamp::{ maketimestamp };
 
 func adjust_single_function_size_call(
-    f: sir_func*,
+    f: sir_func&,
     struct_size_map: hashmap<str, sir_struct*>*,
     union_size_map: hashmap<str, sir_tagged_union*>*
 ) -> i64 {
@@ -19,7 +19,7 @@ func adjust_single_function_size_call(
     var temp = vec<sir*>::instance();
     defer temp.delete();
 
-    foreach (var i; f->body->stmts) {
+    foreach (var i; f.body->stmts) {
         var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
             temp.push(inst);
@@ -74,9 +74,9 @@ func adjust_single_function_size_call(
         free(inst => i8*);
     }
 
-    f->body->stmts.clear();
+    f.body->stmts.clear();
     foreach (var i; temp) {
-        f->body->stmts.push(i.get());
+        f.body->stmts.push(i.get());
     }
 
     return replace_count;
@@ -92,16 +92,16 @@ pub func replace_size_call(ctx: sir_context*, verbose: bool) {
     defer union_size_map.delete();
 
     foreach (var i; ctx->struct_decls) {
-        var size_func_name = i.get()->get_intrinsic_method_name("__size__");
+        var size_func_name = i.get().get_intrinsic_method_name("__size__");
         defer size_func_name.delete();
 
-        struct_size_map.insert(size_func_name.__ptr__(), i.get());
+        struct_size_map.insert(size_func_name.__ptr__(), i.get().__ptr__());
     }
     foreach (var i; ctx->tagged_union_decls) {
-        var size_func_name = i.get()->get_intrinsic_method_name("__size__");
+        var size_func_name = i.get().get_intrinsic_method_name("__size__");
         defer size_func_name.delete();
 
-        union_size_map.insert(size_func_name.__ptr__(), i.get());
+        union_size_map.insert(size_func_name.__ptr__(), i.get().__ptr__());
     }
 
     var replace_count = 0;
@@ -122,12 +122,12 @@ pub func replace_size_call(ctx: sir_context*, verbose: bool) {
     }
 }
 
-func adjust_single_function_ptr_call(f: sir_func*) -> i64 {
+func adjust_single_function_ptr_call(f: sir_func&) -> i64 {
     var replace_count = 0;
     var temp = vec<sir*>::instance();
     defer temp.delete();
 
-    foreach (var i; f->body->stmts) {
+    foreach (var i; f.body->stmts) {
         var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
             temp.push(inst);
@@ -161,7 +161,7 @@ func adjust_single_function_ptr_call(f: sir_func*) -> i64 {
         //   %target = getelementptr %struct.T, %struct.T* %source, i32 0; __ptr__
         var constant = sir_temp_ptr::new(
             call->target.content.__ptr__(),
-            call->args.get(0)->content.__ptr__(),
+            call->args.get(0).content.__ptr__(),
             rtt.__ptr__(),
             call->debug_info_index,
             "__ptr__"
@@ -173,9 +173,9 @@ func adjust_single_function_ptr_call(f: sir_func*) -> i64 {
         free(inst => i8*);
     }
 
-    f->body->stmts.clear();
+    f.body->stmts.clear();
     foreach (var i; temp) {
-        f->body->stmts.push(i.get());
+        f.body->stmts.push(i.get());
     }
 
     return replace_count;
