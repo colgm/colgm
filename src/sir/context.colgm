@@ -52,7 +52,7 @@ impl sir_struct {
         return res;
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out(self.name.c_str).out(" = type ");
 
         if (self.field_type.empty()) {
@@ -139,7 +139,7 @@ impl sir_tagged_union {
         return res;
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out(self.name.c_str).out(" = type ");
 
         if (self.member_type.empty()) {
@@ -244,7 +244,7 @@ impl sir_func {
         }
     }
 
-    func dump_attributes(self, out: io) {
+    func dump_attributes(self, out: io&) {
         var contain_frame_pointer_attribute = false;
         foreach (var i; self.attributes) {
             out.out(" ").out(i.get()->c_str);
@@ -265,7 +265,7 @@ impl sir_func {
         }
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         if (self.eliminated) {
             out.out("; unused @").out(self.name.c_str).out("\n");
             return;
@@ -391,14 +391,14 @@ impl sir_context {
 }
 
 impl sir_context {
-    func dump_target_tripple(self, out: io) {
+    func dump_target_tripple(self, out: io&) {
         var target = get_target_triple();
         defer target.delete();
 
         out.out("target triple = \"").out(target.c_str).out("\"\n\n");
     }
 
-    func dump_tagged_unions(self, out: io) {
+    func dump_tagged_unions(self, out: io&) {
         foreach (var i; self.tagged_union_decls) {
             i.get()->dump(out);
         }
@@ -408,7 +408,7 @@ impl sir_context {
         }
     }
 
-    func dump_structs(self, out: io) {
+    func dump_structs(self, out: io&) {
         foreach (var i; self.struct_decls) {
             i.get()->dump(out);
         }
@@ -418,7 +418,7 @@ impl sir_context {
         }
     }
 
-    func dump_func_decls(self, out: io) {
+    func dump_func_decls(self, out: io&) {
         foreach (var i; self.func_decls) {
             i.get()->dump(out);
         }
@@ -428,14 +428,14 @@ impl sir_context {
         }
     }
 
-    func dump_func_impls(self, out: io) {
+    func dump_func_impls(self, out: io&) {
         foreach (var i; self.func_impls) {
             i.get()->dump(out);
             out.endln();
         }
     }
 
-    func dump_const_strings(self, out: io) {
+    func dump_const_strings(self, out: io&) {
         // convert map to vec
         var ordered_const_string = vec<str>::instance();
         defer ordered_const_string.delete();
@@ -465,7 +465,7 @@ impl sir_context {
         }
     }
 
-    func dump_builtin_time(self, out: io) {
+    func dump_builtin_time(self, out: io&) {
         var time_str = chrono::localtime();
         defer time_str.delete();
 
@@ -483,7 +483,7 @@ impl sir_context {
         out.out_u64(time_str.size + 1).out(" x i8]* @str.__time__ to i8*)\n}\n\n");
     }
 
-    func dump_intrinsic_alloc_method(self, out: io) {
+    func dump_intrinsic_alloc_method(self, out: io&) {
         foreach (var i; self.struct_decls) {
             var st_name = i.get()->name.__ptr__();
             var alloc_func_name = i.get()->get_intrinsic_method_name("__alloc__");
@@ -511,7 +511,7 @@ impl sir_context {
         }
     }
 
-    func dump_named_metadata(self, out: io) {
+    func dump_named_metadata(self, out: io&) {
         foreach (var i; self.named_metadata) {
             i.get()->dump(out);
             out.endln();
@@ -521,14 +521,14 @@ impl sir_context {
         }
     }
 
-    func dump_debug_info(self, out: io) {
+    func dump_debug_info(self, out: io&) {
         foreach (var i; self.debug_info) {
             i.get()->dump(out);
             out.endln();
         }
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         self.dump_target_tripple(out);
         self.dump_tagged_unions(out);
         self.dump_structs(out);

@@ -16,13 +16,13 @@ pub struct colgm_enum {
 }
 
 impl colgm_enum {
-    pub func new(name: str*, loc: span*) -> colgm_enum* {
+    pub func new(name: str&, loc: span&) -> colgm_enum* {
         var res = colgm_enum::__alloc__();
         if (res == nil) {
             panic("failed to allocate memory");
         }
-        res->name = name->clone();
-        res->location = loc->clone();
+        res->name = name.clone();
+        res->location = loc.clone();
         res->ordered_member = vec<str>::instance();
         res->members = hashmap<str, i64>::instance();
         res->is_public = false;
@@ -48,7 +48,7 @@ impl colgm_enum {
 }
 
 impl colgm_enum {
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         if (self.is_public) {
             out.green().out("pub ").reset();

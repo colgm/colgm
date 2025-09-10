@@ -22,6 +22,7 @@ pub enum DI_kind {
     DI_subroutine,
     DI_location,
     DW_TAG_pointer_type,
+    DW_TAG_reference_type,
     DW_TAG_member
 }
 
@@ -47,6 +48,7 @@ pub union(DI_kind) DI_node {
     DI_subroutine: DI_subroutine,
     DI_location: DI_location,
     DW_TAG_pointer_type: DW_TAG_pointer_type,
+    DW_TAG_reference_type: DW_TAG_reference_type,
     DW_TAG_member: DW_TAG_member
 }
 
@@ -82,6 +84,7 @@ impl DI_node {
             DI_kind::DI_subroutine => return self.DI_subroutine.index;
             DI_kind::DI_location => return self.DI_location.index;
             DI_kind::DW_TAG_pointer_type => return self.DW_TAG_pointer_type.index;
+            DI_kind::DW_TAG_reference_type => return self.DW_TAG_reference_type.index;
             DI_kind::DW_TAG_member => return self.DW_TAG_member.index;
         }
         return DI_ERROR_INDEX();
@@ -144,6 +147,9 @@ impl DI_node {
             DI_kind::DW_TAG_pointer_type => {
                 self.DW_TAG_pointer_type.dump(out);
             }
+            DI_kind::DW_TAG_reference_type => {
+                self.DW_TAG_reference_type.dump(out);
+            }
             DI_kind::DW_TAG_member => {
                 self.DW_TAG_member.dump(out);
             }
@@ -195,6 +201,9 @@ impl DI_node {
             DI_kind::DW_TAG_pointer_type => {
                 self.DW_TAG_pointer_type.delete();
             }
+            DI_kind::DW_TAG_reference_type => {
+                self.DW_TAG_reference_type.delete();
+            }
             DI_kind::DW_TAG_member => {
                 self.DW_TAG_member.delete();
             }
@@ -203,6 +212,22 @@ impl DI_node {
 }
 
 impl DI_node {
+    pub func is_DW_TAG_pointer_type(self) -> bool {
+        match (self) {
+            DI_kind::DW_TAG_pointer_type => return true;
+            _ => return false;
+        }
+        return false;
+    }
+
+    pub func is_DW_TAG_reference_type(self) -> bool {
+        match (self) {
+            DI_kind::DW_TAG_reference_type => return true;
+            _ => return false;
+        }
+        return false;
+    }
+
     pub func get_DW_TAG_pointer_type(self) -> DW_TAG_pointer_type* {
         match (self) {
             DI_kind::DW_TAG_pointer_type => {
@@ -210,6 +235,18 @@ impl DI_node {
             }
             _ => {
                 panic("get_pointer_type: not a DW_TAG_pointer_type");
+            }
+        }
+        return nil;
+    }
+
+    pub func get_DW_TAG_reference_type(self) -> DW_TAG_reference_type* {
+        match (self) {
+            DI_kind::DW_TAG_reference_type => {
+                return self.DW_TAG_reference_type.__ptr__();
+            }
+            _ => {
+                panic("get_pointer_type: not a DW_TAG_reference_type");
             }
         }
         return nil;
@@ -827,6 +864,38 @@ impl DW_TAG_pointer_type {
 
     pub func dump(self, out: io&) {
         out.out("!DIDerivedType(tag: DW_TAG_pointer_type, ");
+        out.out("baseType: !").out_u64(self.base_type_index).out(", ");
+        out.out("size: ").out_u64(self.size).out(") ; ").out(self.name.c_str);
+    }
+}
+
+pub struct DW_TAG_reference_type {
+    index: u64,
+    base_type_index: u64,
+    size: u64,
+    name: str
+}
+
+impl DW_TAG_reference_type {
+    pub func new(i: u64, bti: u64, s: u64, n: i8*) -> DI_node* {
+        var res = DI_node::__alloc__();
+        res[0] = DI_node {
+            DW_TAG_reference_type: DW_TAG_reference_type {
+                index: i,
+                base_type_index: bti,
+                size: s,
+                name: str::from(n)
+            }
+        };
+        return res;
+    }
+
+    pub func delete(self) {
+        self.name.delete();
+    }
+
+    pub func dump(self, out: io&) {
+        out.out("!DIDerivedType(tag: DW_TAG_reference_type, ");
         out.out("baseType: !").out_u64(self.base_type_index).out(", ");
         out.out("size: ").out_u64(self.size).out(") ; ").out(self.name.c_str);
     }

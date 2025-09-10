@@ -28,6 +28,21 @@ std::string type::to_string() const {
     for (i64 i = 0; i < pointer_depth; ++i) {
         result += "*";
     }
+    if (is_reference) {
+        result += "&";
+    }
+    return result;
+}
+
+std::string type::llvm_type_name() const {
+    check_pointer_depth();
+    auto result = generic_name();
+    for (i64 i = 0; i < pointer_depth; ++i) {
+        result += "*";
+    }
+    if (is_reference) {
+        result += "*";
+    }
     return result;
 }
 

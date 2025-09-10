@@ -37,7 +37,7 @@ std::string mir2sir::type_mapping(const type& t) {
     // basic type mapping
     if (basic_type_mapper.count(copy.name)) {
         copy.name = basic_type_mapper.at(copy.name);
-        return copy.to_string() + (t.is_reference ? "*" : "");
+        return copy.llvm_type_name();
     }
 
     const auto full_name = t.full_path_name();
@@ -79,7 +79,7 @@ std::string mir2sir::type_mapping(const type& t) {
             break;
         default: break;
     }
-    return copy.to_string() + (t.is_reference ? "*" : "");
+    return copy.llvm_type_name();
 }
 
 std::string mir2sir::array_type_mapping(const type& t) {

@@ -354,7 +354,7 @@ impl type {
 }
 
 impl type {
-    pub func dump(self, out: io, pkg: package*) {
+    pub func dump(self, out: io&, pkg: package*) {
         out.light_orange();
         // print module path
         if (pkg != nil && pkg->has_file(self.loc_file)) {
@@ -455,6 +455,21 @@ impl type {
         var res = self.full_path_name(pkg);
 
         for (var i = 0; i < self.pointer_depth; i += 1) {
+            res.append_char('*');
+        }
+        if (self.is_reference) {
+            res.append_char('&');
+        }
+        return res;
+    }
+
+    pub func llvm_type_name(self, pkg: package*) -> str {
+        var res = self.full_path_name(pkg);
+
+        for (var i = 0; i < self.pointer_depth; i += 1) {
+            res.append_char('*');
+        }
+        if (self.is_reference) {
             res.append_char('*');
         }
         return res;

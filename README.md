@@ -165,4 +165,3 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 8. DCE opt
 9. CSE opt
 10. mir structure optimization
-

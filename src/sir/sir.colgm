@@ -181,7 +181,7 @@ impl sir {
         }
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         match (self.kind) {
             sir_kind::sir_block => {
                 var n = self.__ptr__() => sir_block*;
@@ -362,7 +362,7 @@ impl sir_block {
                self.stmts.back()->kind == sir_kind::sir_ret;
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         foreach (var i; self.allocas) {
             var n = i.get() => sir*;
             n->dump(out);
@@ -441,7 +441,7 @@ impl sir_alloca {
         self.array_info.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  %").out(self.variable.c_str).out(" = alloca ");
         if (self.array_info.base_type.empty()) {
             out.out(self.type.c_str).endln();
@@ -491,7 +491,7 @@ impl sir_temp_ptr {
         self.comment.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  %").out(self.target.c_str).out(" = ");
         out.out("getelementptr ").out(self.type.c_str).out(", ");
         out.out(self.type.c_str).out("* %").out(self.source.c_str);
@@ -530,7 +530,7 @@ impl sir_ret {
         self.value.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ret ").out(self.type.c_str);
         if (self.value.kind != value_kind::null) {
             out.out(" ");
@@ -566,7 +566,7 @@ impl sir_str {
         self.target.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = bitcast [").out_u64(self.length).out(" x i8]* ");
@@ -600,7 +600,7 @@ impl sir_zeroinitializer {
         self.target.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  store ").out(self.type.c_str).out(" zeroinitializer, ");
         out.out(self.type.c_str).out("* ");
         self.target.dump(out);
@@ -647,7 +647,7 @@ impl sir_get_index {
         self.index_type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = getelementptr ").out(self.type.c_str).out(", ");
@@ -689,7 +689,7 @@ impl sir_get_field {
         self.struct_name.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = getelementptr inbounds ");
@@ -744,7 +744,7 @@ impl sir_call {
         self.args_type.push(arg_type);
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         if (self.target.kind == value_kind::variable) {
             self.target.dump(out);
@@ -805,7 +805,7 @@ impl sir_neg {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = ");
@@ -848,7 +848,7 @@ impl sir_bnot {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = xor ").out(self.type.c_str).out(" ");
@@ -880,7 +880,7 @@ impl sir_lnot {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = xor ").out(self.type.c_str).out(" ");
@@ -932,7 +932,7 @@ impl sir_add {
         self.comment.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = ");
@@ -987,7 +987,7 @@ impl sir_sub {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = ");
@@ -1036,7 +1036,7 @@ impl sir_mul {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = ");
@@ -1088,7 +1088,7 @@ impl sir_div {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = ");
@@ -1144,7 +1144,7 @@ impl sir_rem {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = ");
@@ -1194,7 +1194,7 @@ impl sir_band {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = and ");
@@ -1235,7 +1235,7 @@ impl sir_bxor {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = xor ");
@@ -1276,7 +1276,7 @@ impl sir_bor {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = or ");
@@ -1326,7 +1326,7 @@ impl sir_cmp {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = ");
@@ -1400,7 +1400,7 @@ impl sir_label {
         self.comment.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("\nlabel.").out_hex(self.label).out(":");
         if (!self.comment.empty()) {
             out.out("\t; ").out(self.comment.c_str);
@@ -1432,7 +1432,7 @@ impl sir_store {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  store ").out(self.type.c_str).out(" ");
         self.source.dump(out);
         out.out(", ").out(self.type.c_str).out("* ");
@@ -1464,7 +1464,7 @@ impl sir_load {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = load ").out(self.type.c_str).out(", ");
@@ -1489,7 +1489,7 @@ impl sir_br {
 
     pub func delete(self) {}
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  br label %label.").out_hex(self.label).endln();
     }
 }
@@ -1515,7 +1515,7 @@ impl sir_br_cond {
         self.cond.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  br i1 ");
         self.cond.dump(out);
         out.out(", label %label.").out_hex(self.label_true);
@@ -1553,7 +1553,7 @@ impl sir_switch {
         self.case_label.push(label);
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  switch i64 ");
         self.source.dump(out);
         out.out(", label %label.").out_hex(self.default_label).out(" [\n");
@@ -1602,7 +1602,7 @@ impl sir_type_convert {
         self.dst_type.delete();
     }
 
-    func dump_bitcast(self, out: io) {
+    func dump_bitcast(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = bitcast ").out(self.src_type.c_str).out(" ");
@@ -1612,7 +1612,7 @@ impl sir_type_convert {
         out.endln();
     }
 
-    func dump_inttoptr(self, out: io) {
+    func dump_inttoptr(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = inttoptr ").out(self.src_type.c_str).out(" ");
@@ -1622,7 +1622,7 @@ impl sir_type_convert {
         out.endln();
     }
 
-    func dump_ptrtoint(self, out: io) {
+    func dump_ptrtoint(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = ptrtoint ").out(self.src_type.c_str).out(" ");
@@ -1687,13 +1687,13 @@ impl sir_type_convert {
         return "";
     }
 
-    func dump_debug_info(self, out: io) {
+    func dump_debug_info(self, out: io&) {
         if (self.debug_info_index != DI_ERROR_INDEX()) {
             out.out(", !dbg !").out_u64(self.debug_info_index);
         }
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         if (self.src_type.back() == '*' && self.dst_type.back() == '*') {
             self.dump_bitcast(out);
             return;
@@ -1817,7 +1817,7 @@ impl sir_array_cast {
         self.type.delete();
     }
 
-    pub func dump(self, out: io) {
+    pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
         out.out(" = bitcast [").out_u64(self.array_size).out(" x ");

@@ -27,14 +27,14 @@ pub struct colgm_func {
 }
 
 impl colgm_func {
-    pub func new(name: str*, loc: span*, ret_type: type*) -> colgm_func* {
+    pub func new(name: str&, loc: span&, ret_type: type&) -> colgm_func* {
         var res = colgm_func::__alloc__();
         if (res == nil) {
             panic("failed to allocate memory");
         }
-        res->name = name->clone();
-        res->location = loc->clone();
-        res->return_type = ret_type->clone();
+        res->name = name.clone();
+        res->location = loc.clone();
+        res->return_type = ret_type.clone();
         res->param_name = vec<str>::instance();
         res->param_type = vec<type>::instance();
         res->param_location = hashmap<str, span>::instance();
@@ -47,11 +47,11 @@ impl colgm_func {
         return res;
     }
 
-    pub func instance(name: str*, loc: span*, ret_type: type*) -> colgm_func {
+    pub func instance(name: str&, loc: span&, ret_type: type&) -> colgm_func {
         return colgm_func {
-            name: name->clone(),
-            location: loc->clone(),
-            return_type: ret_type->clone(),
+            name: name.clone(),
+            location: loc.clone(),
+            return_type: ret_type.clone(),
             param_name: vec<str>::instance(),
             param_type: vec<type>::instance(),
             param_location: hashmap<str, span>::instance(),
@@ -101,7 +101,7 @@ impl colgm_func {
 }
 
 impl colgm_func {
-    pub func dump(self, out: io, pkg: package*, indent: i8*) {
+    pub func dump(self, out: io&, pkg: package*, indent: i8*) {
         out.out(indent).out("  ");
         if (self.is_extern) {
             out.green().out("extern ").reset();

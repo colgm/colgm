@@ -78,6 +78,7 @@ private:
 
 public:
     std::string to_string() const;
+    std::string llvm_type_name() const;
     std::string array_type_to_string() const;
     std::string full_path_name() const;
     std::string full_path_name_with_pointer() const;

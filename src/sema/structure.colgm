@@ -32,13 +32,13 @@ pub struct colgm_struct {
 }
 
 impl colgm_struct {
-    pub func new(name: str*, loc: span*) -> colgm_struct* {
+    pub func new(name: str&, loc: span&) -> colgm_struct* {
         var res = colgm_struct::__alloc__();
         if (res == nil) {
             panic("failed to allocate memory");
         }
-        res->name = name->clone();
-        res->location = loc->clone();
+        res->name = name.clone();
+        res->location = loc.clone();
         res->fields = hashmap<str, type>::instance();
         res->ordered_fields = vec<str>::instance();
         res->fields_span = hashmap<str, span>::instance();
@@ -99,10 +99,10 @@ impl colgm_struct {
         return res;
     }
 
-    pub func check_field_exists(self, name: str*) -> bool {
-        return self.fields.has(name) ||
-               self.method.has(name) ||
-               self.static_method.has(name);
+    pub func check_field_exists(self, name: str&) -> bool {
+        return self.fields.has(name.__ptr__()) ||
+               self.method.has(name.__ptr__()) ||
+               self.static_method.has(name.__ptr__());
     }
 
     pub func field_index(self, name: str*) -> i64 {
@@ -191,7 +191,7 @@ impl colgm_struct {
 }
 
 impl colgm_struct {
-    pub func dump(self, out: io, pkg: package*) {
+    pub func dump(self, out: io&, pkg: package*) {
         out.out("  ");
         if (self.is_extern) {
             out.green().out("extern ").reset();

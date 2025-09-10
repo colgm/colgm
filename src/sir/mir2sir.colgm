@@ -571,10 +571,7 @@ impl mir2sir {
             copy.name.append_str(replace);
             copy.loc_file.clear();
 
-            var res = copy.full_path_name_with_pointer(self.pkg);
-            if (t->is_reference) {
-                res.append("*");
-            }
+            var res = copy.llvm_type_name(self.pkg);
             // copy will delete here, do not merge definition with return statement
             return res;
         }
@@ -641,10 +638,7 @@ impl mir2sir {
             }
         }
 
-        var res = copy.full_path_name_with_pointer(self.pkg);
-        if (t->is_reference) {
-            res.append("*");
-        }
+        var res = copy.llvm_type_name(self.pkg);
         // copy will delete here, do not merge definition with return statement
         return res;
     }
@@ -3125,103 +3119,47 @@ impl mir2sir {
 
     func visit(self, n: mir*) {
         match (n->kind) {
-            mir_kind::mir_block => {
-                self.visit_mir_block(n => mir_block*);
-            }
-            mir_kind::mir_unary => {
-                self.visit_mir_unary(n => mir_unary*);
-            }
-            mir_kind::mir_binary => {
-                self.visit_mir_binary(n => mir_binary*);
-            }
-            mir_kind::mir_type_convert => {
-                self.visit_mir_type_convert(n => mir_type_convert*);
-            }
-            mir_kind::mir_nil => {
-                self.visit_mir_nil(n => mir_nil*);
-            }
-            mir_kind::mir_number => {
-                self.visit_mir_number(n => mir_number*);
-            }
-            mir_kind::mir_string => {
-                self.visit_mir_string(n => mir_string*);
-            }
-            mir_kind::mir_char => {
-                self.visit_mir_char(n => mir_char*);
-            }
-            mir_kind::mir_bool => {
-                self.visit_mir_bool(n => mir_bool*);
-            }
-            mir_kind::mir_array => {
-                self.visit_mir_array(n => mir_array*);
-            }
-            mir_kind::mir_struct_init => {
-                self.visit_mir_struct_init(n => mir_struct_init*);
-            }
-            mir_kind::mir_call => {
-                self.visit_mir_call(n => mir_call*);
-            }
-            mir_kind::mir_call_id => {
-                self.visit_mir_call_id(n => mir_call_id*);
-            }
-            mir_kind::mir_call_index => {
-                self.visit_mir_call_index(n => mir_call_index*);
-            }
-            mir_kind::mir_call_func => {
-                self.visit_mir_call_func(n => mir_call_func*);
-            }
-            mir_kind::mir_get_field => {
-                self.visit_mir_get_field(n => mir_get_field*);
-            }
-            mir_kind::mir_ptr_get_field => {
-                self.visit_mir_ptr_get_field(n => mir_ptr_get_field*);
-            }
-            mir_kind::mir_get_path => {
-                self.visit_mir_get_path(n => mir_get_path*);
-            }
-            mir_kind::mir_define => {
-                self.visit_mir_define(n => mir_define*);
-            }
-            mir_kind::mir_assign => {
-                self.visit_mir_assign(n => mir_assign*);
-            }
-            mir_kind::mir_if => {
-                self.visit_mir_if(n => mir_if*);
-            }
-            mir_kind::mir_branch => {
-                self.visit_mir_branch(n => mir_branch*);
-            }
-            mir_kind::mir_switch_case => {
-                self.visit_mir_switch_case(n => mir_switch_case*);
-            }
-            mir_kind::mir_switch => {
-                self.visit_mir_switch(n => mir_switch*);
-            }
-            mir_kind::mir_break => {
-                self.visit_mir_break();
-            }
-            mir_kind::mir_continue => {
-                self.visit_mir_continue();
-            }
-            mir_kind::mir_loop => {
-                self.visit_mir_loop(n => mir_loop*);
-            }
-            mir_kind::mir_return => {
-                self.visit_mir_return(n => mir_return*);
-            }
+            mir_kind::mir_block => self.visit_mir_block(n => mir_block*);
+            mir_kind::mir_unary => self.visit_mir_unary(n => mir_unary*);
+            mir_kind::mir_binary => self.visit_mir_binary(n => mir_binary*);
+            mir_kind::mir_type_convert => self.visit_mir_type_convert(n => mir_type_convert*);
+            mir_kind::mir_nil => self.visit_mir_nil(n => mir_nil*);
+            mir_kind::mir_number => self.visit_mir_number(n => mir_number*);
+            mir_kind::mir_string => self.visit_mir_string(n => mir_string*);
+            mir_kind::mir_char => self.visit_mir_char(n => mir_char*);
+            mir_kind::mir_bool => self.visit_mir_bool(n => mir_bool*);
+            mir_kind::mir_array => self.visit_mir_array(n => mir_array*);
+            mir_kind::mir_struct_init => self.visit_mir_struct_init(n => mir_struct_init*);
+            mir_kind::mir_call => self.visit_mir_call(n => mir_call*);
+            mir_kind::mir_call_id => self.visit_mir_call_id(n => mir_call_id*);
+            mir_kind::mir_call_index => self.visit_mir_call_index(n => mir_call_index*);
+            mir_kind::mir_call_func => self.visit_mir_call_func(n => mir_call_func*);
+            mir_kind::mir_get_field => self.visit_mir_get_field(n => mir_get_field*);
+            mir_kind::mir_ptr_get_field => self.visit_mir_ptr_get_field(n => mir_ptr_get_field*);
+            mir_kind::mir_get_path => self.visit_mir_get_path(n => mir_get_path*);
+            mir_kind::mir_define => self.visit_mir_define(n => mir_define*);
+            mir_kind::mir_assign => self.visit_mir_assign(n => mir_assign*);
+            mir_kind::mir_if => self.visit_mir_if(n => mir_if*);
+            mir_kind::mir_branch => self.visit_mir_branch(n => mir_branch*);
+            mir_kind::mir_switch_case => self.visit_mir_switch_case(n => mir_switch_case*);
+            mir_kind::mir_switch => self.visit_mir_switch(n => mir_switch*);
+            mir_kind::mir_break => self.visit_mir_break();
+            mir_kind::mir_continue => self.visit_mir_continue();
+            mir_kind::mir_loop => self.visit_mir_loop(n => mir_loop*);
+            mir_kind::mir_return => self.visit_mir_return(n => mir_return*);
             _ => unreachable();
         }
     }
 }
 
 impl mir2sir {
-    func generate_DI_type_if_not_exists(self, n: str*) {
-        var temp = n->clone();
+    func generate_DI_type_if_not_exists(self, n: str&) {
+        var temp = n.clone();
         defer temp.delete();
 
         // recursively generate DI type for pointer type
         var p: DI_node* = nil;
-        while (temp.back() == '*') {
+        while (temp.back() == '*' || temp.back() == '&') {
             if (self.sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
                 p->get_DW_TAG_pointer_type()->base_type_index = self.sctx->DI_type_map.get(temp.__ptr__());
                 break;
@@ -3229,12 +3167,22 @@ impl mir2sir {
             if (p != nil) {
                 p->get_DW_TAG_pointer_type()->base_type_index = self.dwarf_status.DI_counter;
             }
-            p = DW_TAG_pointer_type::new(
-                self.dwarf_status.DI_counter,
-                DI_ERROR_INDEX(), // base type index is set to error index now
-                64,
-                temp.c_str
-            );
+
+            if (temp.back() == '*') {
+                p = DW_TAG_pointer_type::new(
+                    self.dwarf_status.DI_counter,
+                    DI_ERROR_INDEX(), // base type index is set to error index now
+                    64,
+                    temp.c_str
+                );
+            } else {
+                p = DW_TAG_reference_type::new(
+                    self.dwarf_status.DI_counter,
+                    DI_ERROR_INDEX(), // base type index is set to error index now
+                    64,
+                    temp.c_str
+                );
+            }
             self.sctx->debug_info.push(p);
             self.sctx->add_DI_type(temp.c_str, self.dwarf_status.DI_counter);
             self.dwarf_status.DI_counter += 1;
@@ -3242,26 +3190,30 @@ impl mir2sir {
         }
 
         if (self.sctx->DI_type_map.has(temp.__ptr__()) && p != nil) {
-            p->get_DW_TAG_pointer_type()->base_type_index = self.sctx->DI_type_map.get(temp.__ptr__());
+            if (p->is_DW_TAG_pointer_type()) {
+                p->get_DW_TAG_pointer_type()->base_type_index = self.sctx->DI_type_map.get(temp.__ptr__());
+            } else if (p->is_DW_TAG_reference_type()) {
+                p->get_DW_TAG_reference_type()->base_type_index = self.sctx->DI_type_map.get(temp.__ptr__());
+            }
         } else {
             var info = str::from("cannot generate DI_type for \"");
-            info.append(n->c_str).append("\"");
+            info.append(n.c_str).append("\"");
             defer info.delete();
 
             panic(info.c_str);
         }
     }
 
-    func find_DI_type(self, ty: type*) -> DI_node* {
-        if (ty->is_void() && !ty->is_pointer()) {
+    func find_DI_type(self, ty: type&) -> DI_node* {
+        if (ty.is_void() && !ty.is_pointer()) {
             return DI_null::new();
         }
 
-        var n = ty->full_path_name_with_pointer(self.pkg);
+        var n = ty.full_path_name_with_pointer(self.pkg);
         defer n.delete();
 
         if (!self.sctx->DI_type_map.has(n.__ptr__())) {
-            self.generate_DI_type_if_not_exists(n.__ptr__());
+            self.generate_DI_type_if_not_exists(n);
         }
         var index = self.sctx->DI_type_map.get(n.__ptr__());
         return DI_ref_index::new(index);
@@ -3276,7 +3228,7 @@ impl mir2sir {
         defer n.delete();
 
         if (!self.sctx->DI_type_map.has(n.__ptr__())) {
-            self.generate_DI_type_if_not_exists(n.__ptr__());
+            self.generate_DI_type_if_not_exists(n);
         }
         var index = self.sctx->DI_type_map.get(n.__ptr__());
         return index;
@@ -3765,9 +3717,9 @@ impl mir2sir {
         self.sctx->debug_info.push(ty_list);
         self.dwarf_status.DI_counter += 1;
 
-        ty_list->add(self.find_DI_type(f->return_type.__ptr__()));
+        ty_list->add(self.find_DI_type(f->return_type));
         foreach (var i; f->params) {
-            ty_list->add(self.find_DI_type(i.get()->value.__ptr__()));
+            ty_list->add(self.find_DI_type(i.get()->value));
         }
     }
 

@@ -455,11 +455,7 @@ impl regist_pass {
         var name = str::from("__size__");
         var loc = span::null();
         var ret = type::u64_type();
-        var func_info = colgm_func::instance(
-            name.__ptr__(),
-            loc.__ptr__(),
-            ret.__ptr__()
-        );
+        var func_info = colgm_func::instance(name, loc, ret);
         func_info.is_public = true;
         defer {
             func_info.delete();
@@ -487,11 +483,7 @@ impl regist_pass {
             ret.delete();
         }
 
-        var func_info = colgm_func::instance(
-            name.__ptr__(),
-            loc.__ptr__(),
-            ret.__ptr__()
-        );
+        var func_info = colgm_func::instance(name, loc, ret);
         func_info.is_public = true;
         func_info.param_name.push(self_name.__ptr__());
         func_info.param_type.push(self_type.__ptr__());
@@ -511,11 +503,7 @@ impl regist_pass {
             ret_type.delete();
         }
 
-        var func_info = colgm_func::instance(
-            time_func_name.__ptr__(),
-            null_loc.__ptr__(),
-            ret_type.__ptr__()
-        );
+        var func_info = colgm_func::instance(time_func_name, null_loc, ret_type);
         func_info.is_extern = true;
         defer func_info.delete();
 
@@ -621,7 +609,7 @@ impl regist_pass {
         }
 
         // allocate enum info
-        var enum_info = colgm_enum::new(name, node->base.location.__ptr__());
+        var enum_info = colgm_enum::new(node->name, node->base.location);
         self.generate_enum_member(enum_info, node);
         // insert to domain
         var dm = self.ctx->get_domain(node->base.location.file.__ptr__());
@@ -759,18 +747,18 @@ impl regist_pass {
             defer ret_type.delete();
 
             func_info = colgm_func::new(
-                name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->name,
+                node->base.location,
+                ret_type
             );
         } else {
             var ret_type = self.tr.resolve(node->return_type);
             defer ret_type.delete();
 
             func_info = colgm_func::new(
-                name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->name,
+                node->base.location,
+                ret_type
             );
         }
 
@@ -931,11 +919,7 @@ impl regist_pass {
             ret.delete();
         }
 
-        var func_info = colgm_func::instance(
-            name.__ptr__(),
-            struct_info->location.__ptr__(),
-            ret.__ptr__()
-        );
+        var func_info = colgm_func::instance(name, struct_info->location, ret);
         func_info.is_public = true;
         defer func_info.delete();
 
@@ -952,11 +936,7 @@ impl regist_pass {
             ret.delete();
         }
 
-        var func_info = colgm_func::instance(
-            name.__ptr__(),
-            struct_info->location.__ptr__(),
-            ret.__ptr__()
-        );
+        var func_info = colgm_func::instance(name, struct_info->location, ret);
         func_info.is_public = true;
         defer func_info.delete();
 
@@ -978,11 +958,7 @@ impl regist_pass {
             ret.delete();
         }
 
-        var func_info = colgm_func::instance(
-            name.__ptr__(),
-            struct_info->location.__ptr__(),
-            ret.__ptr__()
-        );
+        var func_info = colgm_func::instance(name, struct_info->location, ret);
         func_info.is_public = true;
         func_info.param_name.push(self_name.__ptr__());
         func_info.param_type.push(self_type.__ptr__());
@@ -1005,7 +981,7 @@ impl regist_pass {
         }
 
         // allocate struct info
-        var struct_info = colgm_struct::new(name, node->base.location.__ptr__());
+        var struct_info = colgm_struct::new(node->name, node->base.location);
         if (node->is_extern) {
             struct_info->is_extern = true;
         }
@@ -1180,11 +1156,7 @@ impl regist_pass {
             ret.delete();
         }
 
-        var func_info = colgm_func::instance(
-            name.__ptr__(),
-            un->location.__ptr__(),
-            ret.__ptr__()
-        );
+        var func_info = colgm_func::instance(name, un->location, ret);
         func_info.is_public = true;
         defer func_info.delete();
 
@@ -1201,11 +1173,7 @@ impl regist_pass {
             ret.delete();
         }
 
-        var func_info = colgm_func::instance(
-            name.__ptr__(),
-            un->location.__ptr__(),
-            ret.__ptr__()
-        );
+        var func_info = colgm_func::instance(name, un->location, ret);
         func_info.is_public = true;
         defer func_info.delete();
 
@@ -1227,11 +1195,7 @@ impl regist_pass {
             ret.delete();
         }
 
-        var func_info = colgm_func::instance(
-            name.__ptr__(),
-            un->location.__ptr__(),
-            ret.__ptr__()
-        );
+        var func_info = colgm_func::instance(name, un->location, ret);
         func_info.is_public = true;
         func_info.param_name.push(self_name.__ptr__());
         func_info.param_type.push(self_type.__ptr__());
@@ -1515,7 +1479,7 @@ impl regist_pass {
         if (struct_info->check_field_exists(name)) {
             var info = str::from("\"");
             defer info.delete();
-            info.append_str(name);
+            info.append_str(name.__ptr__());
             info.append("\" conflicts with exist field or method");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
@@ -1530,8 +1494,8 @@ impl regist_pass {
 
             func_info = colgm_func::new(
                 name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->base.location,
+                ret_type
             );
         } else {
             var ret_type = self.tr.resolve(node->return_type);
@@ -1539,8 +1503,8 @@ impl regist_pass {
 
             func_info = colgm_func::new(
                 name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->base.location,
+                ret_type
             );
         }
         defer {
@@ -1553,7 +1517,7 @@ impl regist_pass {
         self.generate_struct_self_type_node(struct_info, node);
 
         self.generate_function_params(func_info, node, false);
-        struct_info->method.insert(name, func_info);
+        struct_info->method.insert(name.__ptr__(), func_info);
     }
 
     func generate_impl_static_method_for_struct(self,
@@ -1563,7 +1527,7 @@ impl regist_pass {
         if (struct_info->check_field_exists(name)) {
             var info = str::from("\"");
             defer info.delete();
-            info.append_str(name);
+            info.append_str(name.__ptr__());
             info.append("\" conflicts with exist field or method");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
@@ -1578,8 +1542,8 @@ impl regist_pass {
 
             func_info = colgm_func::new(
                 name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->base.location,
+                ret_type
             );
         } else {
             var ret_type = self.tr.resolve(node->return_type);
@@ -1587,8 +1551,8 @@ impl regist_pass {
 
             func_info = colgm_func::new(
                 name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->base.location,
+                ret_type
             );
         }
         defer {
@@ -1597,7 +1561,7 @@ impl regist_pass {
         }
 
         self.generate_function_params(func_info, node, false);
-        struct_info->static_method.insert(name, func_info);
+        struct_info->static_method.insert(name.__ptr__(), func_info);
     }
 
     func generate_union_self_type_node(self,
@@ -1638,18 +1602,18 @@ impl regist_pass {
             defer ret_type.delete();
 
             func_info = colgm_func::new(
-                name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->name,
+                node->base.location,
+                ret_type
             );
         } else {
             var ret_type = self.tr.resolve(node->return_type);
             defer ret_type.delete();
 
             func_info = colgm_func::new(
-                name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->name,
+                node->base.location,
+                ret_type
             );
         }
         defer {
@@ -1686,18 +1650,18 @@ impl regist_pass {
             defer ret_type.delete();
 
             func_info = colgm_func::new(
-                name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->name,
+                node->base.location,
+                ret_type
             );
         } else {
             var ret_type = self.tr.resolve(node->return_type);
             defer ret_type.delete();
 
             func_info = colgm_func::new(
-                name,
-                node->base.location.__ptr__(),
-                ret_type.__ptr__()
+                node->name,
+                node->base.location,
+                ret_type
             );
         }
         defer {
