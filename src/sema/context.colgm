@@ -39,15 +39,15 @@ impl global_symbol_table {
         self.domain.delete();
     }
 
-    pub func create_domain_if_not_exist(self, name: str*) {
-        if (self.domain.has(name)) {
+    pub func create_domain_if_not_exist(self, name: str&) {
+        if (self.domain.has(name.__ptr__())) {
             return;
         }
 
         var res = colgm_module::instance();
         defer res.delete();
 
-        self.domain.insert(name, res.__ptr__());
+        self.domain.insert(name, res);
     }
 }
 
@@ -100,22 +100,22 @@ impl sema_context {
         foreach (var v; self.local_scope.back()) {
             var name = v.key();
             var lv = v.value();
-            if (lv->used) {
+            if (lv.used) {
                 continue;
             }
-            if (name->eq_const("self")) {
+            if (name.eq_const("self")) {
                 continue;
             }
-            err->report_unused_variable(lv->location.__ptr__(), name->c_str);
+            err->report_unused_variable(lv.location.__ptr__(), name.c_str);
         }
         self.local_scope.pop_back();
     }
 
-    pub func add_local_var(self, name: str*, t: type*, loc: span*) {
+    pub func add_local_var(self, name: str&, t: type*, loc: span*) {
         var lv = local_variable::instance(t, loc);
         defer lv.delete();
         
-        self.local_scope.back()->insert(name, lv.__ptr__());
+        self.local_scope.back()->insert(name, lv);
     }
 
     pub func add_var_used(self, name: str*) {
@@ -206,18 +206,18 @@ impl sema_context {
         }
         foreach (var i; gt->primitives) {
             out.out("  ");
-            i.value()->dump(out);
+            i.value().dump(out);
         }
 
         foreach (var i; gt->domain) {
-            i.value()->dump(out, pkg);
+            i.value().dump(out, pkg);
             out.endln();
         }
     }
 }
 
 impl sema_context {
-    pub func create_domain_if_not_exist(self, name: str*) {
+    pub func create_domain_if_not_exist(self, name: str&) {
         self.global->create_domain_if_not_exist(name);
     }
 

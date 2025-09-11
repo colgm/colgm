@@ -783,7 +783,7 @@ impl ast2mir {
             return;
         }
         self.impl_struct_name.clear();
-        self.impl_struct_name.append_str(n->name.__ptr__());
+        self.impl_struct_name.append_str(n->name);
         foreach (var i; n->methods) {
             var m = i.get() => ast_func_decl*;
             self.visit_func_decl(m);
@@ -806,9 +806,7 @@ impl ast2mir {
             defer tmp_ty_name.delete();
 
             name.clear();
-            name.append_str(tmp_ty_name.__ptr__())
-                .append(".")
-                .append_str(n->name.__ptr__());
+            name.append_str(tmp_ty_name).append(".").append_str(n->name);
         }
 
         // global function with is not extern
@@ -820,7 +818,7 @@ impl ast2mir {
             defer tmp_ty_name.delete();
 
             name.clear();
-            name.append_str(tmp_ty_name.__ptr__());            
+            name.append_str(tmp_ty_name);            
         }
 
         
@@ -852,10 +850,7 @@ impl ast2mir {
             var t = self.tr.resolve(p->type);
             defer t.delete();
 
-            var p_pair = pair<str, type>::instance(
-                p->name->content.__ptr__(),
-                t.__ptr__()
-            );
+            var p_pair = pair<str, type>::instance(p->name->content, t);
             defer p_pair.delete();
 
             f.params.push(p_pair.__ptr__());

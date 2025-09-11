@@ -40,8 +40,8 @@ impl type_replace_pass {
     func generate_generic_type(self, t: type&, loc: span&) -> ast_type_def* {
         var new_def = ast_type_def::new(loc);
         new_def->name = ast_identifier::new(loc, t.name);
-        new_def->name->base.redirect_location.append_str(t.loc_file.__ptr__());
-        new_def->base.redirect_location.append_str(t.loc_file.__ptr__());
+        new_def->name->base.redirect_location.append_str(t.loc_file);
+        new_def->base.redirect_location.append_str(t.loc_file);
         new_def->is_const = t.is_const;
         new_def->pointer_depth = t.pointer_depth;
         if (t.generics.size > 0) {
@@ -205,7 +205,7 @@ impl type_replace_pass {
                     st_full_name.delete();
                     info.delete();
                 }
-                info.append_str(st_full_name.__ptr__());
+                info.append_str(st_full_name);
                 info.append("\", which is not allowed here");
 
                 self.err->error(n->base.location.__ptr__(), info.c_str);
@@ -221,18 +221,18 @@ impl type_replace_pass {
                     info.delete();
                     st_full_name.delete();
                 }
-                info.append_str(name);
+                info.append_str(name[0]);
                 info.append("\" with \"");
-                info.append_str(st_full_name.__ptr__());
+                info.append_str(st_full_name);
                 info.append("\", which is already a generic type");
 
                 self.err->error(n->base.location.__ptr__(), info.c_str);
             }
 
             n->id->content.clear();
-            n->id->content.append_str(select_type->name.__ptr__());
-            n->id->base.redirect_location.append_str(select_type->loc_file.__ptr__());
-            n->base.redirect_location.append_str(select_type->loc_file.__ptr__());
+            n->id->content.append_str(select_type->name);
+            n->id->base.redirect_location.append_str(select_type->loc_file);
+            n->base.redirect_location.append_str(select_type->loc_file);
 
             if (select_type->generics.size > 0 &&
                 n->generic_types == nil) {
@@ -291,18 +291,18 @@ impl type_replace_pass {
                     info.delete();
                     st_full_name.delete();
                 }
-                info.append_str(name);
+                info.append_str(name[0]);
                 info.append("\" with \"");
-                info.append_str(st_full_name.__ptr__());
+                info.append_str(st_full_name);
                 info.append("\", which is already a generic type");
 
                 self.err->error(n->base.location.__ptr__(), info.c_str);
             }
 
             n->name->content.clear();
-            n->name->content.append_str(select_type->name.__ptr__());
-            n->name->base.redirect_location.append_str(select_type->loc_file.__ptr__());
-            n->base.redirect_location.append_str(select_type->loc_file.__ptr__());
+            n->name->content.append_str(select_type->name);
+            n->name->base.redirect_location.append_str(select_type->loc_file);
+            n->base.redirect_location.append_str(select_type->loc_file);
 
             n->pointer_depth += select_type->pointer_depth;
 

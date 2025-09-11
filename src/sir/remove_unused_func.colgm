@@ -28,7 +28,7 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
 
     foreach (var i; ctx->func_impls) {
         var f = i.get();
-        func_map.insert(f.name.__ptr__(), f.__ptr__());
+        func_map.insert(f.name, f.__ptr__());
     }
 
     // if main function does not exist or has no statement, return
@@ -44,7 +44,7 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
     defer main_name.delete();
 
     var new_pair = pair<str, sir_func*>::instance(
-        main_name.__ptr__(),
+        main_name,
         func_map.get(main_name.__ptr__())
     );
     defer new_pair.delete();
@@ -61,14 +61,14 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
             var stmt = i.get();
             if (stmt->kind == sir_kind::sir_call) {
                 var call_stmt = stmt => sir_call*;
-                var callee = call_stmt->name.__ptr__();
-                if (used_func.has(callee)) {
+                var callee: str& = call_stmt->name;
+                if (used_func.has(callee.__ptr__())) {
                     continue;
                 }
-                if (!func_map.has(callee)) {
+                if (!func_map.has(callee.__ptr__())) {
                     continue;
                 }
-                var callee_func = func_map.get(callee);
+                var callee_func = func_map.get(callee.__ptr__());
                 var callee_pair = pair<str, sir_func*>::instance(
                     callee,
                     callee_func
@@ -76,7 +76,7 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
                 defer callee_pair.delete();
 
                 bfs.push(callee_pair.__ptr__());
-                used_func.insert(callee);
+                used_func.insert(callee.__ptr__());
             }
         }
     }

@@ -126,14 +126,14 @@ impl hashmap<K, V> {
     }
 
     #[is_non_trivial(V)]
-    pub func insert(self, key: K*, value: V*) {
-        var hash = key->hash() % self.bucket_capacity;
+    pub func insert(self, key: K&, value: V&) {
+        var hash = key.hash() % self.bucket_capacity;
         var bucket = self.bucket[hash].__ptr__();
         foreach (var i; bucket) {
-            if (i.elem()->key.eq(key)) {
+            if (i.elem()->key.eq(key.__ptr__())) {
                 var tmp = i.elem();
                 tmp->value.delete();
-                tmp->value = value->clone();
+                tmp->value = value.clone();
                 return;
             }
         }
@@ -151,11 +151,11 @@ impl hashmap<K, V> {
     }
 
     #[is_trivial(V)]
-    pub func insert(self, key: K*, value: V) {
-        var hash = key->hash() % self.bucket_capacity;
+    pub func insert(self, key: K&, value: V) {
+        var hash = key.hash() % self.bucket_capacity;
         var bucket = self.bucket[hash].__ptr__();
         foreach (var i; bucket) {
-            if (i.elem()->key.eq(key)) {
+            if (i.elem()->key.eq(key.__ptr__())) {
                 i.elem()->value = value;
                 return;
             }
@@ -201,7 +201,7 @@ impl hashmap<K, V> {
         defer temp.delete();
 
         foreach (var i; temp) {
-            self.insert(i.elem()->key.__ptr__(), i.elem()->value.__ptr__());
+            self.insert(i.elem()->key, i.elem()->value);
         }
     }
 
@@ -211,7 +211,7 @@ impl hashmap<K, V> {
         defer temp.delete();
 
         foreach (var i; temp) {
-            self.insert(i.elem()->key.__ptr__(), i.elem()->value);
+            self.insert(i.elem()->key, i.elem()->value);
         }
     }
 
@@ -296,13 +296,13 @@ impl iter<K, V> {
                self.bucket_iter.is_end();
     }
 
-    pub func key(self) -> K* {
-        return self.bucket_iter.elem()->key.__ptr__();
+    pub func key(self) -> K& {
+        return self.bucket_iter.elem()->key;
     }
 
     #[is_non_trivial(V)]
-    pub func value(self) -> V* {
-        return self.bucket_iter.elem()->value.__ptr__();
+    pub func value(self) -> V& {
+        return self.bucket_iter.elem()->value;
     }
 
     #[is_trivial(V)]

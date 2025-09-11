@@ -170,17 +170,12 @@ impl str {
         return self;
     }
 
-    pub func append_str(self, src: str*) -> str& {
-        // do nothing if src is null pointer
-        if (src == nil) {
-            return self;
-        }
-
-        var len = src->size;
+    pub func append_str(self, src: str&) -> str& {
+        var len = src.size;
         while (self.size + len >= self.capacity) {
             self.expand_capacity();
         }
-        memcpy((self.c_str => u64 + self.size) => i8*, src->c_str, len);
+        memcpy((self.c_str => u64 + self.size) => i8*, src.c_str, len);
         self.c_str[self.size + len] = '\0';
         self.size += len;
         return self;

@@ -135,23 +135,23 @@ impl colgm_struct {
         defer collection.delete();
 
         foreach (var i; self.fields) {
-            if (i.key()->startswith(name.c_str)) {
-                collection.push(i.key());
+            if (i.key().startswith(name.c_str)) {
+                collection.push(i.key().__ptr__());
             }
         }
         foreach (var i; self.method) {
-            if (i.key()->startswith(name.c_str)) {
-                collection.push(i.key());
+            if (i.key().startswith(name.c_str)) {
+                collection.push(i.key().__ptr__());
             }
         }
         foreach (var i; self.static_method) {
-            if (i.key()->startswith(name.c_str)) {
-                collection.push(i.key());
+            if (i.key().startswith(name.c_str)) {
+                collection.push(i.key().__ptr__());
             }
         }
         if (!collection.empty()) {
             foreach (var i; collection) {
-                var distance = levenshtein_distance(name, i.get().__ptr__());
+                var distance = levenshtein_distance(name, i.get());
                 if (distance < min_distance) {
                     min_distance = distance;
                     res.clear();
@@ -228,10 +228,10 @@ impl colgm_struct {
             out.out("\n");
         }
         foreach (var i; self.method) {
-            i.value()->dump(out, pkg, "  ");
+            i.value().dump(out, pkg, "  ");
         }
         foreach (var i; self.static_method) {
-            i.value()->dump(out, pkg, "  ");
+            i.value().dump(out, pkg, "  ");
         }
         out.out("  }\n");
     }

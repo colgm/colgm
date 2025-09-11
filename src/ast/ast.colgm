@@ -177,7 +177,7 @@ impl ast {
         return !self.redirect_location.empty();
     }
 
-    pub func set_redirect_location(self, loc: str*) {
+    pub func set_redirect_location(self, loc: str&) {
         self.redirect_location.clear();
         self.redirect_location.append_str(loc);
     }
@@ -1406,19 +1406,19 @@ impl ast_cond_compile {
         self.conds.delete();
     }
 
-    pub func add_condition(self, key: str*, value: str*) {
-        self.ordered_conds.push(key);
+    pub func add_condition(self, key: str&, value: str&) {
+        self.ordered_conds.push(key.__ptr__());
         self.conds.insert(key, value);
     }
 
     pub func get_text(self) -> str {
         var text = str::from("#[");
-        text.append_str(self.cond_name.__ptr__()).append_char('(');
+        text.append_str(self.cond_name).append_char('(');
         foreach (var i; self.ordered_conds) {
             text.append(i.get().c_str);
             if (!self.conds.get(i.get().__ptr__())->empty()) {
                 text.append(" = ");
-                text.append_str(self.conds.get(i.get().__ptr__()));
+                text.append_str(self.conds.get(i.get().__ptr__())[0]);
             }
             text.append_char(',');
         }
@@ -2124,34 +2124,34 @@ impl ast_func_decl {
             defer tmp.delete();
 
             if (c->cond_name.eq_const("is_trivial")) {
-                trivial_cond.append_str(tmp.__ptr__());
+                trivial_cond.append_str(tmp);
             } else if (c->cond_name.eq_const("is_non_trivial")) {
-                non_trivial_cond.append_str(tmp.__ptr__());
+                non_trivial_cond.append_str(tmp);
             } else if (c->cond_name.eq_const("is_pointer")) {
-                is_pointer_cond.append_str(tmp.__ptr__());
+                is_pointer_cond.append_str(tmp);
             } else if (c->cond_name.eq_const("is_non_pointer")) {
-                is_non_pointer_cond.append_str(tmp.__ptr__());
+                is_non_pointer_cond.append_str(tmp);
             }
         }
 
         if (!trivial_cond.empty()) {
-            self.monomorphic_name.append_str(trivial_cond.__ptr__());
+            self.monomorphic_name.append_str(trivial_cond);
             self.monomorphic_name.append_char(' ');
         }
         if (!non_trivial_cond.empty()) {
-            self.monomorphic_name.append_str(non_trivial_cond.__ptr__());
+            self.monomorphic_name.append_str(non_trivial_cond);
             self.monomorphic_name.append_char(' ');
         }
         if (!is_pointer_cond.empty()) {
-            self.monomorphic_name.append_str(is_pointer_cond.__ptr__());
+            self.monomorphic_name.append_str(is_pointer_cond);
             self.monomorphic_name.append_char(' ');
         }
         if (!is_non_pointer_cond.empty()) {
-            self.monomorphic_name.append_str(is_non_pointer_cond.__ptr__());
+            self.monomorphic_name.append_str(is_non_pointer_cond);
             self.monomorphic_name.append_char(' ');
         }
 
-        self.monomorphic_name.append_str(self.name.__ptr__());
+        self.monomorphic_name.append_str(self.name);
         return self.monomorphic_name;
     }
 }

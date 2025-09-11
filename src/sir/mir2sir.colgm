@@ -263,7 +263,7 @@ impl mir2sir {
                 type_name.delete();
                 real_name.delete();
             }
-            self.basic_type_mapper.insert(type_name.__ptr__(), real_name.__ptr__());
+            self.basic_type_mapper.insert(type_name, real_name);
         }
     }
 
@@ -287,7 +287,7 @@ impl mir2sir {
                 size_str.delete();
             }
 
-            self.primitive_methods.insert(name.__ptr__(), size_str.__ptr__());
+            self.primitive_methods.insert(name, size_str);
         }
     }
 }
@@ -400,7 +400,7 @@ impl mir2sir {
             var ret_type_name = self.type_mapping(m_func.return_type.__ptr__());
             defer ret_type_name.delete();
 
-            s_func.return_type.append_str(ret_type_name.__ptr__());
+            s_func.return_type.append_str(ret_type_name);
 
             foreach (var j; m_func.params) {
                 var m_param = j.get();
@@ -408,10 +408,7 @@ impl mir2sir {
                 var mapped_type = self.type_mapping(m_param.value.__ptr__());
                 defer mapped_type.delete();
 
-                var p_pair = pair<str, str>::instance(
-                    m_param.key.__ptr__(),
-                    mapped_type.__ptr__()
-                );
+                var p_pair = pair<str, str>::instance(m_param.key, mapped_type);
                 defer p_pair.delete();
 
                 s_func.params.push(p_pair.__ptr__());
@@ -470,7 +467,7 @@ impl mir2sir {
 
             var ret_type_name = self.type_mapping(m_func.return_type.__ptr__());
             defer ret_type_name.delete();
-            s_func.return_type.append_str(ret_type_name.__ptr__());
+            s_func.return_type.append_str(ret_type_name);
 
             // push local scope
             self.locals.push();
@@ -485,15 +482,9 @@ impl mir2sir {
                 param_name.append(".param");
                 defer param_name.delete();
 
-                self.locals.insert(
-                    m_param.key.__ptr__(),
-                    m_param.key.__ptr__()
-                );
+                self.locals.insert(m_param.key, m_param.key);
 
-                var p_pair = pair<str, str>::instance(
-                    param_name.__ptr__(),
-                    mapped_type.__ptr__()
-                );
+                var p_pair = pair<str, str>::instance(param_name, mapped_type);
                 defer p_pair.delete();
 
                 s_func.params.push(p_pair.__ptr__());
@@ -530,32 +521,32 @@ impl mir2sir {
     func generate_type_mapper(self) {
         foreach (var i; self.ctx->global->domain) {
             var dm = i.value();
-            foreach (var j; dm->enums) {
-                var e_type = type::instance(j.value()->name.c_str, j.value()->location.file.c_str);
+            foreach (var j; dm.enums) {
+                var e_type = type::instance(j.value().name.c_str, j.value().location.file.c_str);
                 defer e_type.delete();
                 
                 var e_name = e_type.full_path_name(self.pkg);
                 defer e_name.delete();
 
-                self.type_mapper.insert(e_name.__ptr__(), symbol_kind::enum_kind);
+                self.type_mapper.insert(e_name, symbol_kind::enum_kind);
             }
-            foreach (var j; dm->structs) {
-                var s_type = type::instance(j.value()->name.c_str, j.value()->location.file.c_str);
+            foreach (var j; dm.structs) {
+                var s_type = type::instance(j.value().name.c_str, j.value().location.file.c_str);
                 defer s_type.delete();
 
                 var s_name = s_type.full_path_name(self.pkg);
                 defer s_name.delete();
 
-                self.type_mapper.insert(s_name.__ptr__(), symbol_kind::struct_kind);
+                self.type_mapper.insert(s_name, symbol_kind::struct_kind);
             }
-            foreach (var j; dm->tagged_unions) {
-                var tu_type = type::instance(j.value()->name.c_str, j.value()->location.file.c_str);
+            foreach (var j; dm.tagged_unions) {
+                var tu_type = type::instance(j.value().name.c_str, j.value().location.file.c_str);
                 defer tu_type.delete();
 
                 var tu_name = tu_type.full_path_name(self.pkg);
                 defer tu_name.delete();
 
-                self.type_mapper.insert(tu_name.__ptr__(), symbol_kind::tagged_union_kind);
+                self.type_mapper.insert(tu_name, symbol_kind::tagged_union_kind);
             }
         }
     }
@@ -568,7 +559,7 @@ impl mir2sir {
         if (self.basic_type_mapper.has(copy.name.__ptr__())) {
             var replace = self.basic_type_mapper.get(copy.name.__ptr__());
             copy.name.clear();
-            copy.name.append_str(replace);
+            copy.name.append_str(replace[0]);
             copy.loc_file.clear();
 
             var res = copy.llvm_type_name(self.pkg);
@@ -584,7 +575,7 @@ impl mir2sir {
             var info = str::from("type not found: \"");
             defer info.delete();
 
-            info.append_str(full_name.__ptr__()).append("\"");
+            info.append_str(full_name).append("\"");
             panic(info.c_str);
         }
 
@@ -594,7 +585,7 @@ impl mir2sir {
                 defer new_name.delete();
 
                 copy.name.clear();
-                copy.name.append_str(new_name.__ptr__());
+                copy.name.append_str(new_name);
                 // need to clear loc_file info
                 // otherwise for example:
                 // std::vec<data::foo>
@@ -622,7 +613,7 @@ impl mir2sir {
                 defer new_name.delete();
 
                 copy.name.clear();
-                copy.name.append_str(new_name.__ptr__());
+                copy.name.append_str(new_name);
                 copy.loc_file.clear();
             }
             symbol_kind::enum_kind => {
@@ -657,7 +648,7 @@ impl mir2sir {
 
         var array_name = str::from("[");
         array_name.append_u64(copy.array_length).append(" x ");
-        array_name.append_str(mapped_type.__ptr__()).append("]");
+        array_name.append_str(mapped_type).append("]");
         return array_name;
     }
 }
@@ -757,7 +748,7 @@ impl mir2sir {
         var temp_0 = self.ssa_gen.create();
         var temp_0_value = value_t::variable(temp_0);
         var temp_0_real = str::from("_");
-        temp_0_real.append_str(temp_0.__ptr__()).append(".r");
+        temp_0_real.append_str(temp_0).append(".r");
         defer {
             i1_name.delete();
             temp_0.delete();
@@ -845,7 +836,7 @@ impl mir2sir {
         var temp_0 = self.ssa_gen.create();
         var temp_0_value = value_t::variable(temp_0);
         var temp_0_real = str::from("_");
-        temp_0_real.append_str(temp_0.__ptr__()).append(".r");
+        temp_0_real.append_str(temp_0).append(".r");
         defer {
             i1_name.delete();
             temp_0.delete();
@@ -1189,7 +1180,7 @@ impl mir2sir {
 
         if (!self.sctx->const_strings.has(n->value.__ptr__())) {
             self.sctx->const_strings.insert(
-                n->value.__ptr__(),
+                n->value,
                 self.sctx->const_strings.size
             );
         }
@@ -1239,8 +1230,8 @@ impl mir2sir {
         defer temp_0.delete();
         var temp_1 = str::from("arr.");
         defer temp_1.delete();
-        temp_0.append_str(index.__ptr__()).append(".ptr");
-        temp_1.append_str(index.__ptr__()).append(".cast_ptr");
+        temp_0.append_str(index).append(".ptr");
+        temp_1.append_str(index).append(".cast_ptr");
 
         var ref_copy = n->resolved_type.ref_copy();
         defer ref_copy.delete();
@@ -1327,7 +1318,7 @@ impl mir2sir {
         defer temp_var.delete();
 
         var temp_var_real = str::from("_");
-        temp_var_real.append_str(temp_var.__ptr__()).append(".r");
+        temp_var_real.append_str(temp_var).append(".r");
         defer temp_var_real.delete();
 
         var temp_var_value = value_t::variable(temp_var);
@@ -1620,7 +1611,7 @@ impl mir2sir {
 
     func visit_mir_call_id(self, n: mir_call_id*) {
         if (!n->resolved_type.is_global_sym) {
-            var name = self.locals.get_local(n->name.__ptr__());
+            var name = self.locals.get_local(n->name);
             defer name.delete();
 
             var ty = n->resolved_type.pointer_copy();
@@ -1637,8 +1628,8 @@ impl mir2sir {
             return;
         }
 
-        var loc_file = n->resolved_type.loc_file.__ptr__();
-        if (loc_file->empty()) {
+        var loc_file: str& = n->resolved_type.loc_file;
+        if (loc_file.empty()) {
             if (!self.ctx->global->primitives.has(n->name.__ptr__())) {
                 panic("empty location for global symbol");
             } else {
@@ -1653,7 +1644,7 @@ impl mir2sir {
             return;
         }
 
-        var dm = self.ctx->get_domain(loc_file);
+        var dm = self.ctx->get_domain(loc_file.__ptr__());
         var name_for_search = n->resolved_type.generic_name(self.pkg);
         defer name_for_search.delete();
 
@@ -1670,7 +1661,7 @@ impl mir2sir {
             // extern function remain raw name
             if (dm->functions.get(name_for_search.__ptr__())->is_extern) {
                 v.content.clear();
-                v.content.append_str(name_for_search.__ptr__());
+                v.content.append_str(name_for_search);
             }
             self.value_stack.push(v.__ptr__());
         } else if (dm->structs.has(name_for_search.__ptr__())) {
@@ -1699,7 +1690,7 @@ impl mir2sir {
             self.value_stack.push(v.__ptr__());
         } else {
             var info = str::from("cannot get global symbol ");
-            info.append_str(name_for_search.__ptr__())
+            info.append_str(name_for_search)
                 .append(" from ")
                 .append_str(loc_file);
             defer info.delete();
@@ -1840,7 +1831,7 @@ impl mir2sir {
             var temp = self.ssa_gen.create();
             defer temp.delete();
 
-            target.append_str(temp.__ptr__());
+            target.append_str(temp);
 
             var n_ty = self.type_mapping(n->resolved_type.__ptr__());
             var target_value = value_t::variable(target);
@@ -1901,7 +1892,7 @@ impl mir2sir {
             defer temp_var.delete();
 
             var real = str::from("_");
-            real.append_str(temp_var.__ptr__()).append(".r");
+            real.append_str(temp_var).append(".r");
             defer real.delete();
 
             var n_ty = self.type_mapping(n->resolved_type.__ptr__());
@@ -1957,7 +1948,7 @@ impl mir2sir {
                 // push self into stack
                 self.value_stack.push(prev.__ptr__());
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
-                method_name.append_char('.').append_str(n->name.__ptr__());
+                method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
                 var v = mir_value_t::method(
@@ -1983,7 +1974,7 @@ impl mir2sir {
                 // push self into stack
                 self.value_stack.push(prev.__ptr__());
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
-                method_name.append_char('.').append_str(n->name.__ptr__());
+                method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
                 var v = mir_value_t::method(
@@ -2038,7 +2029,7 @@ impl mir2sir {
                 // push self into stack
                 self.value_stack.push(prev.__ptr__());
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
-                method_name.append_char('.').append_str(n->name.__ptr__());
+                method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
                 var v = mir_value_t::method(
@@ -2155,7 +2146,7 @@ impl mir2sir {
                 self.value_stack.push(v_self.__ptr__());
 
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
-                method_name.append_char('.').append_str(n->name.__ptr__());
+                method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
                 var v = mir_value_t::method(
@@ -2203,7 +2194,7 @@ impl mir2sir {
                 self.value_stack.push(v_self.__ptr__());
 
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
-                method_name.append_char('.').append_str(n->name.__ptr__());
+                method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
                 var v = mir_value_t::method(
@@ -2293,7 +2284,7 @@ impl mir2sir {
                 self.value_stack.push(v_self.__ptr__());
 
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
-                method_name.append_char('.').append_str(n->name.__ptr__());
+                method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
                 var v = mir_value_t::method(
@@ -2392,7 +2383,7 @@ impl mir2sir {
         match (prev.value_kind) {
             mir_value_kind::primitive => {
                 var name = prev.resolved_type.full_path_name(self.pkg);
-                name.append(".").append_str(n->name.__ptr__());
+                name.append(".").append_str(n->name);
                 defer name.delete();
 
                 var v = mir_value_t::func_symbol(
@@ -2405,7 +2396,7 @@ impl mir2sir {
             }
             mir_value_kind::struct_symbol => {
                 var name = prev.resolved_type.full_path_name(self.pkg);
-                name.append(".").append_str(n->name.__ptr__());
+                name.append(".").append_str(n->name);
                 defer name.delete();
 
                 var v = mir_value_t::func_symbol(
@@ -2418,7 +2409,7 @@ impl mir2sir {
             }
             mir_value_kind::tagged_union_symbol => {
                 var name = prev.resolved_type.full_path_name(self.pkg);
-                name.append(".").append_str(n->name.__ptr__());
+                name.append(".").append_str(n->name);
                 defer name.delete();
 
                 var v = mir_value_t::func_symbol(
@@ -2456,7 +2447,7 @@ impl mir2sir {
         defer name.delete();
 
         // real name of the local variable
-        self.locals.insert(n->name.__ptr__(), name.__ptr__());
+        self.locals.insert(n->name, name);
 
         var n_ty = n->resolved_type.clone();
         n_ty.is_array = false;
@@ -3334,7 +3325,7 @@ impl mir2sir {
             DI_file::new(self.dwarf_status.DI_counter, "", "")
         );
         self.sctx->DI_file_map.insert(
-            empty_file_name.__ptr__(),
+            empty_file_name,
             self.dwarf_status.DI_counter
         );
         self.dwarf_status.DI_counter += 1;
@@ -3350,7 +3341,7 @@ impl mir2sir {
         foreach (var i; self.ctx->global->domain) {
             self.sctx->debug_info.push(DI_file::new(
                 self.dwarf_status.DI_counter,
-                i.key()->c_str,
+                i.key().c_str,
                 cwd.c_str
             ));
             self.sctx->DI_file_map.insert(
@@ -3487,8 +3478,8 @@ impl mir2sir {
         self.dwarf_status.DI_counter += 1;
     }
 
-    func generate_single_DI_enum(self, e: colgm_enum*) -> u64 {
-        var ty = type::instance(e->name.c_str, e->location.file.c_str);
+    func generate_single_DI_enum(self, e: colgm_enum&) -> u64 {
+        var ty = type::instance(e.name.c_str, e.location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self.pkg);
@@ -3499,10 +3490,10 @@ impl mir2sir {
 
         var tmp = DI_enum_type::new(
             self.dwarf_status.DI_counter,
-            e->name.c_str,
+            e.name.c_str,
             id.c_str,
-            self.sctx->DI_file_map.get(e->location.file.__ptr__()),
-            e->location.begin_line,
+            self.sctx->DI_file_map.get(e.location.file.__ptr__()),
+            e.location.begin_line,
             self.sctx->DI_type_map.get(i64_s.__ptr__())
         );
         self.sctx->add_DI_type(id.c_str, self.dwarf_status.DI_counter);
@@ -3514,11 +3505,11 @@ impl mir2sir {
         tmp->get_DI_enum_type()->elements_index = self.dwarf_status.DI_counter;
         self.dwarf_status.DI_counter += 1;
 
-        foreach (var i; e->ordered_member) {
+        foreach (var i; e.ordered_member) {
             self.sctx->debug_info.push(DI_enumerator::new(
                 self.dwarf_status.DI_counter,
                 i.get().c_str,
-                e->members.get(i.get().__ptr__())
+                e.members.get(i.get().__ptr__())
             ));
             enum_list->add(DI_ref_index::new(self.dwarf_status.DI_counter));
             self.dwarf_status.DI_counter += 1;
@@ -3533,7 +3524,7 @@ impl mir2sir {
         self.dwarf_status.DI_counter += 1;
 
         foreach (var i; self.ctx->global->domain) {
-            foreach (var j; i.value()->enums) {
+            foreach (var j; i.value().enums) {
                 var index = self.generate_single_DI_enum(j.value());
                 enums_list->add(DI_ref_index::new(index));
             }
@@ -3542,8 +3533,8 @@ impl mir2sir {
         return enums_list->index();
     }
 
-    func generate_single_DI_struct(self, s: colgm_struct*) {
-        var ty = type::instance(s->name.c_str, s->location.file.c_str);
+    func generate_single_DI_struct(self, s: colgm_struct&) {
+        var ty = type::instance(s.name.c_str, s.location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self.pkg);
@@ -3551,10 +3542,10 @@ impl mir2sir {
 
         var tmp = DI_structure_type::new(
             self.dwarf_status.DI_counter,
-            s->name.c_str,
+            s.name.c_str,
             id.c_str,
-            self.sctx->DI_file_map.get(s->location.file.__ptr__()),
-            s->location.begin_line
+            self.sctx->DI_file_map.get(s.location.file.__ptr__()),
+            s.location.begin_line
         );
         self.sctx->add_DI_type(id.c_str, self.dwarf_status.DI_counter);
         self.sctx->add_DI_struct(id.c_str, tmp);
@@ -3564,14 +3555,14 @@ impl mir2sir {
 
     func generate_DI_structure_type(self) {
         foreach (var i; self.ctx->global->domain) {
-            foreach (var j; i.value()->structs) {
+            foreach (var j; i.value().structs) {
                 self.generate_single_DI_struct(j.value());
             }
         }
     }
 
-    func generate_single_DI_tagged_union(self, u: colgm_tagged_union*) {
-        var ty = type::instance(u->name.c_str, u->location.file.c_str);
+    func generate_single_DI_tagged_union(self, u: colgm_tagged_union&) {
+        var ty = type::instance(u.name.c_str, u.location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self.pkg);
@@ -3579,10 +3570,10 @@ impl mir2sir {
 
         var tmp = DI_union_type::new(
             self.dwarf_status.DI_counter,
-            u->name.c_str,
+            u.name.c_str,
             id.c_str,
-            self.sctx->DI_file_map.get(u->location.file.__ptr__()),
-            u->location.begin_line
+            self.sctx->DI_file_map.get(u.location.file.__ptr__()),
+            u.location.begin_line
         );
         self.sctx->add_DI_type(id.c_str, self.dwarf_status.DI_counter);
         self.sctx->add_DI_union(id.c_str, tmp);
@@ -3592,14 +3583,14 @@ impl mir2sir {
 
     func generate_DI_tagged_union_type(self) {
         foreach (var i; self.ctx->global->domain) {
-            foreach (var j; i.value()->tagged_unions) {
+            foreach (var j; i.value().tagged_unions) {
                 self.generate_single_DI_tagged_union(j.value());
             }
         }
     }
 
-    func generate_single_struct_member_dwarf(self, s: colgm_struct*) {
-        var ty = type::instance(s->name.c_str, s->location.file.c_str);
+    func generate_single_struct_member_dwarf(self, s: colgm_struct&) {
+        var ty = type::instance(s.name.c_str, s.location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self.pkg);
@@ -3612,10 +3603,10 @@ impl mir2sir {
         self.sctx->debug_info.push(element);
         self.dwarf_status.DI_counter += 1;
 
-        foreach (var i; s->ordered_fields) {
+        foreach (var i; s.ordered_fields) {
             var member = i.get();
-            var member_type = s->fields.get(member.__ptr__());
-            var member_span = s->fields_span.get(member.__ptr__());
+            var member_type = s.fields.get(member.__ptr__());
+            var member_span = s.fields_span.get(member.__ptr__());
             var member_type_index = self.find_DI_type_index(member_type);
             var field_node = DW_TAG_member::new(
                 self.dwarf_status.DI_counter,
@@ -3633,14 +3624,14 @@ impl mir2sir {
 
     func generate_structure_member_dwarf(self) {
         foreach (var i; self.ctx->global->domain) {
-            foreach (var j; i.value()->structs) {
+            foreach (var j; i.value().structs) {
                 self.generate_single_struct_member_dwarf(j.value());
             }
         }
     }
 
-    func generate_single_tagged_union_member_dwarf(self, u: colgm_tagged_union*) {
-        var ty = type::instance(u->name.c_str, u->location.file.c_str);
+    func generate_single_tagged_union_member_dwarf(self, u: colgm_tagged_union&) {
+        var ty = type::instance(u.name.c_str, u.location.file.c_str);
         defer ty.delete();
 
         var id = ty.full_path_name(self.pkg);
@@ -3653,10 +3644,10 @@ impl mir2sir {
         self.sctx->debug_info.push(element);
         self.dwarf_status.DI_counter += 1;
 
-        foreach (var i; u->ordered_members) {
+        foreach (var i; u.ordered_members) {
             var member = i.get();
-            var member_type = u->members.get(member.__ptr__());
-            var member_span = u->members_span.get(member.__ptr__());
+            var member_type = u.members.get(member.__ptr__());
+            var member_span = u.members_span.get(member.__ptr__());
             var member_type_index = self.find_DI_type_index(member_type);
             var field_node = DW_TAG_member::new(
                 self.dwarf_status.DI_counter,
@@ -3674,7 +3665,7 @@ impl mir2sir {
 
     func generate_tagged_union_member_dwarf(self) {
         foreach (var i; self.ctx->global->domain) {
-            foreach (var j; i.value()->tagged_unions) {
+            foreach (var j; i.value().tagged_unions) {
                 self.generate_single_tagged_union_member_dwarf(j.value());
             }
         }
@@ -3697,7 +3688,7 @@ impl mir2sir {
         self.sctx->debug_info.push(tmp);
         if (f.block != nil) {
             self.dwarf_status.impl_debug_info.insert(
-                f.name.__ptr__(),
+                f.name,
                 self.dwarf_status.DI_counter
             );
         }

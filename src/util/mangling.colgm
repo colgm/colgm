@@ -28,8 +28,8 @@ pub func mangle(name: str&) -> str {
         }
 
         prefix.clear();
-        prefix.append_str(temp_prefix.__ptr__());
-        suffix.append_str(temp_suffix.__ptr__());
+        prefix.append_str(temp_prefix);
+        suffix.append_str(temp_suffix);
     }
 
     // if prefix is std::vec::vec
@@ -47,7 +47,7 @@ pub func mangle(name: str&) -> str {
 
     // concat suffix
     if (suffix.size > 0) {
-        res.append_str(suffix.__ptr__());
+        res.append_str(suffix);
     }
 
     // if get name std::vec::vec<std::str::str>
@@ -69,18 +69,18 @@ pub func mangle_struct_name(name: str&) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("%\"struct.");
-        temp.append_str(mangled.__ptr__()).append("\"");
+        temp.append_str(mangled).append("\"");
         defer temp.delete();
 
         mangled.clear();
-        mangled.append_str(temp.__ptr__());
+        mangled.append_str(temp);
     } else {
         var temp = str::from("%struct.");
-        temp.append_str(mangled.__ptr__());
+        temp.append_str(mangled);
         defer temp.delete();
 
         mangled.clear();
-        mangled.append_str(temp.__ptr__());
+        mangled.append_str(temp);
     }
     return mangled;
 }
@@ -90,18 +90,18 @@ pub func mangle_tagged_union_name(name: str&) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("%\"tagged_union.");
-        temp.append_str(mangled.__ptr__()).append("\"");
+        temp.append_str(mangled).append("\"");
         defer temp.delete();
 
         mangled.clear();
-        mangled.append_str(temp.__ptr__());
+        mangled.append_str(temp);
     } else {
         var temp = str::from("%tagged_union.");
-        temp.append_str(mangled.__ptr__());
+        temp.append_str(mangled);
         defer temp.delete();
 
         mangled.clear();
-        mangled.append_str(temp.__ptr__());
+        mangled.append_str(temp);
     }
     return mangled;
 }
@@ -113,11 +113,11 @@ pub func mangle_function_name(name: str&) -> str {
     var mangled = mangle(name);
     if (mangled.find('<') != str::npos() || mangled.find(':') != str::npos()) {
         var temp = str::from("\"");
-        temp.append_str(mangled.__ptr__()).append("\"");
+        temp.append_str(mangled).append("\"");
         defer temp.delete();
 
         mangled.clear();
-        mangled.append_str(temp.__ptr__());
+        mangled.append_str(temp);
     }
     return mangled;
 }

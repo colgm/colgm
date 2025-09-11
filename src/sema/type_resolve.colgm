@@ -80,7 +80,7 @@ impl type_resolve {
         if (!DM->global_symbol.has(name) && !GN->has(name)) {
             var info = str::from("undefined type \"");
             defer info.delete();
-            info.append_str(name).append("\"");
+            info.append_str(name[0]).append("\"");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
             return type::error_type();
@@ -92,7 +92,7 @@ impl type_resolve {
             !DM->global_symbol.get(name)->is_public) {
             var info = str::from("private type \"");
             defer info.delete();
-            info.append_str(name).append("\" cannot be used");
+            info.append_str(name[0]).append("\" cannot be used");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
             return type::error_type();
@@ -103,7 +103,7 @@ impl type_resolve {
             DM->global_symbol.get(name)->kind == symbol_kind::func_kind) {
             var info =  str::from("\"");
             defer info.delete();
-            info.append_str(name)
+            info.append_str(name[0])
                 .append("\" is a function, ")
                 .append("cannot be used as a type");
 
@@ -131,9 +131,9 @@ impl type_resolve {
 
         if (DM->global_symbol.has(name) &&
             DM->global_symbol.get(name)->kind != symbol_kind::basic_kind) {
-            t.loc_file.append_str(DM->global_symbol.get(name)->loc_file.__ptr__());
+            t.loc_file.append_str(DM->global_symbol.get(name)->loc_file);
         } else if (DM->generic_symbol.has(name)) {
-            t.loc_file.append_str(DM->generic_symbol.get(name)->loc_file.__ptr__());
+            t.loc_file.append_str(DM->generic_symbol.get(name)->loc_file);
         }
 
         if (node->generic_types != nil) {

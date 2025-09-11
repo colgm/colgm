@@ -76,98 +76,86 @@ impl regist_pass {
 impl regist_pass {
     func import_all(self, dm: colgm_module*) {
         foreach (var i; dm->enums) {
-            if (!i.value()->is_public) {
+            if (!i.value().is_public) {
                 continue;
             }
             var info = symbol_info::instance(
                 symbol_kind::enum_kind,
                 dm->file_name.c_str,
-                i.value()->is_public
+                i.value().is_public
             );
             defer info.delete();
 
-            self.ctx->global_symbol()->insert(
-                i.value()->name.__ptr__(),
-                info.__ptr__()
-            );
+            self.ctx->global_symbol()->insert(i.value().name, info);
         }
         foreach (var i; dm->structs) {
-            if (!i.value()->is_public) {
+            if (!i.value().is_public) {
                 continue;
             }
             var info = symbol_info::instance(
                 symbol_kind::struct_kind,
                 dm->file_name.c_str,
-                i.value()->is_public
+                i.value().is_public
             );
             defer info.delete();
 
-            self.ctx->global_symbol()->insert(
-                i.value()->name.__ptr__(),
-                info.__ptr__()
-            );
+            self.ctx->global_symbol()->insert(i.value().name, info);
         }
         foreach (var i; dm->tagged_unions) {
-            if (!i.value()->is_public) {
+            if (!i.value().is_public) {
                 continue;
             }
             var info = symbol_info::instance(
                 symbol_kind::tagged_union_kind,
                 dm->file_name.c_str,
-                i.value()->is_public
+                i.value().is_public
             );
             defer info.delete();
 
-            self.ctx->global_symbol()->insert(
-                i.value()->name.__ptr__(),
-                info.__ptr__()
-            );
+            self.ctx->global_symbol()->insert(i.value().name, info);
         }
         foreach (var i; dm->functions) {
-            if (!i.value()->is_public) {
+            if (!i.value().is_public) {
                 continue;
             }
             var info = symbol_info::instance(
                 symbol_kind::func_kind,
                 dm->file_name.c_str,
-                i.value()->is_public
+                i.value().is_public
             );
             defer info.delete();
 
-            self.ctx->global_symbol()->insert(
-                i.value()->name.__ptr__(),
-                info.__ptr__()
-            );
+            self.ctx->global_symbol()->insert(i.value().name, info);
         }
         foreach (var i; dm->generic_structs) {
-            if (!i.value()->is_public) {
+            if (!i.value().is_public) {
                 continue;
             }
-            var name = i.value()->name.__ptr__();
+            var name: str& = i.value().name;
             var info = symbol_info::instance(
                 symbol_kind::struct_kind,
                 dm->file_name.c_str,
-                i.value()->is_public
+                i.value().is_public
             );
             defer info.delete();
 
-            self.ctx->global_symbol()->insert(name, info.__ptr__());
-            self.ctx->generic_symbol()->insert(name, info.__ptr__());
+            self.ctx->global_symbol()->insert(name, info);
+            self.ctx->generic_symbol()->insert(name, info);
         }
         foreach (var i; dm->generic_functions) {
-            if (!i.value()->is_public) {
+            if (!i.value().is_public) {
                 continue;
             }
-            var name = i.value()->name.__ptr__();
+            var name: str& = i.value().name;
             var info = symbol_info::instance(
                 symbol_kind::func_kind,
                 dm->file_name.c_str,
-                i.value()->is_public
+                i.value().is_public
             );
             defer info.delete();
 
-            self.ctx->global_symbol()->insert(name, info.__ptr__());
-            self.ctx->generic_symbol()->insert(name, info.__ptr__());
+            self.ctx->global_symbol()->insert(name, info);
+            self.ctx->generic_symbol()->insert(name, info);
         }
     }
 
@@ -191,9 +179,9 @@ impl regist_pass {
                 is_public = dm->generic_functions.get(name)->is_public;
             } else {
                 var info = str::from("cannot find symbol \"");
-                info.append_str(name);
+                info.append_str(name[0]);
                 info.append("\" in module \"");
-                info.append_str(path);
+                info.append_str(path[0]);
                 info.append("\"");
                 defer info.delete();
 
@@ -203,7 +191,7 @@ impl regist_pass {
 
             if (!is_public) {
                 var info = str::from("cannot import private symbol \"");
-                info.append_str(name);
+                info.append_str(name[0]);
                 info.append("\"");
                 defer info.delete();
 
@@ -220,30 +208,30 @@ impl regist_pass {
 
             if (dm->enums.has(name)) {
                 sym_info.kind = symbol_kind::enum_kind;
-                self.ctx->global_symbol()->insert(name, sym_info.__ptr__());
+                self.ctx->global_symbol()->insert(name[0], sym_info);
             } else if (dm->structs.has(name)) {
                 sym_info.kind = symbol_kind::struct_kind;
-                self.ctx->global_symbol()->insert(name, sym_info.__ptr__());
+                self.ctx->global_symbol()->insert(name[0], sym_info);
             } else if (dm->tagged_unions.has(name)) {
                 sym_info.kind = symbol_kind::tagged_union_kind;
-                self.ctx->global_symbol()->insert(name, sym_info.__ptr__());
+                self.ctx->global_symbol()->insert(name[0], sym_info);
             } else if (dm->functions.has(name)) {
                 sym_info.kind = symbol_kind::func_kind;
-                self.ctx->global_symbol()->insert(name, sym_info.__ptr__());
+                self.ctx->global_symbol()->insert(name[0], sym_info);
             } else if (dm->generic_structs.has(name)) {
                 sym_info.kind = symbol_kind::struct_kind;
-                self.ctx->global_symbol()->insert(name, sym_info.__ptr__());
-                self.ctx->generic_symbol()->insert(name, sym_info.__ptr__());
+                self.ctx->global_symbol()->insert(name[0], sym_info);
+                self.ctx->generic_symbol()->insert(name[0], sym_info);
             } else if (dm->generic_functions.has(name)) {
                 sym_info.kind = symbol_kind::func_kind;
-                self.ctx->global_symbol()->insert(name, sym_info.__ptr__());
-                self.ctx->generic_symbol()->insert(name, sym_info.__ptr__());
+                self.ctx->global_symbol()->insert(name[0], sym_info);
+                self.ctx->generic_symbol()->insert(name[0], sym_info);
             }
         }
     }
 
-    func import_from_module(self, path: str*, node: ast_use_stmt*) {
-        if (!self.ctx->has_domain(path)) {
+    func import_from_module(self, path: str&, node: ast_use_stmt*) {
+        if (!self.ctx->has_domain(path.__ptr__())) {
             var info = str::from("module \"");
             info.append_str(path);
             info.append("\" not found,");
@@ -256,11 +244,11 @@ impl regist_pass {
             );
             return;
         }
-        var dm = self.ctx->get_domain(path);
+        var dm = self.ctx->get_domain(path.__ptr__());
         if (node->import_symbol.empty()) {
             self.import_all(dm);
         } else {
-            self.import_specified(node, dm, path);
+            self.import_specified(node, dm, path.__ptr__());
         }
     }
 
@@ -384,7 +372,7 @@ impl regist_pass {
             return;
         }
 
-        self.import_from_module(expect_path.__ptr__(), node);
+        self.import_from_module(expect_path, node);
     }
 
     func scan_imports(self) {
@@ -419,7 +407,7 @@ impl regist_pass {
                 info.delete();
             }
 
-            self.ctx->global_symbol()->insert(name.__ptr__(), info.__ptr__());
+            self.ctx->global_symbol()->insert(name, info);
         }
     }
 
@@ -445,7 +433,7 @@ impl regist_pass {
                 empty_prim.delete();
             }
 
-            gt->primitives.insert(prim_name.__ptr__(), empty_prim.__ptr__());
+            gt->primitives.insert(prim_name, empty_prim);
             self.regist_primitive_size_method(gt->primitives.get(prim_name.__ptr__()));
             self.regist_primitive_ptr_method(gt->primitives.get(prim_name.__ptr__()));
         }
@@ -464,7 +452,7 @@ impl regist_pass {
             ret.delete();
         }
 
-        pt->static_method.insert(name.__ptr__(), func_info.__ptr__());
+        pt->static_method.insert(name, func_info);
     }
 
     func regist_primitive_ptr_method(self, pt: colgm_primitive*) {
@@ -487,10 +475,10 @@ impl regist_pass {
         func_info.is_public = true;
         func_info.param_name.push(self_name.__ptr__());
         func_info.param_type.push(self_type.__ptr__());
-        func_info.unordered_params.insert(self_name.__ptr__(), ret.__ptr__());
+        func_info.unordered_params.insert(self_name, ret);
         defer func_info.delete();
 
-        pt->method.insert(name.__ptr__(), func_info.__ptr__());
+        pt->method.insert(name, func_info);
     }
 
     func regist_builtin_funcs(self, root: root*) {
@@ -508,7 +496,7 @@ impl regist_pass {
         defer func_info.delete();
 
         var dm = self.ctx->get_domain(root->base.location.file.__ptr__());
-        dm->functions.insert(time_func_name.__ptr__(), func_info.__ptr__());
+        dm->functions.insert(time_func_name, func_info);
 
         var sym_info = symbol_info::instance(
             symbol_kind::func_kind,
@@ -517,7 +505,7 @@ impl regist_pass {
         );
         defer sym_info.delete();
 
-        self.ctx->global_symbol()->insert(time_func_name.__ptr__(), sym_info.__ptr__());        
+        self.ctx->global_symbol()->insert(time_func_name, sym_info);        
     }
 }
 
@@ -586,19 +574,19 @@ impl regist_pass {
         foreach (var i; node->members) {
             var n_ast = i.get()=> ast_enum_member*;
             var value = i.index() => i64;
-            var member_name = n_ast->name->content.__ptr__();
+            var member_name: str& = n_ast->name->content;
             if (n_ast->value != nil) {
                 var nl = n_ast->value => ast_number_literal*;
                 value = to_f64(nl->literal.c_str) => i64;
             }
-            e->ordered_member.push(member_name);
+            e->ordered_member.push(member_name.__ptr__());
             e->members.insert(member_name, value);
         }
     }
 
     func regist_single_enum(self, node: ast_enum_decl*) {
-        var name = node->name.__ptr__();
-        if (self.ctx->global_symbol()->has(name)) {
+        var name: str& = node->name;
+        if (self.ctx->global_symbol()->has(name.__ptr__())) {
             var info = str::from("enum \"");
             defer info.delete();
             info.append_str(name);
@@ -613,7 +601,7 @@ impl regist_pass {
         self.generate_enum_member(enum_info, node);
         // insert to domain
         var dm = self.ctx->get_domain(node->base.location.file.__ptr__());
-        dm->enums.insert(name, enum_info);
+        dm->enums.insert(name, enum_info[0]);
         enum_info->delete();
         free(enum_info => i8*);
 
@@ -624,7 +612,7 @@ impl regist_pass {
         );
         defer sym_info.delete();
 
-        self.ctx->global_symbol()->insert(name, sym_info.__ptr__());        
+        self.ctx->global_symbol()->insert(name, sym_info);        
     }
 
     func scan_enums(self) {
@@ -664,27 +652,27 @@ impl regist_pass {
                 continue;
             }
             var n_ast = n => ast_param*;
-            var param_name = n_ast->name->content.__ptr__();
+            var param_name: str& = n_ast->name->content;
 
             // check self param
-            if (param_name->eq_const("self") && i != 0) {
+            if (param_name.eq_const("self") && i != 0) {
                 self.err->error(n->location.__ptr__(),
                     "\"self\" must be the first param"
                 );
                 continue;
             }
-            if (param_name->eq_const("self") && i == 0 && is_global_func) {
+            if (param_name.eq_const("self") && i == 0 && is_global_func) {
                 self.err->error(n->location.__ptr__(),
                     "global function cannot use \"self\" as parameter"
                 );
                 continue;
             }
 
-            if (f->unordered_params.has(param_name)) {
+            if (f->unordered_params.has(param_name.__ptr__())) {
                 self.err->report_conflict_param(
                     n->location.__ptr__(),
-                    param_loc_map.get(param_name),
-                    param_name->c_str
+                    param_loc_map.get(param_name.__ptr__()),
+                    param_name.c_str
                 );
                 continue;
             }
@@ -694,27 +682,27 @@ impl regist_pass {
                 var param_type = type::error_type();
                 defer param_type.delete();
 
-                f->param_name.push(param_name);
+                f->param_name.push(param_name.__ptr__());
                 f->param_type.push(param_type.__ptr__());
-                f->param_location.insert(param_name, n->location.__ptr__());
-                f->unordered_params.insert(param_name, param_type.__ptr__());                
-                param_loc_map.insert(param_name, n_ast->base.location.__ptr__());
+                f->param_location.insert(param_name, n->location);
+                f->unordered_params.insert(param_name, param_type);                
+                param_loc_map.insert(param_name, n_ast->base.location);
             } else {
                 var param_type = self.tr.resolve(n_ast->type);
                 defer param_type.delete();
 
-                f->param_name.push(param_name);
+                f->param_name.push(param_name.__ptr__());
                 f->param_type.push(param_type.__ptr__());
-                f->param_location.insert(param_name, n->location.__ptr__());
-                f->unordered_params.insert(param_name, param_type.__ptr__());
-                param_loc_map.insert(param_name, n_ast->base.location.__ptr__());
+                f->param_location.insert(param_name, n->location);
+                f->unordered_params.insert(param_name, param_type);
+                param_loc_map.insert(param_name, n_ast->base.location);
             }
         }
     }
 
     func regist_single_global_func(self, node: ast_func_decl*) {
-        var name = node->name.__ptr__();
-        if (self.ctx->global_symbol()->has(name)) {
+        var name: str& = node->name;
+        if (self.ctx->global_symbol()->has(name.__ptr__())) {
             var info = str::from("\"");
             defer info.delete();
             info.append_str(name);
@@ -783,9 +771,9 @@ impl regist_pass {
         // insert to domain
         var dm = self.ctx->get_domain(node->base.location.file.__ptr__());
         if (node->generic_types != nil) {
-            dm->generic_functions.insert(name, func_info);
+            dm->generic_functions.insert(name, func_info[0]);
         } else {
-            dm->functions.insert(name, func_info);
+            dm->functions.insert(name, func_info[0]);
         }
         func_info->delete();
         free(func_info => i8*);
@@ -797,9 +785,9 @@ impl regist_pass {
         );
         defer sym_info.delete();
 
-        self.ctx->global_symbol()->insert(name, sym_info.__ptr__());
+        self.ctx->global_symbol()->insert(name, sym_info);
         if (node->generic_types != nil) {
-            self.ctx->generic_symbol()->insert(name, sym_info.__ptr__());
+            self.ctx->generic_symbol()->insert(name, sym_info);
         }
         self.ctx->generics.clear();
     }
@@ -818,8 +806,8 @@ impl regist_pass {
 
 impl regist_pass {
     func regist_single_struct_field(self, node: ast_struct_decl*) {
-        var name = node->name.__ptr__();
-        if (!self.ctx->global_symbol()->has(name)) {
+        var name: str& = node->name;
+        if (!self.ctx->global_symbol()->has(name.__ptr__())) {
             var info = str::from("cannot find symbol \"");
             defer info.delete();
             info.append_str(name);
@@ -846,17 +834,17 @@ impl regist_pass {
         }
 
         var dm = self.ctx->get_domain(node->base.location.file.__ptr__());
-        if (node->generic_types == nil && !dm->structs.has(name)) {
+        if (node->generic_types == nil && !dm->structs.has(name.__ptr__())) {
             return;
         }
-        if (node->generic_types != nil && !dm->generic_structs.has(name)) {
+        if (node->generic_types != nil && !dm->generic_structs.has(name.__ptr__())) {
             return;
         }
         var struct_info: colgm_struct* = nil;
         if (node->generic_types == nil) {
-            struct_info = dm->structs.get(name);
+            struct_info = dm->structs.get(name.__ptr__());
         } else {
-            struct_info = dm->generic_structs.get(name);
+            struct_info = dm->generic_structs.get(name.__ptr__());
             var gtv = node->generic_types->types.__ptr__();
             for (var i: u64 = 0; i < gtv->size; i += 1) {
                 var gt = gtv->get(i);
@@ -874,8 +862,8 @@ impl regist_pass {
 
         foreach (var i; node->fields) {
             var fld = i.get();
-            var fld_name = fld->name->content.__ptr__();
-            if (struct_info->fields.has(fld_name)) {
+            var fld_name: str& = fld->name->content;
+            if (struct_info->fields.has(fld_name.__ptr__())) {
                 var info = str::from("field \"");
                 defer info.delete();
                 info.append_str(fld_name);
@@ -887,12 +875,12 @@ impl regist_pass {
             var sym_type = self.tr.resolve(fld->type);
             defer sym_type.delete();
 
-            struct_info->fields.insert(fld_name, sym_type.__ptr__());
-            struct_info->ordered_fields.push(fld_name);
-            struct_info->fields_span.insert(fld_name, fld->base.location.__ptr__());            
+            struct_info->fields.insert(fld_name, sym_type);
+            struct_info->ordered_fields.push(fld_name.__ptr__());
+            struct_info->fields_span.insert(fld_name, fld->base.location);            
         }
 
-        var struct_self_type = type::instance(name->c_str, node->base.location.file.c_str);
+        var struct_self_type = type::instance(name.c_str, node->base.location.file.c_str);
         defer struct_self_type.delete();
 
         if (node->generic_types != nil) {
@@ -923,7 +911,7 @@ impl regist_pass {
         func_info.is_public = true;
         defer func_info.delete();
 
-        struct_info->static_method.insert(name.__ptr__(), func_info.__ptr__());
+        struct_info->static_method.insert(name, func_info);
     }
 
     func regist_struct_alloc_method(self,
@@ -940,7 +928,7 @@ impl regist_pass {
         func_info.is_public = true;
         defer func_info.delete();
 
-        struct_info->static_method.insert(name.__ptr__(), func_info.__ptr__());
+        struct_info->static_method.insert(name, func_info);
     }
 
     func regist_struct_ptr_method(self,
@@ -962,15 +950,15 @@ impl regist_pass {
         func_info.is_public = true;
         func_info.param_name.push(self_name.__ptr__());
         func_info.param_type.push(self_type.__ptr__());
-        func_info.unordered_params.insert(self_name.__ptr__(), ret.__ptr__());
+        func_info.unordered_params.insert(self_name, ret);
         defer func_info.delete();
 
-        struct_info->method.insert(name.__ptr__(), func_info.__ptr__());
+        struct_info->method.insert(name, func_info);
     }
 
     func regist_single_struct_symbol(self, node: ast_struct_decl*) {
-        var name = node->name.__ptr__();
-        if (self.ctx->global_symbol()->has(name)) {
+        var name: str& = node->name;
+        if (self.ctx->global_symbol()->has(name.__ptr__())) {
             var info = str::from("struct \"");
             defer info.delete();
             info.append_str(name);
@@ -991,9 +979,9 @@ impl regist_pass {
         // insert to domain
         var dm = self.ctx->get_domain(node->base.location.file.__ptr__());
         if (node->generic_types != nil) {
-            dm->generic_structs.insert(name, struct_info);
+            dm->generic_structs.insert(name, struct_info[0]);
         } else {
-            dm->structs.insert(name, struct_info);
+            dm->structs.insert(name, struct_info[0]);
         }
         struct_info->delete();
         free(struct_info => i8*);
@@ -1005,9 +993,9 @@ impl regist_pass {
         );
         defer sym_info.delete();
 
-        self.ctx->global_symbol()->insert(name, sym_info.__ptr__());
+        self.ctx->global_symbol()->insert(name, sym_info);
         if (node->generic_types != nil) {
-            self.ctx->generic_symbol()->insert(name, sym_info.__ptr__());
+            self.ctx->generic_symbol()->insert(name, sym_info);
         }
     }
 
@@ -1019,7 +1007,7 @@ impl regist_pass {
         if (!self.ctx->global_symbol()->has(node->ref_enum_name.__ptr__())) {
             var info = str::from("enum \"");
             defer info.delete();
-            info.append_str(node->ref_enum_name.__ptr__());
+            info.append_str(node->ref_enum_name);
             info.append("\" not found, make sure it is defined or imported");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
@@ -1030,7 +1018,7 @@ impl regist_pass {
         if (enum_info->kind != symbol_kind::enum_kind) {
             var info = str::from("\"");
             defer info.delete();
-            info.append_str(node->ref_enum_name.__ptr__());
+            info.append_str(node->ref_enum_name);
             info.append("\" is not enum");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
@@ -1051,12 +1039,12 @@ impl regist_pass {
             }
             var info = str::from("member \"");
             defer info.delete();
-            info.append_str(i.get()->name->content.__ptr__());
+            info.append_str(i.get()->name->content);
             info.append("\" not found in enum \"");
 
             var full_name = ty.full_path_name(self.pkg);
             defer full_name.delete();
-            info.append_str(full_name.__ptr__());
+            info.append_str(full_name);
 
             info.append("\"");
             self.err->error(i.get()->base.location.__ptr__(), info.c_str);
@@ -1067,7 +1055,7 @@ impl regist_pass {
         if (node->ref_enum_name.empty()) {
             foreach (var i; un->ordered_members) {
                 un->member_int_map.insert(
-                    i.get().__ptr__(),
+                    i.get(),
                     un->member_int_map.size => i64
                 );
             }
@@ -1088,7 +1076,7 @@ impl regist_pass {
         foreach (var i; node->members) {
             if (em->members.has(i.get()->name->content.__ptr__())) {
                 un->member_int_map.insert(
-                    i.get()->name->content.__ptr__(),
+                    i.get()->name->content,
                     em->members.get(i.get()->name->content.__ptr__())
                 );
                 continue;
@@ -1097,8 +1085,8 @@ impl regist_pass {
     }
 
     func regist_single_tagged_union_member(self, node: ast_tagged_union_decl*) {
-        var name = node->name.__ptr__();
-        if (!self.ctx->global_symbol()->has(name)) {
+        var name: str& = node->name;
+        if (!self.ctx->global_symbol()->has(name.__ptr__())) {
             var info = str::from("cannot find symbol \"");
             defer info.delete();
             info.append_str(name);
@@ -1109,7 +1097,7 @@ impl regist_pass {
         }
 
         var dm = self.ctx->get_domain(node->base.location.file.__ptr__());
-        var union_info = dm->tagged_unions.get(name);
+        var union_info = dm->tagged_unions.get(name.__ptr__());
 
         if (node->members.empty()) {
             self.err->error(node->base.location.__ptr__(),
@@ -1118,7 +1106,7 @@ impl regist_pass {
             return;
         }
 
-        var un_type = type::instance(name->c_str, node->base.location.file.c_str);
+        var un_type = type::instance(name.c_str, node->base.location.file.c_str);
         defer un_type.delete();
 
         self.regist_tagged_union_size_method(union_info);
@@ -1127,8 +1115,8 @@ impl regist_pass {
 
         foreach (var i; node->members) {
             var member = i.get();
-            var member_name = member->name->content.__ptr__();
-            if (union_info->members.has(member_name)) {
+            var member_name: str& = member->name->content;
+            if (union_info->members.has(member_name.__ptr__())) {
                 var info = str::from("member \"");
                 defer info.delete();
                 info.append_str(member_name);
@@ -1141,9 +1129,9 @@ impl regist_pass {
             var member_type = self.tr.resolve(member->type);
             defer member_type.delete();
 
-            union_info->members.insert(member_name, member_type.__ptr__());
-            union_info->ordered_members.push(member_name);
-            union_info->members_span.insert(member_name, member->base.location.__ptr__());
+            union_info->members.insert(member_name, member_type);
+            union_info->ordered_members.push(member_name.__ptr__());
+            union_info->members_span.insert(member_name, member->base.location);
         }
         self.load_tagged_union_member_map(node, union_info);
     }
@@ -1160,7 +1148,7 @@ impl regist_pass {
         func_info.is_public = true;
         defer func_info.delete();
 
-        un->static_method.insert(name.__ptr__(), func_info.__ptr__());
+        un->static_method.insert(name, func_info);
     }
 
     func regist_tagged_union_alloc_method(self,
@@ -1177,7 +1165,7 @@ impl regist_pass {
         func_info.is_public = true;
         defer func_info.delete();
 
-        un->static_method.insert(name.__ptr__(), func_info.__ptr__());
+        un->static_method.insert(name, func_info);
     }
 
     func regist_tagged_union_ptr_method(self,
@@ -1199,15 +1187,15 @@ impl regist_pass {
         func_info.is_public = true;
         func_info.param_name.push(self_name.__ptr__());
         func_info.param_type.push(self_type.__ptr__());
-        func_info.unordered_params.insert(self_name.__ptr__(), ret.__ptr__());
+        func_info.unordered_params.insert(self_name, ret);
         defer func_info.delete();
 
-        un->method.insert(name.__ptr__(), func_info.__ptr__());
+        un->method.insert(name, func_info);
     }
 
     func regist_single_tagged_union_symbol(self, node: ast_tagged_union_decl*) {
-        var name = node->name.__ptr__();
-        if (self.ctx->global_symbol()->has(name)) {
+        var name: str& = node->name;
+        if (self.ctx->global_symbol()->has(name.__ptr__())) {
             var info = str::from("struct \"");
             defer info.delete();
             info.append_str(name);
@@ -1219,7 +1207,7 @@ impl regist_pass {
 
         // allocate struct info
         var union_info = colgm_tagged_union::instance(
-            name,
+            name.__ptr__(),
             node->base.location.__ptr__()
         );
         defer union_info.delete();
@@ -1233,7 +1221,7 @@ impl regist_pass {
 
         // insert to domain
         var dm = self.ctx->get_domain(node->base.location.file.__ptr__());        
-        dm->tagged_unions.insert(name, union_info.__ptr__());
+        dm->tagged_unions.insert(name, union_info);
 
         var sym_info = symbol_info::instance(
             symbol_kind::tagged_union_kind,
@@ -1242,7 +1230,7 @@ impl regist_pass {
         );
         defer sym_info.delete();
 
-        self.ctx->global_symbol()->insert(name, sym_info.__ptr__());
+        self.ctx->global_symbol()->insert(name, sym_info);
     }
 
     func scan_complex_structs(self) {
@@ -1274,7 +1262,7 @@ impl regist_pass {
         self.check_self_reference();
     }
 
-    func check_single_self_reference(self, name: str*) {
+    func check_single_self_reference(self, name: str&) {
         var dm = self.ctx->get_domain(self.ctx->this_file.__ptr__());
         var structs = dm->structs.__ptr__();
         var tagged_unions = dm->tagged_unions.__ptr__();
@@ -1291,10 +1279,10 @@ impl regist_pass {
         bfs.push(first.__ptr__());
 
         var location: span* = nil;
-        if (structs->has(name)) {
-            location = structs->get(name)->location.__ptr__();
+        if (structs->has(name.__ptr__())) {
+            location = structs->get(name.__ptr__())->location.__ptr__();
         } else {
-            location = tagged_unions->get(name)->location.__ptr__();
+            location = tagged_unions->get(name.__ptr__())->location.__ptr__();
         }
 
         while (!bfs.empty()) {
@@ -1315,7 +1303,7 @@ impl regist_pass {
                 foreach (var f; structs->get(current.__ptr__())->fields) {
                     var fld_name = f.key();
                     var fld_type = f.value();
-                    if (fld_type->is_pointer()) {
+                    if (fld_type.is_pointer()) {
                         continue;
                     }
 
@@ -1324,19 +1312,19 @@ impl regist_pass {
                     new_ref_path.append("::");
                     new_ref_path.append_str(fld_name);
                     new_ref_path.append(" -> ");
-                    new_ref_path.append_str(fld_type->name.__ptr__());
+                    new_ref_path.append_str(fld_type.name);
 
-                    if (fld_type->name.eq(name)) {
+                    if (fld_type.name.eq(name.__ptr__())) {
                         var info = str::from("self reference detected: ");
                         defer info.delete();
-                        info.append_str(new_ref_path.__ptr__());
+                        info.append_str(new_ref_path);
 
                         self.err->error(location, info.c_str);
-                    } else if (structs->has(fld_type->name.__ptr__()) ||
-                            tagged_unions->has(fld_type->name.__ptr__())) {
+                    } else if (structs->has(fld_type.name.__ptr__()) ||
+                            tagged_unions->has(fld_type.name.__ptr__())) {
                         var new_pair = pair<str, str>::instance(
-                            fld_type->name.__ptr__(),
-                            new_ref_path.__ptr__()
+                            fld_type.name,
+                            new_ref_path
                         );
                         defer new_pair.delete();
 
@@ -1347,7 +1335,7 @@ impl regist_pass {
                 foreach (var m; tagged_unions->get(current.__ptr__())->members) {
                     var member_name = m.key();
                     var member_type = m.value();
-                    if (member_type->is_pointer()) {
+                    if (member_type.is_pointer()) {
                         continue;
                     }
 
@@ -1356,19 +1344,19 @@ impl regist_pass {
                     new_ref_path.append("::");
                     new_ref_path.append_str(member_name);
                     new_ref_path.append(" -> ");
-                    new_ref_path.append_str(member_type->name.__ptr__());
+                    new_ref_path.append_str(member_type.name);
 
-                    if (member_type->name.eq(name)) {
+                    if (member_type.name.eq(name.__ptr__())) {
                         var info = str::from("self reference detected: ");
                         defer info.delete();
-                        info.append_str(new_ref_path.__ptr__());
+                        info.append_str(new_ref_path);
 
                         self.err->error(location, info.c_str);
-                    } else if (structs->has(member_type->name.__ptr__()) ||
-                            tagged_unions->has(member_type->name.__ptr__())) {
+                    } else if (structs->has(member_type.name.__ptr__()) ||
+                            tagged_unions->has(member_type.name.__ptr__())) {
                         var new_pair = pair<str, str>::instance(
-                            member_type->name.__ptr__(),
-                            new_ref_path.__ptr__()
+                            member_type.name,
+                            new_ref_path
                         );
                         defer new_pair.delete();
 
@@ -1389,39 +1377,39 @@ impl regist_pass {
 
         foreach (var st; structs) {
             var info = st.value();
-            foreach (var f; info->fields) {
+            foreach (var f; info.fields) {
                 var field = f.value();
-                if (!field->is_pointer() &&
-                    structs->has(field->name.__ptr__())) {
-                    need_check.push(st.key());
+                if (!field.is_pointer() &&
+                    structs->has(field.name.__ptr__())) {
+                    need_check.push(st.key().__ptr__());
                     break;
                 }
-                if (!field->is_pointer() &&
-                    tagged_unions->has(field->name.__ptr__())) {
-                    need_check.push(st.key());
+                if (!field.is_pointer() &&
+                    tagged_unions->has(field.name.__ptr__())) {
+                    need_check.push(st.key().__ptr__());
                     break;
                 }
             }
         }
         foreach (var un; tagged_unions) {
             var info = un.value();
-            foreach (var m; info->members) {
+            foreach (var m; info.members) {
                 var member = m.value();
-                if (!member->is_pointer() &&
-                    structs->has(member->name.__ptr__())) {
-                    need_check.push(un.key());
+                if (!member.is_pointer() &&
+                    structs->has(member.name.__ptr__())) {
+                    need_check.push(un.key().__ptr__());
                     break;
                 }
-                if (!member->is_pointer() &&
-                    tagged_unions->has(member->name.__ptr__())) {
-                    need_check.push(un.key());
+                if (!member.is_pointer() &&
+                    tagged_unions->has(member.name.__ptr__())) {
+                    need_check.push(un.key().__ptr__());
                     break;
                 }
             }
         }
 
         foreach (var s; need_check) {
-            self.check_single_self_reference(s.get().__ptr__());
+            self.check_single_self_reference(s.get());
         }
     }
 }
@@ -1479,7 +1467,7 @@ impl regist_pass {
         if (struct_info->check_field_exists(name)) {
             var info = str::from("\"");
             defer info.delete();
-            info.append_str(name.__ptr__());
+            info.append_str(name);
             info.append("\" conflicts with exist field or method");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
@@ -1517,7 +1505,7 @@ impl regist_pass {
         self.generate_struct_self_type_node(struct_info, node);
 
         self.generate_function_params(func_info, node, false);
-        struct_info->method.insert(name.__ptr__(), func_info);
+        struct_info->method.insert(name, func_info[0]);
     }
 
     func generate_impl_static_method_for_struct(self,
@@ -1527,7 +1515,7 @@ impl regist_pass {
         if (struct_info->check_field_exists(name)) {
             var info = str::from("\"");
             defer info.delete();
-            info.append_str(name.__ptr__());
+            info.append_str(name);
             info.append("\" conflicts with exist field or method");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
@@ -1561,7 +1549,7 @@ impl regist_pass {
         }
 
         self.generate_function_params(func_info, node, false);
-        struct_info->static_method.insert(name.__ptr__(), func_info);
+        struct_info->static_method.insert(name, func_info[0]);
     }
 
     func generate_union_self_type_node(self,
@@ -1584,8 +1572,8 @@ impl regist_pass {
     func generate_impl_method_for_tagged_union(self,
                                                union_info: colgm_tagged_union*,
                                                node: ast_func_decl*) {
-        var name = node->name.__ptr__();
-        if (union_info->check_member_exists(name)) {
+        var name: str& = node->name;
+        if (union_info->check_member_exists(name.__ptr__())) {
             var info = str::from("\"");
             defer info.delete();
             info.append_str(name);
@@ -1626,14 +1614,14 @@ impl regist_pass {
         self.generate_union_self_type_node(union_info, node);
 
         self.generate_function_params(func_info, node, false);
-        union_info->method.insert(name, func_info);
+        union_info->method.insert(name, func_info[0]);
     }
 
     func generate_impl_static_method_for_tagged_union(self,
                                                       union_info: colgm_tagged_union*,
                                                       node: ast_func_decl*) {
-        var name = node->name.__ptr__();
-        if (union_info->check_member_exists(name)) {
+        var name: str& = node->name;
+        if (union_info->check_member_exists(name.__ptr__())) {
             var info = str::from("\"");
             defer info.delete();
             info.append_str(name);
@@ -1670,7 +1658,7 @@ impl regist_pass {
         }
 
         self.generate_function_params(func_info, node, false);
-        union_info->static_method.insert(name, func_info);
+        union_info->static_method.insert(name, func_info[0]);
     }
 
     func regist_single_impl(self, node: ast_impl*) {
@@ -1772,7 +1760,7 @@ impl regist_pass {
         self.ctx->this_file.append(root->base.location.file.c_str);
 
         // create domain if not exist
-        self.ctx->create_domain_if_not_exist(root->base.location.file.__ptr__());
+        self.ctx->create_domain_if_not_exist(root->base.location.file);
 
         var this_dm = self.ctx->get_domain(root->base.location.file.__ptr__());
         this_dm->file_name.clear();

@@ -238,7 +238,7 @@ impl parser {
                 message.append("keyword ");
             }
             message.append("\"");
-            message.append_str(self.this_tok()->content.__ptr__());
+            message.append_str(self.this_tok()->content);
             message.append("\"");
         }
         self.err->error(loc.__ptr__(), message.c_str);
@@ -259,18 +259,18 @@ impl parser {
         self.match_token(tok_kind::tok_id);
         self.match_token(tok_kind::tok_lparen);
         while (!self.lookahead(tok_kind::tok_rparen)) {
-            var key = self.this_tok()->content.__ptr__();
+            var key: str& = self.this_tok()->content;
             self.match_token(tok_kind::tok_id);
             if (self.lookahead(tok_kind::tok_eq)) {
                 self.match_token(tok_kind::tok_eq);
-                var value = self.this_tok()->content.__ptr__();
+                var value: str& = self.this_tok()->content;
                 self.match_token(tok_kind::tok_str);
                 res->add_condition(key, value);
             } else {
                 var empty_value = str::from("");
                 defer empty_value.delete();
 
-                res->add_condition(key, empty_value.__ptr__());
+                res->add_condition(key, empty_value);
             }
             if (self.lookahead(tok_kind::tok_comma)) {
                 self.match_token(tok_kind::tok_comma);

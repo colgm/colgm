@@ -115,10 +115,10 @@ impl generic_visitor {
 }
 
 impl generic_visitor {
-    func check_generic_exists(self, dm: colgm_module*, type_name: str*, n: ast*) -> bool {
+    func check_generic_exists(self, dm: colgm_module*, type_name: str&, n: ast*) -> bool {
         // check this symbol exists
         // remember, symbol is stored both in global_symbol and generic_symbol
-        if (!dm->global_symbol.has(type_name)) {
+        if (!dm->global_symbol.has(type_name.__ptr__())) {
             var info = str::from("unknown type \"");
             defer info.delete();
             info.append_str(type_name).append("\"");
@@ -128,7 +128,7 @@ impl generic_visitor {
         }
 
         // check this symbol is generic type
-        if (!dm->generic_symbol.has(type_name)) {
+        if (!dm->generic_symbol.has(type_name.__ptr__())) {
             var info = str::from("\"");
             defer info.delete();
             info.append_str(type_name);
@@ -142,7 +142,7 @@ impl generic_visitor {
     }
 
     func scan_generic_type(self, n: ast_type_def*) {
-        var type_name = n->name->content.__ptr__();
+        var type_name: str& = n->name->content;
         var domain_file: str* = nil;
         if (n->base.is_redirected()) {
             domain_file = n->base.redirect_location.__ptr__();
@@ -155,7 +155,7 @@ impl generic_visitor {
             return;
         }
 
-        var sym = dm->generic_symbol.get(type_name);
+        var sym = dm->generic_symbol.get(type_name.__ptr__());
         if (sym->kind != symbol_kind::struct_kind) {
             var info = str::from("\"");
             defer info.delete();
@@ -167,7 +167,7 @@ impl generic_visitor {
         }
 
         var sym_belonged_dm = self.ctx->get_domain(sym->loc_file.__ptr__());
-        var generic_struct = sym_belonged_dm->generic_structs.get(type_name);
+        var generic_struct = sym_belonged_dm->generic_structs.get(type_name.__ptr__());
         var generic_template = generic_struct->generic_template.__ptr__();
         self.check_generic_type(n => ast*,
                                  type_name,
@@ -178,7 +178,7 @@ impl generic_visitor {
 
     func check_generic_type(self,
                             n: ast*,
-                            type_name: str*,
+                            type_name: str&,
                             sym: symbol_info*,
                             type_list_node: ast_generic_type_list*,
                             generic_template: vec<str>*) {
@@ -202,7 +202,7 @@ impl generic_visitor {
                 r_type_fpn.delete();
             }
 
-            ss.append_str(r_type_fpn.__ptr__());
+            ss.append_str(r_type_fpn);
             if (i.index() != type_list->size - 1) {
                 ss.append_char(',');
             }
@@ -215,16 +215,16 @@ impl generic_visitor {
         // load useful data into generic_data
         var g_data = generic_data::instance();
         defer g_data.delete();
-        g_data.name.append_str(ss.__ptr__());
+        g_data.name.append_str(ss);
         g_data.generic_type.name.append_str(type_name);
-        g_data.generic_type.loc_file.append_str(sym->loc_file.__ptr__());
+        g_data.generic_type.loc_file.append_str(sym->loc_file);
 
         foreach (var i; type_list) {
             var r_type = self.tr.resolve(i.get() => ast_type_def*);
             defer r_type.delete();
 
             g_data.generic_type.generics.push(r_type.__ptr__());
-            g_data.types.insert(generic_template->get(i.index()).__ptr__(), r_type.__ptr__());
+            g_data.types.insert(generic_template->get(i.index()), r_type);
         }
 
         self.insert_count += self.insert_generic_type(g_data.__ptr__());
@@ -412,7 +412,7 @@ impl generic_visitor {
         }
         self.visit_generic_type_list(n->generic_types);
 
-        var type_name = n->id->content.__ptr__();
+        var type_name: str& = n->id->content;
         var domain_file: str* = nil;
         if (n->base.is_redirected()) {
             domain_file = n->base.redirect_location.__ptr__();
@@ -425,7 +425,7 @@ impl generic_visitor {
             return;
         }
 
-        var sym = dm->generic_symbol.get(type_name);
+        var sym = dm->generic_symbol.get(type_name.__ptr__());
         if (sym->kind != symbol_kind::struct_kind &&
             sym->kind != symbol_kind::func_kind) {
             var info = str::from("\"");
@@ -440,10 +440,10 @@ impl generic_visitor {
         var sym_belonged_dm = self.ctx->get_domain(sym->loc_file.__ptr__());
         var generic_template: vec<str>* = nil;
         if (sym->kind == symbol_kind::struct_kind) {
-            var generic_struct = sym_belonged_dm->generic_structs.get(type_name);
+            var generic_struct = sym_belonged_dm->generic_structs.get(type_name.__ptr__());
             generic_template = generic_struct->generic_template.__ptr__();
         } else {
-            var generic_func = sym_belonged_dm->generic_functions.get(type_name);
+            var generic_func = sym_belonged_dm->generic_functions.get(type_name.__ptr__());
             generic_template = generic_func->generic_template.__ptr__();
         }
         self.check_generic_type(n => ast*,
@@ -618,8 +618,8 @@ impl generic_visitor {
 }
 
 impl generic_visitor {
-    func insert_struct(self, dm: colgm_module*, gd: generic_data*, gn: str*) {
-        if (dm->structs.has(gn)) {
+    func insert_struct(self, dm: colgm_module*, gd: generic_data*, gn: str&) {
+        if (dm->structs.has(gn.__ptr__())) {
             return;
         }
 
@@ -631,7 +631,7 @@ impl generic_visitor {
         struct_info.generic_template.clear();
         defer struct_info.delete();
 
-        dm->structs.insert(gn, struct_info.__ptr__());
+        dm->structs.insert(gn, struct_info);
 
         var sym_info = symbol_info::instance(
             symbol_kind::struct_kind,
@@ -640,12 +640,12 @@ impl generic_visitor {
         );
         defer sym_info.delete();
 
-        self.ctx->global_symbol()->insert(gn, sym_info.__ptr__());
-        self.replace_struct_type(dm->structs.get(gn), gd);
+        self.ctx->global_symbol()->insert(gn, sym_info);
+        self.replace_struct_type(dm->structs.get(gn.__ptr__()), gd);
     }
 
-    func insert_function(self, dm: colgm_module*, gd: generic_data*, gn: str*) {
-        if (dm->functions.has(gn)) {
+    func insert_function(self, dm: colgm_module*, gd: generic_data*, gn: str&) {
+        if (dm->functions.has(gn.__ptr__())) {
             return;
         }
 
@@ -657,7 +657,7 @@ impl generic_visitor {
         func_info.generic_template.clear();
         defer func_info.delete();
 
-        dm->functions.insert(gn, func_info.__ptr__());
+        dm->functions.insert(gn, func_info);
 
         var sym_info = symbol_info::instance(
             symbol_kind::func_kind,
@@ -666,8 +666,8 @@ impl generic_visitor {
         );
         defer sym_info.delete();
 
-        self.ctx->global_symbol()->insert(gn, sym_info.__ptr__());
-        self.replace_func_type(dm->functions.get(gn), gd);
+        self.ctx->global_symbol()->insert(gn, sym_info);
+        self.replace_func_type(dm->functions.get(gn.__ptr__())[0], gd);
     }
 
     func insert_generic_type(self, g_data: generic_data*) -> i64 {
@@ -689,12 +689,12 @@ impl generic_visitor {
             if (dm->structs.has(generic_name.__ptr__())) {
                 return 0;
             }
-            self.insert_struct(dm, g_data, generic_name.__ptr__());
+            self.insert_struct(dm, g_data, generic_name);
         } else if (dm->generic_functions.has(g_data->generic_type.name.__ptr__())) {
             if (dm->functions.has(generic_name.__ptr__())) {
                 return 0;
             }
-            self.insert_function(dm, g_data, generic_name.__ptr__());
+            self.insert_function(dm, g_data, generic_name);
         }
 
         return 1;
@@ -704,9 +704,9 @@ impl generic_visitor {
         if (g_data->types.has(t.name.__ptr__())) {
             var real = g_data->types.get(t.name.__ptr__());
             t.name.clear();
-            t.name.append_str(real->name.__ptr__());
+            t.name.append_str(real->name);
             t.loc_file.clear();
-            t.loc_file.append_str(real->loc_file.__ptr__());
+            t.loc_file.append_str(real->loc_file);
             t.generics.clear();
             foreach (var i; real->generics) {
                 t.generics.push(i.get().__ptr__()); // will do deep copy
@@ -726,14 +726,14 @@ impl generic_visitor {
 
     func check_is_trivial(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
         foreach (var i; n->ordered_conds) {
-            var cond = i.get().__ptr__();
-            if (!n->conds.get(cond)->empty()) {
+            var cond: str& = i.get();
+            if (!n->conds.get(cond.__ptr__())->empty()) {
                 self.err->warn(
                     n->base.location.__ptr__(),
                     "condition value is ignored"
                 );
             }
-            if (!g_data->types.has(cond)) {
+            if (!g_data->types.has(cond.__ptr__())) {
                 var info = str::from("generic type \"");
                 defer info.delete();
                 info.append_str(cond);
@@ -746,7 +746,7 @@ impl generic_visitor {
                 return false;
             }
 
-            var t = g_data->types.get(cond);
+            var t = g_data->types.get(cond.__ptr__());
             // pointer type is trivial
             if (t->is_pointer()) {
                 continue;
@@ -784,14 +784,14 @@ impl generic_visitor {
 
     func check_is_non_trivial(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
         foreach (var i; n->ordered_conds) {
-            var cond = i.get().__ptr__();
-            if (!n->conds.get(cond)->empty()) {
+            var cond: str& = i.get();
+            if (!n->conds.get(cond.__ptr__())->empty()) {
                 self.err->warn(
                     n->base.location.__ptr__(),
                     "condition value is ignored"
                 );
             }
-            if (!g_data->types.has(cond)) {
+            if (!g_data->types.has(cond.__ptr__())) {
                 var info = str::from("generic type \"");
                 defer info.delete();
                 info.append_str(cond);
@@ -804,7 +804,7 @@ impl generic_visitor {
                 return false;
             }
 
-            var t = g_data->types.get(cond);
+            var t = g_data->types.get(cond.__ptr__());
             if (t->is_pointer()) {
                 return false;
             }
@@ -843,14 +843,14 @@ impl generic_visitor {
 
     func check_is_pointer(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
         foreach (var i; n->ordered_conds) {
-            var cond = i.get().__ptr__();
-            if (!n->conds.get(cond)->empty()) {
+            var cond: str& = i.get();
+            if (!n->conds.get(cond.__ptr__())->empty()) {
                 self.err->warn(
                     n->base.location.__ptr__(),
                     "condition value is ignored"
                 );
             }
-            if (!g_data->types.has(cond)) {
+            if (!g_data->types.has(cond.__ptr__())) {
                 var info = str::from("generic type \"");
                 defer info.delete();
                 info.append_str(cond);
@@ -863,7 +863,7 @@ impl generic_visitor {
                 return false;
             }
 
-            if (!g_data->types.get(cond)->is_pointer()) {
+            if (!g_data->types.get(cond.__ptr__())->is_pointer()) {
                 return false;
             }
 
@@ -873,14 +873,14 @@ impl generic_visitor {
 
     func check_is_non_pointer(self, n: ast_cond_compile*, g_data: generic_data*) -> bool {
         foreach (var i; n->ordered_conds) {
-            var cond = i.get().__ptr__();
-            if (!n->conds.get(cond)->empty()) {
+            var cond: str& = i.get();
+            if (!n->conds.get(cond.__ptr__())->empty()) {
                 self.err->warn(
                     n->base.location.__ptr__(),
                     "condition value is ignored"
                 );
             }
-            if (!g_data->types.has(cond)) {
+            if (!g_data->types.has(cond.__ptr__())) {
                 var info = str::from("generic type \"");
                 defer info.delete();
                 info.append_str(cond);
@@ -893,7 +893,7 @@ impl generic_visitor {
                 return false;
             }
 
-            if (g_data->types.get(cond)->is_pointer()) {
+            if (g_data->types.get(cond.__ptr__())->is_pointer()) {
                 return false;
             }
 
@@ -959,12 +959,12 @@ impl generic_visitor {
                         );
                     } else {
                         s->method.insert(
-                            func_node->name.__ptr__(),
-                            s->method.get(monomorphic_name)
+                            func_node->name,
+                            s->method.get(monomorphic_name)[0]
                         );
                         var f = s->method.get(func_node->name.__ptr__())->name.__ptr__();
                         f->clear();
-                        f->append_str(func_node->name.__ptr__());
+                        f->append_str(func_node->name);
                     }
                     s->method.remove(monomorphic_name);
                 } else if (s->static_method.has(monomorphic_name)) {
@@ -977,12 +977,12 @@ impl generic_visitor {
                         );
                     } else {
                         s->static_method.insert(
-                            func_node->name.__ptr__(),
-                            s->static_method.get(monomorphic_name)
+                            func_node->name,
+                            s->static_method.get(monomorphic_name)[0]
                         );
                         var f = s->static_method.get(func_node->name.__ptr__())->name.__ptr__();
                         f->clear();
-                        f->append_str(func_node->name.__ptr__());
+                        f->append_str(func_node->name);
                     }
                     s->static_method.remove(monomorphic_name);
                 }
@@ -997,7 +997,7 @@ impl generic_visitor {
     func replace_struct_type(self, s: colgm_struct*, g_data: generic_data*) {
         foreach (var i; s->fields) {
             var field = i.value();
-            self.replace_type(field[0], g_data);
+            self.replace_type(field, g_data);
         }
 
         // remove method by conditonal compile config like
@@ -1028,7 +1028,7 @@ impl generic_visitor {
             // for example original name is "foo",
             // but now it should be replaced with "foo<int, bool>"
             s->generic_struct_decl->name.clear();
-            s->generic_struct_decl->name.append_str(s->name.__ptr__());
+            s->generic_struct_decl->name.append_str(s->name);
             s->generic_struct_decl->clear_generic_types();
             s->generic_struct_decl = nil;
         }
@@ -1040,24 +1040,24 @@ impl generic_visitor {
             // for example original name is "foo",
             // but now it should be replaced with "foo<int, bool>"
             i_n->name.clear();
-            i_n->name.append_str(s->name.__ptr__());
+            i_n->name.append_str(s->name);
             i_n->clear_generic_types();
         }
         s->generic_struct_impl.clear();
     }
 
-    func replace_func_type(self, f: colgm_func*, g_data: generic_data*) {
-        self.replace_type(f->return_type, g_data);
-        foreach (var i; f->param_type) {
+    func replace_func_type(self, f: colgm_func&, g_data: generic_data*) {
+        self.replace_type(f.return_type, g_data);
+        foreach (var i; f.param_type) {
             var param_type = i.get();
             self.replace_type(param_type, g_data);
         }
-        foreach (var i; f->unordered_params) {
+        foreach (var i; f.unordered_params) {
             var param_type = i.value();
-            self.replace_type(param_type[0], g_data);
+            self.replace_type(param_type, g_data);
         }
 
-        if (f->generic_func_decl != nil) {
+        if (f.generic_func_decl != nil) {
             var trp = type_replace_pass {
                 err: self.err,
                 ctx: self.ctx,
@@ -1065,12 +1065,12 @@ impl generic_visitor {
                 co: self.co,
                 g_data: g_data
             };
-            trp.replace_func(f->generic_func_decl);
-            self.need_to_be_inserted.push(f->generic_func_decl => ast*);
-            f->generic_func_decl->name.clear();
-            f->generic_func_decl->name.append_str(f->name.__ptr__());
-            f->generic_func_decl->clear_generic_types();
-            f->generic_func_decl = nil;
+            trp.replace_func(f.generic_func_decl);
+            self.need_to_be_inserted.push(f.generic_func_decl => ast*);
+            f.generic_func_decl->name.clear();
+            f.generic_func_decl->name.append_str(f.name);
+            f.generic_func_decl->clear_generic_types();
+            f.generic_func_decl = nil;
         }
     }
 }

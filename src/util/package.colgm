@@ -67,9 +67,9 @@ impl package {
         var info = package_info::instance(file_path, p_status::not_used);
         defer info.delete();
 
-        self.file_mapper.insert(module_name.__ptr__(), info.__ptr__());
-        self.file_to_module.insert(file_path.__ptr__(), module_name.__ptr__());
-        self.module_to_file.insert(module_name.__ptr__(), file_path.__ptr__());
+        self.file_mapper.insert(module_name, info);
+        self.file_to_module.insert(file_path, module_name);
+        self.module_to_file.insert(module_name, file_path);
     }
 
     pub func get_status(self, name: str&) -> p_status {
@@ -101,10 +101,10 @@ impl package {
         return self.module_to_file.get(module_name.__ptr__());
     }
 
-    pub func get_module_name(self, file_path: str&) -> str* {
+    pub func get_module_name(self, file_path: str&) -> str& {
         if (!self.file_to_module.has(file_path.__ptr__())) {
             panic("module name not found");
         }
-        return self.file_to_module.get(file_path.__ptr__());
+        return self.file_to_module.get(file_path.__ptr__())[0];
     }
 }

@@ -1,7 +1,7 @@
 use std::vec::{ vec };
 use std::str::{ str };
 
-pub func levenshtein_distance(left: str&, right: str*) -> u64 {
+pub func levenshtein_distance(left: str&, right: str&) -> u64 {
     var v0 = vec<u64>::instance();
     var v1 = vec<u64>::instance();
     defer {
@@ -10,7 +10,7 @@ pub func levenshtein_distance(left: str&, right: str*) -> u64 {
     }
 
     var left_len = left.size;
-    var right_len = right->size;
+    var right_len = right.size;
     for (var i: u64 = 0; i < right_len; i += 1) {
         v0.push(0);
     }
@@ -27,7 +27,7 @@ pub func levenshtein_distance(left: str&, right: str*) -> u64 {
             var deletion = v0.data[j] + 1;
             var insertion = v1.data[j - 1] + 1;
             var substitution = v0.data[j - 1]; 
-            if (left.c_str[i] != right->c_str[j]) {
+            if (left.c_str[i] != right.c_str[j]) {
                 substitution += 1;
             }
             v1.data[j] = deletion;
