@@ -90,7 +90,7 @@ impl replace_defer {
     }
 
     func add_sub_scope(self) {
-        self.top_scopes.back()->new_scope();
+        self.top_scopes.back().new_scope();
     }
 
     func pop_top_scope(self) {
@@ -101,16 +101,16 @@ impl replace_defer {
     }
 
     func pop_sub_scope(self) {
-        self.top_scopes.back()->pop_scope();
+        self.top_scopes.back().pop_scope();
     }
 
     func add_defer_stmt(self, n: ast_defer_stmt*) {
-        self.top_scopes.back()->scopes.back()->push(n);
+        self.top_scopes.back().scopes.back().push(n);
     }
 
     func in_top_scope(self) -> bool {
         return !self.top_scopes.empty() &&
-               self.top_scopes.back()->scopes.size == 1;
+               self.top_scopes.back().scopes.size == 1;
     }
 
     func insert_defer(self, ds: ast_defer_stmt*, v: vec<ast*>*) {
@@ -120,19 +120,19 @@ impl replace_defer {
     }
 
     func insert_defer_on_subscope_exit(self, v: vec<ast*>*, n: ast*) {
-        if (self.top_scopes.empty() || self.top_scopes.back()->empty()) {
+        if (self.top_scopes.empty() || self.top_scopes.back().empty()) {
             return;
         }
 
-        self.log_when_insert("subscope exit", self.top_scopes.back()->scopes.back(), n);
-        foreach (var i; self.top_scopes.back()->scopes.back()) {
+        self.log_when_insert("subscope exit", self.top_scopes.back().scopes.back(), n);
+        foreach (var i; self.top_scopes.back().scopes.back()) {
             self.insert_defer(i.get(), v);
         }
     }
 
     func insert_defer_on_block_exit(self, v: vec<ast*>*, n: ast*) {
-        foreach (var sub_scope; self.top_scopes.back()->scopes) {
-            self.log_when_insert("block exit", sub_scope.get().__ptr__(), n);
+        foreach (var sub_scope; self.top_scopes.back().scopes) {
+            self.log_when_insert("block exit", sub_scope.get(), n);
             foreach (var i; sub_scope.get()) {
                 self.insert_defer(i.get(), v);
             }
@@ -142,7 +142,7 @@ impl replace_defer {
     func insert_defer_on_return(self, v: vec<ast*>*, n: ast*) {
         foreach (var this_top_scope; self.top_scopes) {
             foreach (var sub_scope; this_top_scope.get().scopes) {
-                self.log_when_insert("return", sub_scope.get().__ptr__(), n);
+                self.log_when_insert("return", sub_scope.get(), n);
                 foreach (var i; sub_scope.get()) {
                     self.insert_defer(i.get(), v);
                 }
@@ -150,8 +150,8 @@ impl replace_defer {
         }
     }
 
-    func log_when_insert(self, msg: const i8*, scope: vec<ast_defer_stmt*>*, n: ast*) {
-        if (!self.verbose || scope->empty()) {
+    func log_when_insert(self, msg: const i8*, scope: vec<ast_defer_stmt*>&, n: ast*) {
+        if (!self.verbose || scope.empty()) {
             return;
         }
 

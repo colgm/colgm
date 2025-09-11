@@ -702,7 +702,7 @@ impl mir2sir {
     func visit_mir_unary(self, n: mir_unary*) {
         self.visit(n->value => mir*);
 
-        var source = self.value_stack.back()->clone();
+        var source = self.value_stack.back().clone();
         defer source.delete();
         self.value_stack.pop_back();
 
@@ -770,7 +770,7 @@ impl mir2sir {
 
         self.visit(n->left => mir*);
 
-        var left = self.value_stack.back()->clone();
+        var left = self.value_stack.back().clone();
         var left_value = left.to_value_t();
         defer {
             left.delete();
@@ -793,7 +793,7 @@ impl mir2sir {
         self.block->add_stmt(sir_label::new(true_label_index, "and.true") => sir*);
 
         self.visit(n->right => mir*);
-        var right = self.value_stack.back()->clone();
+        var right = self.value_stack.back().clone();
         var right_value = right.to_value_t();
         defer {
             right.delete();
@@ -857,7 +857,7 @@ impl mir2sir {
         ) => sir*);
 
         self.visit(n->left => mir*);
-        var left = self.value_stack.back()->clone();
+        var left = self.value_stack.back().clone();
         var left_value = left.to_value_t();
         defer {
             left.delete();
@@ -880,7 +880,7 @@ impl mir2sir {
         self.block->add_stmt(sir_label::new(false_label_index, "or.false") => sir*);
 
         self.visit(n->right => mir*);
-        var right = self.value_stack.back()->clone();
+        var right = self.value_stack.back().clone();
         var right_value = right.to_value_t();
         defer {
             right.delete();
@@ -928,7 +928,7 @@ impl mir2sir {
         }
 
         self.visit(n->left => mir*);
-        var left = self.value_stack.back()->clone();
+        var left = self.value_stack.back().clone();
         var left_value = left.to_value_t();
         var left_ty = self.type_mapping(left.resolved_type.__ptr__());
         defer {
@@ -939,7 +939,7 @@ impl mir2sir {
         self.value_stack.pop_back();
 
         self.visit(n->right => mir*);
-        var right = self.value_stack.back()->clone();
+        var right = self.value_stack.back().clone();
         var right_value = right.to_value_t();
         defer {
             right.delete();
@@ -1111,7 +1111,7 @@ impl mir2sir {
     func visit_mir_type_convert(self, n: mir_type_convert*) {
         self.visit(n->source => mir*);
 
-        var source = self.value_stack.back()->clone();
+        var source = self.value_stack.back().clone();
         defer source.delete();
 
         self.value_stack.pop_back();
@@ -1292,7 +1292,7 @@ impl mir2sir {
                 ) => sir*);
 
                 self.visit(vn);
-                var res = self.value_stack.back()->clone();
+                var res = self.value_stack.back().clone();
                 defer res.delete();
 
                 var res_value = res.to_value_t();
@@ -1370,7 +1370,7 @@ impl mir2sir {
 
                 self.visit(i.get().content => mir*);
 
-                var res = self.value_stack.back()->clone();
+                var res = self.value_stack.back().clone();
                 defer res.delete();
                 self.value_stack.pop_back();
 
@@ -1465,7 +1465,7 @@ impl mir2sir {
 
                 self.visit(i.get().content => mir*);
 
-                var res = self.value_stack.back()->clone();
+                var res = self.value_stack.back().clone();
                 defer res.delete();
                 self.value_stack.pop_back();
 
@@ -1496,11 +1496,11 @@ impl mir2sir {
             return;
         }
 
-        if (!self.value_stack.back()->resolved_type.is_reference) {
+        if (!self.value_stack.back().resolved_type.is_reference) {
             return;
         }
 
-        var source = self.value_stack.back()->clone();
+        var source = self.value_stack.back().clone();
         defer source.delete();
         self.value_stack.pop_back();
 
@@ -1534,7 +1534,7 @@ impl mir2sir {
         self.visit(n->content => mir*);
         self.de_reference();
 
-        var source = self.value_stack.back()->clone();
+        var source = self.value_stack.back().clone();
         defer source.delete();
 
         // for enum member
@@ -1702,13 +1702,13 @@ impl mir2sir {
     func visit_mir_call_index(self, n: mir_call_index*) {
         self.de_reference();
 
-        var prev = self.value_stack.back()->clone();
+        var prev = self.value_stack.back().clone();
         defer prev.delete();
         self.value_stack.pop_back();
 
         self.visit(n->index => mir*);
 
-        var index = self.value_stack.back()->clone();
+        var index = self.value_stack.back().clone();
         defer index.delete();
         self.value_stack.pop_back();
 
@@ -1789,7 +1789,7 @@ impl mir2sir {
     }
 
     func visit_mir_call_func(self, n: mir_call_func*) {
-        var prev = self.value_stack.back()->clone();
+        var prev = self.value_stack.back().clone();
         defer prev.delete();
         self.value_stack.pop_back();
 
@@ -1809,7 +1809,7 @@ impl mir2sir {
         // load "self" argument
         if (prev.value_kind == mir_value_kind::method) {
             self.de_reference();
-            args.push(self.value_stack.back());
+            args.push(self.value_stack.back().__ptr__());
             self.value_stack.pop_back();
         }
         // load arguments
@@ -1819,7 +1819,7 @@ impl mir2sir {
             } else {
                 self.visit(i.get());
             }
-            args.push(self.value_stack.back());
+            args.push(self.value_stack.back().__ptr__());
             self.value_stack.pop_back();
         }
 
@@ -1933,7 +1933,7 @@ impl mir2sir {
 
     func visit_mir_get_field(self, n: mir_get_field*) {
         self.de_reference();
-        var prev = self.value_stack.back()->clone();
+        var prev = self.value_stack.back().clone();
         defer prev.delete();
 
         var prev_name_for_search = prev.resolved_type.generic_name(self.pkg);
@@ -2109,7 +2109,7 @@ impl mir2sir {
     func visit_mir_ptr_get_field(self, n: mir_ptr_get_field*) {
         self.de_reference();
 
-        var prev = self.value_stack.back()->clone();
+        var prev = self.value_stack.back().clone();
         defer prev.delete();
 
         var prev_name_for_search = prev.resolved_type.generic_name(self.pkg);
@@ -2376,7 +2376,7 @@ impl mir2sir {
     }
 
     func visit_mir_get_path(self, n: mir_get_path*) {
-        var prev = self.value_stack.back()->clone();
+        var prev = self.value_stack.back().clone();
         defer prev.delete();
         self.value_stack.pop_back();
 
@@ -2471,7 +2471,7 @@ impl mir2sir {
             self.visit(n->init_value => mir*);
         }
 
-        var source = self.value_stack.back()->clone();
+        var source = self.value_stack.back().clone();
         defer source.delete();
         self.value_stack.pop_back();
 
@@ -2493,7 +2493,7 @@ impl mir2sir {
             n->left->content.get(0) => mir_call*,
             true
         );
-        var left = self.value_stack.back()->clone();
+        var left = self.value_stack.back().clone();
         var left_value = left.to_value_t();
         self.value_stack.pop_back();
         defer {
@@ -2502,7 +2502,7 @@ impl mir2sir {
         }
 
         self.visit(n->right => mir*);
-        var right = self.value_stack.back()->clone();
+        var right = self.value_stack.back().clone();
         var right_value = right.to_value_t();
         var right_ty = self.type_mapping(right.resolved_type.__ptr__());
         self.value_stack.pop_back();
@@ -2770,7 +2770,7 @@ impl mir2sir {
         if (n->condition != nil) {
             self.visit(n->condition => mir*);
 
-            var cond = self.value_stack.back()->clone();
+            var cond = self.value_stack.back().clone();
             defer cond.delete();
             self.value_stack.pop_back();
 
@@ -2796,7 +2796,7 @@ impl mir2sir {
 
         var jump_out = sir_br::new(0);
         self.block->add_stmt(jump_out => sir*);
-        self.branch_jump_out.back()->push(jump_out);
+        self.branch_jump_out.back().push(jump_out);
 
         if (br_cond != nil) {
             br_cond->label_false = self.block->stmts.size;
@@ -2831,7 +2831,7 @@ impl mir2sir {
 
     func visit_mir_switch(self, n: mir_switch*) {
         self.visit(n->condition => mir*);
-        var value = self.value_stack.back()->clone();
+        var value = self.value_stack.back().clone();
         self.value_stack.pop_back();
         defer value.delete();
 
@@ -2962,7 +2962,7 @@ impl mir2sir {
 
     func visit_mir_break(self) {
         var break_br = sir_br::new(0);
-        self.break_inst.back()->push(break_br);
+        self.break_inst.back().push(break_br);
 
         self.block->add_stmt(break_br => sir*);
         self.block->add_stmt(sir_label::new(
@@ -2973,7 +2973,7 @@ impl mir2sir {
 
     func visit_mir_continue(self) {
         var continue_br = sir_br::new(0);
-        self.continue_inst.back()->push(continue_br);
+        self.continue_inst.back().push(continue_br);
 
         self.block->add_stmt(continue_br => sir*);
         self.block->add_stmt(sir_label::new(
@@ -3006,7 +3006,7 @@ impl mir2sir {
         self.block->add_stmt(sir_label::new(entry_label_index, "loop.entry") => sir*);
 
         self.visit(n->condition => mir*);
-        var cond = self.value_stack.back()->clone();
+        var cond = self.value_stack.back().clone();
         defer cond.delete();
         self.value_stack.pop_back();
 
@@ -3091,7 +3091,7 @@ impl mir2sir {
             self.visit(n->value => mir*);
         }
 
-        var ret = self.value_stack.back()->clone();
+        var ret = self.value_stack.back().clone();
         self.value_stack.pop_back();
         defer ret.delete();
 
