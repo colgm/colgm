@@ -31,8 +31,8 @@ impl list_iter<T> {
     }
 
     #[is_non_trivial(T)]
-    pub func elem(self) -> T* {
-        return self.current->elem.__ptr__();
+    pub func elem(self) -> T& {
+        return self.current->elem;
     }
 
     #[is_trivial(T)]
@@ -104,12 +104,12 @@ impl list<T> {
     }
 
     #[is_non_trivial(T)]
-    pub func insert(self, elem: T*) {
+    pub func insert(self, elem: T&) {
         var new_node = node<T>::__alloc__();
         if (new_node == nil) {
             panic("failed to allocate memory");
         }
-        new_node->elem = elem->clone();
+        new_node->elem = elem.clone();
         new_node->next = nil;
         new_node->prev = self.tail;
 
@@ -145,7 +145,7 @@ impl list<T> {
     }
 
     #[is_non_trivial(T)]
-    pub func push_back(self, elem: T*) {
+    pub func push_back(self, elem: T&) {
         self.insert(elem);
     }
 

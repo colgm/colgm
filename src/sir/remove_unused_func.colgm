@@ -14,11 +14,11 @@ func check_main(func_map: hashmap<str, sir_func*>*) -> bool {
     var main_name = str::from("main");
     defer main_name.delete();
 
-    if (!func_map->has(main_name.__ptr__())) {
+    if (!func_map->has(main_name)) {
         return false;
     }
 
-    var main_func = func_map->get(main_name.__ptr__());
+    var main_func = func_map->get(main_name);
     return main_func->body != nil && !main_func->body->stmts.empty();
 }
 
@@ -45,12 +45,12 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
 
     var new_pair = pair<str, sir_func*>::instance(
         main_name,
-        func_map.get(main_name.__ptr__())
+        func_map.get(main_name)
     );
     defer new_pair.delete();
 
-    bfs.push(new_pair.__ptr__());
-    used_func.insert(main_name.__ptr__());
+    bfs.push(new_pair);
+    used_func.insert(main_name);
     while (!bfs.empty()) {
         var cur = bfs.front()->clone();
         defer cur.delete();
@@ -62,21 +62,21 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
             if (stmt->kind == sir_kind::sir_call) {
                 var call_stmt = stmt => sir_call*;
                 var callee: str& = call_stmt->name;
-                if (used_func.has(callee.__ptr__())) {
+                if (used_func.has(callee)) {
                     continue;
                 }
-                if (!func_map.has(callee.__ptr__())) {
+                if (!func_map.has(callee)) {
                     continue;
                 }
-                var callee_func = func_map.get(callee.__ptr__());
+                var callee_func = func_map.get(callee);
                 var callee_pair = pair<str, sir_func*>::instance(
                     callee,
                     callee_func
                 );
                 defer callee_pair.delete();
 
-                bfs.push(callee_pair.__ptr__());
-                used_func.insert(callee.__ptr__());
+                bfs.push(callee_pair);
+                used_func.insert(callee);
             }
         }
     }
@@ -84,7 +84,7 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
     var delete_count = 0;
     foreach (var i; ctx->func_impls) {
         var f = i.get();
-        if (!used_func.has(f.name.__ptr__())) {
+        if (!used_func.has(f.name)) {
             // mark as eliminated, avoid too many copy operations
             f.eliminated = true;
             delete_count += 1;

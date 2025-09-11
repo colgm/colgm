@@ -56,11 +56,8 @@ impl type_resolve {
         if (node == nil) {
             panic("node for type resolve cannot be nil");
         }
-        var name = node->name->content.__ptr__();
-        var file = node->base.location.file.__ptr__();
-        if (node->base.is_redirected()) {
-            file = node->base.redirect_location.__ptr__();
-        }
+        var name: str& = node->name->content;
+        var file = node->base.get_real_location_file();
 
         var G = self.ctx->global;
 
@@ -71,7 +68,7 @@ impl type_resolve {
         var DM = G->domain.get(file);
         var GN = self.ctx->generics.__ptr__();
 
-        if (name->eq_const("void") && node->pointer_depth == 0 && node->is_reference) {
+        if (name.eq_const("void") && node->pointer_depth == 0 && node->is_reference) {
             self.err->error(node->base.location.__ptr__(), "cannot use reference void type");
             return type::error_type();
         }
@@ -80,7 +77,7 @@ impl type_resolve {
         if (!DM->global_symbol.has(name) && !GN->has(name)) {
             var info = str::from("undefined type \"");
             defer info.delete();
-            info.append_str(name[0]).append("\"");
+            info.append_str(name).append("\"");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
             return type::error_type();
@@ -92,7 +89,7 @@ impl type_resolve {
             !DM->global_symbol.get(name)->is_public) {
             var info = str::from("private type \"");
             defer info.delete();
-            info.append_str(name[0]).append("\" cannot be used");
+            info.append_str(name).append("\" cannot be used");
 
             self.err->error(node->base.location.__ptr__(), info.c_str);
             return type::error_type();
@@ -103,7 +100,7 @@ impl type_resolve {
             DM->global_symbol.get(name)->kind == symbol_kind::func_kind) {
             var info =  str::from("\"");
             defer info.delete();
-            info.append_str(name[0])
+            info.append_str(name)
                 .append("\" is a function, ")
                 .append("cannot be used as a type");
 
@@ -111,7 +108,7 @@ impl type_resolve {
             return type::error_type();
         }
 
-        var t = type::instance(name->c_str, "");
+        var t = type::instance(name.c_str, "");
         t.pointer_depth = node->pointer_depth;
         t.is_const = node->is_const;
 

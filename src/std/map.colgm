@@ -67,14 +67,14 @@ impl hashmap<K, V> {
 }
 
 impl hashmap<K, V> {
-    pub func has(self, key: K*) -> bool {
+    pub func has(self, key: K&) -> bool {
         if (self.bucket_capacity == 0) {
             panic("capacity is 0");
         }
-        var hash = key->hash() % self.bucket_capacity;
+        var hash = key.hash() % self.bucket_capacity;
         var bucket = self.bucket[hash].__ptr__();
         foreach (var i; bucket) {
-            if (i.elem()->key.eq(key)) {
+            if (i.elem().key.eq(key)) {
                 return true;
             }
         }
@@ -82,17 +82,17 @@ impl hashmap<K, V> {
     }
 
     #[is_non_trivial(V)]
-    pub func get(self, key: K*) -> V* {
+    pub func get(self, key: K&) -> V* {
         if (self.bucket_capacity == 0) {
             panic("capacity is 0");
         }
-        var hash = key->hash() % self.bucket_capacity;
+        var hash = key.hash() % self.bucket_capacity;
         var bucket = self.bucket[hash].__ptr__();
 
         var elem: pair<K, V>* = nil;
         foreach (var i; bucket) {
-            if (i.elem()->key.eq(key)) {
-                elem = i.elem();
+            if (i.elem().key.eq(key)) {
+                elem = i.elem().__ptr__();
                 break;
             }
         }
@@ -104,17 +104,17 @@ impl hashmap<K, V> {
     }
 
     #[is_trivial(V)]
-    pub func get(self, key: K*) -> V {
+    pub func get(self, key: K&) -> V {
         if (self.bucket_capacity == 0) {
             panic("capacity is 0");
         }
-        var hash = key->hash() % self.bucket_capacity;
+        var hash = key.hash() % self.bucket_capacity;
         var bucket = self.bucket[hash].__ptr__();
 
         var elem: pair<K, V>* = nil;
         foreach (var i; bucket) {
-            if (i.elem()->key.eq(key)) {
-                elem = i.elem();
+            if (i.elem().key.eq(key)) {
+                elem = i.elem().__ptr__();
                 break;
             }
         }
@@ -130,10 +130,10 @@ impl hashmap<K, V> {
         var hash = key.hash() % self.bucket_capacity;
         var bucket = self.bucket[hash].__ptr__();
         foreach (var i; bucket) {
-            if (i.elem()->key.eq(key.__ptr__())) {
+            if (i.elem().key.eq(key)) {
                 var tmp = i.elem();
-                tmp->value.delete();
-                tmp->value = value.clone();
+                tmp.value.delete();
+                tmp.value = value.clone();
                 return;
             }
         }
@@ -142,7 +142,7 @@ impl hashmap<K, V> {
         defer tmp_pair.delete();
 
         // do copy in insert method
-        bucket->insert(tmp_pair.__ptr__());
+        bucket->insert(tmp_pair);
         self.size += 1;
 
         if (self.size / self.bucket_capacity > 8) {
@@ -155,8 +155,8 @@ impl hashmap<K, V> {
         var hash = key.hash() % self.bucket_capacity;
         var bucket = self.bucket[hash].__ptr__();
         foreach (var i; bucket) {
-            if (i.elem()->key.eq(key.__ptr__())) {
-                i.elem()->value = value;
+            if (i.elem().key.eq(key)) {
+                i.elem().value = value;
                 return;
             }
         }
@@ -165,7 +165,7 @@ impl hashmap<K, V> {
         defer tmp_pair.delete();
 
         // do copy in insert method
-        bucket->insert(tmp_pair.__ptr__());
+        bucket->insert(tmp_pair);
         self.size += 1;
 
         if (self.size / self.bucket_capacity > 8) {
@@ -178,7 +178,7 @@ impl hashmap<K, V> {
         foreach (var i; self) {
             var tmp_pair = pair<K, V>::instance(i.key(), i.value());
             defer tmp_pair.delete();
-            temp.insert(tmp_pair.__ptr__());
+            temp.insert(tmp_pair);
         }
 
         self.clear();
@@ -201,7 +201,7 @@ impl hashmap<K, V> {
         defer temp.delete();
 
         foreach (var i; temp) {
-            self.insert(i.elem()->key, i.elem()->value);
+            self.insert(i.elem().key, i.elem().value);
         }
     }
 
@@ -211,12 +211,12 @@ impl hashmap<K, V> {
         defer temp.delete();
 
         foreach (var i; temp) {
-            self.insert(i.elem()->key, i.elem()->value);
+            self.insert(i.elem().key, i.elem().value);
         }
     }
 
-    pub func remove(self, key: K*) {
-        var hash = key->hash() % self.bucket_capacity;
+    pub func remove(self, key: K&) {
+        var hash = key.hash() % self.bucket_capacity;
         var bucket = self.bucket[hash].__ptr__();
         var cur = bucket->head;
         while (cur != nil) {
@@ -297,17 +297,17 @@ impl iter<K, V> {
     }
 
     pub func key(self) -> K& {
-        return self.bucket_iter.elem()->key;
+        return self.bucket_iter.elem().key;
     }
 
     #[is_non_trivial(V)]
     pub func value(self) -> V& {
-        return self.bucket_iter.elem()->value;
+        return self.bucket_iter.elem().value;
     }
 
     #[is_trivial(V)]
     pub func value(self) -> V {
-        return self.bucket_iter.elem()->value;
+        return self.bucket_iter.elem().value;
     }
 }
 

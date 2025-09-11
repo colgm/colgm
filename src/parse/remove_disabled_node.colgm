@@ -38,8 +38,7 @@ func check_enable_if(err: report*, acc: ast_cond_compile*, co: cli_option*) -> b
     }
 
     foreach (var i; acc->conds) {
-        if (!i.key().eq(key_target_os.__ptr__()) &&
-            !i.key().eq(key_arch.__ptr__())) {
+        if (!i.key().eq(key_target_os) && !i.key().eq(key_arch)) {
             var info = str::from("invalid enable_if condition \"");
             defer info.delete();
 
@@ -49,20 +48,19 @@ func check_enable_if(err: report*, acc: ast_cond_compile*, co: cli_option*) -> b
         }
     }
 
-    if (acc->conds.has(key_target_os.__ptr__()) &&
-        acc->conds.has(key_arch.__ptr__())) {
-        var target_os = acc->conds.get(key_target_os.__ptr__());
-        var target_arch = acc->conds.get(key_arch.__ptr__());
+    if (acc->conds.has(key_target_os) && acc->conds.has(key_arch)) {
+        var target_os = acc->conds.get(key_target_os);
+        var target_arch = acc->conds.get(key_arch);
         return target_os->eq_const(platform) && target_arch->eq_const(arch);
     }
 
-    if (acc->conds.has(key_target_os.__ptr__())) {
-        var target_os = acc->conds.get(key_target_os.__ptr__());
+    if (acc->conds.has(key_target_os)) {
+        var target_os = acc->conds.get(key_target_os);
         return target_os->eq_const(platform);
     }
 
-    if (acc->conds.has(key_arch.__ptr__())) {
-        var target_arch = acc->conds.get(key_arch.__ptr__());
+    if (acc->conds.has(key_arch)) {
+        var target_arch = acc->conds.get(key_arch);
         return target_arch->eq_const(arch);
     }
 

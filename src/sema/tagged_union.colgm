@@ -80,13 +80,13 @@ impl colgm_tagged_union {
         return !self.ref_enum_type.name.empty();
     }
 
-    pub func check_member_exists(self, name: str*) -> bool {
+    pub func check_member_exists(self, name: str&) -> bool {
         return self.members.has(name) ||
                self.method.has(name) ||
                self.static_method.has(name);
     }
 
-    pub func get_member_span(self, name: str*) -> span* {
+    pub func get_member_span(self, name: str&) -> span* {
         if (self.members_span.has(name)) {
             return self.members_span.get(name);
         }
@@ -186,10 +186,10 @@ impl colgm_tagged_union {
             var member = self.ordered_members.get(i);
             out.out("    ").out(member.c_str);
             // dump mapped int
-            out.light_green().out("(").out_i64(self.member_int_map.get(member.__ptr__()));
+            out.light_green().out("(").out_i64(self.member_int_map.get(member));
             out.out(")").reset().out(": ");
             // dump type
-            self.members.get(member.__ptr__())->dump(out, pkg);
+            self.members.get(member)->dump(out, pkg);
             out.out("\n");
         }
         foreach (var i; self.method) {

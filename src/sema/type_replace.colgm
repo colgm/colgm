@@ -191,8 +191,8 @@ impl type_replace_pass {
     }
 
     func visit_call_id(self, n: ast_call_id*) {
-        var name = n->id->content.__ptr__();
-        var copy = name->clone();
+        var name: str& = n->id->content;
+        var copy = name.clone();
         defer copy.delete();
 
         if (self.g_data->types.has(name)) {
@@ -221,7 +221,7 @@ impl type_replace_pass {
                     info.delete();
                     st_full_name.delete();
                 }
-                info.append_str(name[0]);
+                info.append_str(name);
                 info.append("\" with \"");
                 info.append_str(st_full_name);
                 info.append("\", which is already a generic type");
@@ -274,8 +274,8 @@ impl type_replace_pass {
     }
 
     func visit_type_def(self, n: ast_type_def*) {
-        var name = n->name->content.__ptr__();
-        var copy = name->clone();
+        var name: str& = n->name->content;
+        var copy = name.clone();
         defer copy.delete();
 
         if (self.g_data->types.has(name)) {
@@ -291,7 +291,7 @@ impl type_replace_pass {
                     info.delete();
                     st_full_name.delete();
                 }
-                info.append_str(name[0]);
+                info.append_str(name);
                 info.append("\" with \"");
                 info.append_str(st_full_name);
                 info.append("\", which is already a generic type");

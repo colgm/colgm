@@ -100,12 +100,12 @@ impl colgm_struct {
     }
 
     pub func check_field_exists(self, name: str&) -> bool {
-        return self.fields.has(name.__ptr__()) ||
-               self.method.has(name.__ptr__()) ||
-               self.static_method.has(name.__ptr__());
+        return self.fields.has(name) ||
+               self.method.has(name) ||
+               self.static_method.has(name);
     }
 
-    pub func field_index(self, name: str*) -> i64 {
+    pub func field_index(self, name: str&) -> i64 {
         foreach (var i; self.ordered_fields) {
             if (i.get().eq(name)) {
                 return i.index() => i64;
@@ -114,7 +114,7 @@ impl colgm_struct {
         return -1;
     }
 
-    pub func get_field_span(self, name: str*) -> span* {
+    pub func get_field_span(self, name: str&) -> span* {
         if (self.fields_span.has(name)) {
             return self.fields_span.get(name);
         }
@@ -224,7 +224,7 @@ impl colgm_struct {
         forindex (var i; self.ordered_fields) {
             var field = self.ordered_fields.get(i);
             out.out("    ").out(field.c_str).out(": ");
-            self.fields.get(field.__ptr__())->dump(out, pkg);
+            self.fields.get(field)->dump(out, pkg);
             out.out("\n");
         }
         foreach (var i; self.method) {

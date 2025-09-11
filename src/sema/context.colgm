@@ -40,7 +40,7 @@ impl global_symbol_table {
     }
 
     pub func create_domain_if_not_exist(self, name: str&) {
-        if (self.domain.has(name.__ptr__())) {
+        if (self.domain.has(name)) {
             return;
         }
 
@@ -118,7 +118,7 @@ impl sema_context {
         self.local_scope.back()->insert(name, lv);
     }
 
-    pub func add_var_used(self, name: str*) {
+    pub func add_var_used(self, name: str&) {
         if (self.local_scope.empty()) {
             return;
         }
@@ -130,7 +130,7 @@ impl sema_context {
         }
     }
 
-    pub func get_local(self, name: str*) -> type* {
+    pub func get_local(self, name: str&) -> type* {
         if (self.local_scope.empty()) {
             return nil;
         }
@@ -142,7 +142,7 @@ impl sema_context {
         return nil;
     }
 
-    pub func get_local_def_location(self, name: str*) -> span* {
+    pub func get_local_def_location(self, name: str&) -> span* {
         if (self.local_scope.empty()) {
             return nil;
         }
@@ -154,7 +154,7 @@ impl sema_context {
         return nil;
     }
 
-    pub func find_local(self, name: str*) -> bool {
+    pub func find_local(self, name: str&) -> bool {
         if (self.local_scope.empty()) {
             return false;
         }
@@ -169,13 +169,13 @@ impl sema_context {
 
 impl sema_context {
     pub func global_symbol(self) -> hashmap<str, symbol_info>* {
-        return self.get_domain(self.this_file.__ptr__())
+        return self.get_domain(self.this_file)
                    ->global_symbol
                    .__ptr__();
     }
 
     pub func generic_symbol(self) -> hashmap<str, symbol_info>* {
-        return self.get_domain(self.this_file.__ptr__())
+        return self.get_domain(self.this_file)
                    ->generic_symbol
                    .__ptr__();
     }
@@ -221,11 +221,11 @@ impl sema_context {
         self.global->create_domain_if_not_exist(name);
     }
 
-    pub func has_domain(self, name: str*) -> bool {
+    pub func has_domain(self, name: str&) -> bool {
         return self.global->domain.has(name);
     }
 
-    pub func get_domain(self, name: str*) -> colgm_module* {
+    pub func get_domain(self, name: str&) -> colgm_module* {
         if (self.has_domain(name)) {
             return self.global->domain.get(name);
         }
