@@ -58,10 +58,10 @@ struct local_variable {
 }
 
 impl local_variable {
-    pub func instance(t: type*, l: span*) -> local_variable {
+    pub func instance(t: type&, l: span&) -> local_variable {
         return local_variable {
-            type: t->clone(),
-            location: l->clone(),
+            type: t.clone(),
+            location: l.clone(),
             used: false
         };
     }
@@ -111,7 +111,7 @@ impl sema_context {
         self.local_scope.pop_back();
     }
 
-    pub func add_local_var(self, name: str&, t: type*, loc: span*) {
+    pub func add_local_var(self, name: str&, t: type&, loc: span&) {
         var lv = local_variable::instance(t, loc);
         defer lv.delete();
         

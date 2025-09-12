@@ -91,20 +91,20 @@ impl type {
         self.generics.delete();
     }
 
-    pub func reset_with(self, t: type*) {
+    pub func reset_with(self, t: type&) {
         self.delete();
-        self.name = t->name.clone();
-        self.loc_file = t->loc_file.clone();
-        self.pointer_depth = t->pointer_depth;
-        self.is_global_sym = t->is_global_sym;
-        self.is_global_func = t->is_global_func;
-        self.is_enum = t->is_enum;
-        self.array_length = t->array_length;
-        self.is_array = t->is_array;
-        self.is_reference = t->is_reference;
-        self.is_const = t->is_const;
-        self.m_info = t->m_info.clone();
-        self.generics = t->generics.clone();
+        self.name = t.name.clone();
+        self.loc_file = t.loc_file.clone();
+        self.pointer_depth = t.pointer_depth;
+        self.is_global_sym = t.is_global_sym;
+        self.is_global_func = t.is_global_func;
+        self.is_enum = t.is_enum;
+        self.array_length = t.array_length;
+        self.is_array = t.is_array;
+        self.is_reference = t.is_reference;
+        self.is_const = t.is_const;
+        self.m_info = t.m_info.clone();
+        self.generics = t.generics.clone();
     }
 
     pub func clone(self) -> type {
@@ -170,19 +170,19 @@ impl type {
         };
     }
 
-    pub func eq(self, t: type*) -> bool {
-        if (!self.name.eq(t->name)) {
+    pub func eq(self, t: type&) -> bool {
+        if (!self.name.eq(t.name)) {
             return false;
         }
-        if (self.pointer_depth != t->pointer_depth) {
+        if (self.pointer_depth != t.pointer_depth) {
             return false;
         }
-        if (self.generics.size != t->generics.size) {
+        if (self.generics.size != t.generics.size) {
             return false;
         }
         foreach (var i; self.generics) {
-            var t_g = t->generics.get(i.index());
-            if (!i.get().eq(t_g.__ptr__())) {
+            var t_g = t.generics.get(i.index());
+            if (!i.get().eq(t_g)) {
                 return false;
             }
         }

@@ -317,14 +317,14 @@ impl mir2sir {
 
             if (m_un.max_align_type.is_array) {
                 var mapped_type = self.array_type_mapping(
-                    m_un.max_align_type.__ptr__()
+                    m_un.max_align_type
                 );
                 defer mapped_type.delete();
 
                 s_un.member_type.push(mapped_type);
             } else {
                 var mapped_type = self.type_mapping(
-                    m_un.max_align_type.__ptr__()
+                    m_un.max_align_type
                 );
                 defer mapped_type.delete();
 
@@ -370,12 +370,12 @@ impl mir2sir {
             foreach (var j; m_stct.field_type) {
                 var m_field = j.get();
                 if (m_field.is_array) {
-                    var mapped_type = self.array_type_mapping(m_field.__ptr__());
+                    var mapped_type = self.array_type_mapping(m_field);
                     defer mapped_type.delete();
 
                     s_stct.field_type.push(mapped_type);
                 } else {
-                    var mapped_type = self.type_mapping(m_field.__ptr__());
+                    var mapped_type = self.type_mapping(m_field);
                     defer mapped_type.delete();
 
                     s_stct.field_type.push(mapped_type);
@@ -397,7 +397,7 @@ impl mir2sir {
             s_func.with_va_args = m_func.with_va_args;
             defer s_func.delete();
 
-            var ret_type_name = self.type_mapping(m_func.return_type.__ptr__());
+            var ret_type_name = self.type_mapping(m_func.return_type);
             defer ret_type_name.delete();
 
             s_func.return_type.append_str(ret_type_name);
@@ -405,7 +405,7 @@ impl mir2sir {
             foreach (var j; m_func.params) {
                 var m_param = j.get();
 
-                var mapped_type = self.type_mapping(m_param.value.__ptr__());
+                var mapped_type = self.type_mapping(m_param.value);
                 defer mapped_type.delete();
 
                 var p_pair = pair<str, str>::instance(m_param.key, mapped_type);
@@ -419,7 +419,7 @@ impl mir2sir {
     }
 
     func process_print(self, curr: u64, total: u64, ts: timestamp&) {
-        if (curr + 1 != total && (curr + 1) % 50 != 0) {
+        if (curr + 1 != total && (curr + 1) % 25 != 0) {
             return;
         }
 
@@ -465,7 +465,7 @@ impl mir2sir {
             s_func.set_attributes(m_func.attributes);
             defer s_func.delete();
 
-            var ret_type_name = self.type_mapping(m_func.return_type.__ptr__());
+            var ret_type_name = self.type_mapping(m_func.return_type);
             defer ret_type_name.delete();
             s_func.return_type.append_str(ret_type_name);
 
@@ -475,7 +475,7 @@ impl mir2sir {
 
             foreach (var j; m_func.params) {
                 var m_param = j.get();
-                var mapped_type = self.type_mapping(m_param.value.__ptr__());
+                var mapped_type = self.type_mapping(m_param.value);
                 defer mapped_type.delete();
 
                 var param_name = m_param.key.clone();
@@ -551,8 +551,8 @@ impl mir2sir {
         }
     }
 
-    func type_mapping(self, t: type*) -> str {
-        var copy = t->clone();
+    func type_mapping(self, t: type&) -> str {
+        var copy = t.clone();
         defer copy.delete();
 
         // basic type mapping
@@ -567,7 +567,7 @@ impl mir2sir {
             return res;
         }
 
-        var full_name = t->full_path_name(self.pkg);
+        var full_name = t.full_path_name(self.pkg);
         defer full_name.delete();
 
         // if not found, let it crash
@@ -622,7 +622,7 @@ impl mir2sir {
 
                 // should copy pointer depth too
                 i64_t.pointer_depth = copy.pointer_depth;
-                copy.reset_with(i64_t.__ptr__());
+                copy.reset_with(i64_t);
             }
             _ => {
                 panic("unsupported type kind");
@@ -634,16 +634,16 @@ impl mir2sir {
         return res;
     }
 
-    func array_type_mapping(self, t: type*) -> str {
-        if (!t->is_array) {
+    func array_type_mapping(self, t: type&) -> str {
+        if (!t.is_array) {
             panic("not array type");
         }
 
-        var copy = t->ref_copy();
+        var copy = t.ref_copy();
         copy.is_array = false;
         defer copy.delete();
 
-        var mapped_type = self.type_mapping(copy.__ptr__());
+        var mapped_type = self.type_mapping(copy);
         defer mapped_type.delete();
 
         var array_name = str::from("[");
@@ -657,7 +657,7 @@ impl mir2sir {
     func generate_func_impl_from_mir_func(self, m_func: mir_func&) {
         foreach (var i; m_func.params) {
             var m_param = i.get();
-            var mapped_type = self.type_mapping(m_param.value.__ptr__());
+            var mapped_type = self.type_mapping(m_param.value);
             defer mapped_type.delete();
 
             var param_name = m_param.key.clone();
@@ -708,7 +708,7 @@ impl mir2sir {
 
         var source_value = source.to_value_t();
         defer source_value.delete();
-        var source_ty = self.type_mapping(source.resolved_type.__ptr__());
+        var source_ty = self.type_mapping(source.resolved_type);
         defer source_ty.delete();
 
         var temp_var = self.ssa_gen.create();
@@ -930,7 +930,7 @@ impl mir2sir {
         self.visit(n->left => mir*);
         var left = self.value_stack.back().clone();
         var left_value = left.to_value_t();
-        var left_ty = self.type_mapping(left.resolved_type.__ptr__());
+        var left_ty = self.type_mapping(left.resolved_type);
         defer {
             left.delete();
             left_value.delete();
@@ -1121,8 +1121,8 @@ impl mir2sir {
 
         var source_value = source.to_value_t();
         var temp_var_value = value_t::variable(temp_var);
-        var source_ty = self.type_mapping(source.resolved_type.__ptr__());
-        var n_ty = self.type_mapping(n->target.__ptr__());
+        var source_ty = self.type_mapping(source.resolved_type);
+        var n_ty = self.type_mapping(n->target);
         defer {
             source_value.delete();
             temp_var_value.delete();
@@ -1236,7 +1236,7 @@ impl mir2sir {
         var ref_copy = n->resolved_type.ref_copy();
         defer ref_copy.delete();
 
-        var array_elem_type = self.type_mapping(ref_copy.__ptr__());
+        var array_elem_type = self.type_mapping(ref_copy);
         defer array_elem_type.delete();
 
         var ati = array_type_t::instance(
@@ -1324,7 +1324,7 @@ impl mir2sir {
         var temp_var_value = value_t::variable(temp_var);
         defer temp_var_value.delete();
 
-        var n_ty = self.type_mapping(n->resolved_type.__ptr__());
+        var n_ty = self.type_mapping(n->resolved_type);
         defer n_ty.delete();
 
         self.block->add_move_register(sir_alloca::new(
@@ -1374,7 +1374,7 @@ impl mir2sir {
                 defer res.delete();
                 self.value_stack.pop_back();
 
-                var res_ty = self.type_mapping(res.resolved_type.__ptr__());
+                var res_ty = self.type_mapping(res.resolved_type);
                 defer res_ty.delete();
 
                 var res_value = res.to_value_t();
@@ -1446,11 +1446,11 @@ impl mir2sir {
                     un_full_path_name
                 )->max_align_type.pointer_copy();
                 defer base_type.delete();
-                var base_type_name = self.type_mapping(base_type.__ptr__());
+                var base_type_name = self.type_mapping(base_type);
                 defer base_type_name.delete();
                 var target_type = un->members.get(i.get().name)->pointer_copy();
                 defer target_type.delete();
-                var target_type_name = self.type_mapping(target_type.__ptr__());
+                var target_type_name = self.type_mapping(target_type);
                 defer target_type_name.delete();
 
                 self.block->add_stmt(sir_type_convert::new(
@@ -1469,7 +1469,7 @@ impl mir2sir {
                 defer res.delete();
                 self.value_stack.pop_back();
 
-                var res_ty = self.type_mapping(res.resolved_type.__ptr__());
+                var res_ty = self.type_mapping(res.resolved_type);
                 defer res_ty.delete();
 
                 var res_value = res.to_value_t();
@@ -1509,7 +1509,7 @@ impl mir2sir {
         source_ref.is_reference = false;
         defer source_ref.delete();
 
-        var source_ref_ty = self.type_mapping(source_ref.__ptr__());
+        var source_ref_ty = self.type_mapping(source_ref);
         defer source_ref_ty.delete();
         var source_value = source.to_value_t();
         defer source_value.delete();
@@ -1558,7 +1558,7 @@ impl mir2sir {
         var temp_var = self.ssa_gen.create();
         var temp_var_value = value_t::variable(temp_var);
         var source_ref = source.resolved_type.ref_copy();
-        var source_ref_ty = self.type_mapping(source_ref.__ptr__());
+        var source_ref_ty = self.type_mapping(source_ref);
         var source_value = source.to_value_t();
         defer {
             temp_var.delete();
@@ -1572,7 +1572,7 @@ impl mir2sir {
             var source_ref_ref = source_ref.ref_copy();
             defer source_ref_ref.delete();
 
-            var source_ref_ref_ty = self.type_mapping(source_ref_ref.__ptr__());
+            var source_ref_ref_ty = self.type_mapping(source_ref_ref);
             defer source_ref_ref_ty.delete();
 
             // for example:
@@ -1718,7 +1718,7 @@ impl mir2sir {
         var prev_ref = prev.resolved_type.ref_copy();
         defer prev_ref.delete();
 
-        var prev_ref_ty = self.type_mapping(prev_ref.__ptr__());
+        var prev_ref_ty = self.type_mapping(prev_ref);
         defer prev_ref_ty.delete();
 
         var prev_value = prev.to_value_t();
@@ -1731,7 +1731,7 @@ impl mir2sir {
             var prev_ref_ref = prev_ref.ref_copy();
             defer prev_ref_ref.delete();
 
-            var prev_ref_ref_ty = self.type_mapping(prev_ref_ref.__ptr__());
+            var prev_ref_ref_ty = self.type_mapping(prev_ref_ref);
             defer prev_ref_ref_ty.delete();
 
             self.block->add_stmt(sir_array_cast::new(
@@ -1761,10 +1761,10 @@ impl mir2sir {
         var prev_ref_ref = prev_ref.ref_copy();
         defer prev_ref_ref.delete();
 
-        var prev_ref_ref_ty = self.type_mapping(prev_ref_ref.__ptr__());
+        var prev_ref_ref_ty = self.type_mapping(prev_ref_ref);
         defer prev_ref_ref_ty.delete();
 
-        var index_ty = self.type_mapping(index.resolved_type.__ptr__());
+        var index_ty = self.type_mapping(index.resolved_type);
         defer index_ty.delete();
 
         self.block->add_stmt(sir_get_index::new(
@@ -1833,7 +1833,7 @@ impl mir2sir {
 
             target.append_str(temp);
 
-            var n_ty = self.type_mapping(n->resolved_type.__ptr__());
+            var n_ty = self.type_mapping(n->resolved_type);
             var target_value = value_t::variable(target);
             var mangled_name = mangle_function_name(prev.content);
             defer {
@@ -1849,7 +1849,7 @@ impl mir2sir {
                 self.generate_DI_location(n->base.location)
             );            
         } else {
-            var n_ty = self.type_mapping(n->resolved_type.__ptr__());
+            var n_ty = self.type_mapping(n->resolved_type);
             var target_value = value_t::null(nil);
             var mangled_name = mangle_function_name(prev.content);
             defer {
@@ -1872,7 +1872,7 @@ impl mir2sir {
             var arg_val = arg.to_value_t();
             defer arg_val.delete();
 
-            var arg_ty = self.type_mapping(arg.resolved_type.__ptr__());
+            var arg_ty = self.type_mapping(arg.resolved_type);
             defer arg_ty.delete();
 
             sir_function_call->add_arg(arg_val, arg_ty);
@@ -1895,7 +1895,7 @@ impl mir2sir {
             real.append_str(temp_var).append(".r");
             defer real.delete();
 
-            var n_ty = self.type_mapping(n->resolved_type.__ptr__());
+            var n_ty = self.type_mapping(n->resolved_type);
             var target_value = value_t::variable(target);
             var temp_var_value = value_t::variable(temp_var);
             defer {
@@ -1998,7 +1998,7 @@ impl mir2sir {
 
             var prev_value = prev.to_value_t();
             var prev_ref = prev.resolved_type.ref_copy();
-            var prev_ref_ty = self.type_mapping(prev_ref.__ptr__());
+            var prev_ref_ty = self.type_mapping(prev_ref);
             defer {
                 prev_value.delete();
                 prev_ref.delete();
@@ -2055,7 +2055,7 @@ impl mir2sir {
 
             var prev_value = prev.to_value_t();
             var prev_ref = prev.resolved_type.ref_copy();
-            var prev_ref_ty = self.type_mapping(prev_ref.__ptr__());
+            var prev_ref_ty = self.type_mapping(prev_ref);
             defer {
                 prev_value.delete();
                 prev_ref.delete();
@@ -2077,12 +2077,12 @@ impl mir2sir {
                 un_full_path_name
             )->max_align_type.pointer_copy();
             defer base_type.delete();
-            var base_type_name = self.type_mapping(base_type.__ptr__());
+            var base_type_name = self.type_mapping(base_type);
             defer base_type_name.delete();
 
             var target_type = un->members.get(n->name)->pointer_copy();
             defer target_type.delete();
-            var target_type_name = self.type_mapping(target_type.__ptr__());
+            var target_type_name = self.type_mapping(target_type);
             defer target_type_name.delete();
 
             self.block->add_stmt(sir_type_convert::new(
@@ -2124,7 +2124,7 @@ impl mir2sir {
                 var temp_var = self.ssa_gen.create();
                 var temp_var_value = value_t::variable(temp_var);
                 var prev_ref = prev.resolved_type.ref_copy();
-                var prev_ref_ty = self.type_mapping(prev_ref.__ptr__());
+                var prev_ref_ty = self.type_mapping(prev_ref);
                 var prev_value = prev.to_value_t();
                 defer {
                     temp_var.delete();
@@ -2172,7 +2172,7 @@ impl mir2sir {
                 var temp_var = self.ssa_gen.create();
                 var temp_var_value = value_t::variable(temp_var);
                 var prev_ref = prev.resolved_type.ref_copy();
-                var prev_ref_ty = self.type_mapping(prev_ref.__ptr__());
+                var prev_ref_ty = self.type_mapping(prev_ref);
                 var prev_value = prev.to_value_t();
                 defer {
                     temp_var.delete();
@@ -2221,9 +2221,9 @@ impl mir2sir {
 
             var prev_value = prev.to_value_t();
             var prev_ref = prev.resolved_type.ref_copy();
-            var prev_ref_ty = self.type_mapping(prev_ref.__ptr__());
+            var prev_ref_ty = self.type_mapping(prev_ref);
             var prev_ref_ref = prev_ref.ref_copy();
-            var prev_ref_ref_ty = self.type_mapping(prev_ref_ref.__ptr__());
+            var prev_ref_ref_ty = self.type_mapping(prev_ref_ref);
             defer {
                 prev_value.delete();
                 prev_ref.delete();
@@ -2262,7 +2262,7 @@ impl mir2sir {
                 var temp_var = self.ssa_gen.create();
                 var temp_var_value = value_t::variable(temp_var);
                 var prev_ref = prev.resolved_type.ref_copy();
-                var prev_ref_ty = self.type_mapping(prev_ref.__ptr__());
+                var prev_ref_ty = self.type_mapping(prev_ref);
                 var prev_value = prev.to_value_t();
                 defer {
                     temp_var.delete();
@@ -2314,9 +2314,9 @@ impl mir2sir {
 
             var prev_value = prev.to_value_t();
             var prev_ref = prev.resolved_type.ref_copy();
-            var prev_ref_ty = self.type_mapping(prev_ref.__ptr__());
+            var prev_ref_ty = self.type_mapping(prev_ref);
             var prev_ref_ref = prev_ref.ref_copy();
-            var prev_ref_ref_ty = self.type_mapping(prev_ref_ref.__ptr__());
+            var prev_ref_ref_ty = self.type_mapping(prev_ref_ref);
             defer {
                 prev_value.delete();
                 prev_ref.delete();
@@ -2346,12 +2346,12 @@ impl mir2sir {
                 un_full_path_name
             )->max_align_type.pointer_copy();
             defer base_type.delete();
-            var base_type_name = self.type_mapping(base_type.__ptr__());
+            var base_type_name = self.type_mapping(base_type);
             defer base_type_name.delete();
 
             var target_type = un->members.get(n->name)->pointer_copy();
             defer target_type.delete();
-            var target_type_name = self.type_mapping(target_type.__ptr__());
+            var target_type_name = self.type_mapping(target_type);
             defer target_type_name.delete();
 
             self.block->add_stmt(sir_type_convert::new(
@@ -2453,7 +2453,7 @@ impl mir2sir {
         n_ty.is_array = false;
         defer n_ty.delete();
 
-        var type_name = self.type_mapping(n_ty.__ptr__());
+        var type_name = self.type_mapping(n_ty);
         defer type_name.delete();
 
         self.block->add_alloca(sir_alloca::new(
@@ -2504,7 +2504,7 @@ impl mir2sir {
         self.visit(n->right => mir*);
         var right = self.value_stack.back().clone();
         var right_value = right.to_value_t();
-        var right_ty = self.type_mapping(right.resolved_type.__ptr__());
+        var right_ty = self.type_mapping(right.resolved_type);
         self.value_stack.pop_back();
         defer {
             right.delete();
@@ -2860,7 +2860,7 @@ impl mir2sir {
                 self.block->stmts.back()->kind == sir_kind::sir_load) {
                 // TODO: this load inst should be deleted
                 var load_inst = self.block->stmts.back() => sir_load*;
-                var value_type_name = self.type_mapping(value.resolved_type.__ptr__());
+                var value_type_name = self.type_mapping(value.resolved_type);
                 defer value_type_name.delete();
                 self.block->add_stmt(sir_get_field::new(
                     tag_v.__ptr__(),
@@ -2872,7 +2872,7 @@ impl mir2sir {
             } else {
                 var value_type_ref = value.resolved_type.ref_copy();
                 defer value_type_ref.delete();
-                var value_type_ref_name = self.type_mapping(value_type_ref.__ptr__());
+                var value_type_ref_name = self.type_mapping(value_type_ref);
                 defer value_type_ref_name.delete();
 
                 self.block->add_stmt(sir_get_field::new(
@@ -3095,7 +3095,7 @@ impl mir2sir {
         self.value_stack.pop_back();
         defer ret.delete();
 
-        var ret_ty = self.type_mapping(ret.resolved_type.__ptr__());
+        var ret_ty = self.type_mapping(ret.resolved_type);
         defer ret_ty.delete();
 
         var ret_val = ret.to_value_t();
