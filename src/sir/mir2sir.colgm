@@ -321,14 +321,14 @@ impl mir2sir {
                 );
                 defer mapped_type.delete();
 
-                s_un.member_type.push(mapped_type.__ptr__());
+                s_un.member_type.push(mapped_type);
             } else {
                 var mapped_type = self.type_mapping(
                     m_un.max_align_type.__ptr__()
                 );
                 defer mapped_type.delete();
 
-                s_un.member_type.push(mapped_type.__ptr__());
+                s_un.member_type.push(mapped_type);
             }
 
             if (m_un.union_size > m_un.max_align_type_size) {
@@ -338,10 +338,10 @@ impl mir2sir {
                 char_arr_ty.append(" x i8]");
                 defer char_arr_ty.delete();
 
-                s_un.member_type.push(char_arr_ty.__ptr__());
+                s_un.member_type.push(char_arr_ty);
             }
 
-            self.sctx->tagged_union_decls.push(s_un.__ptr__());
+            self.sctx->tagged_union_decls.push(s_un);
         }
     }
 
@@ -373,16 +373,16 @@ impl mir2sir {
                     var mapped_type = self.array_type_mapping(m_field.__ptr__());
                     defer mapped_type.delete();
 
-                    s_stct.field_type.push(mapped_type.__ptr__());
+                    s_stct.field_type.push(mapped_type);
                 } else {
                     var mapped_type = self.type_mapping(m_field.__ptr__());
                     defer mapped_type.delete();
 
-                    s_stct.field_type.push(mapped_type.__ptr__());
+                    s_stct.field_type.push(mapped_type);
                 }
             }
 
-            self.sctx->struct_decls.push(s_stct.__ptr__());
+            self.sctx->struct_decls.push(s_stct);
         }
     }
 
@@ -393,7 +393,7 @@ impl mir2sir {
                 m_func.name.__ptr__(),
                 m_func.location.__ptr__()
             );
-            s_func.set_attributes(m_func.attributes.__ptr__());
+            s_func.set_attributes(m_func.attributes);
             s_func.with_va_args = m_func.with_va_args;
             defer s_func.delete();
 
@@ -411,10 +411,10 @@ impl mir2sir {
                 var p_pair = pair<str, str>::instance(m_param.key, mapped_type);
                 defer p_pair.delete();
 
-                s_func.params.push(p_pair.__ptr__());
+                s_func.params.push(p_pair);
             }
 
-            self.sctx->func_decls.push(s_func.__ptr__());
+            self.sctx->func_decls.push(s_func);
         }
     }
 
@@ -462,7 +462,7 @@ impl mir2sir {
                 m_mangled_name.__ptr__(),
                 m_func.location.__ptr__()
             );
-            s_func.set_attributes(m_func.attributes.__ptr__());
+            s_func.set_attributes(m_func.attributes);
             defer s_func.delete();
 
             var ret_type_name = self.type_mapping(m_func.return_type.__ptr__());
@@ -487,7 +487,7 @@ impl mir2sir {
                 var p_pair = pair<str, str>::instance(param_name, mapped_type);
                 defer p_pair.delete();
 
-                s_func.params.push(p_pair.__ptr__());
+                s_func.params.push(p_pair);
             }
 
             // if debug mode is enabled, scope_index should not be DI_ERROR_INDEX
@@ -509,7 +509,7 @@ impl mir2sir {
             self.generate_func_impl_from_mir_func(m_func);
             self.block = nil;
 
-            self.sctx->func_impls.push(s_func.__ptr__());
+            self.sctx->func_impls.push(s_func);
 
             // pop local scope
             self.locals.pop();
@@ -740,7 +740,7 @@ impl mir2sir {
         var v = mir_value_t::variable(temp_var.__ptr__(), n->resolved_type.__ptr__());
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func generate_and(self, n: mir_binary*) {
@@ -828,7 +828,7 @@ impl mir2sir {
         var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func generate_or(self, n: mir_binary*) {
@@ -915,7 +915,7 @@ impl mir2sir {
         var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func visit_mir_binary(self, n: mir_binary*) {
@@ -1105,7 +1105,7 @@ impl mir2sir {
         var v = mir_value_t::variable(temp_var.__ptr__(), n->resolved_type.__ptr__());
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func visit_mir_type_convert(self, n: mir_type_convert*) {
@@ -1146,14 +1146,14 @@ impl mir2sir {
         );
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());        
+        self.value_stack.push(v);        
     }
 
     func visit_mir_nil(self, n: mir_nil*) {
         var v = mir_value_t::nil_value(n->resolved_type.__ptr__());
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func visit_mir_number(self, n: mir_number*) {
@@ -1168,7 +1168,7 @@ impl mir2sir {
         var v = mir_value_t::literal(literal.__ptr__(), n->resolved_type.__ptr__());
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func visit_mir_string(self, n: mir_string*) {
@@ -1194,7 +1194,7 @@ impl mir2sir {
         var sv = mir_value_t::variable(temp.__ptr__(), n->resolved_type.__ptr__());
         defer sv.delete();
 
-        self.value_stack.push(sv.__ptr__());
+        self.value_stack.push(sv);
     }
 
     func visit_mir_char(self, n: mir_char*) {
@@ -1204,7 +1204,7 @@ impl mir2sir {
         var v = mir_value_t::literal(ch.__ptr__(), n->resolved_type.__ptr__());
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func visit_mir_bool(self, n: mir_bool*) {
@@ -1219,7 +1219,7 @@ impl mir2sir {
         var v = mir_value_t::literal(flag.__ptr__(), n->resolved_type.__ptr__());
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func visit_mir_array(self, n: mir_array*) {
@@ -1310,7 +1310,7 @@ impl mir2sir {
         var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func visit_mir_struct_init(self, n: mir_struct_init*) {
@@ -1392,7 +1392,7 @@ impl mir2sir {
             var v = mir_value_t::variable(temp_var.__ptr__(), n_ptr.__ptr__());
             defer v.delete();
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         } else if (dm->tagged_unions.has(name_for_search)) {
             var un = dm->tagged_unions.get(name_for_search);
 
@@ -1487,7 +1487,7 @@ impl mir2sir {
             var v = mir_value_t::variable(temp_var.__ptr__(), n_ptr.__ptr__());
             defer v.delete();
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         }
     }
 
@@ -1527,7 +1527,7 @@ impl mir2sir {
 
         var v = mir_value_t::variable(temp.__ptr__(), source_ref.__ptr__());
         defer v.delete();
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func call_expr_gen(self, n: mir_call*, need_address: bool) {
@@ -1602,7 +1602,7 @@ impl mir2sir {
         );
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
     
     func visit_mir_call(self, n: mir_call*) {
@@ -1624,7 +1624,7 @@ impl mir2sir {
             var v = mir_value_t::variable(name.__ptr__(), ty.__ptr__());
             defer v.delete();
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
             return;
         }
 
@@ -1639,7 +1639,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
             }
             return;
         }
@@ -1663,7 +1663,7 @@ impl mir2sir {
                 v.content.clear();
                 v.content.append_str(name_for_search);
             }
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         } else if (dm->structs.has(name_for_search)) {
             var v = mir_value_t::struct_symbol(
                 full_path_name.__ptr__(),
@@ -1671,7 +1671,7 @@ impl mir2sir {
             );
             defer v.delete();
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         } else if (dm->tagged_unions.has(name_for_search)) {
             var v = mir_value_t::tagged_union_symbol(
                 full_path_name.__ptr__(),
@@ -1679,7 +1679,7 @@ impl mir2sir {
             );
             defer v.delete();
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         } else if (dm->enums.has(name_for_search)) {
             var v = mir_value_t::enum_symbol(
                 name_for_search.__ptr__(),
@@ -1687,7 +1687,7 @@ impl mir2sir {
             );
             defer v.delete();
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         } else {
             var info = str::from("cannot get global symbol ");
             info.append_str(name_for_search)
@@ -1785,7 +1785,7 @@ impl mir2sir {
         );
         defer v.delete();
 
-        self.value_stack.push(v.__ptr__());
+        self.value_stack.push(v);
     }
 
     func visit_mir_call_func(self, n: mir_call_func*) {
@@ -1799,7 +1799,7 @@ impl mir2sir {
             var v = mir_value_t::literal(size, n->resolved_type.__ptr__());
             defer v.delete();
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
             return;
         }
 
@@ -1809,7 +1809,7 @@ impl mir2sir {
         // load "self" argument
         if (prev.value_kind == mir_value_kind::method) {
             self.de_reference();
-            args.push(self.value_stack.back().__ptr__());
+            args.push(self.value_stack.back());
             self.value_stack.pop_back();
         }
         // load arguments
@@ -1819,7 +1819,7 @@ impl mir2sir {
             } else {
                 self.visit(i.get());
             }
-            args.push(self.value_stack.back().__ptr__());
+            args.push(self.value_stack.back());
             self.value_stack.pop_back();
         }
 
@@ -1875,7 +1875,7 @@ impl mir2sir {
             var arg_ty = self.type_mapping(arg.resolved_type.__ptr__());
             defer arg_ty.delete();
 
-            sir_function_call->add_arg(arg_val.__ptr__(), arg_ty.__ptr__());
+            sir_function_call->add_arg(arg_val, arg_ty);
         }
         self.block->add_stmt(sir_function_call => sir*);
 
@@ -1886,7 +1886,7 @@ impl mir2sir {
             );
             defer v.delete();
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         } else {
             var temp_var = self.ssa_gen.create();
             defer temp_var.delete();
@@ -1927,7 +1927,7 @@ impl mir2sir {
             var v = mir_value_t::variable(temp_var.__ptr__(), n_ref.__ptr__());
             defer v.delete();
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         }
     }
 
@@ -1946,7 +1946,7 @@ impl mir2sir {
             var pm = self.ctx->global->primitives.get(prev_name_for_search);
             if (pm->method.has(n->name)) {
                 // push self into stack
-                self.value_stack.push(prev.__ptr__());
+                self.value_stack.push(prev);
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
                 method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
@@ -1957,7 +1957,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
                 return;
             }
             unreachable();
@@ -1972,7 +1972,7 @@ impl mir2sir {
             // get method
             if (st->method.has(n->name)) {
                 // push self into stack
-                self.value_stack.push(prev.__ptr__());
+                self.value_stack.push(prev);
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
                 method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
@@ -1983,7 +1983,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
                 return;
             }
 
@@ -2020,14 +2020,14 @@ impl mir2sir {
                 v.delete();
             }
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         } else if (dm->tagged_unions.has(prev_name_for_search)) {
             var un = dm->tagged_unions.get(prev_name_for_search);
 
             // get method
             if (un->method.has(n->name)) {
                 // push self into stack
-                self.value_stack.push(prev.__ptr__());
+                self.value_stack.push(prev);
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
                 method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
@@ -2038,7 +2038,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
                 return;
             }
 
@@ -2102,7 +2102,7 @@ impl mir2sir {
                 v.delete();
             }
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         }
     }
 
@@ -2143,7 +2143,7 @@ impl mir2sir {
                 var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
                 defer v_self.delete();
 
-                self.value_stack.push(v_self.__ptr__());
+                self.value_stack.push(v_self);
 
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
                 method_name.append_char('.').append_str(n->name);
@@ -2155,7 +2155,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
                 return;
             }
             unreachable();
@@ -2191,7 +2191,7 @@ impl mir2sir {
                 var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
                 defer v_self.delete();
 
-                self.value_stack.push(v_self.__ptr__());
+                self.value_stack.push(v_self);
 
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
                 method_name.append_char('.').append_str(n->name);
@@ -2203,7 +2203,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
                 return;
             }
 
@@ -2253,7 +2253,7 @@ impl mir2sir {
                 v.delete();
             }
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         } else if (dm->tagged_unions.has(prev_name_for_search)) {
             var un = dm->tagged_unions.get(prev_name_for_search);
 
@@ -2281,7 +2281,7 @@ impl mir2sir {
                 var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
                 defer v_self.delete();
 
-                self.value_stack.push(v_self.__ptr__());
+                self.value_stack.push(v_self);
 
                 var method_name = prev.resolved_type.full_path_name(self.pkg);
                 method_name.append_char('.').append_str(n->name);
@@ -2293,7 +2293,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
                 return;
             }
 
@@ -2371,7 +2371,7 @@ impl mir2sir {
                 v.delete();
             }
 
-            self.value_stack.push(v.__ptr__());
+            self.value_stack.push(v);
         }
     }
 
@@ -2392,7 +2392,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
             }
             mir_value_kind::struct_symbol => {
                 var name = prev.resolved_type.full_path_name(self.pkg);
@@ -2405,7 +2405,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
             }
             mir_value_kind::tagged_union_symbol => {
                 var name = prev.resolved_type.full_path_name(self.pkg);
@@ -2418,7 +2418,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
             }
             mir_value_kind::enum_symbol => {
                 var dm = self.ctx->get_domain(prev.resolved_type.loc_file);
@@ -2434,7 +2434,7 @@ impl mir2sir {
                 );
                 defer v.delete();
 
-                self.value_stack.push(v.__ptr__());
+                self.value_stack.push(v);
             }
             _ => { unreachable(); }
         }
@@ -2806,7 +2806,7 @@ impl mir2sir {
 
     func visit_mir_branch(self, n: mir_branch*) {
         var new_table = vec<sir_br*>::instance();
-        self.branch_jump_out.push(new_table.__ptr__());
+        self.branch_jump_out.push(new_table);
         new_table.delete();
 
         foreach (var i; n->branch) {
@@ -2984,8 +2984,8 @@ impl mir2sir {
 
     func visit_mir_loop(self, n: mir_loop*) {
         var new_break_continue_table = vec<sir_br*>::instance();
-        self.continue_inst.push(new_break_continue_table.__ptr__());
-        self.break_inst.push(new_break_continue_table.__ptr__());
+        self.continue_inst.push(new_break_continue_table);
+        self.break_inst.push(new_break_continue_table);
         new_break_continue_table.delete();
 
         // mir loop will generate llvm ir in this form:

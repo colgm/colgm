@@ -756,10 +756,10 @@ impl ast2mir {
             var t = self.tr.resolve(i.get()->type);
             defer t.delete();
 
-            st.field_name.push(i.get()->name->content.__ptr__());
-            st.field_type.push(t.__ptr__());
+            st.field_name.push(i.get()->name->content);
+            st.field_type.push(t);
         }
-        self.mctx->structs.push(st.__ptr__());
+        self.mctx->structs.push(st);
     }
 
     func visit_tagged_union_decl(self, n: ast_tagged_union_decl*) {
@@ -770,9 +770,9 @@ impl ast2mir {
             var t = self.tr.resolve(i.get()->type);
             defer t.delete();
 
-            un.member_type.push(t.__ptr__());            
+            un.member_type.push(t);            
         }
-        self.mctx->tagged_unions.push(un.__ptr__());
+        self.mctx->tagged_unions.push(un);
     }
 
     func visit_impl(self, n: ast_impl*) {
@@ -850,11 +850,11 @@ impl ast2mir {
             var p_pair = pair<str, type>::instance(p->name->content, t);
             defer p_pair.delete();
 
-            f.params.push(p_pair.__ptr__());
+            f.params.push(p_pair);
         }
 
         if (n->body == nil) {
-            self.mctx->decls.push(f.__ptr__());
+            self.mctx->decls.push(f);
             return;
         }
 
@@ -863,7 +863,7 @@ impl ast2mir {
         self.generate_code_block(n->body);
         self.block = nil;
 
-        self.mctx->impls.push(f.__ptr__());
+        self.mctx->impls.push(f);
     }
 
     func generate_code_block(self, n: ast_code_block*) {

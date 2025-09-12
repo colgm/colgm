@@ -473,8 +473,8 @@ impl regist_pass {
 
         var func_info = colgm_func::instance(name, loc, ret);
         func_info.is_public = true;
-        func_info.param_name.push(self_name.__ptr__());
-        func_info.param_type.push(self_type.__ptr__());
+        func_info.param_name.push(self_name);
+        func_info.param_type.push(self_type);
         func_info.unordered_params.insert(self_name, ret);
         defer func_info.delete();
 
@@ -579,7 +579,7 @@ impl regist_pass {
                 var nl = n_ast->value => ast_number_literal*;
                 value = to_f64(nl->literal.c_str) => i64;
             }
-            e->ordered_member.push(member_name.__ptr__());
+            e->ordered_member.push(member_name);
             e->members.insert(member_name, value);
         }
     }
@@ -682,8 +682,8 @@ impl regist_pass {
                 var param_type = type::error_type();
                 defer param_type.delete();
 
-                f->param_name.push(param_name.__ptr__());
-                f->param_type.push(param_type.__ptr__());
+                f->param_name.push(param_name);
+                f->param_type.push(param_type);
                 f->param_location.insert(param_name, n->location);
                 f->unordered_params.insert(param_name, param_type);                
                 param_loc_map.insert(param_name, n_ast->base.location);
@@ -691,8 +691,8 @@ impl regist_pass {
                 var param_type = self.tr.resolve(n_ast->type);
                 defer param_type.delete();
 
-                f->param_name.push(param_name.__ptr__());
-                f->param_type.push(param_type.__ptr__());
+                f->param_name.push(param_name);
+                f->param_type.push(param_type);
                 f->param_location.insert(param_name, n->location);
                 f->unordered_params.insert(param_name, param_type);
                 param_loc_map.insert(param_name, n_ast->base.location);
@@ -761,7 +761,7 @@ impl regist_pass {
                     continue;
                 }
                 var n_td = gt => ast_type_def*;
-                func_info->generic_template.push(n_td->name->content.__ptr__());
+                func_info->generic_template.push(n_td->name->content);
             }
             func_info->generic_func_decl = node->copy();
         }
@@ -855,7 +855,7 @@ impl regist_pass {
                     continue;
                 }
                 var n_td = gt => ast_type_def*;
-                struct_info->generic_template.push(n_td->name->content.__ptr__());
+                struct_info->generic_template.push(n_td->name->content);
             }
             struct_info->generic_struct_decl = node->copy();
         }
@@ -876,7 +876,7 @@ impl regist_pass {
             defer sym_type.delete();
 
             struct_info->fields.insert(fld_name, sym_type);
-            struct_info->ordered_fields.push(fld_name.__ptr__());
+            struct_info->ordered_fields.push(fld_name);
             struct_info->fields_span.insert(fld_name, fld->base.location);            
         }
 
@@ -889,7 +889,7 @@ impl regist_pass {
                 var ty = self.tr.resolve(gt => ast_type_def*);
                 defer ty.delete();
 
-                struct_self_type.generics.push(ty.__ptr__());                
+                struct_self_type.generics.push(ty);                
             }
         }
 
@@ -948,8 +948,8 @@ impl regist_pass {
 
         var func_info = colgm_func::instance(name, struct_info->location, ret);
         func_info.is_public = true;
-        func_info.param_name.push(self_name.__ptr__());
-        func_info.param_type.push(self_type.__ptr__());
+        func_info.param_name.push(self_name);
+        func_info.param_type.push(self_type);
         func_info.unordered_params.insert(self_name, ret);
         defer func_info.delete();
 
@@ -1130,7 +1130,7 @@ impl regist_pass {
             defer member_type.delete();
 
             union_info->members.insert(member_name, member_type);
-            union_info->ordered_members.push(member_name.__ptr__());
+            union_info->ordered_members.push(member_name);
             union_info->members_span.insert(member_name, member->base.location);
         }
         self.load_tagged_union_member_map(node, union_info);
@@ -1185,8 +1185,8 @@ impl regist_pass {
 
         var func_info = colgm_func::instance(name, un->location, ret);
         func_info.is_public = true;
-        func_info.param_name.push(self_name.__ptr__());
-        func_info.param_type.push(self_type.__ptr__());
+        func_info.param_name.push(self_name);
+        func_info.param_type.push(self_type);
         func_info.unordered_params.insert(self_name, ret);
         defer func_info.delete();
 
@@ -1380,11 +1380,11 @@ impl regist_pass {
             foreach (var f; info.fields) {
                 var field = f.value();
                 if (!field.is_pointer() && structs->has(field.name)) {
-                    need_check.push(st.key().__ptr__());
+                    need_check.push(st.key());
                     break;
                 }
                 if (!field.is_pointer() && tagged_unions->has(field.name)) {
-                    need_check.push(st.key().__ptr__());
+                    need_check.push(st.key());
                     break;
                 }
             }
@@ -1394,11 +1394,11 @@ impl regist_pass {
             foreach (var m; info.members) {
                 var member = m.value();
                 if (!member.is_pointer() && structs->has(member.name)) {
-                    need_check.push(un.key().__ptr__());
+                    need_check.push(un.key());
                     break;
                 }
                 if (!member.is_pointer() && tagged_unions->has(member.name)) {
-                    need_check.push(un.key().__ptr__());
+                    need_check.push(un.key());
                     break;
                 }
             }
