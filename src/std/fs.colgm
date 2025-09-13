@@ -1,5 +1,6 @@
 use std::io::{ flag };
-use std::libc::{ open, close, getcwd, strlen };
+use std::libc::{ open, close, getcwd, strlen};
+use std::libc::{ mkdir, chdir, rmdir };
 use std::sys::{ timespec, stat_flag, stat_info_t, stat };
 
 use std::str::{ str };
@@ -75,5 +76,19 @@ impl fs {
             return str::from(buffer);
         }
         return str::from("");
+    }
+}
+
+impl fs {
+    pub func mkdir(path: const i8*) -> bool {
+        return mkdir(path, 0o755) == 0;
+    }
+
+    pub func chdir(path: const i8*) -> bool {
+        return chdir(path) == 0;
+    }
+
+    pub func rmdir(path: const i8*) -> bool {
+        return rmdir(path) == 0;
     }
 }
