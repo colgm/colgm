@@ -105,8 +105,8 @@ pub struct mir {
 }
 
 impl mir {
-    pub func instance(k: mir_kind, l: span*) -> mir {
-        return mir { kind: k, location: l->clone() };
+    pub func instance(k: mir_kind, l: span&) -> mir {
+        return mir { kind: k, location: l.clone() };
     }
 
     pub func delete(self) {
@@ -355,7 +355,7 @@ pub struct mir_block {
 }
 
 impl mir_block {
-    pub func new(l: span*) -> mir_block* {
+    pub func new(l: span&) -> mir_block* {
         var res = mir_block::__alloc__();
         res->base = mir::instance(mir_kind::mir_block, l);
         res->content = vec<mir*>::instance();
@@ -400,7 +400,7 @@ pub struct mir_unary {
 }
 
 impl mir_unary {
-    pub func new(l: span*, op: mir_unary_opr, t: type&, v: mir_block*) -> mir_unary* {
+    pub func new(l: span&, op: mir_unary_opr, t: type&, v: mir_block*) -> mir_unary* {
         var res = mir_unary::__alloc__();
         res->base = mir::instance(mir_kind::mir_unary, l);
         res->op = op;
@@ -447,7 +447,7 @@ pub struct mir_binary {
 }
 
 impl mir_binary {
-    pub func new(l: span*,
+    pub func new(l: span&,
                  op: mir_binary_opr,
                  t: type&,
                  lhs: mir_block*,
@@ -516,7 +516,7 @@ pub struct mir_type_convert {
 }
 
 impl mir_type_convert {
-    pub func new(l: span*, src: mir_block*, t: type&) -> mir_type_convert* {
+    pub func new(l: span&, src: mir_block*, t: type&) -> mir_type_convert* {
         var res = mir_type_convert::__alloc__();
         res->base = mir::instance(mir_kind::mir_type_convert, l);
         res->source = src;
@@ -553,7 +553,7 @@ pub struct mir_nil {
 }
 
 impl mir_nil {
-    pub func new(l: span*, t: type&) -> mir_nil* {
+    pub func new(l: span&, t: type&) -> mir_nil* {
         var res = mir_nil::__alloc__();
         res->base = mir::instance(mir_kind::mir_nil, l);
         res->resolved_type = t.clone();
@@ -580,7 +580,7 @@ pub struct mir_number {
 }
 
 impl mir_number {
-    pub func new(l: span*, num: str*, t: type&) -> mir_number* {
+    pub func new(l: span&, num: str*, t: type&) -> mir_number* {
         var res = mir_number::__alloc__();
         res->base = mir::instance(mir_kind::mir_number, l);
         res->value = num->clone();
@@ -612,7 +612,7 @@ pub struct mir_string {
 }
 
 impl mir_string {
-    pub func new(l: span*, s: str*, t: type&) -> mir_string* {
+    pub func new(l: span&, s: str*, t: type&) -> mir_string* {
         var res = mir_string::__alloc__();
         res->base = mir::instance(mir_kind::mir_string, l);
         res->value = s->clone();
@@ -647,7 +647,7 @@ pub struct mir_char {
 }
 
 impl mir_char {
-    pub func new(l: span*, s: str*, t: type&) -> mir_char* {
+    pub func new(l: span&, s: str*, t: type&) -> mir_char* {
         var res = mir_char::__alloc__();
         res->base = mir::instance(mir_kind::mir_char, l);
         res->value = s->clone();
@@ -682,7 +682,7 @@ pub struct mir_bool {
 }
 
 impl mir_bool {
-    pub func new(l: span*, flag: bool, t: type&) -> mir_bool* {
+    pub func new(l: span&, flag: bool, t: type&) -> mir_bool* {
         var res = mir_bool::__alloc__();
         res->base = mir::instance(mir_kind::mir_bool, l);
         res->value = flag;
@@ -717,7 +717,7 @@ pub struct mir_array {
 }
 
 impl mir_array {
-    pub func new(l: span*, s: u64, t: type&) -> mir_array* {
+    pub func new(l: span&, s: u64, t: type&) -> mir_array* {
         var res = mir_array::__alloc__();
         res->base = mir::instance(mir_kind::mir_array, l);
         res->size = s;
@@ -799,7 +799,7 @@ pub struct mir_struct_init {
 }
 
 impl mir_struct_init {
-    pub func new(l: span*, t: type&) -> mir_struct_init* {
+    pub func new(l: span&, t: type&) -> mir_struct_init* {
         var res = mir_struct_init::__alloc__();
         res->base = mir::instance(mir_kind::mir_struct_init, l);
         res->resolved_type = t.clone();
@@ -851,7 +851,7 @@ pub struct mir_call {
 }
 
 impl mir_call {
-    pub func new(l: span*, b: mir_block*, t: type&) -> mir_call* {
+    pub func new(l: span&, b: mir_block*, t: type&) -> mir_call* {
         var res = mir_call::__alloc__();
         res->base = mir::instance(mir_kind::mir_call, l);
         res->content = b;
@@ -889,7 +889,7 @@ pub struct mir_call_id {
 }
 
 impl mir_call_id {
-    pub func new(l: span*, n: str*, t: type&) -> mir_call_id* {
+    pub func new(l: span&, n: str*, t: type&) -> mir_call_id* {
         var res = mir_call_id::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_id, l);
         res->name = n->clone();
@@ -919,7 +919,7 @@ pub struct mir_call_index {
 }
 
 impl mir_call_index {
-    pub func new(l: span*, idx: mir_block*, t: type&) -> mir_call_index* {
+    pub func new(l: span&, idx: mir_block*, t: type&) -> mir_call_index* {
         var res = mir_call_index::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_index, l);
         res->index = idx;
@@ -958,7 +958,7 @@ pub struct mir_call_func {
 }
 
 impl mir_call_func {
-    pub func new(l: span*, a: mir_block*, ref_table: vec<bool>*, t: type&) -> mir_call_func* {
+    pub func new(l: span&, a: mir_block*, ref_table: vec<bool>*, t: type&) -> mir_call_func* {
         var res = mir_call_func::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_func, l);
         res->args = a;
@@ -998,7 +998,7 @@ pub struct mir_get_field {
 }
 
 impl mir_get_field {
-    pub func new(l: span*, n: str*, t: type&) -> mir_get_field* {
+    pub func new(l: span&, n: str*, t: type&) -> mir_get_field* {
         var res = mir_get_field::__alloc__();
         res->base = mir::instance(mir_kind::mir_get_field, l);
         res->name = n->clone();
@@ -1028,7 +1028,7 @@ pub struct mir_ptr_get_field {
 }
 
 impl mir_ptr_get_field {
-    pub func new(l: span*, n: str*, t: type&) -> mir_ptr_get_field* {
+    pub func new(l: span&, n: str*, t: type&) -> mir_ptr_get_field* {
         var res = mir_ptr_get_field::__alloc__();
         res->base = mir::instance(mir_kind::mir_ptr_get_field, l);
         res->name = n->clone();
@@ -1058,7 +1058,7 @@ pub struct mir_get_path {
 }
 
 impl mir_get_path {
-    pub func new(l: span*, n: str*, t: type&) -> mir_get_path* {
+    pub func new(l: span&, n: str*, t: type&) -> mir_get_path* {
         var res = mir_get_path::__alloc__();
         res->base = mir::instance(mir_kind::mir_get_path, l);
         res->name = n->clone();
@@ -1089,7 +1089,7 @@ pub struct mir_define {
 }
 
 impl mir_define {
-    pub func new(l: span*, n: str*, v: mir_block*, t: type&) -> mir_define* {
+    pub func new(l: span&, n: str*, v: mir_block*, t: type&) -> mir_define* {
         var res = mir_define::__alloc__();
         res->base = mir::instance(mir_kind::mir_define, l);
         res->name = n->clone();
@@ -1131,7 +1131,7 @@ pub struct mir_assign {
 }
 
 impl mir_assign {
-    pub func new(l: span*,
+    pub func new(l: span&,
                  o: mir_assign_opr,
                  lhs: mir_block*,
                  rhs: mir_block*) -> mir_assign* {
@@ -1189,7 +1189,7 @@ pub struct mir_if {
 }
 
 impl mir_if {
-    pub func new(l: span*, cond: mir_block*, ctt: mir_block*) -> mir_if* {
+    pub func new(l: span&, cond: mir_block*, ctt: mir_block*) -> mir_if* {
         var res = mir_if::__alloc__();
         res->base = mir::instance(mir_kind::mir_if, l);
         res->condition = cond;
@@ -1245,7 +1245,7 @@ pub struct mir_branch {
 }
 
 impl mir_branch {
-    pub func new(l: span*) -> mir_branch* {
+    pub func new(l: span&) -> mir_branch* {
         var res = mir_branch::__alloc__();
         res->base = mir::instance(mir_kind::mir_branch, l);
         res->branch = vec<mir_if*>::instance();
@@ -1286,7 +1286,7 @@ pub struct mir_switch_case {
 }
 
 impl mir_switch_case {
-    pub func new(l: span*, i: i64, ctt: mir_block*) -> mir_switch_case* {
+    pub func new(l: span&, i: i64, ctt: mir_block*) -> mir_switch_case* {
         var res = mir_switch_case::__alloc__();
         res->base = mir::instance(mir_kind::mir_switch_case, l);
         res->value = i;
@@ -1324,7 +1324,7 @@ pub struct mir_switch {
 }
 
 impl mir_switch {
-    pub func new(l: span*, cond: mir_block*) -> mir_switch* {
+    pub func new(l: span&, cond: mir_block*) -> mir_switch* {
         var res = mir_switch::__alloc__();
         res->base = mir::instance(mir_kind::mir_switch, l);
         res->condition = cond;
@@ -1384,7 +1384,7 @@ pub struct mir_break {
 }
 
 impl mir_break {
-    pub func new(l: span*) -> mir_break* {
+    pub func new(l: span&) -> mir_break* {
         var res = mir_break::__alloc__();
         res->base = mir::instance(mir_kind::mir_break, l);
         return res;
@@ -1405,7 +1405,7 @@ pub struct mir_continue {
 }
 
 impl mir_continue {
-    pub func new(l: span*) -> mir_continue* {
+    pub func new(l: span&) -> mir_continue* {
         var res = mir_continue::__alloc__();
         res->base = mir::instance(mir_kind::mir_continue, l);
         return res;
@@ -1429,7 +1429,7 @@ pub struct mir_loop {
 }
 
 impl mir_loop {
-    pub func new(l: span*,
+    pub func new(l: span&,
                  cond: mir_block*,
                  ctt: mir_block*,
                  updt: mir_block*) -> mir_loop* {
@@ -1493,7 +1493,7 @@ pub struct mir_return {
 }
 
 impl mir_return {
-    pub func new(l: span*, v: mir_block*, rrt: bool) -> mir_return* {
+    pub func new(l: span&, v: mir_block*, rrt: bool) -> mir_return* {
         var res = mir_return::__alloc__();
         res->base = mir::instance(mir_kind::mir_return, l);
         res->value = v;

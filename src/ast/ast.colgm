@@ -16,11 +16,11 @@ pub enum ast_kind {
     ast_binary_operator,
     ast_type_convert,
     ast_identifier,
-    ast_nil_literal,
-    ast_number_literal,
-    ast_string_literal,
-    ast_char_literal,
-    ast_bool_literal,
+    ast_nil,
+    ast_number,
+    ast_string,
+    ast_char,
+    ast_bool,
     ast_array_list,
     ast_call_index,
     ast_call_func_args,
@@ -70,11 +70,11 @@ pub func ast_kind_name(k: ast_kind) -> i8* {
         ast_kind::ast_binary_operator => return "ast_binary_operator";
         ast_kind::ast_type_convert => return "ast_type_convert";
         ast_kind::ast_identifier => return "ast_identifier";
-        ast_kind::ast_nil_literal => return "ast_nil_literal";
-        ast_kind::ast_number_literal => return "ast_number_literal";
-        ast_kind::ast_string_literal => return "ast_string_literal";
-        ast_kind::ast_char_literal => return "ast_char_literal";
-        ast_kind::ast_bool_literal => return "ast_bool_literal";
+        ast_kind::ast_nil => return "ast_nil";
+        ast_kind::ast_number => return "ast_number";
+        ast_kind::ast_string => return "ast_string";
+        ast_kind::ast_char => return "ast_char";
+        ast_kind::ast_bool => return "ast_bool";
         ast_kind::ast_array_list => return "ast_array_list";
         ast_kind::ast_call_index => return "ast_call_index";
         ast_kind::ast_call_func_args => return "ast_call_func_args";
@@ -209,20 +209,20 @@ impl ast {
                 var tmp = self.__ptr__() => ast_identifier*;
                 tmp->delete();
             }
-            ast_kind::ast_nil_literal => {}
-            ast_kind::ast_number_literal => {
-                var tmp = self.__ptr__() => ast_number_literal*;
+            ast_kind::ast_nil => {}
+            ast_kind::ast_number => {
+                var tmp = self.__ptr__() => ast_number*;
                 tmp->delete();
             }
-            ast_kind::ast_string_literal => {
-                var tmp = self.__ptr__() => ast_string_literal*;
+            ast_kind::ast_string => {
+                var tmp = self.__ptr__() => ast_string*;
                 tmp->delete();
             }
-            ast_kind::ast_char_literal => {
-                var tmp = self.__ptr__() => ast_char_literal*;
+            ast_kind::ast_char => {
+                var tmp = self.__ptr__() => ast_char*;
                 tmp->delete();
             }
-            ast_kind::ast_bool_literal => {}
+            ast_kind::ast_bool => {}
             ast_kind::ast_array_list => {
                 var tmp = self.__ptr__() => ast_array_list*;
                 tmp->delete();
@@ -416,24 +416,24 @@ impl ast {
                 var tmp = self.__ptr__() => ast_identifier*;
                 return tmp->copy() => ast*;
             }
-            ast_kind::ast_nil_literal => {
-                var tmp = self.__ptr__() => ast_nil_literal*;
+            ast_kind::ast_nil => {
+                var tmp = self.__ptr__() => ast_nil*;
                 return tmp->copy() => ast*;
             }
-            ast_kind::ast_number_literal => {
-                var tmp = self.__ptr__() => ast_number_literal*;
+            ast_kind::ast_number => {
+                var tmp = self.__ptr__() => ast_number*;
                 return tmp->copy() => ast*;
             }
-            ast_kind::ast_string_literal => {
-                var tmp = self.__ptr__() => ast_string_literal*;
+            ast_kind::ast_string => {
+                var tmp = self.__ptr__() => ast_string*;
                 return tmp->copy() => ast*;
             }
-            ast_kind::ast_char_literal => {
-                var tmp = self.__ptr__() => ast_char_literal*;
+            ast_kind::ast_char => {
+                var tmp = self.__ptr__() => ast_char*;
                 return tmp->copy() => ast*;
             }
-            ast_kind::ast_bool_literal => {
-                var tmp = self.__ptr__() => ast_bool_literal*;
+            ast_kind::ast_bool => {
+                var tmp = self.__ptr__() => ast_bool*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_array_list => {
@@ -829,41 +829,38 @@ impl ast_identifier {
     }
 }
 
-pub struct ast_nil_literal {
+pub struct ast_nil {
     base: ast
 }
 
-impl ast_nil_literal {
-    pub func new(loc: span&) -> ast_nil_literal* {
-        var res = ast_nil_literal::__alloc__();
-        res->base = ast::instance(ast_kind::ast_nil_literal, loc);
+impl ast_nil {
+    pub func new(loc: span&) -> ast_nil* {
+        var res = ast_nil::__alloc__();
+        res->base = ast::instance(ast_kind::ast_nil, loc);
         return res;
     }
 
-    pub func copy(self) -> ast_nil_literal* {
-        return ast_nil_literal::new(self.base.location);
+    pub func copy(self) -> ast_nil* {
+        return ast_nil::new(self.base.location);
     }
 }
 
-pub struct ast_number_literal {
+pub struct ast_number {
     base: ast,
     literal: str
 }
 
-impl ast_number_literal {
-    pub func new(loc: span&, literal: const i8*) -> ast_number_literal* {
-        var res = ast_number_literal::__alloc__();
-        res->base = ast::instance(ast_kind::ast_number_literal, loc);
+impl ast_number {
+    pub func new(loc: span&, literal: const i8*) -> ast_number* {
+        var res = ast_number::__alloc__();
+        res->base = ast::instance(ast_kind::ast_number, loc);
         res->literal = str::from(literal);
         return res;
     }
 
-    pub func copy(self) -> ast_number_literal* {
-        var res = ast_number_literal::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_number_literal,
-            self.base.location
-        );
+    pub func copy(self) -> ast_number* {
+        var res = ast_number::__alloc__();
+        res->base = ast::instance(ast_kind::ast_number, self.base.location);
         res->literal = self.literal.clone();
         return res;
     }
@@ -873,25 +870,22 @@ impl ast_number_literal {
     }
 }
 
-pub struct ast_string_literal {
+pub struct ast_string {
     base: ast,
     literal: str
 }
 
-impl ast_string_literal {
-    pub func new(loc: span&, literal: const i8*) -> ast_string_literal* {
-        var res = ast_string_literal::__alloc__();
-        res->base = ast::instance(ast_kind::ast_string_literal, loc);
+impl ast_string {
+    pub func new(loc: span&, literal: const i8*) -> ast_string* {
+        var res = ast_string::__alloc__();
+        res->base = ast::instance(ast_kind::ast_string, loc);
         res->literal = str::from(literal);
         return res;
     }
 
-    pub func copy(self) -> ast_string_literal* {
-        var res = ast_string_literal::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_string_literal,
-            self.base.location
-        );
+    pub func copy(self) -> ast_string* {
+        var res = ast_string::__alloc__();
+        res->base = ast::instance(ast_kind::ast_string, self.base.location);
         res->literal = self.literal.clone();
         return res;
     }
@@ -901,25 +895,22 @@ impl ast_string_literal {
     }
 }
 
-pub struct ast_char_literal {
+pub struct ast_char {
     base: ast,
-    literal: str
+    literal: str // use string to store char, may support unicode
 }
 
-impl ast_char_literal {
-    pub func new(loc: span&, literal: str*) -> ast_char_literal* {
-        var res = ast_char_literal::__alloc__();
-        res->base = ast::instance(ast_kind::ast_char_literal, loc);
+impl ast_char {
+    pub func new(loc: span&, literal: str*) -> ast_char* {
+        var res = ast_char::__alloc__();
+        res->base = ast::instance(ast_kind::ast_char, loc);
         res->literal = literal->clone();
         return res;
     }
 
-    pub func copy(self) -> ast_char_literal* {
-        var res = ast_char_literal::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_char_literal,
-            self.base.location
-        );
+    pub func copy(self) -> ast_char* {
+        var res = ast_char::__alloc__();
+        res->base = ast::instance(ast_kind::ast_char, self.base.location);
         res->literal = self.literal.clone();
         return res;
     }
@@ -929,21 +920,21 @@ impl ast_char_literal {
     }
 }
 
-pub struct ast_bool_literal {
+pub struct ast_bool {
     base: ast,
     flag: bool
 }
 
-impl ast_bool_literal {
-    pub func new(loc: span&, flag: bool) -> ast_bool_literal* {
-        var res = ast_bool_literal::__alloc__();
-        res->base = ast::instance(ast_kind::ast_bool_literal, loc);
+impl ast_bool {
+    pub func new(loc: span&, flag: bool) -> ast_bool* {
+        var res = ast_bool::__alloc__();
+        res->base = ast::instance(ast_kind::ast_bool, loc);
         res->flag = flag;
         return res;
     }
 
-    pub func copy(self) -> ast_bool_literal* {
-        return ast_bool_literal::new(self.base.location, self.flag);
+    pub func copy(self) -> ast_bool* {
+        return ast_bool::new(self.base.location, self.flag);
     }
 }
 
@@ -1445,7 +1436,7 @@ pub struct ast_type_def {
     pointer_depth: i64,
     is_const: bool,
 
-    array_length: ast_number_literal*,
+    array_length: ast_number*,
     is_array: bool,
 
     is_reference: bool
@@ -1551,7 +1542,7 @@ impl ast_generic_type_list {
 pub struct ast_enum_member {
     base: ast,
     name: ast_identifier*,
-    value: ast_number_literal*
+    value: ast_number*
 }
 
 impl ast_enum_member {

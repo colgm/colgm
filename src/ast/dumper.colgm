@@ -71,16 +71,11 @@ impl ast_dumper {
                 self.dump_type_convert(node => ast_type_convert*, out);
             ast_kind::ast_identifier =>
                 self.dump_identifier(node => ast_identifier*, out);
-            ast_kind::ast_nil_literal =>
-                self.dump_nil_literal(node => ast_nil_literal*, out);
-            ast_kind::ast_number_literal =>
-                self.dump_number_literal(node => ast_number_literal*, out);
-            ast_kind::ast_string_literal =>
-                self.dump_string_literal(node => ast_string_literal*, out);
-            ast_kind::ast_char_literal =>
-                self.dump_char_literal(node => ast_char_literal*, out);
-            ast_kind::ast_bool_literal =>
-                self.dump_bool_literal(node => ast_bool_literal*, out);
+            ast_kind::ast_nil => self.dump_nil(node => ast_nil*, out);
+            ast_kind::ast_number => self.dump_number(node => ast_number*, out);
+            ast_kind::ast_string => self.dump_string(node => ast_string*, out);
+            ast_kind::ast_char => self.dump_char(node => ast_char*, out);
+            ast_kind::ast_bool => self.dump_bool(node => ast_bool*, out);
             ast_kind::ast_array_list =>
                 self.dump_array_list(node => ast_array_list*, out);
             ast_kind::ast_call_index =>
@@ -118,14 +113,12 @@ impl ast_dumper {
                 self.dump_struct_decl(node => ast_struct_decl*, out);
             ast_kind::ast_tagged_union_decl =>
                 self.dump_tagged_union_decl(node => ast_tagged_union_decl*, out);
-            ast_kind::ast_param =>
-                self.dump_param(node => ast_param*, out);
+            ast_kind::ast_param => self.dump_param(node => ast_param*, out);
             ast_kind::ast_param_list =>
                 self.dump_param_list(node => ast_param_list*, out);
             ast_kind::ast_func_decl => 
                 self.dump_func_decl(node => ast_func_decl*, out);
-            ast_kind::ast_impl =>
-                self.dump_impl(node => ast_impl*, out);
+            ast_kind::ast_impl => self.dump_impl(node => ast_impl*, out);
             ast_kind::ast_use_stmt =>
                 self.dump_use_stmt(node => ast_use_stmt*, out);
             ast_kind::ast_definition =>
@@ -260,27 +253,27 @@ impl ast_dumper {
         node->base.location.dump(out);
     }
 
-    func dump_nil_literal(self, node: ast_nil_literal*, out: io&) {
+    func dump_nil(self, node: ast_nil*, out: io&) {
         self.dump_indent(out);
-        out.purple().out("NilLiteral ").reset();
+        out.purple().out("Nil ").reset();
         out.light_orange().out("0x").out_hex(node=> u64).reset().out(" ");
         self.dump_resolved_type(out, node->base.resolved_type);
         out.green().out("nil").reset().out(" -> ");
         node->base.location.dump(out);
     }
 
-    func dump_number_literal(self, node: ast_number_literal*, out: io&) {
+    func dump_number(self, node: ast_number*, out: io&) {
         self.dump_indent(out);
-        out.purple().out("NumberLiteral ").reset();
+        out.purple().out("Number ").reset();
         out.light_orange().out("0x").out_hex(node=> u64).reset().out(" ");
         self.dump_resolved_type(out, node->base.resolved_type);
         out.green().out(node->literal.c_str).reset().out(" -> ");
         node->base.location.dump(out);
     }
 
-    func dump_string_literal(self, node: ast_string_literal*, out: io&) {
+    func dump_string(self, node: ast_string*, out: io&) {
         self.dump_indent(out);
-        out.purple().out("StringLiteral ").reset();
+        out.purple().out("String ").reset();
         out.light_orange().out("0x").out_hex(node=> u64).reset().out(" ");
         self.dump_resolved_type(out, node->base.resolved_type);
         
@@ -291,9 +284,9 @@ impl ast_dumper {
         node->base.location.dump(out);
     }
 
-    func dump_char_literal(self, node: ast_char_literal*, out: io&) {
+    func dump_char(self, node: ast_char*, out: io&) {
         self.dump_indent(out);
-        out.purple().out("CharacterLiteral ").reset();
+        out.purple().out("Character ").reset();
         out.light_orange().out("[0x").out_hex(node=> u64).reset().out(" ");
         self.dump_resolved_type(out, node->base.resolved_type);
         
@@ -304,9 +297,9 @@ impl ast_dumper {
         node->base.location.dump(out);
     }
 
-    func dump_bool_literal(self, node: ast_bool_literal*, out: io&) {
+    func dump_bool(self, node: ast_bool*, out: io&) {
         self.dump_indent(out);
-        out.purple().out("BooleanLiteral ").reset();
+        out.purple().out("Boolean ").reset();
         out.light_orange().out("0x").out_hex(node=> u64).reset().out(" ");
         self.dump_resolved_type(out, node->base.resolved_type);
         if (node->flag) {
@@ -554,7 +547,7 @@ impl ast_dumper {
         }
         if (node->array_length != nil) {
             self.set_last();
-            self.dump_number_literal(node->array_length, out);
+            self.dump_number(node->array_length, out);
         }
         self.pop_indent();
     }
@@ -587,7 +580,7 @@ impl ast_dumper {
         if (node->value != nil) {
             self.push_indent();
             self.set_last();
-            self.dump_number_literal(node->value, out);
+            self.dump_number(node->value, out);
             self.pop_indent();
         }
     }

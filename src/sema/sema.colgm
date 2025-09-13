@@ -115,13 +115,13 @@ impl sema {
 }
 
 impl sema {
-    func resolve_nil_literal(self, n: ast_nil_literal*) -> type {
+    func resolve_nil(self, n: ast_nil*) -> type {
         var ty = type::i8_type(1);
         n->base.resolved_type.reset_with(ty);
         return ty;
     }
 
-    func resolve_number_literal(self, n: ast_number_literal*) -> type {
+    func resolve_number(self, n: ast_number*) -> type {
         var result = to_f64(n->literal.c_str);
         var to_u64_try = to_u64(n->literal);
         if (isinf(result) || isnan(result)) {
@@ -161,20 +161,20 @@ impl sema {
         return default_ty;
     }
 
-    func resolve_string_literal(self, n: ast_string_literal*) -> type {
+    func resolve_string(self, n: ast_string*) -> type {
         var ty = type::const_str_literal_type();
         self.ctx->constant_string.insert(n->literal);
         n->base.resolved_type.reset_with(ty);
         return ty;
     }
 
-    func resolve_char_literal(self, n: ast_char_literal*) -> type {
+    func resolve_char(self, n: ast_char*) -> type {
         var ty = type::i8_type(0);
         n->base.resolved_type.reset_with(ty);
         return ty;
     }
 
-    func resolve_bool_literal(self, n: ast_bool_literal*) -> type {
+    func resolve_bool(self, n: ast_bool*) -> type {
         var ty = type::bool_type();
         n->base.resolved_type.reset_with(ty);
         return ty;
@@ -1095,11 +1095,11 @@ impl sema {
 
     func check_can_be_referenced(self, n: ast*) -> bool {
         match (n->kind) {
-            ast_kind::ast_nil_literal => return false;
-            ast_kind::ast_number_literal => return false;
-            ast_kind::ast_string_literal => return false;
-            ast_kind::ast_bool_literal => return false;
-            ast_kind::ast_char_literal => return false;
+            ast_kind::ast_nil => return false;
+            ast_kind::ast_number => return false;
+            ast_kind::ast_string => return false;
+            ast_kind::ast_bool => return false;
+            ast_kind::ast_char => return false;
             ast_kind::ast_array_list => return false;
             _ => return true;
         }
@@ -2108,31 +2108,19 @@ impl sema {
             ast_kind::ast_type_convert => {
                 return self.resolve_type_convert(n => ast_type_convert*);
             }
-            ast_kind::ast_nil_literal => {
-                return self.resolve_nil_literal(n => ast_nil_literal*);
-            }
-            ast_kind::ast_number_literal => {
-                return self.resolve_number_literal(n => ast_number_literal*);
-            }
-            ast_kind::ast_string_literal => {
-                return self.resolve_string_literal(n => ast_string_literal*);
-            }
-            ast_kind::ast_char_literal => {
-                return self.resolve_char_literal(n => ast_char_literal*);
-            }
-            ast_kind::ast_bool_literal => {
-                return self.resolve_bool_literal(n => ast_bool_literal*);
-            }
+            ast_kind::ast_nil => return self.resolve_nil(n => ast_nil*);
+            ast_kind::ast_number => return self.resolve_number(n => ast_number*);
+            ast_kind::ast_string => return self.resolve_string(n => ast_string*);
+            ast_kind::ast_char => return self.resolve_char(n => ast_char*);
+            ast_kind::ast_bool => return self.resolve_bool(n => ast_bool*);
             ast_kind::ast_array_list => {
                 return self.resolve_array_list(n => ast_array_list*);
             }
-            ast_kind::ast_call => {
-                return self.resolve_call(n => ast_call*);
-            }
+            ast_kind::ast_call => return self.resolve_call(n => ast_call*);
             ast_kind::ast_assignment => {
                 return self.resolve_assignment(n => ast_assignment*);
             }
-            _ => { unreachable(); }
+            _ => unreachable();
         }
         return type::error_type();
     }
@@ -2151,7 +2139,7 @@ impl sema {
 
     func number_literal_can_be_converted(self, n: ast*, expect_type: type&) -> bool {
         // if is not number literal, just return false
-        if (!n->is(ast_kind::ast_number_literal)) {
+        if (!n->is(ast_kind::ast_number)) {
             return false;
         }
 
@@ -2203,7 +2191,7 @@ impl sema {
     }
 
     func nil_can_be_convered(self, n: ast*, expect_type: type&) -> bool {
-        if (!n->is(ast_kind::ast_nil_literal)) {
+        if (!n->is(ast_kind::ast_nil)) {
             return false;
         }
         if (!expect_type.is_pointer()) {
@@ -2843,7 +2831,7 @@ impl sema {
             iter_ty.name
         );
 
-        lowered_init->value = ast_number_literal::new(
+        lowered_init->value = ast_number::new(
             n->variable->base.location,
             "0"
         ) => ast*;
@@ -2891,7 +2879,7 @@ impl sema {
         // generate `i`
         var lowered_update_lhs = lowered_condition_lhs->copy();
         // generate `1`
-        var lowered_update_rhs = ast_number_literal::new(
+        var lowered_update_rhs = ast_number::new(
             n->container->base.location,
             "1"
         ) => ast*;

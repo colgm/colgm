@@ -408,14 +408,14 @@ impl parser {
         return res;
     }
 
-    func nil_gen(self) -> ast_nil_literal* {
-        var res = ast_nil_literal::new(self.this_tok_loc());
+    func nil_gen(self) -> ast_nil* {
+        var res = ast_nil::new(self.this_tok_loc());
         self.match_token(tok_kind::tok_nil);
         return res;
     }
 
-    func number_literal_gen(self) -> ast_number_literal* {
-        var res = ast_number_literal::new(
+    func number_gen(self) -> ast_number* {
+        var res = ast_number::new(
             self.this_tok_loc(),
             self.this_tok()->content.c_str
         );
@@ -423,8 +423,8 @@ impl parser {
         return res;
     }
 
-    func string_literal_gen(self) -> ast_string_literal* {
-        var res = ast_string_literal::new(
+    func string_gen(self) -> ast_string* {
+        var res = ast_string::new(
             self.this_tok_loc(),
             self.this_tok()->content.c_str
         );
@@ -432,8 +432,8 @@ impl parser {
         return res;
     }
 
-    func char_gen(self) -> ast_char_literal* {
-        var res = ast_char_literal::new(
+    func char_gen(self) -> ast_char* {
+        var res = ast_char::new(
             self.this_tok_loc(),
             self.this_tok()->content.__ptr__()
         );
@@ -441,8 +441,8 @@ impl parser {
         return res;
     }
 
-    func bool_gen(self) -> ast_bool_literal* {
-        var res = ast_bool_literal::new(
+    func bool_gen(self) -> ast_bool* {
+        var res = ast_bool::new(
             self.this_tok_loc(),
             self.this_tok()->kind == tok_kind::tok_true
         );
@@ -487,9 +487,9 @@ impl parser {
         } elsif (self.lookahead(tok_kind::tok_nil)) {
             return self.nil_gen() => ast*;
         } elsif (self.lookahead(tok_kind::tok_num)) {
-            return self.number_literal_gen() => ast*;
+            return self.number_gen() => ast*;
         } elsif (self.lookahead(tok_kind::tok_str)) {
-            return self.string_literal_gen() => ast*;
+            return self.string_gen() => ast*;
         } elsif (self.lookahead(tok_kind::tok_ch)) {
             return self.char_gen() => ast*;
         } elsif (self.lookahead(tok_kind::tok_true) ||
@@ -789,7 +789,7 @@ impl parser {
             );
             self.match_token(tok_kind::tok_sub);
         }
-        res->array_length = self.number_literal_gen();
+        res->array_length = self.number_gen();
         res->is_array = true;
         self.match_token(tok_kind::tok_rbracket);
         self.update_location(res => ast*);
@@ -935,7 +935,7 @@ impl parser {
         res->name = self.identifier_gen();
         if (self.lookahead(tok_kind::tok_eq)) {
             self.match_token(tok_kind::tok_eq);
-            res->value = self.number_literal_gen();
+            res->value = self.number_gen();
         }
         self.update_location(res => ast*);
         return res;

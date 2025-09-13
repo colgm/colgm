@@ -70,18 +70,18 @@ impl generic_visitor {
             return;
         }
 
-        var loc: span* = nil;
-        if (dm.generic_structs.has(ty.name)) {
-            loc = dm.generic_structs.get(ty.name).location.__ptr__();
-        } else if (dm.generic_functions.has(ty.name)) {
-            loc = dm.generic_functions.get(ty.name).location.__ptr__();
-        }
+        var report_info = str::from("template instantiation depth exceeds maximum of ");
+        report_info.append_i64(self.MAX_RECURSIVE_DEPTH);
+        report_info.append(":\n  --> ").append_str(generic_name);
+        defer report_info.delete();
 
-        self.err->out("template instantiation depth exceeds maximum of ")
-                 .out_i64(self.MAX_RECURSIVE_DEPTH)
-                 .out(":\n  --> ")
-                 .out(generic_name.c_str)
-                 .emit_err(loc);
+        if (dm.generic_structs.has(ty.name)) {
+            self.err->out(report_info.c_str)
+                     .emit_err(dm.generic_structs.get(ty.name).location.__ptr__());
+        } else if (dm.generic_functions.has(ty.name)) {
+            self.err->out(report_info.c_str)
+                     .emit_err(dm.generic_functions.get(ty.name).location.__ptr__());
+        }
     }
 
     pub func scan_and_insert(self, n: root*) {
