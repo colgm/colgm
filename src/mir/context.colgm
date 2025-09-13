@@ -23,10 +23,10 @@ pub struct mir_struct {
 }
 
 impl mir_struct {
-    pub func instance(name: str*, loc: span*) -> mir_struct {
+    pub func instance(name: str&, loc: span&) -> mir_struct {
         return mir_struct {
-            name: name->clone(),
-            location: loc->clone(),
+            name: name.clone(),
+            location: loc.clone(),
             field_name: vec<str>::instance(),
             field_type: vec<type>::instance(),
             size_calculated: false,
@@ -70,10 +70,10 @@ pub struct mir_tagged_union {
 }
 
 impl mir_tagged_union {
-    pub func instance(name: str*, loc: span*) -> mir_tagged_union {
+    pub func instance(name: str&, loc: span&) -> mir_tagged_union {
         return mir_tagged_union {
-            name: name->clone(),
-            location: loc->clone(),
+            name: name.clone(),
+            location: loc.clone(),
             member_type: vec<type>::instance(),
             size_calculated: false,
             total_size: 0,
@@ -117,14 +117,14 @@ pub struct mir_func {
 }
 
 impl mir_func {
-    pub func instance(name: const i8*, loc: span*, ret_ty: type*) -> mir_func {
+    pub func instance(name: const i8*, loc: span&, ret_ty: type&) -> mir_func {
         return mir_func {
             name: str::from(name),
-            location: loc->clone(),
+            location: loc.clone(),
             params: vec<pair<str, type>>::instance(),
             with_va_args: false,
             attributes: vec<str>::instance(),
-            return_type: ret_ty->clone(),
+            return_type: ret_ty.clone(),
             block: nil
         };
     }
@@ -241,11 +241,7 @@ impl mir_context {
             arg_pair.delete();
         }
 
-        var malloc_decl = mir_func::instance(
-            "malloc",
-            null_loc.__ptr__(),
-            ret_type.__ptr__()
-        );
+        var malloc_decl = mir_func::instance("malloc", null_loc, ret_type);
         defer malloc_decl.delete();
 
         var nounwind_attr = str::from("nounwind");
@@ -276,11 +272,7 @@ impl mir_context {
             arg_pair.delete();
         }
 
-        var free_decl = mir_func::instance(
-            "free",
-            null_loc.__ptr__(),
-            ret_type.__ptr__()
-        );
+        var free_decl = mir_func::instance("free", null_loc, ret_type);
         defer free_decl.delete();
 
         var nounwind_attr = str::from("nounwind");
@@ -310,11 +302,7 @@ impl mir_context {
             ret_type.delete();
         }
 
-        var main_impl = mir_func::instance(
-            "main",
-            null_loc.__ptr__(),
-            ret_type.__ptr__()
-        );
+        var main_impl = mir_func::instance("main", null_loc, ret_type);
         defer main_impl.delete();
 
         main_impl.block = mir_block::new(null_loc.__ptr__());

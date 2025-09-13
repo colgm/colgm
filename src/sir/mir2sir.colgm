@@ -79,15 +79,9 @@ impl mir_value_t {
     pub func to_value_t(self) -> value_t {
         match (self.value_kind) {
             mir_value_kind::null => return value_t::null("null");
-            mir_value_kind::nil_value => {
-                return value_t::literal(self.content);
-            }
-            mir_value_kind::literal => {
-                return value_t::literal(self.content);
-            }
-            mir_value_kind::variable => {
-                return value_t::variable(self.content);
-            }
+            mir_value_kind::nil_value => return value_t::literal(self.content);
+            mir_value_kind::literal => return value_t::literal(self.content);
+            mir_value_kind::variable => return value_t::variable(self.content);
             mir_value_kind::primitive => return value_t::null("primitive");
             mir_value_kind::func_symbol => return value_t::null("func");
             mir_value_kind::method => return value_t::null("method");
@@ -99,19 +93,19 @@ impl mir_value_t {
         return value_t::null(nil);
     }
 
-    func nil_value(ty: type*) -> mir_value_t {
+    func nil_value(ty: type&) -> mir_value_t {
         return mir_value_t {
             value_kind: mir_value_kind::nil_value,
             content: str::from("null"),
-            resolved_type: ty->clone()
+            resolved_type: ty.clone()
         };
     }
 
-    func variable(name: str*, ty: type*) -> mir_value_t {
+    func variable(name: str&, ty: type&) -> mir_value_t {
         return mir_value_t {
             value_kind: mir_value_kind::variable,
-            content: name->clone(),
-            resolved_type: ty->clone()
+            content: name.clone(),
+            resolved_type: ty.clone()
         };
     }
 
@@ -123,51 +117,51 @@ impl mir_value_t {
         };
     }
 
-    func primitive(value: str*, ty: type*) -> mir_value_t {
+    func primitive(value: str&, ty: type&) -> mir_value_t {
         return mir_value_t {
             value_kind: mir_value_kind::primitive,
-            content: value->clone(),
-            resolved_type: ty->clone()
+            content: value.clone(),
+            resolved_type: ty.clone()
         };
     }
 
-    func func_symbol(name: str*, ty: type*) -> mir_value_t {
+    func func_symbol(name: str&, ty: type&) -> mir_value_t {
         return mir_value_t {
             value_kind: mir_value_kind::func_symbol,
-            content: name->clone(),
-            resolved_type: ty->clone()
+            content: name.clone(),
+            resolved_type: ty.clone()
         };
     }
 
-    func method(name: str*, ty: type*) -> mir_value_t {
+    func method(name: str&, ty: type&) -> mir_value_t {
         return mir_value_t {
             value_kind: mir_value_kind::method,
-            content: name->clone(),
-            resolved_type: ty->clone()
+            content: name.clone(),
+            resolved_type: ty.clone()
         };
     }
 
-    func struct_symbol(name: str*, ty: type*) -> mir_value_t {
+    func struct_symbol(name: str&, ty: type&) -> mir_value_t {
         return mir_value_t {
             value_kind: mir_value_kind::struct_symbol,
-            content: name->clone(),
-            resolved_type: ty->clone()
+            content: name.clone(),
+            resolved_type: ty.clone()
         };
     }
 
-    func tagged_union_symbol(name: str*, ty: type*) -> mir_value_t {
+    func tagged_union_symbol(name: str&, ty: type&) -> mir_value_t {
         return mir_value_t {
             value_kind: mir_value_kind::tagged_union_symbol,
-            content: name->clone(),
-            resolved_type: ty->clone()
+            content: name.clone(),
+            resolved_type: ty.clone()
         };
     }
 
-    func enum_symbol(name: str*, ty: type*) -> mir_value_t {
+    func enum_symbol(name: str&, ty: type&) -> mir_value_t {
         return mir_value_t {
             value_kind: mir_value_kind::enum_symbol,
-            content: name->clone(),
-            resolved_type: ty->clone()
+            content: name.clone(),
+            resolved_type: ty.clone()
         };
     }
 }
@@ -737,7 +731,7 @@ impl mir2sir {
             ) => sir*);
         }
 
-        var v = mir_value_t::variable(temp_var.__ptr__(), n->resolved_type.__ptr__());
+        var v = mir_value_t::variable(temp_var, n->resolved_type);
         defer v.delete();
 
         self.value_stack.push(v);
@@ -825,7 +819,7 @@ impl mir2sir {
             temp_1_value.__ptr__()
         ) => sir*);
 
-        var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
+        var v = mir_value_t::variable(temp_1, n->resolved_type);
         defer v.delete();
 
         self.value_stack.push(v);
@@ -912,7 +906,7 @@ impl mir2sir {
             temp_1_value.__ptr__()
         ) => sir*);
 
-        var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
+        var v = mir_value_t::variable(temp_1, n->resolved_type);
         defer v.delete();
 
         self.value_stack.push(v);
@@ -1102,7 +1096,7 @@ impl mir2sir {
             _ => {}
         }
 
-        var v = mir_value_t::variable(temp_var.__ptr__(), n->resolved_type.__ptr__());
+        var v = mir_value_t::variable(temp_var, n->resolved_type);
         defer v.delete();
 
         self.value_stack.push(v);
@@ -1140,17 +1134,14 @@ impl mir2sir {
             self.generate_DI_location(n->base.location)
         ) => sir*);
 
-        var v = mir_value_t::variable(
-            temp_var.__ptr__(),
-            n->target.__ptr__()
-        );
+        var v = mir_value_t::variable(temp_var, n->target);
         defer v.delete();
 
         self.value_stack.push(v);        
     }
 
     func visit_mir_nil(self, n: mir_nil*) {
-        var v = mir_value_t::nil_value(n->resolved_type.__ptr__());
+        var v = mir_value_t::nil_value(n->resolved_type);
         defer v.delete();
 
         self.value_stack.push(v);
@@ -1191,7 +1182,7 @@ impl mir2sir {
             self.generate_DI_location(n->base.location)
         ) => sir*);
 
-        var sv = mir_value_t::variable(temp.__ptr__(), n->resolved_type.__ptr__());
+        var sv = mir_value_t::variable(temp, n->resolved_type);
         defer sv.delete();
 
         self.value_stack.push(sv);
@@ -1307,7 +1298,7 @@ impl mir2sir {
             }
         }
 
-        var v = mir_value_t::variable(temp_1.__ptr__(), n->resolved_type.__ptr__());
+        var v = mir_value_t::variable(temp_1, n->resolved_type);
         defer v.delete();
 
         self.value_stack.push(v);
@@ -1389,7 +1380,7 @@ impl mir2sir {
 
             var n_ptr = n->resolved_type.pointer_copy();
             defer n_ptr.delete();
-            var v = mir_value_t::variable(temp_var.__ptr__(), n_ptr.__ptr__());
+            var v = mir_value_t::variable(temp_var, n_ptr);
             defer v.delete();
 
             self.value_stack.push(v);
@@ -1484,7 +1475,7 @@ impl mir2sir {
 
             var n_ptr = n->resolved_type.pointer_copy();
             defer n_ptr.delete();
-            var v = mir_value_t::variable(temp_var.__ptr__(), n_ptr.__ptr__());
+            var v = mir_value_t::variable(temp_var, n_ptr);
             defer v.delete();
 
             self.value_stack.push(v);
@@ -1525,7 +1516,7 @@ impl mir2sir {
             temp_var_value.__ptr__()
         ) => sir*);
 
-        var v = mir_value_t::variable(temp.__ptr__(), source_ref.__ptr__());
+        var v = mir_value_t::variable(temp, source_ref);
         defer v.delete();
         self.value_stack.push(v);
     }
@@ -1596,10 +1587,7 @@ impl mir2sir {
             ) => sir*);
         }
 
-        var v = mir_value_t::variable(
-            temp_var.__ptr__(),
-            source_ref.__ptr__()
-        );
+        var v = mir_value_t::variable(temp_var, source_ref);
         defer v.delete();
 
         self.value_stack.push(v);
@@ -1621,7 +1609,7 @@ impl mir2sir {
             ty.is_array = false;
             defer ty.delete();
 
-            var v = mir_value_t::variable(name.__ptr__(), ty.__ptr__());
+            var v = mir_value_t::variable(name, ty);
             defer v.delete();
 
             self.value_stack.push(v);
@@ -1633,10 +1621,7 @@ impl mir2sir {
             if (!self.ctx->global->primitives.has(n->name)) {
                 panic("empty location for global symbol");
             } else {
-                var v = mir_value_t::primitive(
-                    n->name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::primitive(n->name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);
@@ -1652,10 +1637,7 @@ impl mir2sir {
         defer full_path_name.delete();
 
         if (dm.functions.has(name_for_search)) {
-            var v = mir_value_t::func_symbol(
-                full_path_name.__ptr__(),
-                n->resolved_type.__ptr__()
-            );
+            var v = mir_value_t::func_symbol(full_path_name, n->resolved_type);
             defer v.delete();
 
             // extern function remain raw name
@@ -1665,26 +1647,17 @@ impl mir2sir {
             }
             self.value_stack.push(v);
         } else if (dm.structs.has(name_for_search)) {
-            var v = mir_value_t::struct_symbol(
-                full_path_name.__ptr__(),
-                n->resolved_type.__ptr__()
-            );
+            var v = mir_value_t::struct_symbol(full_path_name, n->resolved_type);
             defer v.delete();
 
             self.value_stack.push(v);
         } else if (dm.tagged_unions.has(name_for_search)) {
-            var v = mir_value_t::tagged_union_symbol(
-                full_path_name.__ptr__(),
-                n->resolved_type.__ptr__()
-            );
+            var v = mir_value_t::tagged_union_symbol(full_path_name, n->resolved_type);
             defer v.delete();
 
             self.value_stack.push(v);
         } else if (dm.enums.has(name_for_search)) {
-            var v = mir_value_t::enum_symbol(
-                name_for_search.__ptr__(),
-                n->resolved_type.__ptr__()
-            );
+            var v = mir_value_t::enum_symbol(name_for_search, n->resolved_type);
             defer v.delete();
 
             self.value_stack.push(v);
@@ -1779,10 +1752,7 @@ impl mir2sir {
         var n_ptr = n->resolved_type.pointer_copy();
         defer n_ptr.delete();
 
-        var v = mir_value_t::variable(
-            target.__ptr__(),
-            n_ptr.__ptr__()
-        );
+        var v = mir_value_t::variable(target, n_ptr);
         defer v.delete();
 
         self.value_stack.push(v);
@@ -1880,10 +1850,7 @@ impl mir2sir {
         self.block->add_stmt(sir_function_call => sir*);
 
         if (n->resolved_type.is_void()) {
-            var v = mir_value_t::variable(
-                target.__ptr__(),
-                n->resolved_type.__ptr__()
-            );
+            var v = mir_value_t::variable(target,  n->resolved_type);
             defer v.delete();
 
             self.value_stack.push(v);
@@ -1924,7 +1891,7 @@ impl mir2sir {
             var n_ref = n->resolved_type.pointer_copy();
             defer n_ref.delete();
 
-            var v = mir_value_t::variable(temp_var.__ptr__(), n_ref.__ptr__());
+            var v = mir_value_t::variable(temp_var, n_ref);
             defer v.delete();
 
             self.value_stack.push(v);
@@ -1951,10 +1918,7 @@ impl mir2sir {
                 method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
-                var v = mir_value_t::method(
-                    method_name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::method(method_name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);
@@ -1977,10 +1941,7 @@ impl mir2sir {
                 method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
-                var v = mir_value_t::method(
-                    method_name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::method(method_name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);
@@ -2014,7 +1975,7 @@ impl mir2sir {
             ) => sir*);
 
             var n_ty = n->resolved_type.pointer_copy();
-            var v = mir_value_t::variable(target.__ptr__(), n_ty.__ptr__());
+            var v = mir_value_t::variable(target, n_ty);
             defer {
                 n_ty.delete();
                 v.delete();
@@ -2032,10 +1993,7 @@ impl mir2sir {
                 method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
-                var v = mir_value_t::method(
-                    method_name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::method(method_name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);
@@ -2096,7 +2054,7 @@ impl mir2sir {
             ) => sir*);
 
             var n_ty = n->resolved_type.pointer_copy();
-            var v = mir_value_t::variable(target.__ptr__(), n_ty.__ptr__());
+            var v = mir_value_t::variable(target, n_ty);
             defer {
                 n_ty.delete();
                 v.delete();
@@ -2140,7 +2098,7 @@ impl mir2sir {
                 ) => sir*);
 
                 // push self into stack
-                var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
+                var v_self = mir_value_t::variable(temp_var, prev_ref);
                 defer v_self.delete();
 
                 self.value_stack.push(v_self);
@@ -2149,10 +2107,7 @@ impl mir2sir {
                 method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
-                var v = mir_value_t::method(
-                    method_name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::method(method_name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);
@@ -2188,7 +2143,7 @@ impl mir2sir {
                 ) => sir*);
 
                 // push self into stack
-                var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
+                var v_self = mir_value_t::variable(temp_var, prev_ref);
                 defer v_self.delete();
 
                 self.value_stack.push(v_self);
@@ -2197,10 +2152,7 @@ impl mir2sir {
                 method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
-                var v = mir_value_t::method(
-                    method_name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::method(method_name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);
@@ -2247,7 +2199,7 @@ impl mir2sir {
             ) => sir*);
 
             var n_ty = n->resolved_type.pointer_copy();
-            var v = mir_value_t::variable(temp_1.__ptr__(), n_ty.__ptr__());
+            var v = mir_value_t::variable(temp_1, n_ty);
             defer {
                 n_ty.delete();
                 v.delete();
@@ -2278,7 +2230,7 @@ impl mir2sir {
                 ) => sir*);
 
                 // push self into stack
-                var v_self = mir_value_t::variable(temp_var.__ptr__(), prev_ref.__ptr__());
+                var v_self = mir_value_t::variable(temp_var, prev_ref);
                 defer v_self.delete();
 
                 self.value_stack.push(v_self);
@@ -2287,10 +2239,7 @@ impl mir2sir {
                 method_name.append_char('.').append_str(n->name);
                 defer method_name.delete();
 
-                var v = mir_value_t::method(
-                    method_name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::method(method_name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);
@@ -2365,7 +2314,7 @@ impl mir2sir {
             ) => sir*);
 
             var n_ty = n->resolved_type.pointer_copy();
-            var v = mir_value_t::variable(target.__ptr__(), n_ty.__ptr__());
+            var v = mir_value_t::variable(target, n_ty);
             defer {
                 n_ty.delete();
                 v.delete();
@@ -2386,10 +2335,7 @@ impl mir2sir {
                 name.append(".").append_str(n->name);
                 defer name.delete();
 
-                var v = mir_value_t::func_symbol(
-                    name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::func_symbol(name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);
@@ -2399,10 +2345,7 @@ impl mir2sir {
                 name.append(".").append_str(n->name);
                 defer name.delete();
 
-                var v = mir_value_t::func_symbol(
-                    name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::func_symbol(name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);
@@ -2412,10 +2355,7 @@ impl mir2sir {
                 name.append(".").append_str(n->name);
                 defer name.delete();
 
-                var v = mir_value_t::func_symbol(
-                    name.__ptr__(),
-                    n->resolved_type.__ptr__()
-                );
+                var v = mir_value_t::func_symbol(name, n->resolved_type);
                 defer v.delete();
 
                 self.value_stack.push(v);

@@ -897,8 +897,8 @@ impl regist_pass {
         }
 
         self.regist_struct_size_method(struct_info);
-        self.regist_struct_alloc_method(struct_info, struct_self_type.__ptr__());
-        self.regist_struct_ptr_method(struct_info, struct_self_type.__ptr__());
+        self.regist_struct_alloc_method(struct_info, struct_self_type);
+        self.regist_struct_ptr_method(struct_info, struct_self_type);
         self.ctx->generics.clear();        
     }
 
@@ -919,9 +919,9 @@ impl regist_pass {
 
     func regist_struct_alloc_method(self,
                                     struct_info: colgm_struct&,
-                                    struct_self_type: type*) {
+                                    struct_self_type: type&) {
         var name = str::from("__alloc__");
-        var ret = struct_self_type->pointer_copy();
+        var ret = struct_self_type.pointer_copy();
         defer {
             name.delete();
             ret.delete();
@@ -936,12 +936,12 @@ impl regist_pass {
 
     func regist_struct_ptr_method(self,
                                   struct_info: colgm_struct&,
-                                  struct_self_type: type*) {
+                                  struct_self_type: type&) {
         var name = str::from("__ptr__");
         var self_name = str::from("self");
-        var self_type = struct_self_type->clone();
+        var self_type = struct_self_type.clone();
         self_type.is_reference = true;
-        var ret = struct_self_type->pointer_copy();
+        var ret = struct_self_type.pointer_copy();
         defer {
             name.delete();
             self_name.delete();
@@ -971,24 +971,22 @@ impl regist_pass {
             return;
         }
 
-        // allocate struct info
-        var struct_info = colgm_struct::new(node->name, node->base.location);
-        defer {
-            struct_info->delete();
-            free(struct_info => i8*);
-        }
+        // create struct info
+        var struct_info = colgm_struct::instance(node->name, node->base.location);
+        defer struct_info.delete();
+
         if (node->is_extern) {
-            struct_info->is_extern = true;
+            struct_info.is_extern = true;
         }
         if (node->is_public) {
-            struct_info->is_public = true;
+            struct_info.is_public = true;
         }
         // insert to domain
         var dm = self.ctx->get_domain(node->base.location.file);
         if (node->generic_types != nil) {
-            dm.generic_structs.insert(name, struct_info[0]);
+            dm.generic_structs.insert(name, struct_info);
         } else {
-            dm.structs.insert(name, struct_info[0]);
+            dm.structs.insert(name, struct_info);
         }
 
         var sym_info = symbol_info::instance(
@@ -1115,8 +1113,8 @@ impl regist_pass {
         defer un_type.delete();
 
         self.regist_tagged_union_size_method(union_info);
-        self.regist_tagged_union_alloc_method(union_info, un_type.__ptr__());
-        self.regist_tagged_union_ptr_method(union_info, un_type.__ptr__());
+        self.regist_tagged_union_alloc_method(union_info, un_type);
+        self.regist_tagged_union_ptr_method(union_info, un_type);
 
         foreach (var i; node->members) {
             var member = i.get();
@@ -1158,9 +1156,9 @@ impl regist_pass {
 
     func regist_tagged_union_alloc_method(self,
                                           un: colgm_tagged_union&,
-                                          un_type: type*) {
+                                          un_type: type&) {
         var name = str::from("__alloc__");
-        var ret = un_type->pointer_copy();
+        var ret = un_type.pointer_copy();
         defer {
             name.delete();
             ret.delete();
@@ -1175,12 +1173,12 @@ impl regist_pass {
 
     func regist_tagged_union_ptr_method(self,
                                         un: colgm_tagged_union&,
-                                        un_type: type*) {
+                                        un_type: type&) {
         var name = str::from("__ptr__");
         var self_name = str::from("self");
-        var self_type = un_type->clone();
+        var self_type = un_type.clone();
         self_type.is_reference = true;
-        var ret = un_type->pointer_copy();
+        var ret = un_type.pointer_copy();
         defer {
             name.delete();
             self_name.delete();
@@ -1211,10 +1209,7 @@ impl regist_pass {
         }
 
         // allocate struct info
-        var union_info = colgm_tagged_union::instance(
-            name.__ptr__(),
-            node->base.location.__ptr__()
-        );
+        var union_info = colgm_tagged_union::instance(name, node->base.location);
         defer union_info.delete();
         if (node->is_extern) {
             union_info.is_extern = true;

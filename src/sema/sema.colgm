@@ -241,7 +241,7 @@ impl sema {
         }
         if (!infer.is_integer() && !infer.is_float()) {
             self.err->out("expect integer or float but get \"")
-                     .out_type(infer.__ptr__(), self.pkg)
+                     .out_type(infer, self.pkg)
                      .out("\"")
                      .emit_err(n->base.location.__ptr__());
             return type::error_type();
@@ -260,7 +260,7 @@ impl sema {
         }
         if (!infer.can_bitwise_calculate()) {
             self.err->out("bitwise operator cannot be used on \"")
-                     .out_type(infer.__ptr__(), self.pkg)
+                     .out_type(infer, self.pkg)
                      .out("\"")
                      .emit_err(n->base.location.__ptr__());
             return type::error_type();
@@ -537,7 +537,7 @@ impl sema {
 
         if (!left.can_bitwise_calculate()) {
             self.err->out("bitwise operator cannot be used on \"")
-                     .out_type(left.__ptr__(), self.pkg)
+                     .out_type(left, self.pkg)
                      .out("\"")
                      .emit_err(n->left->location.__ptr__());
             return type::error_type();
@@ -545,7 +545,7 @@ impl sema {
 
         if (!right.can_bitwise_calculate()) {
             self.err->out("bitwise operator cannot be used on \"")
-                     .out_type(right.__ptr__(), self.pkg)
+                     .out_type(right, self.pkg)
                      .out("\"")
                      .emit_err(n->right->location.__ptr__());
             return type::error_type();
@@ -896,11 +896,11 @@ impl sema {
         }
     }
 
-    func struct_method_infer(self, prev: type*, fn_name: str*) -> type {
-        var infer = prev->clone();
+    func struct_method_infer(self, prev: type&, fn_name: str&) -> type {
+        var infer = prev.clone();
         infer.pointer_depth = 0;
         infer.is_global_sym = true;
-        infer.m_info.set_normal_struct_method(fn_name->c_str);
+        infer.m_info.set_normal_struct_method(fn_name.c_str);
         return infer;
     }
 
@@ -912,14 +912,14 @@ impl sema {
         return infer;
     }
 
-    func resolve_get_field(self, prev: type*, n: ast_get_field*) -> type {
-        var prev_name = prev->full_path_name_with_pointer(self.pkg);
+    func resolve_get_field(self, prev: type&, n: ast_get_field*) -> type {
+        var prev_name = prev.full_path_name_with_pointer(self.pkg);
         defer prev_name.delete();
 
-        var prev_name_for_search = prev->generic_name(self.pkg);
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
-        if (prev->is_global_sym) {
+        if (prev.is_global_sym) {
             self.err->out("cannot get field from global symbol \"")
                      .out(prev_name.c_str)
                      .out("\"")
@@ -927,7 +927,7 @@ impl sema {
             return type::error_type();
         }
 
-        if (prev->is_pointer()) {
+        if (prev.is_pointer()) {
             self.err->out("cannot use \".\" to get field from pointer \"")
                      .out(prev_name.c_str)
                      .out("\".")
@@ -937,7 +937,7 @@ impl sema {
         }
 
         // loc_file is empty means prev is native type
-        if (prev->loc_file.empty()) {
+        if (prev.loc_file.empty()) {
             return self.resolve_primitive_get_field(
                 prev,
                 n->name,
@@ -945,7 +945,7 @@ impl sema {
             );
         }
 
-        var dm = self.ctx->get_domain(prev->loc_file);
+        var dm = self.ctx->get_domain(prev.loc_file);
         if (dm.structs.has(prev_name_for_search)) {
             var res = self.resolve_struct_get_field(
                 dm.structs.get(prev_name_for_search),
@@ -969,8 +969,8 @@ impl sema {
         return type::error_type();
     }
 
-    func resolve_primitive_get_field(self, prev: type*, method_name: str&, loc: span*) -> type {
-        var prev_name_for_search = prev->generic_name(self.pkg);
+    func resolve_primitive_get_field(self, prev: type&, method_name: str&, loc: span*) -> type {
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
         if (!self.ctx->global->primitives.has(prev_name_for_search)) {
@@ -996,7 +996,7 @@ impl sema {
             return type::error_type();
         }
 
-        var infer = prev->clone();
+        var infer = prev.clone();
         infer.pointer_depth = 0;
         infer.is_global_sym = true;
         infer.m_info.set_normal_primitive_method(method_name.c_str);
@@ -1005,12 +1005,12 @@ impl sema {
 
     func resolve_struct_get_field(self,
                                   struct_self: colgm_struct&,
-                                  prev: type*,
+                                  prev: type&,
                                   n: ast_get_field*) -> type {
-        var prev_name = prev->full_path_name_with_pointer(self.pkg);
+        var prev_name = prev.full_path_name_with_pointer(self.pkg);
         defer prev_name.delete();
 
-        var prev_name_for_search = prev->generic_name(self.pkg);
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
         if (struct_self.fields.has(n->name)) {
@@ -1020,7 +1020,7 @@ impl sema {
         }
         if (struct_self.method.has(n->name)) {
             self.check_struct_pub_method(n => ast*, n->name, struct_self);
-            var infer = self.struct_method_infer(prev, n->name.__ptr__());
+            var infer = self.struct_method_infer(prev, n->name);
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
@@ -1050,12 +1050,12 @@ impl sema {
 
     func resolve_tagged_union_get_field(self,
                                         union_self: colgm_tagged_union&,
-                                        prev: type*,
+                                        prev: type&,
                                         n: ast_get_field*) -> type {
-        var prev_name = prev->full_path_name_with_pointer(self.pkg);
+        var prev_name = prev.full_path_name_with_pointer(self.pkg);
         defer prev_name.delete();
 
-        var prev_name_for_search = prev->generic_name(self.pkg);
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
         if (union_self.members.has(n->name)) {
@@ -1065,7 +1065,7 @@ impl sema {
         }
         if (union_self.method.has(n->name)) {
             self.check_tagged_union_pub_method(n => ast*, n->name, union_self);
-            var infer = self.struct_method_infer(prev, n->name.__ptr__());
+            var infer = self.struct_method_infer(prev, n->name);
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
@@ -1551,22 +1551,22 @@ impl sema {
         return type::error_type();
     }
 
-    func resolve_initializer(self, prev: type*, n: ast_initializer*) -> type {
-        if (!prev->is_global_sym) {
+    func resolve_initializer(self, prev: type&, n: ast_initializer*) -> type {
+        if (!prev.is_global_sym) {
             self.err->error(n->base.location.__ptr__(),
                 "need a global symbol to initialize"
             );
             return type::error_type();
         }
-        if (prev->loc_file.empty()) {
+        if (prev.loc_file.empty()) {
             self.err->error(n->base.location.__ptr__(),
                 "basic type cannot be initialized as a struct"
             );
             return type::error_type();
         }
 
-        var dm = self.ctx->get_domain(prev->loc_file);
-        var prev_name_for_search = prev->generic_name(self.pkg);
+        var dm = self.ctx->get_domain(prev.loc_file);
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
         if (dm.structs.has(prev_name_for_search)) {
@@ -1586,11 +1586,11 @@ impl sema {
         return type::error_type();
     }
 
-    func resolve_struct_initializer(self, struct_self: colgm_struct&, prev: type*, n: ast_initializer*) -> type {
-        var prev_name_for_search = prev->generic_name(self.pkg);
+    func resolve_struct_initializer(self, struct_self: colgm_struct&, prev: type&, n: ast_initializer*) -> type {
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
-        var copy = prev->clone();
+        var copy = prev.clone();
         copy.is_global_sym = false;
         n->base.resolved_type.reset_with(copy);
 
@@ -1648,11 +1648,11 @@ impl sema {
         return copy;
     }
 
-    func resolve_tagged_union_initializer(self, union_self: colgm_tagged_union&, prev: type*, n: ast_initializer*) -> type {
-        var prev_name_for_search = prev->generic_name(self.pkg);
+    func resolve_tagged_union_initializer(self, union_self: colgm_tagged_union&, prev: type&, n: ast_initializer*) -> type {
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
-        var copy = prev->clone();
+        var copy = prev.clone();
         copy.is_global_sym = false;
         n->base.resolved_type.reset_with(copy);
 
@@ -1722,14 +1722,14 @@ impl sema {
         return copy;
     }
 
-    func resolve_ptr_get_field(self, prev: type*, n: ast_ptr_get_field*) -> type {
-        var prev_name = prev->full_path_name_with_pointer(self.pkg);
+    func resolve_ptr_get_field(self, prev: type&, n: ast_ptr_get_field*) -> type {
+        var prev_name = prev.full_path_name_with_pointer(self.pkg);
         defer prev_name.delete();
 
-        var prev_name_for_search = prev->generic_name(self.pkg);
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
-        if (prev->is_global_sym) {
+        if (prev.is_global_sym) {
             self.err->out("cannot get field from global symbol \"")
                      .out(prev_name.c_str)
                      .out("\"")
@@ -1737,14 +1737,14 @@ impl sema {
             return type::error_type();
         }
 
-        if (prev->pointer_depth == 0) {
+        if (prev.pointer_depth == 0) {
             self.err->out("cannot use \"->\" to get field from \"")
                      .out(prev_name.c_str)
                      .out("\"")
                      .out_note("use \".\" instead")
                      .emit_err(n->operator_location.__ptr__());
             // report but continue resolving
-        } else if (prev->pointer_depth > 1) {
+        } else if (prev.pointer_depth > 1) {
             self.err->out("cannot use \"->\" to get field from pointer \"")
                      .out(prev_name.c_str)
                      .out("\"")
@@ -1753,7 +1753,7 @@ impl sema {
         }
 
         // loc_file is empty means prev is native type
-        if (prev->loc_file.empty()) {
+        if (prev.loc_file.empty()) {
             return self.resolve_primitive_get_field(
                 prev,
                 n->name,
@@ -1761,7 +1761,7 @@ impl sema {
             );
         }
 
-        var dm = self.ctx->get_domain(prev->loc_file);
+        var dm = self.ctx->get_domain(prev.loc_file);
         if (dm.structs.has(prev_name_for_search)) {
             var res = self.resolve_struct_ptr_get_field(
                 dm.structs.get(prev_name_for_search),
@@ -1789,12 +1789,12 @@ impl sema {
 
     func resolve_struct_ptr_get_field(self,
                                       struct_self: colgm_struct&,
-                                      prev: type*,
+                                      prev: type&,
                                       n: ast_ptr_get_field*) -> type {
-        var prev_name = prev->full_path_name_with_pointer(self.pkg);
+        var prev_name = prev.full_path_name_with_pointer(self.pkg);
         defer prev_name.delete();
 
-        var prev_name_for_search = prev->generic_name(self.pkg);
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
         
         if (struct_self.fields.has(n->name)) {
@@ -1804,7 +1804,7 @@ impl sema {
         }
         if (struct_self.method.has(n->name)) {
             self.check_struct_pub_method(n => ast*, n->name, struct_self);
-            var infer = self.struct_method_infer(prev, n->name.__ptr__());
+            var infer = self.struct_method_infer(prev, n->name);
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
@@ -1834,12 +1834,12 @@ impl sema {
 
     func resolve_tagged_union_ptr_get_field(self,
                                             union_self: colgm_tagged_union&,
-                                            prev: type*,
+                                            prev: type&,
                                             n: ast_ptr_get_field*) -> type {
-        var prev_name = prev->full_path_name_with_pointer(self.pkg);
+        var prev_name = prev.full_path_name_with_pointer(self.pkg);
         defer prev_name.delete();
 
-        var prev_name_for_search = prev->generic_name(self.pkg);
+        var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
         
         if (union_self.members.has(n->name)) {
@@ -1849,7 +1849,7 @@ impl sema {
         }
         if (union_self.method.has(n->name)) {
             self.check_tagged_union_pub_method(n => ast*, n->name, union_self);
-            var infer = self.struct_method_infer(prev, n->name.__ptr__());
+            var infer = self.struct_method_infer(prev, n->name);
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
@@ -1899,10 +1899,7 @@ impl sema {
             match (c->kind) {
                 ast_kind::ast_get_field => {
                     infer.delete();
-                    infer = self.resolve_get_field(
-                        prev.__ptr__(),
-                        c => ast_get_field*
-                    );
+                    infer = self.resolve_get_field(prev, c => ast_get_field*);
                 }
                 ast_kind::ast_call_func_args => {
                     infer.delete();
@@ -1927,17 +1924,11 @@ impl sema {
                 }
                 ast_kind::ast_initializer => {
                     infer.delete();
-                    infer = self.resolve_initializer(
-                        prev.__ptr__(),
-                        c => ast_initializer*
-                    );
+                    infer = self.resolve_initializer(prev, c => ast_initializer*);
                 }
                 ast_kind::ast_ptr_get_field => {
                     infer.delete();
-                    infer = self.resolve_ptr_get_field(
-                        prev.__ptr__(),
-                        c => ast_ptr_get_field*
-                    );
+                    infer = self.resolve_ptr_get_field(prev, c => ast_ptr_get_field*);
                 }
                 _ => {
                     self.err->unimplemented(c->location.__ptr__());
@@ -1961,7 +1952,7 @@ impl sema {
         // infer should not be a global symbol
         if (infer.is_global_sym) {
             self.err->out("get global symbol \"")
-                     .out_type(infer.__ptr__(), self.pkg)
+                     .out_type(infer, self.pkg)
                      .out("\", but not an instance")
                      .emit_err(n->base.location.__ptr__());
         }
@@ -2021,13 +2012,13 @@ impl sema {
         return true;
     }
 
-    func check_mutable_left_value(self, n: ast_call*, left: type*) {
-        if (left->is_const && !left->is_pointer()) {
+    func check_mutable_left_value(self, n: ast_call*, left: type&) {
+        if (left.is_const && !left.is_pointer()) {
             self.err->out("cannot assign to \"const ")
                      .out_type(left, self.pkg)
                      .out("\"")
                      .emit_err(n->base.location.__ptr__());
-        } else if (left->is_array) {
+        } else if (left.is_array) {
             self.err->out("cannot change array \"")
                      .out_type(left, self.pkg)
                      .out("\"")
@@ -2044,7 +2035,7 @@ impl sema {
         }
 
         // left value should be mutable
-        self.check_mutable_left_value(n->left, left.__ptr__());
+        self.check_mutable_left_value(n->left, left);
 
         var right = self.resolve_expression(n->right);
         defer right.delete();
@@ -2058,14 +2049,14 @@ impl sema {
             n->kind == assignment_kind::oreq) {
             if (!left.can_bitwise_calculate()) {
                 self.err->out("bitwise operator cannot be used on \"")
-                         .out_type(left.__ptr__(), self.pkg)
+                         .out_type(left, self.pkg)
                          .out("\"")
                          .emit_err(n->left->base.location.__ptr__());
                 return type::restrict_type();
             }
             if (!right.can_bitwise_calculate()) {
                 self.err->out("bitwise operator cannot be used on \"")
-                         .out_type(right.__ptr__(), self.pkg)
+                         .out_type(right, self.pkg)
                          .out("\"")
                          .emit_err(n->right->location.__ptr__());
                 return type::restrict_type();
@@ -2076,18 +2067,18 @@ impl sema {
             if (!left.eq(right) &&
                 !self.check_can_be_converted(n->right, left)) {
                 self.err->out("cannot calculate \"")
-                         .out_type(left.__ptr__(), self.pkg)
+                         .out_type(left, self.pkg)
                          .out("\" and \"")
-                         .out_type(right.__ptr__(), self.pkg)
+                         .out_type(right, self.pkg)
                          .out("\"")
                          .emit_err(n->right->location.__ptr__());
             }
         } else if (!left.eq(right)) {
             if (!self.check_can_be_converted(n->right, left)) {
                 self.err->out("get \"")
-                         .out_type(right.__ptr__(), self.pkg)
+                         .out_type(right, self.pkg)
                          .out("\" but expect \"")
-                         .out_type(left.__ptr__(), self.pkg)
+                         .out_type(left, self.pkg)
                          .out("\"")
                          .emit_err(n->right->location.__ptr__());
             }
@@ -2096,7 +2087,7 @@ impl sema {
         // only = is allowed to be applied on enums
         if (self.is_enum_type(left) && n->kind != assignment_kind::eq) {
             self.err->out("cannot calculate enum \"")
-                     .out_type(left.__ptr__(), self.pkg)
+                     .out_type(left, self.pkg)
                      .out("\"")
                      .emit_err(n->left->base.location.__ptr__());
         }
@@ -2148,8 +2139,8 @@ impl sema {
 }
 
 impl sema {
-    func check_defined_variable_is_void(self, n: ast_definition*, ty: type*) {
-        if (!ty->is_void()) {
+    func check_defined_variable_is_void(self, n: ast_definition*, ty: type&) {
+        if (!ty.is_void()) {
             return;
         }
         self.err->error(
@@ -2281,7 +2272,7 @@ impl sema {
                 );
             }
             self.ctx->add_local_var(name, real_type, n->base.location);
-            self.check_defined_variable_is_void(n, real_type.__ptr__());
+            self.check_defined_variable_is_void(n, real_type);
             return;
         }
 
@@ -2364,11 +2355,11 @@ impl sema {
         if (real_type.is_const) {
             n->base.resolved_type.reset_with(real_type);
             self.ctx->add_local_var(name, real_type, n->base.location);
-            self.check_defined_variable_is_void(n, real_type.__ptr__());
+            self.check_defined_variable_is_void(n, real_type);
         } else {
             n->base.resolved_type.reset_with(expect_type);
             self.ctx->add_local_var(name, expect_type, n->base.location);
-            self.check_defined_variable_is_void(n, expect_type.__ptr__());
+            self.check_defined_variable_is_void(n, expect_type);
         }
     }
 
@@ -2661,7 +2652,7 @@ impl sema {
 
         if (infer.pointer_depth > 1) {
             self.err->out("cannot match \"")
-                     .out_type(infer.__ptr__(), self.pkg)
+                     .out_type(infer, self.pkg)
                      .out("\"")
                      .emit_err(n->value->location.__ptr__());
         }
@@ -2801,13 +2792,13 @@ impl sema {
         self.ctx->pop_scope_level(self.err);
     }
 
-    func check_struct_has_method(self, t: type*, m_name: i8*) -> bool {
-        if (t->is_error()) {
+    func check_struct_has_method(self, t: type&, m_name: i8*) -> bool {
+        if (t.is_error()) {
             return false;
         }
 
-        var dm = self.ctx->get_domain(t->loc_file);
-        var name_for_search = t->generic_name(self.pkg);
+        var dm = self.ctx->get_domain(t.loc_file);
+        var name_for_search = t.generic_name(self.pkg);
         defer name_for_search.delete();
 
         if (!dm.structs.has(name_for_search)) {
@@ -2824,10 +2815,10 @@ impl sema {
         return true;
     }
 
-    func get_struct_method_return_type(self, t: type*, m_name: i8*) -> type {
-        var dm = self.ctx->get_domain(t->loc_file);
+    func get_struct_method_return_type(self, t: type&, m_name: i8*) -> type {
+        var dm = self.ctx->get_domain(t.loc_file);
 
-        var name_for_search = t->generic_name(self.pkg);
+        var name_for_search = t.generic_name(self.pkg);
         defer name_for_search.delete();
 
         var s = dm.structs.get(name_for_search);
@@ -2839,7 +2830,7 @@ impl sema {
         return m.return_type.clone();
     }
 
-    func lowering_forindex(self, n: ast_forindex*, iter_ty: type*) {
+    func lowering_forindex(self, n: ast_forindex*, iter_ty: type&) {
         // generate `var i: ty = 0;`
         var lowered_init = ast_definition::new(
             n->variable->base.location,
@@ -2849,7 +2840,7 @@ impl sema {
         lowered_init->type = ast_type_def::new(n->variable->base.location);
         lowered_init->type->name = ast_identifier::new(
             n->variable->base.location,
-            iter_ty->name
+            iter_ty.name
         );
 
         lowered_init->value = ast_number_literal::new(
@@ -2919,20 +2910,20 @@ impl sema {
         // only accept container T, T& or T*
         if (ty.pointer_depth > 1) {
             self.err->out("\"")
-                     .out_type(ty.__ptr__(), self.pkg)
+                     .out_type(ty, self.pkg)
                      .out("\" is not accpted as container")
                      .emit_err(n->container->base.location.__ptr__());
         }
 
         // T should have method size(T) -> integer
-        if (!self.check_struct_has_method(ty.__ptr__(), "iter_size")) {
+        if (!self.check_struct_has_method(ty, "iter_size")) {
             self.err->error(n->container->base.location.__ptr__(),
                              "container must have iter_size method");
             return;
         }
 
         // forindex will directly combine size method's return type to iter_type
-        var iter_ty = self.get_struct_method_return_type(ty.__ptr__(), "iter_size");
+        var iter_ty = self.get_struct_method_return_type(ty, "iter_size");
         defer iter_ty.delete();
 
         var u64_type = type::u64_type();
@@ -2951,7 +2942,7 @@ impl sema {
             return;
         }
 
-        self.lowering_forindex(n, iter_ty.__ptr__());
+        self.lowering_forindex(n, iter_ty);
 
         self.ctx->push_scope_level();
         self.resolve_definition(n->lowered_init);
@@ -3061,30 +3052,30 @@ impl sema {
         // only accept container T, T& or T*
         if (ty.pointer_depth > 1) {
             self.err->out("\"")
-                     .out_type(ty.__ptr__(), self.pkg)
+                     .out_type(ty, self.pkg)
                      .out("\" is not accpted as container")
                      .emit_err(n->container->base.location.__ptr__());
         }
         // T should have method iter(T) -> iter_type
-        if (!self.check_struct_has_method(ty.__ptr__(), "iter")) {
+        if (!self.check_struct_has_method(ty, "iter")) {
             self.err->error(n->container->base.location.__ptr__(),
                              "container must have iter method");
             return;
         }
 
         // foreach will directly combine iter_type to defined variable
-        var iter_ty = self.get_struct_method_return_type(ty.__ptr__(), "iter");
+        var iter_ty = self.get_struct_method_return_type(ty, "iter");
         defer iter_ty.delete();
 
         n->variable->base.resolved_type.reset_with(iter_ty);
 
         // check iter.is_end() method
-        if (!self.check_struct_has_method(iter_ty.__ptr__(), "is_end")) {
+        if (!self.check_struct_has_method(iter_ty, "is_end")) {
             self.err->error(n->variable->base.location.__ptr__(),
                              "iterator must have is_end method");
             return;
         } else {
-            var rt = self.get_struct_method_return_type(iter_ty.__ptr__(), "is_end");
+            var rt = self.get_struct_method_return_type(iter_ty, "is_end");
             defer rt.delete();
 
             if (!rt.is_bool()) {
@@ -3095,12 +3086,12 @@ impl sema {
         }
 
         // check iter.next() method
-        if (!self.check_struct_has_method(iter_ty.__ptr__(), "next")) {
+        if (!self.check_struct_has_method(iter_ty, "next")) {
             self.err->error(n->variable->base.location.__ptr__(),
                              "iterator must have next method");
             return;
         } else {
-            var rt = self.get_struct_method_return_type(iter_ty.__ptr__(), "next");
+            var rt = self.get_struct_method_return_type(iter_ty, "next");
             defer rt.delete();
 
             if (!rt.eq(iter_ty)) {
@@ -3151,9 +3142,9 @@ impl sema {
         if (!func_self.return_type.eq(infer) &&
             !self.check_can_be_converted(n->value, func_self.return_type)) {
             self.err->out("expected return type \"")
-                        .out_type(func_self.return_type.__ptr__(), self.pkg)
+                        .out_type(func_self.return_type, self.pkg)
                         .out("\", but get \"")
-                        .out_type(infer.__ptr__(), self.pkg)
+                        .out_type(infer, self.pkg)
                         .out("\"")
                         .emit_err(n->base.location.__ptr__());
         }

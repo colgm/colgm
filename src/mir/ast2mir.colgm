@@ -736,8 +736,8 @@ impl ast2mir {
 }
 
 impl ast2mir {
-    func generate_full_name(self, n: str*, loc: span*) -> str {
-        var ty = type::instance(n->c_str, loc->file.c_str);
+    func generate_full_name(self, n: str&, loc: span&) -> str {
+        var ty = type::instance(n.c_str, loc.file.c_str);
         defer ty.delete();
 
         var name = ty.full_path_name(self.pkg);
@@ -749,7 +749,7 @@ impl ast2mir {
             return;
         }
 
-        var st = mir_struct::instance(n->name.__ptr__(), n->base.location.__ptr__());
+        var st = mir_struct::instance(n->name, n->base.location);
         defer st.delete();
 
         foreach (var i; n->fields) {
@@ -763,7 +763,7 @@ impl ast2mir {
     }
 
     func visit_tagged_union_decl(self, n: ast_tagged_union_decl*) {
-        var un = mir_tagged_union::instance(n->name.__ptr__(), n->base.location.__ptr__());
+        var un = mir_tagged_union::instance(n->name, n->base.location);
         defer un.delete();
 
         foreach (var i; n->members) {
@@ -797,8 +797,8 @@ impl ast2mir {
         defer name.delete();
         if (!self.impl_struct_name.empty()) {
             var tmp_ty_name = self.generate_full_name(
-                self.impl_struct_name.__ptr__(),
-                n->base.location.__ptr__()
+                self.impl_struct_name,
+                n->base.location
             );
             defer tmp_ty_name.delete();
 
@@ -809,8 +809,8 @@ impl ast2mir {
         // global function with is not extern
         if (self.impl_struct_name.empty() && !n->is_extern) {
             var tmp_ty_name = self.generate_full_name(
-                n->name.__ptr__(),
-                n->base.location.__ptr__()
+                n->name,
+                n->base.location
             );
             defer tmp_ty_name.delete();
 
@@ -834,11 +834,7 @@ impl ast2mir {
             ret_ty.reset_with(t);
         }
 
-        var f = mir_func::instance(
-            name.c_str,
-            n->base.location.__ptr__(),
-            ret_ty.__ptr__()
-        );
+        var f = mir_func::instance(name.c_str, n->base.location, ret_ty);
         defer f.delete();
 
         foreach (var i; n->params->params) {
