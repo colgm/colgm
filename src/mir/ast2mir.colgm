@@ -148,7 +148,7 @@ impl ast2mir {
         self.block->add(mir_unary::new(
             n->base.location.__ptr__(),
             op,
-            n->base.resolved_type.__ptr__(),
+            n->base.resolved_type,
             unary_operator_block
         ) => mir*);
     }
@@ -189,7 +189,7 @@ impl ast2mir {
         self.block->add(mir_binary::new(
             n->base.location.__ptr__(),
             op,
-            n->base.resolved_type.__ptr__(),
+            n->base.resolved_type,
             lhs,
             rhs
         ) => mir*);
@@ -215,14 +215,14 @@ impl ast2mir {
         self.block->add(mir_type_convert::new(
             n->base.location.__ptr__(),
             new_block,
-            target_type.__ptr__()
+            target_type
         ) => mir*);
     }
 
     func visit_nil_literal(self, n: ast_nil_literal*) {
         self.block->add(mir_nil::new(
             n->base.location.__ptr__(),
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -230,7 +230,7 @@ impl ast2mir {
         self.block->add(mir_number::new(
             n->base.location.__ptr__(),
             n->literal.__ptr__(),
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -238,7 +238,7 @@ impl ast2mir {
         self.block->add(mir_string::new(
             n->base.location.__ptr__(),
             n->literal.__ptr__(),
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -246,7 +246,7 @@ impl ast2mir {
         self.block->add(mir_char::new(
             n->base.location.__ptr__(),
             n->literal.__ptr__(),
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -254,7 +254,7 @@ impl ast2mir {
         self.block->add(mir_bool::new(
             n->base.location.__ptr__(),
             n->flag,
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -270,7 +270,7 @@ impl ast2mir {
         var new_array = mir_array::new(
             n->base.location.__ptr__(),
             n->base.resolved_type.array_length,
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         );
         new_array->value = new_block;
         self.block->add(new_array => mir*);
@@ -286,7 +286,7 @@ impl ast2mir {
         self.block->add(mir_call_index::new(
             n->base.location.__ptr__(),
             new_block,
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -303,7 +303,7 @@ impl ast2mir {
             n->base.location.__ptr__(),
             new_block,
             n->args_is_ref.__ptr__(),
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -311,7 +311,7 @@ impl ast2mir {
         self.block->add(mir_get_field::new(
             n->base.location.__ptr__(),
             n->name.__ptr__(),
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -319,7 +319,7 @@ impl ast2mir {
         self.block->add(mir_ptr_get_field::new(
             n->base.location.__ptr__(),
             n->name.__ptr__(),
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -327,7 +327,7 @@ impl ast2mir {
         var temp = self.block;
         var m = mir_struct_init::new(
             n->base.location.__ptr__(),
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         );
         foreach (var i; n->pairs) {
             var p = i.get() => ast_init_pair*;
@@ -336,7 +336,7 @@ impl ast2mir {
             m->add_field(
                 p->field->content.__ptr__(),
                 self.block,
-                p->value->resolved_type.__ptr__()
+                p->value->resolved_type
             );
         }
         self.block = temp;
@@ -347,7 +347,7 @@ impl ast2mir {
         self.block->add(mir_get_path::new(
             n->base.location.__ptr__(),
             n->name.__ptr__(),
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -362,14 +362,14 @@ impl ast2mir {
             var m = mir_call_id::new(
                 n->head->base.location.__ptr__(),
                 ht.__ptr__(),
-                n->head->base.resolved_type.__ptr__()
+                n->head->base.resolved_type
             );
             self.block->add(m => mir*);
         } else {
             var m = mir_call_id::new(
                 n->head->base.location.__ptr__(),
                 n->head->id->content.__ptr__(),
-                n->head->base.resolved_type.__ptr__()
+                n->head->base.resolved_type
             );
             self.block->add(m => mir*);
         }
@@ -381,7 +381,7 @@ impl ast2mir {
         self.block->add(mir_call::new(
             n->base.location.__ptr__(),
             new_block,
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 }
@@ -398,7 +398,7 @@ impl ast2mir {
             n->base.location.__ptr__(),
             n->name.__ptr__(),
             new_block,
-            n->base.resolved_type.__ptr__()
+            n->base.resolved_type
         ) => mir*);
     }
 
@@ -594,7 +594,7 @@ impl ast2mir {
             var cond = mir_binary::new(
                 n->base.location.__ptr__(),
                 mir_binary_opr::cmpeq,
-                bt.__ptr__(),
+                bt,
                 mir_block::new(n->base.location.__ptr__()),
                 mir_block::new(n->base.location.__ptr__())
             );
@@ -602,12 +602,12 @@ impl ast2mir {
             cond->left->add(mir_number::new(
                 n->base.location.__ptr__(),
                 one.__ptr__(),
-                it.__ptr__()
+                it
             ) => mir*);
             cond->right->add(mir_number::new(
                 n->base.location.__ptr__(),
                 one.__ptr__(),
-                it.__ptr__()
+                it
             ) => mir*);
             cond_block->add(cond => mir*);
         }
