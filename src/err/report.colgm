@@ -436,21 +436,21 @@ impl report {
 
 impl report {
     pub func report_conflict_param(self,
-                                   param_loc: span*,
-                                   conflict_loc: span*,
+                                   param_loc: span&,
+                                   conflict_loc: span&,
                                    param_name: const i8*) {
         self.endwith_enter = false;
         self.highlight().out("\"").out(param_name)
             .out("\"").cancel_highlight()
             .out(" conflicts with an exist parameter")
-            .emit_err(param_loc);
+            .emit_err(param_loc.__ptr__());
         self.endwith_enter = true;
         self.out_note("parameter ")
             .highlight_note()
             .out_note("\"").out_note(param_name).out_note("\"")
             .cancel_highlight_note()
             .out_note(" is defined here")
-            .emit_headless(conflict_loc);
+            .emit_headless(conflict_loc.__ptr__());
     }
 
     pub func report_field_not_found(self,
@@ -458,11 +458,8 @@ impl report {
                                     field_name: const i8*,
                                     data_struct_name: const i8*,
                                     fuzzy_match: const i8*,
-                                    fuzzy_match_loc: span*) {
-        if (fuzzy_match_loc != nil) {
-            self.endwith_enter = false;
-        }
-
+                                    fuzzy_match_loc: span&) {
+        self.endwith_enter = false;
         self.out("cannot find field or method ")
             .highlight().out("\"").out(field_name).out("\"").cancel_highlight()
             .out(" in ")
@@ -473,11 +470,8 @@ impl report {
             .cancel_highlight_note()
             .out_note("?")
             .emit_err(call_loc);
-
-        if (fuzzy_match_loc != nil) {
-            self.endwith_enter = true;
-            self.out_note("defined here").emit_headless(fuzzy_match_loc);
-        }
+        self.endwith_enter = true;
+        self.out_note("defined here").emit_headless(fuzzy_match_loc.__ptr__());
     }
 
     pub func report_non_static_method(self,

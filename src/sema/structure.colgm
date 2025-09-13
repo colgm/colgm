@@ -114,7 +114,7 @@ impl colgm_struct {
         return -1;
     }
 
-    pub func get_method(self, name: str&) -> colgm_func* {
+    pub func get_method(self, name: str&) -> colgm_func& {
         if (self.method.has(name)) {
             return self.method.get(name);
         }
@@ -124,17 +124,17 @@ impl colgm_struct {
         return self.static_method.get(name);
     }
 
-    pub func get_field_span(self, name: str&) -> span* {
+    pub func get_field_span(self, name: str&) -> span& {
         if (self.fields_span.has(name)) {
             return self.fields_span.get(name);
         }
         if (self.method.has(name)) {
-            return self.method.get(name)->location.__ptr__();
+            return self.method.get(name).location;
         }
-        if (self.static_method.has(name)) {
-            return self.static_method.get(name)->location.__ptr__();
+        if (!self.static_method.has(name)) {
+            panic("field not found");
         }
-        return nil;
+        return self.static_method.get(name).location;
     }
 
     pub func fuzzy_match_field(self, name: str&) -> str {
@@ -234,7 +234,7 @@ impl colgm_struct {
         forindex (var i; self.ordered_fields) {
             var field = self.ordered_fields.get(i);
             out.out("    ").out(field.c_str).out(": ");
-            self.fields.get(field)->dump(out, pkg);
+            self.fields.get(field).dump(out, pkg);
             out.out("\n");
         }
         foreach (var i; self.method) {

@@ -207,7 +207,7 @@ impl ast2mir {
 
         if (self.ctx->has_domain(target_type.loc_file)) {
             var dm = self.ctx->get_domain(target_type.loc_file);
-            if (dm->enums.has(target_type.name)) {
+            if (dm.enums.has(target_type.name)) {
                 target_type.is_enum = true;
             }
         }
@@ -485,19 +485,19 @@ impl ast2mir {
         var ty = n->pattern->base.resolved_type.__ptr__();
         var dm = self.ctx->get_domain(ty->loc_file);
         var index: i64 = 0;
-        if (dm->enums.has(ty->name)) {
-            var em = dm->enums.get(ty->name);
+        if (dm.enums.has(ty->name)) {
+            var em = dm.enums.get(ty->name);
             var path_node = n->pattern->chain.get(0);
             var p = path_node => ast_call_path*;
-            index = em->members.get(p->name);
-        } else if (dm->tagged_unions.has(ty->name)) {
-            var un = dm->tagged_unions.get(ty->name);
-            if (un->ref_enum_type.is_empty()) {
-                index = un->member_int_map.get(n->pattern->head->id->content);
+            index = em.members.get(p->name);
+        } else if (dm.tagged_unions.has(ty->name)) {
+            var un = dm.tagged_unions.get(ty->name);
+            if (un.ref_enum_type.is_empty()) {
+                index = un.member_int_map.get(n->pattern->head->id->content);
             } else {
                 var path_node = n->pattern->chain.get(0);
                 var p = path_node => ast_call_path*;
-                index = un->member_int_map.get(p->name);
+                index = un.member_int_map.get(p->name);
             }
         }
 

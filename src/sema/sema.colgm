@@ -65,7 +65,7 @@ impl sema {
             return false;
         }
         var dm = self.ctx->get_domain(ty.loc_file);
-        if (dm->enums.has(ty.name)) {
+        if (dm.enums.has(ty.name)) {
             return true;
         }
         return false;
@@ -79,7 +79,7 @@ impl sema {
         var n = ty.generic_name(self.pkg);
         defer n.delete();
 
-        if (dm->structs.has(n)) {
+        if (dm.structs.has(n)) {
             return true;
         }
         return false;
@@ -93,7 +93,7 @@ impl sema {
         var n = ty.generic_name(self.pkg);
         defer n.delete();
 
-        if (dm->tagged_unions.has(n)) {
+        if (dm.tagged_unions.has(n)) {
             return true;
         }
         return false;
@@ -107,7 +107,7 @@ impl sema {
         var n = ty.generic_name(self.pkg);
         defer n.delete();
 
-        if (dm->functions.has(n)) {
+        if (dm.functions.has(n)) {
             return true;
         }
         return false;
@@ -744,9 +744,9 @@ impl sema {
         var n_ast = n => ast*;
         var dm = self.ctx->get_domain(n_ast->get_real_location_file());
 
-        if (dm->global_symbol.has(name)) {
-            var sym_info = dm->global_symbol.get(name);
-            if (!sym_info->is_public) {
+        if (dm.global_symbol.has(name)) {
+            var sym_info = dm.global_symbol.get(name);
+            if (!sym_info.is_public) {
                 var info = str::from("\"");
                 defer info.delete();
 
@@ -756,10 +756,10 @@ impl sema {
                 return type::error_type();
             }
 
-            var result = type::instance(name.c_str, sym_info->loc_file.c_str);
+            var result = type::instance(name.c_str, sym_info.loc_file.c_str);
             result.pointer_depth = 0;
             result.is_global_sym = true;
-            result.is_global_func = sym_info->kind == symbol_kind::func_kind;
+            result.is_global_func = sym_info.kind == symbol_kind::func_kind;
             return result;
         }
 
@@ -822,8 +822,8 @@ impl sema {
             }
 
             var dm = self.ctx->get_domain(infer.loc_file);
-            if (dm->structs.has(name) ||
-                dm->functions.has(name)) {
+            if (dm.structs.has(name) ||
+                dm.functions.has(name)) {
                 infer.name.delete();
                 infer.name = n->id->content.clone();
                 infer.generics.delete();
@@ -847,22 +847,22 @@ impl sema {
     func check_struct_pub_method(self,
                                  n: ast*,
                                  name: str&,
-                                 struct_self: colgm_struct*) {
-        if (!struct_self->method.has(name)) {
+                                 struct_self: colgm_struct&) {
+        if (!struct_self.method.has(name)) {
             return;
         }
 
-        var m = struct_self->method.get(name);
-        if (m->is_public) {
+        var m = struct_self.method.get(name);
+        if (m.is_public) {
             return;
         }
 
         if (self.impl_struct_name.empty() ||
-            !self.impl_struct_name.eq(struct_self->name)) {
+            !self.impl_struct_name.eq(struct_self.name)) {
             var info = str::from("cannot access private method \"");
             defer info.delete();
 
-            info.append_str(struct_self->name);
+            info.append_str(struct_self.name);
             info.append("::");
             info.append_str(name);
             info.append("\"");
@@ -873,22 +873,22 @@ impl sema {
     func check_tagged_union_pub_method(self,
                                        n: ast*,
                                        name: str&,
-                                       union_self: colgm_tagged_union*) {
-        if (!union_self->method.has(name)) {
+                                       union_self: colgm_tagged_union&) {
+        if (!union_self.method.has(name)) {
             return;
         }
 
-        var m = union_self->method.get(name);
-        if (m->is_public) {
+        var m = union_self.method.get(name);
+        if (m.is_public) {
             return;
         }
 
         if (self.impl_struct_name.empty() ||
-            !self.impl_struct_name.eq(union_self->name)) {
+            !self.impl_struct_name.eq(union_self.name)) {
             var info = str::from("cannot access private method \"");
             defer info.delete();
 
-            info.append_str(union_self->name);
+            info.append_str(union_self.name);
             info.append("::");
             info.append_str(name);
             info.append("\"");
@@ -946,16 +946,16 @@ impl sema {
         }
 
         var dm = self.ctx->get_domain(prev->loc_file);
-        if (dm->structs.has(prev_name_for_search)) {
+        if (dm.structs.has(prev_name_for_search)) {
             var res = self.resolve_struct_get_field(
-                dm->structs.get(prev_name_for_search),
+                dm.structs.get(prev_name_for_search),
                 prev,
                 n
             );
             return res;
-        } else if (dm->tagged_unions.has(prev_name_for_search)) {
+        } else if (dm.tagged_unions.has(prev_name_for_search)) {
             var res = self.resolve_tagged_union_get_field(
-                dm->tagged_unions.get(prev_name_for_search),
+                dm.tagged_unions.get(prev_name_for_search),
                 prev,
                 n
             );
@@ -984,7 +984,7 @@ impl sema {
         }
 
         var p = self.ctx->global->primitives.get(prev_name_for_search);
-        if (!p->method.has(method_name)) {
+        if (!p.method.has(method_name)) {
             var info = str::from("cannot find method \"");
             defer info.delete();
 
@@ -1004,7 +1004,7 @@ impl sema {
     }
 
     func resolve_struct_get_field(self,
-                                  struct_self: colgm_struct*,
+                                  struct_self: colgm_struct&,
                                   prev: type*,
                                   n: ast_get_field*) -> type {
         var prev_name = prev->full_path_name_with_pointer(self.pkg);
@@ -1013,19 +1013,19 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
-        if (struct_self->fields.has(n->name)) {
-            var infer = struct_self->fields.get(n->name)->clone();
+        if (struct_self.fields.has(n->name)) {
+            var infer = struct_self.fields.get(n->name).clone();
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
-        if (struct_self->method.has(n->name)) {
+        if (struct_self.method.has(n->name)) {
             self.check_struct_pub_method(n => ast*, n->name, struct_self);
             var infer = self.struct_method_infer(prev, n->name.__ptr__());
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
 
-        if (struct_self->static_method.has(n->name)) {
+        if (struct_self.static_method.has(n->name)) {
             self.err->out("method \"")
                      .out(n->name.c_str)
                      .out("\" in \"")
@@ -1035,7 +1035,7 @@ impl sema {
             return type::error_type();
         }
 
-        var fuzzy_field = struct_self->fuzzy_match_field(n->name);
+        var fuzzy_field = struct_self.fuzzy_match_field(n->name);
         defer fuzzy_field.delete();
 
         self.err->report_field_not_found(
@@ -1043,13 +1043,13 @@ impl sema {
             n->name.c_str,
             prev_name_for_search.c_str,
             fuzzy_field.c_str,
-            struct_self->get_field_span(fuzzy_field)
+            struct_self.get_field_span(fuzzy_field)
         );
         return type::error_type();
     }
 
     func resolve_tagged_union_get_field(self,
-                                        union_self: colgm_tagged_union*,
+                                        union_self: colgm_tagged_union&,
                                         prev: type*,
                                         n: ast_get_field*) -> type {
         var prev_name = prev->full_path_name_with_pointer(self.pkg);
@@ -1058,19 +1058,19 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
-        if (union_self->members.has(n->name)) {
-            var infer = union_self->members.get(n->name)->clone();
+        if (union_self.members.has(n->name)) {
+            var infer = union_self.members.get(n->name).clone();
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
-        if (union_self->method.has(n->name)) {
+        if (union_self.method.has(n->name)) {
             self.check_tagged_union_pub_method(n => ast*, n->name, union_self);
             var infer = self.struct_method_infer(prev, n->name.__ptr__());
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
 
-        if (union_self->static_method.has(n->name)) {
+        if (union_self.static_method.has(n->name)) {
             self.err->out("method \"")
                      .out(n->name.c_str)
                      .out("\" in \"")
@@ -1080,7 +1080,7 @@ impl sema {
             return type::error_type();
         }
 
-        var fuzzy_field = union_self->fuzzy_match_field(n->name);
+        var fuzzy_field = union_self.fuzzy_match_field(n->name);
         defer fuzzy_field.delete();
 
         self.err->report_field_not_found(
@@ -1088,7 +1088,7 @@ impl sema {
             n->name.c_str,
             prev_name_for_search.c_str,
             fuzzy_field.c_str,
-            union_self->get_member_span(fuzzy_field)
+            union_self.get_member_span(fuzzy_field)
         );
         return type::error_type();
     }
@@ -1107,13 +1107,13 @@ impl sema {
     }
 
     func check_static_call_args(self,
-                                func_self: colgm_func*,
+                                func_self: colgm_func&,
                                 n: ast_call_func_args*) {
-        if (func_self->unordered_params.size != n->args.size) {
+        if (func_self.unordered_params.size != n->args.size) {
             self.err->report_wrong_arg_num(
                 n->base.location.__ptr__(),
-                func_self->location.__ptr__(),
-                func_self->unordered_params.size,
+                func_self.location.__ptr__(),
+                func_self.unordered_params.size,
                 n->args.size
             );
             return;
@@ -1127,7 +1127,7 @@ impl sema {
             if (infer.is_error()) {
                 continue;
             }
-            var param = func_self->param_type.get(i.index());
+            var param = func_self.param_type.get(i.index());
             if (!infer.eq(param)) {
                 if (!self.check_can_be_converted(arg, param)) {
                     var info = str::from("expect \"");
@@ -1158,13 +1158,13 @@ impl sema {
     }
 
     func check_method_call_args(self,
-                                func_self: colgm_func*,
+                                func_self: colgm_func&,
                                 n: ast_call_func_args*) {
-        if (func_self->unordered_params.size != n->args.size + 1) {
+        if (func_self.unordered_params.size != n->args.size + 1) {
             self.err->report_wrong_arg_num(
                 n->base.location.__ptr__(),
-                func_self->location.__ptr__(),
-                func_self->unordered_params.size - 1,
+                func_self.location.__ptr__(),
+                func_self.unordered_params.size - 1,
                 n->args.size
             );
             return;
@@ -1178,7 +1178,7 @@ impl sema {
             if (infer.is_error()) {
                 continue;
             }
-            var param = func_self->param_type.get(i.index() + 1);
+            var param = func_self.param_type.get(i.index() + 1);
             if (!infer.eq(param)) {
                 if (!self.check_can_be_converted(arg, param)) {
                     var info = str::from("expect \"");
@@ -1217,10 +1217,10 @@ impl sema {
         // global function call
         if (prev.is_global_func) {
             var dm = self.ctx->get_domain(prev.loc_file);
-            var func_self = dm->functions.get(prev_name_for_search);
+            var func_self = dm.functions.get(prev_name_for_search);
             self.check_static_call_args(func_self, n);
 
-            var infer = func_self->return_type.clone();
+            var infer = func_self.return_type.clone();
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
@@ -1228,12 +1228,12 @@ impl sema {
         // static method call of native type
         if (prev.m_info.is_primitive_method && prev.m_info.flag_is_static) {
             var primitive = self.ctx->global->primitives.get(prev_name_for_search);
-            var method = primitive->static_method.get(
+            var method = primitive.static_method.get(
                 prev.m_info.method_name
             );
             self.check_static_call_args(method, n);
 
-            var infer = method->return_type.clone();
+            var infer = method.return_type.clone();
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
@@ -1241,12 +1241,12 @@ impl sema {
         // method call of native type
         if (prev.m_info.is_primitive_method && prev.m_info.flag_is_normal) {
             var primitive = self.ctx->global->primitives.get(prev_name_for_search);
-            var method = primitive->method.get(
+            var method = primitive.method.get(
                 prev.m_info.method_name
             );
             self.check_method_call_args(method, n);
 
-            var infer = method->return_type.clone();
+            var infer = method.return_type.clone();
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
@@ -1254,24 +1254,24 @@ impl sema {
         // static method call of struct
         if (prev.m_info.is_struct_method && prev.m_info.flag_is_static) {
             var dm = self.ctx->get_domain(prev.loc_file);
-            if (dm->structs.has(prev_name_for_search)) {
-                var struct_self = dm->structs.get(prev_name_for_search);
-                var method = struct_self->static_method.get(
+            if (dm.structs.has(prev_name_for_search)) {
+                var struct_self = dm.structs.get(prev_name_for_search);
+                var method = struct_self.static_method.get(
                     prev.m_info.method_name
                 );
                 self.check_static_call_args(method, n);
 
-                var infer = method->return_type.clone();
+                var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
                 return infer;
-            } else if (dm->tagged_unions.has(prev_name_for_search)) {
-                var union_self = dm->tagged_unions.get(prev_name_for_search);
-                var method = union_self->static_method.get(
+            } else if (dm.tagged_unions.has(prev_name_for_search)) {
+                var union_self = dm.tagged_unions.get(prev_name_for_search);
+                var method = union_self.static_method.get(
                     prev.m_info.method_name
                 );
                 self.check_static_call_args(method, n);
 
-                var infer = method->return_type.clone();
+                var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
                 return infer;
             }
@@ -1285,24 +1285,24 @@ impl sema {
         // normal method call of struct
         if (prev.m_info.is_struct_method && prev.m_info.flag_is_normal) {
             var dm = self.ctx->get_domain(prev.loc_file);
-            if (dm->structs.has(prev_name_for_search)) {
-                var struct_self = dm->structs.get(prev_name_for_search);
-                var method = struct_self->method.get(
+            if (dm.structs.has(prev_name_for_search)) {
+                var struct_self = dm.structs.get(prev_name_for_search);
+                var method = struct_self.method.get(
                     prev.m_info.method_name
                 );
                 self.check_method_call_args(method, n);
 
-                var infer = method->return_type.clone();
+                var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
                 return infer;
-            } else if (dm->tagged_unions.has(prev_name_for_search)) {
-                var union_self = dm->tagged_unions.get(prev_name_for_search);
-                var method = union_self->method.get(
+            } else if (dm.tagged_unions.has(prev_name_for_search)) {
+                var union_self = dm.tagged_unions.get(prev_name_for_search);
+                var method = union_self.method.get(
                     prev.m_info.method_name
                 );
                 self.check_method_call_args(method, n);
 
-                var infer = method->return_type.clone();
+                var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
                 return infer;
             }
@@ -1385,11 +1385,11 @@ impl sema {
         }
 
         var dm = self.ctx->get_domain(prev.loc_file);
-        if (dm->structs.has(prev_name_for_search)) {
+        if (dm.structs.has(prev_name_for_search)) {
             return self.resolve_struct_call_path(prev, n);
-        } else if (dm->enums.has(prev_name_for_search)) {
-            var en = dm->enums.get(prev_name_for_search);
-            if (en->members.has(n->name)) {
+        } else if (dm.enums.has(prev_name_for_search)) {
+            var en = dm.enums.get(prev_name_for_search);
+            if (en.members.has(n->name)) {
                 var infer = prev.clone();
                 infer.is_global_sym = false;
                 infer.is_enum = true;
@@ -1404,7 +1404,7 @@ impl sema {
                      .out("\"")
                      .emit_err(n->base.location.__ptr__());
             return type::error_type();
-        } else if (dm->tagged_unions.has(prev_name_for_search)) {
+        } else if (dm.tagged_unions.has(prev_name_for_search)) {
             return self.resolve_tagged_union_call_path(prev, n);
         } else {
             var info = str::from("cannot find path \"");
@@ -1436,7 +1436,7 @@ impl sema {
         }
 
         var p = self.ctx->global->primitives.get(prev_name_for_search);
-        if (!p->static_method.has(n->name)) {
+        if (!p.static_method.has(n->name)) {
             var info = str::from("cannot find static method \"");
             defer info.delete();
 
@@ -1460,18 +1460,18 @@ impl sema {
         defer prev_name_for_search.delete();
 
         var dm = self.ctx->get_domain(prev.loc_file);
-        var st = dm->structs.get(prev_name_for_search);
-        if (st->static_method.has(n->name)) {
+        var st = dm.structs.get(prev_name_for_search);
+        if (st.static_method.has(n->name)) {
             self.check_struct_pub_method(n => ast*, n->name, st);
             var infer = self.struct_static_method_infer(prev, n->name);
             n->base.resolved_type.reset_with(infer);
             return infer;
-        } else if (st->method.has(n->name)) {
+        } else if (st.method.has(n->name)) {
             self.err->report_non_static_method(
                 n->base.location.__ptr__(),
                 prev_name_for_search.c_str,
                 n->name.c_str,
-                st->method.get(n->name)->location.__ptr__()
+                st.method.get(n->name).location.__ptr__()
             );
             return type::error_type();
         } else {
@@ -1486,7 +1486,7 @@ impl sema {
             var note = str::from("maybe you mean \"");
             defer note.delete();
 
-            var fuzzy = st->fuzzy_match_field(n->name);
+            var fuzzy = st.fuzzy_match_field(n->name);
             defer fuzzy.delete();
 
             note.append_str(fuzzy);
@@ -1508,18 +1508,18 @@ impl sema {
         defer prev_name_for_search.delete();
 
         var dm = self.ctx->get_domain(prev.loc_file);
-        var tu = dm->tagged_unions.get(prev_name_for_search);
-        if (tu->static_method.has(n->name)) {
+        var tu = dm.tagged_unions.get(prev_name_for_search);
+        if (tu.static_method.has(n->name)) {
             self.check_tagged_union_pub_method(n => ast*, n->name, tu);
             var infer = self.struct_static_method_infer(prev, n->name);
             n->base.resolved_type.reset_with(infer);
             return infer;
-        } else if (tu->method.has(n->name)) {
+        } else if (tu.method.has(n->name)) {
             self.err->report_non_static_method(
                 n->base.location.__ptr__(),
                 prev_name_for_search.c_str,
                 n->name.c_str,
-                tu->method.get(n->name)->location.__ptr__()
+                tu.method.get(n->name).location.__ptr__()
             );
             return type::error_type();
         } else {
@@ -1534,7 +1534,7 @@ impl sema {
             var note = str::from("maybe you mean \"");
             defer note.delete();
 
-            var fuzzy = tu->fuzzy_match_field(n->name);
+            var fuzzy = tu.fuzzy_match_field(n->name);
             defer fuzzy.delete();
 
             note.append_str(fuzzy);
@@ -1569,11 +1569,11 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
-        if (dm->structs.has(prev_name_for_search)) {
-            var struct_self = dm->structs.get(prev_name_for_search);
+        if (dm.structs.has(prev_name_for_search)) {
+            var struct_self = dm.structs.get(prev_name_for_search);
             return self.resolve_struct_initializer(struct_self, prev, n);
-        } else if (dm->tagged_unions.has(prev_name_for_search)) {
-            var union_self = dm->tagged_unions.get(prev_name_for_search);
+        } else if (dm.tagged_unions.has(prev_name_for_search)) {
+            var union_self = dm.tagged_unions.get(prev_name_for_search);
             return self.resolve_tagged_union_initializer(union_self, prev, n);
         }
 
@@ -1586,7 +1586,7 @@ impl sema {
         return type::error_type();
     }
 
-    func resolve_struct_initializer(self, struct_self: colgm_struct*, prev: type*, n: ast_initializer*) -> type {
+    func resolve_struct_initializer(self, struct_self: colgm_struct&, prev: type*, n: ast_initializer*) -> type {
         var prev_name_for_search = prev->generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
@@ -1597,7 +1597,7 @@ impl sema {
         foreach (var i; n->pairs) {
             var tmp = i.get() => ast_init_pair*;
             var field: str& = tmp->field->content;
-            if (!struct_self->fields.has(field)) {
+            if (!struct_self.fields.has(field)) {
                 var info = str::from("cannot find field \"");
                 defer info.delete();
 
@@ -1617,11 +1617,11 @@ impl sema {
                 continue;
             }
 
-            var expect = struct_self->fields.get(field);
-            if (!infer.eq(expect[0])) {
-                if (!self.check_can_be_converted(tmp->value, expect[0])) {
+            var expect = struct_self.fields.get(field);
+            if (!infer.eq(expect)) {
+                if (!self.check_can_be_converted(tmp->value, expect)) {
                     var info = str::from("expect \"");
-                    var e_name = expect->full_path_name_with_pointer(self.pkg);
+                    var e_name = expect.full_path_name_with_pointer(self.pkg);
                     var i_name = infer.full_path_name_with_pointer(self.pkg);
                     defer {
                         info.delete();
@@ -1648,7 +1648,7 @@ impl sema {
         return copy;
     }
 
-    func resolve_tagged_union_initializer(self, union_self: colgm_tagged_union*, prev: type*, n: ast_initializer*) -> type {
+    func resolve_tagged_union_initializer(self, union_self: colgm_tagged_union&, prev: type*, n: ast_initializer*) -> type {
         var prev_name_for_search = prev->generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
@@ -1672,7 +1672,7 @@ impl sema {
 
         var tmp = n->pairs.get(0) => ast_init_pair*;
         var member: str& = tmp->field->content;
-        if (!union_self->members.has(member)) {
+        if (!union_self.members.has(member)) {
             var info = str::from("cannot find member \"");
             defer info.delete();
 
@@ -1692,11 +1692,11 @@ impl sema {
             return copy;
         }
 
-        var expect = union_self->members.get(member);
-        if (!infer.eq(expect[0])) {
-            if (!self.check_can_be_converted(tmp->value, expect[0])) {
+        var expect = union_self.members.get(member);
+        if (!infer.eq(expect)) {
+            if (!self.check_can_be_converted(tmp->value, expect)) {
                 var info = str::from("expect \"");
-                var e_name = expect->full_path_name_with_pointer(self.pkg);
+                var e_name = expect.full_path_name_with_pointer(self.pkg);
                 var i_name = infer.full_path_name_with_pointer(self.pkg);
                 defer {
                     info.delete();
@@ -1762,16 +1762,16 @@ impl sema {
         }
 
         var dm = self.ctx->get_domain(prev->loc_file);
-        if (dm->structs.has(prev_name_for_search)) {
+        if (dm.structs.has(prev_name_for_search)) {
             var res = self.resolve_struct_ptr_get_field(
-                dm->structs.get(prev_name_for_search),
+                dm.structs.get(prev_name_for_search),
                 prev,
                 n
             );
             return res;
-        } else if (dm->tagged_unions.has(prev_name_for_search)) {
+        } else if (dm.tagged_unions.has(prev_name_for_search)) {
             var res = self.resolve_tagged_union_ptr_get_field(
-                dm->tagged_unions.get(prev_name_for_search),
+                dm.tagged_unions.get(prev_name_for_search),
                 prev,
                 n
             );
@@ -1788,7 +1788,7 @@ impl sema {
     }
 
     func resolve_struct_ptr_get_field(self,
-                                      struct_self: colgm_struct*,
+                                      struct_self: colgm_struct&,
                                       prev: type*,
                                       n: ast_ptr_get_field*) -> type {
         var prev_name = prev->full_path_name_with_pointer(self.pkg);
@@ -1797,19 +1797,19 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self.pkg);
         defer prev_name_for_search.delete();
         
-        if (struct_self->fields.has(n->name)) {
-            var infer = struct_self->fields.get(n->name)->clone();
+        if (struct_self.fields.has(n->name)) {
+            var infer = struct_self.fields.get(n->name).clone();
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
-        if (struct_self->method.has(n->name)) {
+        if (struct_self.method.has(n->name)) {
             self.check_struct_pub_method(n => ast*, n->name, struct_self);
             var infer = self.struct_method_infer(prev, n->name.__ptr__());
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
 
-        if (struct_self->static_method.has(n->name)) {
+        if (struct_self.static_method.has(n->name)) {
             self.err->out("method \"")
                      .out(n->name.c_str)
                      .out("\" in \"")
@@ -1819,7 +1819,7 @@ impl sema {
             return type::error_type();
         }
 
-        var fuzzy_field = struct_self->fuzzy_match_field(n->name);
+        var fuzzy_field = struct_self.fuzzy_match_field(n->name);
         defer fuzzy_field.delete();
 
         self.err->report_field_not_found(
@@ -1827,13 +1827,13 @@ impl sema {
             n->name.c_str,
             prev_name_for_search.c_str,
             fuzzy_field.c_str,
-            struct_self->get_field_span(fuzzy_field)
+            struct_self.get_field_span(fuzzy_field)
         );
         return type::error_type();
     }
 
     func resolve_tagged_union_ptr_get_field(self,
-                                            union_self: colgm_tagged_union*,
+                                            union_self: colgm_tagged_union&,
                                             prev: type*,
                                             n: ast_ptr_get_field*) -> type {
         var prev_name = prev->full_path_name_with_pointer(self.pkg);
@@ -1842,19 +1842,19 @@ impl sema {
         var prev_name_for_search = prev->generic_name(self.pkg);
         defer prev_name_for_search.delete();
         
-        if (union_self->members.has(n->name)) {
-            var infer = union_self->members.get(n->name)->clone();
+        if (union_self.members.has(n->name)) {
+            var infer = union_self.members.get(n->name).clone();
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
-        if (union_self->method.has(n->name)) {
+        if (union_self.method.has(n->name)) {
             self.check_tagged_union_pub_method(n => ast*, n->name, union_self);
             var infer = self.struct_method_infer(prev, n->name.__ptr__());
             n->base.resolved_type.reset_with(infer);
             return infer;
         }
 
-        if (union_self->static_method.has(n->name)) {
+        if (union_self.static_method.has(n->name)) {
             self.err->out("method \"")
                      .out(n->name.c_str)
                      .out("\" in \"")
@@ -1864,7 +1864,7 @@ impl sema {
             return type::error_type();
         }
 
-        var fuzzy_field = union_self->fuzzy_match_field(n->name);
+        var fuzzy_field = union_self.fuzzy_match_field(n->name);
         defer fuzzy_field.delete();
 
         self.err->report_field_not_found(
@@ -1872,7 +1872,7 @@ impl sema {
             n->name.c_str,
             prev_name_for_search.c_str,
             fuzzy_field.c_str,
-            union_self->get_member_span(fuzzy_field)
+            union_self.get_member_span(fuzzy_field)
         );
         return type::error_type();
     }
@@ -2244,7 +2244,7 @@ impl sema {
         }
 
         // check if conflicts with global symbol
-        if (self.ctx->get_domain(loc->file)->global_symbol.has(name)) {
+        if (self.ctx->get_domain(loc->file).global_symbol.has(name)) {
             self.err->out("variable \"")
                      .out(name.c_str)
                      .out("\" conflicts with global symbol")
@@ -2372,7 +2372,7 @@ impl sema {
         }
     }
 
-    func resolve_if_stmt(self, n: ast_if_stmt*, func_self: colgm_func*) {
+    func resolve_if_stmt(self, n: ast_if_stmt*, func_self: colgm_func&) {
         if (n->condition != nil) {
             var ty = self.resolve_expression(n->condition => ast*);
             defer ty.delete();
@@ -2391,7 +2391,7 @@ impl sema {
         }
     }
 
-    func resolve_cond_stmt(self, n: ast_cond_stmt*, func_self: colgm_func*) {
+    func resolve_cond_stmt(self, n: ast_cond_stmt*, func_self: colgm_func&) {
         foreach (var i; n->stmts) {
             self.resolve_if_stmt(i.get() => ast_if_stmt*, func_self);
         }
@@ -2414,11 +2414,11 @@ impl sema {
         }
 
         var name: str& = n->head->id->content;
-        if (!self.ctx->global_symbol()->has(name)) {
+        if (!self.ctx->global_symbol().has(name)) {
             return false;
         }
 
-        if (self.ctx->global_symbol()->get(name)->kind != symbol_kind::enum_kind) {
+        if (self.ctx->global_symbol().get(name).kind != symbol_kind::enum_kind) {
             return false;
         }
 
@@ -2436,33 +2436,33 @@ impl sema {
         }
 
         var dm = self.ctx->get_domain(infer.loc_file);
-        if (!dm->enums.has(name)) {
+        if (!dm.enums.has(name)) {
             return 0xffffffffffffffff;
         }
 
-        var em = dm->enums.get(name);
+        var em = dm.enums.get(name);
         var call_node = n->chain.get(0) => ast_call_path*;
         var e_name: str& = call_node->name;
-        if (!em->members.has(e_name)) {
+        if (!em.members.has(e_name)) {
             return 0xffffffffffffffff;
         }
-        return em->members.get(e_name);
+        return em.members.get(e_name);
     }
 
     func check_is_tagged_union_member(self,
                                       n: ast_call*,
-                                      un: colgm_tagged_union*) -> bool {
+                                      un: colgm_tagged_union&) -> bool {
         var name: str& = n->head->id->content;
         // means this tag is not referenced from enum
         // so the call head's identifier is the tag
-        if (un->ref_enum_type.is_empty()) {
+        if (un.ref_enum_type.is_empty()) {
             if (n->chain.size != 0) {
                 return false;
             }
-            return un->members.has(name);
+            return un.members.has(name);
         }
 
-        if (!un->ref_enum_type.name.eq(name)) {
+        if (!un.ref_enum_type.name.eq(name)) {
             return false;
         }
         if (n->chain.size != 1) {
@@ -2475,17 +2475,17 @@ impl sema {
         }
 
         var call_path_node = call_node => ast_call_path*;
-        return un->members.has(call_path_node->name);
+        return un.members.has(call_path_node->name);
     }
 
     // must use when check_is_tagged_union_member is true
     func get_tagged_union_label(self,
                                 n: ast_call*,
-                                un: colgm_tagged_union*) -> str {
+                                un: colgm_tagged_union&) -> str {
         var name = n->head->id->content.__ptr__();
         // means this tag is not referenced from enum
         // so the call head's identifier is the tag
-        if (un->ref_enum_type.is_empty()) {
+        if (un.ref_enum_type.is_empty()) {
             return name->clone();
         }
 
@@ -2493,7 +2493,7 @@ impl sema {
         return call_path_node->name.clone();
     }
 
-    func resolve_match_stmt(self, n: ast_match_stmt*, func_self: colgm_func*) {
+    func resolve_match_stmt(self, n: ast_match_stmt*, func_self: colgm_func&) {
         var infer = self.resolve_expression(n->value);
         defer infer.delete();
 
@@ -2530,7 +2530,7 @@ impl sema {
 
     func resolve_match_stmt_for_enum(self,
                                      n: ast_match_stmt*,
-                                     func_self: colgm_func*,
+                                     func_self: colgm_func&,
                                      infer: type&) {
         var default_found = false;
         var used_values = hashset<basic<i64>>::instance();
@@ -2610,15 +2610,15 @@ impl sema {
             return;
         }
         var dm = self.ctx->get_domain(infer.loc_file);
-        if (!dm->enums.has(infer.name)) {
+        if (!dm.enums.has(infer.name)) {
             return;
         }
-        var em = dm->enums.get(infer.name);
+        var em = dm.enums.get(infer.name);
         var generated_warning = str::instance();
         defer generated_warning.delete();
         var unused_counter = 0;
 
-        foreach (var i; em->members) {
+        foreach (var i; em.members) {
             if (used_values.has(basic<i64>::wrap(i.value()))) {
                 continue;
             }
@@ -2653,7 +2653,7 @@ impl sema {
 
     func resolve_match_stmt_for_tagged_union(self,
                                              n: ast_match_stmt*,
-                                             func_self: colgm_func*,
+                                             func_self: colgm_func&,
                                              infer: type&) {
         var default_found = false;
         var used_values = hashset<str>::instance();
@@ -2667,7 +2667,7 @@ impl sema {
         }
 
         var dm = self.ctx->get_domain(infer.loc_file);
-        var un = dm->tagged_unions.get(infer.name);
+        var un = dm.tagged_unions.get(infer.name);
 
         foreach (var i; n->cases) {
             var case_node = i.get() => ast_match_case*;
@@ -2718,7 +2718,7 @@ impl sema {
         defer generated_warning.delete();
         var unused_counter = 0;
 
-        foreach (var i; un->members) {
+        foreach (var i; un.members) {
             if (used_values.has(i.key())) {
                 continue;
             }
@@ -2757,7 +2757,7 @@ impl sema {
 }
 
 impl sema {
-    func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func*) {
+    func resolve_while_stmt(self, n: ast_while_stmt*, func_self: colgm_func&) {
         var infer = self.resolve_expression(n->condition => ast*);
         defer infer.delete();
 
@@ -2776,7 +2776,7 @@ impl sema {
         }
     }
 
-    func resolve_for_stmt(self, n: ast_for_stmt*, func_self: colgm_func*) {
+    func resolve_for_stmt(self, n: ast_for_stmt*, func_self: colgm_func&) {
         self.ctx->push_scope_level();
         if (n->init != nil) {
             self.resolve_definition(n->init);
@@ -2810,15 +2810,15 @@ impl sema {
         var name_for_search = t->generic_name(self.pkg);
         defer name_for_search.delete();
 
-        if (!dm->structs.has(name_for_search)) {
+        if (!dm.structs.has(name_for_search)) {
             return false;
         }
 
-        var s = dm->structs.get(name_for_search);
+        var s = dm.structs.get(name_for_search);
         var method_name = str::from(m_name);
         defer method_name.delete();
 
-        if (!s->method.has(method_name)) {
+        if (!s.method.has(method_name)) {
             return false;
         }
         return true;
@@ -2830,13 +2830,13 @@ impl sema {
         var name_for_search = t->generic_name(self.pkg);
         defer name_for_search.delete();
 
-        var s = dm->structs.get(name_for_search);
+        var s = dm.structs.get(name_for_search);
 
         var method_name = str::from(m_name);
         defer method_name.delete();
 
-        var m = s->method.get(method_name);
-        return m->return_type.clone();
+        var m = s.method.get(method_name);
+        return m.return_type.clone();
     }
 
     func lowering_forindex(self, n: ast_forindex*, iter_ty: type*) {
@@ -2912,7 +2912,7 @@ impl sema {
         n->lowered_update = lowered_update => ast*;
     }
 
-    func resolve_forindex_stmt(self, n: ast_forindex*, func_self: colgm_func*) {
+    func resolve_forindex_stmt(self, n: ast_forindex*, func_self: colgm_func&) {
         var ty = self.resolve_expression(n->container => ast*);
         defer ty.delete();
 
@@ -3054,7 +3054,7 @@ impl sema {
         n->lowered_update = lowered_update => ast*;
     }
 
-    func resolve_foreach_stmt(self, n: ast_foreach*, func_self: colgm_func*) {
+    func resolve_foreach_stmt(self, n: ast_foreach*, func_self: colgm_func&) {
         var ty = self.resolve_expression(n->container => ast*);
         defer ty.delete();
 
@@ -3131,8 +3131,8 @@ impl sema {
         n->base.resolved_type.reset_with(ty);
     }
 
-    func resolve_ret_stmt(self, n: ast_ret_stmt*, func_self: colgm_func*) {
-        if (n->value == nil && !func_self->return_type.is_void()) {
+    func resolve_ret_stmt(self, n: ast_ret_stmt*, func_self: colgm_func&) {
+        if (n->value == nil && !func_self.return_type.is_void()) {
             self.err->error(n->base.location.__ptr__(), "expect non-void return value");
             return;
         }
@@ -3148,22 +3148,22 @@ impl sema {
             return;
         }
 
-        if (!func_self->return_type.eq(infer) &&
-            !self.check_can_be_converted(n->value, func_self->return_type)) {
+        if (!func_self.return_type.eq(infer) &&
+            !self.check_can_be_converted(n->value, func_self.return_type)) {
             self.err->out("expected return type \"")
-                        .out_type(func_self->return_type.__ptr__(), self.pkg)
+                        .out_type(func_self.return_type.__ptr__(), self.pkg)
                         .out("\", but get \"")
                         .out_type(infer.__ptr__(), self.pkg)
                         .out("\"")
                         .emit_err(n->base.location.__ptr__());
         }
 
-        if (func_self->return_type.is_reference) {
+        if (func_self.return_type.is_reference) {
             n->return_ref_type = true;
         }
     }
 
-    func resolve_statement(self, n: ast*, func_self: colgm_func*) {
+    func resolve_statement(self, n: ast*, func_self: colgm_func&) {
         match (n->kind) {
             ast_kind::ast_definition =>
                 self.resolve_definition(n => ast_definition*);
@@ -3207,7 +3207,7 @@ impl sema {
         }
     }
 
-    func resolve_code_block(self, node: ast_code_block*, func_self: colgm_func*) {
+    func resolve_code_block(self, node: ast_code_block*, func_self: colgm_func&) {
         self.ctx->push_scope_level();
         foreach (var i; node->stmts) {
             var n = i.get();
@@ -3274,7 +3274,7 @@ impl sema {
 
     func report_top_level_block_has_no_return(self,
                                               n: ast_code_block*,
-                                              func_self: colgm_func*) {
+                                              func_self: colgm_func&) {
         var flag_has_return = false;
         foreach (var i; n->stmts) {
             var tmp = i.get();
@@ -3288,7 +3288,7 @@ impl sema {
             return;
         }
 
-        if (func_self->return_type.is_void()) {
+        if (func_self.return_type.is_void()) {
             var rs = ast_ret_stmt::new(n->base.location);
             n->stmts.push(rs => ast*);
             return;
@@ -3316,8 +3316,8 @@ impl sema {
 
         var dm = self.ctx->get_domain(node->base.get_real_location_file());
 
-        if (dm->structs.has(node->name)) {
-            var struct_self = dm->structs.get(node->name);
+        if (dm.structs.has(node->name)) {
+            var struct_self = dm.structs.get(node->name);
             self.impl_struct_name.clear();
             self.impl_struct_name.append_str(node->name);
             foreach (var i; node->methods) {
@@ -3325,8 +3325,8 @@ impl sema {
             }
             self.impl_struct_name.clear();
             return;
-        } else if (dm->tagged_unions.has(node->name)) {
-            var union_self = dm->tagged_unions.get(node->name);
+        } else if (dm.tagged_unions.has(node->name)) {
+            var union_self = dm.tagged_unions.get(node->name);
             self.impl_struct_name.clear();
             self.impl_struct_name.append_str(node->name);
             foreach (var i; node->methods) {
@@ -3349,7 +3349,7 @@ impl sema {
         }
 
         var dm = self.ctx->get_domain(node->base.location.file);
-        if (!dm->functions.has(node->name)) {
+        if (!dm.functions.has(node->name)) {
             self.err->out("cannot find function \"")
                      .out(node->name.c_str)
                      .out("\"")
@@ -3357,9 +3357,9 @@ impl sema {
             return;
         }
 
-        var func_self = dm->functions.get(node->name);
+        var func_self = dm.functions.get(node->name);
         if (node->body == nil) {
-            if (!func_self->is_extern) {
+            if (!func_self.is_extern) {
                 self.err->out("non-extern function \"")
                          .out(node->name.c_str)
                          .out("\" is not implemented")
@@ -3369,11 +3369,11 @@ impl sema {
         }
 
         self.ctx->push_scope_level();
-        foreach (var p; func_self->unordered_params) {
+        foreach (var p; func_self.unordered_params) {
             var param_name = p.key();
             var param_type = p.value();
-            var param_loc = func_self->param_location.get(param_name);
-            self.ctx->add_local_var(param_name, param_type, param_loc[0]);
+            var param_loc = func_self.param_location.get(param_name);
+            self.ctx->add_local_var(param_name, param_type, param_loc);
         }
         foreach (var i; node->body->stmts) {
             var n = i.get();
@@ -3389,20 +3389,20 @@ impl sema {
         self.ctx->pop_scope_level(self.err);
     }
 
-    func resolve_struct_method(self, node: ast_func_decl*, st: colgm_struct*) {
+    func resolve_struct_method(self, node: ast_func_decl*, st: colgm_struct&) {
         if (node->body == nil) {
             self.err->error(node->base.location.__ptr__(),
                              "method should be implemented");
             return;
         }
         
-        var method_self = st->get_method(node->name);
+        var method_self = st.get_method(node->name);
         self.ctx->push_scope_level();
-        foreach (var p; method_self->unordered_params) {
+        foreach (var p; method_self.unordered_params) {
             var param_name = p.key();
             var param_type = p.value();
-            var param_loc = method_self->param_location.get(param_name);
-            self.ctx->add_local_var(param_name, param_type, param_loc[0]);
+            var param_loc = method_self.param_location.get(param_name);
+            self.ctx->add_local_var(param_name, param_type, param_loc);
         }
         foreach (var i; node->body->stmts) {
             var n = i.get();
@@ -3418,20 +3418,20 @@ impl sema {
         self.ctx->pop_scope_level(self.err);
     }
 
-    func resolve_union_method(self, node: ast_func_decl*, un: colgm_tagged_union*) {
+    func resolve_union_method(self, node: ast_func_decl*, un: colgm_tagged_union&) {
         if (node->body == nil) {
             self.err->error(node->base.location.__ptr__(),
                              "method should be implemented");
             return;
         }
         
-        var method_self = un->get_method(node->name);
+        var method_self = un.get_method(node->name);
         self.ctx->push_scope_level();
-        foreach (var p; method_self->unordered_params) {
+        foreach (var p; method_self.unordered_params) {
             var param_name = p.key();
             var param_type = p.value();
-            var param_loc = method_self->param_location.get(param_name);
-            self.ctx->add_local_var(param_name, param_type, param_loc[0]);
+            var param_loc = method_self.param_location.get(param_name);
+            self.ctx->add_local_var(param_name, param_type, param_loc);
         }
         foreach (var i; node->body->stmts) {
             var n = i.get();

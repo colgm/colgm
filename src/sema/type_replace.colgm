@@ -198,8 +198,8 @@ impl type_replace_pass {
         if (self.g_data->types.has(name)) {
             var select_type = self.g_data->types.get(name);
 
-            if (select_type->pointer_depth > 0) {
-                var st_full_name = select_type->full_path_name_with_pointer(self.pkg);
+            if (select_type.pointer_depth > 0) {
+                var st_full_name = select_type.full_path_name_with_pointer(self.pkg);
                 var info = str::from("replace generic type with pointer type \"");
                 defer {
                     st_full_name.delete();
@@ -213,10 +213,10 @@ impl type_replace_pass {
 
             // cannot replace T in T<K> with another generic V<X>
             // because V<X><K> is not a valid type
-            if (select_type->generics.size > 0 &&
+            if (select_type.generics.size > 0 &&
                 n->generic_types != nil) {
                 var info = str::from("try to replace generic \"");
-                var st_full_name = select_type->full_path_name_with_pointer(self.pkg);
+                var st_full_name = select_type.full_path_name_with_pointer(self.pkg);
                 defer {
                     info.delete();
                     st_full_name.delete();
@@ -230,14 +230,14 @@ impl type_replace_pass {
             }
 
             n->id->content.clear();
-            n->id->content.append_str(select_type->name);
-            n->id->base.redirect_location.append_str(select_type->loc_file);
-            n->base.redirect_location.append_str(select_type->loc_file);
+            n->id->content.append_str(select_type.name);
+            n->id->base.redirect_location.append_str(select_type.loc_file);
+            n->base.redirect_location.append_str(select_type.loc_file);
 
-            if (select_type->generics.size > 0 &&
+            if (select_type.generics.size > 0 &&
                 n->generic_types == nil) {
                 n->generic_types = ast_generic_type_list::new(n->base.location);
-                foreach (var i; select_type->generics) {
+                foreach (var i; select_type.generics) {
                     n->generic_types->types.push(self.generate_generic_type(
                         i.get(),
                         n->base.location
@@ -246,7 +246,7 @@ impl type_replace_pass {
             }
 
             if (self.co->VIEW_TYPE_REPLACE_INFO) {
-                var st_full_name = select_type->generic_name(self.pkg);
+                var st_full_name = select_type.generic_name(self.pkg);
                 defer st_full_name.delete();
 
                 io::stdout().out("[type_replace] call_id");
@@ -283,10 +283,10 @@ impl type_replace_pass {
 
             // cannot replace T in T<K> with another generic V<X>
             // because V<X><K> is not a valid type
-            if (select_type->generics.size > 0 &&
+            if (select_type.generics.size > 0 &&
                 n->generic_types != nil) {
                 var info = str::from("try to replace generic \"");
-                var st_full_name = select_type->full_path_name_with_pointer(self.pkg);
+                var st_full_name = select_type.full_path_name_with_pointer(self.pkg);
                 defer {
                     info.delete();
                     st_full_name.delete();
@@ -300,16 +300,16 @@ impl type_replace_pass {
             }
 
             n->name->content.clear();
-            n->name->content.append_str(select_type->name);
-            n->name->base.redirect_location.append_str(select_type->loc_file);
-            n->base.redirect_location.append_str(select_type->loc_file);
+            n->name->content.append_str(select_type.name);
+            n->name->base.redirect_location.append_str(select_type.loc_file);
+            n->base.redirect_location.append_str(select_type.loc_file);
 
-            n->pointer_depth += select_type->pointer_depth;
+            n->pointer_depth += select_type.pointer_depth;
 
-            if (select_type->generics.size > 0 &&
+            if (select_type.generics.size > 0 &&
                 n->generic_types == nil) {
                 n->generic_types = ast_generic_type_list::new(n->base.location);
-                foreach (var i; select_type->generics) {
+                foreach (var i; select_type.generics) {
                     n->generic_types->types.push(self.generate_generic_type(
                         i.get(),
                         n->base.location
@@ -318,7 +318,7 @@ impl type_replace_pass {
             }
 
             if (self.co->VIEW_TYPE_REPLACE_INFO) {
-                var st_full_name = select_type->generic_name(self.pkg);
+                var st_full_name = select_type.generic_name(self.pkg);
                 defer st_full_name.delete();
 
                 io::stdout().out("[type_replace] type_def");
