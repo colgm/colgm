@@ -83,7 +83,13 @@ func clang_compile(co: cli_option&) -> i32 {
         io::stdout().red().out("     CLANG ").reset();
         io::stdout().out("Compilation ").red().out("failed ").reset();
     }
-    io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
+
+    var compile_duration = t_stamp.elapsed_msec();
+    if (compile_duration < 1000.0) {
+        io::stdout().out_f64(compile_duration).out(" ms\n");
+    } else {
+        io::stdout().out_f64(compile_duration / 1000.0).out(" s\n");
+    }
 
     return ret_code;
 }

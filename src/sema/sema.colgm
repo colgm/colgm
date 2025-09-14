@@ -941,7 +941,7 @@ impl sema {
             return self.resolve_primitive_get_field(
                 prev,
                 n->name,
-                n->base.location.__ptr__()
+                n->base.location
             );
         }
 
@@ -969,7 +969,7 @@ impl sema {
         return type::error_type();
     }
 
-    func resolve_primitive_get_field(self, prev: type&, method_name: str&, loc: span*) -> type {
+    func resolve_primitive_get_field(self, prev: type&, method_name: str&, loc: span&) -> type {
         var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
@@ -979,7 +979,7 @@ impl sema {
 
             info.append_str(prev_name_for_search);
             info.append("\"");
-            self.err->error(loc, info.c_str);
+            self.err->error(loc.__ptr__(), info.c_str);
             return type::error_type();
         }
 
@@ -992,7 +992,7 @@ impl sema {
             info.append("\" in \"");
             info.append_str(prev_name_for_search);
             info.append("\"");
-            self.err->error(loc, info.c_str);
+            self.err->error(loc.__ptr__(), info.c_str);
             return type::error_type();
         }
 
@@ -1757,7 +1757,7 @@ impl sema {
             return self.resolve_primitive_get_field(
                 prev,
                 n->name,
-                n->base.location.__ptr__()
+                n->base.location
             );
         }
 
@@ -2214,7 +2214,7 @@ impl sema {
         return false;
     }
 
-    func check_local_variable_conflict(self, name: str&, loc: span*) -> bool {
+    func check_local_variable_conflict(self, name: str&, loc: span&) -> bool {
         // check if conflicts with local variable
         if (self.ctx->find_local(name)) {
             var shadowed_loc = self.ctx->get_local_def_location(name);
@@ -2223,11 +2223,11 @@ impl sema {
         }
 
         // check if conflicts with global symbol
-        if (self.ctx->get_domain(loc->file).global_symbol.has(name)) {
+        if (self.ctx->get_domain(loc.file).global_symbol.has(name)) {
             self.err->out("variable \"")
                      .out(name.c_str)
                      .out("\" conflicts with global symbol")
-                     .emit_err(loc);
+                     .emit_err(loc.__ptr__());
             return false;
         }
 
@@ -2238,7 +2238,7 @@ impl sema {
         var name: str& = n->name;
 
         // check if conflicts with local variable
-        if (!self.check_local_variable_conflict(name, n->base.location.__ptr__())) {
+        if (!self.check_local_variable_conflict(name, n->base.location)) {
             return;
         }
 

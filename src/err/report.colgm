@@ -512,13 +512,13 @@ impl report {
     }
 
     pub func report_name_shadowing(self,
-                                   loc: span*,
+                                   loc: span&,
                                    name: const i8*,
                                    shadowed_loc: span*) {
         self.endwith_enter = false;
         self.out("redefinition of variable ")
             .highlight().out("\"").out(name).out("\"").cancel_highlight()
-            .emit_err(loc);
+            .emit_err(loc.__ptr__());
         self.endwith_enter = true;
         self.out_note("shadows previous definition here")
             .emit_headless(shadowed_loc);

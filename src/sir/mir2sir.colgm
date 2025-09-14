@@ -302,8 +302,8 @@ impl mir2sir {
             }
 
             var s_un = sir_tagged_union::instance(
-                s_ty_llvm_name.__ptr__(),
-                m_un.location.__ptr__(),
+                s_ty_llvm_name,
+                m_un.location,
                 m_un.total_size,
                 m_un.align
             );
@@ -354,8 +354,8 @@ impl mir2sir {
             }
 
             var s_stct = sir_struct::instance(
-                s_ty_llvm_name.__ptr__(),
-                m_stct.location.__ptr__(),
+                s_ty_llvm_name,
+                m_stct.location,
                 m_stct.size,
                 m_stct.align
             );
@@ -383,10 +383,7 @@ impl mir2sir {
     func emit_func_decl(self, mctx: mir_context*) {
         foreach (var i; mctx->decls) {
             var m_func = i.get();
-            var s_func = sir_func::instance(
-                m_func.name.__ptr__(),
-                m_func.location.__ptr__()
-            );
+            var s_func = sir_func::instance(m_func.name, m_func.location);
             s_func.set_attributes(m_func.attributes);
             s_func.with_va_args = m_func.with_va_args;
             defer s_func.delete();
@@ -437,8 +434,14 @@ impl mir2sir {
         stdout.out_u64(percent => u64).out("%").reset();
         if (curr + 1 != total) {
             stdout.out(" in ").cyan().out_i64(remaining_sec).reset().out(" s\r");
+            return;
+        }
+
+        var generation_duration = ts.elapsed_msec();
+        if (generation_duration < 1000.0) {
+            stdout.out(" ").out_f64(generation_duration).out(" ms\n");
         } else {
-            stdout.out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+            stdout.out(" ").out_f64(generation_duration / 1000.0).out(" s\n");
         }
     }
 
@@ -452,10 +455,7 @@ impl mir2sir {
             var m_mangled_name = mangle_function_name(m_func.name);
             defer m_mangled_name.delete();
 
-            var s_func = sir_func::instance(
-                m_mangled_name.__ptr__(),
-                m_func.location.__ptr__()
-            );
+            var s_func = sir_func::instance(m_mangled_name, m_func.location);
             s_func.set_attributes(m_func.attributes);
             defer s_func.delete();
 
