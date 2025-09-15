@@ -1416,8 +1416,6 @@ impl parser {
         while (!self.lookahead(tok_kind::tok_eof)) {
             var flag_is_public = false;
             var flag_is_extern = false;
-            var pub_loc: span* = nil;
-            var extern_loc: span* = nil;
 
             // get conditional compilation
             var conds = vec<ast_cond_compile*>::instance();
@@ -1430,13 +1428,11 @@ impl parser {
             while (self.lookahead(tok_kind::tok_pub) || self.lookahead(tok_kind::tok_extern)) {
                 if (self.lookahead(tok_kind::tok_pub) && !flag_is_public) {
                     flag_is_public = true;
-                    pub_loc = self.this_tok_loc().__ptr__();
                 } else if (self.lookahead(tok_kind::tok_pub) && flag_is_public) {
                     self.err->error(self.this_tok_loc().__ptr__(), "duplicate 'pub' modifier");
                 }
                 if (self.lookahead(tok_kind::tok_extern) && !flag_is_extern) {
                     flag_is_extern = true;
-                    extern_loc = self.this_tok_loc().__ptr__();
                 } else if (self.lookahead(tok_kind::tok_extern) && flag_is_extern) {
                     self.err->error(self.this_tok_loc().__ptr__(), "duplicate 'extern' modifier");
                 }
@@ -1468,7 +1464,7 @@ impl parser {
                     tmp->set_conds(conds.__ptr__());
                     tmp->is_public = flag_is_public;
                     if (flag_is_extern) {
-                        self.err->error(extern_loc,
+                        self.err->error(self.this_tok_loc().__ptr__(),
                             "extern enum not supported"
                         );
                     }
@@ -1484,14 +1480,9 @@ impl parser {
                     continue;
                 }
                 tok_kind::tok_impl => {
-                    if (flag_is_public) {
-                        self.err->warn(pub_loc,
-                            "cannot use 'pub' with 'impl', ignored"
-                        );
-                    }
-                    if (flag_is_extern) {
-                        self.err->warn(extern_loc,
-                            "cannot use 'extern' with 'impl', ignored"
+                    if (flag_is_public || flag_is_extern) {
+                        self.err->warn(self.this_tok_loc().__ptr__(),
+                            "cannot use 'pub' or 'extern' with 'impl', ignored"
                         );
                     }
                     var tmp = self.impl_gen();

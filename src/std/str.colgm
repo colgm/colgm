@@ -59,7 +59,7 @@ impl str {
 }
 
 impl str {
-    pub func from(src: i8*) -> str {
+    pub func from(src: const i8*) -> str {
         if (src == nil) {
             panic("cannot create string from nil");
         }
@@ -105,7 +105,7 @@ impl str {
 }
 
 impl str {
-    pub func copy_const(self, src: i8*) {
+    pub func copy_const(self, src: const i8*) {
         // do nothing if src in null pointer
         if (src == nil) {
             return;
@@ -181,7 +181,7 @@ impl str {
         return self;
     }
 
-    pub func append(self, src: i8*) -> str& {
+    pub func append(self, src: const i8*) -> str& {
         // do nothing if src is null pointer
         if (src == nil) {
             return self;
@@ -240,7 +240,7 @@ impl str {
         return self.c_str[self.size - 1];
     }
 
-    pub func startswith(self, src: i8*) -> bool {
+    pub func startswith(self, src: const i8*) -> bool {
         if (src == nil) {
             return false;
         }
@@ -252,7 +252,7 @@ impl str {
         return memcmp(self.c_str, src, len) == 0;
     }
 
-    pub func endswith(self, src: i8*) -> bool {
+    pub func endswith(self, src: const i8*) -> bool {
         if (src == nil) {
             return false;
         }
@@ -294,7 +294,7 @@ impl str {
         return str::npos();
     }
 
-    pub func find_i8_vec(self, src: i8*) -> u64 {
+    pub func find_i8_vec(self, src: const i8*) -> u64 {
         for (var i: u64 = 0; i < self.size; i += 1) {
             var addr = (i + self.c_str => u64) => i8*;
             if (memcmp(addr, src, strlen(src) => u64) == 0) {
@@ -312,12 +312,8 @@ impl str {
         return 0xffffffffffffffff;
     }
 
-    pub func eq_const(self, src: i8*) -> bool {
+    pub func eq_const(self, src: const i8*) -> bool {
         return streq(self.c_str, src);
-    }
-
-    pub func eq_str(self, src: str) -> bool {
-        return streq(self.c_str, src.c_str);
     }
 
     pub func eq(self, src: str&) -> bool {

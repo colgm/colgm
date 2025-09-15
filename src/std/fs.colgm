@@ -12,7 +12,7 @@ use util::platform::{ is_windows };
 pub struct fs {}
 
 impl fs {
-    pub func exists(file: i8*) -> bool {
+    pub func exists(file: const i8*) -> bool {
         var fd = open(file, flag::O_RDONLY => i32, 0);
         if (fd < 0) {
             return false;
@@ -21,7 +21,7 @@ impl fs {
         return true;
     }
 
-    pub func is_dir(filename: i8*) -> bool {
+    pub func is_dir(filename: const i8*) -> bool {
         var info = stat_info_t {};
         if (stat(filename, info.__ptr__()) == -1) {
             return false;
@@ -30,7 +30,7 @@ impl fs {
         return (ifmt => stat_flag) == stat_flag::S_IFDIR;
     }
 
-    pub func get_mtime(filename: i8*) -> timespec {
+    pub func get_mtime(filename: const i8*) -> timespec {
         var info = stat_info_t {};
         if (stat(filename, info.__ptr__()) == -1) {
             return timespec {};

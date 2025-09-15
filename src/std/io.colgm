@@ -37,7 +37,7 @@ pub enum flag {
     O_BINARY = 0x8000
 }
 
-pub func readfile(filename: i8*) -> str {
+pub func readfile(filename: const i8*) -> str {
     var fd = open(filename, flag::O_RDONLY => i32, 0);
     if (fd < 0) {
         return str::from("");
@@ -99,7 +99,7 @@ impl io {
         self.force_flush();
     }
 
-    pub func out(self, info: i8*) -> io {
+    pub func out(self, info: const i8*) -> io {
         // do nothing if is stdin
         if (self.fd == 0) {
             return self;
@@ -299,7 +299,7 @@ impl io {
 }
 
 impl io {
-    func open_append_write_file(file: i8*) -> i32 {
+    func open_append_write_file(file: const i8*) -> i32 {
         var flags = flag::O_WRONLY | flag::O_APPEND | flag::O_CREAT;
         var fd = open(file, flags => i32, 0o666); // rw-rw-rw-
         if (fd < 0) {
@@ -308,7 +308,7 @@ impl io {
         return fd;
     }
 
-    func open_file(file: i8*) -> i32 {
+    func open_file(file: const i8*) -> i32 {
         var flags = flag::O_WRONLY | flag::O_CREAT | flag::O_TRUNC;
         var fd = open(file, flags => i32, 0o666); // rw-rw-rw-
         if (fd < 0) {
@@ -317,7 +317,7 @@ impl io {
         return fd;
     }
 
-    func logger(file: i8*) -> io {
+    func logger(file: const i8*) -> io {
         return io {
             fd: io::open_append_write_file(file),
             color_out: false,
@@ -325,7 +325,7 @@ impl io {
         };
     }
 
-    pub func fileout(file: i8*) -> io {
+    pub func fileout(file: const i8*) -> io {
         return io {
             fd: io::open_file(file),
             color_out: false,

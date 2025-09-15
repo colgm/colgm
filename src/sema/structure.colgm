@@ -121,6 +121,12 @@ impl colgm_struct {
         return self.static_method.get(name);
     }
 
+    pub func has_field(self, name: str&) -> bool {
+        return self.fields.has(name) ||
+               self.method.has(name) ||
+               self.static_method.has(name);
+    }
+
     pub func get_field_span(self, name: str&) -> span& {
         if (self.fields_span.has(name)) {
             return self.fields_span.get(name);
@@ -134,6 +140,10 @@ impl colgm_struct {
         return self.static_method.get(name).location;
     }
 
+    // always has result, struct has intrinsic method:
+    // pub func __ptr__(self) -> Self*;
+    // pub func __size__() -> u64;
+    // pub func __alloc__() -> Self*;
     pub func fuzzy_match_field(self, name: str&) -> str {
         var res = str::instance();
         var min_distance: u64 = 0xffffffffffffffff;

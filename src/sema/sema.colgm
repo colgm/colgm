@@ -1039,7 +1039,7 @@ impl sema {
         defer fuzzy_field.delete();
 
         self.err->report_field_not_found(
-            n->base.location.__ptr__(),
+            n->base.location,
             n->name.c_str,
             prev_name_for_search.c_str,
             fuzzy_field.c_str,
@@ -1084,7 +1084,7 @@ impl sema {
         defer fuzzy_field.delete();
 
         self.err->report_field_not_found(
-            n->base.location.__ptr__(),
+            n->base.location,
             n->name.c_str,
             prev_name_for_search.c_str,
             fuzzy_field.c_str,
@@ -1111,8 +1111,8 @@ impl sema {
                                 n: ast_call_func_args*) {
         if (func_self.unordered_params.size != n->args.size) {
             self.err->report_wrong_arg_num(
-                n->base.location.__ptr__(),
-                func_self.location.__ptr__(),
+                n->base.location,
+                func_self.location,
                 func_self.unordered_params.size,
                 n->args.size
             );
@@ -1162,8 +1162,8 @@ impl sema {
                                 n: ast_call_func_args*) {
         if (func_self.unordered_params.size != n->args.size + 1) {
             self.err->report_wrong_arg_num(
-                n->base.location.__ptr__(),
-                func_self.location.__ptr__(),
+                n->base.location,
+                func_self.location,
                 func_self.unordered_params.size - 1,
                 n->args.size
             );
@@ -1468,10 +1468,10 @@ impl sema {
             return infer;
         } else if (st.method.has(n->name)) {
             self.err->report_non_static_method(
-                n->base.location.__ptr__(),
+                n->base.location,
                 prev_name_for_search.c_str,
                 n->name.c_str,
-                st.method.get(n->name).location.__ptr__()
+                st.method.get(n->name).location
             );
             return type::error_type();
         } else {
@@ -1516,10 +1516,10 @@ impl sema {
             return infer;
         } else if (tu.method.has(n->name)) {
             self.err->report_non_static_method(
-                n->base.location.__ptr__(),
+                n->base.location,
                 prev_name_for_search.c_str,
                 n->name.c_str,
-                tu.method.get(n->name).location.__ptr__()
+                tu.method.get(n->name).location
             );
             return type::error_type();
         } else {
@@ -1823,7 +1823,7 @@ impl sema {
         defer fuzzy_field.delete();
 
         self.err->report_field_not_found(
-            n->base.location.__ptr__(),
+            n->base.location,
             n->name.c_str,
             prev_name_for_search.c_str,
             fuzzy_field.c_str,
@@ -1868,7 +1868,7 @@ impl sema {
         defer fuzzy_field.delete();
 
         self.err->report_field_not_found(
-            n->base.location.__ptr__(),
+            n->base.location,
             n->name.c_str,
             prev_name_for_search.c_str,
             fuzzy_field.c_str,
@@ -2218,7 +2218,7 @@ impl sema {
         // check if conflicts with local variable
         if (self.ctx->find_local(name)) {
             var shadowed_loc = self.ctx->get_local_def_location(name);
-            self.err->report_name_shadowing(loc, name.c_str, shadowed_loc);
+            self.err->report_name_shadowing(loc, name.c_str, shadowed_loc[0]);
             return false;
         }
 
@@ -2780,7 +2780,7 @@ impl sema {
         self.ctx->pop_scope_level(self.err);
     }
 
-    func check_struct_has_method(self, t: type&, m_name: i8*) -> bool {
+    func check_struct_has_method(self, t: type&, m_name: const i8*) -> bool {
         if (t.is_error()) {
             return false;
         }
@@ -2803,7 +2803,7 @@ impl sema {
         return true;
     }
 
-    func get_struct_method_return_type(self, t: type&, m_name: i8*) -> type {
+    func get_struct_method_return_type(self, t: type&, m_name: const i8*) -> type {
         var dm = self.ctx->get_domain(t.loc_file);
 
         var name_for_search = t.generic_name(self.pkg);
