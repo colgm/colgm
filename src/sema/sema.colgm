@@ -243,7 +243,7 @@ impl sema {
             self.err->out("expect integer or float but get \"")
                      .out_type(infer, self.pkg)
                      .out("\"")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -262,7 +262,7 @@ impl sema {
             self.err->out("bitwise operator cannot be used on \"")
                      .out_type(infer, self.pkg)
                      .out("\"")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -539,7 +539,7 @@ impl sema {
             self.err->out("bitwise operator cannot be used on \"")
                      .out_type(left, self.pkg)
                      .out("\"")
-                     .emit_err(n->left->location.__ptr__());
+                     .emit_err(n->left->location);
             return type::error_type();
         }
 
@@ -547,7 +547,7 @@ impl sema {
             self.err->out("bitwise operator cannot be used on \"")
                      .out_type(right, self.pkg)
                      .out("\"")
-                     .emit_err(n->right->location.__ptr__());
+                     .emit_err(n->right->location);
             return type::error_type();
         }
 
@@ -923,7 +923,7 @@ impl sema {
             self.err->out("cannot get field from global symbol \"")
                      .out(prev_name.c_str)
                      .out("\"")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -932,7 +932,7 @@ impl sema {
                      .out(prev_name.c_str)
                      .out("\".")
                      .out_note("maybe you mean \"->\"?")
-                     .emit_err(n->operator_location.__ptr__());
+                     .emit_err(n->operator_location);
             // report but continue resolving
         }
 
@@ -965,7 +965,7 @@ impl sema {
         self.err->out("cannot get field from \"")
                  .out(prev_name.c_str)
                  .out("\"")
-                 .emit_err(n->base.location.__ptr__());
+                 .emit_err(n->base.location);
         return type::error_type();
     }
 
@@ -1031,7 +1031,7 @@ impl sema {
                      .out("\" in \"")
                      .out(prev_name.c_str)
                      .out("\" is static")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -1076,7 +1076,7 @@ impl sema {
                      .out("\" in \"")
                      .out(prev_name.c_str)
                      .out("\" is static")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -1278,7 +1278,7 @@ impl sema {
             self.err->out("cannot find \"")
                      .out(prev_name_for_search.c_str)
                      .out("\"")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -1310,7 +1310,7 @@ impl sema {
             self.err->out("cannot find \"")
                      .out(prev_name_for_search.c_str)
                      .out("\"")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -1402,7 +1402,7 @@ impl sema {
                      .out("\" in enum \"")
                      .out(prev_name_for_search.c_str)
                      .out("\"")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         } else if (dm.tagged_unions.has(prev_name_for_search)) {
             return self.resolve_tagged_union_call_path(prev, n);
@@ -1493,7 +1493,7 @@ impl sema {
             note.append("\"?");
 
             self.err->error_with_note(
-                n->base.location.__ptr__(),
+                n->base.location,
                 info.c_str,
                 note.c_str
             );
@@ -1541,7 +1541,7 @@ impl sema {
             note.append("\"?");
 
             self.err->error_with_note(
-                n->base.location.__ptr__(),
+                n->base.location,
                 info.c_str,
                 note.c_str
             );
@@ -1733,7 +1733,7 @@ impl sema {
             self.err->out("cannot get field from global symbol \"")
                      .out(prev_name.c_str)
                      .out("\"")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -1742,13 +1742,13 @@ impl sema {
                      .out(prev_name.c_str)
                      .out("\"")
                      .out_note("use \".\" instead")
-                     .emit_err(n->operator_location.__ptr__());
+                     .emit_err(n->operator_location);
             // report but continue resolving
         } else if (prev.pointer_depth > 1) {
             self.err->out("cannot use \"->\" to get field from pointer \"")
                      .out(prev_name.c_str)
                      .out("\"")
-                     .emit_err(n->operator_location.__ptr__());
+                     .emit_err(n->operator_location);
             // report but continue resolving
         }
 
@@ -1815,7 +1815,7 @@ impl sema {
                      .out("\" in \"")
                      .out(prev_name.c_str)
                      .out("\" is static")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -1860,7 +1860,7 @@ impl sema {
                      .out("\" in \"")
                      .out(prev_name.c_str)
                      .out("\" is static")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
             return type::error_type();
         }
 
@@ -1931,7 +1931,7 @@ impl sema {
                     infer = self.resolve_ptr_get_field(prev, c => ast_ptr_get_field*);
                 }
                 _ => {
-                    self.err->unimplemented(c->location.__ptr__());
+                    self.err->unimplemented(c->location);
                     return type::error_type();
                 }
             }
@@ -1954,7 +1954,7 @@ impl sema {
             self.err->out("get global symbol \"")
                      .out_type(infer, self.pkg)
                      .out("\", but not an instance")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
         }
 
         var res = infer.clone();
@@ -2007,7 +2007,7 @@ impl sema {
             self.err->out("function returning non-pointer/non-reference type, ")
                      .out("will do shallow copy, ")
                      .out("may cause invalid assignment")
-                     .emit_warn(seg->location.__ptr__());
+                     .emit_warn(seg->location);
         }
         return true;
     }
@@ -2017,12 +2017,12 @@ impl sema {
             self.err->out("cannot assign to \"const ")
                      .out_type(left, self.pkg)
                      .out("\"")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
         } else if (left.is_array) {
             self.err->out("cannot change array \"")
                      .out_type(left, self.pkg)
                      .out("\"")
-                     .emit_err(n->base.location.__ptr__());
+                     .emit_err(n->base.location);
         }
     }
 
@@ -2051,14 +2051,14 @@ impl sema {
                 self.err->out("bitwise operator cannot be used on \"")
                          .out_type(left, self.pkg)
                          .out("\"")
-                         .emit_err(n->left->base.location.__ptr__());
+                         .emit_err(n->left->base.location);
                 return type::restrict_type();
             }
             if (!right.can_bitwise_calculate()) {
                 self.err->out("bitwise operator cannot be used on \"")
                          .out_type(right, self.pkg)
                          .out("\"")
-                         .emit_err(n->right->location.__ptr__());
+                         .emit_err(n->right->location);
                 return type::restrict_type();
             }
         }
@@ -2071,7 +2071,7 @@ impl sema {
                          .out("\" and \"")
                          .out_type(right, self.pkg)
                          .out("\"")
-                         .emit_err(n->right->location.__ptr__());
+                         .emit_err(n->right->location);
             }
         } else if (!left.eq(right)) {
             if (!self.check_can_be_converted(n->right, left)) {
@@ -2080,7 +2080,7 @@ impl sema {
                          .out("\" but expect \"")
                          .out_type(left, self.pkg)
                          .out("\"")
-                         .emit_err(n->right->location.__ptr__());
+                         .emit_err(n->right->location);
             }
         }
 
@@ -2089,7 +2089,7 @@ impl sema {
             self.err->out("cannot calculate enum \"")
                      .out_type(left, self.pkg)
                      .out("\"")
-                     .emit_err(n->left->base.location.__ptr__());
+                     .emit_err(n->left->base.location);
         }
 
         var res = type::restrict_type();
@@ -2227,7 +2227,7 @@ impl sema {
             self.err->out("variable \"")
                      .out(name.c_str)
                      .out("\" conflicts with global symbol")
-                     .emit_err(loc.__ptr__());
+                     .emit_err(loc);
             return false;
         }
 
@@ -2490,7 +2490,7 @@ impl sema {
 
         if (self.is_enum_type(infer) && infer.is_pointer()) {
             self.err->out("match value should not be pointer")
-                     .emit_err(n->value->location.__ptr__());
+                     .emit_err(n->value->location);
             return;
         }
 
@@ -2642,7 +2642,7 @@ impl sema {
             self.err->out("cannot match \"")
                      .out_type(infer, self.pkg)
                      .out("\"")
-                     .emit_err(n->value->location.__ptr__());
+                     .emit_err(n->value->location);
         }
 
         var dm = self.ctx->get_domain(infer.loc_file);
@@ -2727,7 +2727,7 @@ impl sema {
             }
             info.append(": ").append_str(generated_warning);
             self.err->warn_with_note(
-                n->base.location.__ptr__(),
+                n->base.location,
                 info.c_str,
                 "complete unused branch or use \"_\" default branch instead"
             );
@@ -2900,7 +2900,7 @@ impl sema {
             self.err->out("\"")
                      .out_type(ty, self.pkg)
                      .out("\" is not accpted as container")
-                     .emit_err(n->container->base.location.__ptr__());
+                     .emit_err(n->container->base.location);
         }
 
         // T should have method size(T) -> integer
@@ -3042,7 +3042,7 @@ impl sema {
             self.err->out("\"")
                      .out_type(ty, self.pkg)
                      .out("\" is not accpted as container")
-                     .emit_err(n->container->base.location.__ptr__());
+                     .emit_err(n->container->base.location);
         }
         // T should have method iter(T) -> iter_type
         if (!self.check_struct_has_method(ty, "iter")) {
@@ -3134,7 +3134,7 @@ impl sema {
                         .out("\", but get \"")
                         .out_type(infer, self.pkg)
                         .out("\"")
-                        .emit_err(n->base.location.__ptr__());
+                        .emit_err(n->base.location);
         }
 
         if (func_self.return_type.is_reference) {
@@ -3244,10 +3244,10 @@ impl sema {
 
         if (unreachable_statements.size > 1) {
             self.err->out("unreachable statements, ignored")
-                     .emit_warn(unreachable_location.__ptr__());
+                     .emit_warn(unreachable_location);
         } else {
             self.err->out("unreachable statement, ignored")
-                     .emit_warn(unreachable_location.__ptr__());
+                     .emit_warn(unreachable_location);
         }
     }
 
@@ -3318,7 +3318,7 @@ impl sema {
         self.err->out("cannot implement \"")
                  .out(node->name.c_str)
                  .out("\", because it is not defined in the same file")
-                 .emit_err(node->base.location.__ptr__());
+                 .emit_err(node->base.location);
     }
 
     func resolve_global_func(self, node: ast_func_decl*) {
@@ -3332,7 +3332,7 @@ impl sema {
             self.err->out("cannot find function \"")
                      .out(node->name.c_str)
                      .out("\"")
-                     .emit_err(node->base.location.__ptr__());
+                     .emit_err(node->base.location);
             return;
         }
 
@@ -3342,7 +3342,7 @@ impl sema {
                 self.err->out("non-extern function \"")
                          .out(node->name.c_str)
                          .out("\" is not implemented")
-                         .emit_err(node->base.location.__ptr__());
+                         .emit_err(node->base.location);
             }
             return;
         }

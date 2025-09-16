@@ -482,19 +482,6 @@ impl tokenizer {
                    input->c_str[i] == '\t' ||
                    input->c_str[i] == '\n' ||
                    input->c_str[i] == '\r') {
-            while (input->c_str[i] == ' ' ||
-                   input->c_str[i] == '\t' ||
-                   input->c_str[i] == '\n' ||
-                   input->c_str[i] == '\r') {
-                if (i + 2 < input->size &&
-                    input->c_str[i + 1] == ' ' &&
-                    input->c_str[i + 2] == ' ') {
-                    i += 3;
-                } else {
-                    i += 1;
-                }
-            }
-            i -= 1;
             return json_token::empty_result();
         }
 
@@ -564,11 +551,11 @@ impl parser {
         return self.tkn.tokens.get(self.index).kind == kind;
     }
 
-    func this_tok(self) -> json_token* {
+    func this_tok(self) -> json_token& {
         if (self.index >= self.tkn.tokens.size) {
-            return self.tkn.tokens.back().__ptr__();
+            return self.tkn.tokens.back();
         }
-        return self.tkn.tokens.get(self.index).__ptr__();
+        return self.tkn.tokens.get(self.index);
     }
 
     func next(self) {
@@ -599,8 +586,7 @@ impl parser {
                 return json::error("invalid object, expect string");
             }
 
-            var key = self.this_tok()->value.clone();
-            defer key.delete();
+            var key: str& = self.this_tok().value;
             self.next();
 
             if (!self.lookahead(json_token_kind::tok_colon)) {
@@ -670,7 +656,7 @@ impl parser {
     }
 
     func parse_value(self) -> json* {
-        match (self.this_tok()->kind) {
+        match (self.this_tok().kind) {
             json_token_kind::tok_left_brace => {
                 return self.parse_object();
             }
@@ -698,12 +684,12 @@ impl parser {
                 return result;
             }
             json_token_kind::tok_string => {
-                var result = json::str(self.this_tok()->value.c_str);
+                var result = json::str(self.this_tok().value.c_str);
                 self.next();
                 return result;
             }
             json_token_kind::tok_number => {
-                var result = json::num(to_f64(self.this_tok()->value.c_str));
+                var result = json::num(to_f64(self.this_tok().value.c_str));
                 self.next();
                 return result;
             }
@@ -726,7 +712,7 @@ impl parser {
                 panic("empty result token");
             }
             json_token_kind::tok_error => {
-                var result = json::error(self.this_tok()->value.c_str);
+                var result = json::error(self.this_tok().value.c_str);
                 self.next();
                 return result;
             }

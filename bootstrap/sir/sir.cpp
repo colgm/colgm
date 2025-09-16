@@ -246,7 +246,7 @@ void sir_label::dump(std::ostream& out) const {
 
 std::string sir_label::get_label() const {
     std::stringstream ss;
-    ss << "label." << std::hex << label_count << std::dec;
+    ss << "label._." << std::hex << label_count << std::dec;
     return ss.str();
 }
 
@@ -266,7 +266,7 @@ void sir_br::dump(std::ostream& out) const {
 
 std::string sir_br::get_label() const {
     std::stringstream ss;
-    ss << "label." << std::hex << label << std::dec;
+    ss << "label._." << std::hex << label << std::dec;
     return ss.str();
 }
 
@@ -278,19 +278,19 @@ void sir_br_cond::dump(std::ostream& out) const {
 
 std::string sir_br_cond::get_label_true() const {
     std::stringstream ss;
-    ss << "label." << std::hex << label_true << std::dec;
+    ss << "label._." << std::hex << label_true << std::dec;
     return ss.str();
 }
 
 std::string sir_br_cond::get_label_false() const {
     std::stringstream ss;
-    ss << "label." << std::hex << label_false << std::dec;
+    ss << "label._." << std::hex << label_false << std::dec;
     return ss.str();
 }
 
 std::string sir_switch::get_default_label() const {
     std::stringstream ss;
-    ss << "label." << std::hex << label_default << std::dec;
+    ss << "label._." << std::hex << label_default << std::dec;
     return ss.str();
 }
 
@@ -298,7 +298,7 @@ std::vector<std::string> sir_switch::get_case_labels() const {
     std::vector<std::string> labels;
     for (auto& c : label_cases) {
         std::stringstream ss;
-        ss << "label." << std::hex << c.second << std::dec;
+        ss << "label._." << std::hex << c.second << std::dec;
         labels.push_back(ss.str());
     }
     return labels;
@@ -309,7 +309,7 @@ void sir_switch::dump(std::ostream& out) const {
     out << "label %" << get_default_label() << " [\n";
     for (auto& c : label_cases) {
         out << "    i64 " << c.first << ", ";
-        out << "label %label." << std::hex << c.second << std::dec << "\n";
+        out << "label %label._." << std::hex << c.second << std::dec << "\n";
     }
     out << "  ]\n";
 }
