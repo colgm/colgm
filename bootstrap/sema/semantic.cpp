@@ -2142,6 +2142,14 @@ void semantic::resolve_ret_stmt(ret_stmt* node, const colgm_func& func_self) {
         );
     }
 
+    if (node->get_value() && node->get_value()->is(ast_type::ast_call)) {
+        auto tmp = reinterpret_cast<call*>(node->get_value());
+        if (tmp->get_chain().size() && tmp->get_chain().back()->is(ast_type::ast_call_func_args) &&
+            func_self.return_type.is_reference && !infer.is_reference) {
+            rp.warn(node, "return local variable by reference may cause unexpected behavior");
+        }
+    }
+
     if (func_self.return_type.is_reference) {
         node->set_return_ref_type(true);
     }

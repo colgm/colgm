@@ -3137,6 +3137,20 @@ impl sema {
                         .emit_err(n->base.location);
         }
 
+        // check if return value on stack as reference
+        // which may cause unexpected behavior
+        if (n->value != nil && n->value->kind == ast_kind::ast_call) {
+            var tmp = n->value => ast_call*;
+            if (tmp->chain.size > 0 &&
+                tmp->chain.back()->kind == ast_kind::ast_call_func_args &&
+                func_self.return_type.is_reference &&
+                !infer.is_reference) {
+                self.err->warn(n->base.location.__ptr__(),
+                    "return local variable as reference may cause unexpected behavior"
+                );
+            }
+        }
+
         if (func_self.return_type.is_reference) {
             n->return_ref_type = true;
         }

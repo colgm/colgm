@@ -1,0 +1,54 @@
+use std::io::{ io };
+use std::panic::{ assert };
+
+struct foo {
+    a: i64
+}
+
+impl foo {
+    pub func instance(a: i64) -> foo {
+        return foo { a: a };
+    }
+}
+
+struct vec_foo {
+    data: [foo; 20],
+    len: u64
+}
+
+impl vec_foo {
+    pub func push(self, value: foo) {
+        self.data[self.len] = value;
+        self.len += 1;
+    }
+
+    pub func get(self, index: u64) -> foo {
+        return self.data[index];
+    }
+}
+
+func get(v: vec_foo&, index: u64) -> foo& {
+    return v.get(index);
+}
+
+func get_correct(v: vec_foo&, index: u64) -> foo {
+    return v.get(index);
+}
+
+func main() -> i64 {
+    var v = vec_foo {};
+
+    for (var i = 0; i < 10; i += 1) {
+        v.push(foo::instance(i));
+    }
+
+    // when build under -O3, this will cause undefined behavior
+    for (var i: u64 = 0; i < 10; i += 1) {
+        io::stdout().out_i64(get(v, i).a).out(" ");
+        io::stdout().out_i64(get_correct(v, i).a).endln();
+
+        assert(get(v, i).a == get_correct(v, i).a, "get() != get_correct()");
+    }
+
+    return 0;
+}
