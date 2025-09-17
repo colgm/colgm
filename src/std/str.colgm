@@ -181,6 +181,14 @@ impl str {
         return self;
     }
 
+    pub func append_view(self, src: str_view) -> str& {
+        var tmp = src.to_str();
+        defer tmp.delete();
+
+        self.append_str(tmp);
+        return self;
+    }
+
     pub func append(self, src: const i8*) -> str& {
         // do nothing if src is null pointer
         if (src == nil) {
@@ -379,5 +387,42 @@ impl str_iterator {
 
     pub func index(self) -> u64 {
         return self.__pos;
+    }
+}
+
+pub struct str_view {
+    data: i8*,
+    begin: u64,
+    size: u64
+}
+
+impl str_view {
+    pub func instance(data: const i8*, begin: u64, size: u64) -> str_view {
+        return str_view {
+            data: data,
+            begin: begin,
+            size: size
+        };
+    }
+
+    pub func eq_const(self, src: const i8*) -> bool {
+        var len = strlen(src) => u64;
+        if (self.size != len) {
+            return false;
+        }
+        for (var i: u64 = 0; i < self.size; i += 1) {
+            if (self.data[i + self.begin] != src[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    pub func to_str(self) -> str {
+        var res = str::instance();
+        for (var i: u64 = 0; i < self.size; i += 1) {
+            res.append_char(self.data[i + self.begin]);
+        }
+        return res;
     }
 }
