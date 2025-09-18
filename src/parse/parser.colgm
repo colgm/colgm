@@ -196,7 +196,7 @@ impl parser {
             self.next();
             return;
         }
-        self.err->error(self.last_tok_loc().__ptr__(), "expected \"}\"");
+        self.err->error(self.last_tok_loc(), "expected \"}\"");
     }
 
     func try_match_semi(self) {
@@ -204,7 +204,7 @@ impl parser {
             self.next();
             return;
         }
-        self.err->error(self.last_tok_loc().__ptr__(), "expected \";\"");
+        self.err->error(self.last_tok_loc(), "expected \";\"");
     }
 
     func match_token(self, kind: tok_kind) {
@@ -241,7 +241,7 @@ impl parser {
             message.append_str(self.this_tok()->content);
             message.append("\"");
         }
-        self.err->error(loc.__ptr__(), message.c_str);
+        self.err->error(loc, message.c_str);
 
         self.next();
     }
@@ -465,7 +465,7 @@ impl parser {
             if (self.lookahead(tok_kind::tok_comma)) {
                 self.match_token(tok_kind::tok_comma);
             } else if (!self.lookahead(tok_kind::tok_rbracket)) {
-                self.err->error(self.this_tok_loc().__ptr__(), "expected comma here");
+                self.err->error(self.this_tok_loc(), "expected comma here");
             }
         }
         self.match_token(tok_kind::tok_rbracket);
@@ -501,10 +501,7 @@ impl parser {
             return self.call_gen() => ast*;
         }
 
-        self.err->error(
-            self.this_tok_loc().__ptr__(),
-            "expected scalar here"
-        );
+        self.err->error(self.this_tok_loc(), "expected scalar here");
         self.next();
         return ast_null::new() => ast*;
     }
@@ -784,7 +781,7 @@ impl parser {
         self.match_token(tok_kind::tok_semi);
         if (self.lookahead(tok_kind::tok_sub)) {
             self.err->error(
-                self.this_tok_loc().__ptr__(),
+                self.this_tok_loc(),
                 "array type does not accept negative length"
             );
             self.match_token(tok_kind::tok_sub);
@@ -829,7 +826,7 @@ impl parser {
                self.lookahead(tok_kind::tok_bit_and)) {
             if (report_once) {
                 self.err->error(
-                    self.this_tok_loc().__ptr__(),
+                    self.this_tok_loc(),
                     "reference type can not be referenced"
                 );
                 report_once = false;
@@ -849,7 +846,7 @@ impl parser {
             if (self.lookahead(tok_kind::tok_comma)) {
                 self.match_token(tok_kind::tok_comma);
             } else if (self.lookahead(tok_kind::tok_id)) {
-                self.err->error(self.this_tok_loc().__ptr__(), "expected comma here");
+                self.err->error(self.this_tok_loc(), "expected comma here");
             }
         }
         self.match_token(tok_kind::tok_grt);
@@ -1056,7 +1053,7 @@ impl parser {
     }
 
     func impl_block_invalid_first_token(self) {
-        self.err->error(self.this_tok_loc().__ptr__(),
+        self.err->error(self.this_tok_loc(),
             "expected function declaration"
         );
 
@@ -1161,10 +1158,7 @@ impl parser {
             _ => {}
         }
 
-        self.err->error(
-            self.this_tok_loc().__ptr__(),
-            "expected statement here."
-        );
+        self.err->error(self.this_tok_loc(), "expected statement here.");
         self.next();
         return ast_null::new() => ast*;
     }
@@ -1240,7 +1234,7 @@ impl parser {
             if (self.lookahead(tok_kind::tok_eq) &&
                 self.lookahead_next_n(1, tok_kind::tok_grt)) {
                 self.match_token(tok_kind::tok_eq);
-                self.err->error(self.this_tok_loc().__ptr__(),
+                self.err->error(self.this_tok_loc(),
                     "do not split \"=>\" to \"= >\" in match case"
                 );
                 self.match_token(tok_kind::tok_grt);
@@ -1365,7 +1359,7 @@ impl parser {
 
         info.append(tok->content.c_str);
         info.append("\"");
-        self.err->error(tok->location.__ptr__(), info.c_str);
+        self.err->error(tok->location, info.c_str);
 
         // do skip
         while (!self.lookahead(tok_kind::tok_eof) &&
@@ -1384,7 +1378,7 @@ impl parser {
     // because the code must be terribly broken.
     func error_count_threshold_exceeded(self) -> bool {
         if (self.err->error_count >= 8) {
-            self.err->error(nil, "too many errors, stop\n");
+            self.err->error_without_loc("too many errors, stop\n");
             return true;
         }
         return false;
@@ -1429,12 +1423,12 @@ impl parser {
                 if (self.lookahead(tok_kind::tok_pub) && !flag_is_public) {
                     flag_is_public = true;
                 } else if (self.lookahead(tok_kind::tok_pub) && flag_is_public) {
-                    self.err->error(self.this_tok_loc().__ptr__(), "duplicate 'pub' modifier");
+                    self.err->error(self.this_tok_loc(), "duplicate 'pub' modifier");
                 }
                 if (self.lookahead(tok_kind::tok_extern) && !flag_is_extern) {
                     flag_is_extern = true;
                 } else if (self.lookahead(tok_kind::tok_extern) && flag_is_extern) {
-                    self.err->error(self.this_tok_loc().__ptr__(), "duplicate 'extern' modifier");
+                    self.err->error(self.this_tok_loc(), "duplicate 'extern' modifier");
                 }
                 if (self.error_count_threshold_exceeded()) {
                     return;
@@ -1464,7 +1458,7 @@ impl parser {
                     tmp->set_conds(conds.__ptr__());
                     tmp->is_public = flag_is_public;
                     if (flag_is_extern) {
-                        self.err->error(self.this_tok_loc().__ptr__(),
+                        self.err->error(self.this_tok_loc(),
                             "extern enum not supported"
                         );
                     }
@@ -1481,7 +1475,7 @@ impl parser {
                 }
                 tok_kind::tok_impl => {
                     if (flag_is_public || flag_is_extern) {
-                        self.err->warn(self.this_tok_loc().__ptr__(),
+                        self.err->warn(self.this_tok_loc(),
                             "cannot use 'pub' or 'extern' with 'impl', ignored"
                         );
                     }

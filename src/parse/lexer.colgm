@@ -379,7 +379,7 @@ impl lexer {
                 self.column += tmp.size => i64;
                 loc.end_line = self.line;
                 loc.end_column = self.column;
-                self.err->error(loc.__ptr__(), "invalid hex number");
+                self.err->error(loc, "invalid hex number");
             }
             return;
         }
@@ -401,7 +401,7 @@ impl lexer {
                 self.column += tmp.size => i64;
                 loc.end_line = self.line;
                 loc.end_column = self.column;
-                self.err->error(loc.__ptr__(), "invalid oct number");
+                self.err->error(loc, "invalid oct number");
             }
             return;
         }
@@ -565,10 +565,7 @@ impl lexer {
         if (self.pos >= src.size) {
             loc.end_line = self.line;
             loc.end_column = self.column;
-            self.err->error(
-                loc.__ptr__(),
-                "expected end of string but reached end of file"
-            );
+            self.err->error(loc, "expected end of string but reached eof");
             return;
         }
 
@@ -583,7 +580,7 @@ impl lexer {
             self.push_token(tok_kind::tok_str, tmp, loc);
         } else {
             if (tmp.size != 1) {
-                self.err->error(loc.__ptr__(), "should only contain one character");
+                self.err->error(loc, "should only contain one character");
             }
             self.push_token(tok_kind::tok_ch, tmp, loc);
         }

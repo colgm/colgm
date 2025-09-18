@@ -44,7 +44,7 @@ func check_enable_if(err: report*, acc: ast_cond_compile*, co: cli_option*) -> b
 
             info.append(i.key().c_str);
             info.append("\", may cause this node disabled");
-            err->warn(acc->base.location.__ptr__(), info.c_str);
+            err->warn(acc->base.location, info.c_str);
         }
     }
 
@@ -74,7 +74,7 @@ func check_conds(err: report*,
         var acc = i.get();
         if (!acc->cond_name.eq_const("enable_if")) {
             err->error(
-                acc->base.location.__ptr__(),
+                acc->base.location,
                 "this compile condition is not supported"
             );
             continue;
@@ -107,7 +107,7 @@ func report_not_supported_condition(err: report*, node: ast_impl*) {
             var acc = j.get();
             if (!check_is_supported_condition(acc->cond_name)) {
                 err->error(
-                    acc->base.location.__ptr__(),
+                    acc->base.location,
                     "this compile condition is not supported"
                 );
             }

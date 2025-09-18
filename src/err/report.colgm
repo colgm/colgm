@@ -115,13 +115,13 @@ impl report {
         return res;
     }
 
-    func print_span(self, location: span*, note: const i8*, level: report_level) {
-        if (!location->file.eq_const(self.filename.c_str)) {
-            self.load_file_source(location->file.c_str);
+    func print_span(self, location: span&, note: const i8*, level: report_level) {
+        if (!location.file.eq_const(self.filename.c_str)) {
+            self.load_file_source(location.file.c_str);
         }
 
-        var index = location->begin_line;
-        var max_line_number_length = report::get_number_length(location->end_line + 1);
+        var index = location.begin_line;
+        var max_line_number_length = report::get_number_length(location.end_line + 1);
         var pad_str = report::left_pad(max_line_number_length);
         defer pad_str.delete();
 
@@ -129,11 +129,11 @@ impl report {
 
         var omit_line_printed = false;
 
-        while (index <= location->end_line) {
+        while (index <= location.end_line) {
             // if total span includes more than 4 lines, omit the middle lines
-            if (index > location->begin_line &&
-                index < location->end_line &&
-                location->end_line - location->begin_line > 4) {
+            if (index > location.begin_line &&
+                index < location.end_line &&
+                location.end_line - location.begin_line > 4) {
                 if (!omit_line_printed) {
                     io::stderr().cyan().out(pad_str.c_str).out(" | ").reset();
                     io::stderr().out("  ...").endln();
@@ -167,48 +167,48 @@ impl report {
             var underline = str::instance();
             defer underline.delete();
 
-            if (index == location->begin_line) {
+            if (index == location.begin_line) {
                 for (var i = 0; i < len; i += 1) {
-                    if (location->begin_line == location->end_line &&
-                        i == location->end_column) {
+                    if (location.begin_line == location.end_line &&
+                        i == location.end_column) {
                         break;
                     }
-                    if (i < location->begin_column && this_line[i] != '\t') {
+                    if (i < location.begin_column && this_line[i] != '\t') {
                         underline.append_char(' ');
                     }
-                    if (i < location->begin_column && this_line[i] == '\t') {
+                    if (i < location.begin_column && this_line[i] == '\t') {
                         underline.append_char('\t');
                     }
-                    if (i >= location->begin_column && this_line[i] != '\t') {
+                    if (i >= location.begin_column && this_line[i] != '\t') {
                         underline.append_char('^');
                     }
-                    if (i >= location->begin_column && this_line[i] == '\t') {
+                    if (i >= location.begin_column && this_line[i] == '\t') {
                         underline.append("^^^^");
                     }
                 }
-            } elsif (index == location->end_line) {
+            } elsif (index == location.end_line) {
                 // for case eof, len == 1, this_line = " "
                 // sometimes the end_column is 0, but we still need one char
                 // to mark the end of line
-                if (len == 1 && location->end_column == 0) {
+                if (len == 1 && location.end_column == 0) {
                     underline.append_char('^');
                 }
                 for (var i = 0; i < len; i += 1) {
                     // in fact this should be unreachable
-                    if (location->begin_line == location->end_line &&
-                        i < location->begin_column) {
+                    if (location.begin_line == location.end_line &&
+                        i < location.begin_column) {
                         continue;
                     }
-                    if (i < location->end_column && this_line[i] != '\t') {
+                    if (i < location.end_column && this_line[i] != '\t') {
                         underline.append_char('^');
                     }
-                    if (i < location->end_column && this_line[i] == '\t') {
+                    if (i < location.end_column && this_line[i] == '\t') {
                         underline.append("^^^^");
                     }
-                    if (i >= location->end_column && this_line[i] != '\t') {
+                    if (i >= location.end_column && this_line[i] != '\t') {
                         underline.append_char(' ');
                     }
-                    if (i >= location->end_column && this_line[i] == '\t') {
+                    if (i >= location.end_column && this_line[i] == '\t') {
                         underline.append_char('\t');
                     }
                 }
@@ -263,17 +263,21 @@ impl report {
         );
     }
 
-    pub func error(self, location: span*, message: const i8*) {
+    pub func error(self, location: span&, message: const i8*) {
         self.error_count += 1;
 
         io::stderr().red().out("Error: ").reset().out(message).endln();
-        if (location != nil) {
-            io::stderr().cyan().out("  --> ").red().out(location->file.c_str);
-            io::stderr().out_ch(':').out_i64(location->begin_line + 1);
-            io::stderr().out_ch(':').out_i64(location->begin_column + 1);
-            io::stderr().reset().endln();
-            self.print_span(location, nil, report_level::error);
-        }
+        io::stderr().cyan().out("  --> ").red().out(location.file.c_str);
+        io::stderr().out_ch(':').out_i64(location.begin_line + 1);
+        io::stderr().out_ch(':').out_i64(location.begin_column + 1);
+        io::stderr().reset().endln();
+        self.print_span(location, nil, report_level::error);
+    }
+
+    pub func error_without_loc(self, message: const i8*) {
+        self.error_count += 1;
+
+        io::stderr().red().out("Error: ").reset().out(message).endln();
     }
 
     pub func error_with_note(self, loc: span&, message: const i8*, note: const i8*) {
@@ -284,18 +288,16 @@ impl report {
         io::stderr().out_ch(':').out_i64(loc.begin_line + 1);
         io::stderr().out_ch(':').out_i64(loc.begin_column + 1);
         io::stderr().reset().endln();
-        self.print_span(loc.__ptr__(), note, report_level::error);
+        self.print_span(loc, note, report_level::error);
     }
 
-    pub func warn(self, location: span*, message: const i8*) {
+    pub func warn(self, location: span&, message: const i8*) {
         io::stderr().orange().out("Warning: ").reset().out(message).endln();
-        if (location != nil) {
-            io::stderr().cyan().out("  --> ").orange().out(location->file.c_str);
-            io::stderr().out_ch(':').out_i64(location->begin_line + 1);
-            io::stderr().out_ch(':').out_i64(location->begin_column + 1);
-            io::stderr().reset().endln();
-            self.print_span(location, nil, report_level::warning);
-        }
+        io::stderr().cyan().out("  --> ").orange().out(location.file.c_str);
+        io::stderr().out_ch(':').out_i64(location.begin_line + 1);
+        io::stderr().out_ch(':').out_i64(location.begin_column + 1);
+        io::stderr().reset().endln();
+        self.print_span(location, nil, report_level::warning);
     }
 
     pub func warn_with_note(self, loc: span&, message: const i8*, note: const i8*) {
@@ -304,18 +306,16 @@ impl report {
         io::stderr().out_ch(':').out_i64(loc.begin_line + 1);
         io::stderr().out_ch(':').out_i64(loc.begin_column + 1);
         io::stderr().reset().endln();
-        self.print_span(loc.__ptr__(), note, report_level::warning);
+        self.print_span(loc, note, report_level::warning);
     }
 
-    pub func note(self, location: span*, message: const i8*) {
+    pub func note(self, location: span&, message: const i8*) {
         io::stderr().grey().out("Note: ").reset().out(message).endln();
-        if (location != nil) {
-            io::stderr().cyan().out("  --> ").grey().out(location->file.c_str);
-            io::stderr().out_ch(':').out_i64(location->begin_line + 1);
-            io::stderr().out_ch(':').out_i64(location->begin_column + 1);
-            io::stderr().reset().endln();
-            self.print_span(location, nil, report_level::note);
-        }
+        io::stderr().cyan().out("  --> ").grey().out(location.file.c_str);
+        io::stderr().out_ch(':').out_i64(location.begin_line + 1);
+        io::stderr().out_ch(':').out_i64(location.begin_column + 1);
+        io::stderr().reset().endln();
+        self.print_span(location, nil, report_level::note);
     }
 
     pub func note_with_note(self, loc: span&, message: const i8*, note: const i8*) {
@@ -324,7 +324,7 @@ impl report {
         io::stderr().out_ch(':').out_i64(loc.begin_line + 1);
         io::stderr().out_ch(':').out_i64(loc.begin_column + 1);
         io::stderr().reset().endln();
-        self.print_span(loc.__ptr__(), note, report_level::note);
+        self.print_span(loc, note, report_level::note);
     }
 }
 
@@ -415,7 +415,7 @@ impl report {
         io::stderr().out_ch(':').out_i64(location.begin_line + 1);
         io::stderr().out_ch(':').out_i64(location.begin_column + 1);
         io::stderr().reset().endln();
-        self.print_span(location.__ptr__(), note, report_level::note);
+        self.print_span(location, note, report_level::note);
     }
 
     func emit_headless(self, location: span&) {

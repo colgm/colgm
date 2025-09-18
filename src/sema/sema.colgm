@@ -130,7 +130,7 @@ impl sema {
             info.append_char('\"');
             defer info.delete();
 
-            self.err->error(n->base.location.__ptr__(), info.c_str);
+            self.err->error(n->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -220,7 +220,7 @@ impl sema {
                 info.append_str(i_name);
                 info.append("\"");
 
-                self.err->error(this_node->location.__ptr__(), info.c_str);
+                self.err->error(this_node->location, info.c_str);
             }
         }
 
@@ -288,7 +288,7 @@ impl sema {
             info.append_str(i_name);
             info.append("\"");
 
-            self.err->error(n->base.location.__ptr__(), info.c_str);
+            self.err->error(n->base.location, info.c_str);
             return type::bool_type();
         }
 
@@ -346,7 +346,7 @@ impl sema {
                 info.append("\" and \"");
                 info.append_str(r_name);
                 info.append("\"");
-                self.err->error(n->base.location.__ptr__(), info.c_str);
+                self.err->error(n->base.location, info.c_str);
 
                 var infer = type::bool_type();
                 n->base.resolved_type.reset_with(infer);
@@ -358,7 +358,7 @@ impl sema {
         if (self.is_enum_type(left)) {
             if (n->kind != binary_kind::cmpeq &&
                 n->kind != binary_kind::cmpne) {
-                self.err->error(n->base.location.__ptr__(), "only \"==\" and \"!=\" are allowed");
+                self.err->error(n->base.location, "only \"==\" and \"!=\" are allowed");
             }
 
             var infer = type::bool_type();
@@ -379,7 +379,7 @@ impl sema {
             info.append("\" and \"");
             info.append_str(r_name);
             info.append("\"");
-            self.err->error(n->base.location.__ptr__(), info.c_str);
+            self.err->error(n->base.location, info.c_str);
 
             var infer = type::bool_type();
             n->base.resolved_type.reset_with(infer);
@@ -400,7 +400,7 @@ impl sema {
             info.append("\" with different pointer level type \"");
             info.append_str(r_name);
             info.append("\"");
-            self.err->error(n->base.location.__ptr__(), info.c_str);
+            self.err->error(n->base.location, info.c_str);
 
             var infer = type::bool_type();
             n->base.resolved_type.reset_with(infer);
@@ -440,7 +440,7 @@ impl sema {
 
             info.append_str(name);
             info.append("\"");
-            self.err->error(n->left->location.__ptr__(), info.c_str);
+            self.err->error(n->left->location, info.c_str);
         }
         if (!right.is_bool()) {
             var info = str::from("expect \"bool\" but get \"");
@@ -451,7 +451,7 @@ impl sema {
 
             info.append_str(name);
             info.append("\"");
-            self.err->error(n->right->location.__ptr__(), info.c_str);
+            self.err->error(n->right->location, info.c_str);
         }
 
         var infer = type::bool_type();
@@ -485,7 +485,7 @@ impl sema {
 
                 info.append_str(l_name).append("\" and \"");
                 info.append_str(r_name);
-                self.err->error(n->base.location.__ptr__(), info.c_str);
+                self.err->error(n->base.location, info.c_str);
                 return type::error_type();
             }
         }
@@ -502,7 +502,7 @@ impl sema {
             defer name.delete();
 
             info.append_str(name).append("\"");
-            self.err->error(n->left->location.__ptr__(), info.c_str);
+            self.err->error(n->left->location, info.c_str);
             return type::error_type();
         } else if (self.is_enum_type(right) ||
                    self.is_struct_type(right) ||
@@ -515,7 +515,7 @@ impl sema {
             defer name.delete();
 
             info.append_str(name).append("\"");
-            self.err->error(n->right->location.__ptr__(), info.c_str);
+            self.err->error(n->right->location, info.c_str);
             return type::error_type();
         }
 
@@ -566,7 +566,7 @@ impl sema {
 
                 info.append_str(l_name).append("\" and \"");
                 info.append_str(r_name);
-                self.err->error(n->base.location.__ptr__(), info.c_str);
+                self.err->error(n->base.location, info.c_str);
                 return type::error_type();
             }
         }
@@ -690,7 +690,7 @@ impl sema {
             info.append_str(r_name).append("\" => \"");
             info.append_str(t_name);
             info.append("\"");
-            self.err->error(n->to->base.location.__ptr__(), info.c_str);
+            self.err->error(n->to->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -708,7 +708,7 @@ impl sema {
             info.append_str(r_name).append("\" to \"");
             info.append_str(t_name);
             info.append("\"");
-            self.err->error(n->to->base.location.__ptr__(), info.c_str);
+            self.err->error(n->to->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -725,7 +725,7 @@ impl sema {
             info.append_str(r_name).append("\" to struct \"");
             info.append_str(t_name);
             info.append("\"");
-            self.err->error(n->to->base.location.__ptr__(), info.c_str);
+            self.err->error(n->to->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -752,7 +752,7 @@ impl sema {
 
                 info.append_str(name);
                 info.append("\" is not imported");
-                self.err->error(n_ast->location.__ptr__(), info.c_str);
+                self.err->error(n_ast->location, info.c_str);
                 return type::error_type();
             }
 
@@ -768,7 +768,7 @@ impl sema {
 
         info.append_str(name);
         info.append_char('\"');
-        self.err->error(n_ast->location.__ptr__(), info.c_str);
+        self.err->error(n_ast->location, info.c_str);
         return type::error_type();
     }
 
@@ -779,7 +779,7 @@ impl sema {
         }
 
         if (n->generic_types != nil && !infer.is_global_sym) {
-            self.err->error(n->base.location.__ptr__(),
+            self.err->error(n->base.location,
                 "cannot instantiate generic type of non-global symbol"
             );
         }
@@ -817,7 +817,7 @@ impl sema {
 
                 info.append_str(infer.loc_file);
                 info.append("\" not found");
-                self.err->error(n->base.location.__ptr__(), info.c_str);
+                self.err->error(n->base.location, info.c_str);
                 return infer;
             }
 
@@ -836,7 +836,7 @@ impl sema {
                 info.append("\" in namespace \"");
                 info.append_str(infer.loc_file);
                 info.append("\"");
-                self.err->error(n->base.location.__ptr__(), info.c_str);
+                self.err->error(n->base.location, info.c_str);
             }
         }
 
@@ -866,7 +866,7 @@ impl sema {
             info.append("::");
             info.append_str(name);
             info.append("\"");
-            self.err->error(n->location.__ptr__(), info.c_str);
+            self.err->error(n->location, info.c_str);
         }
     }
 
@@ -892,7 +892,7 @@ impl sema {
             info.append("::");
             info.append_str(name);
             info.append("\"");
-            self.err->error(n->location.__ptr__(), info.c_str);
+            self.err->error(n->location, info.c_str);
         }
     }
 
@@ -979,7 +979,7 @@ impl sema {
 
             info.append_str(prev_name_for_search);
             info.append("\"");
-            self.err->error(loc.__ptr__(), info.c_str);
+            self.err->error(loc, info.c_str);
             return type::error_type();
         }
 
@@ -992,7 +992,7 @@ impl sema {
             info.append("\" in \"");
             info.append_str(prev_name_for_search);
             info.append("\"");
-            self.err->error(loc.__ptr__(), info.c_str);
+            self.err->error(loc, info.c_str);
             return type::error_type();
         }
 
@@ -1143,11 +1143,10 @@ impl sema {
 
                     info.append_str(infer_name);
                     info.append("\"");
-                    self.err->error(arg->location.__ptr__(), info.c_str);
+                    self.err->error(arg->location, info.c_str);
                 }
             } elsif (param.is_reference && !self.check_can_be_referenced(arg)) {
-                self.err->error(
-                    arg->location.__ptr__(),
+                self.err->error(arg->location,
                     "cannot pass literal as reference"
                 );
             }
@@ -1194,11 +1193,10 @@ impl sema {
 
                     info.append_str(infer_name);
                     info.append("\"");
-                    self.err->error(arg->location.__ptr__(), info.c_str);
+                    self.err->error(arg->location, info.c_str);
                 }
             } elsif (param.is_reference && !self.check_can_be_referenced(arg)) {
-                self.err->error(
-                    arg->location.__ptr__(),
+                self.err->error(arg->location,
                     "cannot pass literal as reference"
                 );
             }
@@ -1314,7 +1312,7 @@ impl sema {
             return type::error_type();
         }
 
-        self.err->error(n->base.location.__ptr__(), "cannot call non-function");
+        self.err->error(n->base.location, "cannot call non-function");
         return type::error_type();
     }
 
@@ -1328,7 +1326,7 @@ impl sema {
 
             info.append_str(prev_name);
             info.append("\"");
-            self.err->error(n->base.location.__ptr__(), info.c_str);
+            self.err->error(n->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -1341,7 +1339,7 @@ impl sema {
 
             info.append_str(prev_name);
             info.append("\"");
-            self.err->error(n->base.location.__ptr__(), info.c_str);
+            self.err->error(n->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -1359,7 +1357,7 @@ impl sema {
 
                 info.append_str(ii_name);
                 info.append("\"");
-                self.err->error(n->base.location.__ptr__(), info.c_str);
+                self.err->error(n->base.location, info.c_str);
             }
         }
 
@@ -1372,7 +1370,7 @@ impl sema {
 
     func resolve_call_path(self, prev: type&, n: ast_call_path*) -> type {
         if (!prev.is_global_sym) {
-            self.err->error(n->base.location.__ptr__(), "cannot get path from non-global symbol");
+            self.err->error(n->base.location, "cannot get path from non-global symbol");
             return type::error_type();
         }
 
@@ -1414,7 +1412,7 @@ impl sema {
             info.append("\" in \"");
             info.append_str(prev_name_for_search);
             info.append("\"");
-            self.err->error(n->base.location.__ptr__(), info.c_str);
+            self.err->error(n->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -1431,7 +1429,7 @@ impl sema {
 
             info.append_str(prev_name_for_search);
             info.append("\"");
-            self.err->error(n->base.location.__ptr__(), info.c_str);
+            self.err->error(n->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -1444,7 +1442,7 @@ impl sema {
             info.append("\" in \"");
             info.append_str(prev_name_for_search);
             info.append("\"");
-            self.err->error(n->base.location.__ptr__(), info.c_str);
+            self.err->error(n->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -1553,13 +1551,13 @@ impl sema {
 
     func resolve_initializer(self, prev: type&, n: ast_initializer*) -> type {
         if (!prev.is_global_sym) {
-            self.err->error(n->base.location.__ptr__(),
+            self.err->error(n->base.location,
                 "need a global symbol to initialize"
             );
             return type::error_type();
         }
         if (prev.loc_file.empty()) {
-            self.err->error(n->base.location.__ptr__(),
+            self.err->error(n->base.location,
                 "basic type cannot be initialized as a struct"
             );
             return type::error_type();
@@ -1582,7 +1580,7 @@ impl sema {
 
         info.append_str(prev_name_for_search);
         info.append("\" is not struct or tagged union, cannot initialize");
-        self.err->error(n->base.location.__ptr__(), info.c_str);
+        self.err->error(n->base.location, info.c_str);
         return type::error_type();
     }
 
@@ -1605,7 +1603,7 @@ impl sema {
                 info.append("\" in \"");
                 info.append_str(prev_name_for_search);
                 info.append("\"");
-                self.err->error(tmp->base.location.__ptr__(), info.c_str);
+                self.err->error(tmp->base.location, info.c_str);
                 continue;
             }
 
@@ -1632,14 +1630,14 @@ impl sema {
                     info.append_str(e_name);
                     info.append("\" but get \"");
                     info.append_str(i_name);
-                    self.err->error(tmp->base.location.__ptr__(), info.c_str);                    
+                    self.err->error(tmp->base.location, info.c_str);                    
                     continue;
                 }
             }
             // struct foo { bar: [0, 1, 2] } is not allowed
             if (infer.is_array) {
                 self.err->error(
-                    tmp->base.location.__ptr__(),
+                    tmp->base.location,
                     "cannot initialize array, but it's already filled with 0 by default"
                 );
             }
@@ -1657,14 +1655,12 @@ impl sema {
         n->base.resolved_type.reset_with(copy);
 
         if (n->pairs.size > 1) {
-            self.err->error(
-                n->base.location.__ptr__(),
+            self.err->error(n->base.location,
                 "cannot initialize tagged union with more than one member"
             );
             return copy;
         } else if (n->pairs.empty()) {
-            self.err->error(
-                n->base.location.__ptr__(),
+            self.err->error(n->base.location,
                 "tagged union's initializer cannot be empty"
             );
             return copy;
@@ -1680,7 +1676,7 @@ impl sema {
             info.append("\" in \"");
             info.append_str(prev_name_for_search);
             info.append("\"");
-            self.err->error(tmp->base.location.__ptr__(), info.c_str);
+            self.err->error(tmp->base.location, info.c_str);
             return copy;
         }
 
@@ -1707,14 +1703,13 @@ impl sema {
                 info.append_str(e_name);
                 info.append("\" but get \"");
                 info.append_str(i_name);
-                self.err->error(tmp->base.location.__ptr__(), info.c_str);                    
+                self.err->error(tmp->base.location, info.c_str);                    
                 return copy;
             }
         }
         // struct foo { bar: [0, 1, 2] } is not allowed
         if (infer.is_array) {
-            self.err->error(
-                tmp->base.location.__ptr__(),
+            self.err->error(tmp->base.location,
                 "cannot initialize array, but it's already filled with 0 by default"
             );
         }
@@ -1783,7 +1778,7 @@ impl sema {
 
         info.append_str(prev_name);
         info.append("\"");
-        self.err->error(n->base.location.__ptr__(), info.c_str);
+        self.err->error(n->base.location, info.c_str);
         return type::error_type();
     }
 
@@ -1889,7 +1884,7 @@ impl sema {
             var c = i.get();
             if (c->kind != ast_kind::ast_call_func_args &&
                 infer.is_function()) {
-                self.err->error(c->location.__ptr__(), "function should be called before");
+                self.err->error(c->location, "function should be called before");
                 return type::error_type();
             }
 
@@ -1944,7 +1939,7 @@ impl sema {
 
         // infer should not be a function
         if (infer.is_function()) {
-            self.err->error(n->base.location.__ptr__(), "function should be called here");
+            self.err->error(n->base.location, "function should be called here");
             return type::error_type();
         }
 
@@ -1965,15 +1960,13 @@ impl sema {
         foreach (var i; n->chain) {
             var tmp = i.get();
             if (tmp->kind == ast_kind::ast_initializer) {
-                self.err->error(
-                    tmp->location.__ptr__(),
+                self.err->error(tmp->location,
                     "bad left value: should not contain initializer"
                 );
                 return false;
             }
             if (tmp->kind == ast_kind::ast_call_path) {
-                self.err->error(
-                    tmp->location.__ptr__(),
+                self.err->error(tmp->location,
                     "bad left value: should not contain call path"
                 );
                 return false;
@@ -1981,8 +1974,7 @@ impl sema {
             if (tmp->kind == ast_kind::ast_call_func_args &&
                 !tmp->resolved_type.is_reference &&
                 i.index() == n->chain.size - 1) {
-                self.err->error(
-                    tmp->location.__ptr__(),
+                self.err->error(tmp->location,
                     "bad left value: should not end with function call"
                 );
                 return false;
@@ -2131,8 +2123,7 @@ impl sema {
         if (!ty.is_void()) {
             return;
         }
-        self.err->error(
-            n->base.location.__ptr__(),
+        self.err->error(n->base.location,
             "cannot define variable with void type"
         );
     }
@@ -2244,7 +2235,7 @@ impl sema {
 
         // check if not initialized
         if (n->value == nil) {
-            self.err->error(n->base.location.__ptr__(), "variable must be initialized");
+            self.err->error(n->base.location, "variable must be initialized");
             return;
         }
 
@@ -2254,8 +2245,7 @@ impl sema {
 
             n->base.resolved_type.reset_with(real_type);
             if (real_type.is_empty_array()) {
-                self.err->error(
-                    n->value->location.__ptr__(),
+                self.err->error(n->value->location,
                     "expect at least one element to infer type"
                 );
             }
@@ -2288,7 +2278,7 @@ impl sema {
                 info.append(expect_type_name.c_str);
                 info.append("\", but get \"");
                 info.append(real_type_name.c_str);
-                self.err->error(n->base.location.__ptr__(), info.c_str);
+                self.err->error(n->base.location, info.c_str);
             } else if (expect_type.is_array &&
                        expect_type.array_length < real_type.array_length) {
                 var info = str::from("expect at most ");
@@ -2297,7 +2287,7 @@ impl sema {
                 info.append_u64(expect_type.array_length);
                 info.append(" element(s), but get ");
                 info.append_u64(real_type.array_length);
-                self.err->error(n->base.location.__ptr__(), info.c_str);
+                self.err->error(n->base.location, info.c_str);
             }
             // sync the array length
             if (expect_type.is_array) {
@@ -2320,7 +2310,7 @@ impl sema {
                 info.append(expect_type_name.c_str);
                 info.append("\", but get \"");
                 info.append(real_type_name.c_str);
-                self.err->warn(n->base.location.__ptr__(), info.c_str);
+                self.err->warn(n->base.location, info.c_str);
             }
         } else if (!expect_type.eq(real_type) &&
             !self.check_can_be_converted(n->value, expect_type)) {
@@ -2336,7 +2326,7 @@ impl sema {
             info.append(expect_type_name.c_str);
             info.append("\", but get \"");
             info.append(real_type_name.c_str);
-            self.err->warn(n->base.location.__ptr__(), info.c_str);
+            self.err->warn(n->base.location, info.c_str);
         }
 
         // if immutable, make sure the type is correct
@@ -2357,8 +2347,7 @@ impl sema {
             defer ty.delete();
 
             if (!ty.is_bool() && !ty.is_error()) {
-                self.err->error(n->condition->location.__ptr__(),
-                                "condition must be bool");
+                self.err->error(n->condition->location, "condition must be bool");
             }
         }
 
@@ -2483,8 +2472,9 @@ impl sema {
 
         if (!self.is_enum_type(infer) &&
             !self.is_tagged_union_type(infer)) {
-            self.err->error(n->value->location.__ptr__(),
-                            "match value must be enum or tagged union");
+            self.err->error(n->value->location,
+                "match value must be enum or tagged union"
+            );
             return;
         }
 
@@ -2495,8 +2485,9 @@ impl sema {
         }
 
         if (n->cases.empty()) {
-            self.err->error(n->value->location.__ptr__(),
-                             "must have at least one case");
+            self.err->error(n->value->location,
+                "must have at least one case"
+            );
             return;
         }
 
@@ -2549,14 +2540,14 @@ impl sema {
                     info.append("\", but get \"");
                     info.append(i_name.c_str);
                     info.append("\"");
-                    self.err->error(case_node->pattern->base.location.__ptr__(), info.c_str);
+                    self.err->error(case_node->pattern->base.location, info.c_str);
                 }
                 continue;
             }
 
             if (!self.check_is_enum_literal(case_node->pattern)) {
                 self.err->error(
-                    case_node->pattern->base.location.__ptr__(),
+                    case_node->pattern->base.location,
                     "match value must be enum literal"
                 );
                 continue;
@@ -2568,7 +2559,7 @@ impl sema {
             }
             if (used_values.has(basic<i64>::wrap(value))) {
                     self.err->error(
-                    case_node->pattern->base.location.__ptr__(),
+                    case_node->pattern->base.location,
                     "enum literal value is already used"
                 );
             }
@@ -2626,7 +2617,7 @@ impl sema {
                 info.append("s");
             }
             info.append(": ").append_str(generated_warning);
-            self.err->warn(n->base.location.__ptr__(), info.c_str);
+            self.err->warn(n->base.location, info.c_str);
         }
     }
 
@@ -2665,7 +2656,7 @@ impl sema {
 
             if (!self.check_is_tagged_union_member(case_node->pattern, un)) {
                 self.err->error(
-                    case_node->base.location.__ptr__(),
+                    case_node->base.location,
                     "cannot find this tag in this union"
                 );
                 continue;
@@ -2675,10 +2666,7 @@ impl sema {
             defer label.delete();
 
             if (used_values.has(label)) {
-                self.err->error(
-                    case_node->base.location.__ptr__(),
-                    "duplicate tag"
-                );
+                self.err->error(case_node->base.location, "duplicate tag");
             }
             used_values.insert(label);
         }
@@ -2741,10 +2729,7 @@ impl sema {
         defer infer.delete();
 
         if (!infer.is_bool() && !infer.is_error()) {
-            self.err->error(
-                n->condition->location.__ptr__(),
-                "condition must be bool"
-            );
+            self.err->error(n->condition->location, "condition must be bool");
         }
 
         // resolve block
@@ -2765,8 +2750,7 @@ impl sema {
             defer ty.delete();
 
             if (!ty.is_bool() && !ty.is_error()) {
-                self.err->error(n->condition->location.__ptr__(),
-                                "condition must be bool");
+                self.err->error(n->condition->location, "condition must be bool");
             }
         }
         if (n->update != nil) {
@@ -2905,8 +2889,9 @@ impl sema {
 
         // T should have method size(T) -> integer
         if (!self.check_struct_has_method(ty, "iter_size")) {
-            self.err->error(n->container->base.location.__ptr__(),
-                             "container must have iter_size method");
+            self.err->error(n->container->base.location,
+                "container must have iter_size method"
+            );
             return;
         }
 
@@ -2918,15 +2903,17 @@ impl sema {
         defer u64_type.delete();
 
         if (!iter_ty.eq(u64_type)) {
-            self.err->error(n->container->base.location.__ptr__(),
-                             "iter_size method must return u64");
+            self.err->error(n->container->base.location,
+                "iter_size method must return u64"
+            );
             return;
         }
 
         n->variable->base.resolved_type.reset_with(iter_ty);
         if (!iter_ty.is_integer()) {
-            self.err->error(n->container->base.location.__ptr__(),
-                             "iter_size method must return integer");
+            self.err->error(n->container->base.location,
+                "iter_size method must return integer"
+            );
             return;
         }
 
@@ -3046,8 +3033,9 @@ impl sema {
         }
         // T should have method iter(T) -> iter_type
         if (!self.check_struct_has_method(ty, "iter")) {
-            self.err->error(n->container->base.location.__ptr__(),
-                             "container must have iter method");
+            self.err->error(n->container->base.location,
+                "container must have iter method"
+            );
             return;
         }
 
@@ -3059,32 +3047,36 @@ impl sema {
 
         // check iter.is_end() method
         if (!self.check_struct_has_method(iter_ty, "is_end")) {
-            self.err->error(n->variable->base.location.__ptr__(),
-                             "iterator must have is_end method");
+            self.err->error(n->variable->base.location,
+                "iterator must have is_end method"
+            );
             return;
         } else {
             var rt = self.get_struct_method_return_type(iter_ty, "is_end");
             defer rt.delete();
 
             if (!rt.is_bool()) {
-                self.err->error(n->variable->base.location.__ptr__(),
-                                 "is_end method must return bool type");
+                self.err->error(n->variable->base.location,
+                    "is_end method must return bool type"
+                );
                 return;
             }
         }
 
         // check iter.next() method
         if (!self.check_struct_has_method(iter_ty, "next")) {
-            self.err->error(n->variable->base.location.__ptr__(),
-                             "iterator must have next method");
+            self.err->error(n->variable->base.location,
+                "iterator must have next method"
+            );
             return;
         } else {
             var rt = self.get_struct_method_return_type(iter_ty, "next");
             defer rt.delete();
 
             if (!rt.eq(iter_ty)) {
-                self.err->error(n->variable->base.location.__ptr__(),
-                                 "next method's return type should equal to the iterator");
+                self.err->error(n->variable->base.location,
+                    "next method's return type should equal to the iterator"
+                );
                 return;
             }
         }
@@ -3112,7 +3104,7 @@ impl sema {
 
     func resolve_ret_stmt(self, n: ast_ret_stmt*, func_self: colgm_func&) {
         if (n->value == nil && !func_self.return_type.is_void()) {
-            self.err->error(n->base.location.__ptr__(), "expect non-void return value");
+            self.err->error(n->base.location, "expect non-void return value");
             return;
         }
 
@@ -3145,7 +3137,7 @@ impl sema {
                 tmp->chain.back()->kind == ast_kind::ast_call_func_args &&
                 func_self.return_type.is_reference &&
                 !infer.is_reference) {
-                self.err->warn(n->base.location.__ptr__(),
+                self.err->warn(n->base.location,
                     "return local variable as reference may cause unexpected behavior"
                 );
             }
@@ -3177,21 +3169,19 @@ impl sema {
             ast_kind::ast_in_stmt_expr =>
                 self.resolve_in_stmt_expr(n => ast_in_stmt_expr*);
             ast_kind::ast_defer_stmt =>
-                self.err->error(n->location.__ptr__(),
+                self.err->error(n->location,
                     "defer statement should not exist here, please report a bug"
                 );
             ast_kind::ast_ret_stmt =>
                 self.resolve_ret_stmt(n => ast_ret_stmt*, func_self);
             ast_kind::ast_break_stmt => {
                 if (self.in_loop_level == 0) {
-                    self.err->error(n->location.__ptr__(),
-                                     "break statement is not in loop");
+                    self.err->error(n->location, "break statement is not in loop");
                 }
             }
             ast_kind::ast_continue_stmt => {
                 if (self.in_loop_level == 0) {
-                    self.err->error(n->location.__ptr__(),
-                                     "continue statement is not in loop");
+                    self.err->error(n->location, "continue statement is not in loop");
                 }
             }
             // if statement only has one ';', the ast will be ast_null
@@ -3287,7 +3277,7 @@ impl sema {
             return;
         }
 
-        self.err->error(n->base.location.__ptr__(), "function has no return statement");
+        self.err->error(n->base.location, "function has no return statement");
     }
 
     func resolve_function_block(self, r: root*) {
@@ -3384,8 +3374,7 @@ impl sema {
 
     func resolve_struct_method(self, node: ast_func_decl*, st: colgm_struct&) {
         if (node->body == nil) {
-            self.err->error(node->base.location.__ptr__(),
-                             "method should be implemented");
+            self.err->error(node->base.location, "method should be implemented");
             return;
         }
         
@@ -3413,8 +3402,7 @@ impl sema {
 
     func resolve_union_method(self, node: ast_func_decl*, un: colgm_tagged_union&) {
         if (node->body == nil) {
-            self.err->error(node->base.location.__ptr__(),
-                             "method should be implemented");
+            self.err->error(node->base.location, "method should be implemented");
             return;
         }
         

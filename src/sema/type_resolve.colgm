@@ -30,21 +30,21 @@ impl type_resolve {
             res = to_u64_res.unwrap();
         } else {
             self.err->error(
-                n->base.location.__ptr__(),
+                n->base.location,
                 "invalid number, length should be a u64 number"
             );
         }
 
         if (res == 0) {
             self.err->error(
-                n->base.location.__ptr__(),
+                n->base.location,
                 "invalid number, length should not be 0"
             );
         }
 
         if (res < 0 || res > 0xffffffff) {
             self.err->error(
-                n->base.location.__ptr__(),
+                n->base.location,
                 "invalid number, length should be in range [0, 0xffffffff]"
             );
         }
@@ -62,14 +62,14 @@ impl type_resolve {
         var G = self.ctx->global;
 
         if (!G->domain.has(file)) {
-            self.err->error(node->base.location.__ptr__(), "cannot find module");
+            self.err->error(node->base.location, "cannot find module");
             return type::error_type();
         }
         var DM = G->domain.get(file);
         var GN = self.ctx->generics.__ptr__();
 
         if (name.eq_const("void") && node->pointer_depth == 0 && node->is_reference) {
-            self.err->error(node->base.location.__ptr__(), "cannot use reference void type");
+            self.err->error(node->base.location, "cannot use reference void type");
             return type::error_type();
         }
 
@@ -79,7 +79,7 @@ impl type_resolve {
             defer info.delete();
             info.append_str(name).append("\"");
 
-            self.err->error(node->base.location.__ptr__(), info.c_str);
+            self.err->error(node->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -91,7 +91,7 @@ impl type_resolve {
             defer info.delete();
             info.append_str(name).append("\" cannot be used");
 
-            self.err->error(node->base.location.__ptr__(), info.c_str);
+            self.err->error(node->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -104,7 +104,7 @@ impl type_resolve {
                 .append("\" is a function, ")
                 .append("cannot be used as a type");
 
-            self.err->error(node->base.location.__ptr__(), info.c_str);
+            self.err->error(node->base.location, info.c_str);
             return type::error_type();
         }
 
@@ -139,7 +139,7 @@ impl type_resolve {
                 var gt = i.get();
                 if (!gt->is(ast_kind::ast_type_def)) {
                     self.err->error(
-                        gt->location.__ptr__(),
+                        gt->location,
                         "invalid ast node, expect type def"
                     );
                     continue;
