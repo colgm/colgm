@@ -3006,7 +3006,7 @@ impl mir2sir {
     }
 
     func visit_mir_return(self, n: mir_return*) {
-        if (n->value->content.empty()) {
+        if (n->value == nil) {
             var void_name = str::from("void");
             defer void_name.delete();
 
@@ -3021,9 +3021,8 @@ impl mir2sir {
             return;
         }
 
-        if (n->value->content.size == 1 &&
-            n->value->content.get(0)->kind == mir_kind::mir_call) {
-            self.call_expr_gen(n->value->content.get(0) => mir_call*, n->return_ref_type);
+        if (n->value->kind == mir_kind::mir_call) {
+            self.call_expr_gen(n->value => mir_call*, n->return_ref_type);
         } else {
             self.visit(n->value => mir*);
         }

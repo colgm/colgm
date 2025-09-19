@@ -1488,12 +1488,12 @@ impl mir_loop {
 
 pub struct mir_return {
     base: mir,
-    value: mir_block*,
+    value: mir*,
     return_ref_type: bool
 }
 
 impl mir_return {
-    pub func new(l: span&, v: mir_block*, rrt: bool) -> mir_return* {
+    pub func new(l: span&, v: mir*, rrt: bool) -> mir_return* {
         var res = mir_return::__alloc__();
         res->base = mir::instance(mir_kind::mir_return, l);
         res->value = v;
@@ -1503,9 +1503,8 @@ impl mir_return {
 
     pub func delete(self) {
         if (self.value != nil) {
-            var n = self.value => mir*;
-            n->delete();
-            free(n => i8*);
+            self.value->delete();
+            free(self.value => i8*);
         }
     }
 

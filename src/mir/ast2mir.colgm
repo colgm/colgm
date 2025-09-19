@@ -690,6 +690,11 @@ impl ast2mir {
 
     func visit_ret_stmt(self, n: ast_ret_stmt*) {
         var new_block = mir_block::new(n->base.location);
+        defer {
+            var new_block_mir = new_block => mir*;
+            new_block_mir->delete();
+            free(new_block_mir => i8*);
+        }
         var temp = self.block;
         self.block = new_block;
         if (n->value != nil) {
@@ -700,9 +705,15 @@ impl ast2mir {
         // expect only one mir node or nothing inside the block
         assert(new_block->content.size <= 1, "ret stmt can only have one value or less");
 
+        var value: mir* = nil;
+        if (new_block->content.size == 1) {
+            value = new_block->content.get(0);
+            new_block->content.clear();
+        }
+
         self.block->add(mir_return::new(
             n->base.location,
-            new_block,
+            value,
             n->return_ref_type
         ) => mir*);
     }
