@@ -2398,10 +2398,9 @@ impl mir2sir {
             type_name.__ptr__()
         ));
 
-        if (n->init_value->content.size == 1 &&
-            n->init_value->content.get(0)->kind == mir_kind::mir_call) {
+        if (n->init_value->kind == mir_kind::mir_call) {
             self.call_expr_gen(
-                n->init_value->content.get(0) => mir_call*,
+                n->init_value => mir_call*,
                 n->resolved_type.is_reference
             );
         } else {
@@ -2426,10 +2425,7 @@ impl mir2sir {
     }
 
     func visit_mir_assign(self, n: mir_assign*) {
-        self.call_expr_gen(
-            n->left->content.get(0) => mir_call*,
-            true
-        );
+        self.call_expr_gen(n->left => mir_call*, true);
         var left = self.value_stack.back().clone();
         var left_value = left.to_value_t();
         self.value_stack.pop_back();

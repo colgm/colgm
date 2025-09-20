@@ -285,21 +285,21 @@ impl mir2nasal {
             mir_unary_opr::bnot => out.out("~");
             mir_unary_opr::lnot => out.out("!");
         }
-        self.dump_expr(out, n->value, indent);
+        self.dump_mir(out, n->value, indent);
         out.out(")");
     }
 
     func dump_binary(self, out: io&, n: mir_binary*, indent: i64) {
         if (n->op == mir_binary_opr::rem) {
             out.out("math.mod(");
-            self.dump_expr(out, n->left, indent);
+            self.dump_mir(out, n->left, indent);
             out.out(", ");
-            self.dump_expr(out, n->right, indent);
+            self.dump_mir(out, n->right, indent);
             out.out(")");
             return;
         }
 
-        self.dump_expr(out, n->left, indent);
+        self.dump_mir(out, n->left, indent);
         out.out(" ");
         match (n->op) {
             mir_binary_opr::add => out.out("+");
@@ -320,7 +320,7 @@ impl mir2nasal {
             mir_binary_opr::bxor => out.out("^");
         }
         out.out(" ");
-        self.dump_expr(out, n->right, indent + 1);
+        self.dump_mir(out, n->right, indent + 1);
     }
 
     func dump_type_convert(self, out: io&, n: mir_type_convert*, indent: i64) {
@@ -368,7 +368,7 @@ impl mir2nasal {
     func dump_if(self, out: io&, n: mir_if*, indent: i64) {
         if (n->condition != nil) {
             out.out(" (");
-            self.dump_block(out, n->condition, indent);
+            self.dump_mir(out, n->condition, indent);
             out.out(")");
         }
         out.out(" {\n");
