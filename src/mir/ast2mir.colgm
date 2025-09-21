@@ -200,6 +200,8 @@ impl ast2mir {
 
     func visit_type_convert(self, n: ast_type_convert*) {
         var new_block = mir_block::new(n->base.location);
+        defer self.delete_wrapper_block(new_block);
+
         var temp = self.block;
         self.block = new_block;
         self.visit(n->from);
@@ -217,7 +219,7 @@ impl ast2mir {
 
         self.block->add(mir_type_convert::new(
             n->base.location,
-            new_block,
+            new_block->content.get(0),
             target_type
         ) => mir*);
     }
@@ -281,6 +283,8 @@ impl ast2mir {
 
     func visit_call_index(self, n: ast_call_index*) {
         var new_block = mir_block::new(n->base.location);
+        defer self.delete_wrapper_block(new_block);
+
         var temp = self.block;
         self.block = new_block;
         self.visit(n->index);
@@ -288,7 +292,7 @@ impl ast2mir {
 
         self.block->add(mir_call_index::new(
             n->base.location,
-            new_block,
+            new_block->content.get(0),
             n->base.resolved_type
         ) => mir*);
     }
@@ -335,10 +339,12 @@ impl ast2mir {
         foreach (var i; n->pairs) {
             var p = i.get() => ast_init_pair*;
             self.block = mir_block::new(p->base.location);
+            defer self.delete_wrapper_block(self.block);
+
             self.visit(p->value);
             m->add_field(
                 p->field->content,
-                self.block,
+                self.block->content.get(0),
                 p->value->resolved_type
             );
         }
@@ -513,12 +519,14 @@ impl ast2mir {
 
     func visit_match_stmt(self, n: ast_match_stmt*) {
         var cond_block = mir_block::new(n->value->location);
+        defer self.delete_wrapper_block(cond_block);
+
         var temp = self.block;
         self.block = cond_block;
         self.visit(n->value);
         self.block = temp;
 
-        var switch_block = mir_switch::new(n->base.location, cond_block);
+        var switch_block = mir_switch::new(n->base.location, cond_block->content.get(0));
         self.block->add(switch_block => mir*);
 
         var default_case: ast_match_case* = nil;
@@ -542,6 +550,8 @@ impl ast2mir {
 
     func visit_while_stmt(self, n: ast_while_stmt*) {
         var cond_block = mir_block::new(n->condition->location);
+        defer self.delete_wrapper_block(cond_block);
+
         var temp = self.block;
         self.block = cond_block;
         self.visit(n->condition);
@@ -554,7 +564,7 @@ impl ast2mir {
 
         self.block->add(mir_loop::new(
             n->base.location,
-            cond_block,
+            cond_block->content.get(0),
             body_block,
             nil // no update stage in while loop
         ) => mir*);
@@ -619,10 +629,11 @@ impl ast2mir {
 
         for_top_level->add(mir_loop::new(
             n->base.location,
-            cond_block,
+            cond_block->content.get(0),
             body_block,
             update_block
         ) => mir*);
+        self.delete_wrapper_block(cond_block);
     }
 
     func visit_forindex(self, n: ast_forindex*) {
@@ -638,6 +649,8 @@ impl ast2mir {
         self.block = temp;
 
         var cond_block = mir_block::new(n->lowered_condition->location);
+        defer self.delete_wrapper_block(cond_block);
+
         self.block = cond_block;
         self.visit(n->lowered_condition);
         self.block = temp;
@@ -654,7 +667,7 @@ impl ast2mir {
 
         for_top_level->add(mir_loop::new(
             n->base.location,
-            cond_block,
+            cond_block->content.get(0),
             body_block,
             update_block
         ) => mir*);
@@ -673,6 +686,8 @@ impl ast2mir {
         self.block = temp;
 
         var cond_block = mir_block::new(n->lowered_condition->location);
+        defer self.delete_wrapper_block(cond_block);
+
         self.block = cond_block;
         self.visit(n->lowered_condition);
         self.block = temp;
@@ -689,7 +704,7 @@ impl ast2mir {
 
         for_top_level->add(mir_loop::new(
             n->base.location,
-            cond_block,
+            cond_block->content.get(0),
             body_block,
             update_block
         ) => mir*);

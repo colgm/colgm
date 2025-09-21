@@ -504,12 +504,12 @@ impl mir_binary {
 
 pub struct mir_type_convert {
     base: mir,
-    source: mir_block*,
+    source: mir*,
     target: type
 }
 
 impl mir_type_convert {
-    pub func new(l: span&, src: mir_block*, t: type&) -> mir_type_convert* {
+    pub func new(l: span&, src: mir*, t: type&) -> mir_type_convert* {
         var res = mir_type_convert::__alloc__();
         res->base = mir::instance(mir_kind::mir_type_convert, l);
         res->source = src;
@@ -519,9 +519,8 @@ impl mir_type_convert {
 
     pub func delete(self) {
         if (self.source != nil) {
-            var n = self.source => mir*;
-            n->delete();
-            free(n => i8*);
+            self.source->delete();
+            free(self.source => i8*);
         }
         self.target.delete();
     }
@@ -746,7 +745,7 @@ impl mir_array {
 
 struct init_field {
     name: str,
-    content: mir_block*,
+    content: mir*,
     resolved_type: type
 }
 
@@ -763,9 +762,8 @@ impl init_field {
     pub func delete(self) {
         self.name.delete();
         if (self.content != nil) {
-            var n = self.content => mir*;
-            n->delete();
-            free(n => i8*);
+            self.content->delete();
+            free(self.content => i8*);
         }
         self.resolved_type.delete();
     }
@@ -805,7 +803,7 @@ impl mir_struct_init {
         self.fields.delete();
     }
 
-    pub func add_field(self, n: str&, b: mir_block*, t: type&) {
+    pub func add_field(self, n: str&, b: mir*, t: type&) {
         var in_fld = init_field {
             name: n.clone(),
             content: b,
@@ -907,12 +905,12 @@ impl mir_call_id {
 
 pub struct mir_call_index {
     base: mir,
-    index: mir_block*,
+    index: mir*,
     resolved_type: type
 }
 
 impl mir_call_index {
-    pub func new(l: span&, idx: mir_block*, t: type&) -> mir_call_index* {
+    pub func new(l: span&, idx: mir*, t: type&) -> mir_call_index* {
         var res = mir_call_index::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_index, l);
         res->index = idx;
@@ -922,9 +920,8 @@ impl mir_call_index {
 
     pub func delete(self) {
         if (self.index != nil) {
-            var n = self.index => mir*;
-            n->delete();
-            free(n => i8*);
+            self.index->delete();
+            free(self.index => i8*);
         }
         self.resolved_type.delete();
     }
@@ -1304,13 +1301,13 @@ impl mir_switch_case {
 
 pub struct mir_switch {
     base: mir,
-    condition: mir_block*,
+    condition: mir*,
     cases: vec<mir_switch_case*>,
     default_case: mir_block*
 }
 
 impl mir_switch {
-    pub func new(l: span&, cond: mir_block*) -> mir_switch* {
+    pub func new(l: span&, cond: mir*) -> mir_switch* {
         var res = mir_switch::__alloc__();
         res->base = mir::instance(mir_kind::mir_switch, l);
         res->condition = cond;
@@ -1321,9 +1318,8 @@ impl mir_switch {
 
     pub func delete(self) {
         if (self.condition != nil) {
-            var n = self.condition => mir*;
-            n->delete();
-            free(n => i8*);
+            self.condition->delete();
+            free(self.condition => i8*);
         }
         foreach (var i; self.cases) {
             var n = i.get() => mir*;
@@ -1409,14 +1405,14 @@ impl mir_continue {
 
 pub struct mir_loop {
     base: mir,
-    condition: mir_block*,
+    condition: mir*,
     content: mir_block*,
     update: mir_block*
 }
 
 impl mir_loop {
     pub func new(l: span&,
-                 cond: mir_block*,
+                 cond: mir*,
                  ctt: mir_block*,
                  updt: mir_block*) -> mir_loop* {
         var res = mir_loop::__alloc__();
@@ -1429,9 +1425,8 @@ impl mir_loop {
 
     pub func delete(self) {
         if (self.condition != nil) {
-            var n = self.condition => mir*;
-            n->delete();
-            free(n => i8*);
+            self.condition->delete();
+            free(self.condition => i8*);
         }
         if (self.content != nil) {
             var n = self.content => mir*;

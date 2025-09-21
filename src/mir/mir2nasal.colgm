@@ -206,7 +206,7 @@ impl mir2nasal {
             mir_kind::mir_call_index => {
                 var t = n => mir_call_index*;
                 out.out("[");
-                self.dump_block(out, t->index, indent);
+                self.dump_mir(out, t->index, indent);
                 out.out("]");
             }
             mir_kind::mir_call_func => self.dump_call_func(out, n => mir_call_func*, indent);
@@ -324,7 +324,7 @@ impl mir2nasal {
     }
 
     func dump_type_convert(self, out: io&, n: mir_type_convert*, indent: i64) {
-        self.dump_block(out, n->source, indent);
+        self.dump_mir(out, n->source, indent);
     }
 
     func dump_call(self, out: io&, n: mir_call*, indent: i64) {
@@ -399,7 +399,7 @@ impl mir2nasal {
 
     func dump_switch(self, out: io&, n: mir_switch*, indent: i64) {
         out.out("var _ = ");
-        self.dump_block(out, n->condition, indent);
+        self.dump_mir(out, n->condition, indent);
         out.out(";\n");
         self.dump_indent(out, indent);
         foreach (var i; n->cases) {
@@ -425,7 +425,7 @@ impl mir2nasal {
             out.out("while (");
         }
         if (n->condition != nil) {
-            self.dump_block(out, n->condition, indent);
+            self.dump_mir(out, n->condition, indent);
         }
         if (n->update != nil) {
             out.out("; ");
