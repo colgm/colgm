@@ -704,7 +704,7 @@ impl mir_bool {
 pub struct mir_array {
     base: mir,
     size: u64,
-    value: mir_block*,
+    value: vec<mir*>,
     resolved_type: type
 }
 
@@ -713,17 +713,17 @@ impl mir_array {
         var res = mir_array::__alloc__();
         res->base = mir::instance(mir_kind::mir_array, l);
         res->size = s;
-        res->value = nil;
+        res->value = vec<mir*>::instance();
         res->resolved_type = t.clone();
         return res;
     }
 
     pub func delete(self) {
-        if (self.value != nil) {
-            var n = self.value => mir*;
-            n->delete();
-            free(n => i8*);
+        foreach (var i; self.value) {
+            i.get()->delete();
+            free(i.get() => i8*);
         }
+        self.value.delete();
         self.resolved_type.delete();
     }
 
@@ -734,10 +734,14 @@ impl mir_array {
         dump_resolved_type(out, pkg, self.resolved_type);
         self.base.location.dump(out);
 
-        if (self.value != nil) {
+        if (!self.value.empty()) {
             tm.push_indent();
-            tm.set_last();
-            self.value->dump(out, pkg, tm);
+            foreach (var i; self.value) {
+                if (i.index() == self.value.size - 1) {
+                    tm.set_last();
+                }
+                i.get()->dump(out, pkg, tm);
+            }
             tm.pop_indent();
         }
     }
@@ -837,25 +841,25 @@ impl mir_struct_init {
 
 pub struct mir_call {
     base: mir,
-    content: mir_block*,
+    content: vec<mir*>,
     resolved_type: type
 }
 
 impl mir_call {
-    pub func new(l: span&, b: mir_block*, t: type&) -> mir_call* {
+    pub func new(l: span&, t: type&) -> mir_call* {
         var res = mir_call::__alloc__();
         res->base = mir::instance(mir_kind::mir_call, l);
-        res->content = b;
+        res->content = vec<mir*>::instance();
         res->resolved_type = t.clone();
         return res;
     }
 
     pub func delete(self) {
-        if (self.content != nil) {
-            var n = self.content => mir*;
-            n->delete();
-            free(n => i8*);
+        foreach (var i; self.content) {
+            i.get()->delete();
+            free(i.get() => i8*);
         }
+        self.content.delete();
         self.resolved_type.delete();
     }
 
@@ -867,8 +871,12 @@ impl mir_call {
         self.base.location.dump(out);
 
         tm.push_indent();
-        tm.set_last();
-        self.content->dump(out, pkg, tm);
+        foreach (var i; self.content) {
+            if (i.index() == self.content.size - 1) {
+                tm.set_last();
+            }
+            i.get()->dump(out, pkg, tm);
+        }
         tm.pop_indent();
     }
 }
@@ -942,27 +950,27 @@ impl mir_call_index {
 
 pub struct mir_call_func {
     base: mir,
-    args: mir_block*,
+    args: vec<mir*>,
     args_is_ref: vec<bool>,
     resolved_type: type
 }
 
 impl mir_call_func {
-    pub func new(l: span&, a: mir_block*, ref_table: vec<bool>*, t: type&) -> mir_call_func* {
+    pub func new(l: span&, ref_table: vec<bool>*, t: type&) -> mir_call_func* {
         var res = mir_call_func::__alloc__();
         res->base = mir::instance(mir_kind::mir_call_func, l);
-        res->args = a;
+        res->args = vec<mir*>::instance();
         res->args_is_ref = ref_table->clone();
         res->resolved_type = t.clone();
         return res;
     }
 
     pub func delete(self) {
-        if (self.args != nil) {
-            var n = self.args => mir*;
-            n->delete();
-            free(n => i8*);
+        foreach (var i; self.args) {
+            i.get()->delete();
+            free(i.get() => i8*);
         }
+        self.args.delete();
         self.args_is_ref.delete();
         self.resolved_type.delete();
     }
@@ -975,8 +983,12 @@ impl mir_call_func {
         self.base.location.dump(out);
 
         tm.push_indent();
-        tm.set_last();
-        self.args->dump(out, pkg, tm);
+        foreach (var i; self.args) {
+            if (i.index() == self.args.size - 1) {
+                tm.set_last();
+            }
+            i.get()->dump(out, pkg, tm);
+        }
         tm.pop_indent();
     }
 }

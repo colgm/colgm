@@ -179,6 +179,7 @@ pub struct mir2sir {
     block: sir_block*,
     ssa_gen: ssa_generator,
     array_ssa_gen: ssa_generator,
+    var_ssa_suffix: u64,
     
     value_stack: vec<mir_value_t>,
 
@@ -208,6 +209,7 @@ impl mir2sir {
             block: nil,
             ssa_gen: ssa_generator::instance(),
             array_ssa_gen: ssa_generator::instance(),
+            var_ssa_suffix: 0,
             value_stack: vec<mir_value_t>::instance(),
             locals: local_table::instance(),
             continue_inst: vec<vec<sir_br*>>::instance(),
@@ -496,6 +498,7 @@ impl mir2sir {
 
             self.ssa_gen.clear();
             self.array_ssa_gen.clear();
+            self.var_ssa_suffix = 0;
             self.value_stack.clear();
 
             s_func.body = sir_block::new();
@@ -1256,11 +1259,11 @@ impl mir2sir {
         );
         self.block->add_stmt(cv => sir*);
 
-        if (n->value != nil) {
+        if (!n->value.empty()) {
             var i64_type = str::from("i64");
             defer i64_type.delete();
 
-            foreach (var i; n->value->content) {
+            foreach (var i; n->value) {
                 var vn = i.get();
                 var temp = self.ssa_gen.create();
                 defer temp.delete();
@@ -1522,7 +1525,9 @@ impl mir2sir {
     }
 
     func call_expr_gen(self, n: mir_call*, need_address: bool) {
-        self.visit(n->content => mir*);
+        foreach (var i; n->content) {
+            self.visit(i.get());
+        }
         self.de_reference();
 
         var source = self.value_stack.back().clone();
@@ -1783,7 +1788,7 @@ impl mir2sir {
             self.value_stack.pop_back();
         }
         // load arguments
-        foreach (var i; n->args->content) {
+        foreach (var i; n->args) {
             if (i.get()->kind == mir_kind::mir_call && n->args_is_ref.get(i.index())) {
                 self.call_expr_gen(i.get() => mir_call*, true);
             } else {
@@ -2379,8 +2384,8 @@ impl mir2sir {
 
     func visit_mir_define(self, n: mir_define*) {
         var name = n->name.clone();
-        name.append(".");
-        name.append_i64(self.locals.local_scope_depth);
+        name.append(".").append_u64(self.var_ssa_suffix);
+        self.var_ssa_suffix += 1;
         defer name.delete();
 
         // real name of the local variable

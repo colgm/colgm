@@ -265,6 +265,8 @@ impl ast2mir {
 
     func visit_array_list(self, n: ast_array_list*) {
         var new_block = mir_block::new(n->base.location);
+        defer self.delete_wrapper_block(new_block);
+
         var temp = self.block;
         self.block = new_block;
         foreach (var i; n->value) {
@@ -277,7 +279,9 @@ impl ast2mir {
             n->base.resolved_type.array_length,
             n->base.resolved_type
         );
-        new_array->value = new_block;
+        foreach (var i; new_block->content) {
+            new_array->value.push(i.get());
+        }
         self.block->add(new_array => mir*);
     }
 
@@ -299,6 +303,8 @@ impl ast2mir {
 
     func visit_call_func_args(self, n: ast_call_func_args*) {
         var new_block = mir_block::new(n->base.location);
+        defer self.delete_wrapper_block(new_block);
+
         var temp = self.block;
         self.block = new_block;
         foreach (var i; n->args) {
@@ -306,12 +312,15 @@ impl ast2mir {
         }
         self.block = temp;
 
-        self.block->add(mir_call_func::new(
+        var mcf = mir_call_func::new(
             n->base.location,
-            new_block,
             n->args_is_ref.__ptr__(),
             n->base.resolved_type
-        ) => mir*);
+        );
+        foreach (var i; new_block->content) {
+            mcf->args.push(i.get());
+        }
+        self.block->add(mcf => mir*);
     }
 
     func visit_get_field(self, n: ast_get_field*) {
@@ -362,6 +371,8 @@ impl ast2mir {
 
     func visit_call(self, n: ast_call*) {
         var new_block = mir_block::new(n->base.location);
+        defer self.delete_wrapper_block(new_block);
+
         var temp = self.block;
         self.block = new_block;
         if (n->head->generic_types != nil) {
@@ -387,11 +398,15 @@ impl ast2mir {
         }
         self.block = temp;
 
-        self.block->add(mir_call::new(
+        var call = mir_call::new(
             n->base.location,
-            new_block,
             n->base.resolved_type
-        ) => mir*);
+        );
+        foreach (var i; new_block->content) {
+            call->content.push(i.get());
+        }
+
+        self.block->add(call => mir*);
     }
 }
 
@@ -573,15 +588,8 @@ impl ast2mir {
     func visit_for_stmt(self, n: ast_for_stmt*) {
         var temp = self.block;
 
-        // for top level block will keep defined variable in live range
-        // util for loop exit
-        var for_top_level = mir_block::new(n->base.location);
-        self.block->add(for_top_level => mir*);
-
         if (n->init != nil) {
-            self.block = for_top_level;
             self.visit(n->init => ast*);
-            self.block = temp;
         }
 
         var cond_block: mir_block* = nil;
@@ -627,7 +635,7 @@ impl ast2mir {
         self.generate_code_block(n->body);
         self.block = temp;
 
-        for_top_level->add(mir_loop::new(
+        self.block->add(mir_loop::new(
             n->base.location,
             cond_block->content.get(0),
             body_block,
@@ -639,14 +647,7 @@ impl ast2mir {
     func visit_forindex(self, n: ast_forindex*) {
         var temp = self.block;
 
-        // for top level block will keep defined variable in live range
-        // util for loop exit
-        var for_top_level = mir_block::new(n->base.location);
-        self.block->add(for_top_level => mir*);
-
-        self.block = for_top_level;
         self.visit(n->lowered_init => ast*);
-        self.block = temp;
 
         var cond_block = mir_block::new(n->lowered_condition->location);
         defer self.delete_wrapper_block(cond_block);
@@ -665,7 +666,7 @@ impl ast2mir {
         self.generate_code_block(n->body);
         self.block = temp;
 
-        for_top_level->add(mir_loop::new(
+        self.block->add(mir_loop::new(
             n->base.location,
             cond_block->content.get(0),
             body_block,
@@ -676,14 +677,7 @@ impl ast2mir {
     func visit_foreach(self, n: ast_foreach*) {
         var temp = self.block;
 
-        // for top level block will keep defined variable in live range
-        // util for loop exit
-        var for_top_level = mir_block::new(n->base.location);
-        self.block->add(for_top_level => mir*);
-
-        self.block = for_top_level;
         self.visit(n->lowered_init => ast*);
-        self.block = temp;
 
         var cond_block = mir_block::new(n->lowered_condition->location);
         defer self.delete_wrapper_block(cond_block);
@@ -702,7 +696,7 @@ impl ast2mir {
         self.generate_code_block(n->body);
         self.block = temp;
 
-        for_top_level->add(mir_loop::new(
+        self.block->add(mir_loop::new(
             n->base.location,
             cond_block->content.get(0),
             body_block,
