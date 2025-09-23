@@ -107,13 +107,13 @@ void error::err(const span& loc, const std::string& info, const std::string& not
             continue;
         }
 
-        // if this line has nothing, skip
-        if (!res[line-1].length() && line!=loc.end_line) {
+        // line out of range
+        if (line-1>=res.size()) {
             continue;
         }
 
-        // line out of range
-        if (line-1>=res.size()) {
+        // if this line has nothing, skip
+        if (!res[line-1].length() && line!=loc.end_line) {
             continue;
         }
 
@@ -182,13 +182,13 @@ void error::warn(const span& loc, const std::string& info, const std::string& no
             continue;
         }
 
-        // if this line has nothing, skip
-        if (!res[line-1].length() && line!=loc.end_line) {
+        // line out of range
+        if (line-1>=res.size()) {
             continue;
         }
 
-        // line out of range
-        if (line-1>=res.size()) {
+        // if this line has nothing, skip
+        if (!res[line-1].length() && line!=loc.end_line) {
             continue;
         }
 

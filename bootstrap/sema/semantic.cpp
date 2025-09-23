@@ -1764,7 +1764,7 @@ void semantic::resolve_match_stmt_for_enum(match_stmt* node,
     auto generated_warning = std::string("");
     auto unused_counter = 0;
 
-    for (auto& i : em.members) {
+    for (const auto& i : em.members) {
         if (used_values.count(i.second)) {
             continue;
         }
@@ -1885,7 +1885,7 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
     auto generated_warning = std::string("");
     auto unused_counter = 0;
 
-    for (auto& i : un.member) {
+    for (const auto& i : un.member) {
         if (used_values.count(i.first)) {
             continue;
         }

@@ -143,7 +143,6 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         func->set_return_type(type_mapping(i->return_type));
         // push local scope
         locals.push();
-        locals.local_scope_counter = 0;
         // load parameters and locals
         for (const auto& j : i->params) {
             func->add_param(j.first + ".param", type_mapping(j.second));
@@ -164,6 +163,7 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         // init ssa generator
         ssa_gen.clear();
         array_ssa_gen.clear();
+        var_ssa_gen.clear();
         // clear value stack
         value_stack.clear();
 
@@ -1227,8 +1227,7 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
 }
 
 void mir2sir::visit_mir_define(mir_define* node) {
-    const auto name = node->get_name() +
-                      "." + std::to_string(locals.local_scope_counter);
+    const auto name = node->get_name() + "." + var_ssa_gen.create();
     locals.elem.back().insert({
         node->get_name(),
         name
@@ -1839,7 +1838,7 @@ void mir2sir::generate_basic_type() {
         {"f64", 64, "DW_ATE_float"},
         {"bool", 1, "DW_ATE_boolean"}
     };
-    for (auto& i : type_table) {
+    for (const auto& i : type_table) {
         ictx.debug_info.push_back(
             new DI_basic_type(
                 dwarf_status.DI_counter,
@@ -1854,8 +1853,8 @@ void mir2sir::generate_basic_type() {
 }
 
 void mir2sir::generate_DI_enum_type() {
-    for (auto& d : ctx.global.domain) {
-        for (auto& e : d.second.enums) {
+    for (const auto& d : ctx.global.domain) {
+        for (const auto& e : d.second.enums) {
             const auto ty = type {
                 .name = e.second.name,
                 .loc_file = e.second.location.file
@@ -1877,7 +1876,7 @@ void mir2sir::generate_DI_enum_type() {
             tmp->set_elements_index(dwarf_status.DI_counter);
             ++dwarf_status.DI_counter;
 
-            for (auto& et : e.second.ordered_member) {
+            for (const auto& et : e.second.ordered_member) {
                 ictx.debug_info.push_back(
                     new DI_enumerator(
                         dwarf_status.DI_counter,
@@ -1912,7 +1911,7 @@ void mir2sir::generate_DI_structure_type(const mir_context& mctx) {
 }
 
 void mir2sir::generate_DI_subprogram(const mir_context& mctx) {
-    for (auto& i : mctx.impls) {
+    for (const auto& i : mctx.impls) {
         // auto added libc func like free, malloc may not have location
         if (!ictx.DI_file_map.count(i->location.file)) {
             continue;

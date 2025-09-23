@@ -1375,7 +1375,7 @@ void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
 void regist_pass::load_tagged_union_member_map(ast::tagged_union_decl* node,
                                                colgm_tagged_union& un) {
     if (node->get_ref_enum_name().empty()) {
-        for (auto& m : un.ordered_member) {
+        for (const auto& m : un.ordered_member) {
             un.member_int_map.insert({m, un.member_int_map.size()});
         }
         return;
@@ -1775,7 +1775,7 @@ void regist_pass::generate_self_parameter(ast::param* node,
         new_type_def->set_generic_types(
             new generic_type_list(node->get_location())
         );
-        for (auto& i : stct.generic_template) {
+        for (const auto& i : stct.generic_template) {
             auto t = new type_def(node->get_location());
             t->set_name(new identifier(node->get_location(), i));
             new_type_def->get_generic_types()->add_type(t);

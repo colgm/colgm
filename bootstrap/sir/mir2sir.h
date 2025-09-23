@@ -28,9 +28,7 @@ public:
 
 struct local_table {
     std::vector<std::unordered_map<std::string, std::string>> elem;
-    i64 local_scope_counter;
 
-    local_table(): local_scope_counter(0) {}
 
     auto get_local(const std::string& name) {
         for (auto it = elem.rbegin(); it!=elem.rend(); ++it) {
@@ -43,7 +41,7 @@ struct local_table {
 
     auto size() const { return elem.size(); }
 
-    void push() { elem.push_back({}); local_scope_counter++; }
+    void push() { elem.push_back({}); }
     void pop() { elem.pop_back(); }
 };
 
@@ -185,6 +183,7 @@ private:
     sir_context ictx;
     ssa_generator ssa_gen;
     ssa_generator array_ssa_gen;
+    ssa_generator var_ssa_gen;
     sir_block* block;
     std::vector<mir_value_t> value_stack;
     error err;
