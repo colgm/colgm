@@ -94,7 +94,10 @@ func clang_compile(co: cli_option&) -> i32 {
     return ret_code;
 }
 
-func nasal_target_output(option: cli_option, mctx: mir_context*, pkg: package*) {
+func nasal_target_output(option: cli_option,
+                         glb: global_symbol_table*,
+                         mctx: mir_context*,
+                         pkg: package*) {
     var t_stamp = maketimestamp();
     var nas_file = str::from(option.output_file);
     nas_file.append(".nas");
@@ -104,7 +107,7 @@ func nasal_target_output(option: cli_option, mctx: mir_context*, pkg: package*) 
     io::stdout().out("Generating ");
     io::stdout().cyan().out("<").out(option.output_file).out(".nas> ").reset();
     t_stamp.stamp();
-    mir2nasal::instance(mctx, pkg).dump(nas_file.c_str);
+    mir2nasal::instance(glb, mctx, pkg).dump(nas_file.c_str);
     io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
 }
 
@@ -256,7 +259,7 @@ func compile(option: cli_option&) -> i32 {
         fout.close();
     }
     if (option.EMIT_NASAL_ONLY) {
-        nasal_target_output(option, mctx.__ptr__(), cc.pkg.__ptr__());
+        nasal_target_output(option, gt.__ptr__(), mctx.__ptr__(), cc.pkg.__ptr__());
         return 0;
     }
 

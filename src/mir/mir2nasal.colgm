@@ -1,6 +1,7 @@
 use mir::mir::*;
 use mir::context::*;
 
+use sema::context::{ global_symbol_table };
 use sema::type::{ type };
 
 use util::package::{ package };
@@ -8,15 +9,19 @@ use util::cli::{ version };
 
 use std::io::{ io };
 use std::str::{ str };
+use std::panic::{ unreachable };
 
 pub struct mir2nasal {
+    global: global_symbol_table*,
     ctx: mir_context*,
     pkg: package*
 }
 
 impl mir2nasal {
-    pub func instance(ctx: mir_context*, pkg: package*) -> mir2nasal {
-        return mir2nasal { ctx: ctx, pkg: pkg };
+    pub func instance(glb: global_symbol_table*,
+                      ctx: mir_context*,
+                      pkg: package*) -> mir2nasal {
+        return mir2nasal { global: glb, ctx: ctx, pkg: pkg };
     }
 
     func dump_raw_nasal_string(self, out: io&, s: str&) {
@@ -197,31 +202,14 @@ impl mir2nasal {
                 }
             }
             mir_kind::mir_array => out.out("[]");
-            mir_kind::mir_struct_init => out.out("{}");
             mir_kind::mir_call => self.dump_call(out, n => mir_call*, indent);
-            mir_kind::mir_call_id => {
-                var t = n => mir_call_id*;
-                out.out(t->name.c_str);
-            }
-            mir_kind::mir_call_index => {
-                var t = n => mir_call_index*;
-                out.out("[");
-                self.dump_mir(out, t->index, indent);
-                out.out("]");
-            }
-            mir_kind::mir_call_func => self.dump_call_func(out, n => mir_call_func*, indent);
-            mir_kind::mir_get_field => {
-                var t = n => mir_get_field*;
-                out.out(".").out(t->name.c_str);
-            }
-            mir_kind::mir_get_path => {
-                var t = n => mir_get_path*;
-                out.out("::").out(t->name.c_str);
-            }
-            mir_kind::mir_ptr_get_field => {
-                var t = n => mir_ptr_get_field*;
-                out.out(".").out(t->name.c_str);
-            }
+            mir_kind::mir_struct_init => unreachable();
+            mir_kind::mir_call_id => unreachable();
+            mir_kind::mir_call_index => unreachable();
+            mir_kind::mir_call_func => unreachable();
+            mir_kind::mir_get_field => unreachable();
+            mir_kind::mir_get_path => unreachable();
+            mir_kind::mir_ptr_get_field => unreachable();
             mir_kind::mir_define => self.dump_define(out, n => mir_define*, indent);
             mir_kind::mir_assign => self.dump_assign(out, n => mir_assign*, indent);
             mir_kind::mir_if => self.dump_if(out, n => mir_if*, indent);
@@ -328,8 +316,67 @@ impl mir2nasal {
     }
 
     func dump_call(self, out: io&, n: mir_call*, indent: i64) {
+        var path = str::instance();
+        defer path.delete();
+
         foreach (var i; n->content) {
-            self.dump_mir(out, i.get(), indent);
+            match (i.get()->kind) {
+                mir_kind::mir_struct_init => {
+                    if (!path.empty()) {
+                        out.out("colgm_T[\"").out(path.c_str).out("\"]()");
+                        path.clear();
+                    } else {
+                        out.out("{}");
+                    }
+                }
+                mir_kind::mir_call_id => {
+                    var t = i.get() => mir_call_id*;
+                    if (t->resolved_type.is_global_sym || t->resolved_type.is_global_func) {
+                        path.append_str(t->name);
+                    } else {
+                        out.out(t->name.c_str);
+                    }
+                }
+                mir_kind::mir_call_index => {
+                    var t = i.get() => mir_call_index*;
+                    out.out("[");
+                    self.dump_mir(out, t->index, indent);
+                    out.out("]");
+                }
+                mir_kind::mir_call_func => {
+                    if (!path.empty()) {
+                        out.out("colgm_F[\"").out(path.c_str).out("\"]");
+                        path.clear();
+                    }
+                    self.dump_call_func(out, i.get() => mir_call_func*, indent);
+                }
+                mir_kind::mir_get_field => {
+                    var t = i.get() => mir_get_field*;
+                    out.out(".").out(t->name.c_str);
+                }
+                mir_kind::mir_get_path => {
+                    var t = i.get() => mir_get_path*;
+                    path.append("::").append(t->name.c_str);
+                    if (t->resolved_type.is_enum) {
+                        var dm = self.global->domain.get(t->resolved_type.loc_file);
+                        var em = dm.enums.get(t->resolved_type.name);
+                        out.out_i64(em.members.get(t->name));
+                        path.clear();
+                    }
+                }
+                mir_kind::mir_ptr_get_field => {
+                    var t = i.get() => mir_ptr_get_field*;
+                    out.out(".").out(t->name.c_str);
+                }
+                _ => unreachable();
+            }
+        }
+        if (!path.empty()) {
+            if (path.find(':') != str::npos()) {
+                unreachable();
+            } else {
+                out.out(path.c_str);
+            }
         }
     }
 
