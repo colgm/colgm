@@ -795,6 +795,13 @@ impl ast2mir {
         }
         self.impl_struct_name.clear();
     }
+
+    func resolve_func_return_type(self, n: ast_type_def*) -> type {
+        if (n == nil) {
+            return type::void_type();
+        }
+        return self.tr.resolve(n);
+    }
     
     func visit_func_decl(self, n: ast_func_decl*) {
         if (n->generic_types != nil) {
@@ -826,22 +833,9 @@ impl ast2mir {
             name.append_str(tmp_ty_name);            
         }
 
-        
-        var ret_ty = type::instance("", "");
+		// resolve return type, if n->return_type is nil, get void type 
+        var ret_ty = self.resolve_func_return_type(n->return_type);
         defer ret_ty.delete();
-
-        if (n->return_type != nil) {
-            var t = self.tr.resolve(n->return_type);
-            defer t.delete();
-
-            ret_ty.reset_with(t);
-        } else {
-            var t = type::void_type();
-            defer t.delete();
-
-            ret_ty.reset_with(t);
-        }
-
         var f = mir_func::instance(name.c_str, n->base.location, ret_ty);
         defer f.delete();
 

@@ -64,6 +64,8 @@ impl mir2nasal {
         out.out("use std.math;\n\n");
 
         out.out("var colgm_T = {};\n");
+        out.out("var colgm_F = {};\n");
+
         out.out("\n# basic types\n");
         self.dump_basic(out);
         out.out("\n# tagged union types\n");
@@ -75,7 +77,6 @@ impl mir2nasal {
             self.dump_struct(out, i.get());
         }
 
-        out.out("var colgm_F = {};\n");
         foreach (var i; self.ctx->decls) {
             self.dump_func(out, i.get());
         }
@@ -84,6 +85,8 @@ impl mir2nasal {
             self.dump_func(out, i.get());
             out.out("\n");
         }
+
+        out.out("exit(colgm_F[\"main\"](1, [\"nasal\"]));\n");
     }
 }
 
@@ -120,7 +123,7 @@ impl mir2nasal {
             return;
         }
         out.out("func {\n");
-        out.out("  return {\n");
+        out.out("  var res = {\n");
         foreach (var i; s.field_name) {
             out.out("    \"").out(i.get().c_str).out("\": ");
             if (s.field_type.get(i.index()).is_pointer()) {
@@ -136,14 +139,43 @@ impl mir2nasal {
             out.out("\n");
         }
         out.out("  };\n");
+
+        // load method
+        var dm = self.global->domain.get(s.location.file);
+        var name_for_search = s_ty.generic_name(self.pkg);
+        defer name_for_search.delete();
+        var st = dm.structs.get(name_for_search);
+        foreach (var i; st.method) {
+            if (i.key().startswith("#")) {
+                continue;
+            }
+            if (i.key().eq_const("__ptr__")) {
+                out.out("  res.__ptr__ = func { return me; };\n");
+                continue;
+            }
+            out.out("  res.").out(i.value().name.c_str);
+            out.out(" = colgm_F[\"").out(s_ty_name.c_str).out(".");
+            out.out(i.value().name.c_str).out("\"];\n");
+        }
+
+        out.out("  return res;\n");
         out.out("}\n");
+
+        out.out("colgm_F[\"").out(s_ty_name.c_str).out(".__size__\"] = func ");
+        out.out("{ return ").out_u64(s.size).out("; }\n");
     }
 
     func dump_func(self, out: io&, f: mir_func&) {
         out.out("colgm_F[\"");
         self.dump_raw_nasal_string(out, f.name);
         out.out("\"] = func(");
+
+        var has_self = false;
         foreach (var i; f.params) {
+            if (i.get().key.eq_const("self")) {
+                has_self = true;
+                continue;
+            }
             out.out(i.get().key.c_str);
             if (i.index() < f.params.size - 1) {
                 out.out(", ");
@@ -158,6 +190,9 @@ impl mir2nasal {
             return;
         }
         out.out("{\n");
+        if (has_self) {
+            out.out("  var self = me;\n");
+        }
         self.dump_code_block(out, f.block, 1);
         out.out("}\n");
     }
@@ -331,8 +366,24 @@ impl mir2nasal {
                 }
                 mir_kind::mir_call_id => {
                     var t = i.get() => mir_call_id*;
-                    if (t->resolved_type.is_global_sym || t->resolved_type.is_global_func) {
-                        path.append_str(t->name);
+                    if (t->resolved_type.is_global_sym) {
+                        var full_name = t->resolved_type.full_path_name(self.pkg);
+                        defer full_name.delete();
+
+                        if (t->resolved_type.is_global_func) {
+                            var dm = self.global->domain.get(t->resolved_type.loc_file);
+                            var name_for_search = t->resolved_type.generic_name(self.pkg);
+                            defer name_for_search.delete();
+
+                            if (dm.functions.has(name_for_search) &&
+                                dm.functions.get(name_for_search).is_extern) {
+                                path.append_str(t->name);
+                            } else {
+                                path.append_str(full_name);
+                            }
+                        } else {
+                            path.append_str(full_name);
+                        }
                     } else {
                         out.out(t->name.c_str);
                     }
@@ -356,7 +407,7 @@ impl mir2nasal {
                 }
                 mir_kind::mir_get_path => {
                     var t = i.get() => mir_get_path*;
-                    path.append("::").append(t->name.c_str);
+                    path.append(".").append(t->name.c_str);
                     if (t->resolved_type.is_enum) {
                         var dm = self.global->domain.get(t->resolved_type.loc_file);
                         var em = dm.enums.get(t->resolved_type.name);
