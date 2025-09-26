@@ -2128,6 +2128,18 @@ impl sema {
         );
     }
 
+    func check_defined_variable_is_restrict(self, n: ast_definition*, ty: type&) {
+        if (!ty.is_restrict()) {
+            return;
+        }
+        // assignment statement returns <restrict> type
+        // which is not allowed to init a variable
+        self.err->error(
+            n->value->location,
+            "cannot use value of assignment statement as the initial value"
+        );
+    }
+
     func number_literal_can_be_converted(self, n: ast*, expect_type: type&) -> bool {
         // if is not number literal, just return false
         if (!n->is(ast_kind::ast_number)) {
@@ -2251,6 +2263,7 @@ impl sema {
             }
             self.ctx->add_local_var(name, real_type, n->base.location);
             self.check_defined_variable_is_void(n, real_type);
+            self.check_defined_variable_is_restrict(n, real_type);
             return;
         }
 
@@ -2264,6 +2277,7 @@ impl sema {
         if (expect_type.is_error() || real_type.is_error()) {
             return;
         }
+
         if (expect_type.is_array || real_type.is_array) {
             if (!expect_type.eq(real_type) && !real_type.is_empty_array()) {
                 var info = str::from("expect \"");
@@ -2339,6 +2353,7 @@ impl sema {
             self.ctx->add_local_var(name, expect_type, n->base.location);
             self.check_defined_variable_is_void(n, expect_type);
         }
+        self.check_defined_variable_is_restrict(n, real_type);
     }
 
     func resolve_if_stmt(self, n: ast_if_stmt*, func_self: colgm_func&) {

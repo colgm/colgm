@@ -1532,6 +1532,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         node->set_resolve_type(real_type);
         ctx.add_local(name, real_type);
         check_defined_variable_is_void(node, real_type);
+        check_defined_variable_is_restrict(node, real_type);
         return;
     }
 
@@ -1582,6 +1583,7 @@ void semantic::resolve_definition(definition* node, const colgm_func& func_self)
         ctx.add_local(name, expected_type);
         check_defined_variable_is_void(node, expected_type);
     }
+    check_defined_variable_is_restrict(node, real_type);
 }
 
 void semantic::check_defined_variable_is_void(definition* node, const type& t) {
@@ -1589,6 +1591,18 @@ void semantic::check_defined_variable_is_void(definition* node, const type& t) {
         return;
     }
     rp.report(node, "cannot define variable with void type");
+}
+
+void semantic::check_defined_variable_is_restrict(definition* node, const type& t) {
+    if (!t.is_restrict()) {
+        return;
+    }
+    // assignment statement returns <restrict> type
+    // which is not allowed to init a variable
+    rp.report(
+        node->get_init_value(),
+        "cannot use value of assignment statement as the initial value"
+    );
 }
 
 void semantic::resolve_if_stmt(if_stmt* node, const colgm_func& func_self) {
