@@ -65,6 +65,8 @@ impl mir2nasal {
 
         out.out("var colgm_T = {};\n");
         out.out("var colgm_F = {};\n");
+        out.out("var __array_init__ = func(s) ");
+        out.out("{ var r = []; setsize(r, s); return r; }\n");
 
         out.out("\n# basic types\n");
         self.dump_basic(out);
@@ -109,12 +111,18 @@ impl mir2nasal {
     }
 
     func dump_struct(self, out: io&, s: mir_struct&) {
-        out.out("colgm_T[\"");
         var s_ty = type::instance(s.name.c_str, s.location.file.c_str);
         defer s_ty.delete();
         
         var s_ty_name = s_ty.full_path_name(self.pkg);
         defer s_ty_name.delete();
+
+        out.out("colgm_F[\"").out(s_ty_name.c_str).out(".__size__\"] = func ");
+        out.out("{ return 1; }\n");
+        out.out("colgm_F[\"").out(s_ty_name.c_str).out(".__ptr__\"] = func ");
+        out.out("{ return me; }\n");
+
+        out.out("colgm_T[\"");
         self.dump_raw_nasal_string(out, s_ty_name);
 
         out.out("\"] = ");
@@ -122,7 +130,7 @@ impl mir2nasal {
             out.out("func { return {}; }\n");
             return;
         }
-        out.out("func {\n");
+        out.out("func(ini = {}) {\n");
         out.out("  var res = {\n");
         foreach (var i; s.field_name) {
             out.out("    \"").out(i.get().c_str).out("\": ");
@@ -140,6 +148,10 @@ impl mir2nasal {
         }
         out.out("  };\n");
 
+        out.out("\n  foreach (var i; keys(ini)) {\n");
+        out.out("    res[i] = ini[i];\n");
+        out.out("  }\n\n");
+
         // load method
         var dm = self.global->domain.get(s.location.file);
         var name_for_search = s_ty.generic_name(self.pkg);
@@ -149,10 +161,6 @@ impl mir2nasal {
             if (i.key().startswith("#")) {
                 continue;
             }
-            if (i.key().eq_const("__ptr__")) {
-                out.out("  res.__ptr__ = func { return me; };\n");
-                continue;
-            }
             out.out("  res.").out(i.value().name.c_str);
             out.out(" = colgm_F[\"").out(s_ty_name.c_str).out(".");
             out.out(i.value().name.c_str).out("\"];\n");
@@ -160,9 +168,18 @@ impl mir2nasal {
 
         out.out("  return res;\n");
         out.out("}\n");
+    }
 
-        out.out("colgm_F[\"").out(s_ty_name.c_str).out(".__size__\"] = func ");
-        out.out("{ return ").out_u64(s.size).out("; }\n");
+    func dump_extern_func_body(self, out: io&, f: mir_func&) {
+        if (f.name.eq_const("malloc")) {
+            out.out("{ return __array_init__(s); }\n");
+            return;
+        }
+        if (f.name.eq_const("puts")) {
+            out.out("{ print(str, \"\\n\"); }\n");
+            return;
+        }
+        out.out("{}\n");
     }
 
     func dump_func(self, out: io&, f: mir_func&) {
@@ -186,7 +203,7 @@ impl mir2nasal {
         }
         out.out(") ");
         if (f.block == nil) {
-            out.out(" {}\n");
+            self.dump_extern_func_body(out, f);
             return;
         }
         out.out("{\n");
@@ -203,6 +220,17 @@ impl mir2nasal {
         for (var i = 0; i < indent; i += 1) {
             out.out("  ");
         }
+    }
+
+    func is_integer_result(self, n: mir*) -> bool {
+        match (n->kind) {
+            mir_kind::mir_call => {
+                var t = n => mir_call*;
+                return t->resolved_type.is_integer();
+            }
+            _ => {}
+        }
+        return false;
     }
 
     func dump_mir(self, out: io&, n: mir*, indent: i64) {
@@ -236,7 +264,10 @@ impl mir2nasal {
                     out.out("false");
                 }
             }
-            mir_kind::mir_array => out.out("[]");
+            mir_kind::mir_array => {
+                var t = n => mir_array*;
+                out.out("__array_init__(").out_u64(t->size).out(")");
+            }
             mir_kind::mir_call => self.dump_call(out, n => mir_call*, indent);
             mir_kind::mir_struct_init => unreachable();
             mir_kind::mir_call_id => unreachable();
@@ -322,7 +353,13 @@ impl mir2nasal {
             return;
         }
 
+        if (self.is_integer_result(n->left)) {
+            out.out("int(");
+        }
         self.dump_mir(out, n->left, indent);
+        if (self.is_integer_result(n->left)) {
+            out.out(")");
+        }
         out.out(" ");
         match (n->op) {
             mir_binary_opr::add => out.out("+");
@@ -343,11 +380,33 @@ impl mir2nasal {
             mir_binary_opr::bxor => out.out("^");
         }
         out.out(" ");
+        if (self.is_integer_result(n->right)) {
+            out.out("int(");
+        }
         self.dump_mir(out, n->right, indent + 1);
+        if (self.is_integer_result(n->right)) {
+            out.out(")");
+        }
     }
 
     func dump_type_convert(self, out: io&, n: mir_type_convert*, indent: i64) {
         self.dump_mir(out, n->source, indent);
+    }
+
+    func dump_struct_init(self, out: io&, n: mir_struct_init*, indent: i64) {
+        if (n->fields.empty()) {
+            out.out("{}");
+            return;
+        }
+        out.out("{");
+        foreach (var i; n->fields) {
+            out.out(i.get().name.c_str).out(": ");
+            self.dump_mir(out, i.get().content, indent);
+            if (i.index() != n->fields.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out("}");
     }
 
     func dump_call(self, out: io&, n: mir_call*, indent: i64) {
@@ -357,12 +416,10 @@ impl mir2nasal {
         foreach (var i; n->content) {
             match (i.get()->kind) {
                 mir_kind::mir_struct_init => {
-                    if (!path.empty()) {
-                        out.out("colgm_T[\"").out(path.c_str).out("\"]()");
-                        path.clear();
-                    } else {
-                        out.out("{}");
-                    }
+                    out.out("colgm_T[\"").out(path.c_str).out("\"](");
+                    self.dump_struct_init(out, i.get() => mir_struct_init*, indent);
+                    out.out(")");
+                    path.clear();
                 }
                 mir_kind::mir_call_id => {
                     var t = i.get() => mir_call_id*;
