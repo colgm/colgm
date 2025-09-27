@@ -10,6 +10,7 @@ use util::cli::{ version };
 use std::io::{ io };
 use std::str::{ str };
 use std::panic::{ unreachable };
+use std::time::{ chrono };
 
 pub struct mir2nasal {
     global: global_symbol_table*,
@@ -56,6 +57,20 @@ impl mir2nasal {
         out.out(tmp.c_str);
     }
 
+    func dump_intrinsic_array_init(self, out: io&) {
+        out.out("var __array_init__ = func(s) ");
+        out.out("{ var r = []; setsize(r, s); return r; }\n");
+    }
+
+    func dump_intrinsic_time(self, out: io&) {
+        var time_str = chrono::localtime();
+        defer time_str.delete();
+
+        out.out("\n# intrinsic time\n");
+        out.out("colgm_F[\"__time__\"] = func { return \"");
+        out.out(time_str.c_str).out("\"; }\n");
+    }
+
     pub func dump(self, filename: const i8*) {
         var out = io::fileout(filename);
         defer out.close();
@@ -65,8 +80,8 @@ impl mir2nasal {
 
         out.out("var colgm_T = {};\n");
         out.out("var colgm_F = {};\n");
-        out.out("var __array_init__ = func(s) ");
-        out.out("{ var r = []; setsize(r, s); return r; }\n");
+        self.dump_intrinsic_array_init(out);
+        self.dump_intrinsic_time(out);
 
         out.out("\n# basic types\n");
         self.dump_basic(out);
@@ -175,8 +190,28 @@ impl mir2nasal {
             out.out("{ return __array_init__(s); }\n");
             return;
         }
+        if (f.name.eq_const("realloc")) {
+            out.out("{ setsize(s, size); return s; }\n");
+            return;
+        }
         if (f.name.eq_const("puts")) {
             out.out("{ print(str, \"\\n\"); }\n");
+            return;
+        }
+        if (f.name.eq_const("write")) {
+            out.out("{\n");
+            out.out("  if (fd != 1) return -1;\n");
+            out.out("  print(buf);\n");
+            out.out("  return count;\n");
+            out.out("}\n");
+            return;
+        }
+        if (f.name.eq_const("strlen")) {
+            out.out("{ return size(str); }\n");
+            return;
+        }
+        if (f.name.eq_const("exit")) {
+            out.out("{ exit(code); }\n");
             return;
         }
         out.out("{}\n");
