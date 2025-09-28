@@ -58,8 +58,11 @@ impl mir2nasal {
     }
 
     func dump_intrinsic_array_init(self, out: io&) {
-        out.out("var __array_init__ = func(s) ");
-        out.out("{ var r = []; setsize(r, s); return r; }\n");
+        out.out("var __array_init__ = func(s, elem) {\n");
+        out.out("  var r = elem;\n");
+        out.out("  setsize(r, s);\n");
+        out.out("  return r;\n");
+        out.out("}\n");
     }
 
     func dump_intrinsic_time(self, out: io&) {
@@ -187,7 +190,7 @@ impl mir2nasal {
 
     func dump_extern_func_body(self, out: io&, f: mir_func&) {
         if (f.name.eq_const("malloc")) {
-            out.out("{ return __array_init__(s); }\n");
+            out.out("{ return __array_init__(s, []); }\n");
             return;
         }
         if (f.name.eq_const("realloc")) {
@@ -200,7 +203,7 @@ impl mir2nasal {
         }
         if (f.name.eq_const("write")) {
             out.out("{\n");
-            out.out("  if (fd != 1) return -1;\n");
+            out.out("  if (fd != 1 and fd != 2) return -1;\n");
             out.out("  print(buf);\n");
             out.out("  return count;\n");
             out.out("}\n");
@@ -299,10 +302,7 @@ impl mir2nasal {
                     out.out("false");
                 }
             }
-            mir_kind::mir_array => {
-                var t = n => mir_array*;
-                out.out("__array_init__(").out_u64(t->size).out(")");
-            }
+            mir_kind::mir_array => self.dump_array(out, n => mir_array*, indent);
             mir_kind::mir_call => self.dump_call(out, n => mir_call*, indent);
             mir_kind::mir_struct_init => unreachable();
             mir_kind::mir_call_id => unreachable();
@@ -442,6 +442,17 @@ impl mir2nasal {
             }
         }
         out.out("}");
+    }
+
+    func dump_array(self, out: io&, n: mir_array*, indent: i64) {
+        out.out("__array_init__(").out_u64(n->size).out(", [");
+        foreach (var i; n->value) {
+            self.dump_mir(out, i.get(), indent);
+            if (i.index() != n->value.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out("])");
     }
 
     func dump_call(self, out: io&, n: mir_call*, indent: i64) {
