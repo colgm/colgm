@@ -9,11 +9,11 @@ Colgm aims to be a simple, easy-to-use and easy-to-maintain programming language
 It will let you write relatively safe code without too much cognitive load.
 Targets supported now are [__LLVM IR__](https://llvm.org/) and [__nasal-lang__ [WIP]](https://github.com/ValKmjolnir/Nasal-Interpreter).
 
-Now these nightly-builds are available:
+Now nightly-builds are available:
 
 - [__macos-aarch64-nightly-build__](https://github.com/colgm/colgm/releases/tag/macOS_nightly)
 - [__linux-x86_64-nightly-build__](https://github.com/colgm/colgm/releases/tag/linux_nightly)
-- [__windows-x86_64-nightly-build__ [WIP]](https://github.com/colgm/colgm/releases/tag/windows_nightly)
+- [__windows-x86_64-nightly-build__](https://github.com/colgm/colgm/releases/tag/windows_nightly)
 
 ```rust
 use std::io::{ io };

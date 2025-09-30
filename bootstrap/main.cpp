@@ -87,7 +87,7 @@ void scan_package(const std::string& library_path,
         return;
     }
     colgm::package_manager::singleton()->scan(library_path, entry_file).chkerr();
-    if (cmd&COMPILE_VIEW_LIB) {
+    if (cmd & COMPILE_VIEW_LIB) {
         colgm::package_manager::singleton()->dump_packages();
     }
 }

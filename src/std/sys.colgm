@@ -11,9 +11,22 @@ pub enum stat_flag {
 }
 
 // used on 64 bit platforms
+#[enable_if(target_os = "macos")]
 pub struct timespec {
     tv_sec: i64,
     tv_nsec: i64,
+}
+
+#[enable_if(target_os = "linux")]
+pub struct timespec {
+    tv_sec: i64,
+    tv_nsec: i64,
+}
+
+#[enable_if(target_os = "windows")]
+pub struct timespec {
+    tv_sec: i64,
+    tv_nsec: i32,
 }
 
 #[enable_if(target_os = "macos", arch = "aarch64")]
@@ -78,6 +91,21 @@ pub struct stat_info_t {
     st_ctime: timespec, // st_ctim in libc
     // reserved
     __glibc_reserved: [i32; 2]
+}
+
+#[enable_if(target_os = "windows", arch = "x86_64")]
+pub struct stat_info_t {
+    st_dev: u32,
+    st_ino: u16,
+    st_mode: u16,
+    st_nlink: i16,
+    st_uid: i16,
+    st_gid: i16,
+    st_rdev: u32,
+    st_size: i64,
+    st_atime: i64,
+    st_mtime: i64,
+    st_ctime: i64
 }
 
 pub extern func stat(filename: const i8*, stat_ptr: stat_info_t*) -> i32;

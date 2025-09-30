@@ -29,13 +29,30 @@ impl fs {
         var ifmt = (info.st_mode => u32) & (stat_flag::S_IFMT => u32);
         return (ifmt => stat_flag) == stat_flag::S_IFDIR;
     }
+}
 
+#[enable_if(target_os = "windows")]
+func mtime(info: stat_info_t&) -> timespec {
+    return timespec { tv_sec: info.st_mtime, tv_nsec: 0 };
+}
+
+#[enable_if(target_os = "linux")]
+func mtime(info: stat_info_t&) -> timespec {
+    return info.st_mtime;
+}
+
+#[enable_if(target_os = "macos")]
+func mtime(info: stat_info_t&) -> timespec {
+    return info.st_mtime;
+}
+
+impl fs {
     pub func get_mtime(filename: const i8*) -> timespec {
         var info = stat_info_t {};
         if (stat(filename, info.__ptr__()) == -1) {
             return timespec {};
         }
-        return info.st_mtime;
+        return mtime(info);
     }
 }
 
