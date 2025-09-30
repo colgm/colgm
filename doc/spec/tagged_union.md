@@ -40,8 +40,8 @@ impl mir {
     pub func fetch_m_block_from_mir(self) -> mir_block {
         // match statement, accept tagged union pointer (depth=1) or instance
         match (self) {
-            mir_kind::m_block => return self->m_block;
-            //                                ^^^^^^^ get element
+            mir_kind::m_block => return self.m_block;
+            //                               ^^^^^^^ get element
             _ => { unreachable(); }
         }
         return mir_block::null();
@@ -49,7 +49,7 @@ impl mir {
 
     pub func fetch_m_block_ptr_from_mir(self) -> mir_block* {
         match (self) {
-            mir_kind::m_block => return self->m_block.__ptr__();
+            mir_kind::m_block => return self.m_block.__ptr__();
             _ => { unreachable(); }
         }
         return nil;
@@ -58,9 +58,9 @@ impl mir {
     pub func test_match(self) {
         var out = io::stdout();
         match (self) {
-            mir_kind::m_block => self->m_block.dump(out);
-            mir_kind::m_num => self->m_num.dump(out);
-            mir_kind::m_str => self->m_str.dump(out);
+            mir_kind::m_block => self.m_block.dump(out);
+            mir_kind::m_num => self.m_num.dump(out);
+            mir_kind::m_str => self.m_str.dump(out);
         }
     }
 }
@@ -69,9 +69,9 @@ impl mir_without_block {
     pub func test_match(self) {
         var out = io::stdout();
         match (self) {
-            m_block => self->m_block.dump(out);
-            m_num => self->m_num.dump(out);
-            m_str => self->m_str.dump(out);
+            m_block => self.m_block.dump(out);
+            m_num => self.m_num.dump(out);
+            m_str => self.m_str.dump(out);
         }
     }
 }

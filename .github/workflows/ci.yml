@@ -70,18 +70,22 @@ jobs:
       run: |
           python3 misc/pack.py colgm-linux-x86_64-nightly.zip
   
-  # windows-x86_64-build-bootstrap:
-  #   runs-on: windows-latest
-  #   steps:
-  #   - name: checkout
-  #     uses: actions/checkout@v4
-  #   - name: fetch llvm-dev
-  #     run: |
-  #         choco install -y llvm
-  #         choco install -y cmake
-  #         choco install -y zip
-  #         clang --version
-  #   - name: build
-  #     run: |
-  #         mkdir build
-  #         cd build
+  windows-x86_64-build-bootstrap:
+    runs-on: windows-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: fetch llvm-dev
+      run: |
+          choco install -y llvm
+          choco install -y cmake
+          clang --version
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v2
+    - name: build
+      run: |
+          mkdir build
+          cd build
+          cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release
+          MSBuild.exe colgm.sln /p:Configuration=Release /p:Platform=x64
+          ./Release/colgm.exe

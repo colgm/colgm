@@ -12,7 +12,7 @@ is equivalent to:
 func foo(a: i64*);
 ```
 
-So in mir2sir pass, we should convert `i64&` to `i64*`.
+So in mir2sir pass, we should convert `i64&`(current type) to `i64*`(real llvm type).
 
 For example:
 
@@ -21,7 +21,7 @@ func main() -> i32 {
     var a = 1;
     foo(a);
     //  ^ at semantic stage
-    //    we will mark this argument as a reference
+    //    we will mark this argument as a reference (i64&)
     return 0;
 }
 ```

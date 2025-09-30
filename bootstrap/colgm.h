@@ -11,7 +11,9 @@
 #include <sstream>
 #include <cmath>
 
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 
 // abbreviation of some useful basic type
 using i32 = std::int32_t;

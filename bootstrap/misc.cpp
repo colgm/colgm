@@ -9,6 +9,7 @@
 #ifndef _MSC_VER
 #include <unistd.h>
 #else
+#include <direct.h>
 #include <io.h>
 #endif
 #include <sys/stat.h>
@@ -140,6 +141,9 @@ const char* get_arch() {
 }
 
 std::string get_cwd() {
+#ifdef _MSC_VER
+#define getcwd(buf, size) _getcwd(buf, size)
+#endif
     char buf[1024];
     if (getcwd(buf, 1023)) {
         return std::string(buf);
