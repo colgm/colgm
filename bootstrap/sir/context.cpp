@@ -130,6 +130,9 @@ void sir_context::dump_target_tripple(std::ostream& out) const {
     if (platform == "linux" && arch == "aarch64") {
         out << "target triple = \"aarch64-unknown-linux-gnu\"\n\n";
     }
+    if (platform == "windows" && arch == "x86_64") {
+        out << "target triple = \"x86_64-pc-windows-msvc\"\n\n";
+    }
     if (platform == "macos" && arch == "aarch64") {
 #if defined __APPLE__
         auto major = mac_major_version();
