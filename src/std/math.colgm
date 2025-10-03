@@ -1,6 +1,28 @@
 
+#[enable_if(target_os = "windows")]
+extern pub func _dclass(x: f64) -> i16;
+
+#[enable_if(target_os = "macos")]
 extern pub func isinf(x: f64) -> bool;
+#[enable_if(target_os = "linux")]
+extern pub func isinf(x: f64) -> bool;
+#[enable_if(target_os = "windows")]
+pub func isinf(x: f64) -> bool {
+    return _dclass(x) == 1;
+}
+
+#[enable_if(target_os = "macos")]
 extern pub func isnan(x: f64) -> bool;
+#[enable_if(target_os = "linux")]
+extern pub func isnan(x: f64) -> bool;
+#[enable_if(target_os = "windows")]
+pub func isnan(x: f64) -> bool {
+    return _dclass(x) == 2;
+}
+
+pub func inf() -> f64 {
+    return 1.0 / 0.0;
+}
 extern pub func nan(tagp: const i8*) -> f64;
 
 extern pub func floor(x: f64) -> f64;

@@ -8,6 +8,7 @@ use util::frontend::{ frontend };
 use util::clang_finder::{ find_clang };
 use util::timestamp::{ maketimestamp };
 use util::package::{ package };
+use util::platform::{ is_windows };
 
 use sema::context::{ global_symbol_table, sema_context };
 use sema::regist::{ regist_pass };
@@ -46,7 +47,12 @@ func clang_compile(co: cli_option&) -> i32 {
         io::stdout().out_f64(t_stamp.elapsed_msec()).out(" ms\n");
     }
 
-    var cmd = clang.clone();
+    var cmd = str::instance();
+    if (is_windows()) {
+        cmd.append("\"").append(clang.c_str).append("\"");
+    } else {
+        cmd.append(clang.c_str);
+    }
     defer cmd.delete();
 
     var ll_file = str::from(co.output_file);
@@ -64,7 +70,9 @@ func clang_compile(co: cli_option&) -> i32 {
     }
     cmd.append(" -o ");
     cmd.append(co.output_file);
-    cmd.append(" -rdynamic -lm");
+    if (!is_windows()) {
+        cmd.append(" -rdynamic -lm");
+    }
     if (co.VERBOSE) {
         io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Executing ");

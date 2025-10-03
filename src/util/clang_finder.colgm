@@ -2,6 +2,8 @@ use std::fs::{ fs };
 use std::str::{ str };
 use std::vec::{ vec };
 
+use util::platform::{ is_windows };
+
 func supported_clang_version() -> vec<str> {
     var res = vec<str>::instance();
     // always try to find the latest clang version
@@ -12,20 +14,33 @@ func supported_clang_version() -> vec<str> {
         defer name.delete();
 
         name.append("clang-").append_i64(i);
+        if (is_windows()) {
+            name.append(".exe");
+        }
         res.push(name);
 
         name.clear();
         name.append("clang++-").append_i64(i);
+        if (is_windows()) {
+            name.append(".exe");
+        }
         res.push(name);
     }
 
     // also find default clang and clang++
     var cl = str::from("clang");
+    if (is_windows()) {
+        cl.append(".exe");
+    }
     defer cl.delete();
+    res.push(cl);
 
-    res.push(cl);
-    cl.append("++");
-    res.push(cl);
+    var clpp = str::from("clang++");
+    if (is_windows()) {
+        clpp.append(".exe");
+    }
+    defer clpp.delete();
+    res.push(clpp);
     return res;
 }
 
@@ -41,7 +56,12 @@ pub func find_clang() -> str {
             var full_path = p.get().clone();
             defer full_path.delete();
 
-            full_path.append("/").append(cl.get().c_str);
+            if (is_windows()) {
+                full_path.append("\\").append(cl.get().c_str);
+            } else {
+                full_path.append("/").append(cl.get().c_str);
+            }
+
             if (fs::exists(full_path.c_str)) {
                 res.append_str(full_path);
                 break;

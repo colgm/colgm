@@ -36,7 +36,35 @@ pub extern func time(t: time_t*) -> time_t;
 pub extern func localtime(t: time_t*) -> tm*;
 pub extern func strftime(s: i8*, max: i64, format: const i8*, tm: tm*);
 pub extern func difftime(t1: time_t, t2: time_t) -> f64;
+
+#[enable_if(target_os = "linux")]
 pub extern func clock_gettime(clock_id: i32, tp: timespec*) -> i32;
+#[enable_if(target_os = "macos")]
+pub extern func clock_gettime(clock_id: i32, tp: timespec*) -> i32;
+
+#[enable_if(target_os = "windows")]
+pub extern func QueryPerformanceFrequency(freq: i64*) -> bool;
+#[enable_if(target_os = "windows")]
+pub extern func QueryPerformanceCounter(cnt: i64*) -> bool;
+#[enable_if(target_os = "windows")]
+pub func clock_gettime(clock_id: i32, tp: timespec*) -> i32 {
+    if (clock_id != clockid_t::CLOCK_REALTIME => i32) {
+        return -1;
+    }
+    var freq = 0;
+    var counter = 0;
+    if (!QueryPerformanceFrequency(freq.__ptr__())) {
+        return -1;
+    }
+    if (!QueryPerformanceCounter(counter.__ptr__())) {
+        return -1;
+    }
+    
+    tp->tv_sec = counter / freq;
+    tp->tv_nsec = ((counter % freq) * 1000000000 / freq) => i32;
+
+    return clock_id;
+}
 
 pub struct chrono {}
 

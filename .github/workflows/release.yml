@@ -106,17 +106,16 @@ jobs:
       uses: microsoft/setup-msbuild@v2
     - name: build
       run: |
-          mkdir build
-          cd build
-          cmake ../bootstrap -DCMAKE_BUILD_TYPE=Release
-          MSBuild.exe colgm.sln /p:Configuration=Release /p:Platform=x64
-          ./Release/colgm.exe
+          python3 misc/build.py
+    - name: check
+      run: |
+          .\cmake-windows-build\colgm_self_host.exe
     - name: package
       run: |
           zip -r colgm-windows-x86_64-nightly.zip bootstrap
           zip -r colgm-windows-x86_64-nightly.zip doc
           zip -r colgm-windows-x86_64-nightly.zip src
-          zip -r colgm-windows-x86_64-nightly.zip build
+          zip -r colgm-windows-x86_64-nightly.zip cmake-windows-build
     - name: release
       uses: softprops/action-gh-release@v2.0.5
       with:

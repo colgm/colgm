@@ -10,6 +10,15 @@ pub func print_backtrace() {
     var trace_size = backtrace(stack_info_buffer, 256);
     var trace_strings = backtrace_symbols(stack_info_buffer, trace_size);
 
+    if (trace_size == 0) {
+        stderr_put("[colgm] stack trace is empty\n");
+        return;
+    }
+    if (trace_strings == nil) {
+        stderr_put("[colgm] failed to get stack trace\n");
+        return;
+    }
+
     // convert trace_size to string
     var number_buffer: [i8; 128] = [];
     itoa(trace_size => i64, number_buffer, 10);

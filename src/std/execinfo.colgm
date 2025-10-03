@@ -1,3 +1,23 @@
 
+#[enable_if(target_os = "linux")]
 pub extern func backtrace(buf: i8**, size: i32) -> i32;
+#[enable_if(target_os = "linux")]
 pub extern func backtrace_symbols(buf: i8**, size: i32) -> i8**;
+
+#[enable_if(target_os = "macos")]
+pub extern func backtrace(buf: i8**, size: i32) -> i32;
+#[enable_if(target_os = "macos")]
+pub extern func backtrace_symbols(buf: i8**, size: i32) -> i8**;
+
+#[enable_if(target_os = "windows")]
+pub func backtrace(buf: i8**, size: i32) -> i32 {
+    buf[0] = nil;
+    size = 0;
+    return 0;
+}
+#[enable_if(target_os = "windows")]
+pub func backtrace_symbols(buf: i8**, size: i32) -> i8** {
+    buf[0] = nil;
+    size = 0;
+    return nil;
+}

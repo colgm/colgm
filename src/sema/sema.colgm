@@ -386,7 +386,9 @@ impl sema {
             return infer;
         }
 
-        if (left.is_pointer() && left.pointer_depth != right.pointer_depth) {
+        if (left.is_pointer() &&
+            left.pointer_depth != right.pointer_depth &&
+            !self.check_can_be_converted(n->right, left)) {
             var info = str::from("cannot compare pointer \"");
             var l_name = left.full_path_name_with_pointer(self.pkg);
             var r_name = right.full_path_name_with_pointer(self.pkg);
