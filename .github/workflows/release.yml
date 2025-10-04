@@ -100,7 +100,6 @@ jobs:
       run: |
           choco install -y llvm
           choco install -y cmake
-          choco install -y zip --allow-empty-checksums
           clang --version
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
@@ -112,10 +111,7 @@ jobs:
           .\cmake-windows-build\colgm_self_host.exe
     - name: package
       run: |
-          zip -r colgm-windows-x86_64-nightly.zip bootstrap
-          zip -r colgm-windows-x86_64-nightly.zip doc
-          zip -r colgm-windows-x86_64-nightly.zip src
-          zip -r colgm-windows-x86_64-nightly.zip cmake-windows-build
+          python3 misc\pack.py colgm-windows-x86_64-nightly.zip
     - name: release
       uses: softprops/action-gh-release@v2.0.5
       with:

@@ -49,6 +49,8 @@ func clang_compile(co: cli_option&) -> i32 {
 
     var cmd = str::instance();
     if (is_windows()) {
+        // LLVM usually installed in C:\Program Files\LLVM
+        // so we need to use "\" to escape the space in path
         cmd.append("\"").append(clang.c_str).append("\"");
     } else {
         cmd.append(clang.c_str);
@@ -71,6 +73,8 @@ func clang_compile(co: cli_option&) -> i32 {
     cmd.append(" -o ");
     cmd.append(co.output_file);
     if (!is_windows()) {
+        // clang on windows need to link with msvcrt.lib
+        // but macOS/linux need to link with math library
         cmd.append(" -rdynamic -lm");
     }
     if (co.VERBOSE) {
