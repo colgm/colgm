@@ -1,6 +1,7 @@
 import subprocess
 import os
 import sys
+import shutil
 
 def execute(cmd: list[str], do_print: bool = True) -> int:
     if do_print:
@@ -66,7 +67,7 @@ if os.path.exists("test.out"):
 if os.path.exists("test.out.ll"):
     os.remove("test.out.ll")
 if os.path.exists("test.out.dSYM"):
-    os.remove("test.out.dSYM")
+    shutil.rmtree("test.out.dSYM")
 if os.path.exists("test.pdb"):
     os.remove("test.pdb")
 if os.path.exists("test.ilk"):
