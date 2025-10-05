@@ -1,5 +1,6 @@
 import subprocess
 import os
+import sys
 
 def execute(cmd: list[str], do_print: bool = True) -> int:
     if do_print:
@@ -43,9 +44,13 @@ TEST_LIST = [
     ("test/warn_on_left_call.colgm",       "src")
 ]
 
+COMPILER = "build/colgm_self_host"
+if sys.platform == "win32":
+    COMPILER = "cmake-windows-build\\colgm_self_host.exe"
+
 for (test, lib) in TEST_LIST:
     ret = execute([
-        "./build/colgm_self_host",
+        COMPILER,
         test,
         "-L", lib,
         "-o", "test.out",
@@ -57,8 +62,12 @@ for (test, lib) in TEST_LIST:
     execute(["./test.out"], False)
 
 if os.path.exists("test.out"):
-    execute(["rm", "test.out"], False)
+    os.remove("test.out")
 if os.path.exists("test.out.ll"):
-    execute(["rm", "test.out.ll"], False)
+    os.remove("test.out.ll")
 if os.path.exists("test.out.dSYM"):
-    execute(["rm", "-rf", "test.out.dSYM"], False)
+    os.remove("test.out.dSYM")
+if os.path.exists("test.pdb"):
+    os.remove("test.pdb")
+if os.path.exists("test.ilk"):
+    os.remove("test.ilk")

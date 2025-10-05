@@ -21,3 +21,32 @@ pub func backtrace_symbols(buf: i8**, size: i32) -> i8** {
     size = 0;
     return nil;
 }
+
+#[enable_if(target_os = "windows")]
+struct SYMBOL_INFO {
+    SizeOfStruct: u32,
+    TypeIndex: u32,
+    Reserved: [u64; 2],
+    info: u32,
+    Size: u32,
+    ModBase: u64,
+    Flags: u32,
+    Value: u64,
+    Address: u64,
+    Register: u32,
+    Scope: u32,
+    Tag: u32,
+    NameLen: u32,
+    MaxNameLen: u32,
+    Name: [u8; 1]
+}
+#[enable_if(target_os = "windows")]
+pub extern func GetCurrentProcess() -> i8*;
+#[enable_if(target_os = "windows")]
+pub extern func SymInitialize(process: i8*, user_search_path: const i8*, f_invade_process: i32) -> i32;
+#[enable_if(target_os = "windows")]
+pub extern func RtlCaptureStackBackTrace(frame_to_skip: u32, frame_to_capture: u32, back_trace: i8**, back_trace_hash: u32*) -> u16;
+#[enable_if(target_os = "windows")]
+pub extern func SymFromAddr(process: i8*, address: u64, displacement: u64*, symbol: SYMBOL_INFO*) -> i32;
+#[enable_if(target_os = "windows")]
+pub extern func SymCleanup(process: i8*) -> i32;

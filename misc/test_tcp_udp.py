@@ -1,11 +1,15 @@
 from threading import Thread
 import subprocess
 import time
-
 import os
+import sys
+
+COMPILER = "build/colgm_self_host"
+if sys.platform == "win32":
+    COMPILER = "cmake-windows-build\\colgm_self_host.exe"
 
 def check_required():
-    if not os.path.exists("build/colgm_self_host"):
+    if not os.path.exists(COMPILER):
         print("Error: build/colgm_self_host not found", flush=True)
         exit(1)
     if not os.path.exists("test/socket/udp_example.colgm"):
@@ -17,7 +21,7 @@ def check_required():
 
 def compile_tcp():
     subprocess.run([
-        "./build/colgm_self_host",
+        COMPILER,
         "--library", "src",
         "test/socket/tcp_example.colgm",
         "-o", "tcp_udp_test.out"
@@ -25,7 +29,7 @@ def compile_tcp():
 
 def compile_udp():
     subprocess.run([
-        "./build/colgm_self_host",
+        COMPILER,
         "--library", "src",
         "test/socket/udp_example.colgm",
         "-o", "tcp_udp_test.out"
