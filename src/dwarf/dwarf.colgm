@@ -499,9 +499,22 @@ impl DI_file {
         self.directory.delete();
     }
 
+    func dump_file_path_raw(self, out: io&, path: str&) {
+        foreach (var i; path) {
+            if (i.get() == '\\') {
+                out.out("\\\\");
+            } else {
+                out.out_ch(i.get());
+            }
+        }
+    }
+
     pub func dump(self, out: io&) {
-        out.out("!DIFile(filename: \"").out(self.filename.c_str);
-        out.out("\", directory: \"").out(self.directory.c_str).out("\")");
+        out.out("!DIFile(filename: \"");
+        self.dump_file_path_raw(out, self.filename);
+        out.out("\", directory: \"");
+        self.dump_file_path_raw(out, self.directory);
+        out.out("\")");
     }
 }
 

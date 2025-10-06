@@ -33,7 +33,16 @@ pub extern func perror(message: const i8*) -> i32;
 
 pub extern func gcvt(value: f64, ndec: i32, buf: i8*) -> i8*;
 
+#[enable_if(target_os = "linux")]
 pub extern func sleep(seconds: u32) -> i32;
+#[enable_if(target_os = "macos")]
+pub extern func sleep(seconds: u32) -> i32;
+#[enable_if(target_os = "windows")]
+extern func Sleep(miliseconds: u32) -> i32;
+#[enable_if(target_os = "windows")]
+pub func sleep(seconds: u32) -> i32 {
+    return Sleep(seconds * 1000);
+}
 
 pub func streq(left: const i8*, right: const i8*) -> bool {
     return strcmp(left, right) == 0;

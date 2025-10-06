@@ -82,6 +82,32 @@ impl sockaddr_in {
     }
 }
 
+#[enable_if(target_os="windows")]
+pub struct sockaddr_in {
+    sin_family: i16,
+    sin_port: u16,
+    sin_addr: in_addr,
+    sin_zero: [i8; 8]
+}
+
+#[enable_if(target_os="windows")]
+impl sockaddr_in {
+    pub func instance() -> sockaddr_in {
+        return sockaddr_in {
+            sin_family: 0,
+            sin_port: 0,
+            sin_addr: in_addr { s_addr: 0 }
+            // sin_zero should be all zero because of llvm zeroinitializer
+        };
+    }
+
+    pub func set(self, domain: af_domain, ip: i8*, port: u16) {
+        self.sin_family = domain => i16;
+        self.sin_port = htons(port);
+        self.sin_addr.s_addr = inet_addr(ip);
+    }
+}
+
 impl sockaddr_in {
     pub func to_str(self) -> str {
         var res = str::from(inet_ntoa(self.sin_addr));

@@ -104,7 +104,8 @@ def lift_first_version_compiler():
             USED_CLANG,
             lifted_ll,
             "-o", LIFTED_COMPILER,
-            "-g", "-Oz"
+            "-g", "-Oz",
+            "-ldbghelp", "-lws2_32", "-lkernel32"
         ])
     else:
         execute([
