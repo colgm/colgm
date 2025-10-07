@@ -27,6 +27,8 @@ pub func main() -> i32 {
 ## Repo Content
 
 - [bootstrap](./bootstrap/main.cpp) : bootstrap compiler.
+- [doc](./doc) : documentation.
+- [misc](./misc/) : build and test scripts.
 - [src](./src/main.colgm) : self-host compiler.
 - [test](./test): test cases.
 

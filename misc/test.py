@@ -2,6 +2,7 @@ import subprocess
 import os
 import sys
 import shutil
+import time
 
 def execute(cmd: list[str], do_print: bool = True) -> int:
     if do_print:
@@ -36,6 +37,7 @@ TEST_LIST = [
     ("test/match.colgm",                   "src"),
     ("test/negative.colgm",                "src"),
     ("test/ref_variable_assign.colgm",     "src"),
+    ("test/sleep.colgm",                   "src"),
     ("test/std_test.colgm",                "src"),
     ("test/string.colgm",                  "src"),
     ("test/tagged_union.colgm",            "src"),
@@ -61,6 +63,7 @@ for (test, lib) in TEST_LIST:
     if ret != 0:
         continue
     execute(["./test.out"], False)
+    time.sleep(0.1)
 
 if os.path.exists("test.out"):
     os.remove("test.out")
