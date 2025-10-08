@@ -105,6 +105,7 @@ def lift_first_version_compiler():
             lifted_ll,
             "-o", LIFTED_COMPILER,
             "-g", "-Oz",
+            "-Xclang", "-triple=x86_64-pc-windows-msvc",
             "-ldbghelp", "-lws2_32", "-lkernel32"
         ])
     else:
