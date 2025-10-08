@@ -3,6 +3,7 @@ import subprocess
 import time
 import os
 import sys
+import shutil
 
 COMPILER = "build/colgm_self_host"
 if sys.platform == "win32":
@@ -24,6 +25,7 @@ def compile_tcp():
         COMPILER,
         "--library", "src",
         "test/socket/tcp_example.colgm",
+        "-g",
         "-o", "tcp_udp_test.out"
     ])
 
@@ -32,8 +34,21 @@ def compile_udp():
         COMPILER,
         "--library", "src",
         "test/socket/udp_example.colgm",
+        "-g",
         "-o", "tcp_udp_test.out"
     ])
+
+def clear():
+    if os.path.exists("tcp_udp_test.out"):
+        os.remove("tcp_udp_test.out")
+    if os.path.exists("tcp_udp_test.out.ll"):
+        os.remove("tcp_udp_test.out.ll")
+    if os.path.exists("tcp_udp_test.out.dSYM"):
+        shutil.rmtree("tcp_udp_test.out.dSYM")
+    if os.path.exists("tcp_udp_test.ilk"):
+        os.remove("tcp_udp_test.ilk")
+    if os.path.exists("tcp_udp_test.pdb"):
+        os.remove("tcp_udp_test.pdb")
 
 ERROR_RETURN = False
 
@@ -83,7 +98,4 @@ if __name__ == "__main__":
     check_required()
     test_tcp()
     test_udp()
-    if os.path.exists("tcp_udp_test.out"):
-        os.remove("tcp_udp_test.out")
-    if os.path.exists("tcp_udp_test.out.ll"):
-        os.remove("tcp_udp_test.out.ll")
+    clear()

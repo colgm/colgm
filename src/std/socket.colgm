@@ -85,11 +85,11 @@ impl sockaddr_in {
 
 #[enable_if(target_os="windows")]
 pub struct sockaddr_in {
-    sin_family: i16,
-    sin_port: u16,
-    sin_addr: in_addr,
-    sin_zero: [i8; 8]
-}
+    sin_family: i16,   // 2 align 2
+    sin_port: u16,     // 2 align 2
+    sin_addr: in_addr, // 4 align 4
+    sin_zero: [i8; 8]  // 8 align 1
+} // 16 align 4
 
 #[enable_if(target_os="windows")]
 impl sockaddr_in {
@@ -142,8 +142,62 @@ pub extern func recvfrom(sockfd: i32, buf: i8*, len: u64, flags: i32, addr: sock
 pub func s_socket(domain: af_domain, type: sock_kind, protocol: ip_proto) -> i32 {
     var fd = socket(domain => i32, type => i32, protocol => i32);
     if (fd < 0) {
-        perror("socket");
+        perror("std::s_socket: socket");
         panic("error creating socket");
     }
     return fd;
+}
+
+#[enable_if(target_os="windows", arch="x86_64")]
+struct WSAData {
+    wVersion: u16,
+    wHighVersion: u16,
+    iMaxSockets: u16,
+    iMaxUdpDg: u16,
+    lpVendorInfo: i8*,
+    szDescription: [i8; 257],
+    szSystemStatus: [i8; 129]
+}
+#[enable_if(target_os="windows")]
+extern func WSAStartup(wVersionRequested: u16, lpWSAData: WSAData*) -> i32;
+#[enable_if(target_os="windows")]
+extern func WSACleanup() -> i32;
+
+#[enable_if(target_os="linux")]
+pub func closesocket(sockfd: i32) -> i32 {
+    return close(sockfd);
+}
+#[enable_if(target_os="macos")]
+pub func closesocket(sockfd: i32) -> i32 {
+    return close(sockfd);
+}
+#[enable_if(target_os="windows")]
+pub extern func closesocket(sockfd: i32) -> i32;
+
+#[enable_if(target_os="linux")]
+pub func socket_init() -> bool {
+    return true;
+}
+#[enable_if(target_os="linux")]
+pub func socket_cleanup() {}
+
+#[enable_if(target_os="macos")]
+pub func socket_init() -> bool {
+    return true;
+}
+#[enable_if(target_os="macos")]
+pub func socket_cleanup() {}
+
+#[enable_if(target_os="windows")]
+pub func socket_init() -> bool {
+    var wsaData = WSAData {};
+    if (WSAStartup(0x202, wsaData.__ptr__()) != 0) {
+        perror("std::winsock_init: WSAStartup");
+        return false;
+    }
+    return true;
+}
+#[enable_if(target_os="windows")]
+pub func socket_cleanup() {
+    WSACleanup();
 }

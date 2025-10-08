@@ -3,6 +3,7 @@ use std::time::{ sleep };
 use std::io::{ io };
 use std::str::{ str };
 
+use std::socket::{ socket_init, socket_cleanup };
 use std::udp::{ udp_server, udp_client };
 use std::tcp::{ tcp_server, tcp_client };
 
@@ -73,11 +74,13 @@ func main(argc: i32, argv: i8**) -> i32 {
         io::stdout().out("Usage: ./a.out <server|client>\n");
         return -1;
     }
+    socket_init();
     if (streq(argv[1], "server")) {
         udp_server_loop();
     }
     if (streq(argv[1], "client")) {
         udp_client_loop();
     }
+    socket_cleanup();
     return 0;
 }

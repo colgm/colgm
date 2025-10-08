@@ -7,9 +7,10 @@ use std::socket::{
     af_domain,
     sock_kind,
     ip_proto,
+    closesocket
 };
 use std::str::{ str };
-use std::libc::{ close, perror };
+use std::libc::{ perror };
 use std::panic::{ panic };
 
 pub struct udp_server {
@@ -21,7 +22,7 @@ pub struct udp_server {
 impl udp_server {
     pub func delete(self) {
         if (self.sockfd > 0) {
-            close(self.sockfd);
+            closesocket(self.sockfd);
         }
     }
 
@@ -99,7 +100,7 @@ pub struct udp_client {
 impl udp_client {
     pub func delete(self) {
         if (self.sockfd > 0) {
-            close(self.sockfd);
+            closesocket(self.sockfd);
         }
     }
 
@@ -120,14 +121,6 @@ impl udp_client {
         }
 
         udp_res.server_addr.set(af_domain::AF_INET, ip, port);
-
-        if (bind(udp_res.sockfd,
-                 udp_res.client_addr.__ptr__(),
-                 sockaddr_in::__size__() => u32) < 0) {
-            perror("bind");
-            panic("error binding socket");
-        }
-
         return udp_res;
     }
 

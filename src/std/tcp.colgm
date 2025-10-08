@@ -10,9 +10,10 @@ use std::socket::{
     af_domain,
     sock_kind,
     ip_proto,
+    closesocket
 };
 use std::str::{ str };
-use std::libc::{ close, perror };
+use std::libc::{ perror };
 use std::panic::{ panic };
 
 pub struct tcp_server {
@@ -25,10 +26,10 @@ pub struct tcp_server {
 impl tcp_server {
     pub func delete(self) {
         if (self.sockfd > 0) {
-            close(self.sockfd);
+            closesocket(self.sockfd);
         }
         if (self.client_sockfd > 0) {
-            close(self.client_sockfd);
+            closesocket(self.client_sockfd);
         }
     }
 
@@ -105,7 +106,7 @@ pub struct tcp_client {
 impl tcp_client {
     pub func delete(self) {
         if (self.sockfd > 0) {
-            close(self.sockfd);
+            closesocket(self.sockfd);
         }
     }
 
