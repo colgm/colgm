@@ -27,6 +27,14 @@ func dump_resolved_type(out: io&, pkg: package&, ty: type&) {
     var name = ty.full_path_name_with_pointer(pkg.__ptr__());
     defer name.delete();
 
+    if (ty.is_global_func ||
+        ty.m_info.is_struct_method ||
+        ty.m_info.is_primitive_method) {
+        out.red().out("[function] ").reset();
+    } else if (ty.is_global_sym) {
+        out.red().out("[global] ").reset();
+    }
+
     out.cyan().out("[type: ").out(name.c_str).out("] ").reset();
 }
 
