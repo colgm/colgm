@@ -23,6 +23,18 @@ use sir::sir::*;
 use sir::context::{ sir_context };
 use sir::mir2sir::{ mir2sir };
 
+func adjust_compile_option(cmd: str&) {
+    if (!is_windows()) {
+        // clang on windows need to link with msvcrt.lib
+        // but macOS/linux need to link with math library
+        cmd.append(" -rdynamic -lm");
+    } else {
+        // specify the triple, without suffix
+        cmd.append(" -Xclang -triple=x86_64-pc-windows-msvc");
+        cmd.append(" -ldbghelp -lws2_32 -lkernel32");
+    }
+}
+
 func clang_compile(co: cli_option&) -> i32 {
     if (co.EMIT_LLVM_ONLY) {
         io::stdout().green().out("     CLANG ").reset();
@@ -70,16 +82,9 @@ func clang_compile(co: cli_option&) -> i32 {
     if (co.DEBUG_MODE) {
         cmd.append(" -g");
     }
-    cmd.append(" -o ");
-    cmd.append(co.output_file);
-    if (!is_windows()) {
-        // clang on windows need to link with msvcrt.lib
-        // but macOS/linux need to link with math library
-        cmd.append(" -rdynamic -lm");
-    } else {
-        cmd.append(" -Xclang -triple=x86_64-pc-windows-msvc");
-        cmd.append(" -ldbghelp -lws2_32 -lkernel32");
-    }
+    cmd.append(" -o ").append(co.output_file);
+    adjust_compile_option(cmd);
+
     if (co.VERBOSE) {
         io::stdout().green().out("     CLANG ").reset();
         io::stdout().out("Executing ");
@@ -126,6 +131,31 @@ func nasal_target_output(option: cli_option,
     io::stdout().out_f64(time_stamp.elapsed_msec()).out(" ms\n");
 }
 
+func output_ll_file(option: cli_option&, sctx: sir_context&) {
+    var ll_file = str::from(option.output_file);
+    ll_file.append(".ll");
+    defer ll_file.delete();
+
+    if (option.VERBOSE) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Generating ");
+        io::stdout().cyan().out("<").out(option.output_file).out(".ll> ").reset();
+    }
+
+    // make time stamp
+    var time_stamp = maketimestamp();
+    time_stamp.stamp();
+
+    // output
+    var file_output = io::fileout(ll_file.c_str);
+    sctx.dump(file_output);
+    file_output.close();
+
+    if (option.VERBOSE) {
+        io::stdout().out_f64(time_stamp.elapsed_msec()).out(" ms\n");
+    }
+}
+
 func compile(option: cli_option&) -> i32 {
     var err = io::stderr();
     if (!fs::exists(option.input_file)) {
@@ -159,8 +189,7 @@ func compile(option: cli_option&) -> i32 {
     defer cc.delete();
 
     // global symbol table
-    var gt = global_symbol_table::instance();
-    gt.main_input_file.append(option.input_file);
+    var gt = global_symbol_table::instance(option.input_file);
     defer gt.delete();
 
     // semantic context
@@ -291,22 +320,7 @@ func compile(option: cli_option&) -> i32 {
         return -1;
     }
 
-    var ll_file = str::from(option.output_file);
-    ll_file.append(".ll");
-    defer ll_file.delete();
-
-    var file_output = io::fileout(ll_file.c_str);
-    if (option.VERBOSE) {
-        io::stdout().green().out("  SIR-PASS ").reset();
-        io::stdout().out("Generating ");
-        io::stdout().cyan().out("<").out(option.output_file).out(".ll> ").reset();
-    }
-    time_stamp.stamp();
-    sctx.dump(file_output);
-    file_output.close();
-    if (option.VERBOSE) {
-        io::stdout().out_f64(time_stamp.elapsed_msec()).out(" ms\n");
-    }
+    output_ll_file(option, sctx);
 
     return clang_compile(option);
 }
@@ -432,15 +446,21 @@ func main(argc: i32, argv: i8**) -> i32 {
 
     // set default output file
     if (option.output_file == nil) {
-        option.output_file = "a.out";
+        if (is_windows()) {
+            option.output_file = "a.exe";
+        } else {
+            option.output_file = "a.out";
+        }
     }
+
     // set default library path
     if (option.library_path == nil) {
         option.library_path = ".";
     }
 
     // clang may return 256 if error ocurred
-    // when cast to u8, this may return 0, so we check the return code
+    // when cast to u8 (on some platforms), this equals to returning 0
+    // so we check the return code
     if (compile(option) != 0) {
         return -1;
     }

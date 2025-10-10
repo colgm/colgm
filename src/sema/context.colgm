@@ -16,16 +16,16 @@ use sema::type::{ type };
 use sema::symbol_info::{ symbol_info };
 
 pub struct global_symbol_table {
-    main_input_file: str,
+    main_entry_file: str,
     constant_string: hashset<str>,
     primitives: hashmap<str, colgm_primitive>,
     domain: hashmap<str, colgm_module>
 }
 
 impl global_symbol_table {
-    pub func instance() -> global_symbol_table {
+    pub func instance(main_entry: const i8*) -> global_symbol_table {
         return global_symbol_table {
-            main_input_file: str::instance(),
+            main_entry_file: str::from(main_entry),
             constant_string: hashset<str>::instance(),
             primitives: hashmap<str, colgm_primitive>::instance(),
             domain: hashmap<str, colgm_module>::instance()
@@ -33,7 +33,7 @@ impl global_symbol_table {
     }
 
     pub func delete(self) {
-        self.main_input_file.delete();
+        self.main_entry_file.delete();
         self.constant_string.delete();
         self.primitives.delete();
         self.domain.delete();

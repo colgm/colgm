@@ -1,6 +1,7 @@
 import subprocess
 import os
 import sys
+import shutil
 
 def is_windows() -> bool:
     return sys.platform == "win32"
@@ -130,7 +131,17 @@ def build_self_host_compiler():
 
 def test_self_lift():
     if is_windows():
-        print("Skipping self-lift test on Windows")
+        # windows does not allow to overwrite executable while it is running
+        SELF_HOST_COMPILER_TEMP = os.path.join(BUILD_DIRECTORY, "colgm_self_host_temp.exe")
+        execute([
+            SELF_HOST_COMPILER,
+            "--library", "src",
+            "src/main.colgm",
+            "--verbose", "-g", "-Oz",
+            "-o",
+            SELF_HOST_COMPILER_TEMP
+        ])
+        shutil.move(SELF_HOST_COMPILER_TEMP, SELF_HOST_COMPILER)
         return
     execute([
         SELF_HOST_COMPILER,

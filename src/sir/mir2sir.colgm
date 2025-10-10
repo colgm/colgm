@@ -3292,8 +3292,8 @@ impl mir2sir {
         var llvm_dbg_cu = DI_named_metadata::new("llvm.dbg.cu");
         self.sctx->named_metadata.push(llvm_dbg_cu);
 
-        var main_input_file_index = self.sctx->DI_file_map.get(
-            self.ctx->global->main_input_file
+        var main_entry_index = self.sctx->DI_file_map.get(
+            self.ctx->global->main_entry_file
         );
         self.dwarf_status.compile_unit_index = self.dwarf_status.DI_counter;
         
@@ -3304,7 +3304,7 @@ impl mir2sir {
         var cu = DI_compile_unit::new(
             self.dwarf_status.DI_counter,
             version_str.c_str,
-            main_input_file_index
+            main_entry_index
         );
         llvm_dbg_cu->add(DI_ref_index::new(self.dwarf_status.DI_counter));
         self.sctx->debug_info.push(cu);
