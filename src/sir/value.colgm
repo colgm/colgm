@@ -13,11 +13,8 @@ pub struct value_t {
 }
 
 impl value_t {
-    pub func instance() -> value_t {
-        return value_t {
-            kind: value_kind::null,
-            content: str::from("")
-        };
+    pub func instance(kind: value_kind, content: const i8*) -> value_t {
+        return value_t { kind: kind, content: str::from(content) };
     }
 
     pub func delete(self) {
@@ -25,10 +22,7 @@ impl value_t {
     }
 
     pub func clone(self) -> value_t {
-        return value_t {
-            kind: self.kind,
-            content: self.content.clone()
-        };
+        return value_t { kind: self.kind, content: self.content.clone() };
     }
 
     pub func dump(self, out: io&) {
@@ -38,37 +32,25 @@ impl value_t {
                     out.out("<null: ").out(self.content.c_str).out(">");
                 }
             }
-            value_kind::variable => {
-                out.out("%").out(self.content.c_str);
-            }
-            value_kind::literal => {
-                out.out(self.content.c_str);
-            }
+            value_kind::variable => out.out("%").out(self.content.c_str);
+            value_kind::literal => out.out(self.content.c_str);
         }
     }
 }
 
 impl value_t {
     pub func null(name: const i8*) -> value_t {
-        var res = value_t::instance();
-        res.kind = value_kind::null;
-        if (name != nil) {
-            res.content.append(name);
+        if (name == nil) {
+            return value_t::instance(value_kind::null, "");
         }
-        return res;
+        return value_t::instance(value_kind::null, name);
     }
 
     pub func variable(name: str&) -> value_t {
-        var res = value_t::instance();
-        res.kind = value_kind::variable;
-        res.content.append(name.c_str);
-        return res;
+        return value_t::instance(value_kind::variable, name.c_str);
     }
 
     pub func literal(name: str&) -> value_t {
-        var res = value_t::instance();
-        res.kind = value_kind::literal;
-        res.content.append(name.c_str);
-        return res;
+        return value_t::instance(value_kind::literal, name.c_str);
     }
 }

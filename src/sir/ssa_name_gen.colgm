@@ -1,4 +1,5 @@
 use std::str::{ str };
+use sir::value::{ value_t };
 
 pub struct ssa_generator {
     counter: i64
@@ -16,6 +17,13 @@ impl ssa_generator {
     pub func create(self) -> str {
         var res = str::from_i64(self.counter);
         self.counter += 1;
+        return res;
+    }
+
+    pub func create_variable(self) -> value_t {
+        var index = self.create();
+        defer index.delete();
+        var res = value_t::variable(index);
         return res;
     }
 }
