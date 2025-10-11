@@ -26,6 +26,7 @@ TEST_LIST = [
     ("test/continue_break.colgm",          "src"),
     ("test/defer.colgm",                   "src"),
     ("test/enum_test.colgm",               "src"),
+    ("test/errno.colgm",                   "src"),
     ("test/for_iter.colgm",                "src"),
     ("test/for_test.colgm",                "src"),
     ("test/func.colgm",                    "src"),

@@ -1,0 +1,22 @@
+#[enable_if(target_os = "windows")]
+extern func _errno() -> i32*;
+#[enable_if(target_os = "windows")]
+pub func errno() -> i32 {
+    return _errno()[0];
+}
+
+#[enable_if(target_os = "linux")]
+extern func __errno_location() -> i32*;
+#[enable_if(target_os = "linux")]
+pub func errno() -> i32 {
+    return __errno_location()[0];
+}
+
+#[enable_if(target_os = "macos")]
+extern func __error() -> i32*;
+#[enable_if(target_os = "macos")]
+pub func errno() -> i32 {
+    return __error()[0];
+}
+
+pub extern func strerror(errnum: i32) -> const i8*;
