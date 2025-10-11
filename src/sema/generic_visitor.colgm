@@ -863,6 +863,18 @@ impl generic_visitor {
         return true;
     }
 
+    func clear_node_and_remove_method(self, s: colgm_struct&, func_node: ast_func_decl*) {
+        var monomorphic_name = func_node->get_monomorphic_name();
+        if (s.method.has(monomorphic_name)) {
+            s.method.remove(monomorphic_name);
+        } else if (s.static_method.has(monomorphic_name)) {
+            s.static_method.remove(monomorphic_name);
+        }
+        
+        var n = func_node => ast*;
+        n->delete();
+        free(n => i8*);
+    }
 
     func remove_cond_compile_method(self, s: colgm_struct&, g_data: generic_data&) {
         foreach (var i; s.generic_struct_impl) {
@@ -880,33 +892,25 @@ impl generic_visitor {
                 var monomorphic_name = func_node->get_monomorphic_name();
                 var trivial_cond = func_node->get_trivial_cond();
                 if (trivial_cond != nil && !self.check_is_trivial(trivial_cond, g_data)) {
-                    var n = func_node => ast*;
-                    n->delete();
-                    free(n => i8*);
+                    self.clear_node_and_remove_method(s, func_node);
                     continue;
                 }
 
                 var non_trivial_cond = func_node->get_non_trivial_cond();
                 if (non_trivial_cond != nil && !self.check_is_non_trivial(non_trivial_cond, g_data)) {
-                    var n = func_node => ast*;
-                    n->delete();
-                    free(n => i8*);
+                    self.clear_node_and_remove_method(s, func_node);
                     continue;
                 }
 
                 var is_pointer_cond = func_node->get_is_pointer_cond();
                 if (is_pointer_cond != nil && !self.check_is_pointer(is_pointer_cond, g_data)) {
-                    var n = func_node => ast*;
-                    n->delete();
-                    free(n => i8*);
+                    self.clear_node_and_remove_method(s, func_node);
                     continue;
                 }
 
                 var is_non_pointer_cond = func_node->get_is_non_pointer_cond();
                 if (is_non_pointer_cond != nil && !self.check_is_non_pointer(is_non_pointer_cond, g_data)) {
-                    var n = func_node => ast*;
-                    n->delete();
-                    free(n => i8*);
+                    self.clear_node_and_remove_method(s, func_node);
                     continue;
                 }
 
@@ -950,7 +954,7 @@ impl generic_visitor {
                 new_vec.push(func_node => ast*);
             }
             if (new_vec.size != impl_node->methods.size) {
-                impl_node->reset_methods(new_vec.__ptr__());
+                impl_node->reset_methods(new_vec);
             }
         }
     }
