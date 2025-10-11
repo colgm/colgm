@@ -825,7 +825,7 @@ type semantic::resolve_call_id(call_id* node) {
             name.pop_back();
         }
         name += ">";
-        
+
         if (!ctx.global.domain.count(infer.loc_file)) {
             rp.report(node, "namespace in \"" + infer.loc_file + "\" not found");
             return infer;
@@ -905,7 +905,7 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
             node->set_resolve_type(method.return_type);
             return method.return_type;
         }
-        
+
         rp.report(node,
             "cannot find \"" + prev.generic_name() + "\""
         );
@@ -1675,7 +1675,7 @@ size_t semantic::get_enum_literal_value(expr* node, const type& infer) {
     if (!dm.enums.count(name)) {
         return SIZE_MAX;
     }
-    
+
     const auto& em = dm.enums.at(name);
     const auto path_node = reinterpret_cast<call_path*>(call_node->get_chain()[0]);
     const auto& ename = path_node->get_name();
@@ -1745,7 +1745,7 @@ void semantic::resolve_match_stmt_for_enum(match_stmt* node,
             rp.report(case_node, "case value should be enum literal");
             continue;
         }
-    
+
         const auto value = get_enum_literal_value(case_node, infer);
         if (value == SIZE_MAX) {
             // unreachable
@@ -2319,7 +2319,7 @@ void semantic::resolve_impl(impl* node) {
     const auto& domain = node->is_redirected()
         ? ctx.get_domain(node->get_redirect_location())
         : ctx.get_domain(node->get_file());
-    
+
     if (domain.structs.count(node->get_name())) {
         const auto& struct_self = domain.structs.at(node->get_name());
         impl_struct_name = node->get_name();

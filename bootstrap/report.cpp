@@ -51,7 +51,7 @@ void flstream::load(const std::string& f) {
     if (file==f) { // don't need to load a loaded file
         return;
     }
-    
+
     // update file name
     file = f;
 
@@ -61,7 +61,7 @@ void flstream::load(const std::string& f) {
         std::cerr << red << "src: " << reset << "cannot open <" << f << ">\n";
         std::exit(1);
     }
-    
+
     while (!in.eof()) {
         std::string line;
         std::getline(in, line);

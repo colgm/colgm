@@ -189,5 +189,5 @@ public:
     const error& analyse(const std::vector<token>&);
     auto get_result() { return result; }
 };
-    
+
 }

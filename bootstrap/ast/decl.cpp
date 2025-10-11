@@ -153,7 +153,7 @@ void tagged_union_decl::accept(visitor* v) {
     v->visit_tagged_union_decl(this);
 }
 
-tagged_union_decl* tagged_union_decl::clone() const { 
+tagged_union_decl* tagged_union_decl::clone() const {
     auto ret = new tagged_union_decl(location);
     ret->name = name;
     ret->ref_enum_name = ref_enum_name;
@@ -283,7 +283,7 @@ bool func_decl::contain_cond() const {
     return false;
 }
 
-cond_compile* func_decl::get_trivial_cond() const { 
+cond_compile* func_decl::get_trivial_cond() const {
     for (auto i : conds) {
         if (i->get_condition_name() == "is_trivial") {
             return i;
@@ -292,7 +292,7 @@ cond_compile* func_decl::get_trivial_cond() const {
     return nullptr;
 }
 
-cond_compile* func_decl::get_non_trivial_cond() const { 
+cond_compile* func_decl::get_non_trivial_cond() const {
     for (auto i : conds) {
         if (i->get_condition_name() == "is_non_trivial") {
             return i;
@@ -301,7 +301,7 @@ cond_compile* func_decl::get_non_trivial_cond() const {
     return nullptr;
 }
 
-cond_compile* func_decl::get_is_pointer_cond() const { 
+cond_compile* func_decl::get_is_pointer_cond() const {
     for (auto i : conds) {
         if (i->get_condition_name() == "is_pointer") {
             return i;
@@ -310,7 +310,7 @@ cond_compile* func_decl::get_is_pointer_cond() const {
     return nullptr;
 }
 
-cond_compile* func_decl::get_is_non_pointer_cond() const { 
+cond_compile* func_decl::get_is_non_pointer_cond() const {
     for (auto i : conds) {
         if (i->get_condition_name() == "is_non_pointer") {
             return i;

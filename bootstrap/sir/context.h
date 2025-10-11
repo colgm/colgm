@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include "colgm.h"
 #include "report.h"

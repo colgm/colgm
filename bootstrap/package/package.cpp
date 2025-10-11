@@ -28,7 +28,6 @@ void package_manager::dump_packages() {
 
 void package_manager::recursive_dump_modules(colgm_package* pkg,
                                              const std::string& path) {
-    
     const auto parent_path = path.empty()? "":(path + "::");
     for (const auto& i : pkg->sub_pack) {
         recursive_dump_modules(i.second, parent_path + pkg->package_name);

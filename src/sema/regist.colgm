@@ -195,7 +195,7 @@ impl regist_pass {
                 info.append("\"");
                 defer info.delete();
 
-                self.err->error(name_node->base.location, info.c_str);                
+                self.err->error(name_node->base.location, info.c_str);
                 continue;
             }
 
@@ -502,7 +502,7 @@ impl regist_pass {
         );
         defer sym_info.delete();
 
-        self.ctx->global_symbol().insert(time_func_name, sym_info);        
+        self.ctx->global_symbol().insert(time_func_name, sym_info);
     }
 }
 
@@ -567,7 +567,7 @@ impl regist_pass {
                 );
             }
         }
-        
+
         foreach (var i; node->members) {
             var n_ast = i.get()=> ast_enum_member*;
             var value = i.index() => i64;
@@ -608,7 +608,7 @@ impl regist_pass {
         );
         defer sym_info.delete();
 
-        self.ctx->global_symbol().insert(name, sym_info);        
+        self.ctx->global_symbol().insert(name, sym_info);
     }
 
     func scan_enums(self) {
@@ -681,7 +681,7 @@ impl regist_pass {
                 f->param_name.push(param_name);
                 f->param_type.push(param_type);
                 f->param_location.insert(param_name, n->location);
-                f->unordered_params.insert(param_name, param_type);                
+                f->unordered_params.insert(param_name, param_type);
                 param_loc_map.insert(param_name, n_ast->base.location);
             } else {
                 var param_type = self.tr.resolve(n_ast->type);
@@ -877,7 +877,7 @@ impl regist_pass {
 
             struct_info.fields.insert(fld_name, sym_type);
             struct_info.ordered_fields.push(fld_name);
-            struct_info.fields_span.insert(fld_name, fld->base.location);            
+            struct_info.fields_span.insert(fld_name, fld->base.location);
         }
 
         var struct_self_type = type::instance(name.c_str, node->base.location.file.c_str);
@@ -889,14 +889,14 @@ impl regist_pass {
                 var ty = self.tr.resolve(gt => ast_type_def*);
                 defer ty.delete();
 
-                struct_self_type.generics.push(ty);                
+                struct_self_type.generics.push(ty);
             }
         }
 
         self.regist_struct_size_method(struct_info);
         self.regist_struct_alloc_method(struct_info, struct_self_type);
         self.regist_struct_ptr_method(struct_info, struct_self_type);
-        self.ctx->generics.clear();        
+        self.ctx->generics.clear();
     }
 
     func regist_struct_size_method(self, struct_info: colgm_struct&) {
@@ -1217,7 +1217,7 @@ impl regist_pass {
         self.check_ref_enum(node, union_info);
 
         // insert to domain
-        var dm = self.ctx->get_domain(node->base.location.file);        
+        var dm = self.ctx->get_domain(node->base.location.file);
         dm.tagged_unions.insert(name, union_info);
 
         var sym_info = symbol_info::instance(

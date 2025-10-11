@@ -30,7 +30,7 @@ public:
     cond_compile(const span& loc, const std::string& n):
         decl(ast_type::ast_cond_compile, loc),
         condition_name(n) {}
-    
+
     ~cond_compile() override = default;
     void accept(visitor*) override;
     cond_compile* clone() const override;
@@ -199,7 +199,7 @@ public:
     const auto& get_name() const { return name; }
     void set_generic_types(generic_type_list* node) { generic_types = node; }
     auto get_generic_types() const { return generic_types; }
-    void clear_generic_types() { 
+    void clear_generic_types() {
         if (generic_types) {
             delete generic_types;
             generic_types = nullptr;
@@ -215,7 +215,7 @@ public:
     const auto& get_conds() const { return conds; }
 };
 
-class tagged_union_decl: public decl { 
+class tagged_union_decl: public decl {
 private:
     std::vector<field_pair*> fields;
     std::string name;

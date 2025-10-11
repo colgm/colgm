@@ -504,7 +504,7 @@ impl ast2mir {
 
     func generate_match_case(self, n: ast_match_case*) -> mir_switch_case* {
         var temp = self.block;
-        
+
         var ty = n->pattern->base.resolved_type.__ptr__();
         var dm = self.ctx->get_domain(ty->loc_file);
         var index: i64 = 0;
@@ -528,7 +528,7 @@ impl ast2mir {
         self.block = body_block;
         self.generate_code_block(n->body);
         self.block = temp;
-        
+
         return mir_switch_case::new(n->base.location, index, body_block);
     }
 
@@ -778,7 +778,7 @@ impl ast2mir {
             var t = self.tr.resolve(i.get()->type);
             defer t.delete();
 
-            un.member_type.push(t);            
+            un.member_type.push(t);
         }
         self.mctx->tagged_unions.push(un);
     }
@@ -802,7 +802,7 @@ impl ast2mir {
         }
         return self.tr.resolve(n);
     }
-    
+
     func visit_func_decl(self, n: ast_func_decl*) {
         if (n->generic_types != nil) {
             return;
@@ -830,10 +830,10 @@ impl ast2mir {
             defer tmp_ty_name.delete();
 
             name.clear();
-            name.append_str(tmp_ty_name);            
+            name.append_str(tmp_ty_name);
         }
 
-		// resolve return type, if n->return_type is nil, get void type 
+		// resolve return type, if n->return_type is nil, get void type
         var ret_ty = self.resolve_func_return_type(n->return_type);
         defer ret_ty.delete();
         var f = mir_func::instance(name.c_str, n->base.location, ret_ty);

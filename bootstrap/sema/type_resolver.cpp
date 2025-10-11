@@ -43,7 +43,7 @@ type type_resolver::resolve(ast::type_def* node) {
     const auto& dm = node->is_redirected()
         ? ctx.get_domain(node->get_redirect_location())
         : ctx.get_domain(node->get_file());
-    
+
     if (name == "void" && node->get_pointer_level() == 0 && node->get_is_reference()) {
         rp.report(node->get_name(), "cannot use reference void type");
         return type::error_type();

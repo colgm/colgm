@@ -180,7 +180,7 @@ pub struct mir2sir {
     ssa_gen: ssa_generator,
     array_ssa_gen: ssa_generator,
     var_ssa_suffix: u64,
-    
+
     value_stack: vec<mir_value_t>,
 
     locals: local_table,
@@ -295,7 +295,7 @@ impl mir2sir {
 
             var s_ty = type::instance(m_un.name.c_str, m_un.location.file.c_str);
             defer s_ty.delete();
-            
+
             var s_ty_name = s_ty.full_path_name(self.pkg);
             var s_ty_llvm_name = mangle_tagged_union_name(s_ty_name);
             defer {
@@ -347,7 +347,7 @@ impl mir2sir {
 
             var s_ty = type::instance(m_stct.name.c_str, m_stct.location.file.c_str);
             defer s_ty.delete();
-            
+
             var s_ty_name = s_ty.full_path_name(self.pkg);
             var s_ty_llvm_name = mangle_struct_name(s_ty_name);
             defer {
@@ -520,7 +520,7 @@ impl mir2sir {
             foreach (var j; dm.enums) {
                 var e_type = type::instance(j.value().name.c_str, j.value().location.file.c_str);
                 defer e_type.delete();
-                
+
                 var e_name = e_type.full_path_name(self.pkg);
                 defer e_name.delete();
 
@@ -1327,7 +1327,7 @@ impl mir2sir {
 
         var dm = self.ctx->get_domain(n->resolved_type.loc_file);
 
-        if (dm.structs.has(name_for_search)) {        
+        if (dm.structs.has(name_for_search)) {
             var st = dm.structs.get(name_for_search);
 
             foreach (var i; n->fields) {
@@ -1572,7 +1572,7 @@ impl mir2sir {
 
         self.push_mir_value_variable(temp_var, source_ref);
     }
-    
+
     func visit_mir_call(self, n: mir_call*) {
         self.call_expr_gen(n, false);
     }
@@ -1785,13 +1785,13 @@ impl mir2sir {
                 target_value.delete();
                 mangled_name.delete();
             }
-            
+
             sir_function_call = sir_call::new(
                 mangled_name.__ptr__(),
                 n_ty.__ptr__(),
                 target_value.__ptr__(),
                 self.generate_DI_location(n->base.location)
-            );            
+            );
         } else {
             var n_ty = self.type_mapping(n->resolved_type);
             var target_value = value_t::null(nil);
@@ -1841,7 +1841,7 @@ impl mir2sir {
                 target_value.delete();
                 temp_var_value.delete();
             }
-            
+
             self.block->add_move_register(sir_alloca::new(
                 real.__ptr__(),
                 n_ty.__ptr__()
@@ -2075,7 +2075,7 @@ impl mir2sir {
         }
 
         var dm = self.ctx->get_domain(prev.resolved_type.loc_file);
-        
+
         if (dm.structs.has(prev_name_for_search)) {
             var st = dm.structs.get(prev_name_for_search);
 
@@ -2661,7 +2661,7 @@ impl mir2sir {
             self.block->add_stmt(br_cond => sir*);
             self.block->add_stmt(sir_label::new(self.block->stmts.size, "cond.true") => sir*);
         }
-        
+
         self.visit(n->content => mir*);
 
         // for block ends with ret instruction, another basic block is needed
@@ -3121,11 +3121,11 @@ impl mir2sir {
     func generate_llvm_ident(self) {
         var ident = DI_named_metadata::new("llvm.ident");
         self.sctx->named_metadata.push(ident);
-        
+
         var version_str = str::from("colgm compiler version ");
         version_str.append(version());
         defer version_str.delete();
-        
+
         var ver_list = DI_list::new(self.dwarf_status.DI_counter);
         ver_list->add(DI_string::new(version_str.c_str));
         ident->add(DI_ref_index::new(self.dwarf_status.DI_counter));
@@ -3235,7 +3235,7 @@ impl mir2sir {
             self.ctx->global->main_entry_file
         );
         self.dwarf_status.compile_unit_index = self.dwarf_status.DI_counter;
-        
+
         var version_str = str::from("colgm compiler version ");
         version_str.append(version());
         defer version_str.delete();
@@ -3640,7 +3640,7 @@ impl mir2sir {
         self.emit_struct(mctx);
         self.emit_func_decl(mctx);
         self.emit_func_impl(mctx);
-        
+
         self.run_sir_pass(view_unused_func, verbose);
     }
 }

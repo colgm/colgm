@@ -37,7 +37,7 @@ pub func main() -> i32 {
 See simple language guide in:
 
 - [language guide (English)](./doc/guide/tutorial.md)
-- [语言指南（中文版）](./doc/guide/tutorial_zh.md).
+- [语言指南（中文版）](./doc/guide/tutorial_zh.md)
 
 See library reference in:
 

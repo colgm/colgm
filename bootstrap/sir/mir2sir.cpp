@@ -98,7 +98,7 @@ void mir2sir::emit_tagged_union(const mir_context& mctx) {
             i->total_size,
             i->align
         );
-        
+
         tud->add_member_type(type_mapping(i->max_align_type));
         if (i->union_size > i->max_align_type_size) {
             tud->add_member_type(
@@ -309,7 +309,7 @@ void mir2sir::visit_mir_unary(mir_unary* node) {
             value_t::variable(temp_var),
             source.resolve_type.is_integer(),
             type_mapping(source.resolve_type)
-        ));        
+        ));
     } else if (node->get_opr()==mir_unary::opr_kind::bnot) {
         block->add_stmt(new sir_bnot(
             source.to_value_t(),

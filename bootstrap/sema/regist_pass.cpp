@@ -708,7 +708,7 @@ bool regist_pass::check_is_public_enum(ast::identifier* node,
     return true;
 }
 
-void regist_pass::import_global_symbol(ast::node* n, 
+void regist_pass::import_global_symbol(ast::node* n,
                                        const std::string& name,
                                        const symbol_info& sym,
                                        bool is_generic) {
