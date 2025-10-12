@@ -10,15 +10,15 @@ use std::pair::{ pair };
 use std::map::{ hashmap };
 use std::set::{ hashset };
 
-func check_main(func_map: hashmap<str, sir_func*>*) -> bool {
+func check_main(func_map: hashmap<str, sir_func*>&) -> bool {
     var main_name = str::from("main");
     defer main_name.delete();
 
-    if (!func_map->has(main_name)) {
+    if (!func_map.has(main_name)) {
         return false;
     }
 
-    var main_func = func_map->get(main_name);
+    var main_func = func_map.get(main_name);
     return main_func->body != nil && !main_func->body->stmts.empty();
 }
 
@@ -32,7 +32,7 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
     }
 
     // if main function does not exist or has no statement, return
-    if (!check_main(func_map.__ptr__())) {
+    if (!check_main(func_map)) {
         return;
     }
 
@@ -90,7 +90,11 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
             delete_count += 1;
             if (view_unused_func) {
                 io::stdout().out("[remove unused func] remove ");
-                io::stdout().cyan().out(f.name.c_str).reset().endln();
+                if (f.name.find('<') != str::npos()) {
+                    io::stdout().cyan().out(f.name.c_str).reset().endln();
+                } else {
+                    io::stdout().red().out(f.name.c_str).reset().endln();
+                }
             }
         }
     }

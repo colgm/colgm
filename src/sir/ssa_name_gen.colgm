@@ -14,14 +14,17 @@ impl ssa_generator {
         self.counter = 0;
     }
 
-    pub func create(self) -> str {
-        var res = str::from_i64(self.counter);
+    pub func create_index(self) -> i64 {
         self.counter += 1;
-        return res;
+        return self.counter - 1;
+    }
+
+    pub func create(self) -> str {
+        return str::from_i64(self.create_index());
     }
 
     pub func create_variable(self) -> value_t {
-        var index = self.create();
+        var index = str::from_i64(self.create_index());
         defer index.delete();
         var res = value_t::variable(index);
         return res;
