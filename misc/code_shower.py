@@ -55,7 +55,7 @@ class LineNumberDumper:
     def __init__(self, line_count):
         self.padding = len(str(line_count))
         self.count = 0
-    
+
     def dump(self):
         self.count += 1
         print(Colors.LINE + f"   {self.count:>{self.padding}} | " + Colors.END, end='')
@@ -65,7 +65,7 @@ class CodeShower:
         self.lines = []
         with open(file_path, 'r') as f:
             self.lines = f.readlines()
-    
+
     def dump_single_char(self, ch):
         operators = [
             ',', ';', '.', ':',
@@ -82,19 +82,19 @@ class CodeShower:
             return
         print(ch, end='', flush=True)
         time.sleep(0.01)
-    
+
     def dump_string(self, string: str):
         print(Colors.STRING, end='', flush=True)
         for ch in string:
             print(ch, end='', flush=True)
             time.sleep(0.01)
         print(Colors.END, end='', flush=True)
-    
+
     def dump_number(self, number: int):
         print(Colors.NUMBER, end='', flush=True)
         print(number, end='', flush=True)
         print(Colors.END, end='', flush=True)
-    
+
     def dump_identifier(self, identifier: str):
         keyword = [
             "use", "pub", "impl", "extern",
@@ -111,7 +111,7 @@ class CodeShower:
                 time.sleep(0.01)
             print(Colors.END, end='', flush=True)
             return
-        
+
         special_id = [
             "self", "std", "str", "io",
             "i8", "i16", "i32", "i64",
@@ -132,21 +132,21 @@ class CodeShower:
             print(ch, end='', flush=True)
             time.sleep(0.01)
         print(Colors.END, end='', flush=True)
-    
+
     def dump_function_call(self, function_call: str):
         print(Colors.FUNCTION_CALL, end='', flush=True)
         for ch in function_call:
             print(ch, end='', flush=True)
             time.sleep(0.01)
         print(Colors.END, end='', flush=True)
-    
+
     def dump_comment(self, comment: str):
         print(Colors.COMMENT, end='', flush=True)
         for ch in comment:
             print(ch, end='', flush=True)
             time.sleep(0.01)
         print(Colors.END, end='', flush=True)
-    
+
     def tokenize(self, line: str) -> list[tuple[str, str]]:
         res = []
 

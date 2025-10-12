@@ -13,7 +13,14 @@ def check_file(file_path):
             elif line.endswith(" "):
                 print(f"{loc} #{line.replace(' ', '.')}#")
 
+def check_suffix(file_path):
+    suffix = [".colgm", ".c", ".cpp", ".h", ".hpp", ".py", ".md"]
+    for s in suffix:
+        if file_path.endswith(s):
+            return True
+    return False
+
 for root, dirs, files in os.walk("."):
     for f in files:
-        if f.endswith(".colgm") or f.endswith(".cpp") or f.endswith(".h"):
+        if check_suffix(f):
             check_file(os.path.join(root, f))
