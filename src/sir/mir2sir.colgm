@@ -1762,25 +1762,23 @@ impl mir2sir {
         if (n->resolved_type.is_void()) {
             self.push_mir_value_variable(target, n->resolved_type);
         } else {
-            var temp_var = self.ssa_gen.create();
-            defer temp_var.delete();
+            var temp_var_value = self.ssa_gen.create_variable();
+            defer temp_var_value.delete();
 
             var real = str::from("_");
-            real.append_str(temp_var).append(".r");
+            real.append_str(temp_var_value.content).append(".r");
             defer real.delete();
 
             var n_ty = self.type_mapping(n->resolved_type);
             var target_value = value_t::variable(target);
-            var temp_var_value = value_t::variable(temp_var);
             defer {
                 n_ty.delete();
                 target_value.delete();
-                temp_var_value.delete();
             }
 
             self.block->add_move_register(sir_alloca::new(real, n_ty));
             self.block->add_stmt(sir_temp_ptr::new(
-                temp_var.__ptr__(),
+                temp_var_value.content.__ptr__(),
                 real.__ptr__(),
                 n_ty.__ptr__(),
                 self.generate_DI_location(n->base.location),
@@ -1795,7 +1793,7 @@ impl mir2sir {
             var n_ref = n->resolved_type.pointer_copy();
             defer n_ref.delete();
 
-            self.push_mir_value_variable(temp_var, n_ref);
+            self.push_mir_value_variable(temp_var_value.content, n_ref);
         }
     }
 
@@ -1884,14 +1882,10 @@ impl mir2sir {
                 return;
             }
 
-            var source = self.ssa_gen.create();
-            var source_value = value_t::variable(source);
-            var target = self.ssa_gen.create();
-            var target_value = value_t::variable(target);
+            var source_value = self.ssa_gen.create_variable();
+            var target_value = self.ssa_gen.create_variable();
             defer {
-                source.delete();
                 source_value.delete();
-                target.delete();
                 target_value.delete();
             }
 
@@ -1940,7 +1934,7 @@ impl mir2sir {
             var n_ty = n->resolved_type.pointer_copy();
             defer n_ty.delete();
 
-            self.push_mir_value_variable(target, n_ty);
+            self.push_mir_value_variable(target_value.content, n_ty);
         }
     }
 
@@ -2028,14 +2022,10 @@ impl mir2sir {
             }
 
             var index = st.field_index(n->name);
-            var temp_0 = self.ssa_gen.create();
-            var temp_1 = self.ssa_gen.create();
-            var temp_0_value = value_t::variable(temp_0);
-            var temp_1_value = value_t::variable(temp_1);
+            var temp_0_value = self.ssa_gen.create_variable();
+            var temp_1_value = self.ssa_gen.create_variable();
             defer {
-                temp_0.delete();
                 temp_0_value.delete();
-                temp_1.delete();
                 temp_1_value.delete();
             }
 
@@ -2069,7 +2059,7 @@ impl mir2sir {
             var n_ty = n->resolved_type.pointer_copy();
             defer n_ty.delete();
 
-            self.push_mir_value_variable(temp_1, n_ty);
+            self.push_mir_value_variable(temp_1_value.content, n_ty);
         } else if (dm.tagged_unions.has(prev_name_for_search)) {
             var un = dm.tagged_unions.get(prev_name_for_search);
 
@@ -2290,13 +2280,9 @@ impl mir2sir {
 
         match (n->opr) {
             mir_assign_opr::addeq => {
-                var temp_0 = self.ssa_gen.create();
-                var temp_1 = self.ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0);
-                var temp_1_value = value_t::variable(temp_1);
+                var temp_0_value = self.ssa_gen.create_variable();
+                var temp_1_value = self.ssa_gen.create_variable();
                 defer {
-                    temp_0.delete();
-                    temp_1.delete();
                     temp_0_value.delete();
                     temp_1_value.delete();
                 }
@@ -2322,13 +2308,9 @@ impl mir2sir {
                 ) => sir*);
             }
             mir_assign_opr::subeq => {
-                var temp_0 = self.ssa_gen.create();
-                var temp_1 = self.ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0);
-                var temp_1_value = value_t::variable(temp_1);
+                var temp_0_value = self.ssa_gen.create_variable();
+                var temp_1_value = self.ssa_gen.create_variable();
                 defer {
-                    temp_0.delete();
-                    temp_1.delete();
                     temp_0_value.delete();
                     temp_1_value.delete();
                 }
@@ -2352,13 +2334,9 @@ impl mir2sir {
                 ) => sir*);
             }
             mir_assign_opr::muleq => {
-                var temp_0 = self.ssa_gen.create();
-                var temp_1 = self.ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0);
-                var temp_1_value = value_t::variable(temp_1);
+                var temp_0_value = self.ssa_gen.create_variable();
+                var temp_1_value = self.ssa_gen.create_variable();
                 defer {
-                    temp_0.delete();
-                    temp_1.delete();
                     temp_0_value.delete();
                     temp_1_value.delete();
                 }
@@ -2382,13 +2360,9 @@ impl mir2sir {
                 ) => sir*);
             }
             mir_assign_opr::diveq => {
-                var temp_0 = self.ssa_gen.create();
-                var temp_1 = self.ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0);
-                var temp_1_value = value_t::variable(temp_1);
+                var temp_0_value = self.ssa_gen.create_variable();
+                var temp_1_value = self.ssa_gen.create_variable();
                 defer {
-                    temp_0.delete();
-                    temp_1.delete();
                     temp_0_value.delete();
                     temp_1_value.delete();
                 }
@@ -2413,13 +2387,9 @@ impl mir2sir {
                 ) => sir*);
             }
             mir_assign_opr::remeq => {
-                var temp_0 = self.ssa_gen.create();
-                var temp_1 = self.ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0);
-                var temp_1_value = value_t::variable(temp_1);
+                var temp_0_value = self.ssa_gen.create_variable();
+                var temp_1_value = self.ssa_gen.create_variable();
                 defer {
-                    temp_0.delete();
-                    temp_1.delete();
                     temp_0_value.delete();
                     temp_1_value.delete();
                 }
@@ -2451,13 +2421,9 @@ impl mir2sir {
                 ) => sir*);
             }
             mir_assign_opr::andeq => {
-                var temp_0 = self.ssa_gen.create();
-                var temp_1 = self.ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0);
-                var temp_1_value = value_t::variable(temp_1);
+                var temp_0_value = self.ssa_gen.create_variable();
+                var temp_1_value = self.ssa_gen.create_variable();
                 defer {
-                    temp_0.delete();
-                    temp_1.delete();
                     temp_0_value.delete();
                     temp_1_value.delete();
                 }
@@ -2480,13 +2446,9 @@ impl mir2sir {
                 ) => sir*);
             }
             mir_assign_opr::xoreq => {
-                var temp_0 = self.ssa_gen.create();
-                var temp_1 = self.ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0);
-                var temp_1_value = value_t::variable(temp_1);
+                var temp_0_value = self.ssa_gen.create_variable();
+                var temp_1_value = self.ssa_gen.create_variable();
                 defer {
-                    temp_0.delete();
-                    temp_1.delete();
                     temp_0_value.delete();
                     temp_1_value.delete();
                 }
@@ -2509,13 +2471,9 @@ impl mir2sir {
                 ) => sir*);
             }
             mir_assign_opr::oreq => {
-                var temp_0 = self.ssa_gen.create();
-                var temp_1 = self.ssa_gen.create();
-                var temp_0_value = value_t::variable(temp_0);
-                var temp_1_value = value_t::variable(temp_1);
+                var temp_0_value = self.ssa_gen.create_variable();
+                var temp_1_value = self.ssa_gen.create_variable();
                 defer {
-                    temp_0.delete();
-                    temp_1.delete();
                     temp_0_value.delete();
                     temp_1_value.delete();
                 }
@@ -2620,13 +2578,9 @@ impl mir2sir {
         var dm = self.ctx->get_domain(value.resolved_type.loc_file);
         var switch_inst: sir_switch* = nil;
         if (dm.tagged_unions.has(name_for_search)) {
-            var tag = self.ssa_gen.create();
-            var tag_v = value_t::variable(tag);
-            var tag_value = self.ssa_gen.create();
-            var tag_value_v = value_t::variable(tag_value);
-            defer tag.delete();
+            var tag_v = self.ssa_gen.create_variable();
+            var tag_value_v = self.ssa_gen.create_variable();
             defer tag_v.delete();
-            defer tag_value.delete();
             defer tag_value_v.delete();
             // if value type is not a pointer, means the value is tagged union value
             // not a tagged union reference, so there must be a sir_load before it
@@ -2667,9 +2621,9 @@ impl mir2sir {
                 tag_v.__ptr__(),
                 tag_value_v.__ptr__(),
             ) => sir*);
-            switch_inst = sir_switch::new(tag_value_v.__ptr__());
+            switch_inst = sir_switch::new(tag_value_v);
         } else {
-            switch_inst = sir_switch::new(value_val.__ptr__());
+            switch_inst = sir_switch::new(value_val);
         }
 
         self.block->add_stmt(switch_inst => sir*);
