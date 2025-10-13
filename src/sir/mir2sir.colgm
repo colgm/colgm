@@ -670,9 +670,9 @@ impl mir2sir {
             }
 
             self.block->add_stmt(sir_store::new(
-                mapped_type.__ptr__(),
-                source.__ptr__(),
-                target.__ptr__()
+                mapped_type,
+                source,
+                target
             ) => sir*);
         }
 
@@ -724,22 +724,22 @@ impl mir2sir {
 
         if (n->op == mir_unary_opr::neg) {
             self.block->add_stmt(sir_neg::new(
-                source_value.__ptr__(),
-                target_value.__ptr__(),
+                source_value,
+                target_value,
                 source.resolved_type.is_integer(),
-                source_ty.__ptr__()
+                source_ty
             ) => sir*);
         } else if (n->op == mir_unary_opr::bnot) {
             self.block->add_stmt(sir_bnot::new(
-                source_value.__ptr__(),
-                target_value.__ptr__(),
-                source_ty.__ptr__()
+                source_value,
+                target_value,
+                source_ty
             ) => sir*);
         } else if (n->op == mir_unary_opr::lnot) {
             self.block->add_stmt(sir_lnot::new(
-                source_value.__ptr__(),
-                target_value.__ptr__(),
-                source_ty.__ptr__()
+                source_value,
+                target_value,
+                source_ty
             ) => sir*);
         }
 
@@ -759,9 +759,9 @@ impl mir2sir {
 
         self.block->add_move_register(sir_alloca::new(temp_0_real, i1_name));
         self.block->add_stmt(sir_temp_ptr::new(
-            temp_0_value.content.__ptr__(),
-            temp_0_real.__ptr__(),
-            i1_name.__ptr__(),
+            temp_0_value.content,
+            temp_0_real,
+            i1_name,
             self.generate_DI_location(n->base.location),
             ""
         ) => sir*);
@@ -773,14 +773,14 @@ impl mir2sir {
         self.value_stack.pop_back();
 
         self.block->add_stmt(sir_store::new(
-            i1_name.__ptr__(),
-            left_value.__ptr__(),
-            temp_0_value.__ptr__()
+            i1_name,
+            left_value,
+            temp_0_value
         ) => sir*);
 
         var true_label_index = self.block->stmts.size + 1;
         var br = sir_br_cond::new(
-            left_value.__ptr__(),
+            left_value,
             true_label_index,
             0
         );
@@ -794,9 +794,9 @@ impl mir2sir {
         self.value_stack.pop_back();
 
         self.block->add_stmt(sir_store::new(
-            i1_name.__ptr__(),
-            right_value.__ptr__(),
-            temp_0_value.__ptr__()
+            i1_name,
+            right_value,
+            temp_0_value
         ) => sir*);
 
         var next_label_index = self.block->stmts.size + 1;
@@ -810,9 +810,9 @@ impl mir2sir {
         defer temp_1_value.delete();
 
         self.block->add_stmt(sir_load::new(
-            i1_name.__ptr__(),
-            temp_0_value.__ptr__(),
-            temp_1_value.__ptr__()
+            i1_name,
+            temp_0_value,
+            temp_1_value
         ) => sir*);
 
         self.push_mir_value_variable(temp_1_value.content, n->resolved_type);
@@ -831,9 +831,9 @@ impl mir2sir {
 
         self.block->add_move_register(sir_alloca::new(temp_0_real, i1_name));
         self.block->add_stmt(sir_temp_ptr::new(
-            temp_0_value.content.__ptr__(),
-            temp_0_real.__ptr__(),
-            i1_name.__ptr__(),
+            temp_0_value.content,
+            temp_0_real,
+            i1_name,
             self.generate_DI_location(n->base.location),
             ""
         ) => sir*);
@@ -845,14 +845,14 @@ impl mir2sir {
         self.value_stack.pop_back();
 
         self.block->add_stmt(sir_store::new(
-            i1_name.__ptr__(),
-            left_value.__ptr__(),
-            temp_0_value.__ptr__()
+            i1_name,
+            left_value,
+            temp_0_value
         ) => sir*);
 
         var false_label_index = self.block->stmts.size + 1;
         var br = sir_br_cond::new(
-            left_value.__ptr__(),
+            left_value,
             0,
             false_label_index
         );
@@ -866,9 +866,9 @@ impl mir2sir {
         self.value_stack.pop_back();
 
         self.block->add_stmt(sir_store::new(
-            i1_name.__ptr__(),
-            right_value.__ptr__(),
-            temp_0_value.__ptr__()
+            i1_name,
+            right_value,
+            temp_0_value
         ) => sir*);
 
         var next_label_index = self.block->stmts.size + 1;
@@ -882,9 +882,9 @@ impl mir2sir {
         defer temp_1_value.delete();
 
         self.block->add_stmt(sir_load::new(
-            i1_name.__ptr__(),
-            temp_0_value.__ptr__(),
-            temp_1_value.__ptr__()
+            i1_name,
+            temp_0_value,
+            temp_1_value
         ) => sir*);
 
         self.push_mir_value_variable(temp_1_value.content, n->resolved_type);
@@ -930,141 +930,141 @@ impl mir2sir {
         match (n->op) {
             mir_binary_opr::add => {
                 self.block->add_stmt(sir_add::new(
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     left.resolved_type.is_integer(),
-                    left_ty.__ptr__(),
+                    left_ty,
                     self.generate_DI_location(n->base.location),
                     "+"
                 ) => sir*);
             }
             mir_binary_opr::sub => {
                 self.block->add_stmt(sir_sub::new(
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     left.resolved_type.is_integer(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::mul => {
                 self.block->add_stmt(sir_mul::new(
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     left.resolved_type.is_integer(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::div => {
                 self.block->add_stmt(sir_div::new(
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::rem => {
                 self.block->add_stmt(sir_rem::new(
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::band => {
                 self.block->add_stmt(sir_band::new(
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
-                    left_ty.__ptr__()
+                    left_value,
+                    right_value,
+                    temp_var_value,
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::bxor => {
                 self.block->add_stmt(sir_bxor::new(
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
-                    left_ty.__ptr__()
+                    left_value,
+                    right_value,
+                    temp_var_value,
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::bor => {
                 self.block->add_stmt(sir_bor::new(
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
-                    left_ty.__ptr__()
+                    left_value,
+                    right_value,
+                    temp_var_value,
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::cmpeq => {
                 self.block->add_stmt(sir_cmp::new(
                     sir_cmp_kind::cmp_eq,
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     flag_is_integer,
                     !left.resolved_type.is_unsigned(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::cmpne => {
                 self.block->add_stmt(sir_cmp::new(
                     sir_cmp_kind::cmp_neq,
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     flag_is_integer,
                     !left.resolved_type.is_unsigned(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::grt => {
                 self.block->add_stmt(sir_cmp::new(
                     sir_cmp_kind::cmp_gt,
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::geq => {
                 self.block->add_stmt(sir_cmp::new(
                     sir_cmp_kind::cmp_ge,
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::less => {
                 self.block->add_stmt(sir_cmp::new(
                     sir_cmp_kind::cmp_lt,
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             mir_binary_opr::leq => {
                 self.block->add_stmt(sir_cmp::new(
                     sir_cmp_kind::cmp_le,
-                    left_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_var_value.__ptr__(),
+                    left_value,
+                    right_value,
+                    temp_var_value,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty.__ptr__()
+                    left_ty
                 ) => sir*);
             }
             _ => {}
@@ -1092,10 +1092,10 @@ impl mir2sir {
         }
 
         self.block->add_stmt(sir_type_convert::new(
-            source_value.__ptr__(),
-            temp_var.__ptr__(),
-            source_ty.__ptr__(),
-            n_ty.__ptr__(),
+            source_value,
+            temp_var,
+            source_ty,
+            n_ty,
             source.resolved_type.is_unsigned(),
             n->target.is_unsigned(),
             self.generate_DI_location(n->base.location)
@@ -1186,10 +1186,7 @@ impl mir2sir {
         var array_elem_type = self.type_mapping(ref_copy);
         defer array_elem_type.delete();
 
-        var ati = array_type_t::instance(
-            array_elem_type.__ptr__(),
-            n->size
-        );
+        var ati = array_type_t::instance(array_elem_type, n->size);
         defer ati.delete();
 
         var array_new = sir_alloca::new_array(temp_0, ati);
@@ -1201,9 +1198,9 @@ impl mir2sir {
         defer v_temp_1.delete();
 
         var cv = sir_array_cast::new(
-            v_temp_0.__ptr__(),
-            v_temp_1.__ptr__(),
-            array_elem_type.__ptr__(),
+            v_temp_0,
+            v_temp_1,
+            array_elem_type,
             n->size,
             self.generate_DI_location(n->base.location)
         );
@@ -1225,11 +1222,11 @@ impl mir2sir {
                 defer index_value.delete();
 
                 self.block->add_stmt(sir_get_index::new(
-                    v_temp_1.__ptr__(),
-                    elem_value.__ptr__(),
-                    index_value.__ptr__(),
-                    array_elem_type.__ptr__(),
-                    i64_type.__ptr__(),
+                    v_temp_1,
+                    elem_value,
+                    index_value,
+                    array_elem_type,
+                    i64_type,
                     self.generate_DI_location(n->base.location)
                 ) => sir*);
 
@@ -1242,9 +1239,9 @@ impl mir2sir {
 
                 self.value_stack.pop_back();
                 self.block->add_stmt(sir_store::new(
-                    array_elem_type.__ptr__(),
-                    res_value.__ptr__(),
-                    elem_value.__ptr__()
+                    array_elem_type,
+                    res_value,
+                    elem_value
                 ) => sir*);
             }
         }
@@ -1265,9 +1262,9 @@ impl mir2sir {
 
         self.block->add_move_register(sir_alloca::new(temp_var_real, n_ty));
         self.block->add_stmt(sir_temp_ptr::new(
-            temp_var.content.__ptr__(),
-            temp_var_real.__ptr__(),
-            n_ty.__ptr__(),
+            temp_var.content,
+            temp_var_real,
+            n_ty,
             self.generate_DI_location(n->base.location),
             ""
         ) => sir*);
@@ -1291,9 +1288,9 @@ impl mir2sir {
 
                 var index = st.field_index(i.get().name);
                 self.block->add_stmt(sir_get_field::new(
-                    target_value.__ptr__(),
-                    temp_var.__ptr__(),
-                    n_ty.__ptr__(),
+                    target_value,
+                    temp_var,
+                    n_ty,
                     index,
                     self.generate_DI_location(i.get().content->location)
                 ) => sir*);
@@ -1311,9 +1308,9 @@ impl mir2sir {
                 defer res_value.delete();
 
                 self.block->add_stmt(sir_store::new(
-                    res_ty.__ptr__(),
-                    res_value.__ptr__(),
-                    target_value.__ptr__()
+                    res_ty,
+                    res_value,
+                    target_value
                 ) => sir*);
             }
 
@@ -1329,9 +1326,9 @@ impl mir2sir {
                 defer tag_value.delete();
 
                 self.block->add_stmt(sir_get_field::new(
-                    tag_value.__ptr__(),
-                    temp_var.__ptr__(),
-                    n_ty.__ptr__(),
+                    tag_value,
+                    temp_var,
+                    n_ty,
                     0,
                     self.generate_DI_location(i.get().content->location)
                 ) => sir*);
@@ -1343,9 +1340,9 @@ impl mir2sir {
                 defer tag_value_str.delete();
                 defer tag_value_v.delete();
                 self.block->add_stmt(sir_store::new(
-                    i64_t.__ptr__(),
-                    tag_value_v.__ptr__(),
-                    tag_value.__ptr__()
+                    i64_t,
+                    tag_value_v,
+                    tag_value
                 ) => sir*);
 
                 var source_value = self.ssa_gen.create_variable();
@@ -1354,9 +1351,9 @@ impl mir2sir {
                 defer target_value.delete();
 
                 self.block->add_stmt(sir_get_field::new(
-                    source_value.__ptr__(),
-                    temp_var.__ptr__(),
-                    n_ty.__ptr__(),
+                    source_value,
+                    temp_var,
+                    n_ty,
                     1,
                     self.generate_DI_location(i.get().content->location)
                 ) => sir*);
@@ -1376,10 +1373,10 @@ impl mir2sir {
                 defer target_type_name.delete();
 
                 self.block->add_stmt(sir_type_convert::new(
-                    source_value.__ptr__(),
-                    target_value.__ptr__(),
-                    base_type_name.__ptr__(),
-                    target_type_name.__ptr__(),
+                    source_value,
+                    target_value,
+                    base_type_name,
+                    target_type_name,
                     true,
                     true,
                     self.generate_DI_location(i.get().content->location)
@@ -1398,9 +1395,9 @@ impl mir2sir {
                 defer res_value.delete();
 
                 self.block->add_stmt(sir_store::new(
-                    res_ty.__ptr__(),
-                    res_value.__ptr__(),
-                    target_value.__ptr__()
+                    res_ty,
+                    res_value,
+                    target_value
                 ) => sir*);
             }
 
@@ -1438,9 +1435,9 @@ impl mir2sir {
         defer temp_var.delete();
 
         self.block->add_stmt(sir_load::new(
-            source_ref_ty.__ptr__(),
-            source_value.__ptr__(),
-            temp_var.__ptr__()
+            source_ref_ty,
+            source_value,
+            temp_var
         ) => sir*);
 
         self.push_mir_value_variable(temp_var.content, source_ref);
@@ -1497,18 +1494,18 @@ impl mir2sir {
             // so we need to:
             //   %0 = bitcast [8 x i8]* %arr.a.ptr to i8*
             self.block->add_stmt(sir_array_cast::new(
-                source_value.__ptr__(),
-                temp_var.__ptr__(),
-                source_ref_ref_ty.__ptr__(),
+                source_value,
+                temp_var,
+                source_ref_ref_ty,
                 source.resolved_type.array_length,
                 self.generate_DI_location(n->base.location)
             ) => sir*);
         } else {
             // load value from pointer
             self.block->add_stmt(sir_load::new(
-                source_ref_ty.__ptr__(),
-                source_value.__ptr__(),
-                temp_var.__ptr__()
+                source_ref_ty,
+                source_value,
+                temp_var
             ) => sir*);
         }
 
@@ -1624,17 +1621,17 @@ impl mir2sir {
             defer prev_ref_ref_ty.delete();
 
             self.block->add_stmt(sir_array_cast::new(
-                prev_value.__ptr__(),
-                temp_var.__ptr__(),
-                prev_ref_ref_ty.__ptr__(),
+                prev_value,
+                temp_var,
+                prev_ref_ref_ty,
                 prev.resolved_type.array_length,
                 self.generate_DI_location(n->base.location)
             ) => sir*);
         } else {
             self.block->add_stmt(sir_load::new(
-                prev_ref_ty.__ptr__(),
-                prev_value.__ptr__(),
-                temp_var.__ptr__()
+                prev_ref_ty,
+                prev_value,
+                temp_var
             ) => sir*);
         }
 
@@ -1654,11 +1651,11 @@ impl mir2sir {
         defer index_ty.delete();
 
         self.block->add_stmt(sir_get_index::new(
-            temp_var.__ptr__(),
-            target_value.__ptr__(),
-            index_value.__ptr__(),
-            prev_ref_ref_ty.__ptr__(),
-            index_ty.__ptr__(),
+            temp_var,
+            target_value,
+            index_value,
+            prev_ref_ref_ty,
+            index_ty,
             self.generate_DI_location(n->base.location)
         ) => sir*);
 
@@ -1723,9 +1720,9 @@ impl mir2sir {
             }
 
             sir_function_call = sir_call::new(
-                mangled_name.__ptr__(),
-                n_ty.__ptr__(),
-                target_value.__ptr__(),
+                mangled_name,
+                n_ty,
+                target_value,
                 self.generate_DI_location(n->base.location)
             );
         } else {
@@ -1739,9 +1736,9 @@ impl mir2sir {
             }
 
             sir_function_call = sir_call::new(
-                mangled_name.__ptr__(),
-                n_ty.__ptr__(),
-                target_value.__ptr__(),
+                mangled_name,
+                n_ty,
+                target_value,
                 self.generate_DI_location(n->base.location)
             );
         }
@@ -1778,16 +1775,16 @@ impl mir2sir {
 
             self.block->add_move_register(sir_alloca::new(real, n_ty));
             self.block->add_stmt(sir_temp_ptr::new(
-                temp_var_value.content.__ptr__(),
-                real.__ptr__(),
-                n_ty.__ptr__(),
+                temp_var_value.content,
+                real,
+                n_ty,
                 self.generate_DI_location(n->base.location),
                 ""
             ) => sir*);
             self.block->add_stmt(sir_store::new(
-                n_ty.__ptr__(),
-                target_value.__ptr__(),
-                temp_var_value.__ptr__()
+                n_ty,
+                target_value,
+                temp_var_value
             ) => sir*);
 
             var n_ref = n->resolved_type.pointer_copy();
@@ -1856,9 +1853,9 @@ impl mir2sir {
             }
 
             self.block->add_stmt(sir_get_field::new(
-                target_value.__ptr__(),
-                prev_value.__ptr__(),
-                prev_ref_ty.__ptr__(),
+                target_value,
+                prev_value,
+                prev_ref_ty,
                 index,
                 self.generate_DI_location(n->base.location)
             ) => sir*);
@@ -1899,9 +1896,9 @@ impl mir2sir {
             }
 
             self.block->add_stmt(sir_get_field::new(
-                source_value.__ptr__(),
-                prev_value.__ptr__(),
-                prev_ref_ty.__ptr__(),
+                source_value,
+                prev_value,
+                prev_ref_ty,
                 1,
                 self.generate_DI_location(n->base.location)
             ) => sir*);
@@ -1922,10 +1919,10 @@ impl mir2sir {
             defer target_type_name.delete();
 
             self.block->add_stmt(sir_type_convert::new(
-                source_value.__ptr__(),
-                target_value.__ptr__(),
-                base_type_name.__ptr__(),
-                target_type_name.__ptr__(),
+                source_value,
+                target_value,
+                base_type_name,
+                target_type_name,
                 true,
                 true,
                 self.generate_DI_location(n->base.location)
@@ -1966,9 +1963,9 @@ impl mir2sir {
                     prev_value.delete();
                 }
                 self.block->add_stmt(sir_load::new(
-                    prev_ref_ty.__ptr__(),
-                    prev_value.__ptr__(),
-                    temp_var_value.__ptr__()
+                    prev_ref_ty,
+                    prev_value,
+                    temp_var_value
                 ) => sir*);
 
                 // push self into stack
@@ -2005,9 +2002,9 @@ impl mir2sir {
                     prev_value.delete();
                 }
                 self.block->add_stmt(sir_load::new(
-                    prev_ref_ty.__ptr__(),
-                    prev_value.__ptr__(),
-                    temp_var_value.__ptr__()
+                    prev_ref_ty,
+                    prev_value,
+                    temp_var_value
                 ) => sir*);
 
                 // push self into stack
@@ -2043,15 +2040,15 @@ impl mir2sir {
             }
 
             self.block->add_stmt(sir_load::new(
-                prev_ref_ty.__ptr__(),
-                prev_value.__ptr__(),
-                temp_0_value.__ptr__()
+                prev_ref_ty,
+                prev_value,
+                temp_0_value
             ) => sir*);
 
             self.block->add_stmt(sir_get_field::new(
-                temp_1_value.__ptr__(),
-                temp_0_value.__ptr__(),
-                prev_ref_ref_ty.__ptr__(),
+                temp_1_value,
+                temp_0_value,
+                prev_ref_ref_ty,
                 index,
                 self.generate_DI_location(n->base.location)
             ) => sir*);
@@ -2076,9 +2073,9 @@ impl mir2sir {
                     prev_value.delete();
                 }
                 self.block->add_stmt(sir_load::new(
-                    prev_ref_ty.__ptr__(),
-                    prev_value.__ptr__(),
-                    temp_var_value.__ptr__()
+                    prev_ref_ty,
+                    prev_value,
+                    temp_var_value
                 ) => sir*);
 
                 // push self into stack
@@ -2115,15 +2112,15 @@ impl mir2sir {
             }
 
             self.block->add_stmt(sir_load::new(
-                prev_ref_ty.__ptr__(),
-                prev_value.__ptr__(),
-                temp_0_value.__ptr__()
+                prev_ref_ty,
+                prev_value,
+                temp_0_value
             ) => sir*);
 
             self.block->add_stmt(sir_get_field::new(
-                temp_1_value.__ptr__(),
-                temp_0_value.__ptr__(),
-                prev_ref_ref_ty.__ptr__(),
+                temp_1_value,
+                temp_0_value,
+                prev_ref_ref_ty,
                 1,
                 self.generate_DI_location(n->base.location)
             ) => sir*);
@@ -2144,10 +2141,10 @@ impl mir2sir {
             defer target_type_name.delete();
 
             self.block->add_stmt(sir_type_convert::new(
-                temp_1_value.__ptr__(),
-                target_value.__ptr__(),
-                base_type_name.__ptr__(),
-                target_type_name.__ptr__(),
+                temp_1_value,
+                target_value,
+                base_type_name,
+                target_type_name,
                 true,
                 true,
                 self.generate_DI_location(n->base.location)
@@ -2251,9 +2248,9 @@ impl mir2sir {
         defer name_value.delete();
 
         self.block->add_stmt(sir_store::new(
-            type_name.__ptr__(),
-            source_value.__ptr__(),
-            name_value.__ptr__()
+            type_name,
+            source_value,
+            name_value
         ) => sir*);
     }
 
@@ -2288,23 +2285,23 @@ impl mir2sir {
                 }
 
                 self.block->add_stmt(sir_load::new(
-                    right_ty.__ptr__(),
-                    left_value.__ptr__(),
-                    temp_0_value.__ptr__()
+                    right_ty,
+                    left_value,
+                    temp_0_value
                 ) => sir*);
                 self.block->add_stmt(sir_add::new(
-                    temp_0_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_1_value.__ptr__(),
+                    temp_0_value,
+                    right_value,
+                    temp_1_value,
                     right.resolved_type.is_integer(),
-                    right_ty.__ptr__(),
+                    right_ty,
                     self.generate_DI_location(n->base.location),
                     "+="
                 ) => sir*);
                 self.block->add_stmt(sir_store::new(
-                    right_ty.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    left_value.__ptr__()
+                    right_ty,
+                    temp_1_value,
+                    left_value
                 ) => sir*);
             }
             mir_assign_opr::subeq => {
@@ -2316,21 +2313,21 @@ impl mir2sir {
                 }
 
                 self.block->add_stmt(sir_load::new(
-                    right_ty.__ptr__(),
-                    left_value.__ptr__(),
-                    temp_0_value.__ptr__()
+                    right_ty,
+                    left_value,
+                    temp_0_value
                 ) => sir*);
                 self.block->add_stmt(sir_sub::new(
-                    temp_0_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_1_value.__ptr__(),
+                    temp_0_value,
+                    right_value,
+                    temp_1_value,
                     right.resolved_type.is_integer(),
-                    right_ty.__ptr__()
+                    right_ty
                 ) => sir*);
                 self.block->add_stmt(sir_store::new(
-                    right_ty.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    left_value.__ptr__()
+                    right_ty,
+                    temp_1_value,
+                    left_value
                 ) => sir*);
             }
             mir_assign_opr::muleq => {
@@ -2342,21 +2339,21 @@ impl mir2sir {
                 }
 
                 self.block->add_stmt(sir_load::new(
-                    right_ty.__ptr__(),
-                    left_value.__ptr__(),
-                    temp_0_value.__ptr__()
+                    right_ty,
+                    left_value,
+                    temp_0_value
                 ) => sir*);
                 self.block->add_stmt(sir_mul::new(
-                    temp_0_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_1_value.__ptr__(),
+                    temp_0_value,
+                    right_value,
+                    temp_1_value,
                     right.resolved_type.is_integer(),
-                    right_ty.__ptr__()
+                    right_ty
                 ) => sir*);
                 self.block->add_stmt(sir_store::new(
-                    right_ty.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    left_value.__ptr__()
+                    right_ty,
+                    temp_1_value,
+                    left_value
                 ) => sir*);
             }
             mir_assign_opr::diveq => {
@@ -2368,22 +2365,22 @@ impl mir2sir {
                 }
 
                 self.block->add_stmt(sir_load::new(
-                    right_ty.__ptr__(),
-                    left_value.__ptr__(),
-                    temp_0_value.__ptr__()
+                    right_ty,
+                    left_value,
+                    temp_0_value
                 ) => sir*);
                 self.block->add_stmt(sir_div::new(
-                    temp_0_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_1_value.__ptr__(),
+                    temp_0_value,
+                    right_value,
+                    temp_1_value,
                     right.resolved_type.is_integer(),
                     !right.resolved_type.is_unsigned(),
-                    right_ty.__ptr__()
+                    right_ty
                 ) => sir*);
                 self.block->add_stmt(sir_store::new(
-                    right_ty.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    left_value.__ptr__()
+                    right_ty,
+                    temp_1_value,
+                    left_value
                 ) => sir*);
             }
             mir_assign_opr::remeq => {
@@ -2395,29 +2392,29 @@ impl mir2sir {
                 }
 
                 self.block->add_stmt(sir_load::new(
-                    right_ty.__ptr__(),
-                    left_value.__ptr__(),
-                    temp_0_value.__ptr__()
+                    right_ty,
+                    left_value,
+                    temp_0_value
                 ) => sir*);
                 self.block->add_stmt(sir_rem::new(
-                    temp_0_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_1_value.__ptr__(),
+                    temp_0_value,
+                    right_value,
+                    temp_1_value,
                     right.resolved_type.is_integer(),
                     !right.resolved_type.is_unsigned(),
-                    right_ty.__ptr__()
+                    right_ty
                 ) => sir*);
                 self.block->add_stmt(sir_store::new(
-                    right_ty.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    left_value.__ptr__()
+                    right_ty,
+                    temp_1_value,
+                    left_value
                 ) => sir*);
             }
             mir_assign_opr::eq => {
                 self.block->add_stmt(sir_store::new(
-                    right_ty.__ptr__(),
-                    right_value.__ptr__(),
-                    left_value.__ptr__()
+                    right_ty,
+                    right_value,
+                    left_value
                 ) => sir*);
             }
             mir_assign_opr::andeq => {
@@ -2429,20 +2426,20 @@ impl mir2sir {
                 }
 
                 self.block->add_stmt(sir_load::new(
-                    right_ty.__ptr__(),
-                    left_value.__ptr__(),
-                    temp_0_value.__ptr__()
+                    right_ty,
+                    left_value,
+                    temp_0_value
                 ) => sir*);
                 self.block->add_stmt(sir_band::new(
-                    temp_0_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    right_ty.__ptr__()
+                    temp_0_value,
+                    right_value,
+                    temp_1_value,
+                    right_ty
                 ) => sir*);
                 self.block->add_stmt(sir_store::new(
-                    right_ty.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    left_value.__ptr__()
+                    right_ty,
+                    temp_1_value,
+                    left_value
                 ) => sir*);
             }
             mir_assign_opr::xoreq => {
@@ -2454,20 +2451,20 @@ impl mir2sir {
                 }
 
                 self.block->add_stmt(sir_load::new(
-                    right_ty.__ptr__(),
-                    left_value.__ptr__(),
-                    temp_0_value.__ptr__()
+                    right_ty,
+                    left_value,
+                    temp_0_value
                 ) => sir*);
                 self.block->add_stmt(sir_bxor::new(
-                    temp_0_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    right_ty.__ptr__()
+                    temp_0_value,
+                    right_value,
+                    temp_1_value,
+                    right_ty
                 ) => sir*);
                 self.block->add_stmt(sir_store::new(
-                    right_ty.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    left_value.__ptr__()
+                    right_ty,
+                    temp_1_value,
+                    left_value
                 ) => sir*);
             }
             mir_assign_opr::oreq => {
@@ -2479,20 +2476,20 @@ impl mir2sir {
                 }
 
                 self.block->add_stmt(sir_load::new(
-                    right_ty.__ptr__(),
-                    left_value.__ptr__(),
-                    temp_0_value.__ptr__()
+                    right_ty,
+                    left_value,
+                    temp_0_value
                 ) => sir*);
                 self.block->add_stmt(sir_bor::new(
-                    temp_0_value.__ptr__(),
-                    right_value.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    right_ty.__ptr__()
+                    temp_0_value,
+                    right_value,
+                    temp_1_value,
+                    right_ty
                 ) => sir*);
                 self.block->add_stmt(sir_store::new(
-                    right_ty.__ptr__(),
-                    temp_1_value.__ptr__(),
-                    left_value.__ptr__()
+                    right_ty,
+                    temp_1_value,
+                    left_value
                 ) => sir*);
             }
         }
@@ -2512,7 +2509,7 @@ impl mir2sir {
             defer cond_value.delete();
 
             br_cond = sir_br_cond::new(
-                cond_value.__ptr__(),
+                cond_value,
                 self.block->stmts.size + 1,
                 0
             );
@@ -2593,9 +2590,9 @@ impl mir2sir {
                 var value_type_name = self.type_mapping(value.resolved_type);
                 defer value_type_name.delete();
                 self.block->add_stmt(sir_get_field::new(
-                    tag_v.__ptr__(),
-                    load_inst->source.__ptr__(),
-                    value_type_name.__ptr__(),
+                    tag_v,
+                    load_inst->source,
+                    value_type_name,
                     0,
                     self.generate_DI_location(n->condition->location)
                 ) => sir*);
@@ -2606,9 +2603,9 @@ impl mir2sir {
                 defer value_type_ref_name.delete();
 
                 self.block->add_stmt(sir_get_field::new(
-                    tag_v.__ptr__(),
-                    value_val.__ptr__(),
-                    value_type_ref_name.__ptr__(),
+                    tag_v,
+                    value_val,
+                    value_type_ref_name,
                     0,
                     self.generate_DI_location(n->condition->location)
                 ) => sir*);
@@ -2617,9 +2614,9 @@ impl mir2sir {
             var i64_t = str::from("i64");
             defer i64_t.delete();
             self.block->add_stmt(sir_load::new(
-                i64_t.__ptr__(),
-                tag_v.__ptr__(),
-                tag_value_v.__ptr__(),
+                i64_t,
+                tag_v,
+                tag_value_v,
             ) => sir*);
             switch_inst = sir_switch::new(tag_value_v);
         } else {
@@ -2744,7 +2741,7 @@ impl mir2sir {
         defer cond_value.delete();
 
         var cond_inst = sir_br_cond::new(
-            cond_value.__ptr__(),
+            cond_value,
             self.block->stmts.size + 1,
             0
         );
@@ -2807,8 +2804,8 @@ impl mir2sir {
             defer null_val.delete();
 
             self.block->add_stmt(sir_ret::new(
-                void_name.__ptr__(),
-                null_val.__ptr__(),
+                void_name,
+                null_val,
                 self.generate_DI_location(n->base.location)
             ) => sir*);
             return;
@@ -2831,8 +2828,8 @@ impl mir2sir {
         defer ret_val.delete();
 
         self.block->add_stmt(sir_ret::new(
-            ret_ty.__ptr__(),
-            ret_val.__ptr__(),
+            ret_ty,
+            ret_val,
             self.generate_DI_location(n->base.location)
         ) => sir*);
     }
