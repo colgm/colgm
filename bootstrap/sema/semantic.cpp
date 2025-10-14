@@ -1945,7 +1945,7 @@ void semantic::resolve_for_stmt(for_stmt* node, const colgm_func& func_self) {
     }
     if (node->get_condition()) {
         const auto infer = resolve_expression(node->get_condition());
-        if (infer!=type::bool_type() && infer!=type::error_type()) {
+        if (infer != type::bool_type() && infer != type::error_type()) {
             rp.report(node->get_condition(),
                 "condition should be \"bool\" type but get \"" +
                 infer.to_string() + "\""

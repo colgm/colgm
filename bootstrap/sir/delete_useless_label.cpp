@@ -72,7 +72,7 @@ void delete_useless_label::delete_label(sir_block* cb) {
     cb->get_mut_stmts() = after_remove;
 
     for (auto i : cb->get_stmts()) {
-        if (i->get_ir_type()==sir_kind::sir_block) {
+        if (i->get_ir_type() == sir_kind::sir_block) {
             delete_label(i->to<sir_block>());
         }
     }

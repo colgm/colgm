@@ -182,7 +182,7 @@ public:
     void add_stmt(sir* node) { stmts.push_back(node); }
     auto stmt_size() const { return stmts.size(); }
     bool back_is_ret_stmt() const {
-        return stmts.size() && stmts.back()->get_ir_type()==sir_kind::sir_ret;
+        return stmts.size() && stmts.back()->get_ir_type() == sir_kind::sir_ret;
     }
 
     const auto& get_stmts() const { return stmts; }

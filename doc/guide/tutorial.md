@@ -191,10 +191,10 @@ Only boolean type is allowed.
 Logical operators for `and`/`or` all have two syntax:
 
 ```rust
-1==1 and 2==2 && 3==3;
-//   ^^^      ^^ same logical and
-1==1 or 2==2 || 3==3;
-//   ^^      ^^  same logical or
+1 == 1 and 2 == 2 && 3 == 3;
+//     ^^^        ^^ same logical and
+1 == 1 or 2 == 2 || 3==3;
+//     ^^        ^^  same logical or
 ```
 
 ## Definition

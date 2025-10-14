@@ -150,19 +150,19 @@ void execute(const std::string& input_file,
 
 i32 main(i32 argc, const char* argv[]) {
     // output version info
-    if (argc<=1) {
+    if (argc <= 1) {
         std::clog << logo;
         return 0;
     }
 
     // run directly or show help
-    if (argc==2) {
+    if (argc == 2) {
         std::string s(argv[1]);
         if (s == "-h" || s == "--help") {
             std::clog << help;
         } else if (s == "-v" || s == "--version") {
             std::clog << version;
-        } else if (s[0]!='-') {
+        } else if (s[0] != '-') {
             execute(s, "out.ll");
         } else {
             err();

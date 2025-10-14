@@ -74,7 +74,7 @@ void sir_block::dump(std::ostream& out) const {
         i->dump(out);
     }
     for (auto i : stmts) {
-        if (i->get_ir_type()!=sir_kind::sir_label) {
+        if (i->get_ir_type() != sir_kind::sir_label) {
             out << "  ";
         } else {
             out << "\n";
@@ -123,7 +123,7 @@ void sir_get_field::dump(std::ostream& out) const {
 }
 
 void sir_call::dump(std::ostream& out) const {
-    if (destination.value_kind==value_t::kind::variable) {
+    if (destination.value_kind == value_t::kind::variable) {
         out << destination << " = ";
     }
     out << "call " << quoted_name(return_type);
@@ -318,51 +318,51 @@ std::string sir_type_convert::convert_instruction(char source_type_mark,
                                                   int source_bit_size,
                                                   char dest_type_mark,
                                                   int dest_bit_size) const {
-    if (source_type_mark=='u' && dest_type_mark=='u') {
+    if (source_type_mark == 'u' && dest_type_mark == 'u') {
         return source_bit_size<dest_bit_size? "zext":"trunc";
     }
-    if (source_type_mark=='u' && dest_type_mark=='i') {
+    if (source_type_mark == 'u' && dest_type_mark == 'i') {
         return source_bit_size<dest_bit_size? "zext":"trunc";
     }
-    if (source_type_mark=='u' && dest_type_mark=='f') {
+    if (source_type_mark == 'u' && dest_type_mark == 'f') {
         return "uitofp";
     }
-    if (source_type_mark=='i' && dest_type_mark=='u') {
+    if (source_type_mark == 'i' && dest_type_mark == 'u') {
         return source_bit_size<dest_bit_size? "sext":"trunc";
     }
-    if (source_type_mark=='i' && dest_type_mark=='i') {
+    if (source_type_mark == 'i' && dest_type_mark == 'i') {
         return source_bit_size<dest_bit_size? "sext":"trunc";
     }
-    if (source_type_mark=='i' && dest_type_mark=='f') {
+    if (source_type_mark == 'i' && dest_type_mark == 'f') {
         return "sitofp";
     }
-    if (source_type_mark=='f' && dest_type_mark=='u') {
+    if (source_type_mark == 'f' && dest_type_mark == 'u') {
         return "fptoui";
     }
-    if (source_type_mark=='f' && dest_type_mark=='i') {
+    if (source_type_mark == 'f' && dest_type_mark == 'i') {
         return "fptosi";
     }
-    if (source_type_mark=='f' && dest_type_mark=='f') {
-        return source_bit_size<dest_bit_size? "fpext":"fptrunc";
+    if (source_type_mark == 'f' && dest_type_mark == 'f') {
+        return source_bit_size < dest_bit_size ? "fpext" : "fptrunc";
     }
     // unreachable
     return "";
 }
 
 void sir_type_convert::dump(std::ostream& out) const {
-    if (src_type.back()=='*' && dst_type.back()=='*') {
+    if (src_type.back() == '*' && dst_type.back() == '*') {
         out << destination << " = bitcast " << quoted_name(src_type) << " ";
         out << source << " to ";
         out << quoted_name(dst_type) << "\n";
         return;
     }
-    if (src_type.back()!='*' && dst_type.back()=='*') {
+    if (src_type.back() != '*' && dst_type.back() == '*') {
         out << destination << " = inttoptr ";
         out << quoted_name(src_type) << " " << source << " to ";
         out << quoted_name(dst_type) << "\n";
         return;
     }
-    if (src_type.back()=='*' && dst_type.back()!='*') {
+    if (src_type.back() == '*' && dst_type.back() != '*') {
         out << destination << " = ptrtoint ";
         out << quoted_name(src_type) << " " << source << " to ";
         out << quoted_name(dst_type) << "\n";
@@ -370,8 +370,8 @@ void sir_type_convert::dump(std::ostream& out) const {
     }
 
     // error, should be unreachable
-    if ((src_type.front()=='%' && src_type.back()!='*') ||
-        (dst_type.front()=='%' && dst_type.back()!='*')) {
+    if ((src_type.front() == '%' && src_type.back() != '*') ||
+        (dst_type.front() == '%' && dst_type.back() != '*')) {
         out << destination << " = unknown ";
         out << quoted_name(src_type) << " " << source << " to ";
         out << quoted_name(dst_type) << "\n";

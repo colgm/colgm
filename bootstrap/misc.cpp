@@ -211,7 +211,7 @@ u64 oct_to_u64(const char* str) {
 // just as andy's interpreter does.
 // it is not platform independent, and may have strange output.
 // so we write a new function here to convert str to number manually.
-// but this also makes 0.1+0.2==0.3,
+// but this also makes 0.1 + 0.2 == 0.3,
 // not another result that you may get in other languages.
 f64 dec_to_f64(const char* str) {
     f64 ret = 0, num_pow = 0;
@@ -318,8 +318,8 @@ std::string mangle(const std::string& name) {
         suffix = temp.substr(pos);
         temp = temp.substr(0, pos);
     }
-    for (size_t i = 0; i<temp.length(); ++i) {
-        if (temp[i]==':' && i+1<temp.length() && temp[i+1]==':') {
+    for (size_t i = 0; i < temp.length(); ++i) {
+        if (temp[i] == ':' && i + 1 < temp.length() && temp[i + 1] == ':') {
             copy += ".";
             i++;
             continue;
@@ -383,7 +383,7 @@ usize levenshtein_distance(const std::string& left, const std::string& right) {
         for (usize j = 1; j < right_len; j++) {
             usize deletion = v0[j] + 1;
             usize insertion = v1[j - 1] + 1;
-            usize substitution = v0[j - 1] + ((left[i]==right[j])? 0 : 1);
+            usize substitution = v0[j - 1] + ((left[i] == right[j]) ? 0 : 1);
             v1[j] = std::min({deletion, insertion, substitution});
         }
         v0 = v1;

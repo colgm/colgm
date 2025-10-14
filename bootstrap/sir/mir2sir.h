@@ -31,7 +31,7 @@ struct local_table {
 
 
     auto get_local(const std::string& name) {
-        for (auto it = elem.rbegin(); it!=elem.rend(); ++it) {
+        for (auto it = elem.rbegin(); it != elem.rend(); ++it) {
             if (it->count(name)) {
                 return it->at(name);
             }

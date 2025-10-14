@@ -5,11 +5,11 @@
 namespace colgm {
 
 bool lexer::skip(char c) {
-    return c==' ' || c=='\n' || c=='\t' || c=='\r' || c==0;
+    return c == ' ' || c == '\n' || c == '\t' || c == '\r' || c == 0;
 }
 
 bool lexer::is_id(char c) {
-    return (c=='_') || std::isalpha(c) || (c<0);
+    return (c == '_') || std::isalpha(c) || (c < 0);
 }
 
 bool lexer::is_hex(char c) {
@@ -25,42 +25,42 @@ bool lexer::is_dec(char c) {
 }
 
 bool lexer::is_str(char c) {
-    return c=='\'' || c=='\"';
+    return c == '\'' || c == '\"';
 }
 
 bool lexer::is_single_opr(char c) {
     return (
-        c=='(' || c==')' || c=='[' || c==']' ||
-        c=='{' || c=='}' || c==',' || c==';' ||
-        c=='?' || c=='`' || c=='@' || c=='$' ||
-        c=='\\' || c=='#'
+        c == '(' || c == ')' || c == '[' || c == ']' ||
+        c == '{' || c == '}' || c == ',' || c == ';' ||
+        c == '?' || c == '`' || c == '@' || c == '$' ||
+        c == '\\' || c == '#'
     );
 }
 
 bool lexer::is_calc_opr(char c) {
     return (
-        c=='=' || c=='+' || c=='-' || c=='*' ||
-        c=='!' || c=='/' || c=='<' || c=='>' ||
-        c=='~' || c=='|' || c=='&' || c=='^' ||
-        c=='%'
+        c == '=' || c == '+' || c == '-' || c == '*' ||
+        c == '!' || c == '/' || c == '<' || c == '>' ||
+        c == '~' || c == '|' || c == '&' || c == '^' ||
+        c == '%'
     );
 }
 
 bool lexer::is_arrow(char c) {
-    if (c!='-') {
+    if (c != '-') {
         return false;
     }
-    if (ptr+1<res.size() && res[ptr+1]=='>') {
+    if (ptr + 1 < res.size() && res[ptr + 1] == '>') {
         return true;
     }
     return false;
 }
 
 bool lexer::is_wide_arrow(char c) {
-    if (c!='=') {
+    if (c != '=') {
         return false;
     }
-    if (ptr+1<res.size() && res[ptr+1]=='>') {
+    if (ptr + 1 < res.size() && res[ptr + 1] == '>') {
         return true;
     }
     return false;
