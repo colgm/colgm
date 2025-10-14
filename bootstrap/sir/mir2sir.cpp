@@ -303,20 +303,20 @@ void mir2sir::visit_mir_unary(mir_unary* node) {
     value_stack.pop_back();
 
     auto temp_var = ssa_gen.create();
-    if (node->get_opr()==mir_unary::opr_kind::neg) {
+    if (node->get_opr() == mir_unary::opr_kind::neg) {
         block->add_stmt(new sir_neg(
             source.to_value_t(),
             value_t::variable(temp_var),
             source.resolve_type.is_integer(),
             type_mapping(source.resolve_type)
         ));
-    } else if (node->get_opr()==mir_unary::opr_kind::bnot) {
+    } else if (node->get_opr() == mir_unary::opr_kind::bnot) {
         block->add_stmt(new sir_bnot(
             source.to_value_t(),
             value_t::variable(temp_var),
             type_mapping(source.resolve_type)
         ));
-    } else if (node->get_opr()==mir_unary::opr_kind::lnot) {
+    } else if (node->get_opr() == mir_unary::opr_kind::lnot) {
         block->add_stmt(new sir_lnot(
             source.to_value_t(),
             value_t::variable(temp_var),
@@ -327,10 +327,10 @@ void mir2sir::visit_mir_unary(mir_unary* node) {
 }
 
 void mir2sir::visit_mir_binary(mir_binary* node) {
-    if (node->get_opr()==mir_binary::opr_kind::cmpand) {
+    if (node->get_opr() == mir_binary::opr_kind::cmpand) {
         generate_and(node);
         return;
-    } else if (node->get_opr()==mir_binary::opr_kind::cmpor) {
+    } else if (node->get_opr() == mir_binary::opr_kind::cmpor) {
         generate_or(node);
         return;
     }
@@ -420,7 +420,7 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
             auto flag_is_integer = left.resolve_type.is_integer() ||
                 left.resolve_type.is_pointer() ||
                 left.resolve_type.is_boolean() ||
-                ctx.search_symbol_kind(left.resolve_type)==sym_kind::enum_kind;
+                ctx.search_symbol_kind(left.resolve_type) == sym_kind::enum_kind;
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_eq,
                 left.to_value_t(),
@@ -435,7 +435,7 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
             auto flag_is_integer = left.resolve_type.is_integer() ||
                 left.resolve_type.is_pointer() ||
                 left.resolve_type.is_boolean() ||
-                ctx.search_symbol_kind(left.resolve_type)==sym_kind::enum_kind;
+                ctx.search_symbol_kind(left.resolve_type) == sym_kind::enum_kind;
             block->add_stmt(new sir_cmp(
                 sir_cmp::kind::cmp_neq,
                 left.to_value_t(),
@@ -523,7 +523,7 @@ void mir2sir::visit_mir_nil(mir_nil* node) {
 void mir2sir::visit_mir_number(mir_number* node) {
     auto literal = node->get_literal();
     if (!node->get_type().is_integer() &&
-        literal.find('.')==std::string::npos) {
+        literal.find('.') == std::string::npos) {
         literal += ".0";
     }
     value_stack.push_back(mir_value_t::literal(literal, node->get_type()));
@@ -949,7 +949,7 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
     }
     block->add_stmt(sir_function_call);
 
-    if (node->get_type()!=type::void_type()) {
+    if (node->get_type() != type::void_type()) {
         auto temp_var = ssa_gen.create();
         block->add_move_register(new sir_alloca(
             "_" + temp_var + ".r",
@@ -1495,7 +1495,7 @@ void mir2sir::visit_mir_branch(mir_branch* node) {
 
     for (auto i : node->get_branch()) {
         i->accept(this);
-        if (i->get_condition() && i==node->get_branch().back()) {
+        if (i->get_condition() && i == node->get_branch().back()) {
             block->add_stmt(new sir_br(block->stmt_size()+1));
         }
     }

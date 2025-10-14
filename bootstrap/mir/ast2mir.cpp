@@ -731,7 +731,7 @@ void ast2mir::dump(std::ostream& os) {
         for (const auto& f : i->field_type) {
             os << f;
             ++count;
-            if (count!=i->field_type.size()) {
+            if (count != i->field_type.size()) {
                 os << ", ";
             }
         }
@@ -745,7 +745,7 @@ void ast2mir::dump(std::ostream& os) {
         os << i->name << "(";
         for (const auto& p : i->params) {
             os << p.first << ": " << p.second;
-            if (p.first!=i->params.back().first) {
+            if (p.first != i->params.back().first) {
                 os << ", ";
             }
         }
@@ -759,7 +759,7 @@ void ast2mir::dump(std::ostream& os) {
         os << i->name << "(";
         for (const auto& p : i->params) {
             os << p.first << ": " << p.second;
-            if (p.first!=i->params.back().first) {
+            if (p.first != i->params.back().first) {
                 os << ", ";
             }
         }

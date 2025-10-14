@@ -222,46 +222,46 @@ f64 dec_to_f64(const char* str) {
     if (!*str) {
         return ret;
     }
-    if (*str=='.') {
+    if (*str == '.') {
         if (!*++str) {
             return nan("");
         }
         num_pow = 0.1;
-        while ('0'<=*str && *str<='9') {
-            ret += num_pow*(*str++-'0');
+        while ('0' <= *str && *str <= '9') {
+            ret += num_pow * (*str++ - '0');
             num_pow *= 0.1;
         }
         if (!*str) {
             return ret;
         }
     }
-    if (*str!='e' && *str!='E') {
+    if (*str != 'e' && *str != 'E') {
         return nan("");
     }
     if (!*++str) {
         return nan("");
     }
-    if (*str=='-' || *str=='+') {
-        negative = (*str++=='-');
+    if (*str == '-' || *str == '+') {
+        negative = (*str++ == '-');
     }
     if (!*str) {
         return nan("");
     }
     num_pow = 0;
-    while ('0'<=*str && *str<='9') {
-        num_pow = num_pow*10+(*str++-'0');
+    while ('0' <= *str && *str <= '9') {
+        num_pow = num_pow * 10 + (*str++ - '0');
     }
     if (*str) {
         return nan("");
     }
-    return negative?
-        ret*std::pow(10, 1-num_pow)*0.1:
-        ret*std::pow(10, num_pow-1)*10;
+    return negative
+        ? ret * std::pow(10, 1 - num_pow) * 0.1
+        : ret * std::pow(10, num_pow - 1) * 10;
 }
 
 u64 dec_to_u64(const char* str) {
     u64 ret = 0;
-    while ('0'<=*str && *str<='9') {
+    while ('0' <= *str && *str <= '9') {
         ret = ret*10 + (*str++ - '0');
     }
     if (*str) {
@@ -273,32 +273,32 @@ u64 dec_to_u64(const char* str) {
 f64 str_to_num(const char* str) {
     bool negative = false;
     f64 res = 0;
-    if (*str=='-' || *str=='+') {
-        negative = (*str++=='-');
+    if (*str == '-' || *str == '+') {
+        negative = (*str++ == '-');
     }
     if (!*str) {
         return nan("");
     }
-    if (str[0]=='0' && str[1]=='x') {
+    if (str[0] == '0' && str[1] == 'x') {
         res = hex_to_f64(str+2);
-    } else if (str[0]=='0' && str[1]=='o') {
+    } else if (str[0] == '0' && str[1] == 'o') {
         res = oct_to_f64(str+2);
     } else {
         res = dec_to_f64(str);
     }
-    return negative? -res:res;
+    return negative ? -res : res;
 }
 
 usize utf8_hdchk(const char head) {
     // RFC-2279 but now we use RFC-3629 so nbytes is less than 4
     const auto c = static_cast<u8>(head);
-    if ((c>>5)==0x06) { // 110x xxxx (10xx xxxx)^1
+    if ((c>>5) == 0x06) { // 110x xxxx (10xx xxxx)^1
         return 1;
     }
-    if ((c>>4)==0x0e) { // 1110 xxxx (10xx xxxx)^2
+    if ((c>>4) == 0x0e) { // 1110 xxxx (10xx xxxx)^2
         return 2;
     }
-    if ((c>>3)==0x1e) { // 1111 0xxx (10xx xxxx)^3
+    if ((c>>3) == 0x1e) { // 1111 0xxx (10xx xxxx)^3
         return 3;
     }
     return 0;
@@ -334,13 +334,13 @@ std::string mangle(const std::string& name) {
 
 bool llvm_visible_char(char c) {
     return std::isdigit(c) || std::isalpha(c) ||
-           c=='_' || c==':' || c==' ' || c==',' ||
-           c=='[' || c==']' || c=='(' || c==')' ||
-           c=='{' || c=='}' || c=='<' || c=='>' ||
-           c=='.' || c==';' || c=='-' || c=='+' ||
-           c=='*' || c=='/' || c=='~' || c=='?' ||
-           c=='!' || c=='=' || c=='&' || c=='|' ||
-           c=='%' || c=='^' || c=='@';
+           c == '_' || c == ':' || c == ' ' || c == ',' ||
+           c == '[' || c == ']' || c == '(' || c == ')' ||
+           c == '{' || c == '}' || c == '<' || c == '>' ||
+           c == '.' || c == ';' || c == '-' || c == '+' ||
+           c == '*' || c == '/' || c == '~' || c == '?' ||
+           c == '!' || c == '=' || c == '&' || c == '|' ||
+           c == '%' || c == '^' || c == '@';
 }
 
 std::string llvm_raw_string(const std::string& str) {

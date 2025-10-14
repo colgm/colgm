@@ -23,7 +23,7 @@ private:
 private:
     bool look_ahead(tok t) { return t == toks[ptr].type; }
     void next() {
-        if (toks[ptr].type!=tok::tk_eof) {
+        if (toks[ptr].type != tok::tk_eof) {
             ++ptr;
         }
     }
@@ -118,7 +118,7 @@ private:
     void try_match_rbrace();
     void match(tok);
     void next() {
-        if (toks[ptr].type!=tok::tk_eof) {
+        if (toks[ptr].type != tok::tk_eof) {
             ++ptr;
         }
     }

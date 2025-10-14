@@ -203,23 +203,23 @@ void error::warn(const span& loc, const std::string& info, const std::string& no
             for (u32 i = loc.begin_column; i<loc.end_column; ++i) {
                 std::cerr << orange << (code[i]=='\t'? "^^^^":"^") << reset;
             }
-        } else if (line==loc.begin_line) {
-            for (u32 i = 0; i<loc.begin_column; ++i) {
-                std::cerr << char(" \t"[code[i]=='\t']);
+        } else if (line == loc.begin_line) {
+            for (u32 i = 0; i < loc.begin_column; ++i) {
+                std::cerr << char(" \t"[code[i] == '\t']);
             }
-            for (u32 i = loc.begin_column; i<code.size(); ++i) {
-                std::cerr << orange << (code[i]=='\t'? "^^^^":"^") << reset;
+            for (u32 i = loc.begin_column; i < code.size(); ++i) {
+                std::cerr << orange << (code[i] == '\t' ? "^^^^" : "^") << reset;
             }
-        } else if (loc.begin_line<line && line<loc.end_line) {
+        } else if (loc.begin_line < line && line < loc.end_line) {
             for (u32 i = 0; i<code.size(); ++i) {
-                std::cerr << orange << (code[i]=='\t'? "^^^^":"^");
+                std::cerr << orange << (code[i] == '\t' ? "^^^^" : "^");
             }
         } else {
-            for (u32 i = 0; i<loc.end_column; ++i) {
-                std::cerr << orange << (code[i]=='\t'? "^^^^":"^");
+            for (u32 i = 0; i < loc.end_column; ++i) {
+                std::cerr << orange << (code[i] == '\t' ? "^^^^" : "^");
             }
         }
-        if (line==loc.end_line) {
+        if (line == loc.end_line) {
             std::cerr << reset;
         } else {
             std::cerr << reset << "\n";

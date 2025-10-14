@@ -1925,7 +1925,7 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
 
 void semantic::resolve_while_stmt(while_stmt* node, const colgm_func& func_self) {
     const auto infer = resolve_expression(node->get_condition());
-    if (infer!=type::bool_type() && infer!=type::error_type()) {
+    if (infer != type::bool_type() && infer != type::error_type()) {
         rp.report(node->get_condition(),
             "condition should be \"bool\" type but get \"" +
             infer.to_string() + "\""
