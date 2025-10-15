@@ -154,12 +154,12 @@ std::string get_cwd() {
 f64 hex_to_f64(const char* str) {
     f64 ret = 0;
     for (; *str; ++str) {
-        if ('0'<=*str && *str<='9') {
-            ret = ret*16+(*str-'0');
-        } else if ('a'<=*str && *str<='f') {
-            ret = ret*16+(*str-'a'+10);
-        } else if ('A'<=*str && *str<='F') {
-            ret = ret*16+(*str-'A'+10);
+        if ('0' <= *str && *str <= '9') {
+            ret = ret * 16 + (*str - '0');
+        } else if ('a' <= *str && *str <= 'f') {
+            ret = ret * 16 + (*str - 'a' + 10);
+        } else if ('A' <= *str && *str <= 'F') {
+            ret = ret * 16 + (*str - 'A' + 10);
         } else {
             return nan("");
         }
@@ -171,12 +171,12 @@ u64 hex_to_u64(const char* str) {
     u64 ret = 0;
     str += 2;
     for (; *str; ++str) {
-        if ('0'<=*str && *str<='9') {
-            ret = ret*16+(*str-'0');
-        } else if ('a'<=*str && *str<='f') {
-            ret = ret*16+(*str-'a'+10);
-        } else if ('A'<=*str && *str<='F') {
-            ret = ret*16+(*str-'A'+10);
+        if ('0' <= *str && *str <= '9') {
+            ret = ret * 16 + (*str - '0');
+        } else if ('a' <= *str && *str <= 'f') {
+            ret = ret * 16 + (*str - 'a' + 10);
+        } else if ('A' <= *str && *str <= 'F') {
+            ret = ret * 16 + (*str - 'A' + 10);
         } else {
             return 0;
         }
@@ -186,8 +186,8 @@ u64 hex_to_u64(const char* str) {
 
 f64 oct_to_f64(const char* str) {
     f64 ret = 0;
-    while ('0'<=*str && *str<'8') {
-        ret = ret*8+(*str++-'0');
+    while ('0' <= *str && *str < '8') {
+        ret = ret * 8 + (*str++ - '0');
     }
     if (*str) {
         return nan("");
@@ -198,8 +198,8 @@ f64 oct_to_f64(const char* str) {
 u64 oct_to_u64(const char* str) {
     u64 ret = 0;
     str += 2;
-    while ('0'<=*str && *str<'8') {
-        ret = ret*8+(*str++-'0');
+    while ('0' <= *str && *str < '8') {
+        ret = ret * 8 + (*str++ - '0');
     }
     if (*str) {
         return 0;
@@ -216,8 +216,8 @@ u64 oct_to_u64(const char* str) {
 f64 dec_to_f64(const char* str) {
     f64 ret = 0, num_pow = 0;
     bool negative = false;
-    while ('0'<=*str && *str<='9') {
-        ret = ret*10+(*str++-'0');
+    while ('0' <= *str && *str <= '9') {
+        ret = ret * 10 + (*str++ - '0');
     }
     if (!*str) {
         return ret;
@@ -280,9 +280,9 @@ f64 str_to_num(const char* str) {
         return nan("");
     }
     if (str[0] == '0' && str[1] == 'x') {
-        res = hex_to_f64(str+2);
+        res = hex_to_f64(str + 2);
     } else if (str[0] == '0' && str[1] == 'o') {
-        res = oct_to_f64(str+2);
+        res = oct_to_f64(str + 2);
     } else {
         res = dec_to_f64(str);
     }

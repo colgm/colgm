@@ -216,9 +216,9 @@ type semantic::resolve_comparison_operator(binary_operator* node) {
     }
 
     // check enum comparison
-    if (ctx.search_symbol_kind(left)==sym_kind::enum_kind) {
-        if (node->get_opr()!=binary_operator::kind::cmpeq &&
-            node->get_opr()!=binary_operator::kind::cmpneq) {
+    if (ctx.search_symbol_kind(left) == sym_kind::enum_kind) {
+        if (node->get_opr() != binary_operator::kind::cmpeq &&
+            node->get_opr() != binary_operator::kind::cmpneq) {
             rp.report(node, "only \"==\" and \"!=\" is allowed");
         }
         node->set_resolve_type(type::bool_type());
@@ -416,7 +416,7 @@ type semantic::resolve_type_convert(type_convert* node) {
     }
 
     // normal struct to any type is not allowed
-    if (ctx.search_symbol_kind(res)==sym_kind::struct_kind &&
+    if (ctx.search_symbol_kind(res) == sym_kind::struct_kind &&
         !res.is_pointer()) {
         rp.report(node->get_target(),
             "cannot convert \"" + res.to_string() +
@@ -424,7 +424,7 @@ type semantic::resolve_type_convert(type_convert* node) {
         );
     }
     // any type to normal struct is also not allowed
-    if (ctx.search_symbol_kind(type_res)==sym_kind::struct_kind &&
+    if (ctx.search_symbol_kind(type_res) == sym_kind::struct_kind &&
         !type_res.is_pointer()) {
         rp.report(node->get_target(),
             "cannot convert \"" + res.to_string() +
@@ -535,7 +535,7 @@ type semantic::resolve_identifier(identifier* node) {
             .loc_file = sym.loc_file,
             .pointer_depth = 0,
             .is_global = true,
-            .is_global_func = sym.kind==sym_kind::func_kind
+            .is_global_func = sym.kind == sym_kind::func_kind
         };
     }
     rp.report(node, "undefined symbol \"" + name + "\"");
@@ -551,7 +551,7 @@ void semantic::check_pub_method(ast::node* node,
     if (self.method.at(name).is_public) {
         return;
     }
-    if (impl_struct_name.empty() || impl_struct_name!=self.name) {
+    if (impl_struct_name.empty() || impl_struct_name != self.name) {
         rp.report(node,
             "cannot call private method \"" + self.name + "::" + name + "\""
         );
@@ -567,7 +567,7 @@ void semantic::check_pub_method(ast::node* node,
     if (self.method.at(name).is_public) {
         return;
     }
-    if (impl_struct_name.empty() || impl_struct_name!=self.name) {
+    if (impl_struct_name.empty() || impl_struct_name != self.name) {
         rp.report(node,
             "cannot call private method \"" + self.name + "::" + name + "\""
         );
@@ -821,7 +821,7 @@ type semantic::resolve_call_id(call_id* node) {
             }
             name += ",";
         }
-        if (name.back()==',') {
+        if (name.back() == ',') {
             name.pop_back();
         }
         name += ">";
@@ -1468,8 +1468,8 @@ type semantic::resolve_assignment(assignment* node) {
     }
 
     // only = is allowed to be applied on enums
-    if (ctx.search_symbol_kind(left)==sym_kind::enum_kind &&
-        node->get_type()!=assignment::kind::eq) {
+    if (ctx.search_symbol_kind(left) == sym_kind::enum_kind &&
+        node->get_type() != assignment::kind::eq) {
         rp.report(node, "cannot calculate enum \"" + left.to_string() + "\"");
         return type::restrict_type();
     }
@@ -1608,7 +1608,7 @@ void semantic::check_defined_variable_is_restrict(definition* node, const type& 
 void semantic::resolve_if_stmt(if_stmt* node, const colgm_func& func_self) {
     if (node->get_condition()) {
         const auto infer = resolve_expression(node->get_condition());
-        if (infer!=type::bool_type() && infer!=type::error_type()) {
+        if (infer != type::bool_type() && infer != type::error_type()) {
             rp.report(node->get_condition(),
                 "condition should be \"bool\" type but get \"" +
                 infer.to_string() + "\""

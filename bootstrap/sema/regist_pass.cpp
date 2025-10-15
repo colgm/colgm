@@ -856,7 +856,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node, bool verbose) {
     auto mp = std::string("");
     for (auto i : node->get_module_path()) {
         mp += i->get_name();
-        if (i!=node->get_module_path().back()) {
+        if (i != node->get_module_path().back()) {
             mp += "::";
         }
     }
@@ -868,13 +868,13 @@ void regist_pass::regist_single_import(ast::use_stmt* node, bool verbose) {
     }
 
     auto pkgman = package_manager::singleton();
-    if (pkgman->get_analyse_status(file)==package_manager::status::analysing) {
+    if (pkgman->get_analyse_status(file) == package_manager::status::analysing) {
         rp.report(node, "module \"" + mp +
             "\" is not totally analysed, maybe encounter circular import"
         );
         return;
     }
-    if (pkgman->get_analyse_status(file)==package_manager::status::not_used) {
+    if (pkgman->get_analyse_status(file) == package_manager::status::not_used) {
         pkgman->set_analyse_status(file, package_manager::status::analysing);
         lexer lex(err);
         parse par(err);
@@ -1802,7 +1802,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
                                                  const colgm_struct& stct) {
     for (auto i : node->get_params()) {
         bool is_self = i->get_name()->get_name()=="self";
-        if (is_self && i!=node->get_params().front()) {
+        if (is_self && i != node->get_params().front()) {
             rp.report(i->get_name(), "\"self\" must be the first parameter");
         }
         if (is_self && i->get_type()) {
@@ -1825,7 +1825,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
                                                  const colgm_tagged_union& un) {
     for (auto i : node->get_params()) {
         bool is_self = i->get_name()->get_name()=="self";
-        if (is_self && i!=node->get_params().front()) {
+        if (is_self && i != node->get_params().front()) {
             rp.report(i->get_name(), "\"self\" must be the first parameter");
         }
         if (is_self && i->get_type()) {

@@ -1,4 +1,5 @@
 import os
+import re
 
 def format_line(line: str) -> str:
     if line.endswith("\n"):
@@ -8,7 +9,37 @@ def format_line(line: str) -> str:
 def operator_without_space_in_line(opr: str, line: str) -> bool:
     if opr not in line:
         return False
-    if f" {opr} " in line or f"={opr}" in line or f"{opr}=" in line:
+
+    if "//" in line or "/*" in line:
+        pos = line.find("//")
+        if pos == -1:
+            pos = line.find("/*")
+        if line.find(opr) > pos:
+            return False
+
+    # special operator ++
+    if opr == "+" and "++" in line:
+        return False
+    # special operator -, ->
+    if opr == "-":
+        if "--" in line:
+            return False
+        pattern = r'-[0-9,x,a-f,A-F,o,e,E,\.]*'
+        if re.search(pattern, line):
+            return False
+        pattern = r'-[a-z,A-Z,_,0-9]*'
+        if re.search(pattern, line):
+            return False
+        if "->" in line:
+            pattern = r'[a-z,A-Z,_,0-9]*->[a-z,A-Z,_]*'
+            if re.search(pattern, line):
+                return False
+
+    if f"operator{opr}" in line:
+        return False
+    if f" {opr} " in line or f" {opr}\n" in line or f" ={opr} " in line or f" {opr}= " in line:
+        return False
+    if f" !{opr} " in line or f" {opr}> " in line:
         return False
     if f"\"{opr}" in line or f"{opr}\"" in line:
         return False
@@ -25,10 +56,10 @@ def check_tail_space(lines: list[str], file_path):
         loc = f"{file_path}:{count}:{len(line)}"
         loc = "{:48}".format(loc)
         if line.endswith(" \n") or line.endswith(" ") or line.endswith(" \t"):
-            print(f"{loc} {format_line(line)}")
+            print(f"[tail-space] {loc} {format_line(line)}")
 
 def check_operator_without_space(lines: list[str], file_path):
-    oprs = ["==", "!="]
+    oprs = ["==", "!=", "+", "-", "<=", ">="]
     count = 0
     for line in lines:
         count += 1

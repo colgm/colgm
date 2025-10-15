@@ -17,7 +17,7 @@ bool lexer::is_hex(char c) {
 }
 
 bool lexer::is_oct(char c) {
-    return '0'<=c && c<='7';
+    return '0' <= c && c <= '7';
 }
 
 bool lexer::is_dec(char c) {
@@ -251,7 +251,7 @@ token lexer::num_gen() {
             str += res[ptr++];
         }
         // "xxxe(-|+)" is not a correct number
-        if (str.back()=='e' || str.back()=='E' || str.back()=='-' || str.back()=='+') {
+        if (str.back() == 'e' || str.back() == 'E' || str.back() == '-' || str.back() == '+') {
             column += str.length();
             err.err(
                 {begin_line, begin_column, line, column, filename},
@@ -303,7 +303,7 @@ token lexer::str_gen() {
                 case '\"':str += '\"';    break;
                 default:  str += res[ptr];break;
             }
-            if (res[ptr]=='\n') {
+            if (res[ptr] == '\n') {
                 column = 0;
                 ++line;
             }
@@ -312,7 +312,7 @@ token lexer::str_gen() {
         str += res[ptr];
     }
     // check if this string ends with a " or '
-    if (ptr++>=res.size()) {
+    if (ptr++ >= res.size()) {
         err.err(
             {begin_line, begin_column, line, column, filename},
             "get EOF when generating string"
@@ -326,14 +326,14 @@ token lexer::str_gen() {
     ++column;
 
     // if is not utf8, 1+utf8_hdchk should be 1
-    if (begin=='\'' && str.length()!=1+utf8_hdchk(str[0])) {
+    if (begin == '\'' && str.length() != 1 + utf8_hdchk(str[0])) {
         err.err(
             {begin_line, begin_column, line, column, filename},
             "\"\'\" is used for single character"
         );
     }
     // ascii character
-    if (begin=='\'' && str.length()==1) {
+    if (begin == '\'' && str.length() == 1) {
         return token {
             {begin_line, begin_column, line, column, filename},
             tok::tk_ch,
@@ -366,7 +366,7 @@ token lexer::single_opr() {
     std::string str(1, res[ptr]);
     ++column;
     tok type = get_type(str);
-    if (type==tok::tk_null) {
+    if (type == tok::tk_null) {
         err.err(
             {begin_line, begin_column, line, column, filename},
             "invalid operator `"+str+"`"
@@ -384,7 +384,7 @@ token lexer::dots() {
     u32 begin_line = line;
     u32 begin_column = column;
     std::string str = ".";
-    if (ptr+2<res.size() && res[ptr+1]=='.' && res[ptr+2]=='.') {
+    if (ptr + 2 < res.size() && res[ptr + 1] == '.' && res[ptr + 2] == '.') {
         str += "..";
     }
     ptr += str.length();
@@ -417,9 +417,9 @@ token lexer::calc_opr() {
     u32 begin_column = column;
     // get calculation operator
     std::string str(1, res[ptr++]);
-    if (ptr<res.size() && str[0]==res[ptr] && (str[0]=='&' || str[0]=='|')) {
+    if (ptr < res.size() && str[0] == res[ptr] && (str[0] == '&' || str[0] == '|')) {
         str += res[ptr++]; // generate && ||
-    } else if (ptr<res.size() && res[ptr]=='=') {
+    } else if (ptr < res.size() && res[ptr] == '=') {
         str += res[ptr++]; // generate _=
     }
     column += str.length();
@@ -437,16 +437,16 @@ const error& lexer::scan(const std::string& file) {
     toks = {};
     open(file);
 
-    while (ptr<res.size()) {
-        while (ptr<res.size() && skip(res[ptr])) {
+    while (ptr < res.size()) {
+        while (ptr < res.size() && skip(res[ptr])) {
             // these characters will be ignored, and '\n' will cause ++line
             ++column;
-            if (res[ptr++]=='\n') {
+            if (res[ptr++] == '\n') {
                 ++line;
                 column = 0;
             }
         }
-        if (ptr>=res.size()) {
+        if (ptr >= res.size()) {
             break;
         }
         if (is_note()) {

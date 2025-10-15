@@ -8,7 +8,7 @@ std::ostream& operator<<(std::ostream& out, const span& self) {
     } else {
         out << self.file;
     }
-    out << ":" << self.begin_line << ":" << self.begin_column+1;
+    out << ":" << self.begin_line << ":" << self.begin_column + 1;
     return out;
 }
 
@@ -48,7 +48,7 @@ std::ostream& reset(std::ostream& s) {
 }
 
 void flstream::load(const std::string& f) {
-    if (file==f) { // don't need to load a loaded file
+    if (file == f) { // don't need to load a loaded file
         return;
     }
 
@@ -93,14 +93,14 @@ void error::err(const span& loc, const std::string& info, const std::string& not
 
     std::cerr << cyan << iden << " | " << reset << "\n";
 
-    for (u32 line = loc.begin_line; line<=loc.end_line; ++line) {
+    for (u32 line = loc.begin_line; line <= loc.end_line; ++line) {
         // skip line 0
         if (!line) {
             continue;
         }
 
-        if (loc.begin_line<line && line<loc.end_line) {
-            if (line==loc.begin_line+1) {
+        if (loc.begin_line < line && line < loc.end_line) {
+            if (line == loc.begin_line + 1) {
                 std::cerr << cyan << iden << " | " << reset << "...\n";
                 std::cerr << cyan << iden << " | " << reset << "\n";
             }
@@ -108,43 +108,43 @@ void error::err(const span& loc, const std::string& info, const std::string& not
         }
 
         // line out of range
-        if (line-1>=res.size()) {
+        if (line - 1 >= res.size()) {
             continue;
         }
 
         // if this line has nothing, skip
-        if (!res[line-1].length() && line!=loc.end_line) {
+        if (!res[line - 1].length() && line != loc.end_line) {
             continue;
         }
 
-        const auto& code = res[line-1];
+        const auto& code = res[line - 1];
         std::cerr << cyan << leftpad(line, maxlen) << " | " << reset << code << "\n";
         // output underline
         std::cerr << cyan << iden << " | " << reset;
-        if (loc.begin_line==loc.end_line) {
-            for (u32 i = 0; i<loc.begin_column; ++i) {
-                std::cerr << char(" \t"[code[i]=='\t']);
+        if (loc.begin_line == loc.end_line) {
+            for (u32 i = 0; i < loc.begin_column; ++i) {
+                std::cerr << char(" \t"[code[i] == '\t']);
             }
-            for (u32 i = loc.begin_column; i<loc.end_column; ++i) {
-                std::cerr << red << (code[i]=='\t'? "^^^^":"^") << reset;
+            for (u32 i = loc.begin_column; i < loc.end_column; ++i) {
+                std::cerr << red << (code[i] == '\t' ? "^^^^" : "^") << reset;
             }
-        } else if (line==loc.begin_line) {
-            for (u32 i = 0; i<loc.begin_column; ++i) {
-                std::cerr << char(" \t"[code[i]=='\t']);
+        } else if (line == loc.begin_line) {
+            for (u32 i = 0; i < loc.begin_column; ++i) {
+                std::cerr << char(" \t"[code[i] == '\t']);
             }
-            for (u32 i = loc.begin_column; i<code.size(); ++i) {
-                std::cerr << red << (code[i]=='\t'? "^^^^":"^") << reset;
+            for (u32 i = loc.begin_column; i < code.size(); ++i) {
+                std::cerr << red << (code[i] == '\t' ? "^^^^" : "^") << reset;
             }
-        } else if (loc.begin_line<line && line<loc.end_line) {
-            for (u32 i = 0; i<code.size(); ++i) {
-                std::cerr << red << (code[i]=='\t'? "^^^^":"^");
+        } else if (loc.begin_line < line && line < loc.end_line) {
+            for (u32 i = 0; i < code.size(); ++i) {
+                std::cerr << red << (code[i] == '\t' ? "^^^^" : "^");
             }
         } else {
-            for (u32 i = 0; i<loc.end_column; ++i) {
-                std::cerr << red << (code[i]=='\t'? "^^^^":"^");
+            for (u32 i = 0; i < loc.end_column; ++i) {
+                std::cerr << red << (code[i] == '\t' ? "^^^^" : "^");
             }
         }
-        if (line==loc.end_line) {
+        if (line == loc.end_line) {
             std::cerr << reset;
         } else {
             std::cerr << reset << "\n";
@@ -168,14 +168,14 @@ void error::warn(const span& loc, const std::string& info, const std::string& no
     const usize maxlen = std::to_string(loc.end_line).length();
     const std::string iden = identation(maxlen);
 
-    for (u32 line = loc.begin_line; line<=loc.end_line; ++line) {
+    for (u32 line = loc.begin_line; line <= loc.end_line; ++line) {
         // skip line 0
         if (!line) {
             continue;
         }
 
-        if (loc.begin_line<line && line<loc.end_line) {
-            if (line==loc.begin_line+1) {
+        if (loc.begin_line < line && line < loc.end_line) {
+            if (line == loc.begin_line + 1) {
                 std::cerr << cyan << iden << " | " << reset << "...\n";
                 std::cerr << cyan << iden << " | " << reset << "\n";
             }
@@ -183,25 +183,25 @@ void error::warn(const span& loc, const std::string& info, const std::string& no
         }
 
         // line out of range
-        if (line-1>=res.size()) {
+        if (line - 1 >= res.size()) {
             continue;
         }
 
         // if this line has nothing, skip
-        if (!res[line-1].length() && line!=loc.end_line) {
+        if (!res[line - 1].length() && line != loc.end_line) {
             continue;
         }
 
-        const auto& code = res[line-1];
+        const auto& code = res[line - 1];
         std::cerr << cyan << leftpad(line, maxlen) << " | " << reset << code << "\n";
         // output underline
         std::cerr << cyan << iden << " | " << reset;
-        if (loc.begin_line==loc.end_line) {
-            for (u32 i = 0; i<loc.begin_column; ++i) {
-                std::cerr << char(" \t"[code[i]=='\t']);
+        if (loc.begin_line == loc.end_line) {
+            for (u32 i = 0; i < loc.begin_column; ++i) {
+                std::cerr << char(" \t"[code[i] == '\t']);
             }
-            for (u32 i = loc.begin_column; i<loc.end_column; ++i) {
-                std::cerr << orange << (code[i]=='\t'? "^^^^":"^") << reset;
+            for (u32 i = loc.begin_column; i < loc.end_column; ++i) {
+                std::cerr << orange << (code[i] == '\t' ? "^^^^" : "^") << reset;
             }
         } else if (line == loc.begin_line) {
             for (u32 i = 0; i < loc.begin_column; ++i) {

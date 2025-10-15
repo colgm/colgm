@@ -253,7 +253,7 @@ char_literal* parse::char_gen() {
 }
 
 bool_literal* parse::bool_gen() {
-    auto res = new bool_literal(toks[ptr].loc, toks[ptr].type==tok::tk_true);
+    auto res = new bool_literal(toks[ptr].loc, toks[ptr].type == tok::tk_true);
     match(toks[ptr].type);
     return res;
 }

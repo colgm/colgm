@@ -12,7 +12,7 @@
 namespace colgm {
 
 void type::check_pointer_depth() const {
-    if (pointer_depth>=0) {
+    if (pointer_depth >= 0) {
         return;
     }
     auto info = "invalid pointer depth of \"" + name + "\": ";

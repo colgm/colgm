@@ -1496,7 +1496,7 @@ void mir2sir::visit_mir_branch(mir_branch* node) {
     for (auto i : node->get_branch()) {
         i->accept(this);
         if (i->get_condition() && i == node->get_branch().back()) {
-            block->add_stmt(new sir_br(block->stmt_size()+1));
+            block->add_stmt(new sir_br(block->stmt_size() + 1));
         }
     }
 
