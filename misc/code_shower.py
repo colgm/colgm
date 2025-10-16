@@ -199,6 +199,7 @@ class CodeShower:
                 res.append((ch, "other"))
                 i += 1
         return res
+
     def show(self):
         print("\033c")
         line_number_dumper = LineNumberDumper(line_count = len(self.lines))

@@ -69,18 +69,36 @@ pub func clock_gettime(clock_id: i32, tp: timespec*) -> i32 {
 // cross platform sleep
 #[enable_if(target_os = "linux")]
 pub extern func sleep(seconds: u32) -> i32;
+#[enable_if(target_os = "linux")]
+pub extern func usleep(microseconds: u32) -> i32;
+
 #[enable_if(target_os = "macos")]
 pub extern func sleep(seconds: u32) -> i32;
+#[enable_if(target_os = "macos")]
+pub extern func usleep(microseconds: u32) -> i32;
+
 #[enable_if(target_os = "windows")]
 extern func Sleep(miliseconds: u32) -> i32;
 #[enable_if(target_os = "windows")]
 pub func sleep(seconds: u32) -> i32 {
     return Sleep(seconds * 1000);
 }
+#[enable_if(target_os = "windows")]
+pub func usleep(microseconds: u32) -> i32 {
+    return Sleep(microseconds / 1000);
+}
 
 pub struct chrono {}
 
 impl chrono {
+    pub func sleep(seconds: u32) {
+        sleep(seconds);
+    }
+
+    pub func sleep_us(microseconds: u32) {
+        usleep(microseconds);
+    }
+
     pub func timestamp() -> time_t {
         var current_time = time_t {};
         time(current_time.__ptr__());

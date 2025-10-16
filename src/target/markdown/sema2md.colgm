@@ -1,0 +1,176 @@
+use sema::context::{ sema_context };
+use sema::function::{ colgm_func };
+use sema::module::{ colgm_module };
+use sema::structure::{ colgm_struct };
+use sema::tagged_union::{ colgm_tagged_union };
+
+use util::package::{ package };
+
+use std::io::{ io };
+
+func function_dump(f: colgm_func&, pkg: package&, out: io&) {
+    out.out("```rs\n");
+    if (f.is_public) {
+        out.out("pub ");
+    }
+    if (f.is_extern) {
+        out.out("extern ");
+    }
+    out.out("func ").out(f.name.c_str);
+    if (f.generic_template.size > 0) {
+        out.out("<");
+        foreach (var i; f.generic_template) {
+            out.out(i.get().c_str);
+            if (i.index() != f.generic_template.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out(">");
+    }
+    out.out("(");
+    foreach (var i; f.param_name) {
+        out.out(i.get().c_str).out(": ");
+        f.param_type.get(i.index()).dump(out, pkg.__ptr__());
+        if (i.index() < f.param_name.size - 1) {
+            out.out(", ");
+        }
+    }
+    out.out(") -> ");
+    f.return_type.dump(out, pkg.__ptr__());
+    out.out(";\n```\n\n");
+}
+
+func primitive_dump(ctx: sema_context&, pkg: package&, out: io&) {
+    out.out("## Primitive Types\n\n");
+    foreach (var i; ctx.global->primitives) {
+        out.out("### ").out(i.key().c_str).out("\n\n");
+        foreach (var j; i.value().static_method) {
+            out.out("#### ").out(i.key().c_str).out("::");
+            out.out(j.key().c_str).out("\n\n");
+            function_dump(j.value(), pkg, out);
+        }
+        foreach (var j; i.value().method) {
+            out.out("#### ").out(i.key().c_str).out("::");
+            out.out(j.key().c_str).out("\n\n");
+            function_dump(j.value(), pkg, out);
+        }
+    }
+}
+
+func struct_dump(st: colgm_struct&, pkg: package&, out: io&) {
+    out.out("```rs\n");
+    if (st.is_public) {
+        out.out("pub ");
+    }
+    if (st.is_extern) {
+        out.out("extern ");
+    }
+    out.out("struct ").out(st.name.c_str);
+
+    if (st.generic_template.size > 0) {
+        out.out("<");
+        foreach (var i; st.generic_template) {
+            out.out(i.get().c_str);
+            if (i.index() != st.generic_template.size - 1) {
+                out.out(", ");
+            }
+        }
+        out.out(">");
+    }
+
+    if (st.ordered_fields.empty()) {
+        out.out(" {}\n");
+    } else {
+        out.out(" {\n");
+        foreach (var i; st.ordered_fields) {
+            out.out("  ").out(i.get().c_str).out(": ");
+            st.fields.get(i.get()).dump(out, pkg.__ptr__());
+            if (i.index() != st.ordered_fields.size - 1) {
+                out.out(",");
+            }
+            out.out("\n");
+        }
+        out.out("}\n");
+    }
+    out.out("```\n\n");
+}
+
+func tagged_union_dump(tu: colgm_tagged_union&, pkg: package&, out: io&) {
+    out.out("```rs\n");
+    if (tu.is_public) {
+        out.out("pub ");
+    }
+    if (tu.is_extern) {
+        out.out("extern ");
+    }
+    out.out("union ");
+    if (tu.has_ref_enum()) {
+        out.out("(");
+        tu.ref_enum_type.dump(out, pkg.__ptr__());
+        out.out(") ");
+    }
+    out.out(tu.name.c_str);
+    if (tu.ordered_members.empty()) {
+        out.out(" {}\n");
+    } else {
+        out.out(" {\n");
+        forindex (var i; tu.ordered_members) {
+            var member = tu.ordered_members.get(i);
+            out.out("    ").out(member.c_str);
+            // dump mapped int
+            out.out("(").out_i64(tu.member_int_map.get(member));
+            out.out("): ");
+            // dump type
+            tu.members.get(member).dump(out, pkg.__ptr__());
+            if (i != tu.ordered_members.size - 1) {
+                out.out(",");
+            }
+            out.out("\n");
+        }
+        out.out("}\n");
+    }
+    out.out("```\n\n");
+}
+
+func domain_dump(dm: colgm_module&, pkg: package&, out: io&) {
+    if (!pkg.has_file(dm.file_name)) {
+        out.out("## Main Entry: ").out(dm.file_name.c_str).out("\n\n");
+    } else {
+        out.out("## ").out(pkg.get_module_name(dm.file_name).c_str).out("\n\n");
+    }
+    foreach (var i; dm.functions) {
+        if (i.key().eq_const("__time__")) {
+            continue;
+        }
+        out.out("### ").out(i.key().c_str).out("\n\n");
+        function_dump(i.value(), pkg, out);
+    }
+    foreach (var i; dm.generic_functions) {
+        out.out("### ").out(i.key().c_str).out("\n\n");
+        function_dump(i.value(), pkg, out);
+    }
+    foreach (var i; dm.structs) {
+        out.out("### ").out(i.key().c_str).out("\n\n");
+        struct_dump(i.value(), pkg, out);
+    }
+    foreach (var i; dm.generic_structs) {
+        out.out("### ").out(i.key().c_str).out("\n\n");
+        struct_dump(i.value(), pkg, out);
+    }
+    foreach (var i; dm.tagged_unions) {
+        out.out("### ").out(i.key().c_str).out("\n\n");
+        tagged_union_dump(i.value(), pkg, out);
+    }
+}
+
+pub func sema2md(ctx: sema_context&, pkg: package&, file: const i8*) {
+    var out = io::fileout(file);
+    defer out.close();
+
+    out.out("# Colgm Documentation\n\n");
+    primitive_dump(ctx, pkg, out);
+
+    foreach (var i; ctx.global->domain) {
+        domain_dump(i.value(), pkg, out);
+    }
+}

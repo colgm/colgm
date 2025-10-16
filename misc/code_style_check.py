@@ -4,7 +4,13 @@ import re
 def format_line(line: str) -> str:
     if line.endswith("\n"):
         line = line[0:-1]
-    return "#" + line.replace(" ", ".") + "#"
+
+    tail_space_count = 0
+    while line.endswith(" ") or line.endswith("\t"):
+        line = line[0 : -1]
+        tail_space_count += 1
+
+    return "#" + line + "." * tail_space_count + "#"  
 
 def operator_without_space_in_line(opr: str, line: str) -> bool:
     if opr not in line:

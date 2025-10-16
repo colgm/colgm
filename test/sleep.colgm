@@ -1,5 +1,5 @@
 use std::io::{ io };
-use std::time::{ sleep };
+use std::time::{ sleep, usleep };
 use std::panic::{ assert };
 use std::math::{ fabs };
 
@@ -7,11 +7,20 @@ use util::timestamp::{ maketimestamp };
 
 func main() -> i32 {
     var ts = maketimestamp();
+
     io::stdout().out("[sleep.colgm] sleep 1 sec...").endln();
     ts.stamp();
     sleep(1);
     var dur = ts.elapsed_msec();
-    assert(fabs(dur - 1000.0) < 500.0, "elapsed_msec() failed");
     io::stdout().out("[sleep.colgm] sleep test passed: ").out_f64(dur).out(" ms").endln();
+    assert(fabs(dur - 1000.0) < 500.0, "elapsed_msec() failed");
+
+    io::stdout().out("[sleep.colgm] sleep 100 ms...").endln();
+    ts.stamp();
+    usleep(100000);
+    dur = ts.elapsed_msec();
+    io::stdout().out("[sleep.colgm] sleep test passed: ").out_f64(dur).out(" ms").endln();
+    assert(fabs(dur - 100.0) < 50.0, "elapsed_msec() failed");
+
     return 0;
 }
