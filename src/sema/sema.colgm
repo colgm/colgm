@@ -1110,7 +1110,7 @@ impl sema {
 
     func check_static_call_args(self,
                                 func_self: colgm_func&,
-                                n: ast_call_func_args*) {
+                                n: ast_call_func_args*) -> bool {
         if (func_self.unordered_params.size != n->args.size) {
             self.err->report_wrong_arg_num(
                 n->base.location,
@@ -1118,15 +1118,17 @@ impl sema {
                 func_self.unordered_params.size,
                 n->args.size
             );
-            return;
+            return false;
         }
 
+        var error_occur = false;
         foreach (var i; n->args) {
             var arg = i.get();
             var infer = self.resolve_expression(arg);
             defer infer.delete();
 
             if (infer.is_error()) {
+                error_occur = true;
                 continue;
             }
             var param = func_self.param_type.get(i.index());
@@ -1147,6 +1149,8 @@ impl sema {
                 info.append_str(infer_name);
                 info.append("\"");
                 self.err->error(arg->location, info.c_str);
+
+                error_occur = true;
                 continue;
             }
 
@@ -1155,6 +1159,7 @@ impl sema {
                 self.err->error(arg->location,
                     "cannot pass literal as reference"
                 );
+                error_occur = true;
             }
             if (param.is_reference) {
                 // method call do not need to pass the reference of 'self'
@@ -1162,11 +1167,13 @@ impl sema {
                 n->args_is_ref.c_data()[i.index()] = true;
             }
         }
+
+        return !error_occur;
     }
 
     func check_method_call_args(self,
                                 func_self: colgm_func&,
-                                n: ast_call_func_args*) {
+                                n: ast_call_func_args*) -> bool {
         if (func_self.unordered_params.size != n->args.size + 1) {
             self.err->report_wrong_arg_num(
                 n->base.location,
@@ -1174,15 +1181,17 @@ impl sema {
                 func_self.unordered_params.size - 1,
                 n->args.size
             );
-            return;
+            return false;
         }
 
+        var error_occur = false;
         foreach (var i; n->args) {
             var arg = i.get();
             var infer = self.resolve_expression(arg);
             defer infer.delete();
 
             if (infer.is_error()) {
+                error_occur = true;
                 continue;
             }
             var param = func_self.param_type.get(i.index() + 1);
@@ -1203,6 +1212,8 @@ impl sema {
                 info.append_str(infer_name);
                 info.append("\"");
                 self.err->error(arg->location, info.c_str);
+
+                error_occur = true;
                 continue;
             }
 
@@ -1211,6 +1222,7 @@ impl sema {
                 self.err->error(arg->location,
                     "cannot pass literal as reference"
                 );
+                error_occur = true;
             }
             if (param.is_reference) {
                 // method call do not need to pass the reference of 'self'
@@ -1218,6 +1230,8 @@ impl sema {
                 n->args_is_ref.c_data()[i.index()] = true;
             }
         }
+
+        return !error_occur;
     }
 
     func resolve_call_func_args(self, prev: type&, n: ast_call_func_args*) -> type {
@@ -1228,7 +1242,10 @@ impl sema {
         if (prev.is_global_func) {
             var dm = self.ctx->get_domain(prev.loc_file);
             var func_self = dm.functions.get(prev_name_for_search);
-            self.check_static_call_args(func_self, n);
+            
+            if (!self.check_static_call_args(func_self, n)) {
+                return type::error_type();
+            }
 
             var infer = func_self.return_type.clone();
             n->base.resolved_type.reset_with(infer);
@@ -1241,7 +1258,10 @@ impl sema {
             var method = primitive.static_method.get(
                 prev.m_info.method_name
             );
-            self.check_static_call_args(method, n);
+            
+            if (!self.check_static_call_args(method, n)) {
+                return type::error_type();
+            }
 
             var infer = method.return_type.clone();
             n->base.resolved_type.reset_with(infer);
@@ -1254,7 +1274,10 @@ impl sema {
             var method = primitive.method.get(
                 prev.m_info.method_name
             );
-            self.check_method_call_args(method, n);
+            
+            if (!self.check_method_call_args(method, n)) {
+                return type::error_type();
+            }
 
             var infer = method.return_type.clone();
             n->base.resolved_type.reset_with(infer);
@@ -1269,7 +1292,10 @@ impl sema {
                 var method = struct_self.static_method.get(
                     prev.m_info.method_name
                 );
-                self.check_static_call_args(method, n);
+                
+                if (!self.check_static_call_args(method, n)) {
+                    return type::error_type();
+                }
 
                 var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
@@ -1279,7 +1305,10 @@ impl sema {
                 var method = union_self.static_method.get(
                     prev.m_info.method_name
                 );
-                self.check_static_call_args(method, n);
+                
+                if (!self.check_static_call_args(method, n)) {
+                    return type::error_type();
+                }
 
                 var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
@@ -1300,7 +1329,10 @@ impl sema {
                 var method = struct_self.method.get(
                     prev.m_info.method_name
                 );
-                self.check_method_call_args(method, n);
+                
+                if (!self.check_method_call_args(method, n)) {
+                    return type::error_type();
+                }
 
                 var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
@@ -1310,7 +1342,10 @@ impl sema {
                 var method = union_self.method.get(
                     prev.m_info.method_name
                 );
-                self.check_method_call_args(method, n);
+                
+                if (!self.check_method_call_args(method, n)) {
+                    return type::error_type();
+                }
 
                 var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
@@ -2906,6 +2941,17 @@ impl sema {
         var ty = self.resolve_expression(n->container => ast*);
         defer ty.delete();
 
+        if (ty.is_error()) {
+            return;
+        }
+
+        if (!self.is_struct_type(ty)) {
+            self.err->error(n->container->base.location,
+                "container must be struct type"
+            );
+            return;
+        }
+
         // only accept container T, T& or T*
         if (ty.pointer_depth > 1) {
             self.err->out("\"")
@@ -3050,6 +3096,17 @@ impl sema {
     func resolve_foreach_stmt(self, n: ast_foreach*, func_self: colgm_func&) {
         var ty = self.resolve_expression(n->container => ast*);
         defer ty.delete();
+
+        if (ty.is_error()) {
+            return;
+        }
+
+        if (!self.is_struct_type(ty)) {
+            self.err->error(n->container->base.location,
+                "container must be struct type"
+            );
+            return;
+        }
 
         // only accept container T, T& or T*
         if (ty.pointer_depth > 1) {

@@ -74,8 +74,8 @@ private:
     type resolve_get_field(const type&, get_field*);
     type resolve_struct_get_field(const colgm_struct&, const type&, get_field*);
     type resolve_tagged_union_get_field(const colgm_tagged_union&, const type&, get_field*);
-    void check_static_call_args(const colgm_func&, call_func_args*);
-    void check_method_call_args(const colgm_func&, call_func_args*);
+    bool check_static_call_args(const colgm_func&, call_func_args*);
+    bool check_method_call_args(const colgm_func&, call_func_args*);
     type resolve_call_id(call_id*);
     type resolve_call_func_args(const type&, call_func_args*);
     type resolve_call_index(const type&, call_index*);

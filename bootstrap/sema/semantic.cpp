@@ -720,15 +720,17 @@ type semantic::resolve_tagged_union_get_field(const colgm_tagged_union& un,
     return type::error_type();
 }
 
-void semantic::check_static_call_args(const colgm_func& func,
+bool semantic::check_static_call_args(const colgm_func& func,
                                       call_func_args* node) {
     if (func.ordered_params.size() != node->get_args().size()) {
         rp.report(node,
             "expect " + std::to_string(func.ordered_params.size()) +
             " argument(s) but get " + std::to_string(node->get_args().size())
         );
-        return;
+        return false;
     }
+
+    bool error_occur = false;
     size_t index = 0;
     for (auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
@@ -736,6 +738,7 @@ void semantic::check_static_call_args(const colgm_func& func,
         // do not report if infer is error, because it must be reported before
         if (infer.is_error()) {
             ++ index;
+            error_occur = true;
             continue;
         }
 
@@ -744,29 +747,34 @@ void semantic::check_static_call_args(const colgm_func& func,
                 "expect \"" + param.to_string() +
                 "\" but get \"" + infer.to_string() + "\""
             );
+            error_occur = true;
         }
         
         if (param.is_reference && !check_can_be_referenced(i)) {
             rp.report(i, "cannot pass literal as reference");
+            error_occur = true;
         }
         if (param.is_reference) {
             node->set_arg_is_ref(index, true);
         }
         ++ index;
     }
+
+    return !error_occur;
 }
 
-void semantic::check_method_call_args(const colgm_func& func,
+bool semantic::check_method_call_args(const colgm_func& func,
                                       call_func_args* node) {
     if (func.ordered_params.size() != node->get_args().size() + 1) {
         rp.report(node,
             "expect " + std::to_string(func.ordered_params.size() - 1) +
             " argument(s) but get " + std::to_string(node->get_args().size())
         );
-        return;
+        return false;
     }
 
     // check args
+    bool error_occur = false;
     size_t index = 1;
     for (auto i : node->get_args()) {
         const auto infer = resolve_expression(i);
@@ -774,6 +782,7 @@ void semantic::check_method_call_args(const colgm_func& func,
         // do not report if infer is error, because it must be reported before
         if (infer.is_error()) {
             ++ index;
+            error_occur = true;
             continue;
         }
 
@@ -782,10 +791,12 @@ void semantic::check_method_call_args(const colgm_func& func,
                 "expect \"" + param.to_string() +
                 "\" but get \"" + infer.to_string() + "\""
             );
+            error_occur = true;
         }
 
         if (param.is_reference && !check_can_be_referenced(i)) {
             rp.report(i, "cannot pass literal as reference");
+            error_occur = true;
         }
         if (param.is_reference) {
             // method call do not need to pass the reference of 'self'
@@ -794,6 +805,8 @@ void semantic::check_method_call_args(const colgm_func& func,
         }
         ++ index;
     }
+
+    return !error_occur;
 }
 
 type semantic::resolve_call_id(call_id* node) {
@@ -855,7 +868,9 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
             return type::error_type();
         }
         const auto& func = domain.functions.at(prev.generic_name());
-        check_static_call_args(func, node);
+        if (!check_static_call_args(func, node)) {
+            return type::error_type();
+        }
         node->set_resolve_type(func.return_type);
         return func.return_type;
     }
@@ -870,7 +885,9 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         }
         const auto& p = ctx.global.primitives.at(prev.generic_name());
         const auto& method = p.static_methods.at(prev.m_info.method_name);
-        check_static_call_args(method, node);
+        if (!check_static_call_args(method, node)) {
+            return type::error_type();
+        }
         node->set_resolve_type(method.return_type);
         return method.return_type;
     }
@@ -885,7 +902,9 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         }
         const auto& p = ctx.global.primitives.at(prev.generic_name());
         const auto& method = p.methods.at(prev.m_info.method_name);
-        check_method_call_args(method, node);
+        if (!check_method_call_args(method, node)) {
+            return type::error_type();
+        }
         node->set_resolve_type(method.return_type);
         return method.return_type;
     }
@@ -895,13 +914,17 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         if (domain.structs.count(prev.generic_name())) {
             const auto& st = domain.structs.at(prev.generic_name());
             const auto& method = st.static_method.at(prev.m_info.method_name);
-            check_static_call_args(method, node);
+            if (!check_static_call_args(method, node)) {
+                return type::error_type();
+            }
             node->set_resolve_type(method.return_type);
             return method.return_type;
         } else if (domain.tagged_unions.count(prev.generic_name())) {
             const auto& un = domain.tagged_unions.at(prev.generic_name());
             const auto& method = un.static_method.at(prev.m_info.method_name);
-            check_static_call_args(method, node);
+            if (!check_static_call_args(method, node)) {
+                return type::error_type();
+            }
             node->set_resolve_type(method.return_type);
             return method.return_type;
         }
@@ -917,13 +940,17 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         if (domain.structs.count(prev.generic_name())) {
             const auto& st = domain.structs.at(prev.generic_name());
             const auto& method = st.method.at(prev.m_info.method_name);
-            check_method_call_args(method, node);
+            if (!check_method_call_args(method, node)) {
+                return type::error_type();
+            }
             node->set_resolve_type(method.return_type);
             return method.return_type;
         } else if (domain.tagged_unions.count(prev.generic_name())) {
             const auto& un = domain.tagged_unions.at(prev.generic_name());
             const auto& method = un.method.at(prev.m_info.method_name);
-            check_method_call_args(method, node);
+            if (!check_method_call_args(method, node)) {
+                return type::error_type();
+            }
             node->set_resolve_type(method.return_type);
             return method.return_type;
         }
@@ -2018,7 +2045,9 @@ void semantic::lowering_forindex(forindex* node) {
 }
 
 void semantic::resolve_forindex(forindex* node, const colgm_func& func_self) {
-    resolve_expression(node->get_container());
+    if (resolve_expression(node->get_container()).is_error()) {
+        return;
+    }
     lowering_forindex(node);
 
     ctx.push_level();
@@ -2113,7 +2142,9 @@ void semantic::lowering_foreach(foreach* node) {
 }
 
 void semantic::resolve_foreach(foreach* node, const colgm_func& func_self) {
-    resolve_expression(node->get_container());
+    if (resolve_expression(node->get_container()).is_error()) {
+        return;
+    }
     lowering_foreach(node);
 
     ctx.push_level();

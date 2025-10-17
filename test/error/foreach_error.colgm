@@ -1,0 +1,42 @@
+struct A {
+    index: i32
+}
+
+struct A_iter {
+    index: i32
+}
+
+impl A {
+    pub func reindex(self, index: i32&) -> A& {
+        self.index = index;
+        return self;
+    }
+
+    pub func iter(self) -> A_iter {
+        return A_iter { index: 0 };
+    }
+}
+
+impl A_iter {
+    pub func next(self) -> A_iter {
+        return A_iter { index: self.index + 1 };
+    }
+    pub func is_end(self) -> bool {
+        return self.index >= 10;
+    }
+}
+
+func main() -> i32 {
+    var a = A {};
+    var b = 0;
+
+    // issue 1: report twice, which is not expected
+    foreach (var i; a.reindex(0)) {}
+    forindex (var i; a.reindex(0)) {}
+
+    // issue 2: not a struct type
+    foreach (var i; b) {}
+    forindex (var i; b) {}
+
+    return 0;
+}
