@@ -739,14 +739,14 @@ void semantic::check_static_call_args(const colgm_func& func,
             continue;
         }
 
-        if (infer != param) {
-            if (!check_can_be_converted(i, param)) {
-                rp.report(i,
-                    "expect \"" + param.to_string() +
-                    "\" but get \"" + infer.to_string() + "\""
-                );
-            }
-        } else if (param.is_reference && !check_can_be_referenced(i)) {
+        if (infer != param && !check_can_be_converted(i, param)) {
+            rp.report(i,
+                "expect \"" + param.to_string() +
+                "\" but get \"" + infer.to_string() + "\""
+            );
+        }
+        
+        if (param.is_reference && !check_can_be_referenced(i)) {
             rp.report(i, "cannot pass literal as reference");
         }
         if (param.is_reference) {
@@ -777,14 +777,14 @@ void semantic::check_method_call_args(const colgm_func& func,
             continue;
         }
 
-        if (infer != param) {
-            if (!check_can_be_converted(i, param)) {
-                rp.report(i,
-                    "expect \"" + param.to_string() +
-                    "\" but get \"" + infer.to_string() + "\""
-                );
-            }
-        } else if (param.is_reference && !check_can_be_referenced(i)) {
+        if (infer != param && !check_can_be_converted(i, param)) {
+            rp.report(i,
+                "expect \"" + param.to_string() +
+                "\" but get \"" + infer.to_string() + "\""
+            );
+        }
+
+        if (param.is_reference && !check_can_be_referenced(i)) {
             rp.report(i, "cannot pass literal as reference");
         }
         if (param.is_reference) {

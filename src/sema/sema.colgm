@@ -1130,29 +1130,35 @@ impl sema {
                 continue;
             }
             var param = func_self.param_type.get(i.index());
-            if (!infer.eq(param)) {
-                if (!self.check_can_be_converted(arg, param)) {
-                    var info = str::from("expect \"");
-                    defer info.delete();
 
-                    var param_name = param.full_path_name_with_pointer(self.pkg);
-                    defer param_name.delete();
+            // if param type does not match and cannot be converted, report error
+            if (!infer.eq(param) && !self.check_can_be_converted(arg, param)) {
+                var info = str::from("expect \"");
+                defer info.delete();
 
-                    info.append_str(param_name);
-                    info.append("\" but get \"");
-                    var infer_name = infer.full_path_name_with_pointer(self.pkg);
-                    defer infer_name.delete();
+                var param_name = param.full_path_name_with_pointer(self.pkg);
+                defer param_name.delete();
 
-                    info.append_str(infer_name);
-                    info.append("\"");
-                    self.err->error(arg->location, info.c_str);
-                }
-            } elsif (param.is_reference && !self.check_can_be_referenced(arg)) {
+                info.append_str(param_name);
+                info.append("\" but get \"");
+                var infer_name = infer.full_path_name_with_pointer(self.pkg);
+                defer infer_name.delete();
+
+                info.append_str(infer_name);
+                info.append("\"");
+                self.err->error(arg->location, info.c_str);
+                continue;
+            }
+
+            // check when param is reference and argument shouldn't be literal
+            if (param.is_reference && !self.check_can_be_referenced(arg)) {
                 self.err->error(arg->location,
                     "cannot pass literal as reference"
                 );
             }
             if (param.is_reference) {
+                // method call do not need to pass the reference of 'self'
+                // so there's no need to add 1 to the index
                 n->args_is_ref.c_data()[i.index()] = true;
             }
         }
@@ -1180,24 +1186,28 @@ impl sema {
                 continue;
             }
             var param = func_self.param_type.get(i.index() + 1);
-            if (!infer.eq(param)) {
-                if (!self.check_can_be_converted(arg, param)) {
-                    var info = str::from("expect \"");
-                    defer info.delete();
 
-                    var param_name = param.full_path_name_with_pointer(self.pkg);
-                    defer param_name.delete();
+            // if param type does not match and cannot be converted, report error
+            if (!infer.eq(param) && !self.check_can_be_converted(arg, param)) {
+                var info = str::from("expect \"");
+                defer info.delete();
 
-                    info.append_str(param_name);
-                    info.append("\" but get \"");
-                    var infer_name = infer.full_path_name_with_pointer(self.pkg);
-                    defer infer_name.delete();
+                var param_name = param.full_path_name_with_pointer(self.pkg);
+                defer param_name.delete();
 
-                    info.append_str(infer_name);
-                    info.append("\"");
-                    self.err->error(arg->location, info.c_str);
-                }
-            } elsif (param.is_reference && !self.check_can_be_referenced(arg)) {
+                info.append_str(param_name);
+                info.append("\" but get \"");
+                var infer_name = infer.full_path_name_with_pointer(self.pkg);
+                defer infer_name.delete();
+
+                info.append_str(infer_name);
+                info.append("\"");
+                self.err->error(arg->location, info.c_str);
+                continue;
+            }
+
+            // check when param is reference and argument shouldn't be literal
+            if (param.is_reference && !self.check_can_be_referenced(arg)) {
                 self.err->error(arg->location,
                     "cannot pass literal as reference"
                 );
