@@ -10,7 +10,7 @@ def format_line(line: str) -> str:
         line = line[0 : -1]
         tail_space_count += 1
 
-    return "#" + line + "." * tail_space_count + "#"  
+    return "#" + line + "." * tail_space_count + "#"
 
 def operator_without_space_in_line(opr: str, line: str) -> bool:
     if opr not in line:

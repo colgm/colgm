@@ -749,7 +749,7 @@ bool semantic::check_static_call_args(const colgm_func& func,
             );
             error_occur = true;
         }
-        
+
         if (param.is_reference && !check_can_be_referenced(i)) {
             rp.report(i, "cannot pass literal as reference");
             error_occur = true;
