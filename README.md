@@ -3,7 +3,7 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/colgm/colgm)
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
 [![nightly-build](https://github.com/colgm/colgm/actions/workflows/release.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/release.yml)
-[![discord](https://img.shields.io/discord/1369992600853020693?logo=discord&label=Colgm)](https://discord.gg/v8Uta6K8)
+[![discord](https://img.shields.io/discord/1369992600853020693?logo=discord&label=Colgm)](https://discord.gg/9D6yXNEQSf)
 
 Colgm aims to be a simple, easy-to-use and easy-to-maintain programming language.
 It will let you write relatively safe code without too much cognitive load.
