@@ -925,19 +925,29 @@ impl mir2sir {
         var flag_is_integer = left.resolved_type.is_integer() ||
                               left.resolved_type.is_pointer() ||
                               left.resolved_type.is_bool() ||
-                              left_ty.eq_const("i64");
+                              left_ty.eq_const("i64"); // enum type
 
         match (n->op) {
             mir_binary_opr::add => {
-                self.block->add_stmt(sir_add::new(
-                    left_value,
-                    right_value,
-                    temp_var_value,
-                    left.resolved_type.is_integer(),
-                    left_ty,
-                    self.generate_DI_location(n->base.location),
-                    "+"
-                ) => sir*);
+                if (left.resolved_type.is_integer()) {
+                    self.block->add_stmt(sir_add::new(
+                        left_value,
+                        right_value,
+                        temp_var_value,
+                        left_ty,
+                        self.generate_DI_location(n->base.location),
+                        "+"
+                    ) => sir*);
+                } else {
+                    self.block->add_stmt(sir_fadd::new(
+                        left_value,
+                        right_value,
+                        temp_var_value,
+                        left_ty,
+                        self.generate_DI_location(n->base.location),
+                        "+"
+                    ) => sir*);
+                }
             }
             mir_binary_opr::sub => {
                 self.block->add_stmt(sir_sub::new(
@@ -2289,15 +2299,25 @@ impl mir2sir {
                     left_value,
                     temp_0_value
                 ) => sir*);
-                self.block->add_stmt(sir_add::new(
-                    temp_0_value,
-                    right_value,
-                    temp_1_value,
-                    right.resolved_type.is_integer(),
-                    right_ty,
-                    self.generate_DI_location(n->base.location),
-                    "+="
-                ) => sir*);
+                if (right.resolved_type.is_integer()) {
+                    self.block->add_stmt(sir_add::new(
+                        temp_0_value,
+                        right_value,
+                        temp_1_value,
+                        right_ty,
+                        self.generate_DI_location(n->base.location),
+                        "+="
+                    ) => sir*);
+                } else {
+                    self.block->add_stmt(sir_fadd::new(
+                        temp_0_value,
+                        right_value,
+                        temp_1_value,
+                        right_ty,
+                        self.generate_DI_location(n->base.location),
+                        "+="
+                    ) => sir*);
+                }
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     temp_1_value,

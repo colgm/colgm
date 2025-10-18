@@ -346,13 +346,21 @@ void mir2sir::visit_mir_binary(mir_binary* node) {
     auto temp_var = ssa_gen.create();
     switch(node->get_opr()) {
         case mir_binary::opr_kind::add:
-            block->add_stmt(new sir_add(
-                left.to_value_t(),
-                right.to_value_t(),
-                value_t::variable(temp_var),
-                left.resolve_type.is_integer(),
-                type_mapping(left.resolve_type)
-            ));
+            if (left.resolve_type.is_integer()) {
+                block->add_stmt(new sir_add(
+                    left.to_value_t(),
+                    right.to_value_t(),
+                    value_t::variable(temp_var),
+                    type_mapping(left.resolve_type)
+                ));
+            } else {
+                block->add_stmt(new sir_fadd(
+                    left.to_value_t(),
+                    right.to_value_t(),
+                    value_t::variable(temp_var),
+                    type_mapping(left.resolve_type)
+                ));
+            }
             break;
         case mir_binary::opr_kind::sub:
             block->add_stmt(new sir_sub(
@@ -1289,13 +1297,21 @@ void mir2sir::mir_assign_gen(const mir_value_t& left,
                 left.to_value_t(),
                 value_t::variable(temp_0)
             ));
-            block->add_stmt(new sir_add(
-                value_t::variable(temp_0),
-                right.to_value_t(),
-                value_t::variable(temp_1),
-                left.resolve_type.is_integer(),
-                type_mapping(right.resolve_type)
-            ));
+            if (left.resolve_type.is_integer()) {
+                block->add_stmt(new sir_add(
+                    value_t::variable(temp_0),
+                    right.to_value_t(),
+                    value_t::variable(temp_1),
+                    type_mapping(right.resolve_type)
+                ));
+            } else {
+                block->add_stmt(new sir_fadd(
+                    value_t::variable(temp_0),
+                    right.to_value_t(),
+                    value_t::variable(temp_1),
+                    type_mapping(right.resolve_type)
+                ));
+            }
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 value_t::variable(temp_1),

@@ -23,6 +23,7 @@ pub enum sir_kind {
     sir_bnot,
     sir_lnot,
     sir_add,
+    sir_fadd,
     sir_sub,
     sir_mul,
     sir_div,
@@ -111,6 +112,10 @@ impl sir {
             }
             sir_kind::sir_add => {
                 var n = self.__ptr__() => sir_add*;
+                n->delete();
+            }
+            sir_kind::sir_fadd => {
+                var n = self.__ptr__() => sir_fadd*;
                 n->delete();
             }
             sir_kind::sir_sub => {
@@ -233,6 +238,10 @@ impl sir {
             }
             sir_kind::sir_add => {
                 var n = self.__ptr__() => sir_add*;
+                n->dump(out);
+            }
+            sir_kind::sir_fadd => {
+                var n = self.__ptr__() => sir_fadd*;
                 n->dump(out);
             }
             sir_kind::sir_sub => {
@@ -891,7 +900,6 @@ pub struct sir_add {
     target: value_t,
     left: value_t,
     right: value_t,
-    is_integer: bool,
     type: str,
     debug_info_index: u64,
     comment: str
@@ -901,7 +909,6 @@ impl sir_add {
     pub func new(l: value_t&,
                  r: value_t&,
                  tgt: value_t&,
-                 is_int: bool,
                  type: str&,
                  dii: u64,
                  comment: const i8*) -> sir_add* {
@@ -910,7 +917,6 @@ impl sir_add {
         n->target = tgt.clone();
         n->left = l.clone();
         n->right = r.clone();
-        n->is_integer = is_int;
         n->type = type.clone();
         n->debug_info_index = dii;
         if (comment != nil) {
@@ -932,12 +938,65 @@ impl sir_add {
     pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
-        out.out(" = ");
-        if (self.is_integer) {
-            out.out("add ");
-        } else {
-            out.out("fadd ");
+        out.out(" = add ");
+        out.out(self.type.c_str).out(" ");
+        self.left.dump(out);
+        out.out(", ");
+        self.right.dump(out);
+        if (self.debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self.debug_info_index);
         }
+        if (!self.comment.empty()) {
+            out.out(" ; ").out(self.comment.c_str);
+        }
+        out.endln();
+    }
+}
+
+pub struct sir_fadd {
+    base: sir,
+    target: value_t,
+    left: value_t,
+    right: value_t,
+    type: str,
+    debug_info_index: u64,
+    comment: str
+}
+
+impl sir_fadd {
+    pub func new(l: value_t&,
+                 r: value_t&,
+                 tgt: value_t&,
+                 type: str&,
+                 dii: u64,
+                 comment: const i8*) -> sir_fadd* {
+        var n = sir_fadd::__alloc__();
+        n->base = sir::instance(sir_kind::sir_fadd);
+        n->target = tgt.clone();
+        n->left = l.clone();
+        n->right = r.clone();
+        n->type = type.clone();
+        n->debug_info_index = dii;
+        if (comment != nil) {
+            n->comment = str::from(comment);
+        } else {
+            n->comment = str::instance();
+        }
+        return n;
+    }
+
+    pub func delete(self) {
+        self.target.delete();
+        self.left.delete();
+        self.right.delete();
+        self.type.delete();
+        self.comment.delete();
+    }
+
+    pub func dump(self, out: io&) {
+        out.out("  ");
+        self.target.dump(out);
+        out.out(" = fadd ");
         out.out(self.type.c_str).out(" ");
         self.left.dump(out);
         out.out(", ");

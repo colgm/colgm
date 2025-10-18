@@ -15,7 +15,6 @@ void primitive_size_opt::remove_primitive_size_method(sir_block* b) {
                 value_t::literal(primitive_methods.at(p->get_name())),
                 value_t::literal("0"),
                 p->get_destination(),
-                true,
                 "i64"
             );
             new_stmts.push_back(constant);

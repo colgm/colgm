@@ -169,8 +169,12 @@ void sir_lnot::dump(std::ostream& out) const {
 }
 
 void sir_add::dump(std::ostream& out) const {
-    out << destination << " = ";
-    out << (is_integer? "add":"fadd") << " ";
+    out << destination << " = add ";
+    out << quoted_name(type) << " " << left << ", " << right << "\n";
+}
+
+void sir_fadd::dump(std::ostream& out) const {
+    out << destination << " = fadd ";
     out << quoted_name(type) << " " << left << ", " << right << "\n";
 }
 

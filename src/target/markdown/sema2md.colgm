@@ -7,6 +7,7 @@ use sema::tagged_union::{ colgm_tagged_union };
 use util::package::{ package };
 
 use std::io::{ io };
+use std::str::{ str };
 
 func function_dump(f: colgm_func&, pkg: package&, out: io&) {
     out.out("```rs\n");
@@ -93,6 +94,18 @@ func struct_dump(st: colgm_struct&, pkg: package&, out: io&) {
         out.out("}\n");
     }
     out.out("```\n\n");
+
+    foreach (var i; st.static_method) {
+        out.out("#### ").out(st.name.c_str).out("::");
+        out.out(i.key().c_str).out("\n\n");
+        function_dump(i.value(), pkg, out);
+    }
+
+    foreach (var i; st.method) {
+        out.out("#### ").out(st.name.c_str).out("::");
+        out.out(i.key().c_str).out("\n\n");
+        function_dump(i.value(), pkg, out);
+    }
 }
 
 func tagged_union_dump(tu: colgm_tagged_union&, pkg: package&, out: io&) {
@@ -130,35 +143,64 @@ func tagged_union_dump(tu: colgm_tagged_union&, pkg: package&, out: io&) {
         out.out("}\n");
     }
     out.out("```\n\n");
+
+    foreach (var i; tu.static_method) {
+        out.out("#### ").out(tu.name.c_str).out("::");
+        out.out(i.key().c_str).out("\n\n");
+        function_dump(i.value(), pkg, out);
+    }
+
+    foreach (var i; tu.method) {
+        out.out("#### ").out(tu.name.c_str).out("::");
+        out.out(i.key().c_str).out("\n\n");
+        function_dump(i.value(), pkg, out);
+    }
+}
+
+func name_dump(category: const i8*, module_name: const i8*, name: const i8*, out: io&) {
+    out.out("### ").out(category).out(" `");
+    if (module_name != nil) {
+        out.out(module_name).out("::");
+    }
+    out.out(name).out("`\n\n");
 }
 
 func domain_dump(dm: colgm_module&, pkg: package&, out: io&) {
+    var module_name: i8* = nil;
     if (!pkg.has_file(dm.file_name)) {
-        out.out("## Main Entry: ").out(dm.file_name.c_str).out("\n\n");
+        out.out("## Main Entry `").out(dm.file_name.c_str).out("`\n\n");
     } else {
-        out.out("## ").out(pkg.get_module_name(dm.file_name).c_str).out("\n\n");
+        module_name = pkg.get_module_name(dm.file_name).c_str;
+        out.out("## Module ").out(pkg.get_module_name(dm.file_name).c_str).out("\n\n");
     }
+
     foreach (var i; dm.functions) {
-        if (i.key().eq_const("__time__")) {
+        if (i.key().eq_const("__time__") && module_name != nil) {
             continue;
         }
-        out.out("### ").out(i.key().c_str).out("\n\n");
+        if (i.key().find('<') != str::npos()) {
+            continue;
+        }
+        name_dump("Function", module_name, i.key().c_str, out);
         function_dump(i.value(), pkg, out);
     }
     foreach (var i; dm.generic_functions) {
-        out.out("### ").out(i.key().c_str).out("\n\n");
+        name_dump("Generic Function", module_name, i.key().c_str, out);
         function_dump(i.value(), pkg, out);
     }
     foreach (var i; dm.structs) {
-        out.out("### ").out(i.key().c_str).out("\n\n");
+        if (i.key().find('<') != str::npos()) {
+            continue;
+        }
+        name_dump("Struct", module_name, i.key().c_str, out);
         struct_dump(i.value(), pkg, out);
     }
     foreach (var i; dm.generic_structs) {
-        out.out("### ").out(i.key().c_str).out("\n\n");
+        name_dump("Generic Struct", module_name, i.key().c_str, out);
         struct_dump(i.value(), pkg, out);
     }
     foreach (var i; dm.tagged_unions) {
-        out.out("### ").out(i.key().c_str).out("\n\n");
+        name_dump("Tagged Union", module_name, i.key().c_str, out);
         tagged_union_dump(i.value(), pkg, out);
     }
 }

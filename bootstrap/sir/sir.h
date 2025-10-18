@@ -27,6 +27,7 @@ enum class sir_kind {
     sir_bnot,
     sir_lnot,
     sir_add,
+    sir_fadd,
     sir_sub,
     sir_mul,
     sir_div,
@@ -360,18 +361,34 @@ private:
     value_t left;
     value_t right;
     value_t destination;
-    bool is_integer;
     std::string type;
 
 public:
     sir_add(const value_t& l,
             const value_t& r,
             const value_t& dst,
-            bool is_int,
             const std::string& t):
         sir(sir_kind::sir_add),
-        left(l), right(r), destination(dst), is_integer(is_int), type(t) {}
+        left(l), right(r), destination(dst), type(t) {}
     ~sir_add() override = default;
+    void dump(std::ostream&) const override;
+};
+
+class sir_fadd: public sir {
+private:
+    value_t left;
+    value_t right;
+    value_t destination;
+    std::string type;
+
+public:
+    sir_fadd(const value_t& l,
+             const value_t& r,
+             const value_t& dst,
+             const std::string& t):
+        sir(sir_kind::sir_fadd),
+        left(l), right(r), destination(dst), type(t) {}
+    ~sir_fadd() override = default;
     void dump(std::ostream&) const override;
 };
 
