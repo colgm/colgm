@@ -570,14 +570,16 @@ public:
 class sir_label: public sir {
 private:
     usize label_count;
+    std::vector<sir*> stmts;
     std::string comment;
 
 public:
     sir_label(usize count, const std::string& cm = ""):
         sir(sir_kind::sir_label), label_count(count), comment(cm) {}
-    ~sir_label() override = default;
-    void dump(std::ostream&) const override;
+    ~sir_label() override;
+    void add_stmt(sir* node) { stmts.push_back(node); }
     std::string get_label() const;
+    void dump(std::ostream&) const override;
 };
 
 class sir_store: public sir {

@@ -1440,6 +1440,7 @@ impl sir_cmp {
 pub struct sir_label {
     base: sir,
     label: u64,
+    stmts: vec<sir*>,
     comment: str
 }
 
@@ -1448,12 +1449,19 @@ impl sir_label {
         var n = sir_label::__alloc__();
         n->base = sir::instance(sir_kind::sir_label);
         n->label = label;
+        n->stmts = vec<sir*>::instance();
         n->comment = str::from(comment);
         return n;
     }
 
     pub func delete(self) {
         self.comment.delete();
+        foreach (var i; self.stmts) {
+            var n = i.get();
+            n->delete();
+            free(n => i8*);
+        }
+        self.stmts.delete();
     }
 
     pub func dump(self, out: io&) {
@@ -1462,6 +1470,9 @@ impl sir_label {
             out.out("\t; ").out(self.comment.c_str);
         }
         out.endln();
+        foreach (var i; self.stmts) {
+            i.get()->dump(out);
+        }
     }
 }
 

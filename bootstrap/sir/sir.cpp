@@ -240,18 +240,28 @@ void sir_cmp::dump(std::ostream& out) const {
     out << left << ", " << right << "\n";
 }
 
-void sir_label::dump(std::ostream& out) const {
-    out << get_label() << ":";
-    if (comment.length()) {
-        out << "\t\t\t\t; " << comment;
+sir_label::~sir_label() {
+    for (auto i : stmts) {
+        delete i;
     }
-    out << "\n";
 }
 
 std::string sir_label::get_label() const {
     std::stringstream ss;
     ss << "label._." << std::hex << label_count << std::dec;
     return ss.str();
+}
+
+void sir_label::dump(std::ostream& out) const {
+    out << get_label() << ":";
+    if (comment.length()) {
+        out << "\t\t\t\t; " << comment;
+    }
+    out << "\n";
+    for (auto i : stmts) {
+        out << "  ";
+        i->dump(out);
+    }
 }
 
 void sir_store::dump(std::ostream& out) const {
