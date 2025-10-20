@@ -65,6 +65,7 @@ sir_block::~sir_block() {
 }
 
 void sir_block::dump(std::ostream& out) const {
+    out << "label._.entry:\n";
     for (auto i : allocas) {
         out << "  ";
         i->dump(out);
@@ -73,6 +74,7 @@ void sir_block::dump(std::ostream& out) const {
         out << "  ";
         i->dump(out);
     }
+
     for (auto i : stmts) {
         if (i->get_ir_type() != sir_kind::sir_label) {
             out << "  ";

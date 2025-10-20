@@ -115,7 +115,6 @@ void sir_func::dump(std::ostream& out) const {
         return;
     }
     out << " {\n";
-    out << "label._.entry:\n";
     block->dump(out);
     out << "}\n";
 }
