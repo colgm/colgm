@@ -227,9 +227,10 @@ void mir2sir::generate_and(mir_binary* node) {
     auto false_label = block->stmt_size();
     br->set_false_label(false_label);
 
-    block->add_stmt(new sir_label(next_label, "and.false"));
+    auto and_false_block = new sir_label(next_label, "and.false");
+    block->add_stmt(and_false_block);
     auto temp_1 = ssa_gen.create();
-    block->add_stmt(new sir_load(
+    and_false_block->add_stmt(new sir_load(
         "i1",
         value_t::variable(temp_0),
         value_t::variable(temp_1)
@@ -276,9 +277,10 @@ void mir2sir::generate_or(mir_binary* node) {
     auto true_label = block->stmt_size();
     br->set_true_label(true_label);
 
-    block->add_stmt(new sir_label(next_label, "or.true"));
+    auto or_true_block = new sir_label(next_label, "or.true");
+    block->add_stmt(or_true_block);
     auto temp_1 = ssa_gen.create();
-    block->add_stmt(new sir_load(
+    or_true_block->add_stmt(new sir_load(
         "i1",
         value_t::variable(temp_0),
         value_t::variable(temp_1)

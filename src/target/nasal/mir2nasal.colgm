@@ -88,6 +88,8 @@ impl mir2nasal {
 
         out.out("\n# basic types\n");
         self.dump_basic(out);
+        out.out("\n# enum types\n");
+        self.dump_enum(out);
         out.out("\n# tagged union types\n");
         foreach (var i; self.ctx->tagged_unions) {
             self.dump_tagged_union(out, i.get());
@@ -106,7 +108,7 @@ impl mir2nasal {
             out.out("\n");
         }
 
-        out.out("exit(colgm_F[\"main\"](1, [\"nasal\"]));\n");
+        out.out("exit(colgm_F[\"main\"](1 + size(arg), [\"nasal\"] ~ arg));\n");
     }
 }
 
@@ -119,6 +121,19 @@ impl mir2nasal {
         ];
         for (var i = 0; basic[i] != nil; i += 1) {
             out.out("colgm_T[\"").out(basic[i]).out("\"] = func { return 0; }\n");
+        }
+    }
+
+    func dump_enum(self, out: io&) {
+        foreach (var i; self.global->domain) {
+            foreach (var e; i.value().enums) {
+                var e_ty = type::instance(e.key().c_str, e.value().location.file.c_str);
+                defer e_ty.delete();
+                var e_ty_name = e_ty.full_path_name(self.pkg);
+                defer e_ty_name.delete();
+
+                out.out("colgm_T[\"").out(e_ty_name.c_str).out("\"] = func { return 0; }\n");
+            }
         }
     }
 
@@ -208,6 +223,10 @@ impl mir2nasal {
         }
         if (f.name.eq_const("strlen")) {
             out.out("{ return size(str); }\n");
+            return;
+        }
+        if (f.name.eq_const("strcmp")) {
+            out.out("{ return cmp(left, right); }\n");
             return;
         }
         if (f.name.eq_const("exit")) {

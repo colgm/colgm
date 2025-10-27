@@ -412,7 +412,7 @@ impl mir2sir {
     }
 
     func process_print(self, curr: u64, total: u64, ts: timestamp&) {
-        if (curr + 1 != total && (curr + 1) % 25 != 0) {
+        if (curr + 1 != total && (curr + 1) % 35 != 0) {
             return;
         }
 
@@ -804,12 +804,14 @@ impl mir2sir {
 
         var false_label_index = self.block->stmts.size;
         br->label_false = false_label_index;
-        self.block->add_stmt(sir_label::new(next_label_index, "and.false") => sir*);
+
+        var and_false_block = sir_label::new(next_label_index, "and.false");
+        self.block->add_stmt(and_false_block => sir*);
 
         var temp_1_value = self.ssa_gen.create_variable();
         defer temp_1_value.delete();
 
-        self.block->add_stmt(sir_load::new(
+        and_false_block->add_stmt(sir_load::new(
             i1_name,
             temp_0_value,
             temp_1_value
@@ -876,12 +878,14 @@ impl mir2sir {
 
         var true_label_index = self.block->stmts.size;
         br->label_true = true_label_index;
-        self.block->add_stmt(sir_label::new(next_label_index, "or.true") => sir*);
+
+        var or_true_block = sir_label::new(next_label_index, "or.true");
+        self.block->add_stmt(or_true_block => sir*);
 
         var temp_1_value = self.ssa_gen.create_variable();
         defer temp_1_value.delete();
 
-        self.block->add_stmt(sir_load::new(
+        or_true_block->add_stmt(sir_load::new(
             i1_name,
             temp_0_value,
             temp_1_value
@@ -919,8 +923,8 @@ impl mir2sir {
         }
         self.value_stack.pop_back();
 
-        var temp_var_value = self.ssa_gen.create_variable();
-        defer temp_var_value.delete();
+        var target = self.ssa_gen.create_variable();
+        defer target.delete();
 
         var flag_is_integer = left.resolved_type.is_integer() ||
                               left.resolved_type.is_pointer() ||
@@ -933,7 +937,7 @@ impl mir2sir {
                     self.block->add_stmt(sir_add::new(
                         left_value,
                         right_value,
-                        temp_var_value,
+                        target,
                         left_ty,
                         self.generate_DI_location(n->base.location),
                         "+"
@@ -942,7 +946,7 @@ impl mir2sir {
                     self.block->add_stmt(sir_fadd::new(
                         left_value,
                         right_value,
-                        temp_var_value,
+                        target,
                         left_ty,
                         self.generate_DI_location(n->base.location),
                         "+"
@@ -953,7 +957,7 @@ impl mir2sir {
                 self.block->add_stmt(sir_sub::new(
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left.resolved_type.is_integer(),
                     left_ty
                 ) => sir*);
@@ -962,7 +966,7 @@ impl mir2sir {
                 self.block->add_stmt(sir_mul::new(
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left.resolved_type.is_integer(),
                     left_ty
                 ) => sir*);
@@ -971,7 +975,7 @@ impl mir2sir {
                 self.block->add_stmt(sir_div::new(
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
                     left_ty
@@ -981,7 +985,7 @@ impl mir2sir {
                 self.block->add_stmt(sir_rem::new(
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
                     left_ty
@@ -991,7 +995,7 @@ impl mir2sir {
                 self.block->add_stmt(sir_band::new(
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left_ty
                 ) => sir*);
             }
@@ -999,7 +1003,7 @@ impl mir2sir {
                 self.block->add_stmt(sir_bxor::new(
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left_ty
                 ) => sir*);
             }
@@ -1007,7 +1011,7 @@ impl mir2sir {
                 self.block->add_stmt(sir_bor::new(
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left_ty
                 ) => sir*);
             }
@@ -1016,7 +1020,7 @@ impl mir2sir {
                     sir_cmp_kind::cmp_eq,
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     flag_is_integer,
                     !left.resolved_type.is_unsigned(),
                     left_ty
@@ -1027,7 +1031,7 @@ impl mir2sir {
                     sir_cmp_kind::cmp_neq,
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     flag_is_integer,
                     !left.resolved_type.is_unsigned(),
                     left_ty
@@ -1038,7 +1042,7 @@ impl mir2sir {
                     sir_cmp_kind::cmp_gt,
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
                     left_ty
@@ -1049,7 +1053,7 @@ impl mir2sir {
                     sir_cmp_kind::cmp_ge,
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
                     left_ty
@@ -1060,7 +1064,7 @@ impl mir2sir {
                     sir_cmp_kind::cmp_lt,
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
                     left_ty
@@ -1071,7 +1075,7 @@ impl mir2sir {
                     sir_cmp_kind::cmp_le,
                     left_value,
                     right_value,
-                    temp_var_value,
+                    target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
                     left_ty
@@ -1080,7 +1084,7 @@ impl mir2sir {
             _ => {}
         }
 
-        self.push_mir_value_variable(temp_var_value.content, n->resolved_type);
+        self.push_mir_value_variable(target.content, n->resolved_type);
     }
 
     func visit_mir_type_convert(self, n: mir_type_convert*) {
