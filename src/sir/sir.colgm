@@ -1441,13 +1441,13 @@ impl sir_cmp {
 
 pub struct sir_label {
     base: sir,
-    label: u64,
+    label: i64,
     stmts: vec<sir*>,
     comment: str
 }
 
 impl sir_label {
-    pub func new(label: u64, comment: const i8*) -> sir_label* {
+    pub func new(label: i64, comment: const i8*) -> sir_label* {
         var n = sir_label::__alloc__();
         n->base = sir::instance(sir_kind::sir_label);
         n->label = label;
@@ -1471,7 +1471,7 @@ impl sir_label {
     }
 
     pub func dump(self, out: io&) {
-        out.out("\nlabel._.").out_hex(self.label).out(":");
+        out.out("\nlabel._.").out_hex(self.label => u64).out(":");
         if (!self.comment.empty()) {
             out.out("\t; ").out(self.comment.c_str);
         }
@@ -1549,11 +1549,11 @@ impl sir_load {
 
 pub struct sir_br {
     base: sir,
-    label: u64
+    label: i64
 }
 
 impl sir_br {
-    pub func new(label: u64) -> sir_br* {
+    pub func new(label: i64) -> sir_br* {
         var n = sir_br::__alloc__();
         n->base = sir::instance(sir_kind::sir_br);
         n->label = label;
@@ -1563,19 +1563,19 @@ impl sir_br {
     pub func delete(self) {}
 
     pub func dump(self, out: io&) {
-        out.out("  br label %label._.").out_hex(self.label).endln();
+        out.out("  br label %label._.").out_hex(self.label => u64).endln();
     }
 }
 
 pub struct sir_br_cond {
     base: sir,
     cond: value_t,
-    label_true: u64,
-    label_false: u64
+    label_true: i64,
+    label_false: i64
 }
 
 impl sir_br_cond {
-    pub func new(c: value_t&, label_true: u64, label_false: u64) -> sir_br_cond* {
+    pub func new(c: value_t&, label_true: i64, label_false: i64) -> sir_br_cond* {
         var n = sir_br_cond::__alloc__();
         n->base = sir::instance(sir_kind::sir_br_cond);
         n->cond = c.clone();
@@ -1591,17 +1591,18 @@ impl sir_br_cond {
     pub func dump(self, out: io&) {
         out.out("  br i1 ");
         self.cond.dump(out);
-        out.out(", label %label._.").out_hex(self.label_true);
-        out.out(", label %label._.").out_hex(self.label_false).endln();
+        out.out(", label %label._.").out_hex(self.label_true => u64);
+        out.out(", label %label._.").out_hex(self.label_false => u64);
+        out.endln();
     }
 }
 
 pub struct sir_switch {
     base: sir,
     source: value_t,
-    default_label: u64,
+    default_label: i64,
     case_value: vec<i64>,
-    case_label: vec<u64>
+    case_label: vec<i64>
 }
 
 impl sir_switch {
@@ -1611,7 +1612,7 @@ impl sir_switch {
         n->source = src.clone();
         n->default_label = 0;
         n->case_value = vec<i64>::instance();
-        n->case_label = vec<u64>::instance();
+        n->case_label = vec<i64>::instance();
         return n;
     }
 
@@ -1621,7 +1622,7 @@ impl sir_switch {
         self.case_label.delete();
     }
 
-    pub func add_case(self, value: i64, label: u64) {
+    pub func add_case(self, value: i64, label: i64) {
         self.case_value.push(value);
         self.case_label.push(label);
     }
@@ -1629,12 +1630,14 @@ impl sir_switch {
     pub func dump(self, out: io&) {
         out.out("  switch i64 ");
         self.source.dump(out);
-        out.out(", label %label._.").out_hex(self.default_label).out(" [\n");
+        out.out(", label %label._.").out_hex(self.default_label => u64);
+        out.out(" [\n");
         forindex (var i; self.case_value) {
             var value = self.case_value.get(i);
             var label = self.case_label.get(i);
             out.out("    i64 ").out_i64(value);
-            out.out(", label %label._.").out_hex(label).out("\n");
+            out.out(", label %label._.").out_hex(label => u64);
+            out.out("\n");
         }
         out.out("  ]\n");
     }

@@ -160,10 +160,13 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
 
         // generate code block
         func->set_code_block(new sir_block);
+
         // init ssa generator
         ssa_gen.clear();
         array_ssa_gen.clear();
         var_ssa_gen.clear();
+        label_gen.clear();
+
         // clear value stack
         value_stack.clear();
 
@@ -203,13 +206,13 @@ void mir2sir::generate_and(mir_binary* node) {
         value_t::variable(temp_0)
     ));
 
-    auto true_label = block->stmt_size() + 1;
-    auto br = new sir_br_cond(
+    auto true_label = label_gen.create_index();
+    auto br_cond = new sir_br_cond(
         left.content,
         true_label,
         0
     );
-    block->add_stmt(br);
+    block->add_stmt(br_cond);
     block->add_stmt(new sir_label(true_label, "and.true"));
 
     node->get_right()->accept(this);
@@ -221,13 +224,11 @@ void mir2sir::generate_and(mir_binary* node) {
         value_t::variable(temp_0)
     ));
 
-    auto next_label = block->stmt_size() + 1;
-    block->add_stmt(new sir_br(next_label));
+    auto false_label = label_gen.create_index();
+    br_cond->set_false_label(false_label);
+    block->add_stmt(new sir_br(false_label));
 
-    auto false_label = block->stmt_size();
-    br->set_false_label(false_label);
-
-    auto and_false_block = new sir_label(next_label, "and.false");
+    auto and_false_block = new sir_label(false_label, "and.false");
     block->add_stmt(and_false_block);
     auto temp_1 = ssa_gen.create();
     and_false_block->add_stmt(new sir_load(
@@ -253,13 +254,13 @@ void mir2sir::generate_or(mir_binary* node) {
         value_t::variable(temp_0)
     ));
 
-    auto false_label = block->stmt_size() + 1;
-    auto br = new sir_br_cond(
+    auto false_label = label_gen.create_index();
+    auto br_cond = new sir_br_cond(
         left.content,
         0,
         false_label
     );
-    block->add_stmt(br);
+    block->add_stmt(br_cond);
     block->add_stmt(new sir_label(false_label, "or.false"));
 
     node->get_right()->accept(this);
@@ -271,13 +272,11 @@ void mir2sir::generate_or(mir_binary* node) {
         value_t::variable(temp_0)
     ));
 
-    auto next_label = block->stmt_size() + 1;
-    block->add_stmt(new sir_br(next_label));
+    auto true_label = label_gen.create_index();
+    br_cond->set_true_label(true_label);
+    block->add_stmt(new sir_br(true_label));
 
-    auto true_label = block->stmt_size();
-    br->set_true_label(true_label);
-
-    auto or_true_block = new sir_label(next_label, "or.true");
+    auto or_true_block = new sir_label(true_label, "or.true");
     block->add_stmt(or_true_block);
     auto temp_1 = ssa_gen.create();
     or_true_block->add_stmt(new sir_load(
@@ -1482,20 +1481,21 @@ void mir2sir::visit_mir_if(mir_if* node) {
         node->get_condition()->accept(this);
         auto cond = value_stack.back();
         value_stack.pop_back();
+        auto cond_true_label = label_gen.create_index();
         br_cond = new sir_br_cond(
             cond.content,
-            block->stmt_size() + 1,
+            cond_true_label,
             0
         );
         block->add_stmt(br_cond);
-        block->add_stmt(new sir_label(block->stmt_size(), "cond.true"));
+        block->add_stmt(new sir_label(cond_true_label, "cond.true"));
     }
     node->get_content()->accept(this);
 
     // for block ends with ret instruction, another basic block is needed
     // because ret instruction is the terminator instruction
     if (block->back_is_ret_stmt()) {
-        block->add_stmt(new sir_label(block->stmt_size(), "block.end.ret"));
+        block->add_stmt(new sir_label(label_gen.create_index(), "block.end.ret"));
     }
 
     auto jump_out = new sir_br(0);
@@ -1503,27 +1503,29 @@ void mir2sir::visit_mir_if(mir_if* node) {
     block->add_stmt(jump_out);
 
     if (br_cond) {
-        br_cond->set_false_label(block->stmt_size());
-        block->add_stmt(new sir_label(block->stmt_size(), "cond.false"));
+        auto cond_false_label = label_gen.create_index();
+        br_cond->set_false_label(cond_false_label);
+        block->add_stmt(new sir_label(cond_false_label, "cond.false"));
     }
 }
 
 void mir2sir::visit_mir_branch(mir_branch* node) {
     branch_jump_out.push_back({});
 
+    auto branch_end_label = label_gen.create_index();
     for (auto i : node->get_branch()) {
         i->accept(this);
         if (i->get_condition() && i == node->get_branch().back()) {
-            block->add_stmt(new sir_br(block->stmt_size() + 1));
+            block->add_stmt(new sir_br(branch_end_label));
         }
     }
-
+    
     for (auto i : branch_jump_out.back()) {
-        i->set_label(block->stmt_size());
+        i->set_label(branch_end_label);
     }
     branch_jump_out.pop_back();
 
-    block->add_stmt(new sir_label(block->stmt_size(), "branch.end"));
+    block->add_stmt(new sir_label(branch_end_label, "branch.end"));
 }
 
 void mir2sir::visit_mir_switch_case(mir_switch_case* node) {
@@ -1576,7 +1578,7 @@ void mir2sir::visit_mir_switch(mir_switch* node) {
     }
     block->add_stmt(switch_inst);
     for (auto i : node->get_cases()) {
-        auto case_label = block->stmt_size();
+        auto case_label = label_gen.create_index();
         auto label = new sir_label(
             case_label,
             "switch.case " + std::to_string(i->get_value())
@@ -1595,7 +1597,7 @@ void mir2sir::visit_mir_switch(mir_switch* node) {
         jmp_exits.push_back(jmp_exit);
     }
 
-    auto default_label = block->stmt_size();
+    auto default_label = label_gen.create_index();
     auto label = new sir_label(
         default_label,
         "switch.default"
@@ -1612,7 +1614,7 @@ void mir2sir::visit_mir_switch(mir_switch* node) {
             block->add_stmt(jmp_exit);
             jmp_exits.push_back(jmp_exit);
         }
-        auto exit_label = block->stmt_size();
+        auto exit_label = label_gen.create_index();
         block->add_stmt(new sir_label(exit_label, "switch.end"));
         for (auto i : jmp_exits) {
             i->set_label(exit_label);
@@ -1628,14 +1630,14 @@ void mir2sir::visit_mir_break(mir_break* node) {
     auto break_br = new sir_br(0);
     break_inst.back().push_back(break_br);
     block->add_stmt(break_br);
-    block->add_stmt(new sir_label(block->stmt_size(), "break.end"));
+    block->add_stmt(new sir_label(label_gen.create_index(), "break.end"));
 }
 
 void mir2sir::visit_mir_continue(mir_continue* node) {
     auto continue_br = new sir_br(0);
     continue_inst.back().push_back(continue_br);
     block->add_stmt(continue_br);
-    block->add_stmt(new sir_label(block->stmt_size(), "continue.end"));
+    block->add_stmt(new sir_label(label_gen.create_index(), "continue.end"));
 }
 
 void mir2sir::visit_mir_loop(mir_loop* node) {
@@ -1652,7 +1654,7 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
     // br %loop.entry
     // %loop.exit:       ; break jumps here
     //
-    auto entry_label = block->stmt_size() + 1;
+    auto entry_label = label_gen.create_index();
     continue_inst.push_back({});
     break_inst.push_back({});
 
@@ -1663,23 +1665,25 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
     auto cond = value_stack.back();
     value_stack.pop_back();
 
+    auto cond_true_label = label_gen.create_index();
     auto cond_ir = new sir_br_cond(
         cond.content,
-        block->stmt_size() + 1,
+        cond_true_label,
         0
     );
     block->add_stmt(cond_ir);
-    block->add_stmt(new sir_label(block->stmt_size(), "loop.cond.true"));
+    block->add_stmt(new sir_label(cond_true_label, "loop.cond.true"));
 
     node->get_content()->accept(this);
 
-    auto continue_label = block->stmt_size() + 1;
     if (block->back_is_ret_stmt()) {
         block->add_stmt(new sir_label(
-            block->stmt_size(),
+            label_gen.create_index(),
             "loop.ret_end_avoid_error"
         ));
     }
+
+    auto continue_label = label_gen.create_index();
     block->add_stmt(new sir_br(continue_label));
     block->add_stmt(new sir_label(continue_label, "loop.continue"));
     for (auto i : continue_inst.back()) {
@@ -1690,7 +1694,7 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
     }
     block->add_stmt(new sir_br(entry_label));
 
-    auto exit_label = block->stmt_size();
+    auto exit_label = label_gen.create_index();
     cond_ir->set_false_label(exit_label);
     block->add_stmt(new sir_label(exit_label, "loop.exit"));
     for (auto i : break_inst.back()) {

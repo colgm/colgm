@@ -23,6 +23,7 @@ private:
 public:
     ssa_generator(): counter(0) {}
     void clear() { counter = 0; }
+    auto create_index() { counter++; return counter - 1; }
     auto create() { return std::to_string(counter++); }
 };
 
@@ -184,6 +185,7 @@ private:
     ssa_generator ssa_gen;
     ssa_generator array_ssa_gen;
     ssa_generator var_ssa_gen;
+    ssa_generator label_gen;
     sir_block* block;
     std::vector<mir_value_t> value_stack;
     error err;
