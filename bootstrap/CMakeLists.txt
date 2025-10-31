@@ -43,7 +43,6 @@ set(COLGM_SIR
     ${CMAKE_SOURCE_DIR}/sir/adjust_va_arg_func.cpp
     ${CMAKE_SOURCE_DIR}/sir/context.cpp
     ${CMAKE_SOURCE_DIR}/sir/debug_info.cpp
-    ${CMAKE_SOURCE_DIR}/sir/delete_useless_label.cpp
     ${CMAKE_SOURCE_DIR}/sir/detect_redef_extern.cpp
     ${CMAKE_SOURCE_DIR}/sir/mir2sir.cpp
     ${CMAKE_SOURCE_DIR}/sir/pass_manager.cpp

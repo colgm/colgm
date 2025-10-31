@@ -186,7 +186,8 @@ private:
     ssa_generator array_ssa_gen;
     ssa_generator var_ssa_gen;
     ssa_generator label_gen;
-    sir_block* block;
+    sir_block* func_block;
+    sir_label* block;
     std::vector<mir_value_t> value_stack;
     error err;
 
@@ -280,7 +281,7 @@ private:
 
 public:
     mir2sir(const sema_context& c):
-        ctx(c), block(nullptr) {}
+        ctx(c), func_block(nullptr), block(nullptr) {}
     const error& generate(const mir_context&);
     auto& get_mutable_sir_context() { return ictx; }
 };

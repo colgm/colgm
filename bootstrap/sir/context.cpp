@@ -175,7 +175,7 @@ void sir_context::dump_builtin_time(std::ostream& out) const {
     out << "\"\n";
 
     out << "define i8* @__time__() alwaysinline nounwind {\n";
-    out << "label._.entry:\n";
+    out << "label.entry:\n";
     out << "  ret i8* bitcast ([" << time_str.length() + 1;
     out << " x i8]* @str.__time__ to i8*)\n";
     out << "}\n\n";
@@ -217,7 +217,7 @@ void sir_context::dump_alloc_method(std::ostream& out) const {
         out << "define " << st_real_name << "* ";
         out << "@" << alloc_func_name;
         out << "() alwaysinline {\n";
-        out << "label._.entry:\n";
+        out << "label.entry:\n";
         out << "  %0 = call i8* @malloc(i64 " << st->get_size() << ")\n";
         out << "  %1 = bitcast i8* %0 to " << st_real_name << "*\n";
         out << "  ret " << st_real_name << "* %1\n";
@@ -235,7 +235,7 @@ void sir_context::dump_alloc_method(std::ostream& out) const {
         out << "define " << un_real_name << "* ";
         out << "@" << alloc_func_name;
         out << "() alwaysinline {\n";
-        out << "label._.entry:\n";
+        out << "label.entry:\n";
         out << "  %0 = call i8* @malloc(i64 " << un->get_size() << ")\n";
         out << "  %1 = bitcast i8* %0 to " << un_real_name << "*\n";
         out << "  ret " << un_real_name << "* %1\n";

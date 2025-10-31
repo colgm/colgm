@@ -46,6 +46,8 @@ enum class sir_kind {
     sir_array_cast
 };
 
+class sir_label;
+
 std::string quoted_name(const std::string&);
 
 struct value_t {
@@ -171,7 +173,7 @@ class sir_block: public sir {
 private:
     std::vector<sir_alloca*> allocas;
     std::vector<sir_alloca*> move_register;
-    std::vector<sir*> stmts;
+    std::vector<sir_label*> basic_blocks;
 
 public:
     sir_block(): sir(sir_kind::sir_block) {}
@@ -180,16 +182,9 @@ public:
 
     void add_alloca(sir_alloca* node) { allocas.push_back(node); }
     void add_move_register(sir_alloca* node) { move_register.push_back(node); }
-    void add_stmt(sir* node) { stmts.push_back(node); }
-    auto stmt_size() const { return stmts.size(); }
-    bool back_is_ret_stmt() const {
-        return stmts.size() && stmts.back()->get_ir_type() == sir_kind::sir_ret;
-    }
+    void add_basic_block(sir_label* node) { basic_blocks.push_back(node); }
 
-    const auto& get_stmts() const { return stmts; }
-    auto& get_mut_stmts() { return stmts; }
-    const auto& get_move_register() const { return move_register; }
-    auto& get_mut_move_register() { return move_register; }
+    const auto& get_basic_blocks() const { return basic_blocks; }
 };
 
 class sir_ret: public sir {
@@ -578,6 +573,12 @@ public:
         sir(sir_kind::sir_label), label_count(count), comment(cm) {}
     ~sir_label() override;
     void add_stmt(sir* node) { stmts.push_back(node); }
+    bool back_is_ret_stmt() const {
+        return stmts.size() && stmts.back()->get_ir_type() == sir_kind::sir_ret;
+    }
+
+    const auto& get_stmts() const { return stmts; }
+    auto& get_mut_stmts() { return stmts; }
     std::string get_label() const;
     void dump(std::ostream&) const override;
 };

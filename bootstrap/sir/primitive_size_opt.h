@@ -22,7 +22,7 @@ private:
     u64 replace_count;
 
 private:
-    void remove_primitive_size_method(sir_block*);
+    void remove_primitive_size_method(sir_label*);
 
 public:
     primitive_size_opt(): sir_pass(), replace_count(0) {}

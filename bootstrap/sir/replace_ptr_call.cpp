@@ -5,13 +5,19 @@
 namespace colgm {
 
 void replace_ptr_call::do_remove(sir_block* b) {
+    for (auto i : b->get_basic_blocks()) {
+        do_remove(i);
+    }
+}
+
+void replace_ptr_call::do_remove(sir_label* b) {
     std::vector<sir*> new_stmts = {};
     for (auto i : b->get_stmts()) {
         if (i->get_ir_type() != sir_kind::sir_call) {
             new_stmts.push_back(i);
             continue;
         }
-        auto p = static_cast<sir_call*>(i);
+        auto p = i->to<sir_call>();
         if (p->get_name().find(".__ptr__") != std::string::npos &&
             p->get_args().size() == 1 &&
             p->get_return_type().length() &&
@@ -36,7 +42,9 @@ void replace_ptr_call::do_remove(sir_block* b) {
 
 bool replace_ptr_call::run(sir_context* ctx) {
     for (auto i : ctx->func_impls) {
-        do_remove(i->get_code_block());
+        for (auto j : i->get_code_block()->get_basic_blocks()) {
+            do_remove(j);
+        }
     }
     return true;
 }

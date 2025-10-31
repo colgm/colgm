@@ -13,6 +13,8 @@ private:
     error err;
 
 private:
+    void adjust(sir_call*);
+    void adjust_basic_block(sir_label*);
     void adjust_posix_open(sir_context*);
 
 public:

@@ -372,7 +372,7 @@ impl sir_block {
     }
 
     pub func dump(self, out: io&) {
-        out.out("label._.entry:\n");
+        out.out("label.entry:\n");
         foreach (var i; self.allocas) {
             var n = i.get() => sir*;
             n->dump(out);
@@ -1471,7 +1471,8 @@ impl sir_label {
     }
 
     pub func dump(self, out: io&) {
-        out.out("\nlabel._.").out_hex(self.label => u64).out(":");
+        out.out("\n");
+        out.out("label.L").out_hex(self.label => u64).out(":");
         if (!self.comment.empty()) {
             out.out("\t; ").out(self.comment.c_str);
         }
@@ -1563,7 +1564,7 @@ impl sir_br {
     pub func delete(self) {}
 
     pub func dump(self, out: io&) {
-        out.out("  br label %label._.").out_hex(self.label => u64).endln();
+        out.out("  br label %label.L").out_hex(self.label => u64).endln();
     }
 }
 
@@ -1591,8 +1592,8 @@ impl sir_br_cond {
     pub func dump(self, out: io&) {
         out.out("  br i1 ");
         self.cond.dump(out);
-        out.out(", label %label._.").out_hex(self.label_true => u64);
-        out.out(", label %label._.").out_hex(self.label_false => u64);
+        out.out(", label %label.L").out_hex(self.label_true => u64);
+        out.out(", label %label.L").out_hex(self.label_false => u64);
         out.endln();
     }
 }
@@ -1630,13 +1631,13 @@ impl sir_switch {
     pub func dump(self, out: io&) {
         out.out("  switch i64 ");
         self.source.dump(out);
-        out.out(", label %label._.").out_hex(self.default_label => u64);
+        out.out(", label %label.L").out_hex(self.default_label => u64);
         out.out(" [\n");
         forindex (var i; self.case_value) {
             var value = self.case_value.get(i);
             var label = self.case_label.get(i);
             out.out("    i64 ").out_i64(value);
-            out.out(", label %label._.").out_hex(label => u64);
+            out.out(", label %label.L").out_hex(label => u64);
             out.out("\n");
         }
         out.out("  ]\n");

@@ -13,6 +13,7 @@ private:
 
 private:
     void do_remove(sir_block*);
+    void do_remove(sir_label*);
 
 public:
     replace_ptr_call(): sir_pass(), replace_count(0) {}

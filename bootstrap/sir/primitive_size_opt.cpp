@@ -2,14 +2,14 @@
 
 namespace colgm {
 
-void primitive_size_opt::remove_primitive_size_method(sir_block* b) {
+void primitive_size_opt::remove_primitive_size_method(sir_label* b) {
     std::vector<sir*> new_stmts = {};
     for (auto i : b->get_stmts()) {
         if (i->get_ir_type() != sir_kind::sir_call) {
             new_stmts.push_back(i);
             continue;
         }
-        auto p = static_cast<sir_call*>(i);
+        auto p = i->to<sir_call>();
         if (primitive_methods.count(p->get_name())) {
             auto constant = new sir_add(
                 value_t::literal(primitive_methods.at(p->get_name())),
@@ -29,7 +29,9 @@ void primitive_size_opt::remove_primitive_size_method(sir_block* b) {
 
 bool primitive_size_opt::run(sir_context* ctx) {
     for (auto i : ctx->func_impls) {
-        remove_primitive_size_method(i->get_code_block());
+        for (auto j : i->get_code_block()->get_basic_blocks()) {
+            remove_primitive_size_method(j);
+        }
     }
     return true;
 }

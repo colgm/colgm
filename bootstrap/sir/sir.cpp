@@ -59,28 +59,31 @@ sir_block::~sir_block() {
     for (auto i : move_register) {
         delete i;
     }
-    for (auto i : stmts) {
+    for (auto i : basic_blocks) {
         delete i;
     }
 }
 
 void sir_block::dump(std::ostream& out) const {
-    out << "label._.entry:\n";
+    out << "label.entry:\n";
+    if (allocas.size()) {
+        out << "; allocas:\n";
+    }
     for (auto i : allocas) {
         out << "  ";
         i->dump(out);
+    }
+    if (move_register.size()) {
+        out << "; move register:\n";
     }
     for (auto i : move_register) {
         out << "  ";
         i->dump(out);
     }
+    out << "  br label %" << basic_blocks[0]->get_label() << "\n";
 
-    for (auto i : stmts) {
-        if (i->get_ir_type() != sir_kind::sir_label) {
-            out << "  ";
-        } else {
-            out << "\n";
-        }
+    for (auto i : basic_blocks) {
+        out << "\n";
         i->dump(out);
     }
 }
@@ -250,7 +253,7 @@ sir_label::~sir_label() {
 
 std::string sir_label::get_label() const {
     std::stringstream ss;
-    ss << "label._." << std::hex << label_count << std::dec;
+    ss << "label.L" << std::hex << label_count << std::dec;
     return ss.str();
 }
 
@@ -282,7 +285,7 @@ void sir_br::dump(std::ostream& out) const {
 
 std::string sir_br::get_label() const {
     std::stringstream ss;
-    ss << "label._." << std::hex << label << std::dec;
+    ss << "label.L" << std::hex << label << std::dec;
     return ss.str();
 }
 
@@ -294,19 +297,19 @@ void sir_br_cond::dump(std::ostream& out) const {
 
 std::string sir_br_cond::get_label_true() const {
     std::stringstream ss;
-    ss << "label._." << std::hex << label_true << std::dec;
+    ss << "label.L" << std::hex << label_true << std::dec;
     return ss.str();
 }
 
 std::string sir_br_cond::get_label_false() const {
     std::stringstream ss;
-    ss << "label._." << std::hex << label_false << std::dec;
+    ss << "label.L" << std::hex << label_false << std::dec;
     return ss.str();
 }
 
 std::string sir_switch::get_default_label() const {
     std::stringstream ss;
-    ss << "label._." << std::hex << label_default << std::dec;
+    ss << "label.L" << std::hex << label_default << std::dec;
     return ss.str();
 }
 
@@ -314,7 +317,7 @@ std::vector<std::string> sir_switch::get_case_labels() const {
     std::vector<std::string> labels;
     for (const auto& c : label_cases) {
         std::stringstream ss;
-        ss << "label._." << std::hex << c.second << std::dec;
+        ss << "label.L" << std::hex << c.second << std::dec;
         labels.push_back(ss.str());
     }
     return labels;
@@ -325,7 +328,7 @@ void sir_switch::dump(std::ostream& out) const {
     out << "label %" << get_default_label() << " [\n";
     for (const auto& c : label_cases) {
         out << "    i64 " << c.first << ", ";
-        out << "label %label._." << std::hex << c.second << std::dec << "\n";
+        out << "label %label.L" << std::hex << c.second << std::dec << "\n";
     }
     out << "  ]\n";
 }
