@@ -19,7 +19,7 @@ func check_main(func_map: hashmap<str, sir_func*>&) -> bool {
     }
 
     var main_func = func_map.get(main_name);
-    return main_func->body != nil && !main_func->body->stmts.empty();
+    return main_func->body != nil && !main_func->body->basic_block.empty();
 }
 
 pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: bool) {
@@ -57,26 +57,28 @@ pub func remove_unused_func(ctx: sir_context*, view_unused_func: bool, verbose: 
         bfs.pop();
 
         var cur_func = cur.value;
-        foreach (var i; cur_func->body->stmts) {
-            var stmt = i.get();
-            if (stmt->kind == sir_kind::sir_call) {
-                var call_stmt = stmt => sir_call*;
-                var callee: str& = call_stmt->name;
-                if (used_func.has(callee)) {
-                    continue;
-                }
-                if (!func_map.has(callee)) {
-                    continue;
-                }
-                var callee_func = func_map.get(callee);
-                var callee_pair = pair<str, sir_func*>::instance(
-                    callee,
-                    callee_func
-                );
-                defer callee_pair.delete();
+        foreach (var i; cur_func->body->basic_block) {
+            foreach (var j; i.get()->stmts) {
+                var stmt = j.get();
+                if (stmt->kind == sir_kind::sir_call) {
+                    var call_stmt = stmt => sir_call*;
+                    var callee: str& = call_stmt->name;
+                    if (used_func.has(callee)) {
+                        continue;
+                    }
+                    if (!func_map.has(callee)) {
+                        continue;
+                    }
+                    var callee_func = func_map.get(callee);
+                    var callee_pair = pair<str, sir_func*>::instance(
+                        callee,
+                        callee_func
+                    );
+                    defer callee_pair.delete();
 
-                bfs.push(callee_pair);
-                used_func.insert(callee);
+                    bfs.push(callee_pair);
+                    used_func.insert(callee);
+                }
             }
         }
     }

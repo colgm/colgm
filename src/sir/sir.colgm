@@ -320,7 +320,7 @@ pub struct sir_block {
     base: sir,
     allocas: vec<sir_alloca*>,
     move_register: vec<sir_alloca*>,
-    stmts: vec<sir*>
+    basic_block: vec<sir_label*>
 }
 
 impl sir_block {
@@ -329,7 +329,7 @@ impl sir_block {
         n->base = sir::instance(sir_kind::sir_block);
         n->allocas = vec<sir_alloca*>::instance();
         n->move_register = vec<sir_alloca*>::instance();
-        n->stmts = vec<sir*>::instance();
+        n->basic_block = vec<sir_label*>::instance();
         return n;
     }
 
@@ -344,14 +344,14 @@ impl sir_block {
             n->delete();
             free(n => i8*);
         }
-        foreach (var i; self.stmts) {
-            var n = i.get();
+        foreach (var i; self.basic_block) {
+            var n = i.get() => sir*;
             n->delete();
             free(n => i8*);
         }
         self.allocas.delete();
         self.move_register.delete();
-        self.stmts.delete();
+        self.basic_block.delete();
     }
 
     pub func add_alloca(self, s: sir_alloca*) {
@@ -362,28 +362,35 @@ impl sir_block {
         self.move_register.push(s);
     }
 
-    pub func add_stmt(self, s: sir*) {
-        self.stmts.push(s);
-    }
-
-    pub func back_is_ret_stmt(self) -> bool {
-        return self.stmts.size > 0 &&
-               self.stmts.back()->kind == sir_kind::sir_ret;
+    pub func add_basic_block(self, s: sir_label*) {
+        self.basic_block.push(s);
     }
 
     pub func dump(self, out: io&) {
         out.out("label.entry:\n");
+        if (!self.allocas.empty()) {
+            out.out("  ; allocas\n");
+        }
         foreach (var i; self.allocas) {
             var n = i.get() => sir*;
             n->dump(out);
+        }
+        if (!self.move_register.empty()) {
+            out.out("  ; move register\n");
         }
         foreach (var i; self.move_register) {
             var n = i.get() => sir*;
             n->dump(out);
         }
 
-        foreach (var i; self.stmts) {
-            i.get()->dump(out);
+        if (!self.basic_block.empty()) {
+            var entry = self.basic_block.get(0) => sir_label*;
+            out.out("br label %label.L").out_hex(entry->label => u64).out("\n");
+        }
+
+        foreach (var i; self.basic_block) {
+            var n = i.get() => sir*;
+            n->dump(out);
         }
     }
 }
@@ -1468,6 +1475,11 @@ impl sir_label {
 
     pub func add_stmt(self, stmt: sir*) {
         self.stmts.push(stmt);
+    }
+
+    pub func back_is_ret_stmt(self) -> bool {
+        return self.stmts.size > 0 &&
+               self.stmts.back()->kind == sir_kind::sir_ret;
     }
 
     pub func dump(self, out: io&) {

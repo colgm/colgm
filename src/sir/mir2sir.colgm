@@ -176,7 +176,8 @@ pub struct mir2sir {
     basic_type_mapper: hashmap<str, str>,
     primitive_methods: hashmap<str, str>,
 
-    block: sir_block*,
+    func_block: sir_block*,
+    block: sir_label*,
     ssa_gen: ssa_generator,
     array_ssa_gen: ssa_generator,
     var_ssa_suffix: u64,
@@ -207,6 +208,7 @@ impl mir2sir {
             type_mapper: hashmap<str, symbol_kind>::instance(),
             basic_type_mapper: hashmap<str, str>::instance(),
             primitive_methods: hashmap<str, str>::instance(),
+            func_block: nil,
             block: nil,
             ssa_gen: ssa_generator::instance(),
             array_ssa_gen: ssa_generator::instance(),
@@ -508,8 +510,15 @@ impl mir2sir {
 
             // generate code block
             s_func.body = sir_block::new();
-            self.block = s_func.body;
+            self.func_block = s_func.body;
+            self.block = sir_label::new(self.label_gen.create_index(), "bb.entry");
+            self.func_block->add_basic_block(self.block);
+
+            // generate code
             self.generate_func_impl_from_mir_func(m_func);
+
+            // clear block
+            self.func_block = nil;
             self.block = nil;
 
             self.sctx->func_impls.push(s_func);
@@ -667,7 +676,7 @@ impl mir2sir {
             param_name.append(".param");
             defer param_name.delete();
 
-            self.block->add_alloca(sir_alloca::new(m_param.key, mapped_type));
+            self.func_block->add_alloca(sir_alloca::new(m_param.key, mapped_type));
 
             var source = value_t::variable(param_name);
             var target = value_t::variable(m_param.key);
@@ -764,7 +773,7 @@ impl mir2sir {
             temp_0_real.delete();
         }
 
-        self.block->add_move_register(sir_alloca::new(temp_0_real, i1_name));
+        self.func_block->add_move_register(sir_alloca::new(temp_0_real, i1_name));
         self.block->add_stmt(sir_temp_ptr::new(
             temp_0_value.content,
             temp_0_real,
@@ -792,7 +801,10 @@ impl mir2sir {
             0
         );
         self.block->add_stmt(br_cond => sir*);
-        self.block->add_stmt(sir_label::new(true_label, "and.true") => sir*);
+
+        var and_true_block = sir_label::new(true_label, "and.true");
+        self.func_block->add_basic_block(and_true_block);
+        self.block = and_true_block;
 
         self.visit(n->right => mir*);
 
@@ -811,7 +823,8 @@ impl mir2sir {
         br_cond->label_false = false_label;
 
         var and_false_block = sir_label::new(false_label, "and.false");
-        self.block->add_stmt(and_false_block => sir*);
+        self.func_block->add_basic_block(and_false_block);
+        self.block = and_false_block;
 
         var temp_1_value = self.ssa_gen.create_variable();
         defer temp_1_value.delete();
@@ -836,7 +849,7 @@ impl mir2sir {
             temp_0_real.delete();
         }
 
-        self.block->add_move_register(sir_alloca::new(temp_0_real, i1_name));
+        self.func_block->add_move_register(sir_alloca::new(temp_0_real, i1_name));
         self.block->add_stmt(sir_temp_ptr::new(
             temp_0_value.content,
             temp_0_real,
@@ -864,7 +877,10 @@ impl mir2sir {
             false_label
         );
         self.block->add_stmt(br_cond => sir*);
-        self.block->add_stmt(sir_label::new(false_label, "or.false") => sir*);
+
+        var or_false_block = sir_label::new(false_label, "or.false");
+        self.func_block->add_basic_block(or_false_block);
+        self.block = or_false_block;
 
         self.visit(n->right => mir*);
 
@@ -883,7 +899,8 @@ impl mir2sir {
         br_cond->label_true = true_label;
 
         var or_true_block = sir_label::new(true_label, "or.true");
-        self.block->add_stmt(or_true_block => sir*);
+        self.func_block->add_basic_block(or_true_block);
+        self.block = or_true_block;
 
         var temp_1_value = self.ssa_gen.create_variable();
         defer temp_1_value.delete();
@@ -1207,7 +1224,7 @@ impl mir2sir {
         defer ati.delete();
 
         var array_new = sir_alloca::new_array(temp_0, ati);
-        self.block->add_alloca(array_new);
+        self.func_block->add_alloca(array_new);
 
         var v_temp_0 = value_t::variable(temp_0);
         defer v_temp_0.delete();
@@ -1277,7 +1294,7 @@ impl mir2sir {
         var n_ty = self.type_mapping(n->resolved_type);
         defer n_ty.delete();
 
-        self.block->add_move_register(sir_alloca::new(temp_var_real, n_ty));
+        self.func_block->add_move_register(sir_alloca::new(temp_var_real, n_ty));
         self.block->add_stmt(sir_temp_ptr::new(
             temp_var.content,
             temp_var_real,
@@ -1790,7 +1807,7 @@ impl mir2sir {
                 target_value.delete();
             }
 
-            self.block->add_move_register(sir_alloca::new(real, n_ty));
+            self.func_block->add_move_register(sir_alloca::new(real, n_ty));
             self.block->add_stmt(sir_temp_ptr::new(
                 temp_var_value.content,
                 real,
@@ -2243,7 +2260,7 @@ impl mir2sir {
         var type_name = self.type_mapping(n_ty);
         defer type_name.delete();
 
-        self.block->add_alloca(sir_alloca::new(name, type_name));
+        self.func_block->add_alloca(sir_alloca::new(name, type_name));
 
         if (n->init_value->kind == mir_kind::mir_call) {
             self.call_expr_gen(
@@ -2542,7 +2559,10 @@ impl mir2sir {
                 0
             );
             self.block->add_stmt(br_cond => sir*);
-            self.block->add_stmt(sir_label::new(cond_true_label, "cond.true") => sir*);
+
+            var cond_true_block = sir_label::new(cond_true_label, "cond.true");
+            self.func_block->add_basic_block(cond_true_block);
+            self.block = cond_true_block;
         }
 
         self.visit(n->content => mir*);
@@ -2550,7 +2570,9 @@ impl mir2sir {
         // for block ends with ret instruction, another basic block is needed
         // because ret instruction is the terminator instruction
         if (self.block->back_is_ret_stmt()) {
-            self.block->add_stmt(sir_label::new(self.label_gen.create_index(), "block.end.ret") => sir*);
+            var block_end_ret = sir_label::new(self.label_gen.create_index(), "block.end.ret");
+            self.func_block->add_basic_block(block_end_ret);
+            self.block = block_end_ret;
         }
 
         var jump_out = sir_br::new(0);
@@ -2560,7 +2582,9 @@ impl mir2sir {
         if (br_cond != nil) {
             var cond_false_label = self.label_gen.create_index();
             br_cond->label_false = cond_false_label;
-            self.block->add_stmt(sir_label::new(cond_false_label, "cond.false") => sir*);
+            var cond_false_block = sir_label::new(cond_false_label, "cond.false");
+            self.func_block->add_basic_block(cond_false_block);
+            self.block = cond_false_block;
         }
     }
 
@@ -2583,7 +2607,9 @@ impl mir2sir {
         }
         self.branch_jump_out.pop_back();
 
-        self.block->add_stmt(sir_label::new(branch_end_label, "branch.end") => sir*);
+        var branch_end_block = sir_label::new(branch_end_label, "branch.end");
+        self.func_block->add_basic_block(branch_end_block);
+        self.block = branch_end_block;
     }
 
     func visit_mir_switch_case(self, n: mir_switch_case*) {
@@ -2664,12 +2690,14 @@ impl mir2sir {
             label_comment.append_i64(i.get()->value);
             defer label_comment.delete();
 
-            var label = sir_label::new(
+            var case_block = sir_label::new(
                 case_label,
                 label_comment.c_str
             );
 
-            self.block->add_stmt(label => sir*);
+            self.func_block->add_basic_block(case_block);
+            self.block = case_block;
+
             switch_inst->add_case(i.get()->value, case_label);
 
             self.visit(i.get()->content => mir*);
@@ -2686,8 +2714,10 @@ impl mir2sir {
         }
 
         var default_label = self.label_gen.create_index();
-        var label = sir_label::new(default_label, "switch.default");
-        self.block->add_stmt(label => sir*);
+        var default_block = sir_label::new(default_label, "switch.default");
+        self.func_block->add_basic_block(default_block);
+        self.block = default_block;
+
         switch_inst->default_label = default_label;
 
         if (n->default_case != nil) {
@@ -2702,10 +2732,9 @@ impl mir2sir {
             }
 
             var exit_label = self.label_gen.create_index();
-            self.block->add_stmt(sir_label::new(
-                exit_label,
-                "switch.end"
-            ) => sir*);
+            var switch_end_block = sir_label::new(exit_label, "switch.end");
+            self.func_block->add_basic_block(switch_end_block);
+            self.block = switch_end_block;
 
             foreach (var i; jmp_exits) {
                 i.get()->label = exit_label;
@@ -2722,10 +2751,13 @@ impl mir2sir {
         self.break_inst.back().push(break_br);
 
         self.block->add_stmt(break_br => sir*);
-        self.block->add_stmt(sir_label::new(
+
+        var break_block = sir_label::new(
             self.label_gen.create_index(),
             "break.end"
-        ) => sir*);
+        );
+        self.func_block->add_basic_block(break_block);
+        self.block = break_block;
     }
 
     func visit_mir_continue(self) {
@@ -2733,10 +2765,13 @@ impl mir2sir {
         self.continue_inst.back().push(continue_br);
 
         self.block->add_stmt(continue_br => sir*);
-        self.block->add_stmt(sir_label::new(
+
+        var continue_block = sir_label::new(
             self.label_gen.create_index(),
             "continue.end"
-        ) => sir*);
+        );
+        self.func_block->add_basic_block(continue_block);
+        self.block = continue_block;
     }
 
     func visit_mir_loop(self, n: mir_loop*) {
@@ -2760,7 +2795,10 @@ impl mir2sir {
         //
         var entry_label = self.label_gen.create_index();
         self.block->add_stmt(sir_br::new(entry_label) => sir*);
-        self.block->add_stmt(sir_label::new(entry_label, "loop.entry") => sir*);
+
+        var loop_entry_block = sir_label::new(entry_label, "loop.entry");
+        self.func_block->add_basic_block(loop_entry_block);
+        self.block = loop_entry_block;
 
         self.visit(n->condition => mir*);
         var cond = self.value_stack.back().clone();
@@ -2777,10 +2815,13 @@ impl mir2sir {
             0
         );
         self.block->add_stmt(cond_inst => sir*);
-        self.block->add_stmt(sir_label::new(
+
+        var cond_true_block = sir_label::new(
             cond_true_label,
             "loop.cond.true"
-        ) => sir*);
+        );
+        self.func_block->add_basic_block(cond_true_block);
+        self.block = cond_true_block;
 
         self.visit(n->content => mir*);
 
@@ -2797,15 +2838,20 @@ impl mir2sir {
         //   label.12:	; loop.ret_end_avoid_error
         //     br label %label.13
         if (self.block->back_is_ret_stmt()) {
-            self.block->add_stmt(sir_label::new(
+            var ret_block = sir_label::new(
                 self.label_gen.create_index(),
                 "loop.ret_end_avoid_error"
-            ) => sir*);
+            );
+            self.func_block->add_basic_block(ret_block);
+            self.block = ret_block;
         }
 
         var continue_label = self.label_gen.create_index();
         self.block->add_stmt(sir_br::new(continue_label) => sir*);
-        self.block->add_stmt(sir_label::new(continue_label, "loop.continue") => sir*);
+
+        var continue_block = sir_label::new(continue_label, "loop.continue");
+        self.func_block->add_basic_block(continue_block);
+        self.block = continue_block;
         foreach (var i; self.continue_inst.back()) {
             i.get()->label = continue_label;
         }
@@ -2818,7 +2864,10 @@ impl mir2sir {
 
         var exit_label = self.label_gen.create_index();
         cond_inst->label_false = exit_label;
-        self.block->add_stmt(sir_label::new(exit_label, "loop.exit") => sir*);
+
+        var exit_block = sir_label::new(exit_label, "loop.exit");
+        self.func_block->add_basic_block(exit_block);
+        self.block = exit_block;
         foreach (var i; self.break_inst.back()) {
             i.get()->label = exit_label;
         }

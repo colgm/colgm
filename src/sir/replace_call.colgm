@@ -11,7 +11,7 @@ use std::libc::{ free };
 use util::timestamp::{ maketimestamp };
 
 func adjust_single_function_size_call(
-    f: sir_func&,
+    bb: sir_label*,
     struct_size_map: hashmap<str, sir_struct*>*,
     union_size_map: hashmap<str, sir_tagged_union*>*
 ) -> i64 {
@@ -19,7 +19,7 @@ func adjust_single_function_size_call(
     var temp = vec<sir*>::instance();
     defer temp.delete();
 
-    foreach (var i; f.body->stmts) {
+    foreach (var i; bb->stmts) {
         var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
             temp.push(inst);
@@ -73,9 +73,9 @@ func adjust_single_function_size_call(
         free(inst => i8*);
     }
 
-    f.body->stmts.clear();
+    bb->stmts.clear();
     foreach (var i; temp) {
-        f.body->stmts.push(i.get());
+        bb->stmts.push(i.get());
     }
 
     return replace_count;
@@ -105,11 +105,13 @@ pub func replace_size_call(ctx: sir_context*, verbose: bool) {
 
     var replace_count = 0;
     foreach (var i; ctx->func_impls) {
-        replace_count += adjust_single_function_size_call(
-            i.get(),
-            struct_size_map.__ptr__(),
-            union_size_map.__ptr__()
-        );
+        foreach (var j; i.get().body->basic_block) {
+            replace_count += adjust_single_function_size_call(
+                j.get(),
+                struct_size_map.__ptr__(),
+                union_size_map.__ptr__()
+            );
+        }
     }
 
     if (verbose) {
@@ -121,12 +123,12 @@ pub func replace_size_call(ctx: sir_context*, verbose: bool) {
     }
 }
 
-func adjust_single_function_ptr_call(f: sir_func&) -> i64 {
+func adjust_single_function_ptr_call(bb: sir_label*) -> i64 {
     var replace_count = 0;
     var temp = vec<sir*>::instance();
     defer temp.delete();
 
-    foreach (var i; f.body->stmts) {
+    foreach (var i; bb->stmts) {
         var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
             temp.push(inst);
@@ -172,9 +174,9 @@ func adjust_single_function_ptr_call(f: sir_func&) -> i64 {
         free(inst => i8*);
     }
 
-    f.body->stmts.clear();
+    bb->stmts.clear();
     foreach (var i; temp) {
-        f.body->stmts.push(i.get());
+        bb->stmts.push(i.get());
     }
 
     return replace_count;
@@ -186,7 +188,9 @@ pub func replace_ptr_call(ctx: sir_context*, verbose: bool) {
 
     var replace_count = 0;
     foreach (var i; ctx->func_impls) {
-        replace_count += adjust_single_function_ptr_call(i.get());
+        foreach (var j; i.get().body->basic_block) {
+            replace_count += adjust_single_function_ptr_call(j.get());
+        }
     }
 
     if (verbose) {

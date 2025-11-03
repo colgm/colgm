@@ -1,12 +1,12 @@
-use sir::sir::{ sir_kind, sir_call };
+use sir::sir::{ sir_kind, sir_call, sir_label };
 use sir::context::{ sir_func, sir_context };
 
 use std::io::{ io };
 use util::timestamp::{ maketimestamp };
 
-func adjust_posix_open(f: sir_func&) -> i64 {
+func adjust_posix_open_in_basic_block(bb: sir_label*) -> i64 {
     var adjust_count = 0;
-    foreach (var i; f.body->stmts) {
+    foreach (var i; bb->stmts) {
         var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
             continue;
@@ -20,6 +20,14 @@ func adjust_posix_open(f: sir_func&) -> i64 {
         call->with_va_args = true;
         call->with_va_args_real_param_size = 2;
         adjust_count += 1;
+    }
+    return adjust_count;
+}
+
+func adjust_posix_open(f: sir_func&) -> i64 {
+    var adjust_count = 0;
+    foreach (var i; f.body->basic_block) {
+        adjust_count += adjust_posix_open_in_basic_block(i.get());
     }
     return adjust_count;
 }
