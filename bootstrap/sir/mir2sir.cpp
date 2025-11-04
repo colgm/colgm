@@ -1541,7 +1541,7 @@ void mir2sir::visit_mir_branch(mir_branch* node) {
             block->add_stmt(new sir_br(branch_end_label));
         }
     }
-    
+
     for (auto i : branch_jump_out.back()) {
         i->set_label(branch_end_label);
     }

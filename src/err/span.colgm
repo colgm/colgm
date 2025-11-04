@@ -73,4 +73,21 @@ impl span {
         res.append_i64(self.begin_column + 1);
         return res;
     }
+
+    pub func eq(self, other: span&) -> bool {
+        return self.file.eq(other.file) &&
+               self.begin_line == other.begin_line &&
+               self.begin_column == other.begin_column &&
+               self.end_line == other.end_line &&
+               self.end_column == other.end_column;
+    }
+
+    pub func hash(self) -> u64 {
+        var res = self.file.hash();
+        res = res * 31 + self.begin_line => u64;
+        res = res * 31 + self.begin_column => u64;
+        res = res * 31 + self.end_line => u64;
+        res = res * 31 + self.end_column => u64;
+        return res;
+    }
 }
