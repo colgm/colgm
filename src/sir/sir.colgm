@@ -1450,6 +1450,8 @@ pub struct sir_label {
     base: sir,
     label: i64,
     stmts: vec<sir*>,
+    preds: vec<sir_label*>,
+    succs: vec<sir_label*>,
     comment: str
 }
 
@@ -1459,6 +1461,8 @@ impl sir_label {
         n->base = sir::instance(sir_kind::sir_label);
         n->label = label;
         n->stmts = vec<sir*>::instance();
+        n->preds = vec<sir_label*>::instance();
+        n->succs = vec<sir_label*>::instance();
         n->comment = str::from(comment);
         return n;
     }
@@ -1471,6 +1475,8 @@ impl sir_label {
             free(n => i8*);
         }
         self.stmts.delete();
+        self.preds.delete();
+        self.succs.delete();
     }
 
     pub func add_stmt(self, stmt: sir*) {

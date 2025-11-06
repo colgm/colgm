@@ -566,6 +566,8 @@ class sir_label: public sir {
 private:
     usize label_count;
     std::vector<sir*> stmts;
+    std::vector<sir_label*> preds;
+    std::vector<sir_label*> succs;
     std::string comment;
 
 public:
@@ -576,6 +578,9 @@ public:
     bool back_is_ret_stmt() const {
         return stmts.size() && stmts.back()->get_ir_type() == sir_kind::sir_ret;
     }
+
+    auto& get_preds() { return preds; }
+    auto& get_succs() { return succs; }
 
     const auto& get_stmts() const { return stmts; }
     auto& get_mut_stmts() { return stmts; }
