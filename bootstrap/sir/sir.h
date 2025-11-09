@@ -585,6 +585,7 @@ public:
     const auto& get_stmts() const { return stmts; }
     auto& get_mut_stmts() { return stmts; }
     std::string get_label() const;
+    auto get_label_num() const { return label_count; }
     void dump(std::ostream&) const override;
 };
 
@@ -631,6 +632,7 @@ public:
 
     void set_label(usize dst) { label = dst; }
     std::string get_label() const;
+    auto get_label_num() const { return label; }
 };
 
 class sir_br_cond: public sir {
@@ -647,6 +649,8 @@ public:
     void dump(std::ostream&) const override;
     std::string get_label_true() const;
     std::string get_label_false() const;
+    auto get_label_true_num() const { return label_true; }
+    auto get_label_false_num() const { return label_false; }
 
 public:
     void set_true_label(u64 dst_true) {

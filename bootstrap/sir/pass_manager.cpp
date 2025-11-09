@@ -3,6 +3,7 @@
 #include "sir/detect_redef_extern.h"
 #include "sir/primitive_size_opt.h"
 #include "sir/replace_ptr_call.h"
+#include "sir/control_flow.h"
 #include "report.h"
 
 namespace colgm {
@@ -18,6 +19,7 @@ void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
     passes.push_back(new detect_redef_extern);
     passes.push_back(new primitive_size_opt);
     passes.push_back(new replace_ptr_call);
+    passes.push_back(new control_flow_analysis);
     for (auto i : passes) {
         if (!i->run(sctx)) {
             break;

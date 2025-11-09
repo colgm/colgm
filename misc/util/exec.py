@@ -43,6 +43,20 @@ def find_cmake():
     print("Error: cmake not found", flush=True)
     exit(1)
 
+def find_opt():
+    suffix = ".exe" if is_windows() else ""
+    suppored_opt_version = []
+    for i in range(13, 20):
+        suppored_opt_version.append("opt-" + str(i) + suffix)
+    suppored_opt_version.append("opt" + suffix)
+
+    for path in get_path():
+        for clang in suppored_opt_version:
+            if os.path.exists(os.path.join(path, clang)):
+                return os.path.join(path, clang)
+    print("Error: opt not found", flush=True)
+    exit(1)
+
 BUILD_DIRECTORY = "build"
 if is_windows():
     BUILD_DIRECTORY = "cmake-windows-build"

@@ -262,6 +262,15 @@ void sir_label::dump(std::ostream& out) const {
     if (comment.length()) {
         out << "\t\t\t\t; " << comment;
     }
+    if (!preds.empty() || !succs.empty()) {
+        out << "\t;";
+        for (auto i : preds) {
+            out << " pred:" << i->get_label();
+        }
+        for (auto i : succs) {
+            out << " succ:" << i->get_label();
+        }
+    }
     out << "\n";
     for (auto i : stmts) {
         out << "  ";
