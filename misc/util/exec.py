@@ -51,10 +51,20 @@ def find_opt():
     suppored_opt_version.append("opt" + suffix)
 
     for path in get_path():
-        for clang in suppored_opt_version:
-            if os.path.exists(os.path.join(path, clang)):
-                return os.path.join(path, clang)
+        for opt in suppored_opt_version:
+            if os.path.exists(os.path.join(path, opt)):
+                return os.path.join(path, opt)
     print("Error: opt not found", flush=True)
+    exit(1)
+
+def find_dot():
+    suffix = ".exe" if is_windows() else ""
+    dot = "dot" + suffix
+
+    for path in get_path():
+        if os.path.exists(os.path.join(path, dot)):
+            return os.path.join(path, dot)
+    print("Error: dot not found", flush=True)
     exit(1)
 
 BUILD_DIRECTORY = "build"
