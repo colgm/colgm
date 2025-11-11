@@ -1,0 +1,65 @@
+use sir::sir::{ sir_kind, sir_block, sir_label, sir_br, sir_br_cond };
+use sir::context::{ sir_context, sir_func };
+
+use std::io::{ io };
+use util::timestamp::{ maketimestamp };
+
+func find_bb_by_label(fb: sir_block*, label: i64) -> sir_label* {
+    foreach (var i; fb->basic_block) {
+        if (i.get()->label == label) {
+            return i.get();
+        }
+    }
+    return nil;
+}
+
+func build_cfg(bb: sir_label*, fb: sir_block*) {
+    foreach (var i; bb->stmts) {
+        if (i.get()->kind == sir_kind::sir_br) {
+            var n = i.get() => sir_br*;
+            var succ = find_bb_by_label(fb, n->label);
+            if (succ != nil) {
+                succ->preds.push(bb);
+                bb->succs.push(succ);
+            }
+        } elsif (i.get()->kind == sir_kind::sir_br_cond) {
+            var n = i.get() => sir_br_cond*;
+            var succ_true = find_bb_by_label(fb, n->label_true);
+            var succ_false = find_bb_by_label(fb, n->label_false);
+            if (succ_true != nil) {
+                succ_true->preds.push(bb);
+                bb->succs.push(succ_true);
+            }
+            if (succ_false != nil) {
+                succ_false->preds.push(bb);
+                bb->succs.push(succ_false);
+            }
+        }
+    }
+}
+
+pub func control_flow_analysis(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    foreach (var i; ctx->func_impls) {
+        foreach (var j; i.get().body->basic_block) {
+            j.get()->preds.clear();
+            j.get()->succs.clear();
+        }
+    }
+
+    foreach (var i; ctx->func_impls) {
+        foreach (var j; i.get().body->basic_block) {
+            build_cfg(j.get(), i.get().body);
+        }
+    }
+
+    if (verbose) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Run SIR pass");
+        io::stdout().blue().out(" <control flow analysis>").reset().out(": ");
+        io::stdout().cyan().out("success").reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}

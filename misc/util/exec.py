@@ -73,7 +73,7 @@ if is_windows():
 
 BOOTSTRAP_COMPILER = os.path.join(BUILD_DIRECTORY, "colgm")           # compiler written in C++
 if is_windows():
-    BOOTSTRAP_COMPILER  = os.path.join(BUILD_DIRECTORY, "Release\colgm.exe")
+    BOOTSTRAP_COMPILER  = os.path.join(BUILD_DIRECTORY, "Release\\colgm.exe")
 
 LIFTED_COMPILER    = os.path.join(BUILD_DIRECTORY, "colgm_lifted")    # compiler written in colgm, but lifted by bootstrap compiler
 SELF_HOST_COMPILER = os.path.join(BUILD_DIRECTORY, "colgm_self_host") # compiler written in colgm, compiled by lifted compiler
