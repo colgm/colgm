@@ -1,5 +1,5 @@
 use std::io::{ flag };
-use std::libc::{ open, close, getcwd, strlen};
+use std::libc::{ open, close, read, getcwd, strlen};
 use std::libc::{ mkdir, chdir, rmdir };
 use std::sys::{ timespec, stat_flag, stat_info_t, stat };
 
@@ -28,6 +28,28 @@ impl fs {
         }
         var ifmt = (info.st_mode => u32) & (stat_flag::S_IFMT => u32);
         return (ifmt => stat_flag) == stat_flag::S_IFDIR;
+    }
+
+    pub func read_to_string(filename: const i8*) -> str {
+        var fd = open(filename, flag::O_RDONLY => i32, 0);
+        if (fd < 0) {
+            return str::from("");
+        }
+
+        var dst = str::instance();
+        var buff: [i8; 8192] = [];
+        var readcount = read(fd, buff, 8191);
+        buff[readcount] = 0;
+        dst.append(buff);
+
+        while (readcount != 0) {
+            readcount = read(fd, buff, 8191);
+            buff[readcount] = 0;
+            dst.append(buff);
+        }
+
+        close(fd);
+        return dst;
     }
 }
 

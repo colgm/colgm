@@ -37,28 +37,6 @@ pub enum flag {
     O_BINARY = 0x8000
 }
 
-pub func readfile(filename: const i8*) -> str {
-    var fd = open(filename, flag::O_RDONLY => i32, 0);
-    if (fd < 0) {
-        return str::from("");
-    }
-
-    var dst = str::instance();
-    var buff: [i8; 8192] = [];
-    var readcount = read(fd, buff, 8191);
-    buff[readcount] = 0;
-    dst.append(buff);
-
-    while (readcount != 0) {
-        readcount = read(fd, buff, 8191);
-        buff[readcount] = 0;
-        dst.append(buff);
-    }
-
-    close(fd);
-    return dst;
-}
-
 pub struct io {
     fd: i32,
     color_out: bool,
