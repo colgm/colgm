@@ -171,11 +171,18 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         value_stack.clear();
 
         func_block = func->get_code_block();
+
+        alloca_block = new sir_label(label_gen.create_index());
+        move_reg_block = new sir_label(label_gen.create_index());
         block = new sir_label(label_gen.create_index());
+        auto entry = block->get_label_num();
+
+        func_block->add_basic_block(alloca_block);
+        func_block->add_basic_block(move_reg_block);
         func_block->add_basic_block(block);
 
         for (const auto& j : i->params) {
-            func_block->add_alloca(new sir_alloca(j.first, type_mapping(j.second)));
+            alloca_block->add_stmt(new sir_alloca(j.first, type_mapping(j.second)));
             block->add_stmt(new sir_store(
                 type_mapping(j.second),
                 value_t::variable(j.first + ".param"),
@@ -185,8 +192,14 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
         // visit mir and generate sir
         i->block->accept(this);
 
+        // create br inst
+        alloca_block->add_stmt(new sir_br(move_reg_block->get_label_num()));
+        move_reg_block->add_stmt(new sir_br(entry));
+
         // clear block pointer
         func_block = nullptr;
+        alloca_block = nullptr;
+        move_reg_block = nullptr;
         block = nullptr;
 
         ictx.func_impls.push_back(func);
@@ -198,7 +211,7 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
 
 void mir2sir::generate_and(mir_binary* node) {
     auto temp_0 = ssa_gen.create();
-    func_block->add_move_register(new sir_alloca("_" + temp_0 + ".r", "i1"));
+    move_reg_block->add_stmt(new sir_alloca("_" + temp_0 + ".r", "i1"));
     block->add_stmt(new sir_temp_ptr(temp_0, "_" + temp_0 + ".r", "i1"));
 
     node->get_left()->accept(this);
@@ -251,7 +264,7 @@ void mir2sir::generate_and(mir_binary* node) {
 
 void mir2sir::generate_or(mir_binary* node) {
     auto temp_0 = ssa_gen.create();
-    func_block->add_move_register(new sir_alloca("_" + temp_0 + ".r", "i1"));
+    move_reg_block->add_stmt(new sir_alloca("_" + temp_0 + ".r", "i1"));
     block->add_stmt(new sir_temp_ptr(temp_0, "_" + temp_0 + ".r", "i1"));
 
     node->get_left()->accept(this);
@@ -589,7 +602,7 @@ void mir2sir::visit_mir_array(mir_array* node) {
             node->get_size()
         }
     );
-    func_block->add_alloca(array_new);
+    alloca_block->add_stmt(array_new);
 
     auto cv = new sir_array_cast(
         value_t::variable(temp_0),
@@ -700,7 +713,7 @@ void mir2sir::visit_mir_call(mir_call* node) {
 
 void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
     const auto temp_var = ssa_gen.create();
-    func_block->add_move_register(new sir_alloca(
+    move_reg_block->add_stmt(new sir_alloca(
         "_" + temp_var + ".r",
         type_mapping(node->get_type())
     ));
@@ -974,7 +987,7 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
 
     if (node->get_type() != type::void_type()) {
         auto temp_var = ssa_gen.create();
-        func_block->add_move_register(new sir_alloca(
+        move_reg_block->add_stmt(new sir_alloca(
             "_" + temp_var + ".r",
             type_mapping(node->get_type())
         ));
@@ -1260,7 +1273,7 @@ void mir2sir::visit_mir_define(mir_define* node) {
     if (node_type.is_array) {
         node_type.is_array = false;
     }
-    func_block->add_alloca(new sir_alloca(
+    alloca_block->add_stmt(new sir_alloca(
         name,
         type_mapping(node_type)
     ));

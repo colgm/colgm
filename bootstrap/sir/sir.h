@@ -171,19 +171,13 @@ public:
 
 class sir_block: public sir {
 private:
-    std::vector<sir_alloca*> allocas;
-    std::vector<sir_alloca*> move_register;
     std::vector<sir_label*> basic_blocks;
 
 public:
     sir_block(): sir(sir_kind::sir_block) {}
     ~sir_block() override;
     void dump(std::ostream&) const override;
-
-    void add_alloca(sir_alloca* node) { allocas.push_back(node); }
-    void add_move_register(sir_alloca* node) { move_register.push_back(node); }
     void add_basic_block(sir_label* node) { basic_blocks.push_back(node); }
-
     const auto& get_basic_blocks() const { return basic_blocks; }
 };
 

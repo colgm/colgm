@@ -53,37 +53,16 @@ void sir_alloca::dump(std::ostream& out) const {
 }
 
 sir_block::~sir_block() {
-    for (auto i : allocas) {
-        delete i;
-    }
-    for (auto i : move_register) {
-        delete i;
-    }
     for (auto i : basic_blocks) {
         delete i;
     }
 }
 
 void sir_block::dump(std::ostream& out) const {
-    out << "label.entry:\n";
-    if (allocas.size()) {
-        out << "; allocas:\n";
-    }
-    for (auto i : allocas) {
-        out << "  ";
-        i->dump(out);
-    }
-    if (move_register.size()) {
-        out << "; move register:\n";
-    }
-    for (auto i : move_register) {
-        out << "  ";
-        i->dump(out);
-    }
-    out << "  br label %" << basic_blocks[0]->get_label() << "\n";
-
     for (auto i : basic_blocks) {
-        out << "\n";
+        if (i != basic_blocks.front()) {
+            out << "\n";
+        }
         i->dump(out);
     }
 }
