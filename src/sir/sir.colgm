@@ -32,7 +32,7 @@ pub enum sir_kind {
     sir_bxor,
     sir_bor,
     sir_cmp,
-    sir_label,
+    sir_basic_block,
     sir_store,
     sir_load,
     sir_br,
@@ -150,8 +150,8 @@ impl sir {
                 var n = self.__ptr__() => sir_cmp*;
                 n->delete();
             }
-            sir_kind::sir_label => {
-                var n = self.__ptr__() => sir_label*;
+            sir_kind::sir_basic_block => {
+                var n = self.__ptr__() => sir_basic_block*;
                 n->delete();
             }
             sir_kind::sir_store => {
@@ -276,8 +276,8 @@ impl sir {
                 var n = self.__ptr__() => sir_cmp*;
                 n->dump(out);
             }
-            sir_kind::sir_label => {
-                var n = self.__ptr__() => sir_label*;
+            sir_kind::sir_basic_block => {
+                var n = self.__ptr__() => sir_basic_block*;
                 n->dump(out);
             }
             sir_kind::sir_store => {
@@ -318,14 +318,14 @@ impl sir {
 
 pub struct sir_block {
     base: sir,
-    basic_block: vec<sir_label*>
+    basic_block: vec<sir_basic_block*>
 }
 
 impl sir_block {
     pub func new() -> sir_block* {
         var n = sir_block::__alloc__();
         n->base = sir::instance(sir_kind::sir_block);
-        n->basic_block = vec<sir_label*>::instance();
+        n->basic_block = vec<sir_basic_block*>::instance();
         return n;
     }
 
@@ -338,7 +338,7 @@ impl sir_block {
         self.basic_block.delete();
     }
 
-    pub func add_basic_block(self, s: sir_label*) {
+    pub func add_basic_block(self, s: sir_basic_block*) {
         self.basic_block.push(s);
     }
 
@@ -1404,23 +1404,23 @@ impl sir_cmp {
     }
 }
 
-pub struct sir_label {
+pub struct sir_basic_block {
     base: sir,
     label: i64,
     stmts: vec<sir*>,
-    preds: vec<sir_label*>,
-    succs: vec<sir_label*>,
+    preds: vec<sir_basic_block*>,
+    succs: vec<sir_basic_block*>,
     comment: str
 }
 
-impl sir_label {
-    pub func new(label: i64, comment: const i8*) -> sir_label* {
-        var n = sir_label::__alloc__();
-        n->base = sir::instance(sir_kind::sir_label);
+impl sir_basic_block {
+    pub func new(label: i64, comment: const i8*) -> sir_basic_block* {
+        var n = sir_basic_block::__alloc__();
+        n->base = sir::instance(sir_kind::sir_basic_block);
         n->label = label;
         n->stmts = vec<sir*>::instance();
-        n->preds = vec<sir_label*>::instance();
-        n->succs = vec<sir_label*>::instance();
+        n->preds = vec<sir_basic_block*>::instance();
+        n->succs = vec<sir_basic_block*>::instance();
         n->comment = str::from(comment);
         return n;
     }

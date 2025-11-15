@@ -36,7 +36,7 @@ enum class sir_kind {
     sir_bxor,
     sir_bor,
     sir_cmp,
-    sir_label,
+    sir_basic_block,
     sir_store,
     sir_load,
     sir_br,
@@ -46,7 +46,7 @@ enum class sir_kind {
     sir_array_cast
 };
 
-class sir_label;
+class sir_basic_block;
 
 std::string quoted_name(const std::string&);
 
@@ -171,13 +171,13 @@ public:
 
 class sir_block: public sir {
 private:
-    std::vector<sir_label*> basic_blocks;
+    std::vector<sir_basic_block*> basic_blocks;
 
 public:
     sir_block(): sir(sir_kind::sir_block) {}
     ~sir_block() override;
     void dump(std::ostream&) const override;
-    void add_basic_block(sir_label* node) { basic_blocks.push_back(node); }
+    void add_basic_block(sir_basic_block* node) { basic_blocks.push_back(node); }
     const auto& get_basic_blocks() const { return basic_blocks; }
 };
 
@@ -556,18 +556,18 @@ public:
     void dump(std::ostream&) const override;
 };
 
-class sir_label: public sir {
+class sir_basic_block: public sir {
 private:
     usize label_count;
     std::vector<sir*> stmts;
-    std::vector<sir_label*> preds;
-    std::vector<sir_label*> succs;
+    std::vector<sir_basic_block*> preds;
+    std::vector<sir_basic_block*> succs;
     std::string comment;
 
 public:
-    sir_label(usize count, const std::string& cm = ""):
-        sir(sir_kind::sir_label), label_count(count), comment(cm) {}
-    ~sir_label() override;
+    sir_basic_block(usize count, const std::string& cm = ""):
+        sir(sir_kind::sir_basic_block), label_count(count), comment(cm) {}
+    ~sir_basic_block() override;
     void add_stmt(sir* node) { stmts.push_back(node); }
     bool back_is_ret_stmt() const {
         return stmts.size() && stmts.back()->get_ir_type() == sir_kind::sir_ret;

@@ -224,19 +224,19 @@ void sir_cmp::dump(std::ostream& out) const {
     out << left << ", " << right << "\n";
 }
 
-sir_label::~sir_label() {
+sir_basic_block::~sir_basic_block() {
     for (auto i : stmts) {
         delete i;
     }
 }
 
-std::string sir_label::get_label() const {
+std::string sir_basic_block::get_label() const {
     std::stringstream ss;
     ss << "label.L" << std::hex << label_count << std::dec;
     return ss.str();
 }
 
-void sir_label::dump(std::ostream& out) const {
+void sir_basic_block::dump(std::ostream& out) const {
     out << get_label() << ":";
     if (comment.length()) {
         out << "\t\t\t\t; " << comment;

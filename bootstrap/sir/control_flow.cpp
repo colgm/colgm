@@ -2,7 +2,7 @@
 
 namespace colgm {
 
-sir_label* control_flow_analysis::get_label(sir_block* fb, usize label_num) {
+sir_basic_block* control_flow_analysis::get_label(sir_block* fb, usize label_num) {
     for (auto i : fb->get_basic_blocks()) {
         if (i->get_label_num() == label_num) {
             return i;
@@ -11,7 +11,7 @@ sir_label* control_flow_analysis::get_label(sir_block* fb, usize label_num) {
     return nullptr;
 }
 
-void control_flow_analysis::analyze_basic_block(sir_label* bb, sir_block* fb) {
+void control_flow_analysis::analyze_basic_block(sir_basic_block* bb, sir_block* fb) {
     for (auto i : bb->get_stmts()) {
         if (i->get_ir_type() == sir_kind::sir_br) {
             auto br = static_cast<sir_br*>(i);

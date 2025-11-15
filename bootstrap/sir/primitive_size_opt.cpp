@@ -2,7 +2,7 @@
 
 namespace colgm {
 
-void primitive_size_opt::remove_primitive_size_method(sir_label* b) {
+void primitive_size_opt::remove_primitive_size_method(sir_basic_block* b) {
     std::vector<sir*> new_stmts = {};
     for (auto i : b->get_stmts()) {
         if (i->get_ir_type() != sir_kind::sir_call) {

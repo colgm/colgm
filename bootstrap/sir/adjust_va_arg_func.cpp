@@ -10,7 +10,7 @@ void adjust_va_arg_func::adjust(sir_call* call) {
     call->set_with_va_args_real_param_size(2);
 }
 
-void adjust_va_arg_func::adjust_basic_block(sir_label* block) {
+void adjust_va_arg_func::adjust_basic_block(sir_basic_block* block) {
     for (auto i : block->get_stmts()) {
         if (i->get_ir_type() != sir_kind::sir_call) {
             continue;

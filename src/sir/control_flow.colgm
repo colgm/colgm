@@ -1,10 +1,10 @@
-use sir::sir::{ sir_kind, sir_block, sir_label, sir_br, sir_br_cond };
+use sir::sir::{ sir_kind, sir_block, sir_basic_block, sir_br, sir_br_cond };
 use sir::context::{ sir_context, sir_func };
 
 use std::io::{ io };
 use util::timestamp::{ maketimestamp };
 
-func find_bb_by_label(fb: sir_block*, label: i64) -> sir_label* {
+func find_bb_by_label(fb: sir_block*, label: i64) -> sir_basic_block* {
     foreach (var i; fb->basic_block) {
         if (i.get()->label == label) {
             return i.get();
@@ -13,7 +13,7 @@ func find_bb_by_label(fb: sir_block*, label: i64) -> sir_label* {
     return nil;
 }
 
-func build_cfg(bb: sir_label*, fb: sir_block*) {
+func build_cfg(bb: sir_basic_block*, fb: sir_block*) {
     foreach (var i; bb->stmts) {
         if (i.get()->kind == sir_kind::sir_br) {
             var n = i.get() => sir_br*;

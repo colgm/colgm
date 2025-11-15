@@ -188,9 +188,9 @@ private:
     ssa_generator label_gen;
 
     sir_block* func_block;
-    sir_label* alloca_block;
-    sir_label* move_reg_block;
-    sir_label* block;
+    sir_basic_block* alloca_block;
+    sir_basic_block* move_reg_block;
+    sir_basic_block* block;
 
     std::vector<mir_value_t> value_stack;
     error err;

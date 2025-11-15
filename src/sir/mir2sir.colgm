@@ -178,9 +178,9 @@ pub struct mir2sir {
     primitive_methods: hashmap<str, str>,
 
     func_block: sir_block*,
-    alloca_block: sir_label*,
-    move_reg_block: sir_label*,
-    block: sir_label*,
+    alloca_block: sir_basic_block*,
+    move_reg_block: sir_basic_block*,
+    block: sir_basic_block*,
     ssa_gen: ssa_generator,
     array_ssa_gen: ssa_generator,
     var_ssa_suffix: u64,
@@ -516,9 +516,9 @@ impl mir2sir {
             // generate code block
             s_func.body = sir_block::new();
             self.func_block = s_func.body;
-            self.alloca_block = sir_label::new(self.label_gen.create_index(), "bb.alloca");
-            self.move_reg_block = sir_label::new(self.label_gen.create_index(), "bb.move_reg");
-            self.block = sir_label::new(self.label_gen.create_index(), "bb.entry");
+            self.alloca_block = sir_basic_block::new(self.label_gen.create_index(), "bb.alloca");
+            self.move_reg_block = sir_basic_block::new(self.label_gen.create_index(), "bb.move_reg");
+            self.block = sir_basic_block::new(self.label_gen.create_index(), "bb.entry");
             var entry = self.block->label;
 
             // insert basic blocks
@@ -820,7 +820,7 @@ impl mir2sir {
         );
         self.block->add_stmt(br_cond => sir*);
 
-        var and_true_block = sir_label::new(true_label, "and.true");
+        var and_true_block = sir_basic_block::new(true_label, "and.true");
         self.func_block->add_basic_block(and_true_block);
         self.block = and_true_block;
 
@@ -840,7 +840,7 @@ impl mir2sir {
         self.block->add_stmt(sir_br::new(false_label) => sir*);
         br_cond->label_false = false_label;
 
-        var and_false_block = sir_label::new(false_label, "and.false");
+        var and_false_block = sir_basic_block::new(false_label, "and.false");
         self.func_block->add_basic_block(and_false_block);
         self.block = and_false_block;
 
@@ -896,7 +896,7 @@ impl mir2sir {
         );
         self.block->add_stmt(br_cond => sir*);
 
-        var or_false_block = sir_label::new(false_label, "or.false");
+        var or_false_block = sir_basic_block::new(false_label, "or.false");
         self.func_block->add_basic_block(or_false_block);
         self.block = or_false_block;
 
@@ -916,7 +916,7 @@ impl mir2sir {
         self.block->add_stmt(sir_br::new(true_label) => sir*);
         br_cond->label_true = true_label;
 
-        var or_true_block = sir_label::new(true_label, "or.true");
+        var or_true_block = sir_basic_block::new(true_label, "or.true");
         self.func_block->add_basic_block(or_true_block);
         self.block = or_true_block;
 
@@ -2578,7 +2578,7 @@ impl mir2sir {
             );
             self.block->add_stmt(br_cond => sir*);
 
-            var cond_true_block = sir_label::new(cond_true_label, "cond.true");
+            var cond_true_block = sir_basic_block::new(cond_true_label, "cond.true");
             self.func_block->add_basic_block(cond_true_block);
             self.block = cond_true_block;
         }
@@ -2588,7 +2588,7 @@ impl mir2sir {
         // for block ends with ret instruction, another basic block is needed
         // because ret instruction is the terminator instruction
         if (self.block->back_is_ret_stmt()) {
-            var block_end_ret = sir_label::new(self.label_gen.create_index(), "block.end.ret");
+            var block_end_ret = sir_basic_block::new(self.label_gen.create_index(), "block.end.ret");
             self.func_block->add_basic_block(block_end_ret);
             self.block = block_end_ret;
         }
@@ -2600,7 +2600,7 @@ impl mir2sir {
         if (br_cond != nil) {
             var cond_false_label = self.label_gen.create_index();
             br_cond->label_false = cond_false_label;
-            var cond_false_block = sir_label::new(cond_false_label, "cond.false");
+            var cond_false_block = sir_basic_block::new(cond_false_label, "cond.false");
             self.func_block->add_basic_block(cond_false_block);
             self.block = cond_false_block;
         }
@@ -2625,7 +2625,7 @@ impl mir2sir {
         }
         self.branch_jump_out.pop_back();
 
-        var branch_end_block = sir_label::new(branch_end_label, "branch.end");
+        var branch_end_block = sir_basic_block::new(branch_end_label, "branch.end");
         self.func_block->add_basic_block(branch_end_block);
         self.block = branch_end_block;
     }
@@ -2708,7 +2708,7 @@ impl mir2sir {
             label_comment.append_i64(i.get()->value);
             defer label_comment.delete();
 
-            var case_block = sir_label::new(
+            var case_block = sir_basic_block::new(
                 case_label,
                 label_comment.c_str
             );
@@ -2732,7 +2732,7 @@ impl mir2sir {
         }
 
         var default_label = self.label_gen.create_index();
-        var default_block = sir_label::new(default_label, "switch.default");
+        var default_block = sir_basic_block::new(default_label, "switch.default");
         self.func_block->add_basic_block(default_block);
         self.block = default_block;
 
@@ -2750,7 +2750,7 @@ impl mir2sir {
             }
 
             var exit_label = self.label_gen.create_index();
-            var switch_end_block = sir_label::new(exit_label, "switch.end");
+            var switch_end_block = sir_basic_block::new(exit_label, "switch.end");
             self.func_block->add_basic_block(switch_end_block);
             self.block = switch_end_block;
 
@@ -2770,7 +2770,7 @@ impl mir2sir {
 
         self.block->add_stmt(break_br => sir*);
 
-        var break_block = sir_label::new(
+        var break_block = sir_basic_block::new(
             self.label_gen.create_index(),
             "break.end"
         );
@@ -2784,7 +2784,7 @@ impl mir2sir {
 
         self.block->add_stmt(continue_br => sir*);
 
-        var continue_block = sir_label::new(
+        var continue_block = sir_basic_block::new(
             self.label_gen.create_index(),
             "continue.end"
         );
@@ -2814,7 +2814,7 @@ impl mir2sir {
         var entry_label = self.label_gen.create_index();
         self.block->add_stmt(sir_br::new(entry_label) => sir*);
 
-        var loop_entry_block = sir_label::new(entry_label, "loop.entry");
+        var loop_entry_block = sir_basic_block::new(entry_label, "loop.entry");
         self.func_block->add_basic_block(loop_entry_block);
         self.block = loop_entry_block;
 
@@ -2834,7 +2834,7 @@ impl mir2sir {
         );
         self.block->add_stmt(cond_inst => sir*);
 
-        var cond_true_block = sir_label::new(
+        var cond_true_block = sir_basic_block::new(
             cond_true_label,
             "loop.cond.true"
         );
@@ -2856,7 +2856,7 @@ impl mir2sir {
         //   label.12:	; loop.ret_end_avoid_error
         //     br label %label.13
         if (self.block->back_is_ret_stmt()) {
-            var ret_block = sir_label::new(
+            var ret_block = sir_basic_block::new(
                 self.label_gen.create_index(),
                 "loop.ret_end_avoid_error"
             );
@@ -2867,7 +2867,7 @@ impl mir2sir {
         var continue_label = self.label_gen.create_index();
         self.block->add_stmt(sir_br::new(continue_label) => sir*);
 
-        var continue_block = sir_label::new(continue_label, "loop.continue");
+        var continue_block = sir_basic_block::new(continue_label, "loop.continue");
         self.func_block->add_basic_block(continue_block);
         self.block = continue_block;
         foreach (var i; self.continue_inst.back()) {
@@ -2883,7 +2883,7 @@ impl mir2sir {
         var exit_label = self.label_gen.create_index();
         cond_inst->label_false = exit_label;
 
-        var exit_block = sir_label::new(exit_label, "loop.exit");
+        var exit_block = sir_basic_block::new(exit_label, "loop.exit");
         self.func_block->add_basic_block(exit_block);
         self.block = exit_block;
         foreach (var i; self.break_inst.back()) {
