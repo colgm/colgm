@@ -178,6 +178,8 @@ pub struct mir2sir {
     primitive_methods: hashmap<str, str>,
 
     func_block: sir_block*,
+    alloca_block: sir_label*,
+    move_reg_block: sir_label*,
     block: sir_label*,
     ssa_gen: ssa_generator,
     array_ssa_gen: ssa_generator,
@@ -210,6 +212,8 @@ impl mir2sir {
             basic_type_mapper: hashmap<str, str>::instance(),
             primitive_methods: hashmap<str, str>::instance(),
             func_block: nil,
+            alloca_block: nil,
+            move_reg_block: nil,
             block: nil,
             ssa_gen: ssa_generator::instance(),
             array_ssa_gen: ssa_generator::instance(),
@@ -512,14 +516,27 @@ impl mir2sir {
             // generate code block
             s_func.body = sir_block::new();
             self.func_block = s_func.body;
+            self.alloca_block = sir_label::new(self.label_gen.create_index(), "bb.alloca");
+            self.move_reg_block = sir_label::new(self.label_gen.create_index(), "bb.move_reg");
             self.block = sir_label::new(self.label_gen.create_index(), "bb.entry");
+            var entry = self.block->label;
+
+            // insert basic blocks
+            self.func_block->add_basic_block(self.alloca_block);
+            self.func_block->add_basic_block(self.move_reg_block);
             self.func_block->add_basic_block(self.block);
 
             // generate code
             self.generate_func_impl_from_mir_func(m_func);
 
+            // insert br inst
+            self.alloca_block->add_stmt(sir_br::new(self.move_reg_block->label) => sir*);
+            self.move_reg_block->add_stmt(sir_br::new(entry) => sir*);
+
             // clear block
             self.func_block = nil;
+            self.alloca_block = nil;
+            self.move_reg_block = nil;
             self.block = nil;
 
             self.sctx->func_impls.push(s_func);
@@ -677,7 +694,7 @@ impl mir2sir {
             param_name.append(".param");
             defer param_name.delete();
 
-            self.func_block->add_alloca(sir_alloca::new(m_param.key, mapped_type));
+            self.alloca_block->add_stmt(sir_alloca::new(m_param.key, mapped_type) => sir*);
 
             var source = value_t::variable(param_name);
             var target = value_t::variable(m_param.key);
@@ -774,7 +791,7 @@ impl mir2sir {
             temp_0_real.delete();
         }
 
-        self.func_block->add_move_register(sir_alloca::new(temp_0_real, i1_name));
+        self.move_reg_block->add_stmt(sir_alloca::new(temp_0_real, i1_name) => sir*);
         self.block->add_stmt(sir_temp_ptr::new(
             temp_0_value.content,
             temp_0_real,
@@ -850,7 +867,7 @@ impl mir2sir {
             temp_0_real.delete();
         }
 
-        self.func_block->add_move_register(sir_alloca::new(temp_0_real, i1_name));
+        self.move_reg_block->add_stmt(sir_alloca::new(temp_0_real, i1_name) => sir*);
         self.block->add_stmt(sir_temp_ptr::new(
             temp_0_value.content,
             temp_0_real,
@@ -1225,7 +1242,7 @@ impl mir2sir {
         defer ati.delete();
 
         var array_new = sir_alloca::new_array(temp_0, ati);
-        self.func_block->add_alloca(array_new);
+        self.alloca_block->add_stmt(array_new => sir*);
 
         var v_temp_0 = value_t::variable(temp_0);
         defer v_temp_0.delete();
@@ -1295,7 +1312,7 @@ impl mir2sir {
         var n_ty = self.type_mapping(n->resolved_type);
         defer n_ty.delete();
 
-        self.func_block->add_move_register(sir_alloca::new(temp_var_real, n_ty));
+        self.move_reg_block->add_stmt(sir_alloca::new(temp_var_real, n_ty) => sir*);
         self.block->add_stmt(sir_temp_ptr::new(
             temp_var.content,
             temp_var_real,
@@ -1808,7 +1825,7 @@ impl mir2sir {
                 target_value.delete();
             }
 
-            self.func_block->add_move_register(sir_alloca::new(real, n_ty));
+            self.move_reg_block->add_stmt(sir_alloca::new(real, n_ty) => sir*);
             self.block->add_stmt(sir_temp_ptr::new(
                 temp_var_value.content,
                 real,
@@ -2261,7 +2278,7 @@ impl mir2sir {
         var type_name = self.type_mapping(n_ty);
         defer type_name.delete();
 
-        self.func_block->add_alloca(sir_alloca::new(name, type_name));
+        self.alloca_block->add_stmt(sir_alloca::new(name, type_name) => sir*);
 
         if (n->init_value->kind == mir_kind::mir_call) {
             self.call_expr_gen(
