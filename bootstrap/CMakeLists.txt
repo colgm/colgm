@@ -48,6 +48,7 @@ set(COLGM_SIR
     ${CMAKE_SOURCE_DIR}/sir/mir2sir.cpp
     ${CMAKE_SOURCE_DIR}/sir/pass_manager.cpp
     ${CMAKE_SOURCE_DIR}/sir/primitive_size_opt.cpp
+    ${CMAKE_SOURCE_DIR}/sir/remove_useless_block.cpp
     ${CMAKE_SOURCE_DIR}/sir/replace_ptr_call.cpp
     ${CMAKE_SOURCE_DIR}/sir/sir.cpp)
 set(COLGM_PACKAGE

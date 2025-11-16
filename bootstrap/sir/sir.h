@@ -179,6 +179,7 @@ public:
     void dump(std::ostream&) const override;
     void add_basic_block(sir_basic_block* node) { basic_blocks.push_back(node); }
     const auto& get_basic_blocks() const { return basic_blocks; }
+    auto& get_mutable_basic_blocks() { return basic_blocks; }
 };
 
 class sir_ret: public sir {
@@ -674,6 +675,7 @@ public:
     void set_default_label(usize dst_default) {
         label_default = dst_default;
     }
+    auto get_default_label_num() const { return label_default; }
     std::string get_default_label() const;
     const auto& get_cases() const { return label_cases; }
     std::vector<std::string> get_case_labels() const;

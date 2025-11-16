@@ -35,6 +35,22 @@ void control_flow_analysis::analyze_basic_block(sir_basic_block* bb, sir_block* 
                 label_false_bb->get_preds().push_back(bb);
                 bb->get_succs().push_back(label_false_bb);
             }
+        } else if (i->get_ir_type() == sir_kind::sir_switch) {
+            auto sw = static_cast<sir_switch*>(i);
+            for (auto j : sw->get_cases()) {
+                auto label = j.second;
+                auto label_bb = get_label(fb, label);
+                if (label_bb) {
+                    label_bb->get_preds().push_back(bb);
+                    bb->get_succs().push_back(label_bb);
+                }
+            }
+
+            auto default_bb = get_label(fb, sw->get_default_label_num());
+            if (default_bb) {
+                default_bb->get_preds().push_back(bb);
+                bb->get_succs().push_back(default_bb);
+            }
         }
     }
 }

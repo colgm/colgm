@@ -4,6 +4,7 @@
 #include "sir/primitive_size_opt.h"
 #include "sir/replace_ptr_call.h"
 #include "sir/control_flow.h"
+#include "sir/remove_useless_block.h"
 #include "report.h"
 
 namespace colgm {
@@ -20,6 +21,9 @@ void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
     passes.push_back(new primitive_size_opt);
     passes.push_back(new replace_ptr_call);
     passes.push_back(new control_flow_analysis);
+    passes.push_back(new remove_useless_block);
+    passes.push_back(new control_flow_analysis);
+
     for (auto i : passes) {
         if (!i->run(sctx)) {
             break;
