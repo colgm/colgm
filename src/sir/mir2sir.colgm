@@ -20,6 +20,7 @@ use sir::size_calc::{ size_calc };
 use sir::detect_redef_extern::{ detect_redef_extern };
 use sir::remove_unused_func::{ remove_unused_func };
 use sir::control_flow::{ control_flow_analysis };
+use sir::simplify_cfg::{ remove_no_pred_blocks };
 
 use dwarf::dwarf::*;
 use dwarf::status::{ DWARF_status };
@@ -3572,6 +3573,8 @@ impl mir2sir {
         replace_size_call(self.sctx, verbose);
         detect_redef_extern(self.sctx, self.err, verbose);
         remove_unused_func(self.sctx, view_unused_func, verbose);
+        control_flow_analysis(self.sctx, verbose);
+        remove_no_pred_blocks(self.sctx, verbose);
         control_flow_analysis(self.sctx, verbose);
     }
 

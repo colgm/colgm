@@ -1,0 +1,66 @@
+use sir::context::{ sir_func, sir_context };
+use sir::sir::{ sir_kind, sir, sir_basic_block };
+use util::timestamp::{ maketimestamp };
+
+use std::io::{ io };
+use std::vec::{ vec };
+use std::libc::{ free };
+
+func do_remove_no_pred_blocks(f: sir_func&) -> i64 {
+    var blocks = vec<sir_basic_block*>::instance();
+    defer blocks.delete();
+
+    var delete_count = 0;
+    foreach (var i; f.body->basic_block) {
+        var bb = i.get();
+        if (!bb->preds.empty()) {
+            blocks.push(bb);
+            continue;
+        }
+
+        if (bb->stmts.size > 1 || bb->back_is_ret_stmt()) {
+            blocks.push(bb);
+            continue;
+        }
+
+        if (bb->stmts.size == 1) {
+            var stmt = bb->stmts.get(0);
+            if (stmt->kind != sir_kind::sir_br &&
+                stmt->kind != sir_kind::sir_br_cond) {
+                blocks.push(bb);
+                continue;
+            }
+        }
+
+        var n = bb => sir*;
+        n->delete();
+        free(n => i8*);
+        delete_count += 1;
+    }
+
+    f.body->basic_block.clear();
+    foreach (var i; blocks) {
+        f.body->basic_block.push(i.get());
+    }
+
+    return delete_count;
+}
+
+pub func remove_no_pred_blocks(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var delete_count = 0;
+
+    foreach (var f; ctx->func_impls) {
+        delete_count += do_remove_no_pred_blocks(f.get());
+    }
+
+    if (verbose) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Run SIR pass");
+        io::stdout().blue().out(" <remove no pred blocks>").reset().out(": ");
+        io::stdout().cyan().out_i64(delete_count).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}

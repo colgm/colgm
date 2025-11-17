@@ -160,7 +160,10 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [ ] Regex
     - [ ] Package manager
     - [ ] Docs generator
-6. SIR refactor
+6. Simplify CFG:
+    - [x] Remove blocks without predecessors
+    - [ ] Merge blocks with only one unconditional branch
+    - [ ] Merge block into predecessor if predecessor has only one successor
 7. constant fold
 8. DCE opt
 9. CSE opt

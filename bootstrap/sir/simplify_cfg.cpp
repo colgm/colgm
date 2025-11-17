@@ -1,10 +1,10 @@
-#include "sir/remove_useless_block.h"
+#include "sir/simplify_cfg.h"
 
 #include <vector>
 
 namespace colgm {
 
-void remove_useless_block::do_single_remove(sir_func* func) {
+void remove_no_pred_block::do_single_remove(sir_func* func) {
     auto func_block = func->get_code_block();
     std::vector<sir_basic_block*> blocks;
 
@@ -32,7 +32,7 @@ void remove_useless_block::do_single_remove(sir_func* func) {
     func_block->get_mutable_basic_blocks() = blocks;
 }
 
-bool remove_useless_block::run(sir_context* ctx) {
+bool remove_no_pred_block::run(sir_context* ctx) {
     for (auto func : ctx->func_impls) {
         do_single_remove(func);
     }

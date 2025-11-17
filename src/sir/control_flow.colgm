@@ -1,4 +1,11 @@
-use sir::sir::{ sir_kind, sir_block, sir_basic_block, sir_br, sir_br_cond };
+use sir::sir::{
+    sir_kind,
+    sir_block,
+    sir_basic_block,
+    sir_br,
+    sir_br_cond,
+    sir_switch
+};
 use sir::context::{ sir_context, sir_func };
 
 use std::io::{ io };
@@ -33,6 +40,20 @@ func build_cfg(bb: sir_basic_block*, fb: sir_block*) {
             if (succ_false != nil) {
                 succ_false->preds.push(bb);
                 bb->succs.push(succ_false);
+            }
+        } elsif (i.get()->kind == sir_kind::sir_switch) {
+            var n = i.get() => sir_switch*;
+            var succ_default = find_bb_by_label(fb, n->default_label);
+            if (succ_default != nil) {
+                succ_default->preds.push(bb);
+                bb->succs.push(succ_default);
+            }
+            foreach (var k; n->case_label) {
+                var succ = find_bb_by_label(fb, k.get());
+                if (succ != nil) {
+                    succ->preds.push(bb);
+                    bb->succs.push(succ);
+                }
             }
         }
     }
