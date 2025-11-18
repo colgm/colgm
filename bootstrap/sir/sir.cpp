@@ -278,7 +278,7 @@ std::string sir_br::get_label() const {
 }
 
 void sir_br_cond::dump(std::ostream& out) const {
-    out << "br i1 %" << condition << ", ";
+    out << "br i1 " << condition << ", ";
     out << "label %" << get_label_true() << ", ";
     out << "label %" << get_label_false() << "\n";
 }

@@ -225,7 +225,7 @@ void mir2sir::generate_and(mir_binary* node) {
 
     auto true_label = label_gen.create_index();
     auto br_cond = new sir_br_cond(
-        left.content,
+        left.to_value_t(),
         true_label,
         0
     );
@@ -278,7 +278,7 @@ void mir2sir::generate_or(mir_binary* node) {
 
     auto false_label = label_gen.create_index();
     auto br_cond = new sir_br_cond(
-        left.content,
+        left.to_value_t(),
         0,
         false_label
     );
@@ -1510,7 +1510,7 @@ void mir2sir::visit_mir_if(mir_if* node) {
         value_stack.pop_back();
         auto cond_true_label = label_gen.create_index();
         br_cond = new sir_br_cond(
-            cond.content,
+            cond.to_value_t(),
             cond_true_label,
             0
         );
@@ -1719,7 +1719,7 @@ void mir2sir::visit_mir_loop(mir_loop* node) {
 
     auto cond_true_label = label_gen.create_index();
     auto cond_ir = new sir_br_cond(
-        cond.content,
+        cond.to_value_t(),
         cond_true_label,
         0
     );

@@ -632,12 +632,12 @@ public:
 
 class sir_br_cond: public sir {
 private:
-    std::string condition;
+    value_t condition;
     usize label_true;
     usize label_false;
 
 public:
-    sir_br_cond(const std::string& cd, u64 dst_true, u64 dst_false):
+    sir_br_cond(const value_t& cd, u64 dst_true, u64 dst_false):
         sir(sir_kind::sir_br_cond), condition(cd),
         label_true(dst_true), label_false(dst_false) {}
     ~sir_br_cond() override = default;
