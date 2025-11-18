@@ -1,5 +1,6 @@
 use sir::context::{ sir_func, sir_context };
 use sir::sir::{ sir_kind, sir, sir_basic_block };
+use sir::control_flow::{ control_flow_analysis };
 use util::timestamp::{ maketimestamp };
 
 use std::io::{ io };
@@ -7,6 +8,10 @@ use std::vec::{ vec };
 use std::libc::{ free };
 
 func do_remove_no_pred_blocks(f: sir_func&) -> i64 {
+    if (f.eliminated || f.body->basic_block.size <= 1) {
+        return 0;
+    }
+
     var blocks = vec<sir_basic_block*>::instance();
     defer blocks.delete();
 
@@ -42,7 +47,18 @@ func do_remove_no_pred_blocks(f: sir_func&) -> i64 {
     foreach (var i; blocks) {
         f.body->basic_block.push(i.get());
     }
+    return delete_count;
+}
 
+func iter_remove_no_pred_blocks(ctx: sir_context*) -> i64 {
+    var delete_count = 0;
+    foreach (var f; ctx->func_impls) {
+        delete_count += do_remove_no_pred_blocks(f.get());
+    }
+    // flush cfg if some blocks were deleted
+    if (delete_count > 0) {
+        control_flow_analysis(ctx, false);
+    }
     return delete_count;
 }
 
@@ -50,10 +66,17 @@ pub func remove_no_pred_blocks(ctx: sir_context*, verbose: bool) {
     var ts = maketimestamp();
     ts.stamp();
 
-    var delete_count = 0;
+    // build cfg first
+    control_flow_analysis(ctx, verbose);
 
-    foreach (var f; ctx->func_impls) {
-        delete_count += do_remove_no_pred_blocks(f.get());
+    // iterate until no more blocks can be removed
+    var delete_count = 0;
+    while (true) {
+        var this_iter_delete_count = iter_remove_no_pred_blocks(ctx);
+        if (this_iter_delete_count == 0) {
+            break;
+        }
+        delete_count += this_iter_delete_count;
     }
 
     if (verbose) {

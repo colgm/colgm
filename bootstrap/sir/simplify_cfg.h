@@ -7,7 +7,8 @@ namespace colgm {
 class remove_no_pred_block : public sir_pass {
 private:
     u64 remove_count;
-    void do_single_remove(sir_func*);
+    u64 do_single_remove(sir_func*);
+    u64 iter_do_remove(sir_context*);
 
 public:
     remove_no_pred_block(): sir_pass(), remove_count(0) {}
