@@ -186,12 +186,29 @@ impl vec<T> {
         return self.data[index];
     }
 
+    #[is_non_trivial(T)]
+    pub func set(self, index: u64, item: T&) {
+        if (index >= self.size) {
+            panic("index out of bounds");
+        }
+        self.data[index].delete();
+        self.data[index] = item.clone();
+    }
+
     #[is_trivial(T)]
     pub func get(self, index: u64) -> T {
         if (index >= self.size) {
             panic("index out of bounds");
         }
         return self.data[index];
+    }
+
+    #[is_trivial(T)]
+    pub func set(self, index: u64, item: T) {
+        if (index >= self.size) {
+            panic("index out of bounds");
+        }
+        self.data[index] = item;
     }
 
     pub func c_data(self) -> T* {

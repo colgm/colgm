@@ -678,6 +678,7 @@ public:
     auto get_default_label_num() const { return label_default; }
     std::string get_default_label() const;
     const auto& get_cases() const { return label_cases; }
+    auto& get_mut_cases() { return label_cases; }
     std::vector<std::string> get_case_labels() const;
 };
 

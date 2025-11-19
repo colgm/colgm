@@ -20,9 +20,8 @@ void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
     passes.push_back(new detect_redef_extern);
     passes.push_back(new primitive_size_opt);
     passes.push_back(new replace_ptr_call);
-    passes.push_back(new control_flow_analysis);
     passes.push_back(new remove_no_pred_block);
-    passes.push_back(new control_flow_analysis);
+    passes.push_back(new merge_block_with_no_cond_br);
 
     for (auto i : passes) {
         if (!i->run(sctx)) {

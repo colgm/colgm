@@ -1,14 +1,17 @@
 use sir::context::{ sir_func, sir_context };
-use sir::sir::{ sir_kind, sir, sir_basic_block };
+use sir::sir::{ sir_kind, sir, sir_basic_block, sir_br, sir_br_cond, sir_switch };
 use sir::control_flow::{ control_flow_analysis };
 use util::timestamp::{ maketimestamp };
 
 use std::io::{ io };
 use std::vec::{ vec };
 use std::libc::{ free };
+use std::set::{ hashset };
+use std::basic::{ basic };
+use std::panic::{ unreachable };
 
 func do_remove_no_pred_blocks(f: sir_func&) -> i64 {
-    if (f.eliminated || f.body->basic_block.size <= 1) {
+    if (f.body->basic_block.size <= 1) {
         return 0;
     }
 
@@ -43,6 +46,10 @@ func do_remove_no_pred_blocks(f: sir_func&) -> i64 {
         delete_count += 1;
     }
 
+    if (delete_count == 0) {
+        return 0;
+    }
+
     f.body->basic_block.clear();
     foreach (var i; blocks) {
         f.body->basic_block.push(i.get());
@@ -53,6 +60,9 @@ func do_remove_no_pred_blocks(f: sir_func&) -> i64 {
 func iter_remove_no_pred_blocks(ctx: sir_context*) -> i64 {
     var delete_count = 0;
     foreach (var f; ctx->func_impls) {
+        if (f.get().eliminated) {
+            continue;
+        }
         delete_count += do_remove_no_pred_blocks(f.get());
     }
     // flush cfg if some blocks were deleted
@@ -62,7 +72,7 @@ func iter_remove_no_pred_blocks(ctx: sir_context*) -> i64 {
     return delete_count;
 }
 
-pub func remove_no_pred_blocks(ctx: sir_context*, verbose: bool) {
+func remove_no_pred_blocks(ctx: sir_context*, verbose: bool) {
     var ts = maketimestamp();
     ts.stamp();
 
@@ -86,4 +96,129 @@ pub func remove_no_pred_blocks(ctx: sir_context*, verbose: bool) {
         io::stdout().cyan().out_i64(delete_count).reset();
         io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
     }
+}
+
+func adjust_label(bb: sir_basic_block*, locked_block: hashset<basic<i64>>&) {
+    var succ = bb->succs.get(0);
+    locked_block.insert(basic<i64>::wrap(succ->label));
+
+    foreach (var i; bb->preds) {
+        var pred = i.get();
+        var stmt = pred->stmts.back();
+
+        if (stmt->kind == sir_kind::sir_br) {
+            var n = stmt => sir_br*;
+            if (n->label == bb->label) {
+                n->label = succ->label;
+            }
+        } elsif (stmt->kind == sir_kind::sir_br_cond) {
+            var n = stmt => sir_br_cond*;
+            if (n->label_true == bb->label) {
+                n->label_true = succ->label;
+            }
+            if (n->label_false == bb->label) {
+                n->label_false = succ->label;
+            }
+        } elsif (stmt->kind == sir_kind::sir_switch) {
+            var n = stmt => sir_switch*;
+            if (n->default_label == bb->label) {
+                n->default_label = succ->label;
+            }
+
+            foreach (var case; n->case_label) {
+                if (case.get() == bb->label) {
+                    n->case_label.set(case.index(), succ->label);
+                }
+            }
+        } else {
+            unreachable();
+        }
+    }
+}
+
+func do_merge_block_with_no_cond_br(f: sir_func&) -> i64 {
+    var blocks = vec<sir_basic_block*>::instance();
+    defer blocks.delete();
+
+    // if the block is locked, we cannot delete it in this iteration
+    // succ of moved block will be locked
+    var locked_block = hashset<basic<i64>>::instance();
+    defer locked_block.delete();
+
+    var delete_count = 0;
+    foreach (var i; f.body->basic_block) {
+        var bb = i.get();
+        if (bb->succs.size != 1 || bb->stmts.size != 1) {
+            blocks.push(bb);
+            continue;
+        }
+
+        if (locked_block.has(basic<i64>::wrap(bb->label))) {
+            blocks.push(bb);
+            continue;
+        }
+
+        adjust_label(bb, locked_block);
+
+        var n = bb => sir*;
+        n->delete();
+        free(n => i8*);
+        delete_count += 1;
+    }
+
+    if (delete_count == 0) {
+        return 0;
+    }
+
+    f.body->basic_block.clear();
+    foreach (var i; blocks) {
+        f.body->basic_block.push(i.get());
+    }
+    return delete_count;
+}
+
+func iter_merge_block_with_no_cond_br(ctx: sir_context*) -> i64 {
+    var delete_count = 0;
+    foreach (var f; ctx->func_impls) {
+        if (f.get().eliminated) {
+            continue;
+        }
+        delete_count += do_merge_block_with_no_cond_br(f.get());
+    }
+    // flush cfg if some blocks were deleted
+    if (delete_count > 0) {
+        control_flow_analysis(ctx, false);
+    }
+    return delete_count;
+}
+
+func merge_block_with_no_cond_br(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    // build cfg first
+    control_flow_analysis(ctx, verbose);
+
+    // iterate until no more blocks can be merged
+    var delete_count = 0;
+    while (true) {
+        var this_iter_delete_count = iter_merge_block_with_no_cond_br(ctx);
+        if (this_iter_delete_count == 0) {
+            break;
+        }
+        delete_count += this_iter_delete_count;
+    }
+
+    if (verbose) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Run SIR pass");
+        io::stdout().blue().out(" <merge block with no cond br>").reset().out(": ");
+        io::stdout().cyan().out_i64(delete_count).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}
+
+pub func simplify_cfg(ctx: sir_context*, verbose: bool) {
+    remove_no_pred_blocks(ctx, verbose);
+    merge_block_with_no_cond_br(ctx, verbose);
 }
