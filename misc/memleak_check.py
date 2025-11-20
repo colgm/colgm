@@ -9,5 +9,6 @@ subprocess.run([
     "src/main.colgm",
     "--emit-llvm",
     "-V",
-    "-g"
+    "-g",
+    "-O2"
 ])

@@ -72,12 +72,9 @@ func iter_remove_no_pred_blocks(ctx: sir_context*) -> i64 {
     return delete_count;
 }
 
-func remove_no_pred_blocks(ctx: sir_context*, verbose: bool) {
-    var ts = maketimestamp();
-    ts.stamp();
-
+func remove_no_pred_blocks(ctx: sir_context*) -> i64 {
     // build cfg first
-    control_flow_analysis(ctx, verbose);
+    control_flow_analysis(ctx, false);
 
     // iterate until no more blocks can be removed
     var delete_count = 0;
@@ -89,13 +86,7 @@ func remove_no_pred_blocks(ctx: sir_context*, verbose: bool) {
         delete_count += this_iter_delete_count;
     }
 
-    if (verbose) {
-        io::stdout().green().out("  SIR-PASS ").reset();
-        io::stdout().out("Run SIR pass");
-        io::stdout().blue().out(" <remove no pred blocks>").reset().out(": ");
-        io::stdout().cyan().out_i64(delete_count).reset();
-        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
-    }
+    return delete_count;
 }
 
 func adjust_label(bb: sir_basic_block*, locked_block: hashset<basic<i64>>&) {
@@ -192,12 +183,9 @@ func iter_merge_block_with_no_cond_br(ctx: sir_context*) -> i64 {
     return delete_count;
 }
 
-func merge_block_with_no_cond_br(ctx: sir_context*, verbose: bool) {
-    var ts = maketimestamp();
-    ts.stamp();
-
+func merge_block_with_no_cond_br(ctx: sir_context*) -> i64 {
     // build cfg first
-    control_flow_analysis(ctx, verbose);
+    control_flow_analysis(ctx, false);
 
     // iterate until no more blocks can be merged
     var delete_count = 0;
@@ -209,16 +197,29 @@ func merge_block_with_no_cond_br(ctx: sir_context*, verbose: bool) {
         delete_count += this_iter_delete_count;
     }
 
-    if (verbose) {
-        io::stdout().green().out("  SIR-PASS ").reset();
-        io::stdout().out("Run SIR pass");
-        io::stdout().blue().out(" <merge block with no cond br>").reset().out(": ");
-        io::stdout().cyan().out_i64(delete_count).reset();
-        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
-    }
+    return delete_count;
 }
 
 pub func simplify_cfg(ctx: sir_context*, verbose: bool) {
-    remove_no_pred_blocks(ctx, verbose);
-    merge_block_with_no_cond_br(ctx, verbose);
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var total = 0;
+    while (true) {
+        var delete_count = 0;
+        delete_count += remove_no_pred_blocks(ctx);
+        delete_count += merge_block_with_no_cond_br(ctx);
+        if (delete_count == 0) {
+            break;
+        }
+        total += delete_count;
+    }
+
+    if (verbose) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Run SIR pass");
+        io::stdout().blue().out(" <simplify cfg>").reset().out(": ");
+        io::stdout().cyan().out_i64(total).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
 }

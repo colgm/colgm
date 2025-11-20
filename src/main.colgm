@@ -332,6 +332,23 @@ func compile(option: cli_option&) -> i32 {
     return clang_compile(option);
 }
 
+func is_opt_option(arg: const i8*) -> bool {
+    if (strlen(arg) != 3) {
+        return false;
+    }
+    if (arg[0] != '-' || arg[1] != 'O') {
+        return false;
+    }
+
+    var level = ['0', '1', '2', '3', 'z', 's'];
+    for (var i = 0; i < 6; i += 1) {
+        if (arg[2] == level[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 func main(argc: i32, argv: i8**) -> i32 {
     if (argc == 1) {
         logo(argv[0]);
@@ -431,12 +448,7 @@ func main(argc: i32, argv: i8**) -> i32 {
             option.EMIT_NASAL_ONLY = true;
         } elsif (streq(argv[i], "-emit-markdown") || streq(argv[i], "--emit-markdown")) {
             option.EMIT_MARKDOWN_ONLY = true;
-        } elsif (streq(argv[i], "-O0") ||
-                 streq(argv[i], "-O1") ||
-                 streq(argv[i], "-O2") ||
-                 streq(argv[i], "-O3") ||
-                 streq(argv[i], "-Oz") ||
-                 streq(argv[i], "-Os")) {
+        } elsif (is_opt_option(argv[i])) {
             option.set_opt_level(argv[i]);
         } elsif (argv[i][0] == '-') {
             report_invalid_argument(argv[i]);
