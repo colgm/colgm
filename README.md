@@ -160,12 +160,8 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [ ] Regex
     - [ ] Package manager
     - [ ] Docs generator
-6. Simplify CFG:
-    - [x] Remove blocks without predecessors
-    - [ ] Merge blocks with only one unconditional branch
-    - [ ] Merge block into predecessor if predecessor has only one successor
-7. constant fold
-8. DCE opt
-9. CSE opt
-10. mir structure optimization
-11. ref type implicit copy(include assignment/definition/struct init) detection
+6. constant fold
+7. DCE opt
+8. CSE opt
+9. mir structure optimization
+10. ref type implicit copy(include assignment/definition/struct init) detection
