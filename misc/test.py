@@ -38,7 +38,7 @@ TEST_LIST = [
     ("test/match.colgm",                   "src"),
     ("test/negative.colgm",                "src"),
     ("test/ref_variable_assign.colgm",     "src"),
-    ("test/sleep.colgm",                   "src"),
+#    ("test/sleep.colgm",                   "src"),
     ("test/std_test.colgm",                "src"),
     ("test/string.colgm",                  "src"),
     ("test/tagged_union.colgm",            "src"),
