@@ -1,0 +1,51 @@
+use std::ppm::{ ppm_image, ppm_pixel };
+
+func rgb(i: u32, j: u32, height: u32, width: u32) -> ppm_pixel {
+    var y_min = -1.35;
+    var y_max = 1.35;
+    var x_min = -3.3;
+    var x_max = 1.5;
+
+    var y_delta = y_max - y_min;
+    var x_delta = x_max - x_min;
+
+    var y = (i => f64) / (height => f64) * y_delta + y_min;
+    var x = (j => f64) / (width => f64) * x_delta + x_min;
+
+    var y0 = y;
+    var x0 = x;
+    var iter: u32 = 0;
+    for (; iter < 128; iter += 1) {
+        var x1 = x0 * x0 - y0 * y0 + x;
+        var y1 = 2.0 * x0 * y0 + y;
+        x0 = x1;
+        y0 = y1;
+        if (x0 * x0 + y0 * y0 > 4.0) {
+            break;
+        }
+    }
+
+    if (iter >= 100) {
+        return ppm_pixel::instance(255, 255, 255);
+    }
+
+    var c = ((iter => f64) / 100.0 * 255.0) => u8;
+    return ppm_pixel::instance(c, c, c);
+}
+
+func main() -> i32 {
+    var height: u32 = 1080;
+    var width: u32 = 1920;
+
+    var image = ppm_image::instance(height, width);
+    defer image.delete();
+
+    for (var i: u32 = 0; i < height; i += 1) {
+        for (var j: u32 = 0; j < width; j += 1) {
+            image.set_pixel(i, j, rgb(i, j, height, width));
+        }
+    }
+
+    image.write("mandelbrot.ppm");
+    return 0;
+}

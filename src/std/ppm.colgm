@@ -1,0 +1,62 @@
+use std::io::{ io };
+use std::vec::{ vec };
+
+pub struct ppm_pixel {
+    r: u8,
+    g: u8,
+    b: u8
+}
+
+impl ppm_pixel {
+    pub func instance(r: u8, g: u8, b: u8) -> ppm_pixel {
+        return ppm_pixel { r: r, g: g, b: b };
+    }
+
+    pub func dump(self, out: io&) {
+        out.out_ch(self.r => i8);
+        out.out_ch(self.g => i8);
+        out.out_ch(self.b => i8);
+    }
+}
+
+pub struct ppm_image {
+    width: u32,
+    height: u32,
+    pixels: vec<ppm_pixel>
+}
+
+impl ppm_image {
+    pub func instance(height: u32, width: u32) -> ppm_image {
+        var res = ppm_image {
+            height: height,
+            width: width,
+            pixels: vec<ppm_pixel>::instance()
+        };
+        for (var i: u32 = 0; i < height * width; i += 1) {
+            res.pixels.push(ppm_pixel::instance(0, 0, 0));
+        }
+        return res;
+    }
+
+    pub func delete(self) {
+        self.pixels.delete();
+    }
+
+    pub func set_pixel(self, x: u32, y: u32, pixel: ppm_pixel) {
+        self.pixels.set((x * self.width + y) => u64, pixel);
+    }
+
+    pub func write(self, path: const i8*) {
+        var out = io::fileout(path);
+        defer out.close();
+
+        out.out("P6\n");
+        out.out_u64(self.width => u64).out(" ");
+        out.out_u64(self.height => u64).out("\n255\n");
+        for (var i: u32 = 0; i < self.height; i += 1) {
+            for (var j: u32 = 0; j < self.width; j += 1) {
+                self.pixels.get((i * self.width + j) => u64).dump(out);
+            }
+        }
+    }
+}

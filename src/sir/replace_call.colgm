@@ -12,8 +12,8 @@ use util::timestamp::{ maketimestamp };
 
 func adjust_single_function_size_call(
     bb: sir_basic_block*,
-    struct_size_map: hashmap<str, sir_struct*>*,
-    union_size_map: hashmap<str, sir_tagged_union*>*
+    struct_size_map: hashmap<str, sir_struct*>&,
+    union_size_map: hashmap<str, sir_tagged_union*>&
 ) -> i64 {
     var replace_count = 0;
     var temp = vec<sir*>::instance();
@@ -34,10 +34,10 @@ func adjust_single_function_size_call(
         }
 
         var size: u64 = 0;
-        if (struct_size_map->has(call->name)) {
-            size = struct_size_map->get(call->name)->size;
-        } else if (union_size_map->has(call->name)) {
-            size = union_size_map->get(call->name)->size;
+        if (struct_size_map.has(call->name)) {
+            size = struct_size_map.get(call->name)->size;
+        } else if (union_size_map.has(call->name)) {
+            size = union_size_map.get(call->name)->size;
         } else {
             temp.push(inst);
             continue;
@@ -108,8 +108,8 @@ pub func replace_size_call(ctx: sir_context*, verbose: bool) {
         foreach (var j; i.get().body->basic_block) {
             replace_count += adjust_single_function_size_call(
                 j.get(),
-                struct_size_map.__ptr__(),
-                union_size_map.__ptr__()
+                struct_size_map,
+                union_size_map
             );
         }
     }
