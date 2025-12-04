@@ -387,7 +387,7 @@ impl array_type_t {
 
 pub struct sir_alloca {
     base: sir,
-    variable: str,
+    name: value_t,
     type: str,
     array_info: array_type_t
 }
@@ -396,7 +396,7 @@ impl sir_alloca {
     pub func new(variable: str&, type: str&) -> sir_alloca* {
         var n = sir_alloca::__alloc__();
         n->base = sir::instance(sir_kind::sir_alloca);
-        n->variable = variable.clone();
+        n->name = value_t::variable(variable);
         n->type = type.clone();
         n->array_info = array_type_t::default_instance();
         return n;
@@ -405,20 +405,22 @@ impl sir_alloca {
     pub func new_array(variable: str&, at: array_type_t&) -> sir_alloca* {
         var n = sir_alloca::__alloc__();
         n->base = sir::instance(sir_kind::sir_alloca);
-        n->variable = variable.clone();
+        n->name = value_t::variable(variable);
         n->type = str::instance();
         n->array_info = at.clone();
         return n;
     }
 
     pub func delete(self) {
-        self.variable.delete();
+        self.name.delete();
         self.type.delete();
         self.array_info.delete();
     }
 
     pub func dump(self, out: io&) {
-        out.out("  %").out(self.variable.c_str).out(" = alloca ");
+        out.out("  ");
+        self.name.dump(out);
+        out.out(" = alloca ");
         if (self.array_info.base_type.empty()) {
             out.out(self.type.c_str).endln();
         } else {
@@ -437,8 +439,8 @@ pub struct sir_temp_ptr {
 // and %1 is i32*
 //
     base: sir,
-    target: str,
-    source: str,
+    target: value_t,
+    source: value_t,
     type: str,
     debug_info_index: u64,
     comment: str // for tail comment
@@ -448,8 +450,8 @@ impl sir_temp_ptr {
     pub func new(target: str&, source: str&, ty: str&, dii: u64, comment: const i8*) -> sir_temp_ptr* {
         var n = sir_temp_ptr::__alloc__();
         n->base = sir::instance(sir_kind::sir_temp_ptr);
-        n->target = target.clone();
-        n->source = source.clone();
+        n->target = value_t::variable(target);
+        n->source = value_t::variable(source);
         n->type = ty.clone();
         n->debug_info_index = dii;
         if (comment != nil) {
@@ -468,16 +470,22 @@ impl sir_temp_ptr {
     }
 
     pub func dump(self, out: io&) {
-        out.out("  %").out(self.target.c_str).out(" = ");
+        out.out("  ");
+        self.target.dump(out);
+        out.out(" = ");
         out.out("getelementptr ").out(self.type.c_str).out(", ");
-        out.out(self.type.c_str).out("* %").out(self.source.c_str);
+        out.out(self.type.c_str).out("* ");
+        self.source.dump(out);
         out.out(", i32 0");
         if (self.debug_info_index != DI_ERROR_INDEX()) {
             out.out(", !dbg !").out_u64(self.debug_info_index);
         }
         if (self.comment.empty()) {
-            out.out(" ; %").out(self.source.c_str);
-            out.out(" -> %").out(self.target.c_str).endln();
+            out.out(" ; ");
+            self.source.dump(out);
+            out.out(" -> ");
+            self.target.dump(out);
+            out.endln();
         } else {
             out.out(" ; ").out(self.comment.c_str).endln();
         }
