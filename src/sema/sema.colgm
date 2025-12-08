@@ -935,7 +935,7 @@ impl sema {
                      .out("\".")
                      .out_note("maybe you mean \"->\"?")
                      .emit_err(n->operator_location);
-            // report but continue resolving
+            return type::error_type();
         }
 
         // loc_file is empty means prev is native type
@@ -1785,13 +1785,13 @@ impl sema {
                      .out("\"")
                      .out_note("use \".\" instead")
                      .emit_err(n->operator_location);
-            // report but continue resolving
+            return type::error_type();
         } else if (prev.pointer_depth > 1) {
             self.err->out("cannot use \"->\" to get field from pointer \"")
                      .out(prev_name.c_str)
                      .out("\"")
                      .emit_err(n->operator_location);
-            // report but continue resolving
+            return type::error_type();
         }
 
         // loc_file is empty means prev is native type

@@ -15,6 +15,10 @@ impl A {
     pub func iter(self) -> A_iter {
         return A_iter { index: 0 };
     }
+
+    pub func iter_size(self) -> u64 {
+        return 10;
+    }
 }
 
 impl A_iter {
@@ -29,6 +33,7 @@ impl A_iter {
 func main() -> i32 {
     var a = A {};
     var b = 0;
+    var c = A::__alloc__();
 
     // issue 1: report twice, which is not expected
     foreach (var i; a.reindex(0)) {}
@@ -37,6 +42,11 @@ func main() -> i32 {
     // issue 2: not a struct type
     foreach (var i; b) {}
     forindex (var i; b) {}
+
+    // issue 3: report twice, which is not expected
+    foreach (var i; c.reindex(0)) {}
+    forindex (var i; c.reindex(0)) {}
+
 
     return 0;
 }
