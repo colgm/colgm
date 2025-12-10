@@ -1,0 +1,57 @@
+use sir::sir::*;
+use sir::context::{ sir_context };
+use sir::value::{ value_kind, value_t };
+
+use std::io::{ io };
+
+use util::timestamp::{ maketimestamp };
+
+func check_const_fold(stmt: sir*) -> bool {
+    match (stmt->kind) {
+        sir_kind::sir_neg => {
+            var n = stmt => sir_neg*;
+            if (n->source.kind != value_kind::literal) {
+                return false;
+            }
+            // TODO
+            return true;
+        }
+        sir_kind::sir_add => {
+            var n = stmt => sir_add*;
+            if (n->left.kind != value_kind::literal) {
+                return false;
+            }
+            if (n->right.kind != value_kind::literal) {
+                return false;
+            }
+            // TODO
+            return true;
+        }
+        _ => {}
+    }
+    return false;
+}
+
+pub func inst_combine(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var combine_count = 0;
+    foreach (var i; ctx->func_impls) {
+        foreach (var j; i.get().body->basic_block) {
+            foreach (var k; j.get()->stmts) {
+                if (check_const_fold(k.get())) {
+                    combine_count += 1;
+                }
+            }
+        }
+    }
+
+    if (verbose) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Run SIR pass");
+        io::stdout().blue().out(" <inst combine>").reset().out(": ");
+        io::stdout().cyan().out_i64(combine_count).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}
