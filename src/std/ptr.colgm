@@ -1,7 +1,30 @@
-struct __ptr_wrapper<T> {
+use std::libc::free;
+
+struct unique<T> {
     __p: T*
 }
 
+impl unique<T> {
+    #[is_trivial(T)]
+    pub func delete(self) {
+        if (self.__p == nil) {
+            return;
+        }
+        free(self.__p => i8*);
+        self.__p = nil;
+    }
+
+    #[is_non_trivial(T)]
+    pub func delete(self) {
+        if (self.__p == nil) {
+            return;
+        }
+        self.__p->delete();
+        free(self.__p => i8*);
+        self.__p = nil;
+    }
+}
+
 pub func __ptr_size() -> u64 {
-    return __ptr_wrapper<i8>::__size__();
+    return unique<i8>::__size__();
 }
