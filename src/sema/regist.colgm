@@ -1129,6 +1129,12 @@ impl regist_pass {
             var member_type = self.tr.resolve(member->type);
             defer member_type.delete();
 
+            if (member_type.is_reference) {
+                self.err->error(member->base.location,
+                    "tagged union member cannot be reference type"
+                );
+            }
+
             union_info.members.insert(member_name, member_type);
             union_info.ordered_members.push(member_name);
             union_info.members_span.insert(member_name, member->base.location);

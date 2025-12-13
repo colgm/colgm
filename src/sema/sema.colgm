@@ -1658,6 +1658,7 @@ impl sema {
             defer infer.delete();
 
             tmp->base.resolved_type.reset_with(infer);
+            tmp->value->resolved_type.reset_with(infer);
             if (infer.is_error()) {
                 continue;
             }
@@ -1680,6 +1681,12 @@ impl sema {
                     self.err->error(tmp->base.location, info.c_str);
                     continue;
                 }
+            }
+            // set infer as reference is expect reference type
+            if (expect.is_reference) {
+                infer.is_reference = true;
+                tmp->base.resolved_type.reset_with(infer);
+                tmp->value->resolved_type.reset_with(infer);
             }
             // struct foo { bar: [0, 1, 2] } is not allowed
             if (infer.is_array) {

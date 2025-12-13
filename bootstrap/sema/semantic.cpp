@@ -1047,7 +1047,7 @@ type semantic::resolve_struct_initializer(const colgm_struct& st,
             continue;
         }
 
-        const auto infer = resolve_expression(i->get_value());
+        auto infer = resolve_expression(i->get_value());
         i->get_value()->set_resolve_type(infer);
         const auto& expect = st.field.at(field);
         // error type means the related error is reported before
@@ -1062,6 +1062,12 @@ type semantic::resolve_struct_initializer(const colgm_struct& st,
                 );
                 continue;
             }
+        }
+
+        // set infer as reference is expect reference type
+        if (expect.is_reference) {
+            infer.is_reference = true;
+            i->get_value()->set_resolve_type(infer);
         }
 
         // foo { bar: [0, 1, 2] } is not allowed

@@ -37,6 +37,7 @@ TEST_LIST = [
     ("test/local.colgm",                   "src"),
     ("test/match.colgm",                   "src"),
     ("test/negative.colgm",                "src"),
+    ("test/ref_struct_field.colgm",        "src"),
     ("test/ref_variable_assign.colgm",     "src"),
 #    ("test/sleep.colgm",                   "src"),
     ("test/std_test.colgm",                "src"),

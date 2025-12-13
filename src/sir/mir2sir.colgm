@@ -1349,7 +1349,13 @@ impl mir2sir {
                     self.generate_DI_location(i.get().content->location)
                 ) => sir*);
 
-                self.visit(i.get().content => mir*);
+                // this mir_block should only contain one mir inside
+                if (i.get().content->kind == mir_kind::mir_call) {
+                    var val = i.get().content => mir_call*;
+                    self.call_expr_gen(val, val->resolved_type.is_reference);
+                } else {
+                    self.visit(i.get().content => mir*);
+                }
 
                 var res = self.value_stack.back().clone();
                 defer res.delete();

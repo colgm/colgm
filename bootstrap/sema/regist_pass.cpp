@@ -1476,6 +1476,9 @@ void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node
         if (member_type.is_error()) {
             continue;
         }
+        if (member_type.is_reference) {
+            rp.report(i, "tagged union member cannot be reference type");
+        }
         if (self.member.count(i->get_name()->get_name())) {
             rp.report(i, "member name already exists");
             continue;

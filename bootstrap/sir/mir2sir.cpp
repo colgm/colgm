@@ -740,7 +740,14 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
                 type_mapping(node->get_type()),
                 index
             ));
-            i.content->accept(this);
+
+            // this mir_block should only contain one mir inside
+            auto val = i.content->get_content()[0];
+            if (val->get_kind() == kind::mir_call && i.resolve_type.is_reference) {
+                call_expression_generation(reinterpret_cast<mir_call*>(val), true);
+            } else {
+                val->accept(this);
+            }
 
             const auto res = value_stack.back();
             block->add_stmt(new sir_store(
