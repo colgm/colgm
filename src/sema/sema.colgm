@@ -30,7 +30,7 @@ pub struct sema {
     err: report*,
     root: root*,
     ctx: sema_context*,
-    co: cli_option*,
+    co: cli_option&,
     pkg: package*,
     tr: type_resolve,
     in_loop_level: i64,
@@ -41,7 +41,7 @@ impl sema {
     pub func instance(err: report*,
                       pkg: package*,
                       ctx: sema_context*,
-                      co: cli_option*) -> sema {
+                      co: cli_option&) -> sema {
         return sema {
             err: err,
             root: nil,
@@ -1639,6 +1639,9 @@ impl sema {
         copy.is_global_sym = false;
         n->base.resolved_type.reset_with(copy);
 
+        var initialized_ref_fields = hashset<str>::instance();
+        defer initialized_ref_fields.delete();
+
         foreach (var i; n->pairs) {
             var tmp = i.get() => ast_init_pair*;
             var field: str& = tmp->field->content;
@@ -1685,6 +1688,7 @@ impl sema {
             // set infer as reference is expect reference type
             if (expect.is_reference) {
                 infer.is_reference = true;
+                initialized_ref_fields.insert(field);
                 tmp->base.resolved_type.reset_with(infer);
                 tmp->value->resolved_type.reset_with(infer);
             }
@@ -1695,6 +1699,22 @@ impl sema {
                     "cannot initialize array, but it's already filled with 0 by default"
                 );
             }
+        }
+
+        foreach (var i; struct_self.ordered_fields) {
+            if (initialized_ref_fields.has(i.get())) {
+                continue;
+            }
+
+            var expect = struct_self.fields.get(i.get());
+            if (!expect.is_reference) {
+                continue;
+            }
+            self.err->report_uninit_ref_field(
+                n->base.location,
+                i.get().c_str,
+                struct_self.fields_span.get(i.get())
+            );
         }
 
         return copy;

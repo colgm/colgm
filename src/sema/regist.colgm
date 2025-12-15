@@ -43,7 +43,7 @@ pub struct regist_pass {
     pkg: package*,
     root: root*,
     ctx: sema_context*,
-    co: cli_option*,
+    co: cli_option&,
     tr: type_resolve,
     gnv: generic_visitor,
 
@@ -54,7 +54,7 @@ impl regist_pass {
 	pub func instance(err: report*,
                       pkg: package*,
                       ctx: sema_context*,
-                      co: cli_option*,
+                      co: cli_option&,
                       mctx: mir_context*) -> regist_pass {
 		return regist_pass {
             err: err,
@@ -279,7 +279,7 @@ impl regist_pass {
             ast2mir_worker.delete();
         }
 
-        par.parse(path.c_str, self.co->VIEW_DEFER_REPLACE);
+        par.parse(path.c_str, self.co.VIEW_DEFER_REPLACE);
         if (self.err->error_count > 0) {
             return false;
         }
@@ -297,7 +297,7 @@ impl regist_pass {
         ast2mir_worker.generate(par.root);
 
         info.status = p_status::analysed;
-        if (self.co->VERBOSE) {
+        if (self.co.VERBOSE) {
             var sema_duration = ts.elapsed_msec();
             io::stdout().green().out("  SEMANTIC ").reset();
             io::stdout().out("Finish module ");

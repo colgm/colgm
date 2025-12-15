@@ -26,7 +26,7 @@ pub struct generic_visitor {
     ctx: sema_context*,
     root: root*,
     tr: type_resolve,
-    co: cli_option*,
+    co: cli_option&,
 
     insert_count: i64,
     need_to_be_inserted: vec<ast*>,
@@ -37,7 +37,7 @@ impl generic_visitor {
     pub func instance(e: report*,
                       c: sema_context*,
                       p: package*,
-                      co: cli_option*) -> generic_visitor {
+                      co: cli_option&) -> generic_visitor {
         return generic_visitor {
             err: e,
             pkg: p,
@@ -105,7 +105,7 @@ impl generic_visitor {
             }
         }
 
-        if (scan_count > 0 && self.co->VIEW_TYPE_REPLACE_INFO) {
+        if (scan_count > 0 && self.co.VIEW_TYPE_REPLACE_INFO) {
             io::stdout().out("[generic_visitor] generate generics of ")
                         .white().out(n->base.location.file.c_str).reset()
                         .out(" after ").out_i64(scan_count).out(" scan(s)")

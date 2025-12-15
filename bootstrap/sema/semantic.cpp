@@ -1037,6 +1037,8 @@ type semantic::resolve_struct_initializer(const colgm_struct& st,
     copy.is_global = false;
     node->set_resolve_type(copy);
 
+    std::unordered_set<std::string> initialized_ref_fields;
+
     for (auto i : node->get_pairs()) {
         const auto& field = i->get_field()->get_name();
         if (!st.field.count(field)) {
@@ -1066,6 +1068,7 @@ type semantic::resolve_struct_initializer(const colgm_struct& st,
 
         // set infer as reference is expect reference type
         if (expect.is_reference) {
+            initialized_ref_fields.insert(field);
             infer.is_reference = true;
             i->get_value()->set_resolve_type(infer);
         }
@@ -1074,6 +1077,19 @@ type semantic::resolve_struct_initializer(const colgm_struct& st,
         if (infer.is_array) {
             rp.report(i,
                 "cannot initialize array, but it's already filled with 0 by default"
+            );
+        }
+    }
+
+    for (auto& field : st.ordered_field) {
+        if (initialized_ref_fields.count(field)) {
+            continue;
+        }
+
+        const auto& expect = st.field.at(field);
+        if (expect.is_reference) {
+            rp.report(node,
+                "field \"" + field + "\" is reference type, must be initialized"
             );
         }
     }

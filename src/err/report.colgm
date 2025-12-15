@@ -520,4 +520,18 @@ impl report {
             .highlight().out("\"").out(name).out("\"").cancel_highlight()
             .emit_warn(loc);
     }
+
+    pub func report_uninit_ref_field(self,
+                                     loc: span&,
+                                     name: const i8*,
+                                     def_loc: span&) {
+        self.endwith_enter = false;
+        self.out("struct field ")
+            .highlight().out("\"").out(name).out("\"").cancel_highlight()
+            .out(" is reference type but not initialized")
+            .emit_err(loc);
+        self.endwith_enter = true;
+        self.out_note("defined here")
+            .emit_headless(def_loc);
+    }
 }

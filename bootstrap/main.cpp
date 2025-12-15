@@ -30,7 +30,7 @@ std::ostream& help(std::ostream& out) {
     << "   -v,   --version        | get version.\n"
     << "\ncolgm [option] <file>\n"
     << "option:\n"
-    << "   -o,   --output <file>  | output file, default <out.ll>.\n"
+    << "   -o,   --output <file>  | output file, default <a.out.ll>.\n"
     << "   -l,   --lex            | view analysed tokens.\n"
     << "   -a,   --ast            | view ast.\n"
     << "   -s,   --sema           | view semantic result.\n"
@@ -163,7 +163,7 @@ i32 main(i32 argc, const char* argv[]) {
         } else if (s == "-v" || s == "--version") {
             std::clog << version;
         } else if (s[0] != '-') {
-            execute(s, "out.ll");
+            execute(s, "a.out.ll");
         } else {
             err();
         }
@@ -185,7 +185,7 @@ i32 main(i32 argc, const char* argv[]) {
     };
     u32 cmd = 0;
     std::string input_file = "";
-    std::string output_file = "out.ll";
+    std::string output_file = "a.out.ll";
     std::string library_path = "";
 
     std::vector<std::string> args;
@@ -233,12 +233,10 @@ i32 main(i32 argc, const char* argv[]) {
             err();
         }
     }
+
+    // input file must be specified
     if (!input_file.length()) {
         err();
-    }
-
-    if (output_file.empty()) {
-        output_file = "out.ll";
     }
 
     scan_package(library_path, input_file, cmd);
