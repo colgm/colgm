@@ -308,8 +308,8 @@ func main() -> i32 {
 
 ### std::tcp
 
-See example for `std::tcp` in [test/socket/tcp_example.colgm](../../test/socket/tcp_example.colgm)
+See example for `std::tcp` in [example/socket/tcp_example.colgm](../../example/socket/tcp_example.colgm)
 
 ### std::udp
 
-See example for `std::udp` in [test/socket/udp_example.colgm](../../test/socket/udp_example.colgm)
+See example for `std::udp` in [example/socket/udp_example.colgm](../../example/socket/udp_example.colgm)

@@ -13,18 +13,18 @@ def check_required():
     if not os.path.exists(COMPILER):
         print("Error: build/colgm_self_host not found", flush=True)
         exit(1)
-    if not os.path.exists("test/socket/udp_example.colgm"):
-        print("Error: test/socket/udp_example.colgm not found", flush=True)
+    if not os.path.exists("example/socket/udp_example.colgm"):
+        print("Error: example/socket/udp_example.colgm not found", flush=True)
         exit(1)
-    if not os.path.exists("test/socket/tcp_example.colgm"):
-        print("Error: test/socket/tcp_example.colgm not found", flush=True)
+    if not os.path.exists("example/socket/tcp_example.colgm"):
+        print("Error: example/socket/tcp_example.colgm not found", flush=True)
         exit(1)
 
 def compile_tcp():
     subprocess.run([
         COMPILER,
         "--library", "src",
-        "test/socket/tcp_example.colgm",
+        "example/socket/tcp_example.colgm",
         "-g",
         "-o", "tcp_udp_test.out"
     ])
@@ -33,7 +33,7 @@ def compile_udp():
     subprocess.run([
         COMPILER,
         "--library", "src",
-        "test/socket/udp_example.colgm",
+        "example/socket/udp_example.colgm",
         "-g",
         "-o", "tcp_udp_test.out"
     ])

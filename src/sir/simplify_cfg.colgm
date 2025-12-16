@@ -200,6 +200,29 @@ func merge_block_with_no_cond_br(ctx: sir_context*) -> i64 {
     return delete_count;
 }
 
+// if the block has only one predecessor,
+// and pred's succs has only one,
+// and pred's succs is this block
+// then merge them into this block's predecessor
+// example:
+//
+// label.L0:	; succs: L1
+//   ...
+//   br label %label.L1
+// label.L1:	; preds: L0, succs: L2
+//   ...
+//   br label %label.L2
+// label.L2:	; preds: L1, succs: L4, L6
+//   ...
+//   br i1 %0, label %label.L4, label %label.L6
+//
+// will be merged to:
+//
+// label.L0:	; succs: L4, L6
+//   ...
+//   ...
+//   ...
+//   br i1 %0, label %label.L4, label %label.L6
 func do_merge_if_pred_has_only_one_succ(f: sir_func&) -> i64 {
     var blocks = vec<sir_basic_block*>::instance();
     defer blocks.delete();
@@ -223,11 +246,6 @@ func do_merge_if_pred_has_only_one_succ(f: sir_func&) -> i64 {
         }
 
         var pred = bb->preds.get(0);
-        // we cannot merge if this bb's label is not equal to pred's label + 1
-        if (pred->label + 1 != bb->label) {
-            blocks.push(bb);
-            continue;
-        }
         // pred's succs must have only one, and must be this bb
         if (pred->succs.size != 1) {
             blocks.push(bb);
@@ -307,6 +325,8 @@ pub func simplify_cfg(ctx: sir_context*, verbose: bool) {
         var delete_count = 0;
         delete_count += remove_no_pred_blocks(ctx);
         delete_count += merge_block_with_no_cond_br(ctx);
+        // this pass breaks ssa numbering
+        // so we need to run ssa re-numbering pass after simplify-cfg pass
         delete_count += merge_if_pred_has_only_one_succ(ctx);
         if (delete_count == 0) {
             break;

@@ -20,31 +20,35 @@ def de_color(text: str) -> str:
     text = text.replace("\r", "")
     return text
 
-TEST_LIST = [
-    "binary_opr_struct",
-    "call_expr_get_literal",
-    "call_non_static",
-    "float_enum_member",
-    "foreach_error",
-    "ref_field_not_init"
-]
+TEST_LIST = []
+
+for root, dirs, files in os.walk("test/error"):
+    for f in files:
+        if f.endswith(".colgm"):
+            TEST_LIST.append(os.path.join(root, f[:-6]))
 
 for test in TEST_LIST:
-    source_code = f"test/error/{test}.colgm"
-    result_text = f"test/error/{test}.result"
+    source_code = test + ".colgm"
+    result_text = test + ".result"
     err_report = execute([
         "build/colgm_self_host",
         "-L", "src",
         source_code,
-        "-o", "test_error.out.ll"
+        "-emit-llvm",
+        "-o", "test_error.out"
     ])
     err_report = de_color(err_report)
     with open(result_text, "r") as fp:
         result = fp.read()
+        if len(result) == 0:
+            print("\033[91;1m    FAILED\033[0m empty test result")
+            print("\033[91;1m    FAILED\033[0m got:")
+            print(err_report)
+            continue
         if result not in err_report:
-            print("\033[91;1m TEST FAILED\033[0m, expected:")
+            print("\033[91;1m    FAILED\033[0m expected:")
             print(result)
-            print("\033[91;1m TEST FAILED\033[0m, got:")
+            print("\033[91;1m    FAILED\033[0m got:")
             print(err_report)
             exit(1)
 
