@@ -119,7 +119,7 @@ func clang_compile(co: cli_option&) -> i32 {
 func nasal_target_output(option: cli_option,
                          glb: global_symbol_table*,
                          mctx: mir_context*,
-                         pkg: package*) {
+                         pkg: package&) {
     var time_stamp = maketimestamp();
     var nas_file = str::from(option.output_file);
     nas_file.append(".nas");
@@ -129,7 +129,7 @@ func nasal_target_output(option: cli_option,
     io::stdout().out("Generating ");
     io::stdout().cyan().out("<").out(option.output_file).out(".nas> ").reset();
     time_stamp.stamp();
-    mir2nasal::instance(glb, mctx, pkg).dump(nas_file.c_str);
+    mir2nasal::instance(glb, mctx, pkg.__ptr__()).dump(nas_file.c_str);
     io::stdout().out_f64(time_stamp.elapsed_msec()).out(" ms\n");
 }
 
@@ -203,7 +203,7 @@ func compile(option: cli_option&) -> i32 {
     defer mctx.delete();
 
     // sir context
-    var sctx = sir_context::instance(cc.pkg.__ptr__());
+    var sctx = sir_context::instance();
     defer sctx.delete();
 
     var regpass = regist_pass::instance(
@@ -309,12 +309,12 @@ func compile(option: cli_option&) -> i32 {
         fout.close();
     }
     if (option.EMIT_NASAL_ONLY) {
-        nasal_target_output(option, gt.__ptr__(), mctx.__ptr__(), cc.pkg.__ptr__());
+        nasal_target_output(option, gt.__ptr__(), mctx.__ptr__(), cc.pkg);
         return 0;
     }
 
     mir2sir_worker.generate(
-        mctx.__ptr__(),
+        mctx,
         option.VIEW_UNUSED_FUNC,
         option.with_optimization(),
         option.VERBOSE,

@@ -159,7 +159,7 @@ impl regist_pass {
         }
     }
 
-    func import_specified(self, node: ast_use_stmt*, dm: colgm_module&, path: str*) {
+    func import_specified(self, node: ast_use_stmt*, dm: colgm_module&, path: str&) {
         foreach (var i; node->import_symbol) {
             var name_node = i.get() => ast_identifier*;
             var name: str& = name_node->content;
@@ -181,7 +181,7 @@ impl regist_pass {
                 var info = str::from("cannot find symbol \"");
                 info.append_str(name);
                 info.append("\" in module \"");
-                info.append_str(path[0]);
+                info.append_str(path);
                 info.append("\"");
                 defer info.delete();
 
@@ -245,7 +245,7 @@ impl regist_pass {
         if (node->import_symbol.empty()) {
             self.import_all(dm);
         } else {
-            self.import_specified(node, dm, path.__ptr__());
+            self.import_specified(node, dm, path);
         }
     }
 

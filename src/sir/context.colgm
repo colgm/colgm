@@ -15,8 +15,6 @@ use dwarf::dwarf::*;
 use util::mangling::{ llvm_raw_string };
 use util::platform::{ get_platform, get_target_triple };
 
-use util::package::{ package };
-
 pub struct sir_struct {
     name: str,
     location: span,
@@ -317,13 +315,11 @@ pub struct sir_context {
     DI_file_map: hashmap<str, u64>,
     DI_type_map: hashmap<str, u64>,
     DI_struct_map: hashmap<str, DI_node*>,
-    DI_union_map: hashmap<str, DI_node*>,
-
-    pkg: package*
+    DI_union_map: hashmap<str, DI_node*>
 }
 
 impl sir_context {
-    pub func instance(pkg: package*) -> sir_context {
+    pub func instance() -> sir_context {
         return sir_context {
             tagged_union_decls: vec<sir_tagged_union>::instance(),
             struct_decls: vec<sir_struct>::instance(),
@@ -335,8 +331,7 @@ impl sir_context {
             DI_file_map: hashmap<str, u64>::instance(),
             DI_type_map: hashmap<str, u64>::instance(),
             DI_struct_map: hashmap<str, DI_node*>::instance(),
-            DI_union_map: hashmap<str, DI_node*>::instance(),
-            pkg: pkg
+            DI_union_map: hashmap<str, DI_node*>::instance()
         };
     }
 

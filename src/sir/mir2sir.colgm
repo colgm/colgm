@@ -300,8 +300,8 @@ impl mir2sir {
 }
 
 impl mir2sir {
-    func emit_tagged_union(self, mctx: mir_context*) {
-        foreach (var i; mctx->tagged_unions) {
+    func emit_tagged_union(self, mctx: mir_context&) {
+        foreach (var i; mctx.tagged_unions) {
             var m_un = i.get();
 
             var s_ty = type::instance(m_un.name.c_str, m_un.location.file.c_str);
@@ -352,8 +352,8 @@ impl mir2sir {
         }
     }
 
-    func emit_struct(self, mctx: mir_context*) {
-        foreach (var i; mctx->structs) {
+    func emit_struct(self, mctx: mir_context&) {
+        foreach (var i; mctx.structs) {
             var m_stct = i.get();
 
             var s_ty = type::instance(m_stct.name.c_str, m_stct.location.file.c_str);
@@ -393,8 +393,8 @@ impl mir2sir {
         }
     }
 
-    func emit_func_decl(self, mctx: mir_context*) {
-        foreach (var i; mctx->decls) {
+    func emit_func_decl(self, mctx: mir_context&) {
+        foreach (var i; mctx.decls) {
             var m_func = i.get();
             var s_func = sir_func::instance(m_func.name, m_func.location);
             s_func.set_attributes(m_func.attributes);
@@ -458,12 +458,12 @@ impl mir2sir {
         }
     }
 
-    func emit_func_impl(self, mctx: mir_context*) {
+    func emit_func_impl(self, mctx: mir_context&) {
         var ts = maketimestamp();
         ts.stamp();
 
-        foreach (var i; mctx->impls) {
-            self.process_print(i.index(), mctx->impls.size, ts);
+        foreach (var i; mctx.impls) {
+            self.process_print(i.index(), mctx.impls.size, ts);
             var m_func = i.get();
             var m_mangled_name = mangle_function_name(m_func.name);
             defer m_mangled_name.delete();
@@ -3547,14 +3547,14 @@ impl mir2sir {
         }
     }
 
-    func generate_DI_subprogram(self, mctx: mir_context*) {
+    func generate_DI_subprogram(self, mctx: mir_context&) {
         // only generate subprogram for impls
-        foreach (var i; mctx->impls) {
+        foreach (var i; mctx.impls) {
             self.generate_single_DI_subprogram(i.get());
         }
     }
 
-    func generate_DWARF(self, mctx: mir_context*) {
+    func generate_DWARF(self, mctx: mir_context&) {
         self.generate_llvm_ident();
         self.generate_llvm_module_flags();
         self.generate_DI_file();
@@ -3589,7 +3589,7 @@ impl mir2sir {
         }
     }
 
-    pub func generate(self, mctx: mir_context*,
+    pub func generate(self, mctx: mir_context&,
                             view_unused_func: bool,
                             with_opt: bool,
                             verbose: bool,

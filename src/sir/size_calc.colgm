@@ -204,13 +204,13 @@ impl size_calc {
         u.size_calculated = true;
     }
 
-    pub func calculate(self, mctx: mir_context*, verbose: bool) {
+    pub func calculate(self, mctx: mir_context&, verbose: bool) {
         var ts = maketimestamp();
         ts.stamp();
 
         self.struct_mapper.clear();
         self.tagged_union_mapper.clear();
-        foreach (var i; mctx->structs) {
+        foreach (var i; mctx.structs) {
             var s_ty = type::instance(i.get().name.c_str, i.get().location.file.c_str);
             defer s_ty.delete();
 
@@ -219,7 +219,7 @@ impl size_calc {
 
             self.struct_mapper.insert(s_full_name, i.get().__ptr__());
         }
-        foreach (var i; mctx->tagged_unions) {
+        foreach (var i; mctx.tagged_unions) {
             var s_ty = type::instance(i.get().name.c_str, i.get().location.file.c_str);
             defer s_ty.delete();
 
@@ -229,10 +229,10 @@ impl size_calc {
             self.tagged_union_mapper.insert(s_full_name, i.get().__ptr__());
         }
 
-        foreach (var i; mctx->structs) {
+        foreach (var i; mctx.structs) {
             self.calculate_single_struct_size(i.get());
         }
-        foreach (var i; mctx->tagged_unions) {
+        foreach (var i; mctx.tagged_unions) {
             self.calculate_single_tagged_union_size(i.get());
         }
 
@@ -240,13 +240,13 @@ impl size_calc {
             io::stdout().green().out("   MIR2SIR ").reset();
             io::stdout().out("Run MIR pass");
             io::stdout().blue().out(" <calculate struct size>").reset().out(": ");
-            io::stdout().cyan().out_u64(mctx->structs.size).reset();
+            io::stdout().cyan().out_u64(mctx.structs.size).reset();
             io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
 
             io::stdout().green().out("   MIR2SIR ").reset();
             io::stdout().out("Run MIR pass");
             io::stdout().blue().out(" <calculate tagged union size>").reset().out(": ");
-            io::stdout().cyan().out_u64(mctx->tagged_unions.size).reset();
+            io::stdout().cyan().out_u64(mctx.tagged_unions.size).reset();
             io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
         }
     }

@@ -10,11 +10,11 @@ use util::mangling::{ llvm_raw_string };
 
 pub struct ast_dumper {
     tm: tree_maker,
-    pkg: package*
+    pkg: package&
 }
 
 impl ast_dumper {
-    func instance(pkg: package*) -> ast_dumper {
+    func instance(pkg: package&) -> ast_dumper {
         return ast_dumper {
             tm: tree_maker::instance(),
             pkg: pkg
@@ -42,17 +42,17 @@ impl ast_dumper {
     }
 
     func dump_resolved_type(self, out: io&, ty: type&) {
-        if (self.pkg == nil || ty.name.empty()) {
+        if (ty.name.empty()) {
             return;
         }
 
         if (ty.is_array) {
-            var n = ty.array_type_full_name(self.pkg);
+            var n = ty.array_type_full_name(self.pkg.__ptr__());
             defer n.delete();
             out.blue().out("[real: ").out(n.c_str).out("] ").reset();
         }
 
-        var name = ty.full_path_name_with_pointer(self.pkg);
+        var name = ty.full_path_name_with_pointer(self.pkg.__ptr__());
         defer name.delete();
         out.cyan().out("[type: ").out(name.c_str).out("] ").reset();
     }
