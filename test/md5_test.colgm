@@ -1,0 +1,36 @@
+use std::crypto::md5::{ md5 };
+use std::str::{ str };
+use std::io::{ io };
+use std::panic::{ assert };
+
+func main() -> i32 {
+    var test_set = [
+        "md5",
+        "github.com",
+        "helloworld",
+        "abc",
+        "let the bass kick"
+    ];
+
+    var result = [
+        "1bc29b36f623ba82aaf6724fd3b16718",
+        "99cd2175108d157588c04758296d1cfc",
+        "fc5e038d38a57032085441e7fe7010b0",
+        "900150983cd24fb0d6963f7d28e17f72",
+        "16eadccb9799dfb4c1ca512f40638bbb"
+    ];
+
+    for (var i = 0; i < 5; i += 1) {
+        var a = str::from(test_set[i]);
+        defer a.delete();
+
+        var b = md5(a);
+        defer b.delete();
+
+        io::stdout().out("raw: ").out(a.c_str).endln();
+        io::stdout().out("md5: ").out(b.c_str).endln();
+        assert(b.eq_const(result[i]), "md5 failed");
+    }
+
+    return 0;
+}

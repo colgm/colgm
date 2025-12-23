@@ -448,11 +448,6 @@ type semantic::resolve_number_literal(number_literal* node) {
         rp.report(node, "invalid number \"" + literal_string + "\"");
         return type::error_type();
     }
-    if (literal_string.find(".") != std::string::npos ||
-        literal_string.find("e") != std::string::npos) {
-        node->set_resolve_type(type::f64_type());
-        return type::f64_type();
-    }
     if (literal_string.length() > 2 && literal_string[1] == 'o') {
         node->set_resolve_type(type::u64_type());
         node->reset_number(std::to_string(oct_to_u64(literal_string.c_str())));
@@ -462,6 +457,11 @@ type semantic::resolve_number_literal(number_literal* node) {
         node->set_resolve_type(type::u64_type());
         node->reset_number(std::to_string(hex_to_u64(literal_string.c_str())));
         return type::u64_type();
+    }
+    if (literal_string.find(".") != std::string::npos ||
+        literal_string.find("e") != std::string::npos) {
+        node->set_resolve_type(type::f64_type());
+        return type::f64_type();
     }
     node->set_resolve_type(type::i64_type());
     return type::i64_type();

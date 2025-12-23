@@ -36,6 +36,7 @@ TEST_LIST = [
     ("test/json_test.colgm",               "src"),
     ("test/local.colgm",                   "src"),
     ("test/match.colgm",                   "src"),
+    ("test/md5_test.colgm",                "src"),
     ("test/negative.colgm",                "src"),
     ("test/ref_struct_field.colgm",        "src"),
     ("test/ref_variable_assign.colgm",     "src"),
