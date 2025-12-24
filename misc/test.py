@@ -19,6 +19,7 @@ TEST_LIST = [
     ("test/array_type.colgm",              "src"),
     ("test/array.colgm",                   "src"),
     ("test/assign.colgm",                  "src"),
+    ("test/base64_test.colgm",             "src"),
     ("test/bitwise.colgm",                 "src"),
     ("test/branch.colgm",                  "src"),
     ("test/cmpnot.colgm",                  "src"),

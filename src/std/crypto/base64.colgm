@@ -1,0 +1,93 @@
+use std::str::{ str };
+
+pub struct base64 {}
+
+impl base64 {
+    pub func encode(in: str&) -> str {
+        var base64en = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+        var res = str::instance();
+        var s = 0;
+        var l: u8 = 0;
+
+        for (var i: u64 = 0; i < in.size; i += 1) {
+            var c = in.c_str[i] => u8;
+            if (s == 0) {
+                s = 1;
+                res.append_char(base64en[(c / 4) & 0x3f]);
+            } elsif (s == 1) {
+                s = 2;
+                res.append_char(base64en[((l & 0x3) * 16) | ((c / 16) & 0xf)]);
+            } elsif (s == 2) {
+                s = 0;
+                res.append_char(base64en[((l & 0xf) * 4) | ((c / 64) & 0x3)]);
+                res.append_char(base64en[c & 0x3f]);
+            }
+            l = c;
+        }
+
+        if (s == 1) {
+            res.append_char(base64en[(l & 0x3) * 16]);
+            res.append("==");
+        } elsif (s == 2) {
+            res.append_char(base64en[((l & 0xf) * 4)]);
+            res.append("=");
+        }
+        return res;
+    }
+
+    pub func decode(in: str&) -> str {
+        var base64de: [u8; 128] = [];
+        var base64en = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+        for (var i = 0; i < 128; i += 1) {
+            base64de[i] = 0xff;
+        }
+
+        for (var i = 0; i < 64; i += 1) {
+            base64de[base64en[i]] = i => u8;
+        }
+
+        if ((in.size & 0x3) != 0) {
+            return str::instance();
+        }
+
+        var res = str::instance();
+        var i: u64 = 0;
+        var j = 0;
+        res.append_char(0);
+        for (; i < in.size; i += 1) {
+            if (in.get(i) == '=') {
+                break;
+            }
+            if (in.get(i) < '+' || in.get(i) > 'z') {
+                return str::instance();
+            }
+
+            var c = base64de[in.get(i)];
+            if (c == 0xff) {
+                return str::instance();
+            }
+
+            if ((i & 0x3) == 0) {
+                res.c_str[j] = ((c * 4) & 0xff) => i8;
+            } elsif ((i & 0x3) == 1) {
+                res.c_str[j] |= ((c / 16) & 0x3) => i8;
+                res.append_char(0);
+                j += 1;
+                res.c_str[j] = ((c & 0xf) * 16) => i8;
+            } elsif ((i & 0x3) == 2) {
+                res.c_str[j] |= ((c / 4) & 0xf) => i8;
+                res.append_char(0);
+                j += 1;
+                res.c_str[j] = ((c & 0x3) * 64) => i8;
+            } elsif ((i & 0x3) == 3) {
+                res.c_str[j] |= c => i8;
+                res.append_char(0);
+                j += 1;
+            }
+        }
+
+        return res;
+    }
+}

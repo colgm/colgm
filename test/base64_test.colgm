@@ -1,0 +1,65 @@
+use std::io::{ io };
+use std::str::{ str };
+use std::crypto::base64::{ base64 };
+use std::panic::{ assert };
+use std::libc::{ srand, rand };
+use std::time::{ time };
+
+func test(s: const i8*) {
+    var raw = str::from(s);
+    defer raw.delete();
+
+    var e = base64::encode(raw);
+    defer e.delete();
+
+    var d = base64::decode(e);
+    defer d.delete();
+
+    assert(d.eq(raw), "base64 test failed");
+}
+
+func main() -> i32 {
+    var test_suite = [
+        "",
+        "a",
+        "ab",
+        "abc",
+        "abcd",
+        "abcde",
+        "abcdef",
+        "abcdefg",
+        "abcdefgh",
+        "abcdefghi",
+        "abcdefghij",
+        "abcdefghijk",
+        "abcdefghijkl",
+        "abcdefghijklm",
+        "abcdefghijklmn",
+        "base64",
+        "md5",
+        nil
+    ];
+
+    io::stdout().out("[base64] test consts\n");
+    for (var i = 0; test_suite[i] != nil; i += 1) {
+        test(test_suite[i]);
+    }
+
+    srand(time(nil).to_u32());
+    var test_str = str::instance();
+    defer test_str.delete();
+    var len = 65536 * 16 * 64;
+    io::stdout().out("[base64] test random [generating] ").out_i64(len / 1024 / 1024).out(" M\n");
+    for (var i = 0; i < len; i += 1) {
+        var c = (rand() % 256) => i8;
+        if (c == 0) {
+            c = 1;
+        }
+        test_str.append_char(c);
+    }
+    io::stdout().out("[base64] test random [testing] ").out_i64(len / 1024 / 1024).out(" M\n");
+    test(test_str.c_str);
+
+    io::stdout().out("[base64] test passed\n");
+    return 0;
+}

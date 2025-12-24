@@ -23,6 +23,9 @@
 - [TCP/UDP Utils](#tcpudp-utils)
   - [std::tcp](#stdtcp)
   - [std::udp](#stdudp)
+- [Cryptography](#cryptography)
+  - [std::crypto::md5](#stdcryptomd5)
+  - [std::crypto::base64](#stdcryptobase64)
 
 ## Error Handling
 
@@ -313,3 +316,13 @@ See example for `std::tcp` in [example/socket/tcp_example.colgm](../../example/s
 ### std::udp
 
 See example for `std::udp` in [example/socket/udp_example.colgm](../../example/socket/udp_example.colgm)
+
+## Cryptography
+
+### std::crypto::md5
+
+See example for `std::crypto::md5` in [test/md5_test.colgm](../../test/md5_test.colgm)
+
+### std::crypto::base64
+
+See example for `std::crypto::base64` in [test/base64_test.colgm](../../test/base64_test.colgm)
