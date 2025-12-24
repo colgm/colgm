@@ -5,6 +5,7 @@ use std::str::{ str };
 use std::libc::{ free, streq };
 use std::io::{ io };
 use std::time::{ chrono };
+use std::basic::{ basic };
 
 use err::span::{ span };
 use sir::sir::*;
@@ -432,31 +433,39 @@ impl sir_context {
     }
 
     func dump_const_strings(self, out: io&) {
-        // convert map to vec
-        var ordered_const_string = vec<str>::instance();
-        defer ordered_const_string.delete();
+        // const elimination pass may remove some const strings
+        // so we need to make sure we don't generate unused strings
+        // and make sure the index is correct
+        var max_index: u64 = 0;
         foreach (var i; self.const_strings) {
-            var temp = str::instance();
-            defer temp.delete();
-
-            ordered_const_string.push(temp);
-        }
-        foreach (var i; self.const_strings) {
-            ordered_const_string.get(i.value()).append_str(i.key());
+            if (i.value() > max_index) {
+                max_index = i.value();
+            }
         }
 
-        foreach (var i; ordered_const_string) {
-            out.out("@str.").out_u64(i.index());
+        var u64_str_map = hashmap<basic<u64>, str>::instance();
+        defer u64_str_map.delete();
+        foreach (var i; self.const_strings) {
+            u64_str_map.insert(basic<u64>::wrap(i.value()), i.key());
+        }
+
+        for (var i: u64 = 0; i <= max_index; i += 1) {
+            var key = basic<u64>::wrap(i);
+            if (!u64_str_map.has(key)) {
+                continue;
+            }
+
+            out.out("@str.").out_u64(i);
             out.out(" = private unnamed_addr constant [");
-            out.out_u64(i.get().size + 1).out(" x i8] c\"");
+            out.out_u64(u64_str_map.get(key).size + 1).out(" x i8] c\"");
 
-            var raw_str = llvm_raw_string(i.get());
+            var raw_str = llvm_raw_string(u64_str_map.get(key));
             defer raw_str.delete();
 
             out.out(raw_str.c_str).out("\"\n");
         }
 
-        if (!ordered_const_string.empty()) {
+        if (!self.const_strings.empty()) {
             out.out("\n");
         }
     }

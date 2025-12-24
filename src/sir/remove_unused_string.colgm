@@ -1,0 +1,54 @@
+use sir::context::{ sir_context };
+use sir::sir::{ sir_kind, sir_str };
+use util::timestamp::{ maketimestamp };
+
+use std::set::{ hashset };
+use std::basic::{ basic };
+use std::str::{ str };
+use std::vec::{ vec };
+use std::io::{ io };
+
+pub func remove_unused_string(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var used_string = hashset<basic<u64>>::instance();
+    defer used_string.delete();
+
+    foreach (var f; ctx->func_impls) {
+        if (f.get().eliminated) {
+            continue;
+        }
+        foreach (var bb; f.get().body->basic_block) {
+            foreach (var inst; bb.get()->stmts) {
+                if (inst.get()->kind != sir_kind::sir_str) {
+                    continue;
+                }
+                var n = inst.get() => sir_str*;
+                used_string.insert(basic<u64>::wrap(n->index));
+            }
+        }
+    }
+
+    var to_be_deleted = vec<str>::instance();
+    defer to_be_deleted.delete();
+
+    foreach (var i; ctx->const_strings) {
+        if (used_string.has(basic<u64>::wrap(i.value()))) {
+            continue;
+        }
+        to_be_deleted.push(i.key());
+    }
+
+    foreach (var i; to_be_deleted) {
+        ctx->const_strings.remove(i.get());
+    }
+
+    if (verbose) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Run SIR pass");
+        io::stdout().blue().out(" <remove unused string>").reset().out(": ");
+        io::stdout().cyan().out_u64(to_be_deleted.size).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}

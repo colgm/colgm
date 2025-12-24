@@ -170,9 +170,9 @@ pub func md5(input: str&) -> str {
     var tmp = md5_array<u32>::instance(res.size / 4);
     defer tmp.delete();
     for (var i: u64 = 0; i < res.size; i += 4) {
-        tmp.data[i / 4]  = (res.data[i + 3] => u32) * 16777216;
-        tmp.data[i / 4] += (res.data[i + 2] => u32) * 65536;
-        tmp.data[i / 4] += (res.data[i + 1] => u32) * 256;
+        tmp.data[i / 4]  = lshift(res.data[i + 3] => u32, 24);
+        tmp.data[i / 4] += lshift(res.data[i + 2] => u32, 16);
+        tmp.data[i / 4] += lshift(res.data[i + 1] => u32, 8);
         tmp.data[i / 4] += res.data[i] => u32;
     }
 
