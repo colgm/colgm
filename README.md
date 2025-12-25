@@ -28,6 +28,7 @@ pub func main() -> i32 {
 
 - [bootstrap](./bootstrap/main.cpp) : bootstrap compiler.
 - [doc](./doc) : documentation.
+- [example](./example) : example programs.
 - [misc](./misc/) : build and test scripts.
 - [src](./src/main.colgm) : self-host compiler.
 - [test](./test): test cases.
