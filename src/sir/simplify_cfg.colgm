@@ -10,6 +10,12 @@ use std::set::{ hashset };
 use std::basic::{ basic };
 use std::panic::{ unreachable };
 
+// remove blocks that have no predecessors
+// block should require the following properties:
+// - no predecessors
+// - only have one instruction
+// - the instruction is not ret/switch
+// so obviously, this block is useless and can be removed
 func do_remove_no_pred_blocks(f: sir_func&) -> i64 {
     if (f.body->basic_block.size <= 1) {
         return 0;
@@ -127,6 +133,10 @@ func adjust_label(bb: sir_basic_block*, locked_block: hashset<basic<i64>>&) {
     }
 }
 
+// if this block has only one successor, and only has one instruction
+// which means the instruction must be br inst
+// so we merge the block into all of its predecessors
+// adjust label of the br insts of its predecessors to the label of the successor
 func do_merge_block_with_no_cond_br(f: sir_func&) -> i64 {
     var blocks = vec<sir_basic_block*>::instance();
     defer blocks.delete();
