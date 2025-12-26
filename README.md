@@ -164,5 +164,4 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 6. constant fold
 7. DCE opt
 8. CSE opt
-9. mir structure optimization
-10. ref type implicit copy(include assignment/definition/struct init) detection
+9. ref type implicit copy(include assignment/definition/struct init) detection
