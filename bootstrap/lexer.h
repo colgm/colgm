@@ -196,8 +196,10 @@ private:
     bool is_arrow(char);
     bool is_wide_arrow(char);
     bool is_note();
+    bool is_multi_line_comment();
 
     void skip_note();
+    void skip_multi_line_comment();
     void err_char();
 
     void open(const std::string&);

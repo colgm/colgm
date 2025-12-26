@@ -70,10 +70,36 @@ bool lexer::is_note() {
     return res[ptr] == '/' && ptr + 1 < res.size() && res[ptr+1] == '/';
 }
 
+bool lexer::is_multi_line_comment() {
+    return res[ptr] == '/' && ptr + 1 < res.size() && res[ptr+1] == '*';
+}
+
 void lexer::skip_note() {
     // avoid note, after this process ptr will point to '\n'
     // so next loop line counter+1
     while (++ptr < res.size() && res[ptr] != '\n') {}
+}
+
+void lexer::skip_multi_line_comment() {
+    ++ptr;
+    ++column;
+    while (++ptr < res.size()) {
+        ++column;
+        if (res[ptr] == '\n') {
+            ++line;
+            column = 0;
+        }
+        if (res[ptr] == '*' && ptr + 1 < res.size() && res[ptr + 1] == '/') {
+            ptr += 2;
+            column += 2;
+            return;
+        }
+    }
+
+    err.err(
+        {line, column, line, column, filename},
+        "unclosed multi-line comment"
+    );
 }
 
 void lexer::err_char() {
@@ -451,6 +477,8 @@ const error& lexer::scan(const std::string& file) {
         }
         if (is_note()) {
             skip_note();
+        } else if (is_multi_line_comment()) {
+            skip_multi_line_comment();
         } else if (is_id(res[ptr])) {
             toks.push_back(id_gen());
         } else if (is_dec(res[ptr])) {

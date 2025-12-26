@@ -18,6 +18,8 @@ def de_color(text: str) -> str:
     for i in color:
         text = text.replace("\033[" + i + "m", "")
     text = text.replace("\r", "")
+    text = text.replace("\t", "")
+    text = text.replace(" ", "")
     return text
 
 TEST_LIST = []
@@ -39,7 +41,7 @@ for test in TEST_LIST:
     ])
     err_report = de_color(err_report)
     with open(result_text, "r") as fp:
-        result = fp.read()
+        result = de_color(fp.read())
         if len(result) == 0:
             print("\033[91;1m    FAILED\033[0m empty test result")
             print("\033[91;1m    FAILED\033[0m got:")

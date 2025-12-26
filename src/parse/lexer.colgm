@@ -62,6 +62,17 @@ impl lexer {
         return false;
     }
 
+    // check if the current position is a multi-line comment, begin with "/*"
+    func is_multi_line_comment(pos: u64, src: str&) -> bool {
+        if (src.get(pos) != '/') {
+            return false;
+        }
+        if (pos + 1 < src.size && src.get(pos + 1) == '*') {
+            return true;
+        }
+        return false;
+    }
+
     func is_identifier_head(c: i8) -> bool {
         return is_alpha_letter(c) || (c == '_');
     }
@@ -646,6 +657,37 @@ impl lexer {
         }
     }
 
+    func skip_multi_line_comment(self, src: str&) {
+        self.pos += 2;
+        self.column += 2;
+        while (self.pos < src.size) {
+            var c = src.get(self.pos);
+            if (c == '\n') {
+                self.line += 1;
+                self.column = 0;
+                self.pos += 1;
+                continue;
+            }
+            if (c == '*' && self.pos + 1 < src.size && src.get(self.pos + 1) == '/') {
+                self.pos += 2;
+                self.column += 2;
+                return;
+            }
+
+            self.pos += 1;
+            self.column += 1;
+        }
+
+        var loc = span::create(self.line, self.column, self.filename);
+        defer loc.delete();
+        if (loc.begin_column > 0) {
+            loc.begin_column -= 1;
+        }
+        loc.end_line = self.line;
+        loc.end_column = self.column;
+        self.err->error(loc, "unterminated multi-line comment");
+    }
+
     func generate_eof_token(self) {
         var eof_span = span::create_full(
             self.line,
@@ -676,6 +718,8 @@ impl lexer {
         while (self.pos < src.size) {
             if (lexer::is_note(self.pos, src)) {
                 self.skip_note(src);
+            } elsif (lexer::is_multi_line_comment(self.pos, src)) {
+                self.skip_multi_line_comment(src);
             } elsif (lexer::is_identifier_head(src.get(self.pos))) {
                 self.generate_identifier(src);
             } elsif (is_digit(src.get(self.pos))) {
