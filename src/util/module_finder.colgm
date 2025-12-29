@@ -1,0 +1,46 @@
+use std::io::{ io };
+use std::str::{ str };
+use std::vec::{ vec };
+use std::fs::{ fs };
+use std::result::{ result };
+
+use util::platform::{ is_windows };
+
+struct module_finder {
+    path: vec<str>
+}
+
+impl module_finder {
+    pub func instance() -> module_finder {
+        var PATH = fs::getpath();
+        var cwd = str::from(".");
+        defer cwd.delete();
+        PATH.push(cwd);
+
+        return module_finder { path: PATH };
+    }
+
+    pub func delete(self) {
+        self.path.delete();
+    }
+
+    pub func find(self, name: str&) -> result<str> {
+        foreach (var p; self.path) {
+            var possible_path = p.get().clone();
+            defer possible_path.delete();
+
+            if (is_windows()) {
+                possible_path.append("\\");
+            } else {
+                possible_path.append("/");
+            }
+            possible_path.append_str(name);
+
+            if (fs::exists(possible_path.c_str)) {
+                var res = result<str>::ok(possible_path);
+                return res;
+            }
+        }
+        return result<str>::err();
+    }
+}

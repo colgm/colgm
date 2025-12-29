@@ -40,6 +40,8 @@ for test in TEST_LIST:
         "-o", "test_error.out"
     ])
     err_report = de_color(err_report)
+    if not os.path.exists(result_text):
+        continue
     with open(result_text, "r") as fp:
         result = de_color(fp.read())
         if len(result) == 0:

@@ -67,7 +67,7 @@ for (test, lib) in TEST_LIST:
     if ret != 0:
         continue
     execute(["./test.out"], False)
-    time.sleep(0.1)
+    time.sleep(0.5)
 
 if os.path.exists("test.out"):
     os.remove("test.out")

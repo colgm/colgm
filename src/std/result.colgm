@@ -6,15 +6,40 @@ pub struct result<T> {
 }
 
 impl result<T> {
+    #[is_trivial(T)]
     pub func ok(val: T) -> result<T> {
         return result<T> { _ok: true, val: val };
+    }
+
+    #[is_non_trivial(T)]
+    pub func ok(val: T&) -> result<T> {
+        return result<T> { _ok: true, val: val.clone() };
+    }
+
+    #[is_trivial(T)]
+    pub func delete(self) {}
+
+    #[is_non_trivial(T)]
+    pub func delete(self) {
+        if (self._ok) {
+            self.val.delete();
+        }
     }
 
     pub func err() -> result<T> {
         return result<T> { _ok: false };
     }
 
+    #[is_trivial(T)]
     pub func unwrap(self) -> T {
+        if (!self._ok) {
+            panic("unwrap error");
+        }
+        return self.val;
+    }
+
+    #[is_non_trivial(T)]
+    pub func unwrap(self) -> T& {
         if (!self._ok) {
             panic("unwrap error");
         }
