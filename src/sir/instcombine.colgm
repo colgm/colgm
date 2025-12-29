@@ -3,77 +3,275 @@ use sir::context::{ sir_context };
 use sir::value::{ value_kind, value_t };
 
 use std::io::{ io };
+use std::map::{ hashmap };
+use std::str::{ str };
+use std::vec::{ vec };
+use std::libc::{ free };
 
 use util::timestamp::{ maketimestamp };
+use util::to_num::{ to_u32, to_u64 };
 
-func check_const_fold(stmt: sir*) -> bool {
-    match (stmt->kind) {
-        sir_kind::sir_neg => {
-            var n = stmt => sir_neg*;
-            if (n->source.kind != value_kind::literal) {
-                return false;
-            }
-            // TODO
-            return true;
-        }
-        sir_kind::sir_add => {
-            var n = stmt => sir_add*;
-            if (n->left.kind != value_kind::literal) {
-                return false;
-            }
-            if (n->right.kind != value_kind::literal) {
-                return false;
-            }
-            // TODO
-            return true;
-        }
-        sir_kind::sir_sub => {
-            var n = stmt => sir_sub*;
-            if (n->left.kind != value_kind::literal) {
-                return false;
-            }
-            if (n->right.kind != value_kind::literal) {
-                return false;
-            }
-            // TODO
-            return true;
-        }
-        sir_kind::sir_cmp => {
-            var n = stmt => sir_cmp*;
-            if (n->left.kind != value_kind::literal) {
-                return false;
-            }
-            if (n->right.kind != value_kind::literal) {
-                return false;
-            }
-            // TODO
-            return true;
-        }
-        _ => {}
+struct const_num_fold {
+    var_to_lit: hashmap<str, str>,
+    replace_count: i64
+}
+
+impl const_num_fold {
+    pub func instance() -> const_num_fold {
+        return const_num_fold {
+            var_to_lit: hashmap<str, str>::instance(),
+            replace_count: 0
+        };
     }
-    return false;
+
+    pub func delete(self) {
+        self.var_to_lit.delete();
+    }
+
+    pub func clear(self) {
+        self.var_to_lit.clear();
+        self.replace_count = 0;
+    }
+
+    pub func check_const_fold(self, stmt: sir*) -> bool {
+        match (stmt->kind) {
+            sir_kind::sir_neg => {
+                var n = stmt => sir_neg*;
+                if (n->source.kind != value_kind::literal) {
+                    return false;
+                }
+                if (!n->type.eq_const("i32")) {
+                    return false;
+                }
+
+                var lit_res = to_u32(n->source.content);
+                if (!lit_res.is_ok()) {
+                    return false;
+                }
+
+                var lit = -lit_res.unwrap();
+                var lit_str = str::from_u64(lit => u64);
+                defer lit_str.delete();
+
+                self.var_to_lit.insert(n->target.content, lit_str);
+                return true;
+            }
+            sir_kind::sir_add => {
+                var n = stmt => sir_add*;
+                if (n->left.kind != value_kind::literal) {
+                    return false;
+                }
+                if (n->right.kind != value_kind::literal) {
+                    return false;
+                }
+
+                if (!n->type.eq_const("i64")) {
+                    return false;
+                }
+
+                var lhs = to_u64(n->left.content);
+                var rhs = to_u64(n->right.content);
+                if (!lhs.is_ok() || !rhs.is_ok()) {
+                    return false;
+                }
+
+                var res = lhs.unwrap() + rhs.unwrap();
+                var res_str = str::from_u64(res);
+                defer res_str.delete();
+
+                self.var_to_lit.insert(n->target.content, res_str);
+                return true;
+            }
+            _ => {}
+        }
+        return false;
+    }
+
+    func replace_value_t(self, v: value_t&) {
+        if (v.kind != value_kind::variable) {
+            return;
+        }
+
+        if (!self.var_to_lit.has(v.content)) {
+            return;
+        }
+
+        var ref = self.var_to_lit.get(v.content);
+        v.kind = value_kind::literal;
+        v.content.clear();
+        v.content.append_str(ref);
+        self.replace_count += 1;
+    }
+
+    pub func replace(self, stmt: sir*) {
+        match (stmt->kind) {
+            sir_kind::sir_null => {}
+            sir_kind::sir_block => {}
+            sir_kind::sir_alloca => {
+                var n = stmt => sir_alloca*;
+                self.replace_value_t(n->name);
+            }
+            sir_kind::sir_temp_ptr => {
+                var n = stmt => sir_temp_ptr*;
+                self.replace_value_t(n->source);
+            }
+            sir_kind::sir_ret => {
+                var n = stmt => sir_ret*;
+                self.replace_value_t(n->value);
+            }
+            sir_kind::sir_str => {}
+            sir_kind::sir_zeroinitializer => {}
+            sir_kind::sir_get_index => {
+                var n = stmt => sir_get_index*;
+                self.replace_value_t(n->source);
+                self.replace_value_t(n->index);
+            }
+            sir_kind::sir_get_field => {
+                var n = stmt => sir_get_field*;
+                self.replace_value_t(n->source);
+            }
+            sir_kind::sir_call => {
+                var n = stmt => sir_call*;
+                foreach (var i; n->args) {
+                    self.replace_value_t(i.get());
+                }
+            }
+            sir_kind::sir_neg => {
+                var n = stmt => sir_neg*;
+                self.replace_value_t(n->source);
+            }
+            sir_kind::sir_bnot => {
+                var n = stmt => sir_bnot*;
+                self.replace_value_t(n->source);
+            }
+            sir_kind::sir_lnot => {
+                var n = stmt => sir_lnot*;
+                self.replace_value_t(n->source);
+            }
+            sir_kind::sir_add => {
+                var n = stmt => sir_add*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_fadd => {
+                var n = stmt => sir_fadd*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_sub => {
+                var n = stmt => sir_sub*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_mul => {
+                var n = stmt => sir_mul*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_div => {
+                var n = stmt => sir_div*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_rem => {
+                var n = stmt => sir_rem*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_band => {
+                var n = stmt => sir_band*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_bxor => {
+                var n = stmt => sir_bxor*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_bor => {
+                var n = stmt => sir_bor*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_cmp => {
+                var n = stmt => sir_cmp*;
+                self.replace_value_t(n->left);
+                self.replace_value_t(n->right);
+            }
+            sir_kind::sir_basic_block => {}
+            sir_kind::sir_store => {
+                var n = stmt => sir_store*;
+                self.replace_value_t(n->source);
+            }
+            sir_kind::sir_load => {
+                var n = stmt => sir_load*;
+                self.replace_value_t(n->source);
+            }
+            sir_kind::sir_br => {}
+            sir_kind::sir_br_cond => {
+                var n = stmt => sir_br_cond*;
+                self.replace_value_t(n->cond);
+            }
+            sir_kind::sir_switch => {
+                var n = stmt => sir_switch*;
+                self.replace_value_t(n->source);
+            }
+            sir_kind::sir_type_convert => {
+                var n = stmt => sir_type_convert*;
+                self.replace_value_t(n->source);
+            }
+            sir_kind::sir_array_cast => {
+                var n = stmt => sir_array_cast*;
+                self.replace_value_t(n->source);
+            }
+        }
+    }
 }
 
 pub func inst_combine(ctx: sir_context*, verbose: bool) {
     var ts = maketimestamp();
     ts.stamp();
 
-    var combine_count = 0;
-    foreach (var i; ctx->func_impls) {
-        foreach (var j; i.get().body->basic_block) {
-            foreach (var k; j.get()->stmts) {
-                if (check_const_fold(k.get())) {
-                    combine_count += 1;
+    var cnf = const_num_fold::instance();
+    defer cnf.delete();
+
+    var total = 0;
+    while (true) {
+        var combine_count = 0;
+        foreach (var i; ctx->func_impls) {
+            cnf.clear();
+            foreach (var j; i.get().body->basic_block) {
+                var tmp = vec<sir*>::instance();
+                defer tmp.delete();
+
+                foreach (var k; j.get()->stmts) {
+                    if (cnf.check_const_fold(k.get())) {
+                        k.get()->delete();
+                        free(k.get() => i8*);
+                    } else {
+                        tmp.push(k.get());
+                    }
+                }
+
+                j.get()->stmts.clear();
+                foreach (var k; tmp) {
+                    j.get()->stmts.push(k.get());
+                    cnf.replace(k.get());
                 }
             }
+            combine_count += cnf.replace_count;
         }
-    }
 
+        if (combine_count == 0) {
+            break;
+        }
+        total += combine_count;
+    }
     if (verbose) {
         io::stdout().green().out("  SIR-PASS ").reset();
         io::stdout().out("Run SIR pass");
-        io::stdout().blue().out(" <inst combine (experimental)>").reset().out(": ");
-        io::stdout().cyan().out_i64(combine_count).reset();
+        io::stdout().blue().out(" <inst combine>").reset().out(": ");
+        io::stdout().cyan().out_i64(total).reset();
         io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
     }
 }
