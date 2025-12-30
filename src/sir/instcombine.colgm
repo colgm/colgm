@@ -82,6 +82,58 @@ impl const_num_fold {
                 self.var_to_lit.insert(n->target.content, res_str);
                 return true;
             }
+            sir_kind::sir_sub => {
+                var n = stmt => sir_sub*;
+                if (n->left.kind != value_kind::literal) {
+                    return false;
+                }
+                if (n->right.kind != value_kind::literal) {
+                    return false;
+                }
+
+                if (!n->type.eq_const("i64")) {
+                    return false;
+                }
+
+                var lhs = to_u64(n->left.content);
+                var rhs = to_u64(n->right.content);
+                if (!lhs.is_ok() || !rhs.is_ok()) {
+                    return false;
+                }
+
+                var res = lhs.unwrap() + rhs.unwrap();
+                var res_str = str::from_u64(res);
+                defer res_str.delete();
+
+                self.var_to_lit.insert(n->target.content, res_str);
+                return true;
+            }
+            sir_kind::sir_mul => {
+                var n = stmt => sir_mul*;
+                if (n->left.kind != value_kind::literal) {
+                    return false;
+                }
+                if (n->right.kind != value_kind::literal) {
+                    return false;
+                }
+
+                if (!n->type.eq_const("i64")) {
+                    return false;
+                }
+
+                var lhs = to_u64(n->left.content);
+                var rhs = to_u64(n->right.content);
+                if (!lhs.is_ok() || !rhs.is_ok()) {
+                    return false;
+                }
+
+                var res = lhs.unwrap() + rhs.unwrap();
+                var res_str = str::from_u64(res);
+                defer res_str.delete();
+
+                self.var_to_lit.insert(n->target.content, res_str);
+                return true;
+            }
             _ => {}
         }
         return false;
@@ -271,6 +323,62 @@ pub func inst_combine(ctx: sir_context*, verbose: bool) {
         io::stdout().green().out("  SIR-PASS ").reset();
         io::stdout().out("Run SIR pass");
         io::stdout().blue().out(" <inst combine>").reset().out(": ");
+        io::stdout().cyan().out_i64(total).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}
+
+pub func replace_const_br(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var total = 0;
+    foreach (var f; ctx->func_impls) {
+        foreach (var bb; f.get().body->basic_block) {
+            var tmp = vec<sir*>::instance();
+            defer tmp.delete();
+
+            foreach (var stmt; bb.get()->stmts) {
+                if (stmt.get()->kind != sir_kind::sir_br_cond) {
+                    tmp.push(stmt.get());
+                    continue;
+                }
+
+                var n = stmt.get() => sir_br_cond*;
+                if (n->cond.kind != value_kind::literal) {
+                    tmp.push(stmt.get());
+                    continue;
+                }
+
+                var chosen_label = 0;
+                if (n->cond.content.eq_const("0")) {
+                    chosen_label = n->label_false;
+                } elsif (n->cond.content.eq_const("1")) {
+                    chosen_label = n->label_true;
+                } else {
+                    tmp.push(stmt.get());
+                    continue;
+                }
+
+                var new_stmt = sir_br::new(chosen_label);
+                tmp.push(new_stmt => sir*);
+
+                stmt.get()->delete();
+                free(stmt.get() => i8*);
+                total += 1;
+            }
+
+            bb.get()->stmts.clear();
+            foreach (var stmt; tmp) {
+                bb.get()->stmts.push(stmt.get());
+            }
+        }
+    }
+
+    if (verbose) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Run SIR pass");
+        io::stdout().blue().out(" <replace const br>").reset().out(": ");
         io::stdout().cyan().out_i64(total).reset();
         io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
     }

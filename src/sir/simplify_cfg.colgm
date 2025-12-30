@@ -103,6 +103,38 @@ func adjust_label(bb: sir_basic_block*, locked_block: hashset<basic<i64>>&) {
         var pred = i.get();
         var stmt = pred->stmts.back();
 
+        /*
+            lock all the preds to avoid UAF caused by this:
+            
+            L1: succ L2
+                br L2
+            L2: pred L1 L4, succ L3
+                br L3
+            L3: pred L2, succ L4
+                ...
+                br L4
+            L4: pred L3, succ L2
+                br L2
+            
+            after this, L2 will be eliminated
+            
+            L1: succ L2
+                     ^^-----------+
+                br L3             |
+            --- L2 removed ---    |
+            L3: pred L2, succ L4  |
+                     ^^-----------+
+                ...               |
+                br L4             |
+            L4: pred L3, succ L2  |
+                              ^^--+-> as you can see,
+                                      cfg is not updated between this iteration,
+                                      so we need to lock all the preds of L2
+                                      to avoid use after free (UAF)
+                br L3
+        */
+        locked_block.insert(basic<i64>::wrap(pred->label));
+
         if (stmt->kind == sir_kind::sir_br) {
             var n = stmt => sir_br*;
             if (n->label == bb->label) {

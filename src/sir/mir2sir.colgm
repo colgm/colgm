@@ -22,7 +22,7 @@ use sir::remove_unused_func::{ remove_unused_func };
 use sir::remove_unused_string::{ remove_unused_string };
 use sir::remove_unused_ssa::{ remove_unused_ssa };
 use sir::simplify_cfg::{ simplify_cfg };
-use sir::instcombine::{ inst_combine };
+use sir::instcombine::{ inst_combine, replace_const_br };
 use sir::variable_rename::{ variable_rename_to_form_ssa };
 
 use dwarf::dwarf::*;
@@ -3584,8 +3584,10 @@ impl mir2sir {
 
         if (with_opt) {
             remove_unused_func(self.sctx, view_unused_func, verbose);
-            simplify_cfg(self.sctx, verbose);
             inst_combine(self.sctx, verbose);
+            replace_const_br(self.sctx, verbose);
+
+            simplify_cfg(self.sctx, verbose);
 
             remove_unused_string(self.sctx, verbose);
             remove_unused_ssa(self.sctx, verbose);
