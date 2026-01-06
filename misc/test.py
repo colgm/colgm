@@ -36,6 +36,7 @@ TEST_LIST = [
     ("test/hello.colgm",                   "src"),
     ("test/initializer.colgm",             "src"),
     ("test/json_test.colgm",               "src"),
+    ("test/list_dir.colgm",                "src"),
     ("test/local.colgm",                   "src"),
     ("test/match.colgm",                   "src"),
     ("test/md5_test.colgm",                "src"),

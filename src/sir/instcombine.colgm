@@ -305,9 +305,8 @@ pub func inst_combine(ctx: sir_context*, verbose: bool) {
                     }
                 }
 
-                j.get()->stmts.clear();
-                foreach (var k; tmp) {
-                    j.get()->stmts.push(k.get());
+                j.get()->stmts.swap(tmp);
+                foreach (var k; j.get()->stmts) {
                     cnf.replace(k.get());
                 }
             }
@@ -335,18 +334,13 @@ pub func replace_const_br(ctx: sir_context*, verbose: bool) {
     var total = 0;
     foreach (var f; ctx->func_impls) {
         foreach (var bb; f.get().body->basic_block) {
-            var tmp = vec<sir*>::instance();
-            defer tmp.delete();
-
             foreach (var stmt; bb.get()->stmts) {
                 if (stmt.get()->kind != sir_kind::sir_br_cond) {
-                    tmp.push(stmt.get());
                     continue;
                 }
 
                 var n = stmt.get() => sir_br_cond*;
                 if (n->cond.kind != value_kind::literal) {
-                    tmp.push(stmt.get());
                     continue;
                 }
 
@@ -356,21 +350,16 @@ pub func replace_const_br(ctx: sir_context*, verbose: bool) {
                 } elsif (n->cond.content.eq_const("1")) {
                     chosen_label = n->label_true;
                 } else {
-                    tmp.push(stmt.get());
                     continue;
                 }
 
                 var new_stmt = sir_br::new(chosen_label);
-                tmp.push(new_stmt => sir*);
 
                 stmt.get()->delete();
                 free(stmt.get() => i8*);
-                total += 1;
-            }
 
-            bb.get()->stmts.clear();
-            foreach (var stmt; tmp) {
-                bb.get()->stmts.push(stmt.get());
+                bb.get()->stmts.set(stmt.index(), new_stmt => sir*);
+                total += 1;
             }
         }
     }

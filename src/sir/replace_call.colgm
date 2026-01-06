@@ -16,20 +16,16 @@ func adjust_single_function_size_call(
     union_size_map: hashmap<str, sir_tagged_union*>&
 ) -> i64 {
     var replace_count = 0;
-    var temp = vec<sir*>::instance();
-    defer temp.delete();
 
     foreach (var i; bb->stmts) {
         var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
-            temp.push(inst);
             continue;
         }
 
         var call = inst => sir_call*;
         if (!call->name.endswith(".__size__") &&
             !call->name.endswith(".__size__\"")) {
-            temp.push(inst);
             continue;
         }
 
@@ -39,7 +35,6 @@ func adjust_single_function_size_call(
         } else if (union_size_map.has(call->name)) {
             size = union_size_map.get(call->name)->size;
         } else {
-            temp.push(inst);
             continue;
         }
 
@@ -66,16 +61,11 @@ func adjust_single_function_size_call(
             call->debug_info_index,
             call->name.c_str
         );
-        temp.push(constant => sir*);
+        bb->stmts.set(i.index(), constant => sir*);
 
         // replaced old instruction could be freed
         inst->delete();
         free(inst => i8*);
-    }
-
-    bb->stmts.clear();
-    foreach (var i; temp) {
-        bb->stmts.push(i.get());
     }
 
     return replace_count;
@@ -125,20 +115,16 @@ pub func replace_size_call(ctx: sir_context*, verbose: bool) {
 
 func adjust_single_function_ptr_call(bb: sir_basic_block*) -> i64 {
     var replace_count = 0;
-    var temp = vec<sir*>::instance();
-    defer temp.delete();
 
     foreach (var i; bb->stmts) {
         var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
-            temp.push(inst);
             continue;
         }
 
         var call = inst => sir_call*;
         if (!call->name.endswith(".__ptr__") &&
             !call->name.endswith(".__ptr__\"")) {
-            temp.push(inst);
             continue;
         }
 
@@ -147,7 +133,6 @@ func adjust_single_function_ptr_call(bb: sir_basic_block*) -> i64 {
         if (call->args.size != 1 ||
             call->return_type.empty() ||
             call->return_type.back() != '*') {
-            temp.push(inst);
             continue;
         }
 
@@ -167,16 +152,11 @@ func adjust_single_function_ptr_call(bb: sir_basic_block*) -> i64 {
             call->debug_info_index,
             "__ptr__"
         );
-        temp.push(constant => sir*);
+        bb->stmts.set(i.index(), constant => sir*);
 
         // replaced old instruction could be freed
         inst->delete();
         free(inst => i8*);
-    }
-
-    bb->stmts.clear();
-    foreach (var i; temp) {
-        bb->stmts.push(i.get());
     }
 
     return replace_count;

@@ -1,0 +1,138 @@
+use std::libc::{ strlen, memcpy, free };
+use std::str::{ str };
+
+#[enable_if(target_os = "linux")]
+struct DIR {} // opaque to user
+
+#[enable_if(target_os = "linux")]
+struct dirent {
+    d_ino: u64,
+    d_off: i64,
+    d_reclen: u16,
+    d_type: u8,
+    d_name: [i8; 256]
+}
+
+#[enable_if(target_os = "macos", arch = "aarch64")]
+struct _opaque_pthread_mutex_t {
+    __sig: i64,
+    __opaque: [i8; 56]
+}
+
+#[enable_if(target_os = "macos", arch = "aarch64")]
+struct DIR {
+    __dd_fd: i32,
+    __dd_loc: i64,
+    __dd_size: i64,
+    __dd_buf: i8*,
+    __dd_len: i32,
+    __dd_seek: i64,
+    __padding: i64, // unused
+    __dd_flags: i32,
+    __dd_lock: _opaque_pthread_mutex_t,
+    __dd_td: i8*
+}
+
+#[enable_if(target_os = "macos", arch = "aarch64")]
+struct dirent {
+    d_ino: u64,
+    d_seekoff: u64,
+    d_reclen: u16,
+    d_namlen: u16,
+    d_type: u8,
+    d_name: [i8; 1024]
+}
+
+#[enable_if(target_os = "windows")]
+struct FILETIME {
+    dwLowDateTime: u32,
+    dwHighDateTime: u32
+}
+
+#[enable_if(target_os = "windows")]
+struct WIN32_FIND_DATAA {
+    dwFileAttributes: u32,
+    ftCreationTime: FILETIME,
+    ftLastAccessTime: FILETIME,
+    ftLastWriteTime: FILETIME,
+    nFileSizeHigh: u32,
+    nFileSizeLow: u32,
+    dwReserved0: u32,
+    dwReserved1: u32,
+    cFileName: [i8; 260],
+    cAlternateFileName: [i8; 14]
+}
+
+#[enable_if(target_os = "windows")]
+struct dirent {
+    d_ino: u64,    // always 0
+    d_reclen: u16, // always 260
+    d_namlen: u16,
+    d_type: u8,    // always 0
+    d_name: [i8; 260]
+}
+
+#[enable_if(target_os = "windows")]
+struct DIR {
+    fd: i8*,
+    entry: dirent
+} // fake
+
+#[enable_if(target_os = "linux")]
+extern pub func opendir(name: const i8*) -> DIR*;
+#[enable_if(target_os = "linux")]
+extern pub func readdir(dirp: DIR*) -> dirent*;
+#[enable_if(target_os = "linux")]
+extern pub func closedir(dirp: DIR*) -> i32;
+
+#[enable_if(target_os = "macos", arch = "aarch64")]
+extern pub func opendir(name: const i8*) -> DIR*;
+#[enable_if(target_os = "macos", arch = "aarch64")]
+extern pub func readdir(dirp: DIR*) -> dirent*;
+#[enable_if(target_os = "macos", arch = "aarch64")]
+extern pub func closedir(dirp: DIR*) -> i32;
+
+#[enable_if(target_os = "windows")]
+extern func FindFirstFileA(lpFileName: const i8*, lpFindFileData: WIN32_FIND_DATAA*) -> i8*;
+#[enable_if(target_os = "windows")]
+extern func FindNextFileA(hFindFile: i8*, lpFindFileData: WIN32_FIND_DATAA*) -> i32;
+#[enable_if(target_os = "windows")]
+extern func FindClose(hFindFile: i8*);
+#[enable_if(target_os = "windows")]
+pub func opendir(name: const i8*) -> DIR* { 
+    var find_data = WIN32_FIND_DATAA {};
+
+    var pattern = str::from(name);
+    pattern.append("\\*.*");
+    defer pattern.delete();
+
+    var handle = FindFirstFileA(pattern.c_str, find_data.__ptr__());
+    if (handle == nil) {
+        return nil;
+    }
+
+    var res = DIR::__alloc__();
+    res->fd = handle;
+    return res;
+}
+#[enable_if(target_os = "windows")]
+pub func readdir(dirp: DIR*) -> dirent* { 
+    var find_data = WIN32_FIND_DATAA {};
+    if (FindNextFileA(dirp->fd, find_data.__ptr__()) == 0) {
+        return nil;
+    }
+
+    dirp->entry.d_ino = 0;
+    dirp->entry.d_reclen = 260;
+    dirp->entry.d_namlen = strlen(find_data.cFileName) => u16;
+    dirp->entry.d_type = 0;
+    memcpy(dirp->entry.d_name, find_data.cFileName, dirp->entry.d_namlen => u64);
+    dirp->entry.d_name[dirp->entry.d_namlen] = 0;
+    return dirp->entry.__ptr__();
+}
+#[enable_if(target_os = "windows")]
+pub func closedir(dirp: DIR*) -> i32 { 
+    FindClose(dirp->fd);
+    free(dirp => i8*);
+    return 0;
+}

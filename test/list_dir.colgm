@@ -1,0 +1,48 @@
+use std::dirent::{ opendir, readdir, closedir };
+use std::fs::{ fs };
+use std::str::{ str };
+use std::io::{ io };
+use std::libc::{ streq };
+
+use util::platform::{ is_windows };
+
+func recursive_list(path: const i8*, depth: i64) {
+    var dir = opendir(path);
+    if (dir == nil) {
+        return;
+    }
+
+    while (true) {
+        var entry = readdir(dir);
+        if (entry == nil) {
+            break;
+        }
+
+        if (streq(entry->d_name, ".") || streq(entry->d_name, "..")) {
+            continue;
+        }
+
+        for (var i = 0; i < depth; i += 1) {
+            io::stdout().out("|--");
+        }
+        io::stdout().out(" [").out(entry->d_name).out("]").endln();
+
+        var name = str::from(path);
+        if (is_windows()) {
+            name.append("\\").append(entry->d_name);
+        } else {
+            name.append("/").append(entry->d_name);
+        }
+        defer name.delete();
+
+        if (fs::is_dir(name.c_str)) {
+            recursive_list(name.c_str, depth + 1);
+        }
+    }
+    closedir(dir);
+}
+
+func main() -> i32 {
+    recursive_list("src", 1);
+    return 0;
+}
