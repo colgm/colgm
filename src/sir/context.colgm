@@ -15,6 +15,7 @@ use dwarf::dwarf::*;
 
 use util::mangling::{ llvm_raw_string };
 use util::platform::{ get_platform, get_target_triple };
+use util::cli::{ cli_option };
 
 pub struct sir_struct {
     name: str,
@@ -385,8 +386,8 @@ impl sir_context {
 }
 
 impl sir_context {
-    func dump_target_tripple(self, out: io&) {
-        var target = get_target_triple();
+    func dump_target_tripple(self, out: io&, co: cli_option&) {
+        var target = get_target_triple(co.platform, co.arch);
         defer target.delete();
 
         out.out("target triple = \"").out(target.c_str).out("\"\n\n");
@@ -533,8 +534,8 @@ impl sir_context {
         }
     }
 
-    pub func dump(self, out: io&) {
-        self.dump_target_tripple(out);
+    pub func dump(self, out: io&, co: cli_option&) {
+        self.dump_target_tripple(out, co);
         self.dump_tagged_unions(out);
         self.dump_structs(out);
         self.dump_func_decls(out);

@@ -75,9 +75,14 @@ pub func is_windows() -> bool {
     return streq(get_platform(), "windows");
 }
 
-pub func get_target_triple() -> str {
-    var platform = get_platform();
-    var arch = get_arch();
+pub func get_target_triple(platform: const i8*, arch: const i8*) -> str {
+    if (platform == nil) {
+        platform = get_platform();
+    }
+    if (arch == nil) {
+        arch = get_arch();
+    }
+
     if (streq(platform, "linux") && streq(arch, "x86_64")) {
         return str::from("x86_64-pc-linux-gnu");
     }
