@@ -786,24 +786,13 @@ impl mir2sir {
 
     func generate_and(self, n: mir_binary*) {
         var i1_name = str::from("i1");
-        var temp_0_value = self.ssa_gen.create_variable();
-        var temp_0_real = str::from("_");
-        temp_0_real.append_str(temp_0_value.content).append(".r");
+        var temp_0 = self.ssa_gen.create_variable();
         defer {
             i1_name.delete();
-            temp_0_value.delete();
-            temp_0_real.delete();
+            temp_0.delete();
         }
 
-        self.move_reg_block->add_stmt(sir_alloca::new(temp_0_real, i1_name) => sir*);
-        self.block->add_stmt(sir_temp_ptr::new(
-            temp_0_value.content,
-            temp_0_real,
-            i1_name,
-            self.generate_DI_location(n->base.location),
-            ""
-        ) => sir*);
-
+        self.move_reg_block->add_stmt(sir_alloca::new(temp_0.content, i1_name) => sir*);
         self.visit(n->left => mir*);
 
         var left_value = self.value_stack.back().to_value_t();
@@ -813,7 +802,7 @@ impl mir2sir {
         self.block->add_stmt(sir_store::new(
             i1_name,
             left_value,
-            temp_0_value
+            temp_0
         ) => sir*);
 
         var true_label = self.label_gen.create_index();
@@ -837,7 +826,7 @@ impl mir2sir {
         self.block->add_stmt(sir_store::new(
             i1_name,
             right_value,
-            temp_0_value
+            temp_0
         ) => sir*);
 
         var false_label = self.label_gen.create_index();
@@ -848,38 +837,27 @@ impl mir2sir {
         self.func_block->add_basic_block(and_false_block);
         self.block = and_false_block;
 
-        var temp_1_value = self.ssa_gen.create_variable();
-        defer temp_1_value.delete();
+        var temp_1 = self.ssa_gen.create_variable();
+        defer temp_1.delete();
 
         and_false_block->add_stmt(sir_load::new(
             i1_name,
-            temp_0_value,
-            temp_1_value
+            temp_0,
+            temp_1
         ) => sir*);
 
-        self.push_mir_value_variable(temp_1_value.content, n->resolved_type);
+        self.push_mir_value_variable(temp_1.content, n->resolved_type);
     }
 
     func generate_or(self, n: mir_binary*) {
         var i1_name = str::from("i1");
-        var temp_0_value = self.ssa_gen.create_variable();
-        var temp_0_real = str::from("_");
-        temp_0_real.append_str(temp_0_value.content).append(".r");
+        var temp_0 = self.ssa_gen.create_variable();
         defer {
             i1_name.delete();
-            temp_0_value.delete();
-            temp_0_real.delete();
+            temp_0.delete();
         }
 
-        self.move_reg_block->add_stmt(sir_alloca::new(temp_0_real, i1_name) => sir*);
-        self.block->add_stmt(sir_temp_ptr::new(
-            temp_0_value.content,
-            temp_0_real,
-            i1_name,
-            self.generate_DI_location(n->base.location),
-            ""
-        ) => sir*);
-
+        self.move_reg_block->add_stmt(sir_alloca::new(temp_0.content, i1_name) => sir*);
         self.visit(n->left => mir*);
 
         var left_value = self.value_stack.back().to_value_t();
@@ -889,7 +867,7 @@ impl mir2sir {
         self.block->add_stmt(sir_store::new(
             i1_name,
             left_value,
-            temp_0_value
+            temp_0
         ) => sir*);
 
         var false_label = self.label_gen.create_index();
@@ -913,7 +891,7 @@ impl mir2sir {
         self.block->add_stmt(sir_store::new(
             i1_name,
             right_value,
-            temp_0_value
+            temp_0
         ) => sir*);
 
         var true_label = self.label_gen.create_index();
@@ -924,16 +902,16 @@ impl mir2sir {
         self.func_block->add_basic_block(or_true_block);
         self.block = or_true_block;
 
-        var temp_1_value = self.ssa_gen.create_variable();
-        defer temp_1_value.delete();
+        var temp_1 = self.ssa_gen.create_variable();
+        defer temp_1.delete();
 
         or_true_block->add_stmt(sir_load::new(
             i1_name,
-            temp_0_value,
-            temp_1_value
+            temp_0,
+            temp_1
         ) => sir*);
 
-        self.push_mir_value_variable(temp_1_value.content, n->resolved_type);
+        self.push_mir_value_variable(temp_1.content, n->resolved_type);
     }
 
     func visit_mir_binary(self, n: mir_binary*) {
@@ -1309,21 +1287,10 @@ impl mir2sir {
         var temp_var = self.ssa_gen.create_variable();
         defer temp_var.delete();
 
-        var temp_var_real = str::from("_");
-        temp_var_real.append_str(temp_var.content).append(".r");
-        defer temp_var_real.delete();
-
         var n_ty = self.type_mapping(n->resolved_type);
         defer n_ty.delete();
 
-        self.move_reg_block->add_stmt(sir_alloca::new(temp_var_real, n_ty) => sir*);
-        self.block->add_stmt(sir_temp_ptr::new(
-            temp_var.content,
-            temp_var_real,
-            n_ty,
-            self.generate_DI_location(n->base.location),
-            ""
-        ) => sir*);
+        self.move_reg_block->add_stmt(sir_alloca::new(temp_var.content, n_ty) => sir*);
         self.block->add_stmt(sir_zeroinitializer::new(
             temp_var,
             n_ty,
@@ -1821,12 +1788,8 @@ impl mir2sir {
         if (n->resolved_type.is_void()) {
             self.push_mir_value_variable(target, n->resolved_type);
         } else {
-            var temp_var_value = self.ssa_gen.create_variable();
-            defer temp_var_value.delete();
-
-            var real = str::from("_");
-            real.append_str(temp_var_value.content).append(".r");
-            defer real.delete();
+            var temp_var = self.ssa_gen.create_variable();
+            defer temp_var.delete();
 
             var n_ty = self.type_mapping(n->resolved_type);
             var target_value = value_t::variable(target);
@@ -1835,24 +1798,17 @@ impl mir2sir {
                 target_value.delete();
             }
 
-            self.move_reg_block->add_stmt(sir_alloca::new(real, n_ty) => sir*);
-            self.block->add_stmt(sir_temp_ptr::new(
-                temp_var_value.content,
-                real,
-                n_ty,
-                self.generate_DI_location(n->base.location),
-                ""
-            ) => sir*);
+            self.move_reg_block->add_stmt(sir_alloca::new(temp_var.content, n_ty) => sir*);
             self.block->add_stmt(sir_store::new(
                 n_ty,
                 target_value,
-                temp_var_value
+                temp_var
             ) => sir*);
 
             var n_ref = n->resolved_type.pointer_copy();
             defer n_ref.delete();
 
-            self.push_mir_value_variable(temp_var_value.content, n_ref);
+            self.push_mir_value_variable(temp_var.content, n_ref);
         }
     }
 
@@ -3591,8 +3547,9 @@ impl mir2sir {
 
             remove_unused_string(self.sctx, verbose);
             remove_unused_ssa(self.sctx, verbose);
-            variable_rename_to_form_ssa(self.sctx, verbose);
         }
+
+        variable_rename_to_form_ssa(self.sctx, verbose);
     }
 
     pub func generate(self, mctx: mir_context&,

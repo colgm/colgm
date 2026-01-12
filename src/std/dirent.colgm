@@ -99,7 +99,7 @@ extern func FindNextFileA(hFindFile: i8*, lpFindFileData: WIN32_FIND_DATAA*) -> 
 #[enable_if(target_os = "windows")]
 extern func FindClose(hFindFile: i8*);
 #[enable_if(target_os = "windows")]
-pub func opendir(name: const i8*) -> DIR* { 
+pub func opendir(name: const i8*) -> DIR* {
     var find_data = WIN32_FIND_DATAA {};
 
     var pattern = str::from(name);
@@ -116,7 +116,7 @@ pub func opendir(name: const i8*) -> DIR* {
     return res;
 }
 #[enable_if(target_os = "windows")]
-pub func readdir(dirp: DIR*) -> dirent* { 
+pub func readdir(dirp: DIR*) -> dirent* {
     var find_data = WIN32_FIND_DATAA {};
     if (FindNextFileA(dirp->fd, find_data.__ptr__()) == 0) {
         return nil;
@@ -131,7 +131,7 @@ pub func readdir(dirp: DIR*) -> dirent* {
     return dirp->entry.__ptr__();
 }
 #[enable_if(target_os = "windows")]
-pub func closedir(dirp: DIR*) -> i32 { 
+pub func closedir(dirp: DIR*) -> i32 {
     FindClose(dirp->fd);
     free(dirp => i8*);
     return 0;

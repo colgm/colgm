@@ -12,7 +12,6 @@ pub enum sir_kind {
     sir_null,
     sir_block,
     sir_alloca,
-    sir_temp_ptr,
     sir_ret,
     sir_str,
     sir_zeroinitializer,
@@ -68,10 +67,6 @@ impl sir {
             }
             sir_kind::sir_alloca => {
                 var n = self.__ptr__() => sir_alloca*;
-                n->delete();
-            }
-            sir_kind::sir_temp_ptr => {
-                var n = self.__ptr__() => sir_temp_ptr*;
                 n->delete();
             }
             sir_kind::sir_ret => {
@@ -194,10 +189,6 @@ impl sir {
             }
             sir_kind::sir_alloca => {
                 var n = self.__ptr__() => sir_alloca*;
-                n->dump(out);
-            }
-            sir_kind::sir_temp_ptr => {
-                var n = self.__ptr__() => sir_temp_ptr*;
                 n->dump(out);
             }
             sir_kind::sir_ret => {
@@ -426,68 +417,6 @@ impl sir_alloca {
         } else {
             out.out("[").out_u64(self.array_info.size).out(" x ");
             out.out(self.array_info.base_type.c_str).out("]").endln();
-        }
-    }
-}
-
-pub struct sir_temp_ptr {
-//
-// used to get temporary pointer of numbering variable
-//     %_1.r = alloca i32
-// this operand will do this:
-//     %1 = getelementptr i32, i32* %_1.r, i32 0
-// and %1 is i32*
-//
-    base: sir,
-    target: value_t,
-    source: value_t,
-    type: str,
-    debug_info_index: u64,
-    comment: str // for tail comment
-}
-
-impl sir_temp_ptr {
-    pub func new(target: str&, source: str&, ty: str&, dii: u64, comment: const i8*) -> sir_temp_ptr* {
-        var n = sir_temp_ptr::__alloc__();
-        n->base = sir::instance(sir_kind::sir_temp_ptr);
-        n->target = value_t::variable(target);
-        n->source = value_t::variable(source);
-        n->type = ty.clone();
-        n->debug_info_index = dii;
-        if (comment != nil) {
-            n->comment = str::from(comment);
-        } else {
-            n->comment = str::instance();
-        }
-        return n;
-    }
-
-    pub func delete(self) {
-        self.target.delete();
-        self.source.delete();
-        self.type.delete();
-        self.comment.delete();
-    }
-
-    pub func dump(self, out: io&) {
-        out.out("  ");
-        self.target.dump(out);
-        out.out(" = ");
-        out.out("getelementptr ").out(self.type.c_str).out(", ");
-        out.out(self.type.c_str).out("* ");
-        self.source.dump(out);
-        out.out(", i32 0");
-        if (self.debug_info_index != DI_ERROR_INDEX()) {
-            out.out(", !dbg !").out_u64(self.debug_info_index);
-        }
-        if (self.comment.empty()) {
-            out.out(" ; ");
-            self.source.dump(out);
-            out.out(" -> ");
-            self.target.dump(out);
-            out.endln();
-        } else {
-            out.out(" ; ").out(self.comment.c_str).endln();
         }
     }
 }

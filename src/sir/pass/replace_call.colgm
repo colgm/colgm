@@ -1,6 +1,7 @@
 use sir::sir::*;
 use sir::value::{ value_t };
 use sir::context::{ sir_func, sir_struct, sir_tagged_union, sir_context };
+use sir::value::{ value_kind };
 
 use std::vec::{ vec };
 use std::str::{ str };
@@ -113,18 +114,201 @@ pub func replace_size_call(ctx: sir_context*, verbose: bool) {
     }
 }
 
-func adjust_single_function_ptr_call(bb: sir_basic_block*) -> i64 {
+struct ptr_replace_context {
+    name_map: hashmap<str, str>
+}
+
+impl ptr_replace_context {
+    pub func instance() -> ptr_replace_context {
+        return ptr_replace_context {
+            name_map: hashmap<str, str>::instance()
+        };
+    }
+
+    pub func delete(self) {
+        self.name_map.delete();
+    }
+
+    pub func clear(self) {
+        self.name_map.clear();
+    }
+
+    pub func rename(self, name: value_t&) {
+        if (name.kind != value_kind::variable) {
+            return;
+        }
+
+        if (self.name_map.has(name.content)) {
+            var new_name = self.name_map.get(name.content);
+            name.content.delete();
+            name.content = new_name.clone();
+        }
+    }
+
+    pub func accept(self, stmt: sir*) {
+        match (stmt->kind) {
+            sir_kind::sir_null => {}
+            sir_kind::sir_block => {}
+            sir_kind::sir_alloca => {
+                var n = stmt => sir_alloca*;
+                self.rename(n->name);
+            }
+            sir_kind::sir_ret => {
+                var n = stmt => sir_ret*;
+                self.rename(n->value);
+            }
+            sir_kind::sir_str => {
+                var n = stmt => sir_str*;
+                self.rename(n->target);
+            }
+            sir_kind::sir_zeroinitializer => {
+                var n = stmt => sir_zeroinitializer*;
+                self.rename(n->target);
+            }
+            sir_kind::sir_get_index => {
+                var n = stmt => sir_get_index*;
+                self.rename(n->source);
+                self.rename(n->index);
+                self.rename(n->target);
+            }
+            sir_kind::sir_get_field => {
+                var n = stmt => sir_get_field*;
+                self.rename(n->source);
+                self.rename(n->target);
+            }
+            sir_kind::sir_call => {
+                var n = stmt => sir_call*;
+                foreach (var i; n->args) {
+                    self.rename(i.get());
+                }
+                self.rename(n->target);
+            }
+            sir_kind::sir_neg => {
+                var n = stmt => sir_neg*;
+                self.rename(n->source);
+                self.rename(n->target);
+            }
+            sir_kind::sir_bnot => {
+                var n = stmt => sir_bnot*;
+                self.rename(n->source);
+                self.rename(n->target);
+            }
+            sir_kind::sir_lnot => {
+                var n = stmt => sir_lnot*;
+                self.rename(n->source);
+                self.rename(n->target);
+            }
+            sir_kind::sir_add => {
+                var n = stmt => sir_add*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_fadd => {
+                var n = stmt => sir_fadd*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_sub => {
+                var n = stmt => sir_sub*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_mul => {
+                var n = stmt => sir_mul*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_div => {
+                var n = stmt => sir_div*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_rem => {
+                var n = stmt => sir_rem*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_band => {
+                var n = stmt => sir_band*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_bxor => {
+                var n = stmt => sir_bxor*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_bor => {
+                var n = stmt => sir_bor*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_cmp => {
+                var n = stmt => sir_cmp*;
+                self.rename(n->left);
+                self.rename(n->right);
+                self.rename(n->target);
+            }
+            sir_kind::sir_basic_block => {}
+            sir_kind::sir_store => {
+                var n = stmt => sir_store*;
+                self.rename(n->source);
+                self.rename(n->target);
+            }
+            sir_kind::sir_load => {
+                var n = stmt => sir_load*;
+                self.rename(n->source);
+                self.rename(n->target);
+            }
+            sir_kind::sir_br => {}
+            sir_kind::sir_br_cond => {
+                var n = stmt => sir_br_cond*;
+                self.rename(n->cond);
+            }
+            sir_kind::sir_switch => {
+                var n = stmt => sir_switch*;
+                self.rename(n->source);
+            }
+            sir_kind::sir_type_convert => {
+                var n = stmt => sir_type_convert*;
+                self.rename(n->source);
+                self.rename(n->target);
+            }
+            sir_kind::sir_array_cast => {
+                var n = stmt => sir_array_cast*;
+                self.rename(n->source);
+                self.rename(n->target);
+            }
+        }
+    }
+}
+
+func adjust_single_function_ptr_call(bb: sir_basic_block*,
+                                     prc: ptr_replace_context&) -> i64 {
     var replace_count = 0;
+    var tmp = vec<sir*>::instance();
+    defer tmp.delete();
 
     foreach (var i; bb->stmts) {
         var inst = i.get();
         if (inst->kind != sir_kind::sir_call) {
+            tmp.push(inst);
             continue;
         }
 
         var call = inst => sir_call*;
         if (!call->name.endswith(".__ptr__") &&
             !call->name.endswith(".__ptr__\"")) {
+            tmp.push(inst);
             continue;
         }
 
@@ -133,31 +317,19 @@ func adjust_single_function_ptr_call(bb: sir_basic_block*) -> i64 {
         if (call->args.size != 1 ||
             call->return_type.empty() ||
             call->return_type.back() != '*') {
+            tmp.push(inst);
             continue;
         }
 
-        var rtt = call->return_type.clone();
-        defer rtt.delete();
-        rtt.pop_back(); // delete tail *
-
         replace_count += 1;
-        // replace
-        //   %target = call %struct.T* @T.__ptr__(%struct.T* %source)
-        // to
-        //   %target = getelementptr %struct.T, %struct.T* %source, i32 0; __ptr__
-        var constant = sir_temp_ptr::new(
-            call->target.content,
-            call->args.get(0).content,
-            rtt,
-            call->debug_info_index,
-            "__ptr__"
-        );
-        bb->stmts.set(i.index(), constant => sir*);
+        prc.name_map.insert(call->target.content, call->args.get(0).content);
 
         // replaced old instruction could be freed
         inst->delete();
         free(inst => i8*);
     }
+
+    bb->stmts.swap(tmp);
 
     return replace_count;
 }
@@ -166,10 +338,19 @@ pub func replace_ptr_call(ctx: sir_context*, verbose: bool) {
     var ts = maketimestamp();
     ts.stamp();
 
+    var prc = ptr_replace_context::instance();
+    defer prc.delete();
+
     var replace_count = 0;
     foreach (var i; ctx->func_impls) {
+        prc.clear();
         foreach (var j; i.get().body->basic_block) {
-            replace_count += adjust_single_function_ptr_call(j.get());
+            replace_count += adjust_single_function_ptr_call(j.get(), prc);
+        }
+        foreach (var j; i.get().body->basic_block) {
+            foreach (var k; j.get()->stmts) {
+                prc.accept(k.get());
+            }
         }
     }
 
