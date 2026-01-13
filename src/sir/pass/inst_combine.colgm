@@ -1,8 +1,11 @@
 use sir::sir::*;
 use sir::context::{ sir_context };
 use sir::value::{ value_kind, value_t };
+use sir::pass::replacer::{ replacer };
 
 use std::io::{ io };
+use std::basic::{ basic };
+use std::set::{ hashset };
 use std::map::{ hashmap };
 use std::str::{ str };
 use std::vec::{ vec };
@@ -364,6 +367,83 @@ pub func replace_const_br(ctx: sir_context*, verbose: bool) {
         io::stdout().green().out("  SIR-PASS ").reset();
         io::stdout().out("Run SIR pass");
         io::stdout().blue().out(" <replace const br>").reset().out(": ");
+        io::stdout().cyan().out_i64(total).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}
+
+pub func combine_load_store(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var to_be_removed = hashset<basic<sir*>>::instance();
+    defer to_be_removed.delete();
+    var to_be_replaced = replacer::instance();
+    defer to_be_replaced.delete();
+
+    var total = 0;
+    foreach (var f; ctx->func_impls) {
+        to_be_replaced.clear();
+        foreach (var bb; f.get().body->basic_block) {
+            var maybe_call: sir* = nil;
+            var maybe_store: sir* = nil;
+            to_be_removed.clear();
+            foreach (var stmt; bb.get()->stmts) {
+                defer {
+                    maybe_call = maybe_store;
+                    maybe_store = stmt.get();
+                }
+
+                if (maybe_call != nil && maybe_call->kind == sir_kind::sir_call &&
+                    maybe_store != nil && maybe_store->kind == sir_kind::sir_store &&
+                    stmt.get()->kind == sir_kind::sir_load) {
+                    var call = maybe_call => sir_call*;
+                    var store = maybe_store => sir_store*;
+                    var load = stmt.get() => sir_load*;
+                    if (call->target.content.eq(store->source.content) &&
+                        store->target.content.eq(load->source.content)) {
+
+                        to_be_replaced.add(load->target.content, call->target.content);
+
+                        if (call->return_type.eq_const("i1") ||
+                            call->return_type.eq_const("i8") ||
+                            call->return_type.eq_const("i16") ||
+                            call->return_type.eq_const("i32") ||
+                            call->return_type.eq_const("i64") ||
+                            call->return_type.eq_const("f32") ||
+                            call->return_type.eq_const("f64")) {
+                            to_be_removed.insert(basic<sir*>::wrap(store => sir*));
+                        }
+                        to_be_removed.insert(basic<sir*>::wrap(load => sir*));
+                    }
+                }
+            }
+
+            var tmp = vec<sir*>::instance();
+            defer tmp.delete();
+            foreach (var stmt; bb.get()->stmts) {
+                if (!to_be_removed.has(basic<sir*>::wrap(stmt.get()))) {
+                    tmp.push(stmt.get());
+                    continue;
+                }
+                stmt.get()->delete();
+                free(stmt.get() => i8*);
+                total += 1;
+            }
+            bb.get()->stmts.swap(tmp);
+        }
+
+        foreach (var bb; f.get().body->basic_block) {
+            foreach (var stmt; bb.get()->stmts) {
+                to_be_replaced.accept(stmt.get());
+            }
+        }
+    }
+
+    if (verbose) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Run SIR pass");
+        io::stdout().blue().out(" <combine load store>").reset().out(": ");
         io::stdout().cyan().out_i64(total).reset();
         io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
     }

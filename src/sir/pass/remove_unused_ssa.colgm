@@ -219,8 +219,11 @@ func deal_single_function(f: sir_func&, rc: ssa_remove_context&) -> i64 {
         if (rc.used.has(i.key())) {
             continue;
         }
+        // do not delete call inst, all function calls are used
+        if (i.value()->kind == sir_kind::sir_call) {
+            continue;
+        }
         to_be_removed.insert(basic<sir*>::wrap(i.value()));
-        replace_count += 1;
     }
 
     foreach (var i; f.body->basic_block) {
@@ -231,6 +234,7 @@ func deal_single_function(f: sir_func&, rc: ssa_remove_context&) -> i64 {
             if (to_be_removed.has(basic<sir*>::wrap(j.get()))) {
                 j.get()->delete();
                 free(j.get() => i8*);
+                replace_count += 1;
                 continue;
             }
             tmp.push(j.get());
