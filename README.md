@@ -83,7 +83,7 @@ Also you could use `-O[x] -g` for release with debug info.
 Before building the project, here's the requirements:
 
 - python >= 3.8
-- llvm >= 13.0
+- llvm >= 16.0
 - cmake >= 3.21
 
 ### Build

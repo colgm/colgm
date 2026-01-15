@@ -17,6 +17,8 @@ use util::package::{ package, p_status };
 use util::cli::{ cli_option };
 use util::timestamp::{ maketimestamp };
 use util::to_num::{ to_f64 };
+use util::module_finder::{ module_finder };
+use util::platform::{ is_windows };
 
 use ast::ast::*;
 use parse::lexer::{ lexer };
@@ -46,6 +48,7 @@ pub struct regist_pass {
     co: cli_option&,
     tr: type_resolve,
     gnv: generic_visitor,
+    mf: module_finder,
 
     mctx: mir_context*
 }
@@ -64,12 +67,14 @@ impl regist_pass {
             co: co,
             tr: type_resolve::instance(err, ctx, pkg),
             gnv: generic_visitor::instance(err, ctx, pkg, co),
+            mf: module_finder::instance(pkg->library_path.c_str),
             mctx: mctx
         };
 	}
 
     pub func delete(self) {
         self.gnv.delete();
+        self.mf.delete();
     }
 }
 
@@ -320,7 +325,7 @@ impl regist_pass {
         var expect_name = str::instance();
         defer expect_name.delete();
         // path like: mod/foo/bar.colgm
-        var expect_path = str::from(self.pkg->library_path.c_str);
+        var expect_path = str::instance();
         defer expect_path.delete();
 
         // expect file path init with given library path
@@ -340,7 +345,11 @@ impl regist_pass {
                 expect_name.append("::");
             }
             if (!expect_path.empty()) {
-                expect_path.append_char('/');
+                if (is_windows()) {
+                    expect_path.append_char('\\');
+                } else {
+                    expect_path.append_char('/');
+                }
             }
             expect_name.append(real_node->content.c_str);
             expect_path.append(real_node->content.c_str);
@@ -349,7 +358,9 @@ impl regist_pass {
         expect_path.append(".colgm");
 
         // check if expect path exists
-        if (!fs::exists(expect_path.c_str)) {
+        var res = self.mf.find(expect_path);
+        defer res.delete();
+        if (!res.is_ok()) {
             var info = str::from("module \"");
             info.append(expect_name.c_str);
             info.append("\" not found, \"");
@@ -361,15 +372,15 @@ impl regist_pass {
             return;
         }
 
-        self.pkg->insert(expect_name, expect_path);
+        self.pkg->insert(expect_name, res.unwrap());
 
         if (self.pkg->get_status(expect_name) == p_status::not_used &&
-            !self.compile_module(expect_name, expect_path)) {
+            !self.compile_module(expect_name, res.unwrap())) {
             // failed to compile, skip importing this module
             return;
         }
 
-        self.import_from_module(expect_path, node);
+        self.import_from_module(res.unwrap(), node);
     }
 
     func scan_imports(self) {

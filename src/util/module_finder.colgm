@@ -6,18 +6,30 @@ use std::result::{ result };
 
 use util::platform::{ is_windows };
 
-struct module_finder {
+pub struct module_finder {
     path: vec<str>
 }
 
 impl module_finder {
-    pub func instance() -> module_finder {
+    pub func instance(library: const i8*) -> module_finder {
         var PATH = fs::getpath();
+        defer PATH.delete();
+
         var cwd = str::from(".");
         defer cwd.delete();
-        PATH.push(cwd);
 
-        return module_finder { path: PATH };
+        var res = vec<str>::instance();
+        if (library != nil) {
+            var path = str::from(library);
+            defer path.delete();
+            res.push(path);
+        }
+        res.push(cwd);
+        foreach (var p; PATH) {
+            res.push(p.get());
+        }
+
+        return module_finder { path: res };
     }
 
     pub func delete(self) {
@@ -33,6 +45,9 @@ impl module_finder {
                 possible_path.append("\\");
             } else {
                 possible_path.append("/");
+            }
+            if (p.get().empty() || p.get().eq_const(".")) {
+                possible_path.clear();
             }
             possible_path.append_str(name);
 

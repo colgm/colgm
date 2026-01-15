@@ -514,8 +514,7 @@ impl sir_zeroinitializer {
     }
 
     pub func dump(self, out: io&) {
-        out.out("  store ").out(self.type.c_str).out(" zeroinitializer, ");
-        out.out(self.type.c_str).out("* ");
+        out.out("  store ").out(self.type.c_str).out(" zeroinitializer, ptr ");
         self.target.dump(out);
         if (self.debug_info_index != DI_ERROR_INDEX()) {
             out.out(", !dbg !").out_u64(self.debug_info_index);
@@ -563,8 +562,7 @@ impl sir_get_index {
     pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
-        out.out(" = getelementptr ").out(self.type.c_str).out(", ");
-        out.out(self.type.c_str).out("* ");
+        out.out(" = getelementptr ").out(self.type.c_str).out(", ptr ");
         self.source.dump(out);
         out.out(", ").out(self.index_type.c_str).out(" ");
         self.index.dump(out);
@@ -606,8 +604,7 @@ impl sir_get_field {
         out.out("  ");
         self.target.dump(out);
         out.out(" = getelementptr inbounds ");
-        out.out(self.struct_name.c_str).out(", ");
-        out.out(self.struct_name.c_str).out("* ");
+        out.out(self.struct_name.c_str).out(", ptr ");
         self.source.dump(out);
         out.out(", i32 0, i32 ").out_i64(self.index);
         if (self.debug_info_index != DI_ERROR_INDEX()) {
@@ -1433,7 +1430,7 @@ impl sir_store {
     pub func dump(self, out: io&) {
         out.out("  store ").out(self.type.c_str).out(" ");
         self.source.dump(out);
-        out.out(", ").out(self.type.c_str).out("* ");
+        out.out(", ptr ");
         self.target.dump(out);
         out.endln();
     }
@@ -1465,8 +1462,7 @@ impl sir_load {
     pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
-        out.out(" = load ").out(self.type.c_str).out(", ");
-        out.out(self.type.c_str).out("* ");
+        out.out(" = load ").out(self.type.c_str).out(", ptr ");
         self.source.dump(out);
         out.endln();
     }

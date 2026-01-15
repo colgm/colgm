@@ -190,6 +190,11 @@ func compile(option: cli_option&) -> i32 {
     var cc = frontend::instance(option);
     defer cc.delete();
 
+    var pkg = package::instance();
+    defer pkg.delete();
+    pkg.library_path.clear();
+    pkg.library_path.append(option.library_path);
+
     // global symbol table
     var gt = global_symbol_table::instance(option.input_file);
     defer gt.delete();
@@ -208,7 +213,7 @@ func compile(option: cli_option&) -> i32 {
 
     var regpass = regist_pass::instance(
         cc.err,
-        cc.pkg.__ptr__(),
+        pkg.__ptr__(),
         ctx.__ptr__(),
         cc.copt,
         mctx.__ptr__()
@@ -217,7 +222,7 @@ func compile(option: cli_option&) -> i32 {
 
     var semantic = sema::instance(
         cc.err,
-        cc.pkg.__ptr__(),
+        pkg.__ptr__(),
         ctx.__ptr__(),
         cc.copt
     );
@@ -226,7 +231,7 @@ func compile(option: cli_option&) -> i32 {
     var ast2mir_worker = ast2mir::instance(
         cc.err,
         ctx.__ptr__(),
-        cc.pkg.__ptr__(),
+        pkg.__ptr__(),
         mctx.__ptr__()
     );
     defer ast2mir_worker.delete();
@@ -234,13 +239,10 @@ func compile(option: cli_option&) -> i32 {
     var mir2sir_worker = mir2sir::instance(
         ctx.__ptr__(),
         sctx.__ptr__(),
-        cc.pkg.__ptr__(),
+        pkg.__ptr__(),
         cc.err
     );
     defer mir2sir_worker.delete();
-
-    cc.pkg.library_path.clear();
-    cc.pkg.library_path.append(option.library_path);
 
     var time_stamp = maketimestamp();
 
@@ -284,10 +286,10 @@ func compile(option: cli_option&) -> i32 {
         semantic.view_resolved_ast(io::stdout());
     }
     if (option.VIEW_SEMA) {
-        semantic.ctx->dump(io::stdout(), cc.pkg.__ptr__());
+        semantic.ctx->dump(io::stdout(), pkg.__ptr__());
     }
     if (option.EMIT_MARKDOWN_ONLY) {
-        sema2md(ctx, cc.pkg, "colgm.sema.md");
+        sema2md(ctx, pkg, "colgm.sema.md");
         return 0;
     }
 
@@ -301,15 +303,15 @@ func compile(option: cli_option&) -> i32 {
     mctx.add_default_func(option.VERBOSE);
 
     if (option.VIEW_MIR) {
-        mctx.dump(io::stdout(), cc.pkg);
+        mctx.dump(io::stdout(), pkg);
     }
     if (option.DUMP_MIR) {
         var fout = io::fileout("mir.dump.txt");
-        mctx.dump(fout, cc.pkg);
+        mctx.dump(fout, pkg);
         fout.close();
     }
     if (option.EMIT_NASAL_ONLY) {
-        nasal_target_output(option, gt.__ptr__(), mctx.__ptr__(), cc.pkg);
+        nasal_target_output(option, gt.__ptr__(), mctx.__ptr__(), pkg);
         return 0;
     }
 

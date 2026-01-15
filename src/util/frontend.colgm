@@ -4,13 +4,11 @@ use std::panic::{ panic };
 use parse::parser::{ parser };
 use err::report::{ report };
 
-use util::package::{ package };
 use util::cli::{ cli_option };
 
 pub struct frontend {
     copt: cli_option&,
     err: report*,
-    pkg: package,
     par: parser
 }
 
@@ -21,7 +19,6 @@ impl frontend {
         return frontend {
             copt: co,
             err: err,
-            pkg: package::instance(),
             par: parser::instance(err, co)
         };
     }
@@ -29,7 +26,6 @@ impl frontend {
     pub func delete(self) {
         self.err->delete();
         free(self.err => i8*);
-        self.pkg.delete();
         self.par.delete();
     }
 }

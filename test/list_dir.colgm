@@ -25,7 +25,7 @@ func recursive_list(path: const i8*, depth: i64) {
         for (var i = 0; i < depth; i += 1) {
             io::stdout().out("| ");
         }
-        io::stdout().out("[").out(entry->d_name).out("]").endln();
+        io::stdout().out("[").out(entry->d_name).out("]");
 
         var name = str::from(path);
         if (is_windows()) {
@@ -36,7 +36,10 @@ func recursive_list(path: const i8*, depth: i64) {
         defer name.delete();
 
         if (fs::is_dir(name.c_str)) {
+            io::stdout().out("/\n");
             recursive_list(name.c_str, depth + 1);
+        } else {
+            io::stdout().out("\n");
         }
     }
     closedir(dir);
