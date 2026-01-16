@@ -90,6 +90,7 @@ u64 merge_block_with_no_cond_br::do_single_merge(sir_func* func) {
 
         for (auto pred : bb->get_preds()) {
             auto stmt = pred->get_stmts().back();
+            locked_block.insert(pred->get_label_num());
             if (stmt->get_ir_type() == sir_kind::sir_br) {
                 auto n = static_cast<sir_br*>(stmt);
                 if (n->get_label_num() == bb->get_label_num()) {

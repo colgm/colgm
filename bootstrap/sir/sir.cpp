@@ -90,19 +90,19 @@ void sir_string::dump(std::ostream& out) const {
 
 void sir_zeroinitializer::dump(std::ostream& out) const {
     out << "store " << quoted_name(type) << " zeroinitializer";
-    out << ", " << quoted_name(type) << "* " << target << "\n";
+    out << ", ptr " << target << "\n";
 }
 
 void sir_get_index::dump(std::ostream& out) const {
     out << destination << " = getelementptr " << quoted_name(type) << ", ";
-    out << quoted_name(type) << "* " << source << ", ";
+    out << "ptr " << source << ", ";
     out << quoted_name(index_type) << " " << index << "\n";
 }
 
 void sir_get_field::dump(std::ostream& out) const {
     out << destination << " = getelementptr inbounds ";
     out << quoted_name(struct_name) << ", ";
-    out << quoted_name(struct_name) << "* " << source << ", ";
+    out << "ptr " << source << ", ";
     out << "i32 0, i32 " << index << "\n";
 }
 
@@ -259,12 +259,12 @@ void sir_basic_block::dump(std::ostream& out) const {
 
 void sir_store::dump(std::ostream& out) const {
     out << "store " << quoted_name(type) << " " << source;
-    out << ", " << quoted_name(type) << "* " << destination << "\n";
+    out << ", ptr " << destination << "\n";
 }
 
 void sir_load::dump(std::ostream& out) const {
     out << destination << " = load " << quoted_name(type);
-    out << ", " << quoted_name(type) << "* " << source << "\n";
+    out << ", ptr " << source << "\n";
 }
 
 void sir_br::dump(std::ostream& out) const {

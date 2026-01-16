@@ -444,7 +444,12 @@ impl sir_ret {
     }
 
     pub func dump(self, out: io&) {
-        out.out("  ret ").out(self.type.c_str);
+        out.out("  ret ");
+        if (self.type.endswith("*")) {
+            out.out("ptr");
+        } else {
+            out.out(self.type.c_str);
+        }
         if (self.value.kind != value_kind::null) {
             out.out(" ");
             self.value.dump(out);
@@ -672,7 +677,11 @@ impl sir_call {
 
         out.out(" @").out(self.name.c_str).out("(");
         forindex (var i; self.args) {
-            out.out(self.args_type.get(i).c_str).out(" ");
+            if (self.args_type.get(i).endswith("*")) {
+                out.out("ptr ");
+            } else {
+                out.out(self.args_type.get(i).c_str).out(" ");
+            }
             self.args.get(i).dump(out);
             if (i != self.args.size - 1) {
                 out.out(", ");
@@ -1428,7 +1437,12 @@ impl sir_store {
     }
 
     pub func dump(self, out: io&) {
-        out.out("  store ").out(self.type.c_str).out(" ");
+        out.out("  store ");
+        if (self.type.endswith("*")) {
+            out.out("ptr ");
+        } else {
+            out.out(self.type.c_str).out(" ");
+        }
         self.source.dump(out);
         out.out(", ptr ");
         self.target.dump(out);
@@ -1462,7 +1476,12 @@ impl sir_load {
     pub func dump(self, out: io&) {
         out.out("  ");
         self.target.dump(out);
-        out.out(" = load ").out(self.type.c_str).out(", ptr ");
+        out.out(" = load ");
+        if (self.type.endswith("*")) {
+            out.out("ptr, ptr ");
+        } else {
+            out.out(self.type.c_str).out(", ptr ");
+        }
         self.source.dump(out);
         out.endln();
     }
