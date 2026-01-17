@@ -20,7 +20,7 @@ def get_path() -> list[str]:
 def find_clang() -> str:
     suffix = ".exe" if is_windows() else ""
     suppored_clang_version = []
-    for i in range(15, 21):
+    for i in range(16, 22):
         suppored_clang_version.append("clang-" + str(i) + suffix)
         suppored_clang_version.append("clang++-" + str(i) + suffix)
     suppored_clang_version.append("clang" + suffix)
