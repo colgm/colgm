@@ -495,12 +495,12 @@ impl sir_context {
             var alloc_func_name = i.get().get_intrinsic_method_name("__alloc__");
             defer alloc_func_name.delete();
 
-            out.out("define ").out(st_name->c_str).out("* @");
+            out.out("define ptr @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
             out.out("label.entry:\n");
             out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get().size).out(")\n");
             out.out("  %1 = bitcast i8* %0 to ").out(st_name->c_str).out("*\n");
-            out.out("  ret ").out(st_name->c_str).out("* %1\n}\n");
+            out.out("  ret ptr %1\n}\n\n");
         }
 
         foreach (var i; self.tagged_union_decls) {
@@ -508,12 +508,12 @@ impl sir_context {
             var alloc_func_name = i.get().get_intrinsic_method_name("__alloc__");
             defer alloc_func_name.delete();
 
-            out.out("define ").out(un_name->c_str).out("* @");
+            out.out("define ptr @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
             out.out("label.entry:\n");
             out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get().size).out(")\n");
             out.out("  %1 = bitcast i8* %0 to ").out(un_name->c_str).out("*\n");
-            out.out("  ret ").out(un_name->c_str).out("* %1\n}\n");
+            out.out("  ret ptr %1\n}\n\n");
         }
     }
 

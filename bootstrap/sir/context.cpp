@@ -190,7 +190,7 @@ void sir_context::dump_size_method(std::ostream& out) const {
         const auto st_name = mangle(st_type.full_path_name());
         const auto size_func_name = quoted_name(st_name + ".__size__");
         out << "define i64 @" << size_func_name << "() alwaysinline {\n";
-        out << "  ret i64 " << st->get_size() << "\n}\n";
+        out << "  ret i64 " << st->get_size() << "\n}\n\n";
     }
 
     for (const auto& un : tagged_union_decls) {
@@ -201,7 +201,7 @@ void sir_context::dump_size_method(std::ostream& out) const {
         const auto un_name = mangle(un_type.full_path_name());
         const auto size_func_name = quoted_name(un_name + ".__size__");
         out << "define i64 @" << size_func_name << "() alwaysinline {\n";
-        out << "  ret i64 " << un->get_size() << "\n}\n";
+        out << "  ret i64 " << un->get_size() << "\n}\n\n";
     }
 }
 
@@ -214,14 +214,12 @@ void sir_context::dump_alloc_method(std::ostream& out) const {
         const auto st_name = mangle(st_type.full_path_name());
         const auto st_real_name = quoted_name("%struct." + st_name);
         const auto alloc_func_name = quoted_name(st_name + ".__alloc__");
-        out << "define " << st_real_name << "* ";
-        out << "@" << alloc_func_name;
+        out << "define ptr @" << alloc_func_name;
         out << "() alwaysinline {\n";
         out << "label.entry:\n";
         out << "  %0 = call i8* @malloc(i64 " << st->get_size() << ")\n";
         out << "  %1 = bitcast i8* %0 to " << st_real_name << "*\n";
-        out << "  ret " << st_real_name << "* %1\n";
-        out << "}\n";
+        out << "  ret ptr %1\n}\n\n";
     }
 
     for (const auto un: tagged_union_decls) {
@@ -232,14 +230,12 @@ void sir_context::dump_alloc_method(std::ostream& out) const {
         const auto un_name = mangle(un_type.full_path_name());
         const auto un_real_name = quoted_name("%tagged_union." + un_name);
         const auto alloc_func_name = quoted_name(un_name + ".__alloc__");
-        out << "define " << un_real_name << "* ";
-        out << "@" << alloc_func_name;
+        out << "define ptr @" << alloc_func_name;
         out << "() alwaysinline {\n";
         out << "label.entry:\n";
         out << "  %0 = call i8* @malloc(i64 " << un->get_size() << ")\n";
         out << "  %1 = bitcast i8* %0 to " << un_real_name << "*\n";
-        out << "  ret " << un_real_name << "* %1\n";
-        out << "}\n";
+        out << "  ret ptr %1\n}\n\n";
     }
 }
 
