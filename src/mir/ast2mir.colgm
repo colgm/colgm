@@ -842,6 +842,13 @@ impl ast2mir {
         foreach (var i; n->params->params) {
             var p = i.get() => ast_param*;
 
+            if (p->type == nil) {
+                self.err->error(p->base.location,
+                    "parameter has no type"
+                );
+                continue;
+            }
+
             var t = self.tr.resolve(p->type);
             defer t.delete();
 

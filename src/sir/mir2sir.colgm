@@ -765,13 +765,15 @@ impl mir2sir {
                 source_value,
                 target_value,
                 source.resolved_type.is_integer(),
-                source_ty
+                source_ty,
+                self.generate_DI_location(n->base.location)
             ) => sir*);
         } else if (n->op == mir_unary_opr::bnot) {
             self.block->add_stmt(sir_bnot::new(
                 source_value,
                 target_value,
-                source_ty
+                source_ty,
+                self.generate_DI_location(n->base.location)
             ) => sir*);
         } else if (n->op == mir_unary_opr::lnot) {
             self.block->add_stmt(sir_lnot::new(
@@ -1043,7 +1045,8 @@ impl mir2sir {
                     target,
                     flag_is_integer,
                     !left.resolved_type.is_unsigned(),
-                    left_ty
+                    left_ty,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_binary_opr::cmpne => {
@@ -1054,7 +1057,8 @@ impl mir2sir {
                     target,
                     flag_is_integer,
                     !left.resolved_type.is_unsigned(),
-                    left_ty
+                    left_ty,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_binary_opr::grt => {
@@ -1065,7 +1069,8 @@ impl mir2sir {
                     target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty
+                    left_ty,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_binary_opr::geq => {
@@ -1076,7 +1081,8 @@ impl mir2sir {
                     target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty
+                    left_ty,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_binary_opr::less => {
@@ -1087,7 +1093,8 @@ impl mir2sir {
                     target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty
+                    left_ty,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_binary_opr::leq => {
@@ -1098,7 +1105,8 @@ impl mir2sir {
                     target,
                     left.resolved_type.is_integer(),
                     !left.resolved_type.is_unsigned(),
-                    left_ty
+                    left_ty,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             _ => {}
@@ -2659,9 +2667,15 @@ impl mir2sir {
                 tag_v,
                 tag_value_v,
             ) => sir*);
-            switch_inst = sir_switch::new(tag_value_v);
+            switch_inst = sir_switch::new(
+                tag_value_v,
+                self.generate_DI_location(n->base.location)
+            );
         } else {
-            switch_inst = sir_switch::new(value_val);
+            switch_inst = sir_switch::new(
+                value_val,
+                self.generate_DI_location(n->base.location)
+            );
         }
 
         self.block->add_stmt(switch_inst => sir*);

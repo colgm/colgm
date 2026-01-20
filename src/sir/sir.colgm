@@ -701,17 +701,19 @@ pub struct sir_neg {
     target: value_t,
     source: value_t,
     is_integer: bool,
-    type: str
+    type: str,
+    debug_info_index: u64
 }
 
 impl sir_neg {
-    pub func new(src: value_t&, tgt: value_t&, is_int: bool, type: str&) -> sir_neg* {
+    pub func new(src: value_t&, tgt: value_t&, is_int: bool, type: str&, dii: u64) -> sir_neg* {
         var n = sir_neg::__alloc__();
         n->base = sir::instance(sir_kind::sir_neg);
         n->target = tgt.clone();
         n->source = src.clone();
         n->is_integer = is_int;
         n->type = type.clone();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -737,6 +739,9 @@ impl sir_neg {
             out.out("0.0, ");
         }
         self.source.dump(out);
+        if (self.debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self.debug_info_index);
+        }
         out.endln();
     }
 }
@@ -745,16 +750,18 @@ pub struct sir_bnot {
     base: sir,
     target: value_t,
     source: value_t,
-    type: str
+    type: str,
+    debug_info_index: u64
 }
 
 impl sir_bnot {
-    pub func new(src: value_t&, tgt: value_t&, type: str&) -> sir_bnot* {
+    pub func new(src: value_t&, tgt: value_t&, type: str&, dii: u64) -> sir_bnot* {
         var n = sir_bnot::__alloc__();
         n->base = sir::instance(sir_kind::sir_bnot);
         n->target = tgt.clone();
         n->source = src.clone();
         n->type = type.clone();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -769,7 +776,11 @@ impl sir_bnot {
         self.target.dump(out);
         out.out(" = xor ").out(self.type.c_str).out(" ");
         self.source.dump(out);
-        out.out(", -1\n");
+        out.out(", -1");
+        if (self.debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self.debug_info_index);
+        }
+        out.endln();
     }
 }
 
@@ -1262,7 +1273,8 @@ pub struct sir_cmp {
     kind: sir_cmp_kind,
     is_integer: bool,
     is_signed: bool,
-    type: str
+    type: str,
+    debug_info_index: u64
 }
 
 impl sir_cmp {
@@ -1272,7 +1284,8 @@ impl sir_cmp {
                  tgt: value_t&,
                  is_int: bool,
                  is_sign: bool,
-                 type: str&) -> sir_cmp* {
+                 type: str&,
+                 dii: u64) -> sir_cmp* {
         var n = sir_cmp::__alloc__();
         n->base = sir::instance(sir_kind::sir_cmp);
         n->target = tgt.clone();
@@ -1282,6 +1295,7 @@ impl sir_cmp {
         n->is_integer = is_int;
         n->is_signed = is_sign;
         n->type = type.clone();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -1343,6 +1357,9 @@ impl sir_cmp {
         self.left.dump(out);
         out.out(", ");
         self.right.dump(out);
+        if (self.debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self.debug_info_index);
+        }
         out.endln();
     }
 }
@@ -1542,17 +1559,19 @@ pub struct sir_switch {
     source: value_t,
     default_label: i64,
     case_value: vec<i64>,
-    case_label: vec<i64>
+    case_label: vec<i64>,
+    debug_info_index: u64
 }
 
 impl sir_switch {
-    pub func new(src: value_t&) -> sir_switch* {
+    pub func new(src: value_t&, dii: u64) -> sir_switch* {
         var n = sir_switch::__alloc__();
         n->base = sir::instance(sir_kind::sir_switch);
         n->source = src.clone();
         n->default_label = 0;
         n->case_value = vec<i64>::instance();
         n->case_label = vec<i64>::instance();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -1579,7 +1598,11 @@ impl sir_switch {
             out.out(", label %label.L").out_hex(label => u64);
             out.out("\n");
         }
-        out.out("  ]\n");
+        out.out("  ]");
+        if (self.debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self.debug_info_index);
+        }
+        out.endln();
     }
 }
 

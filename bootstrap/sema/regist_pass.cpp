@@ -1612,6 +1612,10 @@ void regist_pass::generate_parameter(param* node, colgm_func& self) {
         );
         return;
     }
+    if (node->get_type() == nullptr) {
+        rp.report(node, "parameter \"" + name + "\" has no type");
+        return;
+    }
     self.add_parameter(name, tr.resolve(node->get_type()));
 }
 
