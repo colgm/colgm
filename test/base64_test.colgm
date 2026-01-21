@@ -10,12 +10,17 @@ func test(s: const i8*) {
     defer raw.delete();
 
     var e = base64::encode(raw);
+    var e_url_safe = base64::encode_url_safe(raw);
     defer e.delete();
+    defer e_url_safe.delete();
 
     var d = base64::decode(e);
+    var d_url_safe = base64::decode_url_safe(e_url_safe);
     defer d.delete();
+    defer d_url_safe.delete();
 
     assert(d.eq(raw), "base64 test failed");
+    assert(d_url_safe.eq(raw), "base64 test failed");
 }
 
 func main() -> i32 {

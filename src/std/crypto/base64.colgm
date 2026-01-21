@@ -3,9 +3,15 @@ use std::str::{ str };
 pub struct base64 {}
 
 impl base64 {
-    pub func encode(in: str&) -> str {
-        var base64en = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    func normal_encode_table() -> const i8* {
+        return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    }
 
+    func url_safe_encode_table() -> const i8* {
+        return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    }
+
+    func do_encode(in: str&, base64en: const i8*) -> str {
         var res = str::instance();
         var s = 0;
         var l: u8 = 0;
@@ -36,9 +42,18 @@ impl base64 {
         return res;
     }
 
-    pub func decode(in: str&) -> str {
+    pub func encode(in: str&) -> str {
+        return base64::do_encode(in, base64::normal_encode_table());
+    }
+
+    pub func encode_url_safe(in: str&) -> str {
+        return base64::do_encode(in, base64::url_safe_encode_table());
+    }
+}
+
+impl base64 {
+    func do_decode(in: str&, base64en: const i8*) -> str {
         var base64de: [u8; 128] = [];
-        var base64en = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
         for (var i = 0; i < 128; i += 1) {
             base64de[i] = 0xff;
@@ -88,6 +103,21 @@ impl base64 {
             }
         }
 
+        return res;
+    }
+
+    pub func decode(in: str&) -> str {
+        return base64::do_decode(in, base64::normal_encode_table());
+    }
+
+    pub func decode_url_safe(in: str&) -> str {
+        var c = in.clone();
+        defer c.delete();
+        while (c.size & 0x3 != 0) {
+            c.append_char('=');
+        }
+
+        var res = base64::do_decode(c, base64::url_safe_encode_table());
         return res;
     }
 }
