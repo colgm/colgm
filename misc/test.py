@@ -49,6 +49,7 @@ TEST_LIST = [
     ("test/tagged_union.colgm",            "src"),
     ("test/to_str.colgm",                  "src"),
     ("test/type_convert.colgm",            "src"),
+    ("test/utf8_test.colgm",               "src"),
     ("test/void_return.colgm",             "src"),
     ("test/warn_on_left_call.colgm",       "src")
 ]

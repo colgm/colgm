@@ -1,0 +1,68 @@
+use std::str::{ str };
+use std::vec::{ vec };
+use std::libc::{ strlen };
+
+func utf8_nbytes(head: i8) -> u64 {
+    // RFC-2279 but now we use RFC-3629 so nbytes is less than 4
+    var c = head => u8;
+    if ((c / 32) == 0x06) { // 110x xxxx (10xx xxxx)^1
+        return 1;
+    }
+    if ((c / 16) == 0x0e) { // 1110 xxxx (10xx xxxx)^2
+        return 2;
+    }
+    if ((c / 8) == 0x1e) { // 1111 0xxx (10xx xxxx)^3
+        return 3;
+    }
+    return 0;
+}
+
+struct utf8 {
+    bytes: [i8; 5]
+}
+
+impl utf8 {
+    pub func instance(data: const i8*, offset: u64, nbytes: u64) -> utf8 {
+        var res = utf8 {};
+        for (var i: u64 = 0; i < nbytes; i += 1) {
+            res.bytes[i] = data[offset + i];
+        }
+        res.bytes[nbytes] = 0;
+        return res;
+    }
+}
+
+pub struct utf8str {
+    data: vec<utf8>
+}
+
+impl utf8str {
+    pub func instance() -> utf8str {
+        return utf8str { data: vec<utf8>::instance() };
+    }
+
+    pub func delete(self) {
+        self.data.delete();
+    }
+
+    func generate_from_char_array(data: const i8*, len: u64) -> utf8str {
+        var res = utf8str::instance();
+        for (var i: u64 = 0; i < len; i += 1) {
+            var c = data[i];
+            var nbytes = utf8_nbytes(c);
+            res.data.push(utf8::instance(data, i, nbytes + 1));
+            if (nbytes != 0) {
+                i += nbytes;
+            }
+        }
+        return res;
+    }
+
+    pub func from(data: const i8*) -> utf8str {
+        return utf8str::generate_from_char_array(data, strlen(data) => u64);
+    }
+
+    pub func from_str(data: const str&) -> utf8str {
+        return utf8str::generate_from_char_array(data.c_str, data.size);
+    }
+}
