@@ -9,6 +9,7 @@ use util::clang_finder::{ find_clang };
 use util::timestamp::{ maketimestamp };
 use util::package::{ package };
 use util::platform::{ is_windows };
+use util::module_finder::{ module_finder };
 
 use sema::context::{ global_symbol_table, sema_context };
 use sema::regist::{ regist_pass };
@@ -194,6 +195,10 @@ func compile(option: cli_option&) -> i32 {
     defer pkg.delete();
     pkg.library_path.clear();
     pkg.library_path.append(option.library_path);
+
+    if (option.VIEW_PATH_SEARCH_ORDER) {
+        module_finder::dump_search_order(option.library_path);
+    }
 
     // global symbol table
     var gt = global_symbol_table::instance(option.input_file);
@@ -462,6 +467,8 @@ func main(argc: i32, argv: i8**) -> i32 {
             option.VIEW_UNUSED_FUNC = true;
         } elsif (streq(argv[i], "--view-defer-replace")) {
             option.VIEW_DEFER_REPLACE = true;
+        } elsif (streq(argv[i], "--view-path")) {
+            option.VIEW_PATH_SEARCH_ORDER = true;
         } elsif (streq(argv[i], "--mir")) {
             option.VIEW_MIR = true;
         } elsif (streq(argv[i], "--dump-mir")) {

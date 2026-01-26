@@ -105,27 +105,6 @@ impl str {
 }
 
 impl str {
-    pub func copy_const(self, src: const i8*) {
-        // do nothing if src in null pointer
-        if (src == nil) {
-            return;
-        }
-
-        var len = strlen(src) => u64;
-
-        // re-allocate memory
-        if (len >= self.size) {
-            free(self.c_str);
-            self.c_str = malloc(len + 1);
-            self.size = len + 1;
-            self.capacity = len + 1;
-        }
-
-        memcpy(self.c_str, src, len);
-        self.c_str[len] = '\0';
-        self.size = len;
-    }
-
     func expand_capacity(self) {
         self.capacity *= 2;
         self.c_str = realloc(self.c_str, self.capacity);
