@@ -854,14 +854,22 @@ void regist_pass::regist_single_import(ast::use_stmt* node, bool verbose) {
         return;
     }
     auto mp = std::string("");
+    auto fp = std::string("");
     for (auto i : node->get_module_path()) {
         mp += i->get_name();
+        fp += i->get_name();
         if (i != node->get_module_path().back()) {
             mp += "::";
+#ifdef _WIN32
+            fp += "\\";
+#else
+            fp += "/";
+#endif
         }
     }
+    fp += ".colgm";
 
-    const auto& file = package_manager::singleton()->get_file_name(mp);
+    const auto file = package_manager::singleton()->find(mp, fp);
     if (file.empty()) {
         rp.report(node, "cannot find module \"" + mp + "\"");
         return;

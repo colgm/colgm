@@ -32,6 +32,7 @@
 - [标记联合](../spec/tagged_union.md)
 - [Defer](../spec/defer.md)
 - [编译器库参考](./library_reference.md)
+- [编译路径搜索顺序](#编译路径搜索顺序)
 
 ## 字面量
 
@@ -472,3 +473,11 @@ pub enum flag {
 - `#[is_non_trivial(T)]`
 - `#[is_pointer(T)]`
 - `#[is_non_pointer(T)]`
+
+## 编译路径搜索顺序
+
+Colgm 搜索库文件的顺序是：
+
+1. 通过 `-L` 选项传入的库路径
+2. 当前目录 (`.`)
+3. 环境变量 `$PATH`

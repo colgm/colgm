@@ -32,6 +32,7 @@
 - [Tagged Union](../spec/tagged_union.md)
 - [Defer](../spec/defer.md)
 - [Compiler Library Reference](./library_reference.md)
+- [Compiler Path Search Order](#compiler-path-search-order)
 
 ## Literal
 
@@ -473,3 +474,11 @@ Supported conditions:
 - `#[is_non_trivial(T)]`
 - `#[is_pointer(T)]`
 - `#[is_non_pointer(T)]`
+
+## Compiler Path Search Order
+
+Both boot and self-host compiler are searched for in the following order:
+
+1. given library path by `-L` option
+2. current working directory (`.`)
+3. `$PATH`

@@ -9,7 +9,8 @@ NEED_TO_BE_PACKED = [
     "build/colgm_self_host",
     "bootstrap",
     "doc",
-    "src"
+    "src",
+    "std"
 ]
 
 if sys.platform == "win32":
@@ -19,7 +20,8 @@ if sys.platform == "win32":
         "cmake-windows-build/colgm_self_host.exe",
         "bootstrap",
         "doc",
-        "src"
+        "src",
+        "std"
     ]
     if os.path.exists("cmake-windows-build/colgm_lifted.pdb"):
         print("find", "cmake-windows-build/colgm_lifted.pdb")

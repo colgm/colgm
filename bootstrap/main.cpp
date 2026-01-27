@@ -86,9 +86,10 @@ void scan_package(const std::string& library_path,
     if (library_path.empty()) {
         return;
     }
-    colgm::package_manager::singleton()->scan(library_path, entry_file).chkerr();
+    colgm::package_manager::singleton()->set_library_path(library_path);
+    colgm::package_manager::singleton()->generate_search_order();
     if (cmd & COMPILE_VIEW_LIB) {
-        colgm::package_manager::singleton()->dump_packages();
+        colgm::package_manager::singleton()->dump_search_order();
     }
 }
 
