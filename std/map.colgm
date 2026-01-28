@@ -37,7 +37,7 @@ impl hashmap<K, V> {
 
     func init(self) {
         self.size = 0;
-        self.bucket_capacity = 16;
+        self.bucket_capacity = 32;
         self.bucket = malloc(
             self.bucket_capacity *
             list<pair<K, V>>::__size__()
@@ -145,7 +145,7 @@ impl hashmap<K, V> {
         bucket->insert(tmp_pair);
         self.size += 1;
 
-        if (self.size / self.bucket_capacity > 8) {
+        if (self.size > self.bucket_capacity * 4) {
             self.rehash();
         }
     }
@@ -168,7 +168,7 @@ impl hashmap<K, V> {
         bucket->insert(tmp_pair);
         self.size += 1;
 
-        if (self.size / self.bucket_capacity > 8) {
+        if (self.size > self.bucket_capacity * 4) {
             self.rehash();
         }
     }
@@ -188,6 +188,9 @@ impl hashmap<K, V> {
             self.bucket_capacity *
             list<pair<K, V>>::__size__()
         ) => list<pair<K, V>>*;
+        for (var i: u64 = 0; i < self.bucket_capacity / 2; i += 1) {
+            self.bucket[i].clear();
+        }
         for (var i = self.bucket_capacity / 2; i < self.bucket_capacity; i += 1) {
             self.bucket[i] = list<pair<K, V>>::instance();
         }

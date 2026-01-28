@@ -36,7 +36,7 @@ impl hashset<T> {
 
     func init(self) {
         self.size = 0;
-        self.bucket_capacity = 16;
+        self.bucket_capacity = 32;
         self.bucket = malloc(self.bucket_capacity * list<T>::__size__()) => list<T>*;
         for (var i: u64 = 0; i < self.bucket_capacity; i += 1) {
             self.bucket[i] = list<T>::instance();
@@ -110,7 +110,7 @@ impl hashset<T> {
         bucket->insert(item);
         self.size += 1;
 
-        if (self.size / self.bucket_capacity > 8) {
+        if (self.size > self.bucket_capacity * 4) {
             self.rehash();
         }
     }
@@ -131,7 +131,7 @@ impl hashset<T> {
         bucket->insert(item);
         self.size += 1;
 
-        if (self.size / self.bucket_capacity > 8) {
+        if (self.size > self.bucket_capacity * 4) {
             self.rehash();
         }
     }
@@ -149,6 +149,9 @@ impl hashset<T> {
             self.bucket_capacity *
             list<T>::__size__()
         ) => list<T>*;
+        for (var i: u64 = 0; i < self.bucket_capacity / 2; i += 1) {
+            self.bucket[i].clear();
+        }
         for (var i = self.bucket_capacity / 2; i < self.bucket_capacity; i += 1) {
             self.bucket[i] = list<T>::instance();
         }
