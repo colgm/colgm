@@ -188,9 +188,6 @@ impl hashmap<K, V> {
             self.bucket_capacity *
             list<pair<K, V>>::__size__()
         ) => list<pair<K, V>>*;
-        for (var i: u64 = 0; i < self.bucket_capacity / 2; i += 1) {
-            self.bucket[i].clear();
-        }
         for (var i = self.bucket_capacity / 2; i < self.bucket_capacity; i += 1) {
             self.bucket[i] = list<pair<K, V>>::instance();
         }
@@ -198,17 +195,6 @@ impl hashmap<K, V> {
         return temp;
     }
 
-    #[is_non_trivial(V)]
-    func rehash(self) {
-        var temp = self.rehash_pre_work();
-        defer temp.delete();
-
-        foreach (var i; temp) {
-            self.insert(i.elem().key, i.elem().value);
-        }
-    }
-
-    #[is_trivial(V)]
     func rehash(self) {
         var temp = self.rehash_pre_work();
         defer temp.delete();
@@ -295,8 +281,7 @@ impl iter<K, V> {
     }
 
     pub func is_end(self) -> bool {
-        return self.bucket_index >= self.map->bucket_capacity &&
-               self.bucket_iter.is_end();
+        return self.bucket_index >= self.map->bucket_capacity;
     }
 
     pub func key(self) -> K& {
