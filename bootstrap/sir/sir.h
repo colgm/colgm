@@ -589,12 +589,15 @@ private:
     std::string type;
     value_t source;
     value_t destination;
+    u64 debug_info_index;
 
 public:
     sir_store(const std::string& t,
               const value_t& src,
-              const value_t& dst):
-        sir(sir_kind::sir_store), type(t), source(src), destination(dst) {}
+              const value_t& dst,
+              u64 dii):
+        sir(sir_kind::sir_store), type(t), source(src), destination(dst),
+        debug_info_index(dii) {}
     ~sir_store() override = default;
     void dump(std::ostream&) const override;
 };

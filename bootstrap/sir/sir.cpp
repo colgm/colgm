@@ -259,7 +259,11 @@ void sir_basic_block::dump(std::ostream& out) const {
 
 void sir_store::dump(std::ostream& out) const {
     out << "store " << quoted_name(type) << " " << source;
-    out << ", ptr " << destination << "\n";
+    out << ", ptr " << destination;
+    if (debug_info_index != DI_node::DI_ERROR_INDEX) {
+        out << ", !dbg !" << debug_info_index;
+    }
+    out << "\n";
 }
 
 void sir_load::dump(std::ostream& out) const {

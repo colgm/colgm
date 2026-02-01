@@ -1434,16 +1434,18 @@ pub struct sir_store {
     base: sir,
     target: value_t,
     source: value_t,
-    type: str
+    type: str,
+    debug_info_index: u64
 }
 
 impl sir_store {
-    pub func new(type: str&, src: value_t&, tgt: value_t&) -> sir_store* {
+    pub func new(type: str&, src: value_t&, tgt: value_t&, dii: u64) -> sir_store* {
         var n = sir_store::__alloc__();
         n->base = sir::instance(sir_kind::sir_store);
         n->target = tgt.clone();
         n->source = src.clone();
         n->type = type.clone();
+        n->debug_info_index = dii;
         return n;
     }
 
@@ -1463,6 +1465,9 @@ impl sir_store {
         self.source.dump(out);
         out.out(", ptr ");
         self.target.dump(out);
+        if (self.debug_info_index != DI_ERROR_INDEX()) {
+            out.out(", !dbg !").out_u64(self.debug_info_index);
+        }
         out.endln();
     }
 }

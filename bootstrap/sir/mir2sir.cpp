@@ -186,7 +186,8 @@ void mir2sir::emit_func_impl(const mir_context& mctx) {
             block->add_stmt(new sir_store(
                 type_mapping(j.second),
                 value_t::variable(j.first + ".param"),
-                value_t::variable(j.first)
+                value_t::variable(j.first),
+                DI_node::DI_ERROR_INDEX
             ));
         }
         // visit mir and generate sir
@@ -220,7 +221,8 @@ void mir2sir::generate_and(mir_binary* node) {
     block->add_stmt(new sir_store(
         "i1",
         left.to_value_t(),
-        value_t::variable(temp_0)
+        value_t::variable(temp_0),
+        generate_DI_location(node->get_left()->get_location())
     ));
 
     auto true_label = label_gen.create_index();
@@ -241,7 +243,8 @@ void mir2sir::generate_and(mir_binary* node) {
     block->add_stmt(new sir_store(
         "i1",
         right.to_value_t(),
-        value_t::variable(temp_0)
+        value_t::variable(temp_0),
+        generate_DI_location(node->get_right()->get_location())
     ));
 
     auto false_label = label_gen.create_index();
@@ -273,7 +276,8 @@ void mir2sir::generate_or(mir_binary* node) {
     block->add_stmt(new sir_store(
         "i1",
         left.to_value_t(),
-        value_t::variable(temp_0)
+        value_t::variable(temp_0),
+        generate_DI_location(node->get_left()->get_location())
     ));
 
     auto false_label = label_gen.create_index();
@@ -294,7 +298,8 @@ void mir2sir::generate_or(mir_binary* node) {
     block->add_stmt(new sir_store(
         "i1",
         right.to_value_t(),
-        value_t::variable(temp_0)
+        value_t::variable(temp_0),
+        generate_DI_location(node->get_right()->get_location())
     ));
 
     auto true_label = label_gen.create_index();
@@ -629,7 +634,8 @@ void mir2sir::visit_mir_array(mir_array* node) {
             block->add_stmt(new sir_store(
                 array_elem_type,
                 value.to_value_t(),
-                value_t::variable(temp)
+                value_t::variable(temp),
+                generate_DI_location(node->get_location())
             ));
         }
     }
@@ -753,7 +759,8 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
             block->add_stmt(new sir_store(
                 type_mapping(res.resolve_type),
                 res.to_value_t(),
-                value_t::variable(target)
+                value_t::variable(target),
+                generate_DI_location(i.content->get_location())
             ));
             value_stack.pop_back();
         }
@@ -774,7 +781,8 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
             block->add_stmt(new sir_store(
                 "i64",
                 value_t::literal(std::to_string(un.member_int_map.at(i.name))),
-                value_t::variable(tag)
+                value_t::variable(tag),
+                generate_DI_location(node->get_location())
             ));
 
             const auto source = ssa_gen.create();
@@ -801,7 +809,8 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
             block->add_stmt(new sir_store(
                 type_mapping(res.resolve_type),
                 res.to_value_t(),
-                value_t::variable(target)
+                value_t::variable(target),
+                generate_DI_location(i.content->get_location())
             ));
             value_stack.pop_back();
         }
@@ -973,17 +982,7 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
     }
 
     // generate DWARF info
-    {
-        auto DI_loc = new DI_location(
-            dwarf_status.DI_counter,
-            node->get_location().begin_line,
-            node->get_location().begin_column,
-            dwarf_status.scope_index
-        );
-        sir_function_call->set_debug_info_index(dwarf_status.DI_counter);
-        ictx.debug_info.push_back(DI_loc);
-        ++dwarf_status.DI_counter;
-    }
+    sir_function_call->set_debug_info_index(generate_DI_location(node->get_location()));
 
     // load args
     for (const auto& i : args) {
@@ -1006,7 +1005,8 @@ void mir2sir::visit_mir_call_func(mir_call_func* node) {
         block->add_stmt(new sir_store(
             type_mapping(node->get_type()),
             value_t::variable(target),
-            value_t::variable(temp_var)
+            value_t::variable(temp_var),
+            generate_DI_location(node->get_location())
         ));
         value_stack.push_back(mir_value_t::variable(
             temp_var,
@@ -1301,7 +1301,8 @@ void mir2sir::visit_mir_define(mir_define* node) {
     block->add_stmt(new sir_store(
         type_mapping(node_type),
         source.to_value_t(),
-        value_t::variable(name)
+        value_t::variable(name),
+        generate_DI_location(node->get_location())
     ));
 }
 
@@ -1350,7 +1351,8 @@ void mir2sir::mir_assign_gen(const mir_value_t& left,
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
-                left.to_value_t()
+                left.to_value_t(),
+                generate_DI_location(node->get_location())
             ));
         } break;
         case mir_assign::opr_kind::subeq: {
@@ -1371,7 +1373,8 @@ void mir2sir::mir_assign_gen(const mir_value_t& left,
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
-                left.to_value_t()
+                left.to_value_t(),
+                generate_DI_location(node->get_location())
             ));
         } break;
         case mir_assign::opr_kind::multeq: {
@@ -1392,7 +1395,8 @@ void mir2sir::mir_assign_gen(const mir_value_t& left,
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
-                left.to_value_t()
+                left.to_value_t(),
+                generate_DI_location(node->get_location())
             ));
         } break;
         case mir_assign::opr_kind::diveq: {
@@ -1414,7 +1418,8 @@ void mir2sir::mir_assign_gen(const mir_value_t& left,
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
-                left.to_value_t()
+                left.to_value_t(),
+                generate_DI_location(node->get_location())
             ));
         } break;
         case mir_assign::opr_kind::remeq: {
@@ -1436,14 +1441,16 @@ void mir2sir::mir_assign_gen(const mir_value_t& left,
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
-                left.to_value_t()
+                left.to_value_t(),
+                generate_DI_location(node->get_location())
             ));
         } break;
         case mir_assign::opr_kind::eq:
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 right.to_value_t(),
-                left.to_value_t()
+                left.to_value_t(),
+                generate_DI_location(node->get_location())
             ));
             break;
         case mir_assign::opr_kind::andeq: {
@@ -1463,7 +1470,8 @@ void mir2sir::mir_assign_gen(const mir_value_t& left,
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
-                left.to_value_t()
+                left.to_value_t(),
+                generate_DI_location(node->get_location())
             ));
         } break;
         case mir_assign::opr_kind::xoreq: {
@@ -1483,7 +1491,8 @@ void mir2sir::mir_assign_gen(const mir_value_t& left,
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
-                left.to_value_t()
+                left.to_value_t(),
+                generate_DI_location(node->get_location())
             ));
         } break;
         case mir_assign::opr_kind::oreq: {
@@ -1503,7 +1512,8 @@ void mir2sir::mir_assign_gen(const mir_value_t& left,
             block->add_stmt(new sir_store(
                 type_mapping(right.resolve_type),
                 value_t::variable(temp_1),
-                left.to_value_t()
+                left.to_value_t(),
+                generate_DI_location(node->get_location())
             ));
         } break;
     }
@@ -2040,6 +2050,19 @@ void mir2sir::generate_DI_subprogram(const mir_context& mctx) {
         ictx.debug_info.push_back(type_list);
         ++dwarf_status.DI_counter;
     }
+}
+
+u64 mir2sir::generate_DI_location(const span& loc) {
+    auto DI_loc = new DI_location(
+        dwarf_status.DI_counter,
+        loc.begin_line,
+        loc.begin_column,
+        dwarf_status.scope_index
+    );
+    auto res = dwarf_status.DI_counter;
+    ictx.debug_info.push_back(DI_loc);
+    ++dwarf_status.DI_counter;
+    return res;
 }
 
 void mir2sir::generate_DWARF(const mir_context& mctx) {

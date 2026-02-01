@@ -710,7 +710,8 @@ impl mir2sir {
             self.block->add_stmt(sir_store::new(
                 mapped_type,
                 source,
-                target
+                target,
+                DI_ERROR_INDEX()
             ) => sir*);
         }
 
@@ -804,7 +805,8 @@ impl mir2sir {
         self.block->add_stmt(sir_store::new(
             i1_name,
             left_value,
-            temp_0
+            temp_0,
+            self.generate_DI_location(n->left->location)
         ) => sir*);
 
         var true_label = self.label_gen.create_index();
@@ -828,7 +830,8 @@ impl mir2sir {
         self.block->add_stmt(sir_store::new(
             i1_name,
             right_value,
-            temp_0
+            temp_0,
+            self.generate_DI_location(n->right->location)
         ) => sir*);
 
         var false_label = self.label_gen.create_index();
@@ -869,7 +872,8 @@ impl mir2sir {
         self.block->add_stmt(sir_store::new(
             i1_name,
             left_value,
-            temp_0
+            temp_0,
+            self.generate_DI_location(n->left->location)
         ) => sir*);
 
         var false_label = self.label_gen.create_index();
@@ -893,7 +897,8 @@ impl mir2sir {
         self.block->add_stmt(sir_store::new(
             i1_name,
             right_value,
-            temp_0
+            temp_0,
+            self.generate_DI_location(n->right->location)
         ) => sir*);
 
         var true_label = self.label_gen.create_index();
@@ -1283,7 +1288,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     array_elem_type,
                     res_value,
-                    elem_value
+                    elem_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
         }
@@ -1347,7 +1353,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     res_ty,
                     res_value,
-                    target_value
+                    target_value,
+                    self.generate_DI_location(i.get().content->location)
                 ) => sir*);
             }
 
@@ -1379,7 +1386,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     i64_t,
                     tag_value_v,
-                    tag_value
+                    tag_value,
+                    self.generate_DI_location(i.get().content->location)
                 ) => sir*);
 
                 var source_value = self.ssa_gen.create_variable();
@@ -1434,7 +1442,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     res_ty,
                     res_value,
-                    target_value
+                    target_value,
+                    self.generate_DI_location(i.get().content->location)
                 ) => sir*);
             }
 
@@ -1811,7 +1820,8 @@ impl mir2sir {
             self.block->add_stmt(sir_store::new(
                 n_ty,
                 target_value,
-                temp_var
+                temp_var,
+                self.generate_DI_location(n->base.location)
             ) => sir*);
 
             var n_ref = n->resolved_type.pointer_copy();
@@ -2277,7 +2287,8 @@ impl mir2sir {
         self.block->add_stmt(sir_store::new(
             type_name,
             source_value,
-            name_value
+            name_value,
+            self.generate_DI_location(n->base.location)
         ) => sir*);
     }
 
@@ -2338,7 +2349,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     temp_1_value,
-                    left_value
+                    left_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_assign_opr::subeq => {
@@ -2364,7 +2376,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     temp_1_value,
-                    left_value
+                    left_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_assign_opr::muleq => {
@@ -2390,7 +2403,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     temp_1_value,
-                    left_value
+                    left_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_assign_opr::diveq => {
@@ -2417,7 +2431,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     temp_1_value,
-                    left_value
+                    left_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_assign_opr::remeq => {
@@ -2444,14 +2459,16 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     temp_1_value,
-                    left_value
+                    left_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_assign_opr::eq => {
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     right_value,
-                    left_value
+                    left_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_assign_opr::andeq => {
@@ -2476,7 +2493,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     temp_1_value,
-                    left_value
+                    left_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_assign_opr::xoreq => {
@@ -2501,7 +2519,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     temp_1_value,
-                    left_value
+                    left_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
             mir_assign_opr::oreq => {
@@ -2526,7 +2545,8 @@ impl mir2sir {
                 self.block->add_stmt(sir_store::new(
                     right_ty,
                     temp_1_value,
-                    left_value
+                    left_value,
+                    self.generate_DI_location(n->base.location)
                 ) => sir*);
             }
         }

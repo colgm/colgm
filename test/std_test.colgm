@@ -21,7 +21,7 @@ use std::panic::{ assert };
 
 func test_set() -> bool {
     var set = hashset<str>::instance();
-    for (var i = 0; i < 128; i += 1) {
+    for (var i = 0; i < 1024; i += 1) {
         var n = str::instance();
         n.append_i64(i);
         set.insert(n);
@@ -51,7 +51,7 @@ func test_hashmap() -> bool {
     var map = hashmap<str, str>::instance();
     var stored = vec<str>::instance();
 
-    foreach (var i; range(0, 128)) {
+    foreach (var i; range(0, 1024)) {
         var num = rand() % 4096;
         var k = str::instance();
         var v = str::instance();
@@ -65,7 +65,7 @@ func test_hashmap() -> bool {
     }
 
     var result = true;
-    for (var i: u64 = 0; i < 128; i += 1) {
+    for (var i: u64 = 0; i < 1024; i += 1) {
         var key: str& = stored.get(i);
         if (map.has(key)) {
             io::stdout().green().out("[test]").reset().out(" hashmap: \"");
@@ -87,7 +87,7 @@ func test_hashmap() -> bool {
         io::stdout().out_u64(i.key().hash()).endln();
     }
 
-    for (var i: u64 = 0; i < 128; i += 1) {
+    for (var i: u64 = 0; i < 1024; i += 1) {
         var key: str& = stored.get(i);
         map.remove(key);
         assert(!map.has(key), "remove failed!");

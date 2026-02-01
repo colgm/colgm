@@ -78,7 +78,7 @@ def check_operator_without_space(lines: list[str], file_path):
             break
 
 def check_suffix(file_path):
-    suffix = [".colgm", ".c", ".cpp", ".h", ".hpp", ".py", ".md"]
+    suffix = [".colgm", ".c", ".cpp", ".h", ".hpp", ".py", ".nas", ".rs"]
     for s in suffix:
         if file_path.endswith(s):
             return True
