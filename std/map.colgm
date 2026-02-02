@@ -1,14 +1,92 @@
-use std::str::{ str };
 use std::libc::{ malloc, realloc, free };
-use std::list::{ list, list_iter };
+use std::ptr::{ __ptr_size };
 use std::io::{ io };
 use std::pair::{ pair };
 use std::panic::{ panic };
 
+struct map_node<K, V> {
+    key: K,
+    value: V,
+    next: map_node<K, V>*
+}
+
+impl map_node<K, V> {
+    #[is_trivial(K, V)]
+    pub func new(key: K, value: V) -> map_node<K, V>* {
+        var res = map_node<K, V>::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
+        res->key = key;
+        res->value = value;
+        res->next = nil;
+        return res;
+    }
+
+    #[is_trivial(K)]
+    #[is_non_trivial(V)]
+    pub func new(key: K, value: V&) -> map_node<K, V>* {
+        var res = map_node<K, V>::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
+        res->key = key;
+        res->value = value.clone();
+        res->next = nil;
+        return res;
+    }
+
+    #[is_non_trivial(K)]
+    #[is_trivial(V)]
+    pub func new(key: K&, value: V) -> map_node<K, V>* {
+        var res = map_node<K, V>::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
+        res->key = key.clone();
+        res->value = value;
+        res->next = nil;
+        return res;
+    }
+
+    #[is_non_trivial(K, V)]
+    pub func new(key: K&, value: V&) -> map_node<K, V>* {
+        var res = map_node<K, V>::__alloc__();
+        if (res == nil) {
+            panic("failed to allocate memory");
+        }
+        res->key = key.clone();
+        res->value = value.clone();
+        res->next = nil;
+        return res;
+    }
+
+    #[is_trivial(K)]
+    func delete_key(self) {}
+
+    #[is_non_trivial(K)]
+    func delete_key(self) {
+        self.key.delete();
+    }
+
+    #[is_trivial(V)]
+    func delete_value(self) {}
+
+    #[is_non_trivial(V)]
+    func delete_value(self) {
+        self.value.delete();
+    }
+
+    pub func delete(self) {
+        self.delete_key();
+        self.delete_value();
+    }
+}
+
 pub struct hashmap<K, V> {
     size: u64,
-    bucket_capacity: u64,
-    bucket: list<pair<K, V>>*
+    capacity: u64,
+    bucket: map_node<K, V>**
 }
 
 impl hashmap<K, V> {
@@ -37,159 +115,169 @@ impl hashmap<K, V> {
 
     func init(self) {
         self.size = 0;
-        self.bucket_capacity = 32;
-        self.bucket = malloc(
-            self.bucket_capacity *
-            list<pair<K, V>>::__size__()
-        ) => list<pair<K, V>>*;
-        for (var i: u64 = 0; i < self.bucket_capacity; i += 1) {
-            self.bucket[i] = list<pair<K, V>>::instance();
+        self.capacity = 2;
+        self.bucket = malloc(self.capacity * __ptr_size()) => map_node<K, V>**;
+        for (var i: u64 = 0; i < self.capacity; i += 1) {
+            self.bucket[i] = nil;
+        }
+    }
+
+    func clear_bucket(bucket: map_node<K, V>*) {
+        var curr = bucket;
+        while (curr != nil) {
+            var tmp = curr;
+            curr = curr->next;
+            tmp->delete();
+            free(tmp => i8*);
         }
     }
 
     pub func clear(self) {
-        for (var i: u64 = 0; i < self.bucket_capacity; i += 1) {
-            self.bucket[i].clear();
+        for (var i: u64 = 0; i < self.capacity; i += 1) {
+            hashmap<K, V>::clear_bucket(self.bucket[i]);
+            self.bucket[i] = nil;
         }
         self.size = 0;
     }
 
     pub func delete(self) {
-        for (var i: u64 = 0; i < self.bucket_capacity; i += 1) {
-            self.bucket[i].delete();
+        for (var i: u64 = 0; i < self.capacity; i += 1) {
+            hashmap<K, V>::clear_bucket(self.bucket[i]);
+            self.bucket[i] = nil;
         }
         free(self.bucket => i8*);
         self.bucket = nil;
 
         self.size = 0;
-        self.bucket_capacity = 0;
+        self.capacity = 0;
     }
 }
 
 impl hashmap<K, V> {
     pub func has(self, key: K&) -> bool {
-        if (self.bucket_capacity == 0) {
+        if (self.capacity == 0) {
             panic("capacity is 0");
         }
-        var hash = key.hash() % self.bucket_capacity;
-        var bucket = self.bucket[hash].__ptr__();
-        foreach (var i; bucket) {
-            if (i.elem().key.eq(key)) {
+        var hash = key.hash() % self.capacity;
+        var bucket = self.bucket[hash];
+        while (bucket != nil) {
+            if (bucket->key.eq(key)) {
                 return true;
             }
+            bucket = bucket->next;
         }
         return false;
     }
 
     #[is_non_trivial(V)]
     pub func get(self, key: K&) -> V& {
-        if (self.bucket_capacity == 0) {
+        if (self.capacity == 0) {
             panic("capacity is 0");
         }
-        var hash = key.hash() % self.bucket_capacity;
-        var bucket = self.bucket[hash].__ptr__();
+        var hash = key.hash() % self.capacity;
+        var bucket = self.bucket[hash];
 
-        var elem: pair<K, V>* = nil;
-        foreach (var i; bucket) {
-            if (i.elem().key.eq(key)) {
-                elem = i.elem().__ptr__();
+        while (bucket != nil) {
+            if (bucket->key.eq(key)) {
                 break;
             }
+            bucket = bucket->next;
         }
-
-        if (elem == nil) {
+        if (bucket == nil) {
             panic("key not found");
         }
-        return elem->value;
+        return bucket->value;
     }
 
     #[is_trivial(V)]
     pub func get(self, key: K&) -> V {
-        if (self.bucket_capacity == 0) {
+        if (self.capacity == 0) {
             panic("capacity is 0");
         }
-        var hash = key.hash() % self.bucket_capacity;
-        var bucket = self.bucket[hash].__ptr__();
+        var hash = key.hash() % self.capacity;
+        var bucket = self.bucket[hash];
 
-        var elem: pair<K, V>* = nil;
-        foreach (var i; bucket) {
-            if (i.elem().key.eq(key)) {
-                elem = i.elem().__ptr__();
+        while (bucket != nil) {
+            if (bucket->key.eq(key)) {
                 break;
             }
+            bucket = bucket->next;
         }
-
-        if (elem == nil) {
+        if (bucket == nil) {
             panic("key not found");
         }
-        return elem->value;
+        return bucket->value;
     }
 
     #[is_non_trivial(V)]
     pub func insert(self, key: K&, value: V&) {
-        var hash = key.hash() % self.bucket_capacity;
-        var bucket = self.bucket[hash].__ptr__();
-        foreach (var i; bucket) {
-            if (i.elem().key.eq(key)) {
-                var tmp = i.elem();
-                tmp.value.delete();
-                tmp.value = value.clone();
+        var hash = key.hash() % self.capacity;
+        var bucket = self.bucket[hash];
+        
+        while (bucket != nil) {
+            if (bucket->key.eq(key)) {
+                bucket->value.delete();
+                bucket->value = value.clone();
                 return;
             }
+            bucket = bucket->next;
         }
 
-        var tmp_pair = pair<K, V>::instance(key, value);
-        defer tmp_pair.delete();
-
-        // do copy in insert method
-        bucket->insert(tmp_pair);
+        var node = map_node<K, V>::new(key, value);
+        node->next = self.bucket[hash];
+        self.bucket[hash] = node;
         self.size += 1;
 
-        if (self.size > self.bucket_capacity) {
+        if (self.size > self.capacity) {
             self.rehash();
         }
     }
 
     #[is_trivial(V)]
     pub func insert(self, key: K&, value: V) {
-        var hash = key.hash() % self.bucket_capacity;
-        var bucket = self.bucket[hash].__ptr__();
-        foreach (var i; bucket) {
-            if (i.elem().key.eq(key)) {
-                i.elem().value = value;
+        var hash = key.hash() % self.capacity;
+        var bucket = self.bucket[hash];
+        
+        while (bucket != nil) {
+            if (bucket->key.eq(key)) {
+                bucket->value = value;
                 return;
             }
+            bucket = bucket->next;
         }
 
-        var tmp_pair = pair<K, V>::instance(key, value);
-        defer tmp_pair.delete();
-
-        // do copy in insert method
-        bucket->insert(tmp_pair);
+        var node = map_node<K, V>::new(key, value);
+        node->next = self.bucket[hash];
+        self.bucket[hash] = node;
         self.size += 1;
 
-        if (self.size > self.bucket_capacity) {
+        if (self.size > self.capacity) {
             self.rehash();
         }
     }
 
-    func rehash_pre_work(self) -> list<pair<K, V>> {
-        var temp = list<pair<K, V>>::instance();
-        foreach (var i; self) {
-            var tmp_pair = pair<K, V>::instance(i.key(), i.value());
-            defer tmp_pair.delete();
-            temp.insert(tmp_pair);
+    func rehash_pre_work(self) -> map_node<K, V>* {
+        var temp: map_node<K, V>* = nil;
+        for (var i: u64 = 0; i < self.capacity; i += 1) {
+            var head = self.bucket[i];
+            var curr = head;
+            while (curr != nil && curr->next != nil) {
+                curr = curr->next;
+            }
+            if (curr != nil) {
+                curr->next = temp;
+                temp = head;
+            }
+            self.bucket[i] = nil;
         }
 
-        self.clear();
-        self.bucket_capacity *= 2;
+        self.capacity *= 2;
         self.bucket = realloc(
             self.bucket => i8*,
-            self.bucket_capacity *
-            list<pair<K, V>>::__size__()
-        ) => list<pair<K, V>>*;
-        for (var i = self.bucket_capacity / 2; i < self.bucket_capacity; i += 1) {
-            self.bucket[i] = list<pair<K, V>>::instance();
+            self.capacity * __ptr_size()
+        ) => map_node<K, V>**;
+        for (var i = self.capacity / 2; i < self.capacity; i += 1) {
+            self.bucket[i] = nil;
         }
 
         return temp;
@@ -197,38 +285,36 @@ impl hashmap<K, V> {
 
     func rehash(self) {
         var temp = self.rehash_pre_work();
-        defer temp.delete();
 
-        foreach (var i; temp) {
-            self.insert(i.elem().key, i.elem().value);
+        var curr = temp;
+        while (curr != nil) {
+            var hash = curr->key.hash() % self.capacity;
+            var tmp = curr->next;
+            curr->next = self.bucket[hash];
+            self.bucket[hash] = curr;
+            curr = tmp;
         }
     }
 
     pub func remove(self, key: K&) {
-        var hash = key.hash() % self.bucket_capacity;
-        var bucket = self.bucket[hash].__ptr__();
-        var cur = bucket->head;
-        while (cur != nil) {
-            if (cur->elem.key.eq(key)) {
-                if (cur->prev != nil) {
-                    cur->prev->next = cur->next;
+        var hash = key.hash() % self.capacity;
+        var prev: map_node<K, V>* = nil;
+        var curr = self.bucket[hash];
+
+        while (curr != nil) {
+            if (curr->key.eq(key)) {
+                if (prev != nil) {
+                    prev->next = curr->next;
+                } else {
+                    self.bucket[hash] = curr->next;
                 }
-                if (cur->next != nil) {
-                    cur->next->prev = cur->prev;
-                }
-                if (cur == bucket->head) {
-                    bucket->head = cur->next;
-                }
-                if (cur == bucket->tail) {
-                    bucket->tail = cur->prev;
-                }
-                cur->elem.delete();
-                free(cur => i8*);
-                bucket->size -= 1;
+                curr->delete();
+                free(curr => i8*);
                 self.size -= 1;
                 break;
             }
-            cur = cur->next;
+            prev = curr;
+            curr = curr->next;
         }
     }
 
@@ -240,7 +326,7 @@ impl hashmap<K, V> {
 struct iter<K, V> {
     map: hashmap<K, V>*,
     bucket_index: u64,
-    bucket_iter: list_iter<pair<K, V>>
+    node: map_node<K, V>*
 }
 
 impl iter<K, V> {
@@ -248,54 +334,54 @@ impl iter<K, V> {
         var res = iter<K, V> {
             map: map,
             bucket_index: 0,
-            bucket_iter: map->bucket[0].iter()
+            node: map->bucket[0]
         };
-        while (res.bucket_iter.is_end()) {
+        while (res.node == nil) {
             res.bucket_index += 1;
-            if (res.bucket_index >= map->bucket_capacity) {
+            if (res.bucket_index >= map->capacity) {
                 return res;
             }
-            res.bucket_iter = map->bucket[res.bucket_index].iter();
+            res.node = map->bucket[res.bucket_index];
         }
         return res;
     }
 
     pub func next(self) -> iter<K, V> {
-        if (!self.bucket_iter.is_end()) {
-            self.bucket_iter = self.bucket_iter.next();
+        if (self.node != nil) {
+            self.node = self.node->next;
         }
 
-        while (self.bucket_iter.is_end()) {
+        while (self.node == nil) {
             self.bucket_index += 1;
-            if (self.bucket_index >= self.map->bucket_capacity) {
+            if (self.bucket_index >= self.map->capacity) {
                 break;
             }
-            self.bucket_iter = self.map->bucket[self.bucket_index].iter();
+            self.node = self.map->bucket[self.bucket_index];
         }
 
         return iter<K, V> {
             map: self.map,
             bucket_index: self.bucket_index,
-            bucket_iter: self.bucket_iter,
+            node: self.node,
         };
     }
 
     pub func is_end(self) -> bool {
-        return self.bucket_index >= self.map->bucket_capacity;
+        return self.bucket_index >= self.map->capacity;
     }
 
     pub func key(self) -> K& {
-        return self.bucket_iter.elem().key;
+        return self.node->key;
     }
 
     #[is_non_trivial(V)]
     pub func value(self) -> V& {
-        return self.bucket_iter.elem().value;
+        return self.node->value;
     }
 
     #[is_trivial(V)]
     pub func value(self) -> V {
-        return self.bucket_iter.elem().value;
+        return self.node->value;
     }
 }
 
