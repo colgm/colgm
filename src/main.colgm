@@ -196,8 +196,11 @@ func compile(option: cli_option&) -> i32 {
     pkg.library_path.clear();
     pkg.library_path.append(option.library_path);
 
+    var mf = module_finder::instance(option.library_path);
+    defer mf.delete();
+
     if (option.VIEW_PATH_SEARCH_ORDER) {
-        module_finder::dump_search_order(option.library_path);
+        mf.dump_search_order();
     }
 
     // global symbol table
@@ -221,6 +224,7 @@ func compile(option: cli_option&) -> i32 {
         pkg.__ptr__(),
         ctx.__ptr__(),
         cc.copt,
+        mf,
         mctx.__ptr__()
     );
     defer regpass.delete();

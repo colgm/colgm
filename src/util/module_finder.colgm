@@ -15,6 +15,18 @@ impl module_finder {
         return module_finder { path: module_finder::generate_paths(library) };
     }
 
+    func normalize(path: str&) {
+        // remove trailing slash
+        if (path.size > 1 && (path.endswith("\\") || path.endswith("/"))) {
+            path.pop_back();
+        }
+        // remove leading slash
+        if (path.size > 2 && (path.startswith(".\\") || path.startswith("./"))) {
+            path.pop_front();
+            path.pop_front();
+        }
+    }
+
     func generate_paths(library: const i8*) -> vec<str> {
         var PATH = fs::getpath();
         defer PATH.delete();
@@ -25,6 +37,7 @@ impl module_finder {
         var res = vec<str>::instance();
         if (library != nil) {
             var path = str::from(library);
+            module_finder::normalize(path);
             defer path.delete();
             res.push(path);
         }
@@ -40,14 +53,12 @@ impl module_finder {
         self.path.delete();
     }
 
-    pub func dump_search_order(library: const i8*) {
-        var res = module_finder::generate_paths(library);
-        defer res.delete();
-        if (res.size > 0) {
+    pub func dump_search_order(self) {
+        if (self.path.size > 0) {
             io::stdout().green().out("     COLGM ").reset();
             io::stdout().out("Module search order:\n");
         }
-        foreach (var p; res) {
+        foreach (var p; self.path) {
             io::stdout().green().out("     COLGM ").reset();
             io::stdout().out("==> ").out(p.get().c_str).endln();
         }

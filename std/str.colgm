@@ -1,6 +1,6 @@
 use std::libc::{
     malloc, realloc, free,
-    memcpy, memcmp,
+    memcpy, memcmp, memmove,
     strlen, strcmp, streq, itoa, utoa, gcvt
 };
 use std::panic::{ panic };
@@ -202,6 +202,16 @@ impl str {
         gcvt(num, 10, buffer);
         self.append(buffer);
         return self;
+    }
+
+    pub func pop_front(self) {
+        if (self.size == 0) {
+            return;
+        }
+
+        memmove(self.c_str, ((self.c_str => u64) + 1) => i8*, self.size - 1);
+        self.size -= 1;
+        self.c_str[self.size] = '\0';
     }
 
     pub func pop_back(self) {

@@ -73,7 +73,7 @@ impl hashset<T> {
 
     func init(self) {
         self.size = 0;
-        self.capacity = 2;
+        self.capacity = 4;
         self.bucket = malloc(self.capacity * __ptr_size()) => set_node<T>**;
         for (var i: u64 = 0; i < self.capacity; i += 1) {
             self.bucket[i] = nil;
@@ -152,7 +152,7 @@ impl hashset<T> {
     pub func insert(self, item: T&) {
         var hash = item.hash() % self.capacity;
         var bucket = self.bucket[hash];
-        
+
         while (bucket != nil) {
             if (bucket->elem.eq(item)) {
                 return;
@@ -165,7 +165,7 @@ impl hashset<T> {
         self.bucket[hash] = node;
         self.size += 1;
 
-        if (self.size > self.capacity) {
+        if ((self.size => f64) > (self.capacity => f64) * 0.75) {
             self.rehash();
         }
     }
@@ -174,7 +174,7 @@ impl hashset<T> {
     pub func insert(self, item: T) {
         var hash = item.hash() % self.capacity;
         var bucket = self.bucket[hash];
-        
+
         while (bucket != nil) {
             if (bucket->elem.eq(item)) {
                 return;
@@ -187,7 +187,7 @@ impl hashset<T> {
         self.bucket[hash] = node;
         self.size += 1;
 
-        if (self.size > self.capacity) {
+        if ((self.size => f64) > (self.capacity => f64) * 0.75) {
             self.rehash();
         }
     }

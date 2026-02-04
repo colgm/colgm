@@ -48,7 +48,7 @@ pub struct regist_pass {
     co: cli_option&,
     tr: type_resolve,
     gnv: generic_visitor,
-    mf: module_finder,
+    mf: module_finder&,
 
     mctx: mir_context*
 }
@@ -58,6 +58,7 @@ impl regist_pass {
                       pkg: package*,
                       ctx: sema_context*,
                       co: cli_option&,
+                      mf: module_finder&,
                       mctx: mir_context*) -> regist_pass {
 		return regist_pass {
             err: err,
@@ -67,14 +68,13 @@ impl regist_pass {
             co: co,
             tr: type_resolve::instance(err, ctx, pkg),
             gnv: generic_visitor::instance(err, ctx, pkg, co),
-            mf: module_finder::instance(pkg->library_path.c_str),
+            mf: mf,
             mctx: mctx
         };
 	}
 
     pub func delete(self) {
         self.gnv.delete();
-        self.mf.delete();
     }
 }
 
@@ -270,6 +270,7 @@ impl regist_pass {
             self.pkg,
             self.ctx,
             self.co,
+            self.mf,
             self.mctx
         );
         var semantic = sema::instance(self.err, self.pkg, self.ctx, self.co);

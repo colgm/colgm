@@ -24,11 +24,14 @@ def operator_without_space_in_line(opr: str, line: str) -> bool:
             return False
 
     # special operator ++
-    if opr == "+" and "++" in line:
-        return False
+    if opr == "+":
+        for i in ["++", "--+", "+,", "+/", "e+"]:
+            if i in line:
+                return False
+
     # special operator -, ->
     if opr == "-":
-        if "--" in line:
+        if "--" in line or "e-" in line:
             return False
         pattern = r'-[0-9,x,a-f,A-F,o,e,E,\.]*'
         if re.search(pattern, line):
@@ -40,6 +43,9 @@ def operator_without_space_in_line(opr: str, line: str) -> bool:
             pattern = r'[a-z,A-Z,_,0-9]*->[a-z,A-Z,_]*'
             if re.search(pattern, line):
                 return False
+
+    if "<=>" in line:
+        return False
 
     if f"operator{opr}" in line:
         return False
@@ -74,7 +80,7 @@ def check_operator_without_space(lines: list[str], file_path):
         for opr in oprs:
             if not operator_without_space_in_line(opr, line):
                 continue
-            print(f"[opr-without-space] {loc} {format_line(line)}")
+            print(f"[opr-without-space {opr}] {loc} {format_line(line)}")
             break
 
 def check_suffix(file_path):
