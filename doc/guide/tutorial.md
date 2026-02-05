@@ -479,6 +479,8 @@ Supported conditions:
 
 Both boot and self-host compiler are searched for in the following order:
 
-1. given library path by `-L` option
+1. given library path by `-L`/`--library` option
 2. current working directory (`.`)
-3. `$PATH`
+3. env `$PATH`
+
+If still don't know, add `--view-path` option to see the search path.

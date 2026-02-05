@@ -3,37 +3,31 @@ import sys
 import argparse
 import zipfile
 
+# now we only pack the following files
+# bootstrap files are filtered out
 NEED_TO_BE_PACKED = [
-    "build/colgm",
-    "build/colgm_lifted",
     "build/colgm_self_host",
-    "bootstrap",
     "doc",
     "src",
-    "std"
+    "std",
+    "LICENSE",
+    "README.md"
 ]
 
 if sys.platform == "win32":
     NEED_TO_BE_PACKED = [
-        "cmake-windows-build/Release/colgm.exe",
-        "cmake-windows-build/colgm_lifted.exe",
         "cmake-windows-build/colgm_self_host.exe",
-        "bootstrap",
         "doc",
         "src",
-        "std"
+        "std",
+        "LICENSE",
+        "README.md"
     ]
-    if os.path.exists("cmake-windows-build/colgm_lifted.pdb"):
-        print("find", "cmake-windows-build/colgm_lifted.pdb")
-        NEED_TO_BE_PACKED.append("cmake-windows-build/colgm_lifted.pdb")
     if os.path.exists("cmake-windows-build/colgm_self_host.pdb"):
         print("find", "cmake-windows-build/colgm_self_host.pdb")
         NEED_TO_BE_PACKED.append("cmake-windows-build/colgm_self_host.pdb")
 
 if sys.platform == "darwin":
-    if os.path.exists("build/colgm_lifted.dSYM"):
-        print("find", "build/colgm_lifted.dSYM")
-        NEED_TO_BE_PACKED.append("build/colgm_lifted.dSYM")
     if os.path.exists("build/colgm_self_host.dSYM"):
         print("find", "build/colgm_self_host.dSYM")
         NEED_TO_BE_PACKED.append("build/colgm_self_host.dSYM")

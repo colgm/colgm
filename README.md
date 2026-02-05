@@ -31,6 +31,7 @@ pub func main() -> i32 {
 - [example](./example) : example programs.
 - [misc](./misc/) : build and test scripts.
 - [src](./src/main.colgm) : self-host compiler.
+- [std](./std) : standard library.
 - [test](./test): test cases.
 
 ## Language Guide
@@ -85,6 +86,7 @@ Before building the project, here's the requirements:
 - python >= 3.8
 - llvm >= 16.0
 - cmake >= 3.21
+- valgrind (for memory leakage check)
 
 ### Build
 
@@ -99,7 +101,7 @@ python3 misc/build.py
 The build script will generate 3 executables in the `build`
 directory:
 
-1. `build/colgm`: bootstrap compiler (compiled by gcc/clang)
+1. `build/colgm`: bootstrap compiler (compiled by gcc/clang, should support at least c++17)
 2. `build/colgm_lifted`: lifted compiler (compiled by `build/colgm`)
 3. `build/colgm_selfhost`: self-host compiler (compiled by `build/colgm_lifted`)
 
@@ -160,7 +162,6 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [ ] Regex
     - [ ] Package manager
     - [ ] Docs generator
-6. constant fold
-7. DCE opt
-8. CSE opt
-9. ref type implicit copy(include assignment/definition/struct init) detection
+6. DCE opt
+7. CSE opt
+8. ref type implicit copy(include assignment/definition/struct init) detection
