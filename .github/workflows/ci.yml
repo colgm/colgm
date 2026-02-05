@@ -55,20 +55,20 @@ jobs:
     - name: fetch llvm-dev
       run: |
           sudo apt-get update
-          sudo apt-get install llvm-18 llvm-18-dev clang-18
-          export PATH="/usr/lib/llvm-18/bin:$PATH"
+          sudo apt-get install llvm-20 llvm-20-dev clang-20
+          export PATH="/usr/lib/llvm-20/bin:$PATH"
           lli --version
     - name: build
       run: |
-          export PATH="/usr/lib/llvm-18/bin:$PATH"
+          export PATH="/usr/lib/llvm-20/bin:$PATH"
           python3 misc/build.py
     - name: check
       run: |
-          export PATH="/usr/lib/llvm-18/bin:$PATH"
+          export PATH="/usr/lib/llvm-20/bin:$PATH"
           ./build/colgm_self_host
     - name: test
       run: |
-          export PATH="/usr/lib/llvm-18/bin:$PATH"
+          export PATH="/usr/lib/llvm-20/bin:$PATH"
           python3 misc/test.py
     - name: package
       run: |
@@ -95,3 +95,25 @@ jobs:
     - name: test
       run: |
           python3 misc\test.py
+    - name: package
+      run: |
+          python3 misc\pack.py colgm-windows-x86_64-nightly.zip
+  
+  linux-x86_64-memleak-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: fetch llvm-dev
+      run: |
+          sudo apt-get update
+          sudo apt-get install llvm-20 llvm-20-dev clang-20 valgrind
+          export PATH="/usr/lib/llvm-20/bin:$PATH"
+    - name: build
+      run: |
+          export PATH="/usr/lib/llvm-20/bin:$PATH"
+          python3 misc/build.py
+    - name: check
+      run: |
+          export PATH="/usr/lib/llvm-20/bin:$PATH"
+          python3 misc/memleak_check.py
