@@ -535,7 +535,8 @@ type semantic::resolve_identifier(identifier* node) {
             .loc_file = sym.loc_file,
             .pointer_depth = 0,
             .is_global = true,
-            .is_global_func = sym.kind == sym_kind::func_kind
+            .is_global_func = sym.kind == sym_kind::func_kind,
+            .is_tagged_union = sym.kind == sym_kind::tagged_union_kind
         };
     }
     rp.report(node, "undefined symbol \"" + name + "\"");
@@ -958,6 +959,11 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         rp.report(node,
             "cannot find \"" + prev.generic_name() + "\""
         );
+        return type::error_type();
+    }
+    // tagged union new initialization
+    if (prev.is_tagged_union) {
+        rp.report(node, "unimplemented");
         return type::error_type();
     }
 
