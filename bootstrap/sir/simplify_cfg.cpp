@@ -71,7 +71,6 @@ u64 merge_block_with_no_cond_br::do_single_merge(sir_func* func) {
     auto func_block = func->get_code_block();
 
     std::vector<sir_basic_block*> blocks;
-    std::vector<sir_basic_block*> deleted;
     std::unordered_set<u64> locked_block;
 
     for (auto bb : func_block->get_basic_blocks()) {

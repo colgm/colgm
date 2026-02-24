@@ -4,7 +4,7 @@ use std::str::{ str };
 use std::io::{ io };
 use std::libc::{ streq };
 
-use util::platform::{ is_windows };
+use std::util::platform::{ is_windows };
 
 func recursive_list(path: const i8*, depth: i64) {
     var dir = opendir(path);
@@ -45,7 +45,12 @@ func recursive_list(path: const i8*, depth: i64) {
     closedir(dir);
 }
 
-func main() -> i32 {
-    recursive_list("src", 1);
+func main(argc: i32, argv: const i8**) -> i32 {
+    if (argc != 2) {
+        io::stdout().out("Usage: list_dir <path>\n");
+        return -1;
+    }
+
+    recursive_list(argv[1], 1);
     return 0;
 }

@@ -1,8 +1,6 @@
 use std::libc::{ streq };
 use std::str::{ str };
-
-#[enable_if(target_os = "macos")]
-pub extern func sysctlbyname(name: const i8*, oldp: i8*, oldlenp: u64*, newp: i8*, newlen: u64) -> i32;
+use std::util::platform::{ get_platform, get_arch, sysctlbyname };
 
 #[enable_if(target_os = "macos")]
 func mac_version() -> str {
@@ -36,43 +34,6 @@ func mac_major_version() -> str {
 
     var res = v.substr(0, pos);
     return res;
-}
-
-#[enable_if(target_os = "macos")]
-pub func get_platform() -> i8* {
-    return "macos";
-}
-
-#[enable_if(target_os = "linux")]
-pub func get_platform() -> i8* {
-    return "linux";
-}
-
-#[enable_if(target_os = "windows")]
-pub func get_platform() -> i8* {
-    return "windows";
-}
-
-#[enable_if(arch = "x86_64")]
-pub func get_arch() -> i8* {
-    return "x86_64";
-}
-
-#[enable_if(arch = "aarch64")]
-pub func get_arch() -> i8* {
-    return "aarch64";
-}
-
-pub func is_macos() -> bool {
-    return streq(get_platform(), "macos");
-}
-
-pub func is_linux() -> bool {
-    return streq(get_platform(), "linux");
-}
-
-pub func is_windows() -> bool {
-    return streq(get_platform(), "windows");
 }
 
 pub func get_target_triple(platform: const i8*, arch: const i8*) -> str {

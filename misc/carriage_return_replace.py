@@ -64,7 +64,7 @@ if __name__ == "__main__":
             ".nas", ".py", ".colgm",
             ".result", ".gitignore", ".gitattributes"
         ],
-        help="List of file extensions to process, default is ['.txt']"
+        help="List of file extensions to process"
     )
     parser.add_argument(
         "-b", "--backup",

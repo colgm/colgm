@@ -140,7 +140,9 @@ void execute(const std::string& input_file,
 
     // generate sir code
     mir2sir.generate(*ast2mir.get_context()).chkerr();
-    spm.execute(&mir2sir.get_mutable_sir_context(), cmd & COMPILE_VIEW_PASS);
+    if (!spm.execute(&mir2sir.get_mutable_sir_context(), cmd & COMPILE_VIEW_PASS)) {
+        std::exit(1);
+    }
     if (cmd & COMPILE_VIEW_SIR) {
         mir2sir.get_mutable_sir_context().dump_code(std::cout);
     }

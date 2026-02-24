@@ -15,7 +15,7 @@ sir_pass_manager::~sir_pass_manager() {
     }
 }
 
-void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
+bool sir_pass_manager::execute(sir_context* sctx, bool verbose) {
     passes.push_back(new adjust_va_arg_func);
     passes.push_back(new detect_redef_extern);
     passes.push_back(new primitive_size_opt);
@@ -23,8 +23,10 @@ void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
     passes.push_back(new remove_no_pred_block);
     passes.push_back(new merge_block_with_no_cond_br);
 
+    bool success = true;
     for (auto i : passes) {
         if (!i->run(sctx)) {
+            success = false;
             break;
         }
         if (verbose) {
@@ -33,6 +35,8 @@ void sir_pass_manager::execute(sir_context* sctx, bool verbose) {
             std::clog << ": " << i->info() << "\n";
         }
     }
+
+    return success;
 }
 
 }

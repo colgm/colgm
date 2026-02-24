@@ -9,67 +9,66 @@ def execute(cmd: list[str], do_print: bool = True) -> int:
         print("\033[92;1m EXECUTING \033[0m" + " ".join(cmd), flush=True)
     ret = subprocess.run(cmd).returncode
     if ret != 0:
-        print("\033[91;1m     Error \033[0m[exited]" + " ".join(cmd), flush=True)
-        exit(ret)
+        print("\033[91;1m     ERROR \033[0m" + " ".join(cmd), flush=True)
     return ret
 
 TEST_LIST = [
-    # file name                            | library path
-    ("test/align.colgm",                   "src"),
-    ("test/array_type.colgm",              "src"),
-    ("test/array.colgm",                   "src"),
-    ("test/assign.colgm",                  "src"),
-    ("test/base64_test.colgm",             "src"),
-    ("test/bitwise.colgm",                 "src"),
-    ("test/branch.colgm",                  "src"),
-    ("test/cmpnot.colgm",                  "src"),
-    ("test/complex_generics.colgm",        "src"),
-    ("test/const_fold.colgm",              "src"),
-    ("test/continue_break.colgm",          "src"),
-    ("test/defer.colgm",                   "src"),
-    ("test/enum_test.colgm",               "src"),
-    ("test/errno.colgm",                   "src"),
-    ("test/for_iter.colgm",                "src"),
-    ("test/for_test.colgm",                "src"),
-    ("test/func.colgm",                    "src"),
-    ("test/generic_embed.colgm",           "src"),
-    ("test/hello.colgm",                   "src"),
-    ("test/initializer.colgm",             "src"),
-    ("test/json_test.colgm",               "src"),
-    ("test/list_dir.colgm",                "src"),
-    ("test/local.colgm",                   "src"),
-    ("test/match.colgm",                   "src"),
-    ("test/md5_test.colgm",                "src"),
-    ("test/negative.colgm",                "src"),
-    ("test/ref_struct_field.colgm",        "src"),
-    ("test/ref_variable_assign.colgm",     "src"),
-#    ("test/sleep.colgm",                   "src"),
-    ("test/std_test.colgm",                "src"),
-    ("test/string.colgm",                  "src"),
-    ("test/tagged_union.colgm",            "src"),
-    ("test/to_str.colgm",                  "src"),
-    ("test/type_convert.colgm",            "src"),
-    ("test/utf8_test.colgm",               "src"),
-    ("test/void_return.colgm",             "src"),
-    ("test/warn_on_left_call.colgm",       "src")
+    # file name                            | argv
+    ("test/align.colgm",                   []),
+    ("test/array_type.colgm",              []),
+    ("test/array.colgm",                   []),
+    ("test/assign.colgm",                  []),
+    ("test/base64_test.colgm",             []),
+    ("test/bitwise.colgm",                 []),
+    ("test/branch.colgm",                  []),
+    ("test/cmpnot.colgm",                  []),
+    ("test/complex_generics.colgm",        []),
+    ("test/const_fold.colgm",              []),
+    ("test/continue_break.colgm",          []),
+    ("test/defer.colgm",                   []),
+    ("test/enum_test.colgm",               []),
+    ("test/errno.colgm",                   []),
+    ("test/for_iter.colgm",                []),
+    ("test/for_test.colgm",                []),
+    ("test/func.colgm",                    []),
+    ("test/generic_embed.colgm",           []),
+    ("test/hello.colgm",                   []),
+    ("test/initializer.colgm",             []),
+    ("test/json_test.colgm",               []),
+    ("test/list_dir.colgm",                ["src"]),
+    ("test/local.colgm",                   []),
+    ("test/match.colgm",                   []),
+    ("test/md5_test.colgm",                []),
+    ("test/negative.colgm",                []),
+    ("test/ref_struct_field.colgm",        []),
+    ("test/ref_variable_assign.colgm",     []),
+    ("test/std_test.colgm",                []),
+    ("test/string.colgm",                  []),
+    ("test/tagged_union.colgm",            []),
+    ("test/to_str.colgm",                  []),
+    ("test/type_convert.colgm",            []),
+    ("test/utf8_test.colgm",               []),
+    ("test/void_return.colgm",             []),
+    ("test/warn_on_left_call.colgm",       [])
 ]
 
 COMPILER = "build/colgm_self_host"
 if sys.platform == "win32":
     COMPILER = "cmake-windows-build\\colgm_self_host.exe"
 
-for (test, lib) in TEST_LIST:
+for (test, argv) in TEST_LIST:
     ret = execute([
         COMPILER,
         test,
-        "-L", lib,
         "-o", "test.out",
         "-O2",
         "-g"
     ])
     if ret != 0:
-        continue
-    execute(["./test.out"], False)
+        break
+    ret = execute(["./test.out"] + argv, False)
+    if ret != 0:
+        break
     time.sleep(0.5)
 
 if os.path.exists("test.out"):
