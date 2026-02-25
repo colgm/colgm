@@ -28,16 +28,18 @@ struct SYMBOL_INFO {
     MaxNameLen: u32,
     Name: [u8; 1]
 }
+
+// these are opaque to users
 #[enable_if(target_os = "windows")]
-pub extern func GetCurrentProcess() -> i8*;
+extern func GetCurrentProcess() -> i8*;
 #[enable_if(target_os = "windows")]
-pub extern func SymInitialize(process: i8*, user_search_path: const i8*, f_invade_process: i32) -> i32;
+extern func SymInitialize(process: i8*, user_search_path: const i8*, f_invade_process: i32) -> i32;
 #[enable_if(target_os = "windows")]
-pub extern func RtlCaptureStackBackTrace(frame_to_skip: u32, frame_to_capture: u32, back_trace: i8**, back_trace_hash: u32*) -> u16;
+extern func RtlCaptureStackBackTrace(frame_to_skip: u32, frame_to_capture: u32, back_trace: i8**, back_trace_hash: u32*) -> u16;
 #[enable_if(target_os = "windows")]
-pub extern func SymFromAddr(process: i8*, address: u64, displacement: u64*, symbol: SYMBOL_INFO*) -> i32;
+extern func SymFromAddr(process: i8*, address: u64, displacement: u64*, symbol: SYMBOL_INFO*) -> i32;
 #[enable_if(target_os = "windows")]
-pub extern func SymCleanup(process: i8*) -> i32;
+extern func SymCleanup(process: i8*) -> i32;
 
 // compatible layer for backtrace on windows
 #[enable_if(target_os = "windows")]

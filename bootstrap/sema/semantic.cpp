@@ -961,11 +961,6 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         );
         return type::error_type();
     }
-    // tagged union new initialization
-    if (prev.is_tagged_union) {
-        rp.report(node, "unimplemented");
-        return type::error_type();
-    }
 
     rp.report(node, "cannot call non-function");
     return type::error_type();
