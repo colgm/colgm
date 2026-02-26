@@ -145,8 +145,8 @@ call* parse::call_gen() {
           look_ahead(tok::tk_dot) || look_ahead(tok::tk_arrow) ||
           look_ahead(tok::tk_double_colon) || look_ahead(tok::tk_lbrace)) {
         if (look_ahead(tok::tk_lcurve)) {
-            match(tok::tk_lcurve);
             auto new_call_func = new call_func_args(toks[ptr].loc);
+            match(tok::tk_lcurve);
             while (!look_ahead(tok::tk_rcurve)) {
                 new_call_func->add_arg(calculation_gen());
                 if (look_ahead(tok::tk_comma)) {
