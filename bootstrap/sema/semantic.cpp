@@ -536,7 +536,7 @@ type semantic::resolve_identifier(identifier* node) {
             .pointer_depth = 0,
             .is_global = true,
             .is_global_func = sym.kind == sym_kind::func_kind,
-            .is_tagged_union = sym.kind == sym_kind::tagged_union_kind
+            .is_union = sym.kind == sym_kind::tagged_union_kind
         };
     }
     rp.report(node, "undefined symbol \"" + name + "\"");
@@ -962,6 +962,11 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         return type::error_type();
     }
 
+    if (prev.is_union_tag) {
+        rp.report(node, "unimplemented");
+        return type::error_type();
+    }
+
     rp.report(node, "cannot call non-function");
     return type::error_type();
 }
@@ -1229,6 +1234,12 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
                 "\" in \"" + prev.generic_name() + "\" is not static method"
             );
             return type::error_type();
+        } else if (tu.member.count(node->get_name())) {
+            auto res = tu.member.at(node->get_name());
+            res.is_union_tag = true;
+            res.is_global = true;
+            node->set_resolve_type(res);
+            return res;
         } else {
             rp.report(node,
                 "cannot find static method \"" + node->get_name() +

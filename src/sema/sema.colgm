@@ -758,7 +758,7 @@ impl sema {
             result.pointer_depth = 0;
             result.is_global_sym = true;
             result.is_global_func = sym_info.kind == symbol_kind::func_kind;
-            result.is_tagged_union = sym_info.kind == symbol_kind::tagged_union_kind;
+            result.is_union = sym_info.kind == symbol_kind::tagged_union_kind;
             return result;
         }
 
@@ -1352,6 +1352,11 @@ impl sema {
             return type::error_type();
         }
 
+        if (prev.is_union_tag) {
+            self.err->error(n->base.location, "unimplemented");
+            return type::error_type();
+        }
+
         self.err->error(n->base.location, "cannot call non-function");
         return type::error_type();
     }
@@ -1560,6 +1565,12 @@ impl sema {
                 tu.method.get(n->name).location
             );
             return type::error_type();
+        } else if (tu.members.has(n->name)) {
+            var infer = tu.members.get(n->name).clone();
+            infer.is_global_sym = true;
+            infer.is_union_tag = true;
+            n->base.resolved_type.reset_with(infer);
+            return infer;
         } else {
             var info = str::from("cannot find static method \"");
             defer info.delete();

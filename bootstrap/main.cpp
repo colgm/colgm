@@ -83,10 +83,11 @@ void err() {
 void scan_package(const std::string& library_path,
                   const std::string& entry_file,
                   const u32 cmd) {
-    if (library_path.empty()) {
-        return;
+    if (!library_path.empty()) {
+        colgm::package_manager::singleton()->set_library_path(library_path);
+    } else {
+        colgm::package_manager::singleton()->set_library_path(".");
     }
-    colgm::package_manager::singleton()->set_library_path(library_path);
     colgm::package_manager::singleton()->generate_search_order();
     if (cmd & COMPILE_VIEW_LIB) {
         colgm::package_manager::singleton()->dump_search_order();
@@ -166,6 +167,7 @@ i32 main(i32 argc, const char* argv[]) {
         } else if (s == "-v" || s == "--version") {
             std::clog << version;
         } else if (s[0] != '-') {
+            scan_package(".", s, 0);
             execute(s, "a.out.ll");
         } else {
             err();

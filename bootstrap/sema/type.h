@@ -60,18 +60,19 @@ struct type {
     std::string name;
     std::string loc_file;
     i64 pointer_depth = 0;
-    bool is_global = false;       // global symbol
-    bool is_global_func = false;  // global func
-    bool is_enum = false;         // enum type
-    bool is_tagged_union = false; // tagged union type
-    bool is_const = false;        // const type
+    bool is_global = false;      // global symbol
+    bool is_global_func = false; // global func
+    bool is_enum = false;        // enum type
+    bool is_union = false;       // tagged union type
+    bool is_union_tag = false;   // tagged union tag type
+    bool is_const = false;       // const type
 
-    u64 array_length = 0;         // array length
-    bool is_array = false;        // array type
+    u64 array_length = 0;        // array length
+    bool is_array = false;       // array type
 
-    bool is_reference = false;    // reference type
+    bool is_reference = false;   // reference type
 
-    method_info m_info;           // mark this is method infotype
+    method_info m_info;          // mark this is method infotype
     std::vector<type> generics = {};
 
 private:

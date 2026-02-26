@@ -1,0 +1,275 @@
+use std::io::{ io };
+use std::str::{ str };
+use std::libc::{ free };
+use std::panic::{ panic, assert };
+
+struct mir_block {
+    a: u8,  // 1 align 1
+            // 1
+    b: u16, // 2 align 2
+            // 4
+    c: u64  // 8 align 8
+} // 16 align 8
+
+struct mir_num {
+    a: [u8; 127]
+} // 127 align 1
+
+struct mir_str {} // 1 align 1
+
+pub enum mir_tag {
+    m_block = 0x0010,
+    m_num = 0x0100,
+    m_str = 0x1000,
+}
+
+// type {
+//     i64,           // 8 align 8
+//     mir_block      // 16 align 8
+//     [u8; 127 - 16] // 111 align 1
+//                    // 1 for alignment
+// }                  // 136 align 8
+pub union(mir_tag) mir {
+    m_block: mir_block,
+    m_num: mir_num,
+    m_str: mir_str
+}
+
+func test() {
+    assert(mir_block::__size__() == 16, "mir_block size is not 16");
+    assert(mir::__size__() == 136, "mir size is not 136");
+
+    var a = mir::m_block { a: 1, b: 2, c: 3 };
+    var b = mir::m_num {};
+    b.m_num.a[0] = 1;
+    var c = mir::m_str {};
+
+    match (mir::m_str(mir_str {})) {
+        mir_tag::m_str => {
+            io::stdout().out("[tagged_union.colgm] expected mir_tag::m_str branch\n");
+        }
+        _ => { panic("default branch"); }
+    }
+}
+
+
+union(enum) tagged_union_without_ref_enum {
+    aaa: i32,
+    bbb: i8*,
+    ccc: f32
+}
+
+impl tagged_union_without_ref_enum {
+    pub func _aaa(self) -> i32 {
+        self.aaa = 0;
+        match (self) {
+            aaa => return self.aaa;
+            _ => {}
+        }
+        return -1;
+    }
+
+    pub func _bbb(self) -> i8* {
+        self.bbb = nil;
+        return self.bbb;
+    }
+
+    pub func _ccc(self) -> f32 {
+        self.ccc = 0.0;
+        return self.ccc;
+    }
+
+    pub func static() -> i32 {
+        return 0;
+    }
+}
+
+enum Tag {
+    aaa,
+    bbb,
+    ccc,
+    ddd
+}
+
+union(Tag) tagged_union_with_ref_enum {
+    aaa: i32,
+    bbb: i8*,
+    ccc: f32,
+    ddd: str
+}
+
+impl tagged_union_with_ref_enum {
+    pub func _aaa(self) -> i32 {
+        self.aaa = 0;
+        match (self) {
+            Tag::aaa => return self.aaa;
+            _ => {}
+        }
+        return -1;
+    }
+
+    pub func _bbb(self) -> i8* {
+        self.bbb = nil;
+        return self.bbb;
+    }
+
+    pub func _ccc(self) -> f32 {
+        self.ccc = 0.0;
+        return self.ccc;
+    }
+
+    pub func static() -> i32 {
+        return 0;
+    }
+
+    pub func create_str(info: i8*) -> tagged_union_with_ref_enum* {
+        var res = tagged_union_with_ref_enum::__alloc__();
+        res[0] = tagged_union_with_ref_enum::ddd(str::from(info));
+        return res;
+    }
+
+    pub func delete(self) {
+        match (self) {
+            Tag::ddd => {
+                io::stdout().out("[tagged_union.colgm] delete ddd str\n");
+                self.ddd.delete();
+            }
+            _ => {}
+        }
+    }
+}
+
+union (enum) trivial_union { a: i32 }
+
+impl trivial_union {
+    pub func test_trivial() -> bool {
+        return true;
+    }
+}
+
+union (enum) non_trivial_union { a: i32 }
+
+impl non_trivial_union {
+    pub func test_trivial() -> bool {
+        return false;
+    }
+
+    pub func delete(self) {
+        // do nothing but mark it as non-trivial
+    }
+}
+
+struct trivial_test<T> {}
+
+impl trivial_test<T> {
+    #[is_trivial(T)]
+    pub func test(info: const i8*) {
+        var i = str::from(info);
+        i.append(" is not trivial");
+        defer i.delete();
+
+        assert(T::test_trivial(), i.c_str);
+    }
+
+    #[is_non_trivial(T)]
+    pub func test(info: const i8*) {
+        var i = str::from(info);
+        i.append(" is trivial");
+        defer i.delete();
+
+        assert(!T::test_trivial(), i.c_str);
+    }
+}
+
+func trivial_union_test() {
+    // trivial
+    trivial_test<trivial_union>::test("trivial_union");
+    // non-trivial
+    trivial_test<non_trivial_union>::test("non_trivial_union");
+
+    io::stdout().out("[tagged_union.colgm] trivial test passed").endln();
+}
+
+func main() -> i32 {
+    test();
+
+    var a = tagged_union_without_ref_enum::bbb(nil);
+    var b = tagged_union_with_ref_enum::ccc(0.0);
+
+    a._aaa() + b._aaa();
+
+    match (a) {
+        aaa => {
+            a.aaa;
+            panic("unexpected aaa branch");
+        }
+        bbb => {
+            a.bbb;
+            io::stdout().out("[tagged_union.colgm] expected bbb branch\n");
+        }
+        ccc => {
+            a.ccc;
+            panic("unexpected ccc branch");
+        }
+    }
+
+    match (a.__ptr__()) {
+        aaa => {
+            a.aaa;
+            panic("unexpected aaa branch");
+        }
+        bbb => {
+            a.bbb;
+            io::stdout().out("[tagged_union.colgm] expected bbb branch\n");
+        }
+        ccc => {
+            a.ccc;
+            panic("unexpected ccc branch");
+        }
+    }
+
+    match (b) {
+        Tag::aaa => {
+            b.aaa;
+            panic("unexpected aaa branch");
+        }
+        Tag::bbb => {
+            b.bbb;
+            panic("unexpected bbb branch");
+        }
+        Tag::ccc => {
+            b.ccc;
+            io::stdout().out("[tagged_union.colgm] expected ccc branch\n");
+        }
+        _ => { panic("unexpected branch"); }
+    }
+
+    match (b.__ptr__()) {
+        Tag::aaa => {
+            b.aaa;
+            panic("unexpected aaa branch");
+        }
+        Tag::bbb => {
+            b.bbb;
+            panic("unexpected bbb branch");
+        }
+        Tag::ccc => {
+            b.ccc;
+            io::stdout().out("[tagged_union.colgm] expected ccc branch\n");
+        }
+        _ => { panic("unexpected branch"); }
+    }
+
+    var ptr = tagged_union_with_ref_enum::create_str("hello world");
+    defer {
+        ptr->delete();
+        free(ptr => i8*);
+    }
+
+    io::stdout().out("[tagged_union.colgm] ").out(ptr->ddd.c_str).endln();
+
+    trivial_union_test();
+
+    return tagged_union_without_ref_enum::static() +
+           tagged_union_with_ref_enum::static();
+}
