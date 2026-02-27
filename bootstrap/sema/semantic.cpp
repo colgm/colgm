@@ -264,13 +264,13 @@ type semantic::resolve_arithmetic_operator(binary_operator* node) {
     // cannot calculate these types
     if (ctx.search_symbol_kind(left) == sym_kind::enum_kind ||
         ctx.search_symbol_kind(left) == sym_kind::struct_kind ||
-        ctx.search_symbol_kind(left) == sym_kind::tagged_union_kind ||
+        ctx.search_symbol_kind(left) == sym_kind::union_kind ||
         ctx.search_symbol_kind(left) == sym_kind::func_kind) {
         rp.report(node->get_left(), "cannot calculate \"" + left.to_string() + "\"");
         return type::error_type();
     } else if (ctx.search_symbol_kind(right) == sym_kind::enum_kind ||
                ctx.search_symbol_kind(right) == sym_kind::struct_kind ||
-               ctx.search_symbol_kind(right) == sym_kind::tagged_union_kind ||
+               ctx.search_symbol_kind(right) == sym_kind::union_kind ||
                ctx.search_symbol_kind(right) == sym_kind::func_kind) {
         rp.report(node->get_right(), "cannot calculate \"" + right.to_string() + "\"");
         return type::error_type();
@@ -536,7 +536,7 @@ type semantic::resolve_identifier(identifier* node) {
             .pointer_depth = 0,
             .is_global = true,
             .is_global_func = sym.kind == sym_kind::func_kind,
-            .is_union = sym.kind == sym_kind::tagged_union_kind
+            .is_union = sym.kind == sym_kind::union_kind
         };
     }
     rp.report(node, "undefined symbol \"" + name + "\"");
@@ -1754,7 +1754,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
     }
 
     if (ctx.search_symbol_kind(infer) != sym_kind::enum_kind &&
-        ctx.search_symbol_kind(infer) != sym_kind::tagged_union_kind) {
+        ctx.search_symbol_kind(infer) != sym_kind::union_kind) {
         rp.report(node->get_value(), "match value should be enum or tagged union");
         return;
     }
@@ -1771,7 +1771,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
 
     if (ctx.search_symbol_kind(infer) == sym_kind::enum_kind) {
         resolve_match_stmt_for_enum(node, func_self, infer);
-    } else if (ctx.search_symbol_kind(infer) == sym_kind::tagged_union_kind) {
+    } else if (ctx.search_symbol_kind(infer) == sym_kind::union_kind) {
         resolve_match_stmt_for_tagged_union(node, func_self, infer);
     }
 }

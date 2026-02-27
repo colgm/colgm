@@ -107,7 +107,7 @@ public:
             return sym_kind::struct_kind;
         }
         if (domain.tagged_unions.count(t.generic_name())) {
-            return sym_kind::tagged_union_kind;
+            return sym_kind::union_kind;
         }
         if (domain.functions.count(t.generic_name())) {
             return sym_kind::func_kind;

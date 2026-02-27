@@ -134,7 +134,7 @@ public:
             .resolve_type = ty
         };
     }
-    static auto tagged_union_kind(const std::string& full_name, const type& ty) {
+    static auto union_kind(const std::string& full_name, const type& ty) {
         return mir_value_t {
             .value_kind = mir_value_t::kind::tagged_union_symbol,
             .content = full_name,

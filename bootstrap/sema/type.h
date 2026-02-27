@@ -18,7 +18,7 @@ enum class sym_kind {
     basic_kind,
     enum_kind,
     struct_kind,
-    tagged_union_kind,
+    union_kind,
     func_kind,
     package_kind,
     module_kind

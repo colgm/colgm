@@ -27,7 +27,7 @@ void mir2sir::generate_type_mapper() {
                 .name = i.second.name,
                 .loc_file = i.second.location.file
             };
-            type_mapper.insert({tp.full_path_name(), sym_kind::tagged_union_kind});
+            type_mapper.insert({tp.full_path_name(), sym_kind::union_kind});
         }
     }
 }
@@ -70,7 +70,7 @@ std::string mir2sir::type_mapping(const type& t) {
             // %struct.std.vec<data::foo>
             copy.generics.clear();
             break;
-        case sym_kind::tagged_union_kind:
+        case sym_kind::union_kind:
             copy.name = "%tagged_union." + mangle(full_name);
             break;
         case sym_kind::enum_kind:
@@ -883,8 +883,8 @@ void mir2sir::visit_mir_call_id(mir_call_id* node) {
                 node->get_type()
             ));
             break;
-        case sym_kind::tagged_union_kind:
-            value_stack.push_back(mir_value_t::tagged_union_kind(
+        case sym_kind::union_kind:
+            value_stack.push_back(mir_value_t::union_kind(
                 node->get_type().full_path_name(),
                 node->get_type()
             ));

@@ -943,7 +943,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node, bool verbose) {
                 continue;
             }
             import_global_symbol(node, i.second.name,
-                {sym_kind::tagged_union_kind, file, i.second.is_public},
+                {sym_kind::union_kind, file, i.second.is_public},
                 false
             );
         }
@@ -994,7 +994,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node, bool verbose) {
                 continue;
             }
             import_global_symbol(i, i->get_name(),
-                {sym_kind::tagged_union_kind, file, true},
+                {sym_kind::union_kind, file, true},
                 false
             );
             continue;
@@ -1424,7 +1424,7 @@ void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node
     // insert to global symbol table and domain
     ctx.insert(
         name,
-        symbol_info {sym_kind::tagged_union_kind, ctx.this_file, true},
+        symbol_info {sym_kind::union_kind, ctx.this_file, true},
         false
     );
     this_domain.tagged_unions.insert({name, {}});
