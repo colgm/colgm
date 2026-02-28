@@ -106,7 +106,7 @@ public:
         if (domain.structs.count(t.generic_name())) {
             return sym_kind::struct_kind;
         }
-        if (domain.tagged_unions.count(t.generic_name())) {
+        if (domain.unions.count(t.generic_name())) {
             return sym_kind::union_kind;
         }
         if (domain.functions.count(t.generic_name())) {

@@ -53,7 +53,7 @@ struct mir_func {
 
 struct mir_context {
     std::vector<mir_struct*> structs;
-    std::vector<mir_tagged_union*> tagged_unions;
+    std::vector<mir_tagged_union*> unions;
     std::vector<mir_func*> decls;
     std::vector<mir_func*> impls;
 
@@ -61,7 +61,7 @@ struct mir_context {
         for (auto i : structs) {
             delete i;
         }
-        for (auto i : tagged_unions) {
+        for (auto i : unions) {
             delete i;
         }
         for (auto i : decls) {

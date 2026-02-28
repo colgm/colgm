@@ -303,7 +303,7 @@ impl mir2sir {
 
 impl mir2sir {
     func emit_tagged_union(self, mctx: mir_context&) {
-        foreach (var i; mctx.tagged_unions) {
+        foreach (var i; mctx.unions) {
             var m_un = i.get();
 
             var s_ty = type::instance(m_un.name.c_str, m_un.location.file.c_str);
@@ -573,7 +573,7 @@ impl mir2sir {
 
                 self.type_mapper.insert(s_name, symbol_kind::struct_kind);
             }
-            foreach (var j; dm.tagged_unions) {
+            foreach (var j; dm.unions) {
                 var tu_type = type::instance(j.value().name.c_str, j.value().location.file.c_str);
                 defer tu_type.delete();
 
@@ -1362,8 +1362,8 @@ impl mir2sir {
             defer n_ptr.delete();
 
             self.push_mir_value_variable(temp_var.content, n_ptr);
-        } else if (dm.tagged_unions.has(name_for_search)) {
-            var un = dm.tagged_unions.get(name_for_search);
+        } else if (dm.unions.has(name_for_search)) {
+            var un = dm.unions.get(name_for_search);
 
             foreach (var i; n->fields) {
                 var tag_value = self.ssa_gen.create_variable();
@@ -1614,7 +1614,7 @@ impl mir2sir {
             defer v.delete();
 
             self.value_stack.push(v);
-        } else if (dm.tagged_unions.has(name_for_search)) {
+        } else if (dm.unions.has(name_for_search)) {
             var v = mir_value_t::tagged_union_symbol(full_path_name, n->resolved_type);
             defer v.delete();
 
@@ -1901,8 +1901,8 @@ impl mir2sir {
             defer n_ty.delete();
 
             self.push_mir_value_variable(target_value.content, n_ty);
-        } else if (dm.tagged_unions.has(prev_name_for_search)) {
-            var un = dm.tagged_unions.get(prev_name_for_search);
+        } else if (dm.unions.has(prev_name_for_search)) {
+            var un = dm.unions.get(prev_name_for_search);
 
             // get method
             if (un.method.has(n->name)) {
@@ -2094,8 +2094,8 @@ impl mir2sir {
             defer n_ty.delete();
 
             self.push_mir_value_variable(temp_1_value.content, n_ty);
-        } else if (dm.tagged_unions.has(prev_name_for_search)) {
-            var un = dm.tagged_unions.get(prev_name_for_search);
+        } else if (dm.unions.has(prev_name_for_search)) {
+            var un = dm.unions.get(prev_name_for_search);
 
             // get method
             if (un.method.has(n->name)) {
@@ -2643,7 +2643,7 @@ impl mir2sir {
 
         var dm = self.ctx->get_domain(value.resolved_type.loc_file);
         var switch_inst: sir_switch* = nil;
-        if (dm.tagged_unions.has(name_for_search)) {
+        if (dm.unions.has(name_for_search)) {
             var tag_v = self.ssa_gen.create_variable();
             var tag_value_v = self.ssa_gen.create_variable();
             defer tag_v.delete();
@@ -3409,7 +3409,7 @@ impl mir2sir {
 
     func generate_DI_tagged_union_type(self) {
         foreach (var i; self.ctx->global->domain) {
-            foreach (var j; i.value().tagged_unions) {
+            foreach (var j; i.value().unions) {
                 self.generate_single_DI_tagged_union(j.value());
             }
         }
@@ -3491,7 +3491,7 @@ impl mir2sir {
 
     func generate_tagged_union_member_dwarf(self) {
         foreach (var i; self.ctx->global->domain) {
-            foreach (var j; i.value().tagged_unions) {
+            foreach (var j; i.value().unions) {
                 self.generate_single_tagged_union_member_dwarf(j.value());
             }
         }

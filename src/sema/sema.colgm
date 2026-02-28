@@ -92,7 +92,7 @@ impl sema {
         var n = ty.generic_name(self.pkg);
         defer n.delete();
 
-        if (dm.tagged_unions.has(n)) {
+        if (dm.unions.has(n)) {
             return true;
         }
         return false;
@@ -952,9 +952,9 @@ impl sema {
                 n
             );
             return res;
-        } else if (dm.tagged_unions.has(prev_name_for_search)) {
+        } else if (dm.unions.has(prev_name_for_search)) {
             var res = self.resolve_tagged_union_get_field(
-                dm.tagged_unions.get(prev_name_for_search),
+                dm.unions.get(prev_name_for_search),
                 prev,
                 n
             );
@@ -1293,8 +1293,8 @@ impl sema {
                 var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
                 return infer;
-            } else if (dm.tagged_unions.has(prev_name_for_search)) {
-                var union_self = dm.tagged_unions.get(prev_name_for_search);
+            } else if (dm.unions.has(prev_name_for_search)) {
+                var union_self = dm.unions.get(prev_name_for_search);
                 var method = union_self.static_method.get(
                     prev.m_info.method_name
                 );
@@ -1330,8 +1330,8 @@ impl sema {
                 var infer = method.return_type.clone();
                 n->base.resolved_type.reset_with(infer);
                 return infer;
-            } else if (dm.tagged_unions.has(prev_name_for_search)) {
-                var union_self = dm.tagged_unions.get(prev_name_for_search);
+            } else if (dm.unions.has(prev_name_for_search)) {
+                var union_self = dm.unions.get(prev_name_for_search);
                 var method = union_self.method.get(
                     prev.m_info.method_name
                 );
@@ -1447,7 +1447,7 @@ impl sema {
                      .out("\"")
                      .emit_err(n->base.location);
             return type::error_type();
-        } else if (dm.tagged_unions.has(prev_name_for_search)) {
+        } else if (dm.unions.has(prev_name_for_search)) {
             return self.resolve_tagged_union_call_path(prev, n);
         } else {
             var info = str::from("cannot find path \"");
@@ -1551,7 +1551,7 @@ impl sema {
         defer prev_name_for_search.delete();
 
         var dm = self.ctx->get_domain(prev.loc_file);
-        var tu = dm.tagged_unions.get(prev_name_for_search);
+        var tu = dm.unions.get(prev_name_for_search);
         if (tu.static_method.has(n->name)) {
             self.check_tagged_union_pub_method(n => ast*, n->name, tu);
             var infer = self.struct_static_method_infer(prev, n->name);
@@ -1621,8 +1621,8 @@ impl sema {
         if (dm.structs.has(prev_name_for_search)) {
             var struct_self = dm.structs.get(prev_name_for_search);
             return self.resolve_struct_initializer(struct_self, prev, n);
-        } else if (dm.tagged_unions.has(prev_name_for_search)) {
-            var union_self = dm.tagged_unions.get(prev_name_for_search);
+        } else if (dm.unions.has(prev_name_for_search)) {
+            var union_self = dm.unions.get(prev_name_for_search);
             return self.resolve_tagged_union_initializer(union_self, prev, n);
         }
 
@@ -1844,9 +1844,9 @@ impl sema {
                 n
             );
             return res;
-        } else if (dm.tagged_unions.has(prev_name_for_search)) {
+        } else if (dm.unions.has(prev_name_for_search)) {
             var res = self.resolve_tagged_union_ptr_get_field(
-                dm.tagged_unions.get(prev_name_for_search),
+                dm.unions.get(prev_name_for_search),
                 prev,
                 n
             );
@@ -2732,7 +2732,7 @@ impl sema {
         }
 
         var dm = self.ctx->get_domain(infer.loc_file);
-        var un = dm.tagged_unions.get(infer.name);
+        var un = dm.unions.get(infer.name);
 
         foreach (var i; n->cases) {
             var case_node = i.get() => ast_match_case*;
@@ -3425,8 +3425,8 @@ impl sema {
             }
             self.impl_struct_name.clear();
             return;
-        } else if (dm.tagged_unions.has(node->name)) {
-            var union_self = dm.tagged_unions.get(node->name);
+        } else if (dm.unions.has(node->name)) {
+            var union_self = dm.unions.get(node->name);
             self.impl_struct_name.clear();
             self.impl_struct_name.append_str(node->name);
             foreach (var i; node->methods) {

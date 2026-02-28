@@ -513,8 +513,8 @@ impl ast2mir {
             var path_node = n->pattern->chain.get(0);
             var p = path_node => ast_call_path*;
             index = em.members.get(p->name);
-        } else if (dm.tagged_unions.has(ty->name)) {
-            var un = dm.tagged_unions.get(ty->name);
+        } else if (dm.unions.has(ty->name)) {
+            var un = dm.unions.get(ty->name);
             if (un.ref_enum_type.is_empty()) {
                 index = un.member_int_map.get(n->pattern->head->id->content);
             } else {
@@ -780,7 +780,7 @@ impl ast2mir {
 
             un.member_type.push(t);
         }
-        self.mctx->tagged_unions.push(un);
+        self.mctx->unions.push(un);
     }
 
     func visit_impl(self, n: ast_impl*) {

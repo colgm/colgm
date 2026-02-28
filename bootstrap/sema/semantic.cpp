@@ -649,9 +649,9 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
             prev,
             node
         );
-    } else if (domain.tagged_unions.count(prev.generic_name())) {
+    } else if (domain.unions.count(prev.generic_name())) {
         return resolve_tagged_union_get_field(
-            domain.tagged_unions.at(prev.generic_name()),
+            domain.unions.at(prev.generic_name()),
             prev,
             node
         );
@@ -920,8 +920,8 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
             }
             node->set_resolve_type(method.return_type);
             return method.return_type;
-        } else if (domain.tagged_unions.count(prev.generic_name())) {
-            const auto& un = domain.tagged_unions.at(prev.generic_name());
+        } else if (domain.unions.count(prev.generic_name())) {
+            const auto& un = domain.unions.at(prev.generic_name());
             const auto& method = un.static_method.at(prev.m_info.method_name);
             if (!check_static_call_args(method, node)) {
                 return type::error_type();
@@ -946,8 +946,8 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
             }
             node->set_resolve_type(method.return_type);
             return method.return_type;
-        } else if (domain.tagged_unions.count(prev.generic_name())) {
-            const auto& un = domain.tagged_unions.at(prev.generic_name());
+        } else if (domain.unions.count(prev.generic_name())) {
+            const auto& un = domain.unions.at(prev.generic_name());
             const auto& method = un.method.at(prev.m_info.method_name);
             if (!check_method_call_args(method, node)) {
                 return type::error_type();
@@ -1021,9 +1021,9 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
             prev,
             node
         );
-    } else if (domain.tagged_unions.count(prev.generic_name())) {
+    } else if (domain.unions.count(prev.generic_name())) {
         return resolve_tagged_union_initializer(
-            domain.tagged_unions.at(prev.generic_name()),
+            domain.unions.at(prev.generic_name()),
             prev,
             node
         );
@@ -1221,8 +1221,8 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
             "\" in \"" + prev.generic_name() + "\""
         );
         return type::error_type();
-    } else if (domain.tagged_unions.count(prev.generic_name()) && prev.is_global) {
-        const auto& tu = domain.tagged_unions.at(prev.generic_name());
+    } else if (domain.unions.count(prev.generic_name()) && prev.is_global) {
+        const auto& tu = domain.unions.at(prev.generic_name());
         if (tu.static_method.count(node->get_name())) {
             check_pub_static_method(node, node->get_name(), tu);
             const auto res = struct_static_method_infer(prev, node->get_name());
@@ -1297,9 +1297,9 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
             prev,
             node
         );
-    } else if (domain.tagged_unions.count(prev.generic_name())) {
+    } else if (domain.unions.count(prev.generic_name())) {
         return resolve_tagged_union_ptr_get_field(
-            domain.tagged_unions.at(prev.generic_name()),
+            domain.unions.at(prev.generic_name()),
             prev,
             node
         );
@@ -1923,7 +1923,7 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
     }
 
     const auto& dm = ctx.get_domain(infer.loc_file);
-    const auto& un = dm.tagged_unions.at(infer.name);
+    const auto& un = dm.unions.at(infer.name);
 
     for (auto i : node->get_cases()) {
         if (check_is_match_default(i->get_value())) {
@@ -2393,8 +2393,8 @@ void semantic::resolve_impl(impl* node) {
         }
         impl_struct_name = "";
         return;
-    } else if (domain.tagged_unions.count(node->get_name())) {
-        const auto& union_self = domain.tagged_unions.at(node->get_name());
+    } else if (domain.unions.count(node->get_name())) {
+        const auto& union_self = domain.unions.at(node->get_name());
         impl_struct_name = node->get_name();
         for (auto i : node->get_methods()) {
             resolve_method(i, union_self);

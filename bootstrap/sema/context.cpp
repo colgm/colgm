@@ -86,11 +86,11 @@ void sema_context::dump_single_struct(const colgm_struct& st) const {
 
 void sema_context::dump_tagged_unions() const {
     for (const auto& domain : global.domain) {
-        if (domain.second.tagged_unions.empty()) {
+        if (domain.second.unions.empty()) {
             continue;
         }
         std::cout << "\ninfo of " << domain.first << ":\n";
-        for (const auto& i : domain.second.tagged_unions) {
+        for (const auto& i : domain.second.unions) {
             dump_single_tagged_union(i.second);
         }
     }

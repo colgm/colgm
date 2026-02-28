@@ -219,7 +219,7 @@ impl size_calc {
 
             self.struct_mapper.insert(s_full_name, i.get().__ptr__());
         }
-        foreach (var i; mctx.tagged_unions) {
+        foreach (var i; mctx.unions) {
             var s_ty = type::instance(i.get().name.c_str, i.get().location.file.c_str);
             defer s_ty.delete();
 
@@ -232,7 +232,7 @@ impl size_calc {
         foreach (var i; mctx.structs) {
             self.calculate_single_struct_size(i.get());
         }
-        foreach (var i; mctx.tagged_unions) {
+        foreach (var i; mctx.unions) {
             self.calculate_single_tagged_union_size(i.get());
         }
 
@@ -246,7 +246,7 @@ impl size_calc {
             io::stdout().green().out("   MIR2SIR ").reset();
             io::stdout().out("Run pass");
             io::stdout().blue().out(" <calculate tagged union size>").reset().out(": ");
-            io::stdout().cyan().out_u64(mctx.tagged_unions.size).reset();
+            io::stdout().cyan().out_u64(mctx.unions.size).reset();
             io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
         }
     }

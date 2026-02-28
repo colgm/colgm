@@ -319,8 +319,8 @@ bool generic_visitor::check_is_trivial(ast::cond_compile* node,
             if (s.method.count("delete")) {
                 return false;
             }
-        } else if (domain.tagged_unions.count(t.generic_name())) {
-            const auto& u = domain.tagged_unions.at(t.generic_name());
+        } else if (domain.unions.count(t.generic_name())) {
+            const auto& u = domain.unions.at(t.generic_name());
             // with delete method, it's non-trivial
             if (u.method.count("delete")) {
                 return false;
@@ -355,8 +355,8 @@ bool generic_visitor::check_is_non_trivial(ast::cond_compile* node,
             if (!s.method.count("delete")) {
                 return false;
             }
-        } else if (domain.tagged_unions.count(t.generic_name())) {
-            const auto& u = domain.tagged_unions.at(t.generic_name());
+        } else if (domain.unions.count(t.generic_name())) {
+            const auto& u = domain.unions.at(t.generic_name());
             // without delete method, it's trivial
             if (!u.method.count("delete")) {
                 return false;
@@ -656,11 +656,11 @@ bool regist_pass::check_is_public_struct(ast::identifier* node,
 bool regist_pass::check_is_public_tagged_union(ast::identifier* node,
                                                const colgm_module& domain) {
     const auto& name = node->get_name();
-    if (!domain.tagged_unions.count(name)) {
+    if (!domain.unions.count(name)) {
         return false;
     }
-    if (domain.tagged_unions.count(name) &&
-        !domain.tagged_unions.at(name).is_public) {
+    if (domain.unions.count(name) &&
+        !domain.unions.at(name).is_public) {
         rp.report(node,
             "cannot import private tagged union \"" + name + "\""
         );
@@ -938,7 +938,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node, bool verbose) {
                 true
             );
         }
-        for (const auto& i : domain.tagged_unions) {
+        for (const auto& i : domain.unions) {
             if (!i.second.is_public) {
                 continue;
             }
@@ -989,7 +989,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node, bool verbose) {
             );
             continue;
         }
-        if (domain.tagged_unions.count(i->get_name())) {
+        if (domain.unions.count(i->get_name())) {
             if (!check_is_public_tagged_union(i, domain)) {
                 continue;
             }
@@ -1249,7 +1249,7 @@ void regist_pass::regist_single_struct_field(ast::struct_decl* node) {
 
 void regist_pass::check_self_reference() {
     const auto& structs = ctx.get_domain(ctx.this_file).structs;
-    const auto& tagged_unions = ctx.get_domain(ctx.this_file).tagged_unions;
+    const auto& unions = ctx.get_domain(ctx.this_file).unions;
 
     std::vector<std::string> need_check = {};
     for (const auto& st : structs) {
@@ -1260,13 +1260,13 @@ void regist_pass::check_self_reference() {
                 break;
             }
             if (!field.second.is_pointer() &&
-                tagged_unions.count(field.second.name)) {
+                unions.count(field.second.name)) {
                 need_check.push_back(st.first);
                 break;
             }
         }
     }
-    for (const auto& un : tagged_unions) {
+    for (const auto& un : unions) {
         for (const auto& member : un.second.member) {
             if (!member.second.is_pointer() &&
                 structs.count(member.second.name)) {
@@ -1274,7 +1274,7 @@ void regist_pass::check_self_reference() {
                 break;
             }
             if (!member.second.is_pointer() &&
-                tagged_unions.count(member.second.name)) {
+                unions.count(member.second.name)) {
                 need_check.push_back(un.first);
                 break;
             }
@@ -1288,7 +1288,7 @@ void regist_pass::check_self_reference() {
 
 void regist_pass::check_single_self_reference(const std::string& name) {
     const auto& structs = ctx.get_domain(ctx.this_file).structs;
-    const auto& tagged_unions = ctx.get_domain(ctx.this_file).tagged_unions;
+    const auto& unions = ctx.get_domain(ctx.this_file).unions;
 
     std::queue<std::pair<std::string, std::string>> bfs;
     std::unordered_set<std::string> visited;
@@ -1296,7 +1296,7 @@ void regist_pass::check_single_self_reference(const std::string& name) {
 
     const auto& location = structs.count(name)
         ? structs.at(name).location
-        : tagged_unions.at(name).location;
+        : unions.at(name).location;
 
     while (!bfs.empty()) {
         auto [current, path] = bfs.front();
@@ -1318,12 +1318,12 @@ void regist_pass::check_single_self_reference(const std::string& name) {
                     rp.report(location,
                         "self reference detected: " + new_path
                     );
-                } else if (structs.count(type_name) || tagged_unions.count(type_name)) {
+                } else if (structs.count(type_name) || unions.count(type_name)) {
                     bfs.push({type_name, new_path});
                 }
             }
         } else {
-            for (const auto& member : tagged_unions.at(current).member) {
+            for (const auto& member : unions.at(current).member) {
                 if (member.second.is_pointer()) {
                     continue;
                 }
@@ -1333,7 +1333,7 @@ void regist_pass::check_single_self_reference(const std::string& name) {
                     rp.report(location,
                         "self reference detected: " + new_path
                     );
-                } else if (structs.count(type_name) || tagged_unions.count(type_name)) {
+                } else if (structs.count(type_name) || unions.count(type_name)) {
                     bfs.push({type_name, new_path});
                 }
             }
@@ -1427,9 +1427,9 @@ void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node
         symbol_info {sym_kind::union_kind, ctx.this_file, true},
         false
     );
-    this_domain.tagged_unions.insert({name, {}});
+    this_domain.unions.insert({name, {}});
 
-    auto& self = this_domain.tagged_unions.at(name);
+    auto& self = this_domain.unions.at(name);
     self.name = name;
     self.location = node->get_location();
     if (node->is_public_union()) {
@@ -1444,7 +1444,7 @@ void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node
 void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node) {
     const auto& name = node->get_name();
     auto& this_domain = ctx.get_domain(ctx.this_file);
-    if (!this_domain.tagged_unions.count(name)) {
+    if (!this_domain.unions.count(name)) {
         // this branch means the symbol is not loaded successfully
         return;
     }
@@ -1453,7 +1453,7 @@ void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node
         .name = name,
         .loc_file = node->get_file()
     };
-    auto& self = this_domain.tagged_unions.at(name);
+    auto& self = this_domain.unions.at(name);
     if (node->get_members().empty()) {
         rp.report(node, "tagged union must have at least one member");
         return;
@@ -1653,10 +1653,10 @@ void regist_pass::regist_single_impl(ast::impl* node) {
         return;
     }
 
-    if (dm.tagged_unions.count(node->get_name())) {
+    if (dm.unions.count(node->get_name())) {
         regist_single_impl_for_tagged_union(
             node,
-            dm.tagged_unions.at(node->get_name())
+            dm.unions.at(node->get_name())
         );
         return;
     }
@@ -1863,7 +1863,7 @@ void regist_pass::run(ast::root* ast_root, bool verbose) {
 
     ctx.get_domain(ctx.this_file).enums.clear();
     ctx.get_domain(ctx.this_file).structs.clear();
-    ctx.get_domain(ctx.this_file).tagged_unions.clear();
+    ctx.get_domain(ctx.this_file).unions.clear();
     ctx.get_domain(ctx.this_file).generic_structs.clear();
     ctx.get_domain(ctx.this_file).functions.clear();
     ctx.get_domain(ctx.this_file).generic_functions.clear();

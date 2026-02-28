@@ -14,7 +14,7 @@ pub struct colgm_module {
     file_name: str,
     enums: hashmap<str, colgm_enum>,
     structs: hashmap<str, colgm_struct>,
-    tagged_unions: hashmap<str, colgm_tagged_union>,
+    unions: hashmap<str, colgm_tagged_union>,
     functions: hashmap<str, colgm_func>,
     generic_structs: hashmap<str, colgm_struct>,
     generic_functions: hashmap<str, colgm_func>,
@@ -35,7 +35,7 @@ impl colgm_module {
             file_name: str::instance(),
             enums: hashmap<str, colgm_enum>::instance(),
             structs: hashmap<str, colgm_struct>::instance(),
-            tagged_unions: hashmap<str, colgm_tagged_union>::instance(),
+            unions: hashmap<str, colgm_tagged_union>::instance(),
             functions: hashmap<str, colgm_func>::instance(),
             generic_structs: hashmap<str, colgm_struct>::instance(),
             generic_functions: hashmap<str, colgm_func>::instance(),
@@ -48,7 +48,7 @@ impl colgm_module {
         self.file_name.delete();
         self.enums.delete();
         self.structs.delete();
-        self.tagged_unions.delete();
+        self.unions.delete();
         self.functions.delete();
         self.generic_structs.delete();
         self.generic_functions.delete();
@@ -61,7 +61,7 @@ impl colgm_module {
             file_name: self.file_name.clone(),
             enums: self.enums.clone(),
             structs: self.structs.clone(),
-            tagged_unions: self.tagged_unions.clone(),
+            unions: self.unions.clone(),
             functions: self.functions.clone(),
             generic_structs: self.generic_structs.clone(),
             generic_functions: self.generic_functions.clone(),
@@ -75,7 +75,7 @@ impl colgm_module {
     pub func has_symbol(self) -> bool {
         return self.enums.size > 0 ||
                self.structs.size > 0 ||
-               self.tagged_unions.size > 0 ||
+               self.unions.size > 0 ||
                self.functions.size > 0 ||
                self.generic_structs.size > 0 ||
                self.generic_functions.size > 0;
@@ -107,8 +107,8 @@ impl colgm_module {
             }
         }
 
-        if (self.tagged_unions.size > 0) {
-            foreach (var i; self.tagged_unions) {
+        if (self.unions.size > 0) {
+            foreach (var i; self.unions) {
                 i.value().dump(out, pkg);
             }
         }

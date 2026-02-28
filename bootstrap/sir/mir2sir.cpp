@@ -22,7 +22,7 @@ void mir2sir::generate_type_mapper() {
             };
             type_mapper.insert({tp.full_path_name(), sym_kind::struct_kind});
         }
-        for (const auto& i : dm.second.tagged_unions) {
+        for (const auto& i : dm.second.unions) {
             const auto tp = type {
                 .name = i.second.name,
                 .loc_file = i.second.location.file
@@ -91,7 +91,7 @@ std::string mir2sir::array_type_mapping(const type& t) {
 }
 
 void mir2sir::emit_tagged_union(const mir_context& mctx) {
-    for (auto i : mctx.tagged_unions) {
+    for (auto i : mctx.unions) {
         auto tud = new sir_tagged_union(
             i->name,
             i->location,
@@ -768,8 +768,8 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
             temp_var,
             node->get_type().get_pointer_copy()
         ));
-    } else if (dm.tagged_unions.count(node->get_type().generic_name())) {
-        const auto& un = dm.tagged_unions.at(node->get_type().generic_name());
+    } else if (dm.unions.count(node->get_type().generic_name())) {
+        const auto& un = dm.unions.at(node->get_type().generic_name());
         for (const auto& i : node->get_fields()) {
             const auto tag = ssa_gen.create();
             block->add_stmt(new sir_get_field(
@@ -1071,8 +1071,8 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
             target,
             node->get_type().get_pointer_copy()
         ));
-    } else if (dm.tagged_unions.count(prev.resolve_type.generic_name())) {
-        const auto& un = dm.tagged_unions.at(prev.resolve_type.generic_name());
+    } else if (dm.unions.count(prev.resolve_type.generic_name())) {
+        const auto& un = dm.unions.at(prev.resolve_type.generic_name());
 
         // get method
         if (un.method.count(node->get_name())) {
@@ -1215,8 +1215,8 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
             temp_1,
             node->get_type().get_pointer_copy()
         ));
-    } else if (dm.tagged_unions.count(prev.resolve_type.generic_name())) {
-        const auto& un = dm.tagged_unions.at(prev.resolve_type.generic_name());
+    } else if (dm.unions.count(prev.resolve_type.generic_name())) {
+        const auto& un = dm.unions.at(prev.resolve_type.generic_name());
 
         // get method
         if (un.method.count(node->get_name())) {
@@ -1596,7 +1596,7 @@ void mir2sir::visit_mir_switch(mir_switch* node) {
 
     const auto& dm = ctx.get_domain(value.resolve_type.loc_file);
     sir_switch* switch_inst = nullptr;
-    if (dm.tagged_unions.count(value.resolve_type.generic_name())) {
+    if (dm.unions.count(value.resolve_type.generic_name())) {
         const auto tag = ssa_gen.create();
         const auto tag_value = ssa_gen.create();
         // if value type is not a pointer, means the value is tagged union value
@@ -2238,7 +2238,7 @@ void mir2sir::calculate_size(const mir_context& mctx) {
         };
         struct_mapper.insert({ty.full_path_name(), i});
     }
-    for (auto i : mctx.tagged_unions) {
+    for (auto i : mctx.unions) {
          const auto ty = type {
             .name = i->name,
             .loc_file = i->location.file
@@ -2249,7 +2249,7 @@ void mir2sir::calculate_size(const mir_context& mctx) {
     for (auto i : mctx.structs) {
         calculate_single_struct_size(i);
     }
-    for (auto i : mctx.tagged_unions) {
+    for (auto i : mctx.unions) {
         calculate_single_tagged_union_size(i);
     }
 }

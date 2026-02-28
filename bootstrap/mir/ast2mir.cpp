@@ -174,7 +174,7 @@ bool ast2mir::visit_tagged_union_decl(ast::tagged_union_decl* node) {
         new_tagged_union->member_type.push_back(generate_type(i->get_type()));
     }
 
-    mctx.tagged_unions.push_back(new_tagged_union);
+    mctx.unions.push_back(new_tagged_union);
     return true;
 }
 
@@ -473,8 +473,8 @@ mir_switch_case* ast2mir::generate_match_case(ast::match_case* node) {
         auto path_node = reinterpret_cast<ast::call_path*>(value_node->get_chain()[0]);
         const auto& label = path_node->get_name();
         index = dm.enums.at(ty.name).members.at(label);
-    } else if (dm.tagged_unions.count(ty.name)) {
-        const auto& un = dm.tagged_unions.at(ty.name);
+    } else if (dm.unions.count(ty.name)) {
+        const auto& un = dm.unions.at(ty.name);
         auto value_node = reinterpret_cast<ast::call*>(node->get_value());
         if (un.ref_enum_type.is_empty()) {
             const auto& label = value_node->get_head()->get_id()->get_name();

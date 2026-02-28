@@ -106,7 +106,7 @@ impl regist_pass {
 
             self.ctx->global_symbol().insert(i.value().name, info);
         }
-        foreach (var i; dm.tagged_unions) {
+        foreach (var i; dm.unions) {
             if (!i.value().is_public) {
                 continue;
             }
@@ -174,8 +174,8 @@ impl regist_pass {
                 is_public = dm.enums.get(name).is_public;
             } else if (dm.structs.has(name)) {
                 is_public = dm.structs.get(name).is_public;
-            } else if (dm.tagged_unions.has(name)) {
-                is_public = dm.tagged_unions.get(name).is_public;
+            } else if (dm.unions.has(name)) {
+                is_public = dm.unions.get(name).is_public;
             } else if (dm.functions.has(name)) {
                 is_public = dm.functions.get(name).is_public;
             } else if (dm.generic_structs.has(name)) {
@@ -217,7 +217,7 @@ impl regist_pass {
             } else if (dm.structs.has(name)) {
                 sym_info.kind = symbol_kind::struct_kind;
                 self.ctx->global_symbol().insert(name, sym_info);
-            } else if (dm.tagged_unions.has(name)) {
+            } else if (dm.unions.has(name)) {
                 sym_info.kind = symbol_kind::union_kind;
                 self.ctx->global_symbol().insert(name, sym_info);
             } else if (dm.functions.has(name)) {
@@ -1111,7 +1111,7 @@ impl regist_pass {
         }
 
         var dm = self.ctx->get_domain(node->base.location.file);
-        var union_info = dm.tagged_unions.get(name);
+        var union_info = dm.unions.get(name);
 
         if (node->members.empty()) {
             self.err->error(node->base.location,
@@ -1238,7 +1238,7 @@ impl regist_pass {
 
         // insert to domain
         var dm = self.ctx->get_domain(node->base.location.file);
-        dm.tagged_unions.insert(name, union_info);
+        dm.unions.insert(name, union_info);
 
         var sym_info = symbol_info::instance(
             symbol_kind::union_kind,
@@ -1282,7 +1282,7 @@ impl regist_pass {
     func check_single_self_reference(self, name: str&) {
         var dm = self.ctx->get_domain(self.ctx->this_file);
         var structs = dm.structs.__ptr__();
-        var tagged_unions = dm.tagged_unions.__ptr__();
+        var unions = dm.unions.__ptr__();
 
         var bfs = queue<pair<str, str>>::instance();
         defer bfs.delete();
@@ -1299,7 +1299,7 @@ impl regist_pass {
         if (structs->has(name)) {
             location = structs->get(name).location.__ptr__();
         } else {
-            location = tagged_unions->get(name).location.__ptr__();
+            location = unions->get(name).location.__ptr__();
         }
 
         while (!bfs.empty()) {
@@ -1338,7 +1338,7 @@ impl regist_pass {
 
                         self.err->error(location[0], info.c_str);
                     } else if (structs->has(fld_type.name) ||
-                            tagged_unions->has(fld_type.name)) {
+                            unions->has(fld_type.name)) {
                         var new_pair = pair<str, str>::instance(
                             fld_type.name,
                             new_ref_path
@@ -1349,7 +1349,7 @@ impl regist_pass {
                     }
                 }
             } else {
-                foreach (var m; tagged_unions->get(current).members) {
+                foreach (var m; unions->get(current).members) {
                     var member_name = m.key();
                     var member_type = m.value();
                     if (member_type.is_pointer()) {
@@ -1370,7 +1370,7 @@ impl regist_pass {
 
                         self.err->error(location[0], info.c_str);
                     } else if (structs->has(member_type.name) ||
-                            tagged_unions->has(member_type.name)) {
+                            unions->has(member_type.name)) {
                         var new_pair = pair<str, str>::instance(
                             member_type.name,
                             new_ref_path
@@ -1387,7 +1387,7 @@ impl regist_pass {
     func check_self_reference(self) {
         var dm = self.ctx->get_domain(self.ctx->this_file);
         var structs = dm.structs.__ptr__();
-        var tagged_unions = dm.tagged_unions.__ptr__();
+        var unions = dm.unions.__ptr__();
 
         var need_check = vec<str>::instance();
         defer need_check.delete();
@@ -1400,13 +1400,13 @@ impl regist_pass {
                     need_check.push(st.key());
                     break;
                 }
-                if (!field.is_pointer() && tagged_unions->has(field.name)) {
+                if (!field.is_pointer() && unions->has(field.name)) {
                     need_check.push(st.key());
                     break;
                 }
             }
         }
-        foreach (var un; tagged_unions) {
+        foreach (var un; unions) {
             var info = un.value();
             foreach (var m; info.members) {
                 var member = m.value();
@@ -1414,7 +1414,7 @@ impl regist_pass {
                     need_check.push(un.key());
                     break;
                 }
-                if (!member.is_pointer() && tagged_unions->has(member.name)) {
+                if (!member.is_pointer() && unions->has(member.name)) {
                     need_check.push(un.key());
                     break;
                 }
@@ -1683,8 +1683,8 @@ impl regist_pass {
             var struct_info = self.select_struct_by_generic_types(dm, node->generic_types != nil, name);
             self.regist_single_impl_for_struct(node, struct_info);
             return;
-        } else if (dm.tagged_unions.has(name)) {
-            self.regist_single_impl_for_tagged_union(node, dm.tagged_unions.get(name));
+        } else if (dm.unions.has(name)) {
+            self.regist_single_impl_for_tagged_union(node, dm.unions.get(name));
             return;
         }
 
