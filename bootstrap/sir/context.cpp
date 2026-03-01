@@ -54,7 +54,7 @@ const auto sir_tagged_union::get_mangled_name() const {
         .name = name,
         .loc_file = location.file
     };
-    return quoted_name("tagged_union." + mangle(ty.full_path_name()));
+    return quoted_name("union." + mangle(ty.full_path_name()));
 }
 
 void sir_tagged_union::dump(std::ostream& out) const {
@@ -228,7 +228,7 @@ void sir_context::dump_alloc_method(std::ostream& out) const {
             .loc_file = un->get_file()
         };
         const auto un_name = mangle(un_type.full_path_name());
-        const auto un_real_name = quoted_name("%tagged_union." + un_name);
+        const auto un_real_name = quoted_name("%union." + un_name);
         const auto alloc_func_name = quoted_name(un_name + ".__alloc__");
         out << "define ptr @" << alloc_func_name;
         out << "() alwaysinline {\n";

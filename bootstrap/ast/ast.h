@@ -37,7 +37,7 @@ enum class ast_type {
     ast_enum_decl,
     ast_field_pair,
     ast_struct_decl,
-    ast_tagged_union_decl,
+    ast_union_decl,
     ast_param,
     ast_param_list,
     ast_func_decl,
@@ -68,7 +68,7 @@ class generic_type_list;
 class enum_decl;
 class field_pair;
 class struct_decl;
-class tagged_union_decl;
+class union_decl;
 class param_list;
 class func_decl;
 class impl;

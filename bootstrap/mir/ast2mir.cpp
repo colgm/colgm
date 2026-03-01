@@ -165,7 +165,7 @@ bool ast2mir::visit_struct_decl(ast::struct_decl* node) {
     return true;
 }
 
-bool ast2mir::visit_tagged_union_decl(ast::tagged_union_decl* node) {
+bool ast2mir::visit_tagged_union_decl(ast::union_decl* node) {
     auto new_tagged_union = new mir_tagged_union;
     new_tagged_union->name = node->get_name();
     new_tagged_union->location = node->get_location();

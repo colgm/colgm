@@ -200,9 +200,9 @@ bool dumper::visit_struct_decl(struct_decl* node) {
     return true;
 }
 
-bool dumper::visit_tagged_union_decl(tagged_union_decl* node) {
+bool dumper::visit_tagged_union_decl(union_decl* node) {
     dump_indent();
-    std::cout << "tagged_union ";
+    std::cout << "union ";
     if (!node->get_ref_enum_name().empty()) {
         std::cout << "(" << node->get_ref_enum_name() << ") ";
     } else {

@@ -71,7 +71,7 @@ std::string mir2sir::type_mapping(const type& t) {
             copy.generics.clear();
             break;
         case sym_kind::union_kind:
-            copy.name = "%tagged_union." + mangle(full_name);
+            copy.name = "%union." + mangle(full_name);
             break;
         case sym_kind::enum_kind:
             // should copy pointer depth too

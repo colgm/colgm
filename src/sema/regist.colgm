@@ -1013,7 +1013,7 @@ impl regist_pass {
         }
     }
 
-    func check_ref_enum(self, node: ast_tagged_union_decl*, un: colgm_tagged_union&) {
+    func check_ref_enum(self, node: ast_union_decl*, un: colgm_tagged_union&) {
         if (node->ref_enum_name.empty()) {
             return;
         }
@@ -1065,7 +1065,7 @@ impl regist_pass {
         }
     }
 
-    func load_tagged_union_member_map(self, node: ast_tagged_union_decl*, un: colgm_tagged_union&) {
+    func load_tagged_union_member_map(self, node: ast_union_decl*, un: colgm_tagged_union&) {
         if (node->ref_enum_name.empty()) {
             foreach (var i; un.ordered_members) {
                 un.member_int_map.insert(
@@ -1098,7 +1098,7 @@ impl regist_pass {
         }
     }
 
-    func regist_single_tagged_union_member(self, node: ast_tagged_union_decl*) {
+    func regist_single_tagged_union_member(self, node: ast_union_decl*) {
         var name: str& = node->name;
         if (!self.ctx->global_symbol().has(name)) {
             var info = str::from("cannot find symbol \"");
@@ -1213,7 +1213,7 @@ impl regist_pass {
         un.method.insert(name, func_info);
     }
 
-    func regist_single_tagged_union_symbol(self, node: ast_tagged_union_decl*) {
+    func regist_single_tagged_union_symbol(self, node: ast_union_decl*) {
         var name: str& = node->name;
         if (self.ctx->global_symbol().has(name)) {
             var info = str::from("struct \"");
@@ -1257,8 +1257,8 @@ impl regist_pass {
             if (node->is(ast_kind::ast_struct_decl)) {
                 var struct_node = node => ast_struct_decl*;
                 self.regist_single_struct_symbol(struct_node);
-            } else if (node->is(ast_kind::ast_tagged_union_decl)) {
-                var union_node = node => ast_tagged_union_decl*;
+            } else if (node->is(ast_kind::ast_union_decl)) {
+                var union_node = node => ast_union_decl*;
                 self.regist_single_tagged_union_symbol(union_node);
             }
         }
@@ -1269,8 +1269,8 @@ impl regist_pass {
             if (node->is(ast_kind::ast_struct_decl)) {
                 var struct_node = node => ast_struct_decl*;
                 self.regist_single_struct_field(struct_node);
-            } else if (node->is(ast_kind::ast_tagged_union_decl)) {
-                var union_node = node => ast_tagged_union_decl*;
+            } else if (node->is(ast_kind::ast_union_decl)) {
+                var union_node = node => ast_union_decl*;
                 self.regist_single_tagged_union_member(union_node);
             }
         }

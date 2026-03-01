@@ -165,10 +165,10 @@ impl sir_tagged_union {
     pub func get_intrinsic_method_name(self, method: const i8*) -> str {
         var func_name = str::instance();
 
-        // %tagged_union.
-        // ^^^^^^^^^^^^^^ 14
-        // delete prefix `%tagged_union.`
-        var temp = self.name.substr_from(14);
+        // %union.
+        // ^^^^^^^ 7
+        // delete prefix `%union.`
+        var temp = self.name.substr_from(7);
         defer temp.delete();
 
         func_name.append_str(temp);
@@ -394,7 +394,7 @@ impl sir_context {
         out.out("target triple = \"").out(target.c_str).out("\"\n\n");
     }
 
-    func dump_tagged_unions(self, out: io&) {
+    func dump_unions(self, out: io&) {
         foreach (var i; self.tagged_union_decls) {
             i.get().dump(out);
         }
@@ -537,7 +537,7 @@ impl sir_context {
 
     pub func dump(self, out: io&, co: cli_option&) {
         self.dump_target_tripple(out, co);
-        self.dump_tagged_unions(out);
+        self.dump_unions(out);
         self.dump_structs(out);
         self.dump_func_decls(out);
         self.dump_const_strings(out);

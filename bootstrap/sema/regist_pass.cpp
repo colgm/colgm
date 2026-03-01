@@ -1105,8 +1105,8 @@ void regist_pass::regist_complex_structs(ast::root* node) {
         if (i->is(ast_type::ast_struct_decl)) {
             auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);
             regist_single_struct_symbol(struct_decl_node);
-        } else if (i->is(ast_type::ast_tagged_union_decl)) {
-            auto union_decl_node = reinterpret_cast<ast::tagged_union_decl*>(i);
+        } else if (i->is(ast_type::ast_union_decl)) {
+            auto union_decl_node = reinterpret_cast<ast::union_decl*>(i);
             regist_single_tagged_union_symbol(union_decl_node);
         }
     }
@@ -1115,8 +1115,8 @@ void regist_pass::regist_complex_structs(ast::root* node) {
         if (i->is(ast_type::ast_struct_decl)) {
             auto struct_decl_node = reinterpret_cast<ast::struct_decl*>(i);
             regist_single_struct_field(struct_decl_node);
-        } else if (i->is(ast_type::ast_tagged_union_decl)) {
-            auto union_decl_node = reinterpret_cast<ast::tagged_union_decl*>(i);
+        } else if (i->is(ast_type::ast_union_decl)) {
+            auto union_decl_node = reinterpret_cast<ast::union_decl*>(i);
             regist_single_tagged_union_member(union_decl_node);
         }
     }
@@ -1341,7 +1341,7 @@ void regist_pass::check_single_self_reference(const std::string& name) {
     }
 }
 
-void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
+void regist_pass::check_ref_enum(ast::union_decl* node,
                                  colgm_tagged_union& un) {
     if (node->get_ref_enum_name().empty()) {
         return;
@@ -1380,7 +1380,7 @@ void regist_pass::check_ref_enum(ast::tagged_union_decl* node,
     }
 }
 
-void regist_pass::load_tagged_union_member_map(ast::tagged_union_decl* node,
+void regist_pass::load_tagged_union_member_map(ast::union_decl* node,
                                                colgm_tagged_union& un) {
     if (node->get_ref_enum_name().empty()) {
         for (const auto& m : un.ordered_member) {
@@ -1412,7 +1412,7 @@ void regist_pass::load_tagged_union_member_map(ast::tagged_union_decl* node,
     }
 }
 
-void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node) {
+void regist_pass::regist_single_tagged_union_symbol(ast::union_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol().count(name)) {
         rp.report(node, "\"" + name + "\" conflicts with exist symbol");
@@ -1441,7 +1441,7 @@ void regist_pass::regist_single_tagged_union_symbol(ast::tagged_union_decl* node
     check_ref_enum(node, self);
 }
 
-void regist_pass::regist_single_tagged_union_member(ast::tagged_union_decl* node) {
+void regist_pass::regist_single_tagged_union_member(ast::union_decl* node) {
     const auto& name = node->get_name();
     auto& this_domain = ctx.get_domain(ctx.this_file);
     if (!this_domain.unions.count(name)) {

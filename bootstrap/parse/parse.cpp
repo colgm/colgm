@@ -698,10 +698,10 @@ struct_decl* parse::struct_gen(std::vector<cond_compile*>& conds,
     return res;
 }
 
-tagged_union_decl* parse::tagged_union_gen(std::vector<cond_compile*>& conds,
+union_decl* parse::tagged_union_gen(std::vector<cond_compile*>& conds,
                                                 bool flag_is_public,
                                                 bool flag_is_extern) {
-    auto res = new tagged_union_decl(toks[ptr].loc);
+    auto res = new union_decl(toks[ptr].loc);
     for (auto i : conds) {
         res->add_cond(i);
     }

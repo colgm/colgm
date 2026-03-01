@@ -140,7 +140,7 @@ struct_decl* struct_decl::clone() const {
     return ret;
 }
 
-tagged_union_decl::~tagged_union_decl() {
+union_decl::~union_decl() {
     for (auto i : fields) {
         delete i;
     }
@@ -149,12 +149,12 @@ tagged_union_decl::~tagged_union_decl() {
     }
 }
 
-void tagged_union_decl::accept(visitor* v) {
+void union_decl::accept(visitor* v) {
     v->visit_tagged_union_decl(this);
 }
 
-tagged_union_decl* tagged_union_decl::clone() const {
-    auto ret = new tagged_union_decl(location);
+union_decl* union_decl::clone() const {
+    auto ret = new union_decl(location);
     ret->name = name;
     ret->ref_enum_name = ref_enum_name;
     for (auto i : fields) {

@@ -162,7 +162,7 @@ private:
     enum_decl* enum_gen(std::vector<cond_compile*>&, bool, bool);
     field_pair* field_pair_gen();
     struct_decl* struct_gen(std::vector<cond_compile*>&, bool, bool);
-    tagged_union_decl* tagged_union_gen(std::vector<cond_compile*>&, bool, bool);
+    union_decl* tagged_union_gen(std::vector<cond_compile*>&, bool, bool);
     param* param_gen();
     param_list* param_list_gen();
     func_decl* function_gen(std::vector<cond_compile*>&, bool, bool);

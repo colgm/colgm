@@ -84,7 +84,7 @@ public:
     void dump_generics(const std::vector<std::string>&) const;
     void dump_structs() const;
     void dump_single_struct(const colgm_struct&) const;
-    void dump_tagged_unions() const;
+    void dump_unions() const;
     void dump_single_tagged_union(const colgm_tagged_union&) const;
     void dump_enums() const;
     void dump_functions() const;

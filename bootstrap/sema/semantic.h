@@ -83,6 +83,7 @@ private:
     type resolve_struct_initializer(const colgm_struct&, const type&, initializer*);
     type resolve_tagged_union_initializer(const colgm_tagged_union&, const type&, initializer*);
     type resolve_call_path(const type&, call_path*);
+    type resolve_union_call_path(const colgm_module&, const type&, call_path*);
     type resolve_ptr_get_field(const type&, ptr_get_field*);
     type resolve_struct_ptr_get_field(const colgm_struct&, const type&, ptr_get_field*);
     type resolve_tagged_union_ptr_get_field(const colgm_tagged_union&, const type&, ptr_get_field*);

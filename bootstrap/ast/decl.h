@@ -215,7 +215,7 @@ public:
     const auto& get_conds() const { return conds; }
 };
 
-class tagged_union_decl: public decl {
+class union_decl: public decl {
 private:
     std::vector<field_pair*> fields;
     std::string name;
@@ -229,12 +229,12 @@ private:
     bool is_extern;
 
 public:
-    tagged_union_decl(const span& loc):
-        decl(ast_type::ast_tagged_union_decl, loc),
+    union_decl(const span& loc):
+        decl(ast_type::ast_union_decl, loc),
         ref_enum_name(""), is_public(false), is_extern(false) {}
-    ~tagged_union_decl() override;
+    ~union_decl() override;
     void accept(visitor*) override;
-    tagged_union_decl* clone() const override;
+    union_decl* clone() const override;
 
     void set_public(bool f) { is_public = f; }
     void set_extern(bool f) { is_extern = f; }

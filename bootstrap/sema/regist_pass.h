@@ -163,10 +163,10 @@ private: // structs and tagged unions
     void regist_single_struct_field(ast::struct_decl*);
     void check_self_reference();
     void check_single_self_reference(const std::string&);
-    void check_ref_enum(ast::tagged_union_decl*, colgm_tagged_union&);
-    void load_tagged_union_member_map(ast::tagged_union_decl*, colgm_tagged_union&);
-    void regist_single_tagged_union_symbol(ast::tagged_union_decl*);
-    void regist_single_tagged_union_member(ast::tagged_union_decl*);
+    void check_ref_enum(ast::union_decl*, colgm_tagged_union&);
+    void load_tagged_union_member_map(ast::union_decl*, colgm_tagged_union&);
+    void regist_single_tagged_union_symbol(ast::union_decl*);
+    void regist_single_tagged_union_member(ast::union_decl*);
 
 private: // global functions
     void regist_global_funcs(ast::root*);

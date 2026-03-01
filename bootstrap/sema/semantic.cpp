@@ -1222,37 +1222,43 @@ type semantic::resolve_call_path(const type& prev, call_path* node) {
         );
         return type::error_type();
     } else if (domain.unions.count(prev.generic_name()) && prev.is_global) {
-        const auto& tu = domain.unions.at(prev.generic_name());
-        if (tu.static_method.count(node->get_name())) {
-            check_pub_static_method(node, node->get_name(), tu);
-            const auto res = struct_static_method_infer(prev, node->get_name());
-            node->set_resolve_type(res);
-            return res;
-        } else if (tu.method.count(node->get_name())) {
-            rp.report(node,
-                "\"" + node->get_name() +
-                "\" in \"" + prev.generic_name() + "\" is not static method"
-            );
-            return type::error_type();
-        } else if (tu.member.count(node->get_name())) {
-            auto res = tu.member.at(node->get_name());
-            res.is_union_tag = true;
-            res.is_global = true;
-            node->set_resolve_type(res);
-            return res;
-        } else {
-            rp.report(node,
-                "cannot find static method \"" + node->get_name() +
-                "\" in \"" + prev.generic_name() + "\"",
-                "maybe you mean \"" + tu.fuzzy_match_field(node->get_name()) + "\"?"
-            );
-            return type::error_type();
-        }
+        return resolve_union_call_path(domain, prev, node);
     }
 
     rp.report(node,
         "cannot find path \"" + node->get_name() +
         "\" in \"" + prev.to_string() + "\""
+    );
+    return type::error_type();
+}
+
+type semantic::resolve_union_call_path(const colgm_module& domain,
+                                       const type& prev,
+                                       call_path* node) {
+    const auto& tu = domain.unions.at(prev.generic_name());
+    if (tu.static_method.count(node->get_name())) {
+        check_pub_static_method(node, node->get_name(), tu);
+        const auto res = struct_static_method_infer(prev, node->get_name());
+        node->set_resolve_type(res);
+        return res;
+    } else if (tu.method.count(node->get_name())) {
+        rp.report(node,
+            "\"" + node->get_name() +
+            "\" in \"" + prev.generic_name() + "\" is not static method"
+        );
+        return type::error_type();
+    } else if (tu.member.count(node->get_name())) {
+        auto res = tu.member.at(node->get_name());
+        res.is_union_tag = true;
+        res.is_global = true;
+        node->set_resolve_type(res);
+        return res;
+    }
+
+    rp.report(node,
+        "cannot find static method or member \"" + node->get_name() +
+        "\" in \"" + prev.generic_name() + "\"",
+        "maybe you mean \"" + tu.fuzzy_match_field(node->get_name()) + "\"?"
     );
     return type::error_type();
 }
@@ -2439,7 +2445,7 @@ const error& semantic::analyse(root* ast_root, bool verbose) {
 void semantic::dump() {
     ctx.dump_enums();
     ctx.dump_structs();
-    ctx.dump_tagged_unions();
+    ctx.dump_unions();
     ctx.dump_functions();
 }
 
