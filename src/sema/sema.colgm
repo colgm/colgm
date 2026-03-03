@@ -25,6 +25,20 @@ use sema::type_resolve::{ type_resolve };
 use util::package::{ package };
 use util::cli::{ cli_option };
 
+struct type_context {
+    call_id_infer: type
+}
+
+impl type_context {
+    pub func from(infer: type&) -> type_context {
+        return type_context { call_id_infer: infer.clone() };
+    }
+
+    pub func delete(self) {
+        self.call_id_infer.delete();
+    }
+}
+
 pub struct sema {
     err: report*,
     root: root*,
@@ -1227,7 +1241,10 @@ impl sema {
         return !error_occur;
     }
 
-    func resolve_call_func_args(self, prev: type&, n: ast_call_func_args*) -> type {
+    func resolve_call_func_args(self,
+                                prev: type&,
+                                tctx: type_context&,
+                                n: ast_call_func_args*) -> type {
         var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
@@ -1352,9 +1369,39 @@ impl sema {
             return type::error_type();
         }
 
-        if (prev.is_union_tag) {
-            self.err->error(n->base.location, "unimplemented");
-            return type::error_type();
+        if (prev.is_union_tag && tctx.call_id_infer.is_union) {
+            if (n->args.size != 1) {
+                self.err->error(n->base.location, "union initializer should accept 1 argument");
+                return type::error_type();
+            }
+
+            var infer = self.resolve_expression(n->args.get(0));
+            defer infer.delete();
+
+            if (infer.is_error()) {
+                return type::error_type();
+            }
+            if (!infer.eq(prev) && !self.check_can_be_converted(n->args.get(0), prev)) {
+                var info = str::from("expect \"");
+                defer info.delete();
+                var arg_name = prev.full_path_name_with_pointer(self.pkg);
+                defer arg_name.delete();
+                var infer_name = infer.full_path_name_with_pointer(self.pkg);
+                defer infer_name.delete();
+
+                info.append_str(arg_name);
+                info.append("\" but get \"");
+                info.append_str(infer_name);
+                info.append("\"");
+                self.err->error(n->base.location, info.c_str);
+
+                return type::error_type();
+            }
+
+            var res = tctx.call_id_infer.clone();
+            res.is_global_sym = false;
+            n->base.resolved_type.reset_with(res);
+            return res;
         }
 
         self.err->error(n->base.location, "cannot call non-function");
@@ -1600,7 +1647,10 @@ impl sema {
         return type::error_type();
     }
 
-    func resolve_initializer(self, prev: type&, n: ast_initializer*) -> type {
+    func resolve_initializer(self,
+                             prev: type&,
+                             tctx: type_context&,
+                             n: ast_initializer*) -> type {
         if (!prev.is_global_sym) {
             self.err->error(n->base.location,
                 "need a global symbol to initialize"
@@ -1620,10 +1670,10 @@ impl sema {
 
         if (dm.structs.has(prev_name_for_search)) {
             var struct_self = dm.structs.get(prev_name_for_search);
-            return self.resolve_struct_initializer(struct_self, prev, n);
+            return self.resolve_struct_initializer(struct_self, prev, tctx, n);
         } else if (dm.unions.has(prev_name_for_search)) {
             var union_self = dm.unions.get(prev_name_for_search);
-            return self.resolve_tagged_union_initializer(union_self, prev, n);
+            return self.resolve_tagged_union_initializer(union_self, prev, tctx, n);
         }
 
         var info = str::from("\"");
@@ -1635,11 +1685,19 @@ impl sema {
         return type::error_type();
     }
 
-    func resolve_struct_initializer(self, struct_self: colgm_struct&, prev: type&, n: ast_initializer*) -> type {
+    func resolve_struct_initializer(self,
+                                    struct_self: colgm_struct&,
+                                    prev: type&,
+                                    tctx: type_context&,
+                                    n: ast_initializer*) -> type {
         var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
         var copy = prev.clone();
+        if (prev.is_union_tag) {
+            copy.delete();
+            copy = tctx.call_id_infer.clone();
+        }
         copy.is_global_sym = false;
         n->base.resolved_type.reset_with(copy);
 
@@ -1725,11 +1783,19 @@ impl sema {
         return copy;
     }
 
-    func resolve_tagged_union_initializer(self, union_self: colgm_tagged_union&, prev: type&, n: ast_initializer*) -> type {
+    func resolve_tagged_union_initializer(self,
+                                          union_self: colgm_tagged_union&,
+                                          prev: type&,
+                                          tctx: type_context&,
+                                          n: ast_initializer*) -> type {
         var prev_name_for_search = prev.generic_name(self.pkg);
         defer prev_name_for_search.delete();
 
         var copy = prev.clone();
+        if (prev.is_union_tag) {
+            copy.delete();
+            copy = tctx.call_id_infer.clone();
+        }
         copy.is_global_sym = false;
         n->base.resolved_type.reset_with(copy);
 
@@ -1960,6 +2026,9 @@ impl sema {
             return type::error_type();
         }
 
+        var tctx = type_context::from(infer);
+        defer tctx.delete();
+
         foreach (var i; n->chain) {
             var c = i.get();
             if (c->kind != ast_kind::ast_call_func_args &&
@@ -1980,6 +2049,7 @@ impl sema {
                     infer.delete();
                     infer = self.resolve_call_func_args(
                         prev,
+                        tctx,
                         c => ast_call_func_args*
                     );
                 }
@@ -1999,7 +2069,7 @@ impl sema {
                 }
                 ast_kind::ast_initializer => {
                     infer.delete();
-                    infer = self.resolve_initializer(prev, c => ast_initializer*);
+                    infer = self.resolve_initializer(prev, tctx, c => ast_initializer*);
                 }
                 ast_kind::ast_ptr_get_field => {
                     infer.delete();

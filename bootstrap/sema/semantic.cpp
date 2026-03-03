@@ -858,7 +858,9 @@ type semantic::resolve_call_id(call_id* node) {
     return infer;
 }
 
-type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
+type semantic::resolve_call_func_args(const type& prev,
+                                      const type_context& tctx,
+                                      call_func_args* node) {
     // global function call
     if (prev.is_global_func) {
         const auto& domain = ctx.get_domain(prev.loc_file);
@@ -962,9 +964,30 @@ type semantic::resolve_call_func_args(const type& prev, call_func_args* node) {
         return type::error_type();
     }
 
-    if (prev.is_union_tag) {
-        rp.report(node, "unimplemented");
-        return type::error_type();
+    if (prev.is_union_tag && tctx.call_id_infer.is_union) {
+        if (node->get_args().size() != 1) {
+            rp.report(node,
+                "union initializer should accept 1 argument"
+            );
+            return type::error_type();
+        }
+
+        auto arg_infer = resolve_expression(node->get_args()[0]);
+        if (arg_infer.is_error()) {
+            return type::error_type();
+        }
+        if (arg_infer != prev && !check_can_be_converted(node->get_args()[0], prev)) {
+            rp.report(node,
+                "expect \"" + prev.to_string() +
+                "\" but get \"" + arg_infer.to_string() + "\""
+            );
+            return type::error_type();
+        }
+
+        auto copy = tctx.call_id_infer;
+        copy.is_global = false;
+        node->set_resolve_type(copy);
+        return copy;
     }
 
     rp.report(node, "cannot call non-function");
@@ -1003,7 +1026,9 @@ type semantic::resolve_call_index(const type& prev, call_index* node) {
     return result;
 }
 
-type semantic::resolve_initializer(const type& prev, initializer* node) {
+type semantic::resolve_initializer(const type& prev,
+                                   const type_context& tctx,
+                                   initializer* node) {
     if (!prev.is_global) {
         rp.report(node, "need a global symbol to initialize");
         return type::error_type();
@@ -1019,12 +1044,14 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
         return resolve_struct_initializer(
             domain.structs.at(prev.generic_name()),
             prev,
+            tctx,
             node
         );
     } else if (domain.unions.count(prev.generic_name())) {
         return resolve_tagged_union_initializer(
             domain.unions.at(prev.generic_name()),
             prev,
+            tctx,
             node
         );
     }
@@ -1038,8 +1065,9 @@ type semantic::resolve_initializer(const type& prev, initializer* node) {
 
 type semantic::resolve_struct_initializer(const colgm_struct& st,
                                           const type& prev,
+                                          const type_context& tctx,
                                           initializer* node) {
-    auto copy = prev;
+    auto copy = prev.is_union_tag ? tctx.call_id_infer : prev;
     copy.is_global = false;
     node->set_resolve_type(copy);
 
@@ -1105,8 +1133,9 @@ type semantic::resolve_struct_initializer(const colgm_struct& st,
 
 type semantic::resolve_tagged_union_initializer(const colgm_tagged_union& un,
                                                 const type& prev,
+                                                const type_context& tctx,
                                                 initializer* node) {
-    auto copy = prev;
+    auto copy = prev.is_union_tag ? tctx.call_id_infer : prev;
     copy.is_global = false;
     node->set_resolve_type(copy);
 
@@ -1377,6 +1406,8 @@ type semantic::resolve_call(call* node) {
         return infer;
     }
 
+    auto tctx = type_context { .call_id_infer = infer };
+
     // resolve call chain
     for (auto i : node->get_chain()) {
         if (i->get_ast_type() != ast_type::ast_call_func_args &&
@@ -1392,7 +1423,7 @@ type semantic::resolve_call(call* node) {
             break;
         case ast_type::ast_call_func_args:
             infer = resolve_call_func_args(
-                infer, reinterpret_cast<call_func_args*>(i)
+                infer, tctx, reinterpret_cast<call_func_args*>(i)
             );
             break;
         case ast_type::ast_call_index:
@@ -1407,7 +1438,7 @@ type semantic::resolve_call(call* node) {
             break;
         case ast_type::ast_initializer:
             infer = resolve_initializer(
-                infer, reinterpret_cast<initializer*>(i)
+                infer, tctx, reinterpret_cast<initializer*>(i)
             );
             break;
         case ast_type::ast_ptr_get_field:

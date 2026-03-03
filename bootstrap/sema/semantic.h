@@ -23,6 +23,10 @@ namespace colgm {
 
 using namespace ast;
 
+struct type_context {
+    type call_id_infer;
+};
+
 class semantic {
 private:
     error& err;
@@ -77,11 +81,11 @@ private:
     bool check_static_call_args(const colgm_func&, call_func_args*);
     bool check_method_call_args(const colgm_func&, call_func_args*);
     type resolve_call_id(call_id*);
-    type resolve_call_func_args(const type&, call_func_args*);
+    type resolve_call_func_args(const type&, const type_context&, call_func_args*);
     type resolve_call_index(const type&, call_index*);
-    type resolve_initializer(const type&, initializer*);
-    type resolve_struct_initializer(const colgm_struct&, const type&, initializer*);
-    type resolve_tagged_union_initializer(const colgm_tagged_union&, const type&, initializer*);
+    type resolve_initializer(const type&, const type_context&, initializer*);
+    type resolve_struct_initializer(const colgm_struct&, const type&, const type_context&, initializer*);
+    type resolve_tagged_union_initializer(const colgm_tagged_union&, const type&, const type_context&, initializer*);
     type resolve_call_path(const type&, call_path*);
     type resolve_union_call_path(const colgm_module&, const type&, call_path*);
     type resolve_ptr_get_field(const type&, ptr_get_field*);
