@@ -22,9 +22,12 @@ public:
 class null: public expr {
 public:
     null(): expr(ast_type::ast_null, span::null()) {}
+    null(const type& t): expr(ast_type::ast_type_def, span::null()) {
+        set_resolve_type(t);
+    }
     ~null() override = default;
     void accept(visitor*) override { return; }
-    null* clone() const override { return new null(); }
+    null* clone() const override { return new null(get_resolve()); }
 };
 
 class unary_operator: public expr {
@@ -42,6 +45,10 @@ private:
 public:
     unary_operator(const span& loc):
         expr(ast_type::ast_unary_operator, loc), value(nullptr) {}
+    unary_operator(const span& loc, const type& t):
+        expr(ast_type::ast_unary_operator, loc), value(nullptr) {
+        set_resolve_type(t);
+    }
     ~unary_operator() override;
     void accept(visitor*) override;
     unary_operator* clone() const override;
@@ -82,6 +89,11 @@ public:
     binary_operator(const span& loc):
         expr(ast_type::ast_binary_operator, loc),
         left(nullptr), right(nullptr) {}
+    binary_operator(const span& loc, const type& t):
+        expr(ast_type::ast_binary_operator, loc),
+        left(nullptr), right(nullptr) {
+        set_resolve_type(t);
+    }
     ~binary_operator() override;
     void accept(visitor*) override;
     binary_operator* clone() const override;
@@ -103,6 +115,11 @@ public:
     type_convert(const span& loc):
         expr(ast_type::ast_type_convert, loc),
         source(nullptr), target(nullptr) {}
+    type_convert(const span& loc, const type& t):
+        expr(ast_type::ast_type_convert, loc),
+        source(nullptr), target(nullptr) {
+        set_resolve_type(t);
+    }
     ~type_convert() override;
     void accept(visitor*) override;
     type_convert* clone() const override;
@@ -121,10 +138,14 @@ private:
 public:
     identifier(const span& loc, const std::string& id_name):
         expr(ast_type::ast_identifier, loc), name(id_name) {}
+    identifier(const span& loc, const std::string& id_name, const type& t):
+        expr(ast_type::ast_identifier, loc), name(id_name) {
+        set_resolve_type(t);
+    }
     ~identifier() override = default;
     void accept(visitor*) override;
     identifier* clone() const override {
-        return new identifier(location, name);
+        return new identifier(location, name, get_resolve());
     }
     void set_name(const std::string& id_name) { name = id_name; }
     const auto& get_name() const { return name; }
@@ -135,9 +156,15 @@ class nil_literal: public expr {
 public:
     nil_literal(const span& loc):
         expr(ast_type::ast_nil_literal, loc) {}
+    nil_literal(const span& loc, const type& t):
+        expr(ast_type::ast_nil_literal, loc) {
+        set_resolve_type(t);
+    }
     ~nil_literal() override = default;
     void accept(visitor*) override;
-    nil_literal* clone() const override { return new nil_literal(location); }
+    nil_literal* clone() const override {
+        return new nil_literal(location, get_resolve());
+    }
 };
 
 class number_literal: public expr {
@@ -147,10 +174,14 @@ private:
 public:
     number_literal(const span& loc, const std::string& number):
         expr(ast_type::ast_number_literal, loc), literal(number) {}
+    number_literal(const span& loc, const std::string& number, const type& t):
+        expr(ast_type::ast_number_literal, loc), literal(number) {
+        set_resolve_type(t);
+    }
     ~number_literal() override = default;
     void accept(visitor*) override;
     number_literal* clone() const override {
-        return new number_literal(location, literal);
+        return new number_literal(location, literal, get_resolve());
     }
 
     const auto& get_number() const { return literal; }
@@ -165,10 +196,14 @@ private:
 public:
     string_literal(const span& loc, const std::string& str):
         expr(ast_type::ast_string_literal, loc), literal(str) {}
+    string_literal(const span& loc, const std::string& str, const type& t):
+        expr(ast_type::ast_string_literal, loc), literal(str) {
+        set_resolve_type(t);
+    }
     ~string_literal() override = default;
     void accept(visitor*) override;
     string_literal* clone() const override {
-        return new string_literal(location, literal);
+        return new string_literal(location, literal, get_resolve());
     }
 
     const auto& get_string() const { return literal; }
@@ -181,10 +216,14 @@ private:
 public:
     char_literal(const span& loc, const char c):
         expr(ast_type::ast_char_literal, loc), literal(c) {}
+    char_literal(const span& loc, const char c, const type& t):
+        expr(ast_type::ast_char_literal, loc), literal(c) {
+        set_resolve_type(t);
+    }
     ~char_literal() override = default;
     void accept(visitor*) override;
     char_literal* clone() const override {
-        return new char_literal(location, literal);
+        return new char_literal(location, literal, get_resolve());
     }
 
     auto get_char() const { return literal; }
@@ -197,10 +236,14 @@ private:
 public:
     bool_literal(const span& loc, bool f):
         expr(ast_type::ast_bool_literal, loc), flag(f) {}
+    bool_literal(const span& loc, bool f, const type& t):
+        expr(ast_type::ast_bool_literal, loc), flag(f) {
+        set_resolve_type(t);
+    }
     ~bool_literal() override = default;
     void accept(visitor*) override;
     bool_literal* clone() const override {
-        return new bool_literal(location, flag);
+        return new bool_literal(location, flag, get_resolve());
     }
 
     auto get_flag() const { return flag; }
@@ -213,6 +256,10 @@ private:
 public:
     array_list(const span& loc):
         expr(ast_type::ast_array_list, loc) {}
+    array_list(const span& loc, const type& t):
+        expr(ast_type::ast_array_list, loc) {
+        set_resolve_type(t);
+    }
     ~array_list() override;
     void accept(visitor*) override;
     array_list* clone() const override;
@@ -229,6 +276,11 @@ public:
     call_id(const span& loc):
         expr(ast_type::ast_call_id, loc),
         id(nullptr), generic_types(nullptr) {}
+    call_id(const span& loc, const type& t):
+        expr(ast_type::ast_call_id, loc),
+        id(nullptr), generic_types(nullptr) {
+        set_resolve_type(t);
+    }
     ~call_id() override;
     void accept(visitor*) override;
     call_id* clone() const override;
@@ -245,6 +297,10 @@ private:
 public:
     call_index(const span& loc):
         expr(ast_type::ast_call_index, loc), index(nullptr) {}
+    call_index(const span& loc, const type& t):
+        expr(ast_type::ast_call_index, loc), index(nullptr) {
+        set_resolve_type(t);
+    }
     ~call_index() override;
     void accept(visitor*) override;
     call_index* clone() const override;
@@ -261,6 +317,10 @@ private:
 public:
     call_func_args(const span& loc):
         expr(ast_type::ast_call_func_args, loc) {}
+    call_func_args(const span& loc, const type& t):
+        expr(ast_type::ast_call_func_args, loc) {
+        set_resolve_type(t);
+    }
     ~call_func_args() override;
     void accept(visitor*) override;
     call_func_args* clone() const override;
@@ -282,10 +342,15 @@ public:
     get_field(const span& loc, const span& opr_loc, const std::string& f):
         expr(ast_type::ast_get_field, loc),
         operator_location(opr_loc), name(f) {}
+    get_field(const span& loc, const span& opr_loc, const std::string& f, const type& t):
+        expr(ast_type::ast_get_field, loc),
+        operator_location(opr_loc), name(f) {
+        set_resolve_type(t);
+    }
     ~get_field() override = default;
     void accept(visitor*) override;
     get_field* clone() const override {
-        return new get_field(location, operator_location, name);
+        return new get_field(location, operator_location, name, get_resolve());
     }
 
     const auto& get_name() const { return name; }
@@ -301,10 +366,15 @@ public:
     ptr_get_field(const span& loc, const span& opr_loc, const std::string& f):
         expr(ast_type::ast_ptr_get_field, loc),
         operator_location(opr_loc), name(f) {}
+    ptr_get_field(const span& loc, const span& opr_loc, const std::string& f, const type& t):
+        expr(ast_type::ast_ptr_get_field, loc),
+        operator_location(opr_loc), name(f) {
+        set_resolve_type(t);
+    }
     ~ptr_get_field() override = default;
     void accept(visitor*) override;
     ptr_get_field* clone() const override {
-        return new ptr_get_field(location, operator_location, name);
+        return new ptr_get_field(location, operator_location, name, get_resolve());
     }
 
     const auto& get_name() const { return name; }
@@ -320,6 +390,11 @@ public:
     init_pair(const span& loc):
         expr(ast_type::ast_init_pair, loc),
         field(nullptr), value(nullptr) {}
+    init_pair(const span& loc, const type& t):
+        expr(ast_type::ast_init_pair, loc),
+        field(nullptr), value(nullptr) {
+        set_resolve_type(t);
+    }
     ~init_pair() override {
         delete field;
         delete value;
@@ -340,6 +415,10 @@ private:
 public:
     initializer(const span& loc):
         expr(ast_type::ast_initializer, loc) {}
+    initializer(const span& loc, const type& t):
+        expr(ast_type::ast_initializer, loc) {
+        set_resolve_type(t);
+    }
     ~initializer() override {
         for (auto i : pairs) {
             delete i;
@@ -359,10 +438,14 @@ private:
 public:
     call_path(const span& loc, const std::string& f):
         expr(ast_type::ast_call_path, loc), name(f) {}
+    call_path(const span& loc, const std::string& f, const type& t):
+        expr(ast_type::ast_call_path, loc), name(f) {
+        set_resolve_type(t);
+    }
     ~call_path() override = default;
     void accept(visitor*) override;
     call_path* clone() const override {
-        return new call_path(location, name);
+        return new call_path(location, name, get_resolve());
     }
 
     const auto& get_name() const { return name; }
@@ -376,6 +459,10 @@ private:
 public:
     call(const span& loc):
         expr(ast_type::ast_call, loc), head(nullptr) {}
+    call(const span& loc, const type& t):
+        expr(ast_type::ast_call, loc), head(nullptr) {
+        set_resolve_type(t);
+    }
     ~call() override;
     void accept(visitor*) override;
     call* clone() const override;
@@ -409,6 +496,11 @@ public:
     assignment(const span& loc):
         expr(ast_type::ast_assignment, loc),
         left(nullptr), right(nullptr) {}
+    assignment(const span& loc, const colgm::type& t):
+        expr(ast_type::ast_assignment, loc),
+        left(nullptr), right(nullptr) {
+        set_resolve_type(t);
+    }
     ~assignment() override;
     void accept(visitor*) override;
     assignment* clone() const override;

@@ -16,7 +16,7 @@ void unary_operator::accept(visitor* v) {
 }
 
 unary_operator* unary_operator::clone() const {
-    auto copy = new unary_operator(location);
+    auto copy = new unary_operator(location, get_resolve());
     copy->opr = opr;
     copy->value = value->clone();
     return copy;
@@ -32,7 +32,7 @@ void binary_operator::accept(visitor* v) {
 }
 
 binary_operator* binary_operator::clone() const {
-    auto copy = new binary_operator(location);
+    auto copy = new binary_operator(location, get_resolve());
     copy->opr = opr;
     copy->left = left->clone();
     copy->right = right->clone();
@@ -49,7 +49,7 @@ void type_convert::accept(visitor* v) {
 }
 
 type_convert* type_convert::clone() const {
-    auto copy = new type_convert(location);
+    auto copy = new type_convert(location, get_resolve());
     copy->source = source->clone();
     copy->target = target->clone();
     return copy;
@@ -90,7 +90,7 @@ void array_list::accept(visitor* v) {
 }
 
 array_list* array_list::clone() const {
-    auto copy = new array_list(location);
+    auto copy = new array_list(location, get_resolve());
     for (auto i : value) {
         copy->value.push_back(i->clone());
     }
@@ -107,7 +107,7 @@ void call_id::accept(visitor* v) {
 }
 
 call_id* call_id::clone() const {
-    auto copy = new call_id(location);
+    auto copy = new call_id(location, get_resolve());
     copy->id = id->clone();
     if (generic_types) {
         copy->generic_types = generic_types->clone();
@@ -124,7 +124,7 @@ void call_index::accept(visitor* v) {
 }
 
 call_index* call_index::clone() const {
-    auto copy = new call_index(location);
+    auto copy = new call_index(location, get_resolve());
     copy->index = index->clone();
     return copy;
 }
@@ -140,7 +140,7 @@ void call_func_args::accept(visitor* v) {
 }
 
 call_func_args* call_func_args::clone() const {
-    auto copy = new call_func_args(location);
+    auto copy = new call_func_args(location, get_resolve());
     for (auto i : args) {
         copy->args.push_back(i->clone());
     }
@@ -161,7 +161,7 @@ void init_pair::accept(visitor* v) {
 }
 
 init_pair* init_pair::clone() const {
-    auto copy = new init_pair(location);
+    auto copy = new init_pair(location, get_resolve());
     copy->field = field->clone();
     copy->value = value->clone();
     return copy;
@@ -172,7 +172,7 @@ void initializer::accept(visitor* v) {
 }
 
 initializer* initializer::clone() const {
-    auto copy = new initializer(location);
+    auto copy = new initializer(location, get_resolve());
     for (auto i : pairs) {
         copy->pairs.push_back(i->clone());
     }
@@ -195,7 +195,7 @@ void call::accept(visitor* v) {
 }
 
 call* call::clone() const {
-    auto copy = new call(location);
+    auto copy = new call(location, get_resolve());
     copy->head = head->clone();
     for (auto i : chain) {
         copy->chain.push_back(i->clone());
@@ -213,7 +213,7 @@ void assignment::accept(visitor* v) {
 }
 
 assignment* assignment::clone() const {
-    auto copy = new assignment(location);
+    auto copy = new assignment(location, get_resolve());
     copy->set_type(type);
     copy->left = left->clone();
     copy->right = right->clone();

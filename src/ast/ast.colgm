@@ -173,6 +173,15 @@ impl ast {
         };
     }
 
+    pub func clone_base(self) -> ast {
+        return ast {
+            kind: self.kind,
+            location: self.location.clone(),
+            redirect_location: self.redirect_location.clone(),
+            resolved_type: self.resolved_type.clone()
+        };
+    }
+
     pub func is_redirected(self) -> bool {
         return !self.redirect_location.empty();
     }
@@ -615,7 +624,9 @@ impl ast_null {
     }
 
     pub func copy(self) -> ast_null* {
-        return ast_null::new();
+        var res = ast_null::__alloc__();
+        res->base = self.base.clone_base();
+        return res;
     }
 }
 
@@ -636,10 +647,7 @@ impl root {
 
     pub func copy(self) -> root* {
         var res = root::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_root,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->imports = vec<ast*>::instance();
         foreach (var i; self.imports) {
             res->imports.push(i.get()->copy());
@@ -684,10 +692,7 @@ impl ast_unary_operator {
 
     pub func copy(self) -> ast_unary_operator* {
         var res = ast_unary_operator::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_unary_operator,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->kind = self.kind;
         if (self.value != nil) {
             res->value = self.value->copy();
@@ -724,10 +729,7 @@ impl ast_binary_operator {
 
     pub func copy(self) -> ast_binary_operator* {
         var res = ast_binary_operator::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_binary_operator,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->kind = self.kind;
         if (self.left != nil) {
             res->left = self.left->copy();
@@ -771,10 +773,7 @@ impl ast_type_convert {
 
     pub func copy(self) -> ast_type_convert* {
         var res = ast_type_convert::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_type_convert,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.from != nil) {
             res->from = self.from->copy();
         } else {
@@ -816,10 +815,7 @@ impl ast_identifier {
 
     pub func copy(self) -> ast_identifier* {
         var res = ast_identifier::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_identifier,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->content = self.content.clone();
         return res;
     }
@@ -841,7 +837,9 @@ impl ast_nil {
     }
 
     pub func copy(self) -> ast_nil* {
-        return ast_nil::new(self.base.location);
+        var res = ast_nil::__alloc__();
+        res->base = self.base.clone_base();
+        return res;
     }
 }
 
@@ -860,7 +858,7 @@ impl ast_number {
 
     pub func copy(self) -> ast_number* {
         var res = ast_number::__alloc__();
-        res->base = ast::instance(ast_kind::ast_number, self.base.location);
+        res->base = self.base.clone_base();
         res->literal = self.literal.clone();
         return res;
     }
@@ -885,7 +883,7 @@ impl ast_string {
 
     pub func copy(self) -> ast_string* {
         var res = ast_string::__alloc__();
-        res->base = ast::instance(ast_kind::ast_string, self.base.location);
+        res->base = self.base.clone_base();
         res->literal = self.literal.clone();
         return res;
     }
@@ -910,7 +908,7 @@ impl ast_char {
 
     pub func copy(self) -> ast_char* {
         var res = ast_char::__alloc__();
-        res->base = ast::instance(ast_kind::ast_char, self.base.location);
+        res->base = self.base.clone_base();
         res->literal = self.literal.clone();
         return res;
     }
@@ -934,7 +932,10 @@ impl ast_bool {
     }
 
     pub func copy(self) -> ast_bool* {
-        return ast_bool::new(self.base.location, self.flag);
+        var res = ast_bool::__alloc__();
+        res->base = self.base.clone_base();
+        res->flag = self.flag;
+        return res;
     }
 }
 
@@ -953,10 +954,7 @@ impl ast_array_list {
 
     pub func copy(self) -> ast_array_list* {
         var res = ast_array_list::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_array_list,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->value = vec<ast*>::instance();
         foreach (var i; self.value) {
             res->value.push(i.get()->copy());
@@ -989,10 +987,7 @@ impl ast_call_index {
 
     pub func copy(self) -> ast_call_index* {
         var res = ast_call_index::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_call_index,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.index != nil) {
             res->index = self.index->copy();
         } else {
@@ -1026,10 +1021,7 @@ impl ast_call_func_args {
 
     pub func copy(self) -> ast_call_func_args* {
         var res = ast_call_func_args::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_call_func_args,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->args = vec<ast*>::instance();
         res->args_is_ref = vec<bool>::instance();
         foreach (var i; self.args) {
@@ -1066,10 +1058,7 @@ impl ast_get_field {
 
     pub func copy(self) -> ast_get_field* {
         var res = ast_get_field::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_get_field,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->operator_location = self.operator_location.clone();
         res->name = self.name.clone();
         return res;
@@ -1098,10 +1087,7 @@ impl ast_ptr_get_field {
 
     pub func copy(self) -> ast_ptr_get_field* {
         var res = ast_ptr_get_field::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_ptr_get_field,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->operator_location = self.operator_location.clone();
         res->name = self.name.clone();
         return res;
@@ -1130,10 +1116,7 @@ impl ast_init_pair {
 
     pub func copy(self) -> ast_init_pair* {
         var res = ast_init_pair::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_init_pair,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.field != nil) {
             res->field = self.field->copy();
         } else {
@@ -1175,10 +1158,7 @@ impl ast_initializer {
 
     pub func copy(self) -> ast_initializer* {
         var res = ast_initializer::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_initializer,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->pairs = vec<ast*>::instance();
         foreach (var i; self.pairs) {
             res->pairs.push(i.get()->copy());
@@ -1210,10 +1190,7 @@ impl ast_call_path {
 
     pub func copy(self) -> ast_call_path* {
         var res = ast_call_path::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_call_path,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->name = self.name.clone();
         return res;
     }
@@ -1240,10 +1217,7 @@ impl ast_call_id {
 
     pub func copy(self) -> ast_call_id* {
         var res = ast_call_id::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_call_id,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.id != nil) {
             res->id = self.id->copy();
         } else {
@@ -1288,10 +1262,7 @@ impl ast_call {
 
     pub func copy(self) -> ast_call* {
         var res = ast_call::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_call,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.head != nil) {
             res->head = self.head->copy();
         } else {
@@ -1336,10 +1307,7 @@ impl ast_assignment {
 
     pub func copy(self) -> ast_assignment* {
         var res = ast_assignment::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_assignment,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->kind = self.kind;
         if (self.left != nil) {
             res->left = self.left->copy();
@@ -1388,10 +1356,7 @@ impl ast_cond_compile {
 
     pub func copy(self) -> ast_cond_compile* {
         var res = ast_cond_compile::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_cond_compile,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->cond_name = self.cond_name.clone();
         res->ordered_conds = self.ordered_conds.clone();
         res->conds = self.conds.clone();
@@ -1458,10 +1423,7 @@ impl ast_type_def {
 
     pub func copy(self) -> ast_type_def* {
         var res = ast_type_def::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_type_def,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.name != nil) {
             res->name = self.name->copy();
         } else {
@@ -1519,10 +1481,7 @@ impl ast_generic_type_list {
 
     pub func copy(self) -> ast_generic_type_list* {
         var res = ast_generic_type_list::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_generic_type_list,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->types = vec<ast*>::instance();
         foreach (var i; self.types) {
             res->types.push(i.get()->copy());
@@ -1556,10 +1515,7 @@ impl ast_enum_member {
 
     pub func copy(self) -> ast_enum_member* {
         var res = ast_enum_member::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_enum_member,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.name != nil) {
             res->name = self.name->copy();
         } else {
@@ -1608,10 +1564,7 @@ impl ast_enum_decl {
 
     pub func copy(self) -> ast_enum_decl* {
         var res = ast_enum_decl::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_enum_decl,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->members = vec<ast*>::instance();
         foreach (var i; self.members) {
             res->members.push(i.get()->copy());
@@ -1664,10 +1617,7 @@ impl ast_field_pair {
 
     pub func copy(self) -> ast_field_pair* {
         var res = ast_field_pair::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_field_pair,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.name != nil) {
             res->name = self.name->copy();
         } else {
@@ -1720,10 +1670,7 @@ impl ast_struct_decl {
 
     pub func copy(self) -> ast_struct_decl* {
         var res = ast_struct_decl::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_struct_decl,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->fields = vec<ast_field_pair*>::instance();
         foreach (var i; self.fields) {
             res->fields.push(i.get()->copy());
@@ -1806,10 +1753,7 @@ impl ast_union_decl {
 
     pub func copy(self) -> ast_union_decl* {
         var res = ast_union_decl::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_union_decl,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->members = vec<ast_field_pair*>::instance();
         foreach (var i; self.members) {
             res->members.push(i.get()->copy());
@@ -1866,10 +1810,7 @@ impl ast_param {
 
     pub func copy(self) -> ast_param* {
         var res = ast_param::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_param,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.name != nil) {
             res->name = self.name->copy();
         } else {
@@ -1912,10 +1853,7 @@ impl ast_param_list {
 
     pub func copy(self) -> ast_param_list* {
         var res = ast_param_list::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_param_list,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->params = vec<ast*>::instance();
         foreach (var i; self.params) {
             res->params.push(i.get()->copy());
@@ -1963,10 +1901,7 @@ impl ast_func_decl {
 
     pub func copy(self) -> ast_func_decl* {
         var res = ast_func_decl::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_func_decl,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->name = self.name.clone();
         res->monomorphic_name = str::from("");
         if (self.generic_types != nil) {
@@ -2175,10 +2110,7 @@ impl ast_impl {
 
     pub func copy(self) -> ast_impl* {
         var res = ast_impl::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_impl,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->name = self.name.clone();
         if (self.generic_types != nil) {
             res->generic_types = self.generic_types->copy();
@@ -2259,10 +2191,7 @@ impl ast_use_stmt {
 
     pub func copy(self) -> ast_use_stmt* {
         var res = ast_use_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_use_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->module_path = vec<ast*>::instance();
         foreach (var i; self.module_path) {
             res->module_path.push(i.get()->copy());
@@ -2307,10 +2236,7 @@ impl ast_definition {
 
     pub func copy(self) -> ast_definition* {
         var res = ast_definition::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_definition,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->name = self.name.clone();
         if (self.type != nil) {
             res->type = self.type->copy();
@@ -2354,10 +2280,7 @@ impl ast_cond_stmt {
 
     pub func copy(self) -> ast_cond_stmt* {
         var res = ast_cond_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_cond_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->stmts = vec<ast*>::instance();
         foreach (var i; self.stmts) {
             res->stmts.push(i.get()->copy());
@@ -2391,10 +2314,7 @@ impl ast_if_stmt {
 
     pub func copy(self) -> ast_if_stmt* {
         var res = ast_if_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_if_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.condition != nil) {
             res->condition = self.condition->copy();
         } else {
@@ -2438,10 +2358,7 @@ impl ast_match_case {
 
     pub func copy(self) -> ast_match_case* {
         var res = ast_match_case::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_match_case,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.pattern != nil) {
             res->pattern = self.pattern->copy();
         } else {
@@ -2486,10 +2403,7 @@ impl ast_match_stmt {
 
     pub func copy(self) -> ast_match_stmt* {
         var res = ast_match_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_match_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.value != nil) {
             res->value = self.value->copy();
         } else {
@@ -2532,10 +2446,7 @@ impl ast_while_stmt {
 
     pub func copy(self) -> ast_while_stmt* {
         var res = ast_while_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_while_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.condition != nil) {
             res->condition = self.condition->copy();
         } else {
@@ -2583,10 +2494,7 @@ impl ast_for_stmt {
 
     pub func copy(self) -> ast_for_stmt* {
         var res = ast_for_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_for_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.init != nil) {
             res->init = self.init->copy();
         } else {
@@ -2659,10 +2567,7 @@ impl ast_forindex {
 
     pub func copy(self) -> ast_forindex* {
         var res = ast_forindex::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_forindex,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.variable != nil) {
             res->variable = self.variable->copy();
         } else {
@@ -2757,10 +2662,7 @@ impl ast_foreach {
 
     pub func copy(self) -> ast_foreach* {
         var res = ast_foreach::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_foreach,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.variable != nil) {
             res->variable = self.variable->copy();
         } else {
@@ -2843,10 +2745,7 @@ impl ast_in_stmt_expr {
 
     pub func copy(self) -> ast_in_stmt_expr* {
         var res = ast_in_stmt_expr::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_in_stmt_expr,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.value != nil) {
             res->value = self.value->copy();
         } else {
@@ -2878,10 +2777,7 @@ impl ast_defer_stmt {
 
     pub func copy(self) -> ast_defer_stmt* {
         var res = ast_defer_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_defer_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.block != nil) {
             res->block = self.block->copy();
         } else {
@@ -2916,10 +2812,7 @@ impl ast_ret_stmt {
 
     pub func copy(self) -> ast_ret_stmt* {
         var res = ast_ret_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_ret_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         if (self.value != nil) {
             res->value = self.value->copy();
         } else {
@@ -2948,10 +2841,7 @@ impl ast_continue_stmt {
 
     pub func copy(self) -> ast_continue_stmt* {
         var res = ast_continue_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_continue_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         return res;
     }
 }
@@ -2967,10 +2857,7 @@ impl ast_break_stmt {
 
     pub func copy(self) -> ast_break_stmt* {
         var res = ast_break_stmt::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_break_stmt,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         return res;
     }
 }
@@ -2990,10 +2877,7 @@ impl ast_code_block {
 
     pub func copy(self) -> ast_code_block* {
         var res = ast_code_block::__alloc__();
-        res->base = ast::instance(
-            ast_kind::ast_code_block,
-            self.base.location
-        );
+        res->base = self.base.clone_base();
         res->stmts = vec<ast*>::instance();
         foreach (var i; self.stmts) {
             res->stmts.push(i.get()->copy());
