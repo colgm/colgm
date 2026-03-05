@@ -1400,6 +1400,85 @@ type semantic::resolve_tagged_union_ptr_get_field(const colgm_tagged_union& un,
     return type::error_type();
 }
 
+void semantic::union_initializer_desugar(call* node) {
+    if (!node->get_head()->get_resolve().is_union) {
+        return;
+    }
+    if (node->get_chain().size() < 2) {
+        return;
+    }
+
+    auto first = node->get_chain()[0];
+    auto second = node->get_chain()[1];
+    if (first->get_ast_type() != ast_type::ast_call_path) {
+        return;
+    }
+
+    auto cp = reinterpret_cast<call_path*>(first);
+    if (!cp->get_resolve().is_union_tag) {
+        return;
+    }
+    if (second->get_ast_type() != ast_type::ast_initializer &&
+        second->get_ast_type() != ast_type::ast_call_func_args) {
+        return;
+    }
+
+    std::vector<expr*> tmp;
+    for (size_t i = 2; i < node->get_chain().size(); i++) {
+        tmp.push_back(node->get_chain()[i]);
+    }
+    node->get_mut_chain().clear();
+
+    auto init_type = node->get_head()->get_resolve();
+    init_type.is_global = false;
+
+    if (second->get_ast_type() == ast_type::ast_call_func_args) {
+        auto new_pair = new init_pair(node->get_location());
+        auto new_init = new initializer(node->get_location());
+        auto call = reinterpret_cast<call_func_args*>(second);
+        auto arg = call->get_args()[0];
+
+        new_pair->set_field(new identifier(cp->get_location(), cp->get_name()));
+        new_pair->set_value(arg->clone());
+        new_pair->set_resolve_type(cp->get_resolve());
+
+        new_init->add_pair(new_pair);
+        new_init->set_resolve_type(init_type);
+        node->add_chain(new_init);
+    } else {
+        auto new_pair = new init_pair(node->get_location());
+        auto new_call = new call(node->get_location());
+        auto new_init = new initializer(node->get_location());
+
+        new_pair->set_field(new identifier(cp->get_location(), cp->get_name()));
+        new_pair->set_value(new_call);
+        new_pair->set_resolve_type(cp->get_resolve());
+
+        new_call->set_head(new call_id(second->get_location()));
+        // use the type name as the call id
+        new_call->get_head()->set_id(
+            new identifier(second->get_location(), cp->get_resolve().name)
+        );
+        new_call->get_head()->get_id()->set_resolve_type(cp->get_resolve());
+        new_call->get_head()->set_resolve_type(cp->get_resolve());
+        new_call->add_chain(second->clone());
+        new_call->get_chain().back()->set_resolve_type(cp->get_resolve());
+        new_call->set_resolve_type(cp->get_resolve());
+
+        new_init->add_pair(new_pair);
+        new_init->set_resolve_type(init_type);
+        node->add_chain(new_init);
+    }
+
+    for (auto i : tmp) {
+        node->add_chain(i);
+    }
+    tmp.clear();
+
+    delete first;
+    delete second;
+}
+
 type semantic::resolve_call(call* node) {
     auto infer = resolve_call_id(node->get_head());
     if (infer.is_error()) {
@@ -1454,6 +1533,9 @@ type semantic::resolve_call(call* node) {
             return infer;
         }
     }
+
+    union_initializer_desugar(node);
+
     if (infer.is_function()) {
         rp.report(node, "function should be called here");
         return type::error_type();

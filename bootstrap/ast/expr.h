@@ -471,6 +471,7 @@ public:
     auto get_head() const { return head; }
     void add_chain(expr* node) { chain.push_back(node); }
     const auto& get_chain() const { return chain; }
+    auto& get_mut_chain() { return chain; }
 };
 
 class assignment: public expr {

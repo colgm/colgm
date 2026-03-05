@@ -91,6 +91,7 @@ private:
     type resolve_ptr_get_field(const type&, ptr_get_field*);
     type resolve_struct_ptr_get_field(const colgm_struct&, const type&, ptr_get_field*);
     type resolve_tagged_union_ptr_get_field(const colgm_tagged_union&, const type&, ptr_get_field*);
+    void union_initializer_desugar(call*);
     type resolve_call(call*);
 
 private:

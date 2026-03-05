@@ -159,7 +159,8 @@ mir_struct_init::~mir_struct_init() {
 }
 
 void mir_struct_init::dump(const std::string& indent, std::ostream& os) {
-    os << indent << to_hex(this) << " [" << resolve_type << "] struct (\n";
+    os << indent << to_hex(this) << " [" << resolve_type << "] struct ";
+    os << location << " (\n";
     for (const auto& i : fields) {
         os << indent << "  [" << i.resolve_type << "] " << i.name << " : (\n";
         i.content->dump(indent + "    ", os);

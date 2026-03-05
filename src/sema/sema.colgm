@@ -8,6 +8,7 @@ use std::vec::{ vec };
 use std::set::{ hashset };
 use std::basic::{ basic };
 use std::panic::{ unreachable };
+use std::libc::{ free };
 use std::util::to_num::{ to_f64, to_u64 };
 
 use ast::ast::*;
@@ -2087,6 +2088,8 @@ impl sema {
             }
         }
 
+        self.union_initializer_desugar(n);
+
         // infer should not be a function
         if (infer.is_function()) {
             self.err->error(n->base.location, "function should be called here");
@@ -2104,6 +2107,90 @@ impl sema {
 
         var res = infer.clone();
         return res;
+    }
+
+    func union_initializer_desugar(self, n: ast_call*) {
+        if (!n->head->base.resolved_type.is_union) {
+            return;
+        }
+        if (n->chain.size < 2) {
+            return;
+        }
+
+        var first = n->chain.get(0);
+        var second = n->chain.get(1);
+        if (first->kind != ast_kind::ast_call_path) {
+            return;
+        }
+
+        var cp = first => ast_call_path*;
+        if (!cp->base.resolved_type.is_union_tag) {
+            return;
+        }
+        if (second->kind != ast_kind::ast_initializer &&
+            second->kind != ast_kind::ast_call_func_args) {
+            return;
+        }
+
+        var tmp = vec<ast*>::instance();
+        defer tmp.delete();
+
+        for (var i: u64 = 2; i < n->chain.size; i += 1) {
+            tmp.push(n->chain.get(i));
+        }
+        n->chain.clear();
+
+        var init_type = n->head->base.resolved_type.clone();
+        init_type.is_global_sym = false;
+        defer init_type.delete();
+
+        if (second->kind == ast_kind::ast_call_func_args) {
+            var new_pair = ast_init_pair::new(n->base.location);
+            var new_init = ast_initializer::new(n->base.location);
+            var call = second => ast_call_func_args*;
+            var arg = call->args.get(0);
+
+            new_pair->field = ast_identifier::new(cp->base.location, cp->name);
+            new_pair->value = arg->copy();
+            new_pair->base.resolved_type.reset_with(cp->base.resolved_type);
+
+            new_init->pairs.push(new_pair => ast*);
+            new_init->base.resolved_type.reset_with(init_type);
+            n->chain.push(new_init => ast*);
+        } else {
+            var new_pair = ast_init_pair::new(n->base.location);
+            var new_call = ast_call::new(n->base.location);
+            var new_init = ast_initializer::new(n->base.location);
+
+            new_pair->field = ast_identifier::new(cp->base.location, cp->name);
+            new_pair->value = new_call => ast*;
+            new_pair->base.resolved_type.reset_with(cp->base.resolved_type);
+
+            new_call->head = ast_call_id::new(second->location);
+            // use the type name as the call id
+            new_call->head->id = ast_identifier::new(
+                second->location,
+                cp->base.resolved_type.name
+            );
+            new_call->head->base.resolved_type.reset_with(cp->base.resolved_type);
+            new_call->chain.push(second->copy());
+            new_call->chain.get(0)->resolved_type.reset_with(cp->base.resolved_type);
+            new_call->base.resolved_type.reset_with(cp->base.resolved_type);
+
+            new_init->pairs.push(new_pair => ast*);
+            new_init->base.resolved_type.reset_with(init_type);
+            n->chain.push(new_init => ast*);
+        }
+
+        foreach (var i; tmp) {
+            n->chain.push(i.get());
+        }
+        tmp.clear();
+
+        first->delete();
+        free(first => i8*);
+        second->delete();
+        free(second => i8*);
     }
 
     func check_valid_left_value(self, n: ast_call*) -> bool {
