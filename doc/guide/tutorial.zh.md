@@ -29,7 +29,7 @@
 - [枚举](#枚举)
 - [编译器内建函数](#编译器内建函数)
 - [条件编译](#条件编译)
-- [标记联合](../spec/tagged_union.md)
+- [标记联合 (Tagged Union)](../spec/tagged_union.md)
 - [Defer](../spec/defer.md)
 - [编译器库参考](./library_reference.md)
 - [编译路径搜索顺序](#编译路径搜索顺序)

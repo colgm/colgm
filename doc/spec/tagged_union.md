@@ -13,16 +13,36 @@ pub enum mir_tag {
 
 pub union(mir_tag) mir {
     m_block: mir_block,
-    m_num: mir_num,
-    m_str: mir_str
+    m_num: i64,
+    m_str: str
 };
 
 pub union(enum) mir_without_tag {
     m_block: mir_block,
-    m_num: mir_num,
-    m_str: mir_str
+    m_num: i64,
+    m_str: str
 }
 ```
+
+## Initialization
+
+You could use these two ways to initialize tagged union:
+
+```rust
+var a = mir::m_block {a: 1, b: 2, c: 3};
+var b = mir::m_num(1024);
+var c = mir::m_str(str::from("hello world"));
+```
+
+These two ways are equivalent to the old version:
+
+```rust
+var a = mir { m_block: mir_block {a: 1, b: 2, c: 3} };
+var b = mir { m_num: 1024 };
+var c = mir { m_str: str::from("hello world") };
+```
+
+In actual, new version is the syntax sugar of the old version.
 
 ## Implementation
 
@@ -34,7 +54,7 @@ impl mir {
     pub func generate_mir_from_m_block() -> mir {
         // create tagged union instance
         // only one tag could be initialized
-        return mir { m_block: mir_block::instance() };
+        return mir::m_block(mir_block::instance());
     }
 
     pub func fetch_m_block_from_mir(self) -> mir_block {
