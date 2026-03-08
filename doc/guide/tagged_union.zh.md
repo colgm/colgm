@@ -1,8 +1,8 @@
-# Tagged Union
+# 标记联合 (Tagged Union)
 
-## Definition
+## 定义
 
-There're two ways to define tagged union:
+有两种方式可以定义 union：
 
 ```rust
 pub enum mir_tag {
@@ -24,9 +24,9 @@ pub union(enum) mir_without_tag {
 }
 ```
 
-## Initialization
+## 初始化
 
-You could use these two ways to initialize tagged union:
+你可以使用以下两种方式初始化 union：
 
 ```rust
 var a = mir::m_block {a: 1, b: 2, c: 3};
@@ -34,7 +34,7 @@ var b = mir::m_num(1024);
 var c = mir::m_str(str::from("hello world"));
 ```
 
-These two ways are equivalent to the old version:
+这两种方式等价于旧版本：
 
 ```rust
 var a = mir { m_block: mir_block {a: 1, b: 2, c: 3} };
@@ -42,26 +42,26 @@ var b = mir { m_num: 1024 };
 var c = mir { m_str: str::from("hello world") };
 ```
 
-In actual, new version is the syntax sugar of the old version.
+实际上，新版本是旧版本的语法糖。
 
-## Implementation
+## 实现
 
-The implementation is simple, just use `match` statement to match the tag.
-Also, static methods are allowed, just like impl structs.
+实现很简单，与实现结构体类似。在获取元素时，
+只需使用 `match` 语句来匹配标签。
+此外，静态方法也是允许的。
 
 ```rust
 impl mir {
     pub func generate_mir_from_m_block() -> mir {
-        // create tagged union instance
-        // only one tag could be initialized
+        // 创建标记联合实例, 每次只能初始化一个标签
         return mir::m_block(mir_block::instance());
     }
 
     pub func fetch_m_block_from_mir(self) -> mir_block {
-        // match statement, accept tagged union pointer (depth=1) or instance
+        // match 语句, 接受 union 指针（depth=1）或实例
         match (self) {
             mir_kind::m_block => return self.m_block;
-            //                               ^^^^^^^ get element
+            //                               ^^^^^^^ 获取元素
             _ => { unreachable(); }
         }
         return mir_block::null();

@@ -29,7 +29,7 @@
 - [Enumeration](#enumeration)
 - [Builtin Functions](#builtin-functions)
 - [Conditional Compilation](#conditional-compilation)
-- [Tagged Union](../spec/tagged_union.md)
+- [Tagged Union](./tagged_union.md)
 - [Defer](../spec/defer.md)
 - [Compiler Library Reference](./library_reference.md)
 - [Compiler Path Search Order](#compiler-path-search-order)

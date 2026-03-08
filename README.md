@@ -46,7 +46,19 @@ See library reference in:
 - [standard library reference](./doc/guide/std_library_reference.md)
 - [compiler library reference](./doc/guide/compiler_library_reference.md)
 
-### Usage
+## Language Extension
+
+All the extensions are available in [colgm-extension](https://github.com/colgm/colgm-extension).
+
+Here are extensions/plugins for Colgm:
+
+- [Sublime-text](https://github.com/colgm/colgm-extension/tree/main/colgm-subl)
+- [Vim](https://github.com/colgm/colgm-extension/tree/main/colgm-vim)
+- [VSCode](https://github.com/colgm/colgm-extension/tree/main/colgm-vscode)
+
+Nightly-build of VSCode extension is here: [colgm.vsix](https://github.com/colgm/colgm-extension/releases/tag/vscode_extension_nightly)
+
+## Usage
 
 Use this command to show help:
 
@@ -54,7 +66,7 @@ Use this command to show help:
 <colgm compiler path> -h
 ```
 
-#### Example
+### Example
 
 If you want to compile `test.colgm` with debug mode,
 and output the executable file to `test.out`,
@@ -64,7 +76,7 @@ use this command:
 <colgm compiler path> test.colgm -g -o test.out
 ```
 
-#### Optimization
+### Optimization
 
 Colgm accepts `-O` option to enable optimization.
 
