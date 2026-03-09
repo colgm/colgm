@@ -1,0 +1,87 @@
+use std::regex::{ regex, is_match };
+use std::io::{ io };
+
+func main() -> i32 {
+    io::stdout().out("[regex_test] test regex library...\n");
+
+    if (is_match("hello", "hello world")) {
+        io::stdout().out("[regex_test] literal match: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] literal match: FAIL\n");
+        return 1;
+    }
+
+    if (is_match("h.llo", "hello world")) {
+        io::stdout().out("[regex_test] dot wildcard: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] dot wildcard: FAIL\n");
+        return 1;
+    }
+
+    if (is_match("abc*", "ab")) {
+        io::stdout().out("[regex_test] star zero: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] star zero: FAIL\n");
+        return 1;
+    }
+
+    if (is_match("abc*", "abcccccc")) {
+        io::stdout().out("[regex_test] star many: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] star many: FAIL\n");
+        return 1;
+    }
+
+    if (is_match("abc+", "abc")) {
+        io::stdout().out("[regex_test] plus one: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] plus one: FAIL\n");
+        return 1;
+    }
+
+    if (is_match("abc+", "abccccc")) {
+        io::stdout().out("[regex_test] plus many: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] plus many: FAIL\n");
+        return 1;
+    }
+
+    if (is_match("colou?r", "color")) {
+        io::stdout().out("[regex_test] ques match: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] ques match: FAIL\n");
+        return 1;
+    }
+
+    if (is_match("colou?r", "colour")) {
+        io::stdout().out("[regex_test] ques no match: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] ques no match: FAIL\n");
+        return 1;
+    }
+
+    if (is_match("^hello", "hello world")) {
+        io::stdout().out("[regex_test] start anchor: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] start anchor: FAIL\n");
+        return 1;
+    }
+
+    if (is_match("world$", "world")) {
+        io::stdout().out("[regex_test] end anchor: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] end anchor: FAIL\n");
+        return 1;
+    }
+
+    var re_result = regex::compile("test");
+    defer re_result.delete();
+
+    if (re_result.is_match("testing")) {
+        io::stdout().out("[regex_test] regex compile: PASS\n");
+    } else {
+        io::stdout().out("[regex_test] regex compile: FAIL\n");
+        return 1;
+    }
+    return 0;
+}

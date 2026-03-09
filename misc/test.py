@@ -42,6 +42,7 @@ TEST_LIST = [
     ("test/negative.colgm",                []),
     ("test/ref_struct_field.colgm",        []),
     ("test/ref_variable_assign.colgm",     []),
+    ("test/regex_test.colgm",              []),
     ("test/std_test.colgm",                []),
     ("test/string.colgm",                  []),
     ("test/tagged_union.colgm",            []),

@@ -1,0 +1,222 @@
+use std::str::{ str };
+use std::vec::{ vec };
+use std::result::{ result };
+use std::panic::{ panic };
+
+pub struct regex_result {
+    matched: bool,
+    start: u64,
+    end: u64
+}
+
+impl regex_result {
+    pub func instance(matched: bool, start: u64, end: u64) -> regex_result {
+        return regex_result {
+            matched: matched,
+            start: start,
+            end: end
+        };
+    }
+
+    pub func is_match(self) -> bool {
+        return self.matched;
+    }
+
+    pub func get_start(self) -> u64 {
+        return self.start;
+    }
+
+    pub func get_end(self) -> u64 {
+        return self.end;
+    }
+}
+
+pub struct regex {
+    pattern: str
+}
+
+impl regex {
+    pub func compile(pattern: const i8*) -> regex {
+        return regex {
+            pattern: str::from(pattern)
+        };
+    }
+
+    pub func delete(self) {
+        self.pattern.delete();
+    }
+
+    pub func clone(self) -> regex {
+        return regex {
+            pattern: self.pattern.clone()
+        };
+    }
+    
+    pub func is_match(self, input: const i8*) -> bool {
+        var input_str = str::from(input);
+        defer input_str.delete();
+        var res = self.match_at_core(input_str, 0);
+        return res;
+    }
+
+    func match_at_core(self, input: str&, start_pos: u64) -> bool {
+        // Use explicit stack to avoid stack overflow on large inputs
+        // Stack stores pairs of (pattern_pos, input_pos) as consecutive u64 values
+        var stack = vec<u64>::instance();
+        defer stack.delete();
+
+        var pattern_len = self.pattern.size;
+        var input_len = input.size;
+
+        // Push initial state: start of pattern and given start position in input
+        stack.push(0);
+        stack.push(start_pos);
+
+        // Iteratively process all possible match states using DFS
+        while (stack.size > 0) {
+            // Pop current state from stack
+            var input_pos = stack.back();
+            stack.pop_back();
+            var pattern_pos = stack.back();
+            stack.pop_back();
+
+            // Match suceeded: consumed entire pattern
+            if (pattern_pos >= pattern_len) {
+                return true;
+            }
+
+            var pch = self.pattern.c_str[pattern_pos];
+            var next_is_start = false;
+            var next_is_plus = false;
+            var next_is_question = false;
+
+            // Check if next character is a quantifier (*, +, ?)
+            if (pattern_pos + 1 < pattern_len) {
+                var next_ch = self.pattern.c_str[pattern_pos + 1];
+                if (next_ch == '*') {
+                    next_is_start = true;
+                } elsif (next_ch == '+') {
+                    next_is_plus = true;
+                } elsif (next_ch == '?') {
+                    next_is_question = true;
+                }
+            }
+
+            // Handle '*': match zero or more occurrences
+            // Push all possible states: skip qualifier, or consume one character
+            if (next_is_start) {
+                var i = input_pos;
+                while (true) {
+                    stack.push(pattern_pos + 2);
+                    stack.push(i);
+                    if (i >= input_len) {
+                        break;
+                    }
+                    var ich = input.c_str[i];
+                    // Match failed: mismatched character
+                    if (pch != '.' && ich != pch) {
+                        break;
+                    }
+                    i += 1;
+                }
+                continue;
+            }
+
+            // Handle '+': match one or more occurrences
+            // Must consume at least one character before matching rest of pattern
+            if (next_is_plus) {
+                var i = input_pos + 1;
+                while (i <= input_len) {
+                    var all_matched = true;
+                    for (var j = input_pos; j < i; j += 1) {
+                        if (j >= input_len) {
+                            all_matched = false;
+                            break;
+                        }
+                        var ich = input.c_str[j];
+                        if (pch != '.' && ich != pch) {
+                            all_matched = false;
+                            break;
+                        }
+                    }
+                    if (!all_matched) {
+                        break;
+                    }
+                    stack.push(pattern_pos + 2);
+                    stack.push(i);
+                    i += 1;
+                }
+                continue;
+            }
+
+            // Handle '?': match zero or one occurrence
+            // Push both states: skip qualifier, or consume one character
+            if (next_is_question) {
+                stack.push(pattern_pos + 2);
+                stack.push(input_pos);
+                if (input_pos < input_len) {
+                    var ich = input.c_str[input_pos];
+                    if (pch == '.' || ich == pch) {
+                        stack.push(pattern_pos + 2);
+                        stack.push(input_pos + 1);
+                    }
+                }
+                continue;
+            }
+
+            // Handle '^': anchor at start of input
+            if (pch == '^') {
+                if (input_pos == 0) {
+                    stack.push(pattern_pos + 1);
+                    stack.push(input_pos);
+                }
+                continue;
+            }
+
+            // Handle '$': anchor at end of input
+            if (pch == '$') {
+                if (input_pos == input_len) {
+                    stack.push(pattern_pos + 1);
+                    stack.push(input_pos);
+                }
+                continue;
+            }
+
+            // End of input reached but pattern not fully consumed
+            if (input_pos >= input_len) {
+                continue;
+            }
+
+            // Handle literal char or '.' wildcard
+            var ich = input.c_str[input_pos];
+            if (pch == '.' || ich == pch) {
+                stack.push(pattern_pos + 1);
+                stack.push(input_pos + 1);
+            }
+        }
+
+        // Exhausted all possibilities without fully match
+        return false;
+    }
+
+    pub func find(self, input: const i8*) -> regex_result {
+        var input_str = str::from(input);
+        defer input_str.delete();
+
+        var len = input_str.size;
+        for (var i: u64 = 0; i <= len; i += 1) {
+            if (self.match_at_core(input_str, i)) {
+                return regex_result::instance(true, i, i);
+            }
+        }
+
+        return regex_result::instance(false, 0, 0);
+    }
+}
+
+pub func is_match(pattern: const i8*, input: const i8*) -> bool {
+    var re = regex::compile(pattern);
+    defer re.delete();
+    var res = re.is_match(input);
+    return res;
+}
