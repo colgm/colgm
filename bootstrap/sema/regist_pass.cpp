@@ -1641,7 +1641,46 @@ void regist_pass::regist_impls(ast::root* node) {
     }
 }
 
+bool regist_pass::validate_impl(ast::impl* node) {
+    const auto& dm = ctx.get_domain(ctx.this_file);
+
+    // not struct, directly return true
+    if (!dm.structs.count(node->get_name()) &&
+        !dm.generic_structs.count(node->get_name())) {
+        return true;
+    }
+
+    if (dm.structs.count(node->get_name()) && node->get_generic_types()) {
+        rp.report(node, "cannot implement generic template for normal struct");
+        return false;
+    }
+
+    if (dm.generic_structs.count(node->get_name()) && !node->get_generic_types()) {
+        rp.report(node, "should implement generic template for generic struct");
+        return false;
+    }
+
+    if (dm.generic_structs.count(node->get_name())) {
+        return true;
+    }
+
+    // validate impl method node for normal struct
+    auto find_invalid_method = false;
+    for (auto i : node->get_methods()) {
+        if (i->contain_cond()) {
+            rp.report(i, "cannot implement generic method for normal struct");
+            find_invalid_method = true;
+        }
+    }
+
+    return !find_invalid_method;
+}
+
 void regist_pass::regist_single_impl(ast::impl* node) {
+    if (!validate_impl(node)) {
+        return;
+    }
+
     auto& dm = ctx.get_domain(ctx.this_file);
 
     if (dm.structs.count(node->get_name()) ||

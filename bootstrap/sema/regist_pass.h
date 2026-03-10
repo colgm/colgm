@@ -178,6 +178,7 @@ private: // global functions
 
 private: // implementations
     void regist_impls(ast::root*);
+    bool validate_impl(ast::impl*);
     void regist_single_impl(ast::impl*);
     void regist_single_impl_for_struct(ast::impl*, colgm_struct&);
     void regist_single_impl_for_tagged_union(ast::impl*, colgm_tagged_union&);

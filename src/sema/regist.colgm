@@ -1676,7 +1676,53 @@ impl regist_pass {
         union_info.static_method.insert(name, func_info[0]);
     }
 
+    func validate_impl(self, node: ast_impl*) -> bool {
+        var name: str& = node->name;
+        var dm = self.ctx->get_domain(node->base.location.file);
+
+        // not struct, directly return true
+        if (!dm.structs.has(name) && !dm.generic_structs.has(name)) {
+            return true;
+        }
+
+        if (dm.structs.has(name) && node->generic_types != nil) {
+            self.err->out("cannot implement generic template")
+                     .out(" for normal struct")
+                     .emit_err(node->base.location);
+            return false;
+        }
+
+        if (dm.generic_structs.has(name) && node->generic_types == nil) {
+            self.err->out("should implement generic template")
+                     .out(" for generic struct")
+                     .emit_err(node->base.location);
+            return false;
+        }
+
+        if (dm.generic_structs.has(name)) {
+            return true;
+        }
+
+        // validate impl method node for normal struct
+        var find_invalid_method = false;
+        foreach (var i; node->methods) {
+            var mthd = i.get() => ast_func_decl*;
+            if (mthd->contain_cond()) {
+                self.err->out("cannot implement generic method")
+                         .out(" for normal struct")
+                         .emit_err(mthd->base.location);
+                find_invalid_method = true;
+            }
+        }
+
+        return !find_invalid_method;
+    }
+
     func regist_single_impl(self, node: ast_impl*) {
+        if (!self.validate_impl(node)) {
+            return;
+        }
+
         var name: str& = node->name;
         var dm = self.ctx->get_domain(node->base.location.file);
         if (dm.structs.has(name) || dm.generic_structs.has(name)) {
