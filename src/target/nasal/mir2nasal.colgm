@@ -138,6 +138,15 @@ impl mir2nasal {
     }
 
     func dump_tagged_union(self, out: io&, t: mir_tagged_union&) {
+        var u_ty = type::instance(t.name.c_str, t.location.file.c_str);
+        defer u_ty.delete();
+
+        var u_ty_name = u_ty.full_path_name(self.pkg);
+        defer u_ty_name.delete();
+
+        out.out("colgm_F[\"").out(u_ty_name.c_str).out(".__size__\"] = func ");
+        out.out("{ return 1; }\n");
+
         out.out("colgm_T[\"");
         self.dump_raw_nasal_string(out, t.name);
         out.out("\"] = func { return { tag: 0, value: nil }; }\n");
