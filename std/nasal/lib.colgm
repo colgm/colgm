@@ -1,0 +1,64 @@
+
+// nasal target only
+
+struct string { /* opaque */ }
+
+struct vec<T> { /* opaque */ }
+
+struct map<T> { /* opaque */ }
+
+extern func __nasal_intrinsic_append<T>(v: vec<T>, elem: T);
+extern func __nasal_intrinsic_pop<T>(v: vec<T>) -> T;
+extern func __nasal_intrinsic_contains<T>(m: map<T>, key: string) -> bool;
+extern func __nasal_intrinsic_keys<T>(m: map<T>) -> vec<string>;
+extern func __nasal_intrinsic_insert<T>(m: map<T>, key: string, value: T);
+extern func __nasal_intrinsic_get<T>(m: map<T>, key: string) -> T;
+extern func __nasal_intrinsic_print<T>(value: T);
+
+extern func __nasal_intrinsic_create_str(s: const i8*) -> string;
+extern func __nasal_intrinsic_create_vec<T>() -> vec<T>;
+extern func __nasal_intrinsic_create_map<T>() -> map<T>;
+
+extern func __nasal_intrinsic_id<T>(t: T) -> string;
+
+impl string {
+    pub func new() -> string {
+        return __nasal_intrinsic_create_str("");
+    }
+
+    pub func from(s: const i8*) -> string {
+        return __nasal_intrinsic_create_str(s);
+    }
+}
+
+impl vec<T> {
+    pub func new() -> vec<T> {
+        return __nasal_intrinsic_create_vec<T>();
+    }
+
+    pub func append(self, elem: T) {
+        __nasal_intrinsic_append(self, elem);
+    }
+
+    pub func pop(self) -> T {
+        return __nasal_intrinsic_pop(self);
+    }
+}
+
+impl map<T> {
+    pub func new() -> map<T> {
+        return __nasal_intrinsic_create_map<T>();
+    }
+
+    pub func contains(self, key: string) -> bool {
+        return __nasal_intrinsic_contains(self, key);
+    }
+
+    pub func keys(self) -> vec<string> {
+        return __nasal_intrinsic_keys(self);
+    }
+
+    pub func insert(self, key: string, value: T) {
+        __nasal_intrinsic_insert(self, key, value);
+    }
+}
