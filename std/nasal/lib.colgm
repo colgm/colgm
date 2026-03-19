@@ -14,12 +14,13 @@ extern func __nasal_intrinsic_keys<T>(m: map<T>) -> vec<string>;
 extern func __nasal_intrinsic_insert<T>(m: map<T>, key: string, value: T);
 extern func __nasal_intrinsic_get<T>(m: map<T>, key: string) -> T;
 extern func __nasal_intrinsic_print<T>(value: T);
+extern func __nasal_intrinsic_len<T>(elem: T) -> f64;
 
 extern func __nasal_intrinsic_create_str(s: const i8*) -> string;
 extern func __nasal_intrinsic_create_vec<T>() -> vec<T>;
 extern func __nasal_intrinsic_create_map<T>() -> map<T>;
 
-extern func __nasal_intrinsic_id<T>(t: T) -> string;
+extern func __nasal_intrinsic_id<T>(elem: T) -> string;
 
 impl string {
     pub func new() -> string {
@@ -37,11 +38,11 @@ impl vec<T> {
     }
 
     pub func append(self, elem: T) {
-        __nasal_intrinsic_append(self, elem);
+        __nasal_intrinsic_append<T>(self, elem);
     }
 
     pub func pop(self) -> T {
-        return __nasal_intrinsic_pop(self);
+        return __nasal_intrinsic_pop<T>(self);
     }
 }
 
@@ -51,14 +52,18 @@ impl map<T> {
     }
 
     pub func contains(self, key: string) -> bool {
-        return __nasal_intrinsic_contains(self, key);
+        return __nasal_intrinsic_contains<T>(self, key);
     }
 
     pub func keys(self) -> vec<string> {
-        return __nasal_intrinsic_keys(self);
+        return __nasal_intrinsic_keys<T>(self);
     }
 
     pub func insert(self, key: string, value: T) {
-        __nasal_intrinsic_insert(self, key, value);
+        __nasal_intrinsic_insert<T>(self, key, value);
     }
+}
+
+pub func print<T>(value: T) {
+    __nasal_intrinsic_print<T>(value);
 }

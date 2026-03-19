@@ -188,7 +188,44 @@ impl mir2nasal {
     }
 
     func dump_extern_func_body(self, out: io&, f: mir_func&) {
-        out.out("{}\n");
+        if (f.name.startswith("__nasal_intrinsic_append")) {
+            out.out("{ append(v, elem); }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_pop")) {
+            out.out("{ return pop(v); }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_contains")) {
+            out.out("{ contains(m, key); }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_keys")) {
+            out.out("{ return keys(m); }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_insert")) {
+            out.out("{ m[key] = value; }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_get")) {
+            out.out("{ return m[key]; }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_print")) {
+            out.out("{ print(value); }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_len")) {
+            out.out("{ return size(elem); }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_create_str")) {
+            out.out("{ return s; }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_create_vec")) {
+            out.out("{ return []; }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_create_map")) {
+            out.out("{ return {}; }\n");
+            return;
+        } elsif (f.name.startswith("__nasal_intrinsic_id")) {
+            out.out("{ return id(elem); }\n");
+            return;
+        }
+        out.out("{ die(\"unimplemented\"); }\n");
     }
 
     func dump_func(self, out: io&, f: mir_func&) {
@@ -451,7 +488,7 @@ impl mir2nasal {
 
                             if (dm.functions.has(name_for_search) &&
                                 dm.functions.get(name_for_search).is_extern) {
-                                path.append_str(t->name);
+                                path.append_str(name_for_search);
                             } else {
                                 path.append_str(full_name);
                             }
