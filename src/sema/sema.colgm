@@ -747,7 +747,7 @@ impl sema {
         return ret;
     }
 
-    func resolve_identifier(self, n: ast_identifier*) -> type {
+    func resolve_identifier(self, n: ast_identifier*, has_generics: bool) -> type {
         var name: str& = n->content;
         if (self.ctx->find_local(name)) {
             self.ctx->add_var_used(name);
@@ -769,6 +769,18 @@ impl sema {
                 return type::error_type();
             }
 
+            // find generic instantiation without generic arguments and report
+            if (dm.generic_structs.has(name) || dm.generic_functions.has(name)) {
+                if (!has_generics) {
+                    var info = str::from("cannot instantiate generic type \"");
+                    defer info.delete();
+                    info.append_str(name);
+                    info.append("\" without generic arguments");
+                    self.err->error(n_ast->location, info.c_str);
+                    return type::error_type();
+                }
+            }
+
             var result = type::instance(name.c_str, sym_info.loc_file.c_str);
             result.pointer_depth = 0;
             result.is_global_sym = true;
@@ -787,7 +799,7 @@ impl sema {
     }
 
     func resolve_call_identifier(self, n: ast_call_id*) -> type {
-        var infer = self.resolve_identifier(n->id);
+        var infer = self.resolve_identifier(n->id, n->generic_types != nil);
         if (infer.is_error()) {
             return infer;
         }
