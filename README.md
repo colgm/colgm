@@ -7,7 +7,9 @@
 
 Colgm aims to be a simple, easy-to-use and easy-to-maintain programming language.
 It will let you write relatively safe code without too much cognitive load.
-Targets supported now are [__LLVM IR__](https://llvm.org/) and [__nasal-lang__ [WIP]](https://github.com/ValKmjolnir/Nasal-Interpreter).
+
+Mainly support native targets.
+Target supported now is [__LLVM (text IR)__](https://llvm.org/).
 
 Now nightly-builds are available:
 
@@ -156,10 +158,9 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 ## Features and Roadmap
 
 1. feature: fuzzy match when variable is not found
-2. feature: new target: [nasal](https://github.com/ValKmjolnir/Nasal-Interpreter)
-3. feature: to_string method for struct/enum/tagged union
-4. feature: smart pointer
-5. feature: std
+2. feature: to_string method for struct/enum/tagged union
+3. feature: smart pointer
+4. feature: std
     - [x] Filesystem API (read, write, join, exists, etc)
     - [x] Datetime utils
     - [ ] String and Unicode Helpers
@@ -174,6 +175,6 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [ ] Regex
     - [ ] Package manager
     - [ ] Docs generator
-6. DCE opt
-7. CSE opt
-8. ref type implicit copy(include assignment/definition/struct init) detection
+5. DCE opt
+6. CSE opt
+7. ref type implicit copy(include assignment/definition/struct init) detection
