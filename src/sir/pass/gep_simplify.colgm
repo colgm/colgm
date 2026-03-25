@@ -1,0 +1,75 @@
+use sir::context::{ sir_context };
+use sir::pass::replacer::{ replacer };
+use sir::sir::*;
+use sir::value::{ value_kind };
+
+use std::io::{ io };
+use std::basic::{ basic };
+use std::set::{ hashset };
+use std::vec::{ vec };
+use std::libc::{ free };
+use std::util::timestamp::{ maketimestamp };
+
+// remove getelementptr pattern like:
+//   %1 = getelementptr xx, ptr %0, i64 0
+// directly alias %1 with %0
+pub func gep_simplify(ctx: sir_context*, verbose: bool) {
+    var ts = maketimestamp();
+    ts.stamp();
+
+    var to_be_removed = hashset<basic<sir*>>::instance();
+    defer to_be_removed.delete();
+    var to_be_replaced = replacer::instance();
+    defer to_be_replaced.delete();
+
+    var total = 0;
+    foreach (var f; ctx->func_impls) {
+        to_be_replaced.clear();
+        foreach (var bb; f.get().body->basic_block) {
+            to_be_removed.clear();
+            foreach (var stmt; bb.get()->stmts) {
+                if (stmt.get()->kind != sir_kind::sir_get_index) {
+                    continue;
+                }
+
+                var n = stmt.get() => sir_get_index*;
+                if (n->index.kind != value_kind::literal) {
+                    continue;
+                }
+                if (!n->index.content.eq_const("0")) {
+                    continue;
+                }
+
+                to_be_replaced.add(n->target.content, n->source.content);
+                to_be_removed.insert(basic<sir*>::wrap(n => sir*));
+            }
+
+            var tmp = vec<sir*>::instance();
+            defer tmp.delete();
+            foreach (var stmt; bb.get()->stmts) {
+                if (!to_be_removed.has(basic<sir*>::wrap(stmt.get()))) {
+                    tmp.push(stmt.get());
+                    continue;
+                }
+                stmt.get()->delete();
+                free(stmt.get() => i8*);
+                total += 1;
+            }
+            bb.get()->stmts.swap(tmp);
+        }
+
+        foreach (var bb; f.get().body->basic_block) {
+            foreach (var stmt; bb.get()->stmts) {
+                to_be_replaced.accept(stmt.get());
+            }
+        }
+    }
+
+    if (verbose) {
+        io::stdout().green().out("  SIR-PASS ").reset();
+        io::stdout().out("Run pass");
+        io::stdout().blue().out(" <gep simplify>").reset().out(": ");
+        io::stdout().cyan().out_i64(total).reset();
+        io::stdout().out(" ").out_f64(ts.elapsed_msec()).out(" ms\n");
+    }
+}
