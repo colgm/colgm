@@ -90,9 +90,9 @@ std::string mir2sir::array_type_mapping(const type& t) {
     return "[" + std::to_string(copy.array_length) + " x " + type_mapping(copy) + "]";
 }
 
-void mir2sir::emit_tagged_union(const mir_context& mctx) {
+void mir2sir::emit_union(const mir_context& mctx) {
     for (auto i : mctx.unions) {
-        auto tud = new sir_tagged_union(
+        auto tud = new sir_union(
             i->name,
             i->location,
             i->total_size,
@@ -797,7 +797,7 @@ void mir2sir::visit_mir_struct_init(mir_struct_init* node) {
                 value_t::variable(source),
                 value_t::variable(target),
                 // get max align type, it's the base type of union
-                type_mapping(tagged_union_mapper.at(node->get_type().full_path_name())
+                type_mapping(union_mapper.at(node->get_type().full_path_name())
                                                 ->max_align_type.get_pointer_copy()),
                 type_mapping(un.member.at(i.name).get_pointer_copy()),
                 true,
@@ -1097,7 +1097,7 @@ void mir2sir::visit_mir_get_field(mir_get_field* node) {
             value_t::variable(source),
             value_t::variable(target),
             // get max align type, it's the base type of union
-            type_mapping(tagged_union_mapper.at(prev.resolve_type.full_path_name())
+            type_mapping(union_mapper.at(prev.resolve_type.full_path_name())
                                             ->max_align_type.get_pointer_copy()),
             type_mapping(un.member.at(node->get_name()).get_pointer_copy()),
             true,
@@ -1256,7 +1256,7 @@ void mir2sir::visit_mir_ptr_get_field(mir_ptr_get_field* node) {
             value_t::variable(temp_1),
             value_t::variable(target),
             // get max align type, it's the base type of union
-            type_mapping(tagged_union_mapper.at(prev.resolve_type.full_path_name())
+            type_mapping(union_mapper.at(prev.resolve_type.full_path_name())
                                             ->max_align_type.get_pointer_copy()),
             type_mapping(un.member.at(node->get_name()).get_pointer_copy()),
             true,
@@ -2096,10 +2096,10 @@ mir2sir::size_align_pair mir2sir::calculate_size_and_align(const type& ty) {
         }
         field_size = t->size;
         alignment = t->align;
-    } else if (tagged_union_mapper.count(name)) {
-        auto u = tagged_union_mapper.at(name);
+    } else if (union_mapper.count(name)) {
+        auto u = union_mapper.at(name);
         if (!u->size_calculated) {
-            calculate_single_tagged_union_size(u);
+            calculate_single_union_size(u);
         }
         field_size = u->total_size;
         alignment = u->align;
@@ -2139,7 +2139,7 @@ mir2sir::size_align_pair mir2sir::calculate_size_and_align(const type& ty) {
     };
 }
 
-void mir2sir::calculate_single_tagged_union_size(mir_tagged_union* u) {
+void mir2sir::calculate_single_union_size(mir_union* u) {
     if (u->size_calculated) {
         return;
     }
@@ -2230,7 +2230,7 @@ void mir2sir::calculate_single_struct_size(mir_struct* s) {
 
 void mir2sir::calculate_size(const mir_context& mctx) {
     struct_mapper.clear();
-    tagged_union_mapper.clear();
+    union_mapper.clear();
     for (auto i : mctx.structs) {
         const auto ty = type {
             .name = i->name,
@@ -2243,14 +2243,14 @@ void mir2sir::calculate_size(const mir_context& mctx) {
             .name = i->name,
             .loc_file = i->location.file
         };
-         tagged_union_mapper.insert({ty.full_path_name(), i});
+         union_mapper.insert({ty.full_path_name(), i});
     }
 
     for (auto i : mctx.structs) {
         calculate_single_struct_size(i);
     }
     for (auto i : mctx.unions) {
-        calculate_single_tagged_union_size(i);
+        calculate_single_union_size(i);
     }
 }
 
@@ -2260,7 +2260,7 @@ const error& mir2sir::generate(const mir_context& mctx) {
     generate_type_mapper();
 
     calculate_size(mctx);
-    emit_tagged_union(mctx);
+    emit_union(mctx);
     emit_struct(mctx);
     emit_func_decl(mctx);
     emit_func_impl(mctx);

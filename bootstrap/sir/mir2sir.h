@@ -204,7 +204,7 @@ private:
     DWARF_status dwarf_status;
 
     std::unordered_map<std::string, mir_struct*> struct_mapper;
-    std::unordered_map<std::string, mir_tagged_union*> tagged_union_mapper;
+    std::unordered_map<std::string, mir_union*> union_mapper;
 
 private:
     void unimplemented(mir* node) {
@@ -217,7 +217,7 @@ private:
 
 private:
     void generate_type_mapper();
-    void emit_tagged_union(const mir_context&);
+    void emit_union(const mir_context&);
     void emit_struct(const mir_context&);
     void emit_func_decl(const mir_context&);
     void emit_func_impl(const mir_context&);
@@ -280,7 +280,7 @@ public:
 
 private:
     size_align_pair calculate_size_and_align(const type&);
-    void calculate_single_tagged_union_size(mir_tagged_union*);
+    void calculate_single_union_size(mir_union*);
     void calculate_single_struct_size(mir_struct*);
     void calculate_size(const mir_context&);
 

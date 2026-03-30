@@ -105,7 +105,7 @@ impl sir_struct {
     }
 }
 
-pub struct sir_tagged_union {
+pub struct sir_union {
     name: str,
     location: span,
     member_type: vec<str>,
@@ -113,9 +113,9 @@ pub struct sir_tagged_union {
     align: u64
 }
 
-impl sir_tagged_union {
-    pub func instance(n: str&, loc: span&, s: u64, a: u64) -> sir_tagged_union {
-        return sir_tagged_union {
+impl sir_union {
+    pub func instance(n: str&, loc: span&, s: u64, a: u64) -> sir_union {
+        return sir_union {
             name: n.clone(),
             location: loc.clone(),
             member_type: vec<str>::instance(),
@@ -130,8 +130,8 @@ impl sir_tagged_union {
         self.member_type.delete();
     }
 
-    pub func clone(self) -> sir_tagged_union {
-        var res = sir_tagged_union {};
+    pub func clone(self) -> sir_union {
+        var res = sir_union {};
         res.name = self.name.clone();
         res.location = self.location.clone();
         res.member_type = self.member_type.clone();
@@ -307,7 +307,7 @@ impl sir_func {
 }
 
 pub struct sir_context {
-    tagged_union_decls: vec<sir_tagged_union>,
+    tagged_union_decls: vec<sir_union>,
     struct_decls: vec<sir_struct>,
     func_decls: vec<sir_func>,
     func_impls: vec<sir_func>,
@@ -324,7 +324,7 @@ pub struct sir_context {
 impl sir_context {
     pub func instance() -> sir_context {
         return sir_context {
-            tagged_union_decls: vec<sir_tagged_union>::instance(),
+            tagged_union_decls: vec<sir_union>::instance(),
             struct_decls: vec<sir_struct>::instance(),
             func_decls: vec<sir_func>::instance(),
             func_impls: vec<sir_func>::instance(),
@@ -492,29 +492,25 @@ impl sir_context {
 
     func dump_intrinsic_alloc_method(self, out: io&) {
         foreach (var i; self.struct_decls) {
-            var st_name = i.get().name.__ptr__();
             var alloc_func_name = i.get().get_intrinsic_method_name("__alloc__");
             defer alloc_func_name.delete();
 
             out.out("define ptr @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
             out.out("label.entry:\n");
-            out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get().size).out(")\n");
-            out.out("  %1 = bitcast i8* %0 to ").out(st_name->c_str).out("*\n");
-            out.out("  ret ptr %1\n}\n\n");
+            out.out("  %0 = call ptr @malloc(i64 ").out_u64(i.get().size).out(")\n");
+            out.out("  ret ptr %0\n}\n\n");
         }
 
         foreach (var i; self.tagged_union_decls) {
-            var un_name = i.get().name.__ptr__();
             var alloc_func_name = i.get().get_intrinsic_method_name("__alloc__");
             defer alloc_func_name.delete();
 
             out.out("define ptr @");
             out.out(alloc_func_name.c_str).out("() alwaysinline {\n");
             out.out("label.entry:\n");
-            out.out("  %0 = call i8* @malloc(i64 ").out_u64(i.get().size).out(")\n");
-            out.out("  %1 = bitcast i8* %0 to ").out(un_name->c_str).out("*\n");
-            out.out("  ret ptr %1\n}\n\n");
+            out.out("  %0 = call ptr @malloc(i64 ").out_u64(i.get().size).out(")\n");
+            out.out("  ret ptr %0\n}\n\n");
         }
     }
 

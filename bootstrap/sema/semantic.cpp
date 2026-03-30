@@ -561,7 +561,7 @@ void semantic::check_pub_method(ast::node* node,
 
 void semantic::check_pub_method(ast::node* node,
                                 const std::string& name,
-                                const colgm_tagged_union& self) {
+                                const colgm_union& self) {
     if (!self.method.count(name)) {
         return;
     }
@@ -594,7 +594,7 @@ void semantic::check_pub_static_method(ast::node* node,
 
 void semantic::check_pub_static_method(ast::node* node,
                                        const std::string& name,
-                                       const colgm_tagged_union& self) {
+                                       const colgm_union& self) {
     if (!self.static_method.count(name)) {
         return;
     }
@@ -650,7 +650,7 @@ type semantic::resolve_get_field(const type& prev, get_field* node) {
             node
         );
     } else if (domain.unions.count(prev.generic_name())) {
-        return resolve_tagged_union_get_field(
+        return resolve_union_get_field(
             domain.unions.at(prev.generic_name()),
             prev,
             node
@@ -693,7 +693,7 @@ type semantic::resolve_struct_get_field(const colgm_struct& struct_self,
     return type::error_type();
 }
 
-type semantic::resolve_tagged_union_get_field(const colgm_tagged_union& un,
+type semantic::resolve_union_get_field(const colgm_union& un,
                                               const type& prev,
                                               get_field* node) {
     if (un.member.count(node->get_name())) {
@@ -1048,7 +1048,7 @@ type semantic::resolve_initializer(const type& prev,
             node
         );
     } else if (domain.unions.count(prev.generic_name())) {
-        return resolve_tagged_union_initializer(
+        return resolve_union_initializer(
             domain.unions.at(prev.generic_name()),
             prev,
             tctx,
@@ -1131,7 +1131,7 @@ type semantic::resolve_struct_initializer(const colgm_struct& st,
     return copy;
 }
 
-type semantic::resolve_tagged_union_initializer(const colgm_tagged_union& un,
+type semantic::resolve_union_initializer(const colgm_union& un,
                                                 const type& prev,
                                                 const type_context& tctx,
                                                 initializer* node) {
@@ -1333,7 +1333,7 @@ type semantic::resolve_ptr_get_field(const type& prev, ptr_get_field* node) {
             node
         );
     } else if (domain.unions.count(prev.generic_name())) {
-        return resolve_tagged_union_ptr_get_field(
+        return resolve_union_ptr_get_field(
             domain.unions.at(prev.generic_name()),
             prev,
             node
@@ -1372,7 +1372,7 @@ type semantic::resolve_struct_ptr_get_field(const colgm_struct& struct_self,
     return type::error_type();
 }
 
-type semantic::resolve_tagged_union_ptr_get_field(const colgm_tagged_union& un,
+type semantic::resolve_union_ptr_get_field(const colgm_union& un,
                                                   const type& prev,
                                                   ptr_get_field* node) {
     if (un.member.count(node->get_name())) {
@@ -1981,7 +1981,7 @@ void semantic::resolve_match_stmt_for_enum(match_stmt* node,
     }
 }
 
-bool semantic::check_is_tagged_union_member(expr* node, const colgm_tagged_union& un) {
+bool semantic::check_is_tagged_union_member(expr* node, const colgm_union& un) {
     if (!node->is(ast_type::ast_call)) {
         // unreachable
         return false;
@@ -2015,7 +2015,7 @@ bool semantic::check_is_tagged_union_member(expr* node, const colgm_tagged_union
     return un.member.count(static_cast<call_path*>(chain)->get_name());
 }
 
-std::string semantic::get_tagged_union_label(expr* node, const colgm_tagged_union& un) {
+std::string semantic::get_tagged_union_label(expr* node, const colgm_union& un) {
     auto call_node = static_cast<call*>(node);
     const auto& name = call_node->get_head()->get_id()->get_name();
 
@@ -2470,7 +2470,7 @@ void semantic::resolve_method(func_decl* node, const colgm_struct& struct_self) 
     ctx.pop_level();
 }
 
-void semantic::resolve_method(func_decl* node, const colgm_tagged_union& union_self) {
+void semantic::resolve_method(func_decl* node, const colgm_union& union_self) {
     if (!node->get_code_block()) {
         rp.report(node, "should be implemented here");
         return;

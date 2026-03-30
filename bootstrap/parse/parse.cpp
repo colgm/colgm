@@ -698,7 +698,7 @@ struct_decl* parse::struct_gen(std::vector<cond_compile*>& conds,
     return res;
 }
 
-union_decl* parse::tagged_union_gen(std::vector<cond_compile*>& conds,
+union_decl* parse::union_gen(std::vector<cond_compile*>& conds,
                                                 bool flag_is_public,
                                                 bool flag_is_extern) {
     auto res = new union_decl(toks[ptr].loc);
@@ -1153,7 +1153,7 @@ const error& parse::analyse(const std::vector<token>& token_list) {
                 result->add_decl(struct_gen(conds, flag_is_public, flag_is_extern));
                 break;
             case tok::tk_union:
-                result->add_decl(tagged_union_gen(conds, flag_is_public, flag_is_extern));
+                result->add_decl(union_gen(conds, flag_is_public, flag_is_extern));
                 break;
             case tok::tk_impl:
                 result->add_decl(impl_gen(conds, flag_is_public, flag_is_extern));

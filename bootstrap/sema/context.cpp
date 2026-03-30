@@ -91,12 +91,12 @@ void sema_context::dump_unions() const {
         }
         std::cout << "\ninfo of " << domain.first << ":\n";
         for (const auto& i : domain.second.unions) {
-            dump_single_tagged_union(i.second);
+            dump_single_union(i.second);
         }
     }
 }
 
-void sema_context::dump_single_tagged_union(const colgm_tagged_union& un) const {
+void sema_context::dump_single_union(const colgm_union& un) const {
     std::cout << "  tagged union " << un.name << " {\n";
     for (const auto& member : un.ordered_member) {
         std::cout << "    " << member;

@@ -12,7 +12,7 @@
 
 namespace colgm {
 
-struct colgm_tagged_union {
+struct colgm_union {
 public:
     std::string name;
     type ref_enum_type;
@@ -29,13 +29,13 @@ public:
     bool is_extern = false;
 
 public:
-    colgm_tagged_union() = default;
-    colgm_tagged_union(const colgm_tagged_union& t):
+    colgm_union() = default;
+    colgm_union(const colgm_union& t):
         name(t.name), location(t.location),
         member(t.member), member_int_map(t.member_int_map), ordered_member(t.ordered_member),
         method(t.method), static_method(t.static_method),
         is_public(t.is_public), is_extern(t.is_extern) {}
-    ~colgm_tagged_union() = default;
+    ~colgm_union() = default;
     std::string fuzzy_match_field(const std::string&) const;
 };
 

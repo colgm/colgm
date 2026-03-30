@@ -49,7 +49,7 @@ void sir_struct::dump(std::ostream& out) const {
     out << " } ; size " << size << " align " << align << "\n";
 }
 
-const auto sir_tagged_union::get_mangled_name() const {
+const auto sir_union::get_mangled_name() const {
     const auto ty = type {
         .name = name,
         .loc_file = location.file
@@ -57,7 +57,7 @@ const auto sir_tagged_union::get_mangled_name() const {
     return quoted_name("union." + mangle(ty.full_path_name()));
 }
 
-void sir_tagged_union::dump(std::ostream& out) const {
+void sir_union::dump(std::ostream& out) const {
     out << "%" << get_mangled_name();
     if (member_type.empty()) {
         out << " = type { i64 } ; size " << size << " align " << align << "\n";

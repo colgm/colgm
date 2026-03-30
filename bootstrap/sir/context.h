@@ -36,7 +36,7 @@ public:
     auto get_size() const { return size; }
 };
 
-class sir_tagged_union {
+class sir_union {
 private:
     std::string name;
     span location;
@@ -45,7 +45,7 @@ private:
     u64 align;
 
 public:
-    sir_tagged_union(const std::string& n,
+    sir_union(const std::string& n,
                      const span& loc,
                      u64 s,
                      u64 a):
@@ -97,7 +97,7 @@ public:
 
 struct sir_context {
 public:
-    std::vector<sir_tagged_union*> tagged_union_decls;
+    std::vector<sir_union*> tagged_union_decls;
     std::vector<sir_struct*> struct_decls;
     std::vector<sir_func*> func_decls;
     std::vector<sir_func*> func_impls;

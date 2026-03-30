@@ -1,6 +1,6 @@
 use sir::sir::*;
 use sir::value::{ value_t };
-use sir::context::{ sir_func, sir_struct, sir_tagged_union, sir_context };
+use sir::context::{ sir_func, sir_struct, sir_union, sir_context };
 use sir::value::{ value_kind };
 use sir::pass::replacer::{ replacer };
 
@@ -14,7 +14,7 @@ use std::util::timestamp::{ maketimestamp };
 func adjust_single_function_size_call(
     bb: sir_basic_block*,
     struct_size_map: hashmap<str, sir_struct*>&,
-    union_size_map: hashmap<str, sir_tagged_union*>&
+    union_size_map: hashmap<str, sir_union*>&
 ) -> i64 {
     var replace_count = 0;
 
@@ -77,7 +77,7 @@ pub func replace_size_call(ctx: sir_context*, verbose: bool) {
     ts.stamp();
 
     var struct_size_map = hashmap<str, sir_struct*>::instance();
-    var union_size_map = hashmap<str, sir_tagged_union*>::instance();
+    var union_size_map = hashmap<str, sir_union*>::instance();
     defer struct_size_map.delete();
     defer union_size_map.delete();
 

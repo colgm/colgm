@@ -2,7 +2,7 @@
 
 namespace colgm {
 
-std::string colgm_tagged_union::fuzzy_match_field(const std::string& name) const {
+std::string colgm_union::fuzzy_match_field(const std::string& name) const {
     std::string res = "";
     usize min_distance = SIZE_MAX;
 

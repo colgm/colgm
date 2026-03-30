@@ -27,7 +27,7 @@ use parse::parser::{ parser };
 use sema::symbol_info::{ symbol_kind, symbol_info };
 use sema::enumerate::{ colgm_enum };
 use sema::structure::{ colgm_struct };
-use sema::tagged_union::{ colgm_tagged_union };
+use sema::tagged_union::{ colgm_union };
 use sema::function::{ colgm_func };
 use sema::module::{ colgm_module };
 use sema::context::{ sema_context };
@@ -1013,7 +1013,7 @@ impl regist_pass {
         }
     }
 
-    func check_ref_enum(self, node: ast_union_decl*, un: colgm_tagged_union&) {
+    func check_ref_enum(self, node: ast_union_decl*, un: colgm_union&) {
         if (node->ref_enum_name.empty()) {
             return;
         }
@@ -1065,7 +1065,7 @@ impl regist_pass {
         }
     }
 
-    func load_tagged_union_member_map(self, node: ast_union_decl*, un: colgm_tagged_union&) {
+    func load_tagged_union_member_map(self, node: ast_union_decl*, un: colgm_union&) {
         if (node->ref_enum_name.empty()) {
             foreach (var i; un.ordered_members) {
                 un.member_int_map.insert(
@@ -1098,7 +1098,7 @@ impl regist_pass {
         }
     }
 
-    func regist_single_tagged_union_member(self, node: ast_union_decl*) {
+    func regist_single_union_member(self, node: ast_union_decl*) {
         var name: str& = node->name;
         if (!self.ctx->global_symbol().has(name)) {
             var info = str::from("cannot find symbol \"");
@@ -1156,7 +1156,7 @@ impl regist_pass {
         self.load_tagged_union_member_map(node, union_info);
     }
 
-    func regist_tagged_union_size_method(self, un: colgm_tagged_union&) {
+    func regist_tagged_union_size_method(self, un: colgm_union&) {
         var name = str::from("__size__");
         var ret = type::u64_type();
         defer {
@@ -1172,7 +1172,7 @@ impl regist_pass {
     }
 
     func regist_tagged_union_alloc_method(self,
-                                          un: colgm_tagged_union&,
+                                          un: colgm_union&,
                                           un_type: type&) {
         var name = str::from("__alloc__");
         var ret = un_type.pointer_copy();
@@ -1189,7 +1189,7 @@ impl regist_pass {
     }
 
     func regist_tagged_union_ptr_method(self,
-                                        un: colgm_tagged_union&,
+                                        un: colgm_union&,
                                         un_type: type&) {
         var name = str::from("__ptr__");
         var self_name = str::from("self");
@@ -1213,7 +1213,7 @@ impl regist_pass {
         un.method.insert(name, func_info);
     }
 
-    func regist_single_tagged_union_symbol(self, node: ast_union_decl*) {
+    func regist_single_union_symbol(self, node: ast_union_decl*) {
         var name: str& = node->name;
         if (self.ctx->global_symbol().has(name)) {
             var info = str::from("struct \"");
@@ -1226,7 +1226,7 @@ impl regist_pass {
         }
 
         // allocate struct info
-        var union_info = colgm_tagged_union::instance(name, node->base.location);
+        var union_info = colgm_union::instance(name, node->base.location);
         defer union_info.delete();
         if (node->is_extern) {
             union_info.is_extern = true;
@@ -1259,7 +1259,7 @@ impl regist_pass {
                 self.regist_single_struct_symbol(struct_node);
             } else if (node->is(ast_kind::ast_union_decl)) {
                 var union_node = node => ast_union_decl*;
-                self.regist_single_tagged_union_symbol(union_node);
+                self.regist_single_union_symbol(union_node);
             }
         }
 
@@ -1271,7 +1271,7 @@ impl regist_pass {
                 self.regist_single_struct_field(struct_node);
             } else if (node->is(ast_kind::ast_union_decl)) {
                 var union_node = node => ast_union_decl*;
-                self.regist_single_tagged_union_member(union_node);
+                self.regist_single_union_member(union_node);
             }
         }
 
@@ -1567,7 +1567,7 @@ impl regist_pass {
     }
 
     func generate_union_self_type_node(self,
-                                       union_info: colgm_tagged_union&,
+                                       union_info: colgm_union&,
                                        node: ast_func_decl*) {
         var pms = node->params->params.__ptr__();
         var first_param = pms->get(0) => ast_param*;
@@ -1585,7 +1585,7 @@ impl regist_pass {
     }
 
     func generate_impl_method_for_tagged_union(self,
-                                               union_info: colgm_tagged_union&,
+                                               union_info: colgm_union&,
                                                node: ast_func_decl*) {
         var name: str& = node->name;
         if (union_info.check_member_exists(name)) {
@@ -1633,7 +1633,7 @@ impl regist_pass {
     }
 
     func generate_impl_static_method_for_tagged_union(self,
-                                                      union_info: colgm_tagged_union&,
+                                                      union_info: colgm_union&,
                                                       node: ast_func_decl*) {
         var name: str& = node->name;
         if (union_info.check_member_exists(name)) {
@@ -1775,7 +1775,7 @@ impl regist_pass {
         self.ctx->generics.clear();
     }
 
-    func regist_single_impl_for_tagged_union(self, node: ast_impl*, union_info: colgm_tagged_union&) {
+    func regist_single_impl_for_tagged_union(self, node: ast_impl*, union_info: colgm_union&) {
         if (node->generic_types != nil) {
             self.err->warn(node->base.location, "generic template ignored");
         }

@@ -14,7 +14,7 @@ use mir::context::{ mir_context, mir_func };
 use sir::ssa_name_gen::{ ssa_generator };
 use sir::local_scope::{ local_table };
 use sir::sir::*;
-use sir::context::{ sir_tagged_union, sir_struct, sir_func, sir_context };
+use sir::context::{ sir_union, sir_struct, sir_func, sir_context };
 use sir::value::{ value_t };
 use sir::pass::adjust_va_arg::{ adjust_va_arg };
 use sir::pass::replace_call::{ replace_ptr_call, replace_size_call };
@@ -34,7 +34,7 @@ use dwarf::status::{ DWARF_status };
 use sema::symbol_info::{ symbol_kind };
 use sema::enumerate::{ colgm_enum };
 use sema::structure::{ colgm_struct };
-use sema::tagged_union::{ colgm_tagged_union };
+use sema::tagged_union::{ colgm_union };
 use sema::context::{ sema_context };
 use sema::type::{ type };
 
@@ -303,7 +303,7 @@ impl mir2sir {
 }
 
 impl mir2sir {
-    func emit_tagged_union(self, mctx: mir_context&) {
+    func emit_union(self, mctx: mir_context&) {
         foreach (var i; mctx.unions) {
             var m_un = i.get();
 
@@ -317,7 +317,7 @@ impl mir2sir {
                 s_ty_llvm_name.delete();
             }
 
-            var s_un = sir_tagged_union::instance(
+            var s_un = sir_union::instance(
                 s_ty_llvm_name,
                 m_un.location,
                 m_un.total_size,
@@ -1407,7 +1407,7 @@ impl mir2sir {
                 // get max align type, it's the base type of union
                 var un_full_path_name = n->resolved_type.full_path_name(self.pkg);
                 defer un_full_path_name.delete();
-                var base_type = self.sc.tagged_union_mapper.get(
+                var base_type = self.sc.union_mapper.get(
                     un_full_path_name
                 )->max_align_type.pointer_copy();
                 defer base_type.delete();
@@ -1944,7 +1944,7 @@ impl mir2sir {
             // get max align type, it's the base type of union
             var un_full_path_name = prev.resolved_type.full_path_name(self.pkg);
             defer un_full_path_name.delete();
-            var base_type = self.sc.tagged_union_mapper.get(
+            var base_type = self.sc.union_mapper.get(
                 un_full_path_name
             )->max_align_type.pointer_copy();
             defer base_type.delete();
@@ -2166,7 +2166,7 @@ impl mir2sir {
             // get max align type, it's the base type of union
             var un_full_path_name = prev.resolved_type.full_path_name(self.pkg);
             defer un_full_path_name.delete();
-            var base_type = self.sc.tagged_union_mapper.get(
+            var base_type = self.sc.union_mapper.get(
                 un_full_path_name
             )->max_align_type.pointer_copy();
             defer base_type.delete();
@@ -3388,7 +3388,7 @@ impl mir2sir {
         }
     }
 
-    func generate_single_DI_tagged_union(self, u: colgm_tagged_union&) {
+    func generate_single_DI_tagged_union(self, u: colgm_union&) {
         var ty = type::instance(u.name.c_str, u.location.file.c_str);
         defer ty.delete();
 
@@ -3457,7 +3457,7 @@ impl mir2sir {
         }
     }
 
-    func generate_single_tagged_union_member_dwarf(self, u: colgm_tagged_union&) {
+    func generate_single_union_member_dwarf(self, u: colgm_union&) {
         var ty = type::instance(u.name.c_str, u.location.file.c_str);
         defer ty.delete();
 
@@ -3493,7 +3493,7 @@ impl mir2sir {
     func generate_tagged_union_member_dwarf(self) {
         foreach (var i; self.ctx->global->domain) {
             foreach (var j; i.value().unions) {
-                self.generate_single_tagged_union_member_dwarf(j.value());
+                self.generate_single_union_member_dwarf(j.value());
             }
         }
     }
@@ -3603,7 +3603,7 @@ impl mir2sir {
 
         self.generate_type_mapper();
         self.sc.calculate(mctx, verbose);
-        self.emit_tagged_union(mctx);
+        self.emit_union(mctx);
         self.emit_struct(mctx);
         self.emit_func_decl(mctx);
         self.emit_func_impl(mctx);

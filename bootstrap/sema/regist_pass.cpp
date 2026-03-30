@@ -1107,7 +1107,7 @@ void regist_pass::regist_complex_structs(ast::root* node) {
             regist_single_struct_symbol(struct_decl_node);
         } else if (i->is(ast_type::ast_union_decl)) {
             auto union_decl_node = reinterpret_cast<ast::union_decl*>(i);
-            regist_single_tagged_union_symbol(union_decl_node);
+            regist_single_union_symbol(union_decl_node);
         }
     }
     // load field into struct
@@ -1117,7 +1117,7 @@ void regist_pass::regist_complex_structs(ast::root* node) {
             regist_single_struct_field(struct_decl_node);
         } else if (i->is(ast_type::ast_union_decl)) {
             auto union_decl_node = reinterpret_cast<ast::union_decl*>(i);
-            regist_single_tagged_union_member(union_decl_node);
+            regist_single_union_member(union_decl_node);
         }
     }
     // do self reference check
@@ -1342,7 +1342,7 @@ void regist_pass::check_single_self_reference(const std::string& name) {
 }
 
 void regist_pass::check_ref_enum(ast::union_decl* node,
-                                 colgm_tagged_union& un) {
+                                 colgm_union& un) {
     if (node->get_ref_enum_name().empty()) {
         return;
     }
@@ -1381,7 +1381,7 @@ void regist_pass::check_ref_enum(ast::union_decl* node,
 }
 
 void regist_pass::load_tagged_union_member_map(ast::union_decl* node,
-                                               colgm_tagged_union& un) {
+                                               colgm_union& un) {
     if (node->get_ref_enum_name().empty()) {
         for (const auto& m : un.ordered_member) {
             un.member_int_map.insert({m, un.member_int_map.size()});
@@ -1412,7 +1412,7 @@ void regist_pass::load_tagged_union_member_map(ast::union_decl* node,
     }
 }
 
-void regist_pass::regist_single_tagged_union_symbol(ast::union_decl* node) {
+void regist_pass::regist_single_union_symbol(ast::union_decl* node) {
     const auto& name = node->get_name();
     if (ctx.global_symbol().count(name)) {
         rp.report(node, "\"" + name + "\" conflicts with exist symbol");
@@ -1441,7 +1441,7 @@ void regist_pass::regist_single_tagged_union_symbol(ast::union_decl* node) {
     check_ref_enum(node, self);
 }
 
-void regist_pass::regist_single_tagged_union_member(ast::union_decl* node) {
+void regist_pass::regist_single_union_member(ast::union_decl* node) {
     const auto& name = node->get_name();
     auto& this_domain = ctx.get_domain(ctx.this_file);
     if (!this_domain.unions.count(name)) {
@@ -1766,7 +1766,7 @@ void regist_pass::regist_single_impl_for_struct(ast::impl* node,
 }
 
 void regist_pass::regist_single_impl_for_tagged_union(ast::impl* node,
-                                                      colgm_tagged_union& un) {
+                                                      colgm_union& un) {
     for (auto i : node->get_methods()) {
         const auto& name = i->get_name();
         if (un.member.count(name)) {
@@ -1809,7 +1809,7 @@ colgm_func regist_pass::generate_method(ast::func_decl* node,
 }
 
 colgm_func regist_pass::generate_method(ast::func_decl* node,
-                                        const colgm_tagged_union& un) {
+                                        const colgm_union& un) {
     auto func_self = colgm_func();
     func_self.name = node->get_name();
     func_self.location = node->get_location();
@@ -1840,7 +1840,7 @@ void regist_pass::generate_self_parameter(ast::param* node,
 }
 
 void regist_pass::generate_self_parameter(ast::param* node,
-                                          const colgm_tagged_union& un) {
+                                          const colgm_union& un) {
     auto new_type_def = new type_def(node->get_location());
     new_type_def->set_name(new identifier(
         node->get_name()->get_location(),
@@ -1876,7 +1876,7 @@ void regist_pass::generate_method_parameter_list(param_list* node,
 
 void regist_pass::generate_method_parameter_list(param_list* node,
                                                  colgm_func& self,
-                                                 const colgm_tagged_union& un) {
+                                                 const colgm_union& un) {
     for (auto i : node->get_params()) {
         bool is_self = i->get_name()->get_name()=="self";
         if (is_self && i != node->get_params().front()) {

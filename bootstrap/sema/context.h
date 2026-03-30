@@ -85,7 +85,7 @@ public:
     void dump_structs() const;
     void dump_single_struct(const colgm_struct&) const;
     void dump_unions() const;
-    void dump_single_tagged_union(const colgm_tagged_union&) const;
+    void dump_single_union(const colgm_union&) const;
     void dump_enums() const;
     void dump_functions() const;
     void dump_single_function(const colgm_func&,

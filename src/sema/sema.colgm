@@ -15,7 +15,7 @@ use ast::ast::*;
 use ast::dumper::{ ast_dumper };
 
 use sema::structure::{ colgm_struct };
-use sema::tagged_union::{ colgm_tagged_union };
+use sema::tagged_union::{ colgm_union };
 use sema::function::{ colgm_func };
 use sema::context::{ sema_context };
 use sema::type::{ type };
@@ -899,7 +899,7 @@ impl sema {
     func check_tagged_union_pub_method(self,
                                        n: ast*,
                                        name: str&,
-                                       union_self: colgm_tagged_union&) {
+                                       union_self: colgm_union&) {
         if (!union_self.method.has(name)) {
             return;
         }
@@ -980,7 +980,7 @@ impl sema {
             );
             return res;
         } else if (dm.unions.has(prev_name_for_search)) {
-            var res = self.resolve_tagged_union_get_field(
+            var res = self.resolve_union_get_field(
                 dm.unions.get(prev_name_for_search),
                 prev,
                 n
@@ -1074,8 +1074,8 @@ impl sema {
         return type::error_type();
     }
 
-    func resolve_tagged_union_get_field(self,
-                                        union_self: colgm_tagged_union&,
+    func resolve_union_get_field(self,
+                                        union_self: colgm_union&,
                                         prev: type&,
                                         n: ast_get_field*) -> type {
         var prev_name = prev.full_path_name_with_pointer(self.pkg);
@@ -1686,7 +1686,7 @@ impl sema {
             return self.resolve_struct_initializer(struct_self, prev, tctx, n);
         } else if (dm.unions.has(prev_name_for_search)) {
             var union_self = dm.unions.get(prev_name_for_search);
-            return self.resolve_tagged_union_initializer(union_self, prev, tctx, n);
+            return self.resolve_union_initializer(union_self, prev, tctx, n);
         }
 
         var info = str::from("\"");
@@ -1796,8 +1796,8 @@ impl sema {
         return copy;
     }
 
-    func resolve_tagged_union_initializer(self,
-                                          union_self: colgm_tagged_union&,
+    func resolve_union_initializer(self,
+                                          union_self: colgm_union&,
                                           prev: type&,
                                           tctx: type_context&,
                                           n: ast_initializer*) -> type {
@@ -1924,7 +1924,7 @@ impl sema {
             );
             return res;
         } else if (dm.unions.has(prev_name_for_search)) {
-            var res = self.resolve_tagged_union_ptr_get_field(
+            var res = self.resolve_union_ptr_get_field(
                 dm.unions.get(prev_name_for_search),
                 prev,
                 n
@@ -1986,8 +1986,8 @@ impl sema {
         return type::error_type();
     }
 
-    func resolve_tagged_union_ptr_get_field(self,
-                                            union_self: colgm_tagged_union&,
+    func resolve_union_ptr_get_field(self,
+                                            union_self: colgm_union&,
                                             prev: type&,
                                             n: ast_ptr_get_field*) -> type {
         var prev_name = prev.full_path_name_with_pointer(self.pkg);
@@ -2683,7 +2683,7 @@ impl sema {
 
     func check_is_tagged_union_member(self,
                                       n: ast_call*,
-                                      un: colgm_tagged_union&) -> bool {
+                                      un: colgm_union&) -> bool {
         var name: str& = n->head->id->content;
         // means this tag is not referenced from enum
         // so the call head's identifier is the tag
@@ -2713,7 +2713,7 @@ impl sema {
     // must use when check_is_tagged_union_member is true
     func get_tagged_union_label(self,
                                 n: ast_call*,
-                                un: colgm_tagged_union&) -> str {
+                                un: colgm_union&) -> str {
         var name = n->head->id->content.__ptr__();
         // means this tag is not referenced from enum
         // so the call head's identifier is the tag
@@ -3686,7 +3686,7 @@ impl sema {
         self.ctx->pop_scope_level(self.err);
     }
 
-    func resolve_union_method(self, node: ast_func_decl*, un: colgm_tagged_union&) {
+    func resolve_union_method(self, node: ast_func_decl*, un: colgm_union&) {
         if (node->body == nil) {
             self.err->error(node->base.location, "method should be implemented");
             return;

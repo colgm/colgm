@@ -72,12 +72,12 @@ private:
 
 private:
     void check_pub_method(node*, const std::string&, const colgm_struct&);
-    void check_pub_method(node*, const std::string&, const colgm_tagged_union&);
+    void check_pub_method(node*, const std::string&, const colgm_union&);
     void check_pub_static_method(node*, const std::string&, const colgm_struct&);
-    void check_pub_static_method(node*, const std::string&, const colgm_tagged_union&);
+    void check_pub_static_method(node*, const std::string&, const colgm_union&);
     type resolve_get_field(const type&, get_field*);
     type resolve_struct_get_field(const colgm_struct&, const type&, get_field*);
-    type resolve_tagged_union_get_field(const colgm_tagged_union&, const type&, get_field*);
+    type resolve_union_get_field(const colgm_union&, const type&, get_field*);
     bool check_static_call_args(const colgm_func&, call_func_args*);
     bool check_method_call_args(const colgm_func&, call_func_args*);
     type resolve_call_id(call_id*);
@@ -85,12 +85,12 @@ private:
     type resolve_call_index(const type&, call_index*);
     type resolve_initializer(const type&, const type_context&, initializer*);
     type resolve_struct_initializer(const colgm_struct&, const type&, const type_context&, initializer*);
-    type resolve_tagged_union_initializer(const colgm_tagged_union&, const type&, const type_context&, initializer*);
+    type resolve_union_initializer(const colgm_union&, const type&, const type_context&, initializer*);
     type resolve_call_path(const type&, call_path*);
     type resolve_union_call_path(const colgm_module&, const type&, call_path*);
     type resolve_ptr_get_field(const type&, ptr_get_field*);
     type resolve_struct_ptr_get_field(const colgm_struct&, const type&, ptr_get_field*);
-    type resolve_tagged_union_ptr_get_field(const colgm_tagged_union&, const type&, ptr_get_field*);
+    type resolve_union_ptr_get_field(const colgm_union&, const type&, ptr_get_field*);
     void union_initializer_desugar(call*);
     type resolve_call(call*);
 
@@ -113,8 +113,8 @@ private:
     void resolve_cond_stmt(cond_stmt*, const colgm_func&);
     void resolve_match_stmt(match_stmt*, const colgm_func&);
     void resolve_match_stmt_for_enum(match_stmt*, const colgm_func&, const type&);
-    bool check_is_tagged_union_member(expr*, const colgm_tagged_union&);
-    std::string get_tagged_union_label(expr*, const colgm_tagged_union&);
+    bool check_is_tagged_union_member(expr*, const colgm_union&);
+    std::string get_tagged_union_label(expr*, const colgm_union&);
     void resolve_match_stmt_for_tagged_union(match_stmt*, const colgm_func&, const type&);
 
 private:
@@ -130,7 +130,7 @@ private:
     void resolve_code_block(code_block*, const colgm_func&);
     void resolve_global_func(func_decl*);
     void resolve_method(func_decl*, const colgm_struct&);
-    void resolve_method(func_decl*, const colgm_tagged_union&);
+    void resolve_method(func_decl*, const colgm_union&);
     void resolve_impl(impl*);
     void resolve_function_block(root*);
 

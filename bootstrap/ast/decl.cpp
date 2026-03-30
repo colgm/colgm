@@ -150,7 +150,7 @@ union_decl::~union_decl() {
 }
 
 void union_decl::accept(visitor* v) {
-    v->visit_tagged_union_decl(this);
+    v->visit_union_decl(this);
 }
 
 union_decl* union_decl::clone() const {

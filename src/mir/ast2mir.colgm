@@ -18,7 +18,7 @@ use mir::mir::*;
 use mir::context::{
     mir_context,
     mir_struct,
-    mir_tagged_union,
+    mir_union,
     mir_func
 };
 
@@ -770,8 +770,8 @@ impl ast2mir {
         self.mctx->structs.push(st);
     }
 
-    func visit_tagged_union_decl(self, n: ast_union_decl*) {
-        var un = mir_tagged_union::instance(n->name, n->base.location);
+    func visit_union_decl(self, n: ast_union_decl*) {
+        var un = mir_union::instance(n->name, n->base.location);
         defer un.delete();
 
         foreach (var i; n->members) {
@@ -894,7 +894,7 @@ impl ast2mir {
                     self.visit_struct_decl(n => ast_struct_decl*);
                 }
                 ast_kind::ast_union_decl => {
-                    self.visit_tagged_union_decl(n => ast_union_decl*);
+                    self.visit_union_decl(n => ast_union_decl*);
                 }
                 ast_kind::ast_impl => {
                     self.visit_impl(n => ast_impl*);
