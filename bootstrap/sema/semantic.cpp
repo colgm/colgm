@@ -1891,7 +1891,7 @@ void semantic::resolve_match_stmt(match_stmt* node, const colgm_func& func_self)
     if (ctx.search_symbol_kind(infer) == sym_kind::enum_kind) {
         resolve_match_stmt_for_enum(node, func_self, infer);
     } else if (ctx.search_symbol_kind(infer) == sym_kind::union_kind) {
-        resolve_match_stmt_for_tagged_union(node, func_self, infer);
+        resolve_match_stmt_for_union(node, func_self, infer);
     }
 }
 
@@ -1981,7 +1981,7 @@ void semantic::resolve_match_stmt_for_enum(match_stmt* node,
     }
 }
 
-bool semantic::check_is_tagged_union_member(expr* node, const colgm_union& un) {
+bool semantic::check_is_union_member(expr* node, const colgm_union& un) {
     if (!node->is(ast_type::ast_call)) {
         // unreachable
         return false;
@@ -2015,7 +2015,7 @@ bool semantic::check_is_tagged_union_member(expr* node, const colgm_union& un) {
     return un.member.count(static_cast<call_path*>(chain)->get_name());
 }
 
-std::string semantic::get_tagged_union_label(expr* node, const colgm_union& un) {
+std::string semantic::get_union_label(expr* node, const colgm_union& un) {
     auto call_node = static_cast<call*>(node);
     const auto& name = call_node->get_head()->get_id()->get_name();
 
@@ -2029,7 +2029,7 @@ std::string semantic::get_tagged_union_label(expr* node, const colgm_union& un) 
     return static_cast<call_path*>(chain)->get_name();
 }
 
-void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
+void semantic::resolve_match_stmt_for_union(match_stmt* node,
                                                    const colgm_func& func_self,
                                                    const type& infer) {
     bool default_found = false;
@@ -2053,14 +2053,14 @@ void semantic::resolve_match_stmt_for_tagged_union(match_stmt* node,
         const auto case_node = i->get_value();
         case_node->set_resolve_type(infer);
 
-        if (!check_is_tagged_union_member(case_node, un)) {
+        if (!check_is_union_member(case_node, un)) {
             rp.report(case_node,
                 "cannot find this tag in this union"
             );
             continue;
         }
 
-        const auto label = get_tagged_union_label(case_node, un);
+        const auto label = get_union_label(case_node, un);
         if (used_values.count(label)) {
             rp.report(case_node, "duplicate tag");
         }

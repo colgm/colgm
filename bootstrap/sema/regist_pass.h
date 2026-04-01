@@ -125,7 +125,7 @@ private:
 
 private:
     bool check_is_public_struct(ast::identifier*, const colgm_module&);
-    bool check_is_public_tagged_union(ast::identifier*, const colgm_module&);
+    bool check_is_public_union(ast::identifier*, const colgm_module&);
     bool check_is_public_func(ast::identifier*, const colgm_module&);
     bool check_is_public_enum(ast::identifier*, const colgm_module&);
     void import_global_symbol(ast::node*,
@@ -164,7 +164,7 @@ private: // structs and tagged unions
     void check_self_reference();
     void check_single_self_reference(const std::string&);
     void check_ref_enum(ast::union_decl*, colgm_union&);
-    void load_tagged_union_member_map(ast::union_decl*, colgm_union&);
+    void load_union_member_map(ast::union_decl*, colgm_union&);
     void regist_single_union_symbol(ast::union_decl*);
     void regist_single_union_member(ast::union_decl*);
 
@@ -181,7 +181,7 @@ private: // implementations
     bool validate_impl(ast::impl*);
     void regist_single_impl(ast::impl*);
     void regist_single_impl_for_struct(ast::impl*, colgm_struct&);
-    void regist_single_impl_for_tagged_union(ast::impl*, colgm_union&);
+    void regist_single_impl_for_union(ast::impl*, colgm_union&);
     colgm_func generate_method(ast::func_decl*, const colgm_struct&);
     colgm_func generate_method(ast::func_decl*, const colgm_union&);
     void generate_self_parameter(ast::param*, const colgm_struct&);

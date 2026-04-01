@@ -164,7 +164,7 @@ impl size_calc {
         }
 
         var offset: u64 = 8;
-        var tagged_union_align: u64 = 8;
+        var union_align: u64 = 8;
 
         // get max size and max alignment of all members
         var max_size: u64 = 0;
@@ -182,8 +182,8 @@ impl size_calc {
             }
         }
 
-        if (max_align > tagged_union_align) {
-            tagged_union_align = max_align;
+        if (max_align > union_align) {
+            union_align = max_align;
         }
 
         if (max_align != 0) {
@@ -194,13 +194,13 @@ impl size_calc {
             offset += max_size;
         }
         // align union ifself
-        while (offset % tagged_union_align != 0) {
+        while (offset % union_align != 0) {
             offset += 1;
         }
 
         u.total_size = offset;
         u.union_size = max_size;
-        u.align = tagged_union_align;
+        u.align = union_align;
         u.size_calculated = true;
     }
 

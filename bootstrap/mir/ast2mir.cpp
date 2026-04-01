@@ -166,15 +166,15 @@ bool ast2mir::visit_struct_decl(ast::struct_decl* node) {
 }
 
 bool ast2mir::visit_union_decl(ast::union_decl* node) {
-    auto new_tagged_union = new mir_union;
-    new_tagged_union->name = node->get_name();
-    new_tagged_union->location = node->get_location();
+    auto new_union = new mir_union;
+    new_union->name = node->get_name();
+    new_union->location = node->get_location();
 
     for (auto i : node->get_members()) {
-        new_tagged_union->member_type.push_back(generate_type(i->get_type()));
+        new_union->member_type.push_back(generate_type(i->get_type()));
     }
 
-    mctx.unions.push_back(new_tagged_union);
+    mctx.unions.push_back(new_union);
     return true;
 }
 

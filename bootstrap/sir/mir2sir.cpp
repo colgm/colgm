@@ -105,7 +105,7 @@ void mir2sir::emit_union(const mir_context& mctx) {
                 "[" + std::to_string(i->union_size - i->max_align_type_size) + " x i8]"
             );
         }
-        ictx.tagged_union_decls.push_back(tud);
+        ictx.union_decls.push_back(tud);
     }
 }
 
@@ -1123,7 +1123,7 @@ void mir2sir::visit_mir_get_path(mir_get_path* node) {
                 node->get_type()
             ));
             break;
-        case mir_value_t::kind::tagged_union_symbol:
+        case mir_value_t::kind::union_symbol:
             value_stack.push_back(mir_value_t::func_kind(
                 prev.resolve_type.full_path_name() + "." + node->get_name(),
                 node->get_type()
@@ -2150,42 +2150,42 @@ void mir2sir::calculate_single_union_size(mir_union* u) {
     }
 
     u64 offset = 8;
-    u64 tagged_union_align = 8;
+    u64 union_align = 8;
 
-    u64 union_size = 0;
-    u64 union_align = 1;
+    u64 max_size = 0;
+    u64 max_align = 1;
     for (const auto& i : u->member_type) {
         auto res = calculate_size_and_align(i);
-        if (union_size < res.size) {
-            union_size = res.size;
+        if (max_size < res.size) {
+            max_size = res.size;
         }
-        if (union_align < res.align) {
-            union_align = res.align;
+        if (max_align < res.align) {
+            max_align = res.align;
             u->max_align_type = i;
             u->max_align_type_size = res.size;
         }
     }
 
-    if (tagged_union_align < union_align) {
-        tagged_union_align = union_align;
+    if (union_align < max_align) {
+        union_align = max_align;
     }
 
-    if (union_align != 0) {
+    if (max_align != 0) {
         // align union member
-        while (offset % union_align != 0) {
+        while (offset % max_align != 0) {
             offset++;
         }
-        offset += union_size;
+        offset += max_size;
     }
 
     // align union itself
-    while (offset % tagged_union_align != 0) {
+    while (offset % union_align != 0) {
         offset++;
     }
 
     u->total_size = offset;
-    u->union_size = union_size;
-    u->align = tagged_union_align;
+    u->union_size = max_size;
+    u->align = union_align;
     u->size_calculated = true;
 }
 

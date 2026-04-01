@@ -45,7 +45,7 @@ TEST_LIST = [
     ("test/regex_test.colgm",              []),
     ("test/std_test.colgm",                []),
     ("test/string.colgm",                  []),
-    ("test/tagged_union.colgm",            []),
+    ("test/union.colgm",                   []),
     ("test/to_str.colgm",                  []),
     ("test/type_convert.colgm",            []),
     ("test/utf8_test.colgm",               []),
@@ -57,6 +57,8 @@ COMPILER = "build/colgm_self_host"
 if sys.platform == "win32":
     COMPILER = "cmake-windows-build\\colgm_self_host.exe"
 
+pass_count = 0
+failed_list = []
 for (test, argv) in TEST_LIST:
     ret = execute([
         COMPILER,
@@ -66,10 +68,13 @@ for (test, argv) in TEST_LIST:
         "-g"
     ])
     if ret != 0:
-        break
+        failed_list.append(test)
+        continue
     ret = execute(["./test.out"] + argv, False)
     if ret != 0:
-        break
+        failed_list.append(test)
+        continue
+    pass_count += 1
     time.sleep(0.5)
 
 if os.path.exists("test.out"):
@@ -82,3 +87,12 @@ if os.path.exists("test.pdb"):
     os.remove("test.pdb")
 if os.path.exists("test.ilk"):
     os.remove("test.ilk")
+
+print("\n========================")
+print("TOTAL TESTS:", len(TEST_LIST))
+print("PASS:", pass_count)
+if len(failed_list) != 0:
+    print("FAIL:", len(failed_list))
+    for test in failed_list:
+        print("  ", test)
+    exit(1)

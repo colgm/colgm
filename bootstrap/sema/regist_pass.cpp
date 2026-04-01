@@ -653,7 +653,7 @@ bool regist_pass::check_is_public_struct(ast::identifier* node,
     return true;
 }
 
-bool regist_pass::check_is_public_tagged_union(ast::identifier* node,
+bool regist_pass::check_is_public_union(ast::identifier* node,
                                                const colgm_module& domain) {
     const auto& name = node->get_name();
     if (!domain.unions.count(name)) {
@@ -990,7 +990,7 @@ void regist_pass::regist_single_import(ast::use_stmt* node, bool verbose) {
             continue;
         }
         if (domain.unions.count(i->get_name())) {
-            if (!check_is_public_tagged_union(i, domain)) {
+            if (!check_is_public_union(i, domain)) {
                 continue;
             }
             import_global_symbol(i, i->get_name(),
@@ -1380,7 +1380,7 @@ void regist_pass::check_ref_enum(ast::union_decl* node,
     }
 }
 
-void regist_pass::load_tagged_union_member_map(ast::union_decl* node,
+void regist_pass::load_union_member_map(ast::union_decl* node,
                                                colgm_union& un) {
     if (node->get_ref_enum_name().empty()) {
         for (const auto& m : un.ordered_member) {
@@ -1494,7 +1494,7 @@ void regist_pass::regist_single_union_member(ast::union_decl* node) {
         self.member.insert({i->get_name()->get_name(), member_type});
         self.ordered_member.push_back(i->get_name()->get_name());
     }
-    load_tagged_union_member_map(node, self);
+    load_union_member_map(node, self);
 }
 
 void regist_pass::regist_global_funcs(ast::root* node) {
@@ -1693,7 +1693,7 @@ void regist_pass::regist_single_impl(ast::impl* node) {
     }
 
     if (dm.unions.count(node->get_name())) {
-        regist_single_impl_for_tagged_union(
+        regist_single_impl_for_union(
             node,
             dm.unions.at(node->get_name())
         );
@@ -1765,7 +1765,7 @@ void regist_pass::regist_single_impl_for_struct(ast::impl* node,
     }
 }
 
-void regist_pass::regist_single_impl_for_tagged_union(ast::impl* node,
+void regist_pass::regist_single_impl_for_union(ast::impl* node,
                                                       colgm_union& un) {
     for (auto i : node->get_methods()) {
         const auto& name = i->get_name();

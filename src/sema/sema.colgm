@@ -99,7 +99,7 @@ impl sema {
         return false;
     }
 
-    func is_tagged_union_type(self, ty: type&) -> bool {
+    func is_union_type(self, ty: type&) -> bool {
         if (ty.loc_file.empty()) {
             return false;
         }
@@ -506,7 +506,7 @@ impl sema {
         // cannot calculate these types
         if (self.is_enum_type(left) ||
             self.is_struct_type(left) ||
-            self.is_tagged_union_type(left) ||
+            self.is_union_type(left) ||
             self.is_function_type(left)) {
             var info = str::from("cannot calculate \"");
             defer info.delete();
@@ -519,7 +519,7 @@ impl sema {
             return type::error_type();
         } else if (self.is_enum_type(right) ||
                    self.is_struct_type(right) ||
-                   self.is_tagged_union_type(right) ||
+                   self.is_union_type(right) ||
                    self.is_function_type(right)) {
             var info = str::from("cannot calculate \"");
             defer info.delete();
@@ -896,7 +896,7 @@ impl sema {
         }
     }
 
-    func check_tagged_union_pub_method(self,
+    func check_union_pub_method(self,
                                        n: ast*,
                                        name: str&,
                                        union_self: colgm_union&) {
@@ -1090,7 +1090,7 @@ impl sema {
             return infer;
         }
         if (union_self.method.has(n->name)) {
-            self.check_tagged_union_pub_method(n => ast*, n->name, union_self);
+            self.check_union_pub_method(n => ast*, n->name, union_self);
             var infer = self.struct_method_infer(prev, n->name);
             n->base.resolved_type.reset_with(infer);
             return infer;
@@ -1613,7 +1613,7 @@ impl sema {
         var dm = self.ctx->get_domain(prev.loc_file);
         var tu = dm.unions.get(prev_name_for_search);
         if (tu.static_method.has(n->name)) {
-            self.check_tagged_union_pub_method(n => ast*, n->name, tu);
+            self.check_union_pub_method(n => ast*, n->name, tu);
             var infer = self.struct_static_method_infer(prev, n->name);
             n->base.resolved_type.reset_with(infer);
             return infer;
@@ -2002,7 +2002,7 @@ impl sema {
             return infer;
         }
         if (union_self.method.has(n->name)) {
-            self.check_tagged_union_pub_method(n => ast*, n->name, union_self);
+            self.check_union_pub_method(n => ast*, n->name, union_self);
             var infer = self.struct_method_infer(prev, n->name);
             n->base.resolved_type.reset_with(infer);
             return infer;
@@ -2681,7 +2681,7 @@ impl sema {
         return em.members.get(e_name);
     }
 
-    func check_is_tagged_union_member(self,
+    func check_is_union_member(self,
                                       n: ast_call*,
                                       un: colgm_union&) -> bool {
         var name: str& = n->head->id->content;
@@ -2710,8 +2710,8 @@ impl sema {
         return un.members.has(call_path_node->name);
     }
 
-    // must use when check_is_tagged_union_member is true
-    func get_tagged_union_label(self,
+    // must use when check_is_union_member is true
+    func get_union_label(self,
                                 n: ast_call*,
                                 un: colgm_union&) -> str {
         var name = n->head->id->content.__ptr__();
@@ -2735,7 +2735,7 @@ impl sema {
         }
 
         if (!self.is_enum_type(infer) &&
-            !self.is_tagged_union_type(infer)) {
+            !self.is_union_type(infer)) {
             self.err->error(n->value->location,
                 "match value must be enum or tagged union"
             );
@@ -2757,8 +2757,8 @@ impl sema {
 
         if (self.is_enum_type(infer)) {
             self.resolve_match_stmt_for_enum(n, func_self, infer);
-        } else if (self.is_tagged_union_type(infer)) {
-            self.resolve_match_stmt_for_tagged_union(n, func_self, infer);
+        } else if (self.is_union_type(infer)) {
+            self.resolve_match_stmt_for_union(n, func_self, infer);
         }
     }
 
@@ -2885,7 +2885,7 @@ impl sema {
         }
     }
 
-    func resolve_match_stmt_for_tagged_union(self,
+    func resolve_match_stmt_for_union(self,
                                              n: ast_match_stmt*,
                                              func_self: colgm_func&,
                                              infer: type&) {
@@ -2918,7 +2918,7 @@ impl sema {
                 continue;
             }
 
-            if (!self.check_is_tagged_union_member(case_node->pattern, un)) {
+            if (!self.check_is_union_member(case_node->pattern, un)) {
                 self.err->error(
                     case_node->base.location,
                     "cannot find this tag in this union"
@@ -2926,7 +2926,7 @@ impl sema {
                 continue;
             }
 
-            var label = self.get_tagged_union_label(case_node->pattern, un);
+            var label = self.get_union_label(case_node->pattern, un);
             defer label.delete();
 
             if (used_values.has(label)) {

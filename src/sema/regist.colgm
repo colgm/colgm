@@ -1065,7 +1065,7 @@ impl regist_pass {
         }
     }
 
-    func load_tagged_union_member_map(self, node: ast_union_decl*, un: colgm_union&) {
+    func load_union_member_map(self, node: ast_union_decl*, un: colgm_union&) {
         if (node->ref_enum_name.empty()) {
             foreach (var i; un.ordered_members) {
                 un.member_int_map.insert(
@@ -1123,9 +1123,9 @@ impl regist_pass {
         var un_type = type::instance(name.c_str, node->base.location.file.c_str);
         defer un_type.delete();
 
-        self.regist_tagged_union_size_method(union_info);
-        self.regist_tagged_union_alloc_method(union_info, un_type);
-        self.regist_tagged_union_ptr_method(union_info, un_type);
+        self.regist_union_size_method(union_info);
+        self.regist_union_alloc_method(union_info, un_type);
+        self.regist_union_ptr_method(union_info, un_type);
 
         foreach (var i; node->members) {
             var member = i.get();
@@ -1153,10 +1153,10 @@ impl regist_pass {
             union_info.ordered_members.push(member_name);
             union_info.members_span.insert(member_name, member->base.location);
         }
-        self.load_tagged_union_member_map(node, union_info);
+        self.load_union_member_map(node, union_info);
     }
 
-    func regist_tagged_union_size_method(self, un: colgm_union&) {
+    func regist_union_size_method(self, un: colgm_union&) {
         var name = str::from("__size__");
         var ret = type::u64_type();
         defer {
@@ -1171,7 +1171,7 @@ impl regist_pass {
         un.static_method.insert(name, func_info);
     }
 
-    func regist_tagged_union_alloc_method(self,
+    func regist_union_alloc_method(self,
                                           un: colgm_union&,
                                           un_type: type&) {
         var name = str::from("__alloc__");
@@ -1188,7 +1188,7 @@ impl regist_pass {
         un.static_method.insert(name, func_info);
     }
 
-    func regist_tagged_union_ptr_method(self,
+    func regist_union_ptr_method(self,
                                         un: colgm_union&,
                                         un_type: type&) {
         var name = str::from("__ptr__");
@@ -1584,7 +1584,7 @@ impl regist_pass {
         first_param->type = tn;
     }
 
-    func generate_impl_method_for_tagged_union(self,
+    func generate_impl_method_for_union(self,
                                                union_info: colgm_union&,
                                                node: ast_func_decl*) {
         var name: str& = node->name;
@@ -1632,7 +1632,7 @@ impl regist_pass {
         union_info.method.insert(name, func_info[0]);
     }
 
-    func generate_impl_static_method_for_tagged_union(self,
+    func generate_impl_static_method_for_union(self,
                                                       union_info: colgm_union&,
                                                       node: ast_func_decl*) {
         var name: str& = node->name;
@@ -1730,7 +1730,7 @@ impl regist_pass {
             self.regist_single_impl_for_struct(node, struct_info);
             return;
         } else if (dm.unions.has(name)) {
-            self.regist_single_impl_for_tagged_union(node, dm.unions.get(name));
+            self.regist_single_impl_for_union(node, dm.unions.get(name));
             return;
         }
 
@@ -1775,7 +1775,7 @@ impl regist_pass {
         self.ctx->generics.clear();
     }
 
-    func regist_single_impl_for_tagged_union(self, node: ast_impl*, union_info: colgm_union&) {
+    func regist_single_impl_for_union(self, node: ast_impl*, union_info: colgm_union&) {
         if (node->generic_types != nil) {
             self.err->warn(node->base.location, "generic template ignored");
         }
@@ -1783,9 +1783,9 @@ impl regist_pass {
         foreach (var i; node->methods) {
             var mthd = i.get() => ast_func_decl*;
             if (self.is_method(mthd)) {
-                self.generate_impl_method_for_tagged_union(union_info, mthd);
+                self.generate_impl_method_for_union(union_info, mthd);
             } else {
-                self.generate_impl_static_method_for_tagged_union(union_info, mthd);
+                self.generate_impl_static_method_for_union(union_info, mthd);
             }
         }
     }

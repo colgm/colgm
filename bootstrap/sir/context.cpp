@@ -193,7 +193,7 @@ void sir_context::dump_size_method(std::ostream& out) const {
         out << "  ret i64 " << st->get_size() << "\n}\n\n";
     }
 
-    for (const auto& un : tagged_union_decls) {
+    for (const auto& un : union_decls) {
         const auto un_type = type {
             .name = un->get_name(),
             .loc_file = un->get_file()
@@ -222,7 +222,7 @@ void sir_context::dump_alloc_method(std::ostream& out) const {
         out << "  ret ptr %1\n}\n\n";
     }
 
-    for (const auto un: tagged_union_decls) {
+    for (const auto un: union_decls) {
         const auto un_type = type {
             .name = un->get_name(),
             .loc_file = un->get_file()
@@ -244,13 +244,13 @@ void sir_context::dump_code(std::ostream& out) {
     dump_target_tripple(out);
 
     // generate declarations of structs
-    for (auto i : tagged_union_decls) {
+    for (auto i : union_decls) {
          i->dump(out);
     }
     for (auto i : struct_decls) {
         i->dump(out);
     }
-    if (tagged_union_decls.size() || struct_decls.size()) {
+    if (union_decls.size() || struct_decls.size()) {
         out << "\n";
     }
 

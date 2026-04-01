@@ -307,7 +307,7 @@ impl sir_func {
 }
 
 pub struct sir_context {
-    tagged_union_decls: vec<sir_union>,
+    union_decls: vec<sir_union>,
     struct_decls: vec<sir_struct>,
     func_decls: vec<sir_func>,
     func_impls: vec<sir_func>,
@@ -324,7 +324,7 @@ pub struct sir_context {
 impl sir_context {
     pub func instance() -> sir_context {
         return sir_context {
-            tagged_union_decls: vec<sir_union>::instance(),
+            union_decls: vec<sir_union>::instance(),
             struct_decls: vec<sir_struct>::instance(),
             func_decls: vec<sir_func>::instance(),
             func_impls: vec<sir_func>::instance(),
@@ -339,7 +339,7 @@ impl sir_context {
     }
 
     pub func delete(self) {
-        self.tagged_union_decls.delete();
+        self.union_decls.delete();
         self.struct_decls.delete();
         self.func_decls.delete();
         self.func_impls.delete();
@@ -395,11 +395,11 @@ impl sir_context {
     }
 
     func dump_unions(self, out: io&) {
-        foreach (var i; self.tagged_union_decls) {
+        foreach (var i; self.union_decls) {
             i.get().dump(out);
         }
 
-        if (self.tagged_union_decls.size > 0) {
+        if (self.union_decls.size > 0) {
             out.out("\n");
         }
     }
@@ -502,7 +502,7 @@ impl sir_context {
             out.out("  ret ptr %0\n}\n\n");
         }
 
-        foreach (var i; self.tagged_union_decls) {
+        foreach (var i; self.union_decls) {
             var alloc_func_name = i.get().get_intrinsic_method_name("__alloc__");
             defer alloc_func_name.delete();
 

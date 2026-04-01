@@ -97,7 +97,7 @@ public:
 
 struct sir_context {
 public:
-    std::vector<sir_union*> tagged_union_decls;
+    std::vector<sir_union*> union_decls;
     std::vector<sir_struct*> struct_decls;
     std::vector<sir_func*> func_decls;
     std::vector<sir_func*> func_impls;
@@ -118,7 +118,7 @@ private:
 
 public:
     ~sir_context() {
-        for (auto i : tagged_union_decls) {
+        for (auto i : union_decls) {
             delete i;
         }
         for (auto i : struct_decls) {
