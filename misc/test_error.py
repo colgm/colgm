@@ -18,8 +18,6 @@ def de_color(text: str) -> str:
     for i in color:
         text = text.replace("\033[" + i + "m", "")
     text = text.replace("\r", "")
-    text = text.replace("\t", "")
-    text = text.replace(" ", "")
     return text
 
 TEST_LIST = []
@@ -51,9 +49,9 @@ for test in TEST_LIST:
             continue
         if result not in err_report:
             print("\033[91;1m    FAILED\033[0m expected:")
-            print(result)
+            print(result.replace(" ", "."))
             print("\033[91;1m    FAILED\033[0m got:")
-            print(err_report)
+            print(err_report.replace(" ", "."))
             exit(1)
 
 if os.path.exists("test_error.out.ll"):
