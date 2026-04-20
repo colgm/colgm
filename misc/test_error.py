@@ -47,11 +47,15 @@ for test in TEST_LIST:
             print("\033[91;1m    FAILED\033[0m got:")
             print(err_report)
             continue
-        if result not in err_report:
+        if result != err_report:
             print("\033[91;1m    FAILED\033[0m expected:")
+            print("-" * 80)
             print(result.replace(" ", "."))
+            print("-" * 80)
             print("\033[91;1m    FAILED\033[0m got:")
+            print("-" * 80)
             print(err_report.replace(" ", "."))
+            print("-" * 80)
             exit(1)
 
 if os.path.exists("test_error.out.ll"):
