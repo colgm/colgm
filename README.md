@@ -158,9 +158,11 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
 ## Features and Roadmap
 
 1. feature: fuzzy match when variable is not found
-2. feature: to_string method for struct/enum/tagged union
-3. feature: smart pointer
-4. feature: std
+2. feature: function pointer
+3. feature: lambda
+4. feature: to_string method for struct/enum/tagged union
+5. feature: smart pointer
+6. feature: std
     - [x] Filesystem API (read, write, join, exists, etc)
     - [x] Datetime utils
     - [ ] String and Unicode Helpers
@@ -175,6 +177,6 @@ And for development, you should follow the [code style](./doc/spec/code_style.md
     - [ ] Regex
     - [ ] Package manager
     - [ ] Docs generator
-5. DCE opt
-6. CSE opt
-7. ref type implicit copy(include assignment/definition/struct init) detection
+7. DCE opt
+8. CSE opt
+9. ref type implicit copy(include assignment/definition/struct init) detection
