@@ -1,4 +1,4 @@
-# Colgm Language Guide
+# <img src="../logo/colgm.svg" height="50px"/> Colgm Language Guide
 
 ![just a picture](../jpg/llvm-bootstrap.jpg)
 

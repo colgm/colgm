@@ -1,4 +1,4 @@
-# Tagged Union
+# <img src="../logo/colgm.svg" height="50px"/> Tagged Union
 
 ## Definition
 

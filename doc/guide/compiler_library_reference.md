@@ -1,4 +1,4 @@
-# Compiler Library Reference
+# <img src="../logo/colgm.svg" height="50px"/> Compiler Library Reference
 
 ![just a picture](../jpg/llvm-maybe.jpg)
 

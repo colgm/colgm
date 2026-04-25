@@ -1,4 +1,4 @@
-# Standard Library Reference
+# <img src="../logo/colgm.svg" height="50px"/> Standard Library Reference
 
 ![just a picture](../jpg/llvm-maybe.jpg)
 

@@ -1,6 +1,44 @@
-# Feature: defer
+# <img src="../logo/colgm.svg" height="50px"/> Defer (experimental)
 
-## Syntax
+Defer is a keyword that allows you to run a statement before the code block ends:
+
+- `continue` and `break`
+- `return` statement
+- code block ends
+
+__CAUTION__: Defer is now an experimental feature. The specified
+statement will run before the return statement now, but the real
+design expects it run between the expression in the return statement and the real return operation:
+
+```rust
+var s = str::from("hello world!");
+defer s.delete();
+
+/* other statements */
+
+return s.substr(0, 5);
+```
+
+Now the operation is like this:
+
+```rust
+s.delete();
+return s.clone(); // as you see, UAF here.
+```
+
+But the real design expects this:
+
+```rust
+var tmp = s.clone();
+//        ^^^^^^^^^-----+ return expression runs before defer
+s.delete(); //          |
+return tmp; //          |
+//     ^^^--------------+ return safely
+```
+
+## Syntax and Semantics
+
+Defer allows single statement and block statement.
 
 ```rust
 func main() -> i32 {
@@ -32,7 +70,7 @@ func main() -> i32 {
 }
 ```
 
-Defer in this language runs in order, not reverse.
+Defer in this language runs in order, not reverse (FIFO).
 Equivalent to:
 
 ```rust
@@ -60,34 +98,5 @@ func main() -> i32 {
     c.delete();
     d.delete();
     return 0;
-}
-```
-
-All statements in defer block will run before the return statement
-(if it exists). So be aware of the order of execution.
-
-Here's an example of UAF:
-
-```rust
-func test() -> str {
-    var a = str::from_i64(1);
-    defer a.delete();
-
-    ...
-
-    return a.clone(); // use after free
-}
-```
-
-Because it equals to:
-
-```rust
-func test() -> str {
-    var a = str::from_i64(1);
-
-    ...
-
-    a.delete(); // a is freed here
-    return a.clone(); // use after free
 }
 ```

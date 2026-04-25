@@ -1,4 +1,4 @@
-# Colgm 语言指南
+# <img src="../logo/colgm.svg" height="50px"/> Colgm 语言指南
 
 ![只是一张图片](../jpg/llvm-bootstrap.jpg)
 

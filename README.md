@@ -1,4 +1,4 @@
-# <img src="doc/logo/colgm.svg" height="45px"/> Colgm Compiler Project
+# <img src="doc/logo/colgm.svg" height="50px"/> Colgm Compiler Project
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/colgm/colgm)
 [![bootstrap](https://github.com/colgm/colgm/actions/workflows/ci.yml/badge.svg)](https://github.com/colgm/colgm/actions/workflows/ci.yml)
@@ -28,13 +28,16 @@ pub func main() -> i32 {
 
 ## Repo Content
 
-- [bootstrap](./bootstrap/main.cpp) : bootstrap compiler.
+- [bootstrap](./bootstrap/main.cpp) : bootstrap compiler (C++).
 - [doc](./doc) : documentation.
+  - [guide](./doc/guide/) : language guide.
+  - [spec](./doc/spec/) : language specification (experimental features).
 - [example](./example) : example programs.
 - [misc](./misc/) : build and test scripts.
-- [src](./src/main.colgm) : self-host compiler.
+- [src](./src/main.colgm) : self-host compiler (Colgm).
 - [std](./std) : standard library.
-- [test](./test): test cases.
+- [test](./test) : test cases.
+  - [error](./test/error/) : error cases.
 
 ## Language Guide
 

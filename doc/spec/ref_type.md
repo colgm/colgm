@@ -1,4 +1,4 @@
-# Reference Type
+# <img src="../logo/colgm.svg" height="50px"/> Reference Type
 
 ## Implementation
 

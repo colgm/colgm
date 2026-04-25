@@ -1,4 +1,4 @@
-# Code Style
+# <img src="../logo/colgm.svg" height="50px"/> Code Style
 
 ## Struct Definition
 

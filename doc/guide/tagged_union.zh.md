@@ -1,4 +1,4 @@
-# 标记联合 (Tagged Union)
+# <img src="../logo/colgm.svg" height="50px"/> 标记联合 (Tagged Union)
 
 ## 定义
 
