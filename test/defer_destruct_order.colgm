@@ -1,0 +1,36 @@
+use std::libc::{ puts };
+use std::panic::{ assert };
+
+struct A {
+    flag_destruct: bool
+}
+impl A {
+    pub func new() -> A {
+        puts("[defer_destruct_order] A::new()");
+        return A { flag_destruct: false };
+    }
+
+    pub func clone(self) -> A {
+        puts("[defer_destruct_order] A::clone()");
+        assert(self.flag_destruct == false, "A::delete() was called before");
+        return A { flag_destruct: self.flag_destruct };
+    }
+
+    pub func delete(self) {
+        puts("[defer_destruct_order] A::delete()");
+        self.flag_destruct = true;
+    }
+}
+
+func test() -> A {
+    var a = A::new();
+    defer a.delete();
+
+    return a.clone();
+}
+
+func main() -> i32 {
+    test().delete();
+    puts("[defer_destruct_order] Pass");
+    return 0;
+}

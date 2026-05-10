@@ -25,6 +25,7 @@ TEST_LIST = [
     ("test/complex_generics.colgm",        []),
     ("test/const_fold.colgm",              []),
     ("test/continue_break.colgm",          []),
+    ("test/defer_destruct_order.colgm",    []),
     ("test/defer.colgm",                   []),
     ("test/enum_test.colgm",               []),
     ("test/errno.colgm",                   []),

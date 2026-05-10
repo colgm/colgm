@@ -2,6 +2,7 @@ use std::vec::{ vec };
 use std::io::{ io };
 use std::libc::{ free };
 use std::panic::{ panic };
+use std::str::{ str };
 
 use ast::ast::*;
 
@@ -56,6 +57,8 @@ pub struct replace_defer {
     err: report*,
     in_defer_block: bool,
     top_scopes: vec<scope>,
+    ret_type: ast_type_def*,
+    tmp_ret_value_id: u64,
     verbose: bool
 }
 
@@ -65,6 +68,8 @@ impl replace_defer {
             err: e,
             in_defer_block: false,
             top_scopes: vec<scope>::instance(),
+            ret_type: nil,
+            tmp_ret_value_id: 0,
             verbose: verbose
         };
     }
@@ -148,6 +153,19 @@ impl replace_defer {
                 }
             }
         }
+    }
+
+    func should_insert_on_return(self) -> bool {
+        foreach (var this_top_scope; self.top_scopes) {
+            foreach (var sub_scope; this_top_scope.get().scopes) {
+                foreach (var i; sub_scope.get()) {
+                    if (!i.get()->block->stmts.empty()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     func log_when_insert(self, msg: const i8*, scope: vec<ast_defer_stmt*>&, n: ast*) {
@@ -325,6 +343,45 @@ impl replace_defer {
                 self.insert_defer_on_block_exit(new_stmts, i.get());
                 new_stmts.push(i.get());
             } else if (i.get()->kind == ast_kind::ast_ret_stmt) {
+                // replace return value with a temporary variable
+                // and put the value before defer insertion place
+                // to avoid UAF issues
+                //
+                //   defer statement;
+                //   ...
+                //   return value;
+                // -->
+                //   var defer.tmp.0 = value;
+                //   statement;
+                //   return defer.tmp.0;
+                //
+                var ret_node = i.get() => ast_ret_stmt*;
+                if (ret_node->value != nil && self.should_insert_on_return()) {
+                    var val_node = ret_node->value;
+                    var tmp_name = str::from("defer.tmp.");
+                    defer tmp_name.delete();
+                    tmp_name.append_u64(self.tmp_ret_value_id);
+                    var def_node = ast_definition::new(
+                        ret_node->base.location,
+                        tmp_name.__ptr__(),
+                    );
+                    def_node->value = val_node;
+                    if (self.ret_type != nil) {
+                        def_node->type = self.ret_type->copy();
+                    }
+
+                    var call_node = ast_call::new(val_node->location);
+                    var call_id_node = ast_call_id::new(val_node->location);
+                    call_id_node->id = ast_identifier::new(
+                        val_node->location,
+                        tmp_name
+                    );
+                    call_node->head = call_id_node;
+                    ret_node->value = call_node => ast*;
+
+                    self.tmp_ret_value_id += 1;
+                    new_stmts.push(def_node => ast*);
+                }
                 self.insert_defer_on_return(new_stmts, i.get());
                 new_stmts.push(i.get());
             } else {
@@ -363,11 +420,13 @@ impl replace_defer {
             return;
         }
 
+        self.ret_type = n->return_type;
         self.top_scopes.clear();
         self.add_top_scope();
         self.visit_code_block(n->body);
         self.pop_top_scope();
         self.top_scopes.clear();
+        self.ret_type = nil;
     }
 
     func visit_impl(self, n: ast_impl*) {

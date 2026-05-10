@@ -30,7 +30,7 @@
 - [编译器内建函数](#编译器内建函数)
 - [条件编译](#条件编译)
 - [标记联合 (Tagged Union)](./tagged_union.zh.md)
-- [Defer](../spec/defer.md)
+- [Defer 语句](./defer.zh.md)
 - [编译器库参考](./library_reference.md)
 - [编译路径搜索顺序](#编译路径搜索顺序)
 

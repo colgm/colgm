@@ -30,7 +30,7 @@
 - [Builtin Functions](#builtin-functions)
 - [Conditional Compilation](#conditional-compilation)
 - [Tagged Union](./tagged_union.md)
-- [Defer](../spec/defer.md)
+- [Defer](./defer.md)
 - [Compiler Library Reference](./library_reference.md)
 - [Compiler Path Search Order](#compiler-path-search-order)
 

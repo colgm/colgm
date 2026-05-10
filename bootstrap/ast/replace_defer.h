@@ -35,6 +35,9 @@ private:
     bool in_defer_block;
     std::vector<scope> top_scopes;
 
+    type_def* return_type = nullptr;
+    u64 tmp_return_value_id = 0;
+
 private:
     void add_top_scope() {
         top_scopes.push_back({});
@@ -56,11 +59,13 @@ private:
     }
 
     bool in_top_scope() const {
-        return !top_scopes.empty() && top_scopes.back().scopes.size() == 1;
+        return !top_scopes.empty() &&
+               top_scopes.back().scopes.size() == 1;
     }
 
     void insert_defer(defer_stmt*, std::vector<stmt*>&);
     void insert_defer_on_return(std::vector<stmt*>&);
+    bool should_insert_on_return() const;
     void insert_defer_on_block_exit(std::vector<stmt*>&);
     void insert_defer_on_subscope_exit(std::vector<stmt*>&);
 

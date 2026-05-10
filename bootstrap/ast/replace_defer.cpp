@@ -18,6 +18,19 @@ void replace_defer::insert_defer_on_return(std::vector<stmt*>& v) {
     }
 }
 
+bool replace_defer::should_insert_on_return() const {
+    for (const auto& this_top_scope : top_scopes) {
+        for (const auto& sub_scope : this_top_scope.scopes) {
+            for (auto i : sub_scope) {
+                if (!i->get_block()->get_stmts().empty()) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 void replace_defer::insert_defer_on_block_exit(std::vector<stmt*>& v) {
     for (const auto& sub_scope : top_scopes.back().scopes) {
         for (auto i : sub_scope) {
@@ -36,12 +49,14 @@ void replace_defer::insert_defer_on_subscope_exit(std::vector<stmt*>& v) {
 }
 
 bool replace_defer::visit_func_decl(func_decl* d) {
+    return_type = d->get_return_type();
     if (d->get_code_block()) {
         top_scopes.clear();
         add_top_scope();
         d->get_code_block()->accept(this);
         top_scopes.clear();
     }
+    return_type = nullptr;
     return true;
 }
 
@@ -134,6 +149,42 @@ bool replace_defer::visit_code_block(code_block* b) {
             insert_defer_on_block_exit(new_stmts);
             new_stmts.push_back(i);
         } else if (i->is(ast_type::ast_ret_stmt)) {
+            // replace return value with a temporary variable
+            // and put the value before defer insertion place
+            // to avoid UAF issues
+            //
+            //   defer statement;
+            //   ...
+            //   return value;
+            // -->
+            //   var defer.tmp.0 = value;
+            //   statement;
+            //   return defer.tmp.0;
+            //
+            auto ret_node = reinterpret_cast<ret_stmt*>(i);
+            if (ret_node->get_value() && should_insert_on_return()) {
+                auto val_node = ret_node->get_value();
+                definition* def_node = new definition(
+                    ret_node->get_location(),
+                    "defer.tmp." + std::to_string(tmp_return_value_id)
+                );
+                def_node->set_init_value(val_node);
+                if (return_type) {
+                    def_node->set_type(return_type->clone());
+                }
+
+                call* call_node = new call(val_node->get_location());
+                call_id* call_id_node = new call_id(val_node->get_location());
+                call_id_node->set_id(new identifier(
+                    val_node->get_location(),
+                    "defer.tmp." + std::to_string(tmp_return_value_id)
+                ));
+                call_node->set_head(call_id_node);
+                ret_node->set_value(call_node);
+
+                tmp_return_value_id++;
+                new_stmts.push_back(def_node);
+            }
             insert_defer_on_return(new_stmts);
             new_stmts.push_back(i);
         } else {
