@@ -65,6 +65,15 @@ enum_decl* enum_decl::clone() const {
     return ret;
 }
 
+void type_base::accept(visitor* v) {
+    v->visit_type_base(this);
+}
+
+type_base* type_base::clone() const {
+    assert(false && "child class must implement clone()");
+    return nullptr;
+}
+
 type_def::~type_def() {
     delete name;
     delete generic_types;
@@ -90,6 +99,30 @@ type_def* type_def::clone() const {
     }
     ret->is_array = is_array;
     ret->is_reference = is_reference;
+    return ret;
+}
+
+func_ptr::~func_ptr() {
+    for (auto i : types) {
+        delete i;
+    }
+    if (return_type) {
+        delete return_type;
+    }
+}
+
+void func_ptr::accept(visitor* v) {
+    v->visit_func_ptr(this);
+}
+
+func_ptr* func_ptr::clone() const {
+    auto ret = new func_ptr(location);
+    for (auto i : types) {
+        ret->add_type(i->clone());
+    }
+    if (return_type) {
+        ret->return_type = return_type->clone();
+    }
     return ret;
 }
 

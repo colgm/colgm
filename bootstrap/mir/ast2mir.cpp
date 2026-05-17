@@ -1,6 +1,8 @@
 #include "mir/ast2mir.h"
 #include "ast/dumper.h"
 
+#include <cassert>
+
 namespace colgm::mir {
 
 bool ast2mir::visit_unary_operator(ast::unary_operator* node) {
@@ -720,8 +722,11 @@ bool ast2mir::visit_code_block(ast::code_block* node) {
     return true;
 }
 
-type ast2mir::generate_type(ast::type_def* node) {
-    return tr.resolve(node);
+type ast2mir::generate_type(ast::type_base* node) {
+    if (node->get_ast_type() != ast::ast_type::ast_type_def) {
+        assert(false && "unimplemented type node");
+    }
+    return tr.resolve(reinterpret_cast<ast::type_def*>(node));
 }
 
 void ast2mir::dump(std::ostream& os) {

@@ -2148,8 +2148,9 @@ void semantic::lowering_forindex(forindex* node) {
         node->get_variable()->get_location(),
         node->get_variable()->get_name()
     );
-    lowered_init->set_type(new type_def(node->get_variable()->get_location()));
-    lowered_init->get_type()->set_name(new identifier(
+    auto init_type = new type_def(node->get_variable()->get_location());
+    lowered_init->set_type(init_type);
+    init_type->set_name(new identifier(
         node->get_variable()->get_location(),
         "u64"
     ));

@@ -192,7 +192,11 @@ bool generic_visitor::visit_struct_decl(struct_decl* node) {
         return true;
     }
     for (auto i : node->get_fields()) {
-        if (!i->get_type() || !i->get_type()->get_generic_types()) {
+        if (!i->get_type()) {
+            continue;
+        }
+        if (i->get_type()->is(ast_type::ast_type_def) &&
+            !reinterpret_cast<type_def*>(i->get_type())->get_generic_types()) {
             continue;
         }
         i->get_type()->accept(this);
@@ -207,7 +211,11 @@ bool generic_visitor::visit_func_decl(func_decl* node) {
     }
     for (auto i : node->get_params()->get_params()) {
         i->accept(this);
-        if (!i->get_type() || !i->get_type()->get_generic_types()) {
+        if (!i->get_type()) {
+            continue;
+        }
+        if (i->get_type()->is(ast_type::ast_type_def) &&
+            !reinterpret_cast<type_def*>(i->get_type())->get_generic_types()) {
             continue;
         }
         i->get_type()->accept(this);
@@ -1627,7 +1635,7 @@ void regist_pass::generate_parameter(param* node, colgm_func& self) {
     self.add_parameter(name, tr.resolve(node->get_type()));
 }
 
-void regist_pass::generate_return_type(type_def* node, colgm_func& self) {
+void regist_pass::generate_return_type(type_base* node, colgm_func& self) {
     self.return_type = tr.resolve(node);
 }
 

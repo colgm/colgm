@@ -38,20 +38,26 @@ u64 type_resolver::get_array_length(ast::number_literal* n) {
     return res;
 }
 
-type type_resolver::resolve(ast::type_def* node) {
-    const auto& name = node->get_name()->get_name();
-    const auto& dm = node->is_redirected()
-        ? ctx.get_domain(node->get_redirect_location())
-        : ctx.get_domain(node->get_file());
+type type_resolver::resolve(ast::type_base* node) {
+    if (node->is(ast::ast_type::ast_func_ptr)) {
+        rp.report(node, "unimplemented");
+        return type::error_type();
+    }
 
-    if (name == "void" && node->get_pointer_level() == 0 && node->get_is_reference()) {
-        rp.report(node->get_name(), "cannot use reference void type");
+    auto tn = reinterpret_cast<ast::type_def*>(node);
+    const auto& name = tn->get_name()->get_name();
+    const auto& dm = tn->is_redirected()
+        ? ctx.get_domain(tn->get_redirect_location())
+        : ctx.get_domain(tn->get_file());
+
+    if (name == "void" && tn->get_pointer_level() == 0 && tn->get_is_reference()) {
+        rp.report(tn->get_name(), "cannot use reference void type");
         return type::error_type();
     }
 
     // cannot find type
     if (!dm.global_symbol.count(name) && !ctx.generics.count(name)) {
-        rp.report(node->get_name(),
+        rp.report(tn->get_name(),
             "undefined type \"" + name + "\""
         );
         return type::error_type();
@@ -61,7 +67,7 @@ type type_resolver::resolve(ast::type_def* node) {
     // mainly occurs when import all symbols from a module
     if (dm.global_symbol.count(name) &&
         !dm.global_symbol.at(name).is_public) {
-        rp.report(node->get_name(),
+        rp.report(tn->get_name(),
             "private type \"" + name + "\" cannot be used"
         );
     }
@@ -69,7 +75,7 @@ type type_resolver::resolve(ast::type_def* node) {
     // function cannot be used as type
     if (dm.global_symbol.count(name) &&
         dm.global_symbol.at(name).kind == sym_kind::func_kind) {
-        rp.report(node->get_name(),
+        rp.report(tn->get_name(),
             "\"" + name + "\" is a function, cannot be used as a type"
         );
     }
@@ -80,7 +86,7 @@ type type_resolver::resolve(ast::type_def* node) {
         .loc_file = dm.global_symbol.count(name)
             ? dm.global_symbol.at(name).loc_file
             : "",
-        .pointer_depth = node->get_pointer_level()
+        .pointer_depth = tn->get_pointer_level()
     };
 
     if (dm.global_symbol.count(name) &&
@@ -89,23 +95,23 @@ type type_resolver::resolve(ast::type_def* node) {
     }
 
     // if node has const flag, set it
-    if (node->is_constant()) {
+    if (tn->is_constant()) {
         res.is_const = true;
     }
-    if (node->get_is_array()) {
+    if (tn->get_is_array()) {
         res.is_array = true;
         res.pointer_depth ++;
-        res.array_length = get_array_length(node->get_array_length());
+        res.array_length = get_array_length(tn->get_array_length());
     }
-    if (node->get_is_reference()) {
+    if (tn->get_is_reference()) {
         res.is_reference = true;
     }
 
     // resolve generics
-    if (node->get_generic_types()) {
+    if (tn->get_generic_types()) {
         res.generics = {};
 
-        for (auto& g : node->get_generic_types()->get_types()) {
+        for (auto& g : tn->get_generic_types()->get_types()) {
             res.generics.push_back(resolve(g));
         }
     }

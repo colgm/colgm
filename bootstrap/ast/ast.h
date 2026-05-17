@@ -32,7 +32,9 @@ enum class ast_type {
     ast_call,
     ast_assignment,
     ast_cond_compile, // conditional compilation node
+    ast_type_base,
     ast_type_def,
+    ast_func_ptr,
     ast_generic_type_list,
     ast_enum_decl,
     ast_field_pair,
@@ -63,7 +65,9 @@ enum class ast_type {
 class visitor;
 
 class decl;
+class type_base;
 class type_def;
+class func_ptr;
 class generic_type_list;
 class enum_decl;
 class field_pair;

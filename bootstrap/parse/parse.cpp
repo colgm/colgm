@@ -333,7 +333,7 @@ expr* parse::type_convert_gen() {
         match(tok::tk_wide_arrow);
         auto type_cast_node = new type_convert(begin_location);
         type_cast_node->set_source(res);
-        type_cast_node->set_target(type_def_gen());
+        type_cast_node->set_target(type_gen());
         res = type_cast_node;
     }
 
@@ -564,6 +564,12 @@ type_def* parse::array_type_gen() {
     return res;
 }
 
+type_base* parse::type_gen() {
+    if (look_ahead(tok::tk_func)) {
+        return func_ptr_type_gen();
+    }
+    return type_def_gen();
+}
 type_def* parse::type_def_gen() {
     if (look_ahead(tok::tk_lbracket)) {
         return array_type_gen();
@@ -593,6 +599,27 @@ type_def* parse::type_def_gen() {
     if (look_ahead(tok::tk_btand)) {
         res->set_reference();
         match(tok::tk_btand);
+    }
+    update_location(res);
+    return res;
+}
+
+func_ptr* parse::func_ptr_type_gen() {
+    auto res = new func_ptr(toks[ptr].loc);
+    match(tok::tk_func);
+    match(tok::tk_lcurve);
+    while (look_ahead(tok::tk_id) || look_ahead(tok::tk_func)) {
+        res->add_type(type_gen());
+        if (look_ahead(tok::tk_comma)) {
+            match(tok::tk_comma);
+        } else if (look_ahead(tok::tk_id) || look_ahead(tok::tk_func)) {
+            err.err(toks[ptr-1].loc, "expected ',' here");
+        }
+    }
+    match(tok::tk_rcurve);
+    if (look_ahead(tok::tk_arrow)) {
+        match(tok::tk_arrow);
+        res->set_return_type(type_gen());
     }
     update_location(res);
     return res;
@@ -654,7 +681,7 @@ field_pair* parse::field_pair_gen() {
     auto res = new field_pair(toks[ptr].loc);
     res->set_name(identifier_gen());
     match(tok::tk_colon);
-    res->set_type(type_def_gen());
+    res->set_type(type_gen());
     update_location(res);
     return res;
 }
@@ -750,7 +777,7 @@ param* parse::param_gen() {
     res->set_name(identifier_gen());
     if (look_ahead(tok::tk_colon)) {
         match(tok::tk_colon);
-        res->set_type(type_def_gen());
+        res->set_type(type_gen());
     }
     update_location(res);
     return res;
@@ -799,7 +826,7 @@ func_decl* parse::function_gen(std::vector<cond_compile*>& conds,
         res->set_return_type(ret);
     } else {
         match(tok::tk_arrow);
-        res->set_return_type(type_def_gen());
+        res->set_return_type(type_gen());
     }
     if (look_ahead(tok::tk_semi)) {
         match(tok::tk_semi);
@@ -891,7 +918,7 @@ definition* parse::definition_gen() {
     match(tok::tk_id);
     if (look_ahead(tok::tk_colon)) {
         match(tok::tk_colon);
-        res->set_type(type_def_gen());
+        res->set_type(type_gen());
     }
     match(tok::tk_eq);
     res->set_init_value(calculation_gen());

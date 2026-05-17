@@ -13,7 +13,9 @@ public:
     virtual bool visit_root(root*);
     virtual bool visit_decl(decl*);
     virtual bool visit_cond_compile(cond_compile*);
+    virtual bool visit_type_base(type_base*);
     virtual bool visit_type_def(type_def*);
+    virtual bool visit_func_ptr(func_ptr*);
     virtual bool visit_generic_type_list(generic_type_list*);
     virtual bool visit_enum_decl(enum_decl*);
     virtual bool visit_field_pair(field_pair*);

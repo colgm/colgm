@@ -21,7 +21,7 @@ private:
 public:
     type_resolver(error& e, const sema_context& c):
         err(e), ctx(c), rp(err) {}
-    type resolve(ast::type_def*);
+    type resolve(ast::type_base*);
 };
 
 }

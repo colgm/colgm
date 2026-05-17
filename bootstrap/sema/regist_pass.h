@@ -174,7 +174,7 @@ private: // global functions
     colgm_func generate_single_global_func(ast::func_decl*);
     void generate_parameter_list(ast::param_list*, colgm_func&);
     void generate_parameter(ast::param*, colgm_func&);
-    void generate_return_type(ast::type_def*, colgm_func&);
+    void generate_return_type(ast::type_base*, colgm_func&);
 
 private: // implementations
     void regist_impls(ast::root*);

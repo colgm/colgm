@@ -157,7 +157,9 @@ private:
     expr* or_expression_gen();
     expr* calculation_gen();
     type_def* array_type_gen();
+    type_base* type_gen();
     type_def* type_def_gen();
+    func_ptr* func_ptr_type_gen();
     generic_type_list* generic_type_list_gen();
     enum_decl* enum_gen(std::vector<cond_compile*>&, bool, bool);
     field_pair* field_pair_gen();

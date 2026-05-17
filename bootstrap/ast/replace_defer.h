@@ -35,7 +35,7 @@ private:
     bool in_defer_block;
     std::vector<scope> top_scopes;
 
-    type_def* return_type = nullptr;
+    type_base* return_type = nullptr;
     u64 tmp_return_value_id = 0;
 
 private:

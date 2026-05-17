@@ -101,6 +101,8 @@ impl ast_dumper {
                 self.dump_cond_compile(node => ast_cond_compile*, out);
             ast_kind::ast_type_def =>
                 self.dump_type_def(node => ast_type_def*, out);
+            ast_kind::ast_func_ptr =>
+                self.dump_func_ptr(node => ast_func_ptr*, out);
             ast_kind::ast_generic_type_list =>
                 self.dump_generic_type_list(node => ast_generic_type_list*, out);
             ast_kind::ast_enum_member =>
@@ -240,7 +242,7 @@ impl ast_dumper {
         self.push_indent();
         self.dump(node->from, out);
         self.set_last();
-        self.dump_type_def(node->to, out);
+        self.dump(node->to, out);
         self.pop_indent();
     }
 
@@ -552,6 +554,34 @@ impl ast_dumper {
         self.pop_indent();
     }
 
+    func dump_func_ptr(self, node: ast_func_ptr*, out: io&) {
+        self.dump_indent(out);
+        out.purple().out("FuncPtr ").reset();
+        out.light_orange().out("0x").out_hex(node => u64).reset().out(" -> ");
+        node->base.location.dump(out);
+
+        self.push_indent();
+        foreach (var i; node->types) {
+            if (i.index() == node->types.size - 1 && node->return_type == nil) {
+                self.set_last();
+            }
+            self.dump(i.get(), out);
+        }
+        if (node->return_type != nil) {
+            self.set_last();
+            self.dump_indent(out);
+            out.purple().out("FuncPtrRet ").reset();
+            out.light_orange().out("0x").out_hex(node->return_type => u64).reset().out(" -> ");
+            node->return_type->location.dump(out);
+
+            self.push_indent();
+            self.set_last();
+            self.dump(node->return_type, out);
+            self.pop_indent();
+        }
+        self.pop_indent();
+    }
+
     func dump_generic_type_list(self, node: ast_generic_type_list*, out: io&) {
         self.dump_indent(out);
         out.purple().out("GenericTypeList ").reset();
@@ -621,7 +651,7 @@ impl ast_dumper {
 
         self.push_indent();
         self.set_last();
-        self.dump_type_def(node->type, out);
+        self.dump(node->type, out);
         self.pop_indent();
     }
 
@@ -713,7 +743,7 @@ impl ast_dumper {
         if (node->type != nil) {
             self.push_indent();
             self.set_last();
-            self.dump_type_def(node->type, out);
+            self.dump(node->type, out);
             self.pop_indent();
         }
     }
@@ -767,7 +797,7 @@ impl ast_dumper {
             if (node->body == nil) {
                 self.set_last();
             }
-            self.dump_type_def(node->return_type, out);
+            self.dump(node->return_type, out);
         }
         if (node->body != nil) {
             self.set_last();
@@ -860,7 +890,7 @@ impl ast_dumper {
 
         self.push_indent();
         if (node->type != nil) {
-            self.dump_type_def(node->type, out);
+            self.dump(node->type, out);
         }
         self.set_last();
         self.dump(node->value, out);

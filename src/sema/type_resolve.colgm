@@ -1,5 +1,5 @@
 use err::report::{ report };
-use ast::ast::{ ast_kind, ast_type_def, ast_number };
+use ast::ast::{ ast_kind, ast, ast_type_def, ast_number };
 use util::package::{ package };
 
 use sema::context::{ sema_context };
@@ -52,10 +52,7 @@ impl type_resolve {
         return res;
     }
 
-    pub func resolve(self, node: ast_type_def*) -> type {
-        if (node == nil) {
-            panic("node for type resolve cannot be nil");
-        }
+    func resolve_type_def(self, node: ast_type_def*) -> type {
         var name: str& = node->name->content;
         var file = node->base.get_real_location_file();
 
@@ -144,12 +141,26 @@ impl type_resolve {
                     );
                     continue;
                 }
-                var gt_res = self.resolve(gt => ast_type_def*);
+                var gt_res = self.resolve(gt);
                 defer gt_res.delete();
 
                 t.generics.push(gt_res);
             }
         }
         return t;
+    }
+
+    pub func resolve(self, node: ast*) -> type {
+        if (node == nil) {
+            panic("node for type resolve cannot be nil");
+        }
+        if (!node->is(ast_kind::ast_type_def)) {
+            self.err->error(
+                node->location,
+                "unimplemented type node"
+            );
+            return type::error_type();
+        }
+        return self.resolve_type_def(node => ast_type_def*);
     }
 }

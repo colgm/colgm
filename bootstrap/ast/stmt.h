@@ -41,7 +41,7 @@ public:
 class definition: public stmt {
 private:
     std::string name;
-    type_def* type;
+    type_base* type;
     expr* init_value;
 
 public:
@@ -53,7 +53,7 @@ public:
     definition* clone() const override;
 
     const auto& get_name() const { return name; }
-    void set_type(type_def* node) { type = node; }
+    void set_type(type_base* node) { type = node; }
     auto get_type() const { return type; }
     void set_init_value(expr* node) { init_value = node; }
     auto get_init_value() const { return init_value; }

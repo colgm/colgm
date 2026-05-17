@@ -190,7 +190,7 @@ impl generic_visitor {
         defer ss.delete();
         ss.append_str(type_name).append_char('<');
         foreach (var i; type_list) {
-            var r_type = self.tr.resolve(i.get() => ast_type_def*);
+            var r_type = self.tr.resolve(i.get());
             var r_type_fpn = r_type.full_path_name_with_pointer(self.pkg);
             defer {
                 r_type.delete();
@@ -215,7 +215,7 @@ impl generic_visitor {
         g_data.generic_type.loc_file.append_str(sym.loc_file);
 
         foreach (var i; type_list) {
-            var r_type = self.tr.resolve(i.get() => ast_type_def*);
+            var r_type = self.tr.resolve(i.get());
             defer r_type.delete();
 
             g_data.generic_type.generics.push(r_type);
@@ -253,6 +253,8 @@ impl generic_visitor {
                 self.visit_assignment(n => ast_assignment*);
             ast_kind::ast_type_def =>
                 self.visit_type_def(n => ast_type_def*);
+            ast_kind::ast_func_ptr =>
+                self.visit_func_ptr(n => ast_func_ptr*);
             ast_kind::ast_generic_type_list =>
                 self.visit_generic_type_list(n => ast_generic_type_list*);
             ast_kind::ast_field_pair =>
@@ -341,7 +343,7 @@ impl generic_visitor {
         }
         self.visit_param_list(n->params);
         if (n->return_type != nil) {
-            self.visit_type_def(n->return_type);
+            self.visit_ast(n->return_type);
         }
         if (n->body != nil) {
             self.visit_code_block(n->body);
@@ -372,7 +374,7 @@ impl generic_visitor {
 
     func visit_type_convert(self, n: ast_type_convert*) {
         self.visit_ast(n->from);
-        self.visit_type_def(n->to);
+        self.visit_ast(n->to);
     }
 
     func visit_array_list(self, n: ast_array_list*) {
@@ -464,6 +466,15 @@ impl generic_visitor {
         }
     }
 
+    func visit_func_ptr(self, n: ast_func_ptr*) {
+        foreach (var i; n->types) {
+            self.visit_ast(i.get());
+        }
+        if (n->return_type != nil) {
+            self.visit_ast(n->return_type);
+        }
+    }
+
     func visit_generic_type_list(self, n: ast_generic_type_list*) {
         foreach (var i; n->types) {
             self.visit_ast(i.get());
@@ -471,12 +482,12 @@ impl generic_visitor {
     }
 
     func visit_field_pair(self, n: ast_field_pair*) {
-        self.visit_type_def(n->type);
+        self.visit_ast(n->type);
     }
 
     func visit_param(self, n: ast_param*) {
         if (n->type != nil) {
-            self.visit_type_def(n->type);
+            self.visit_ast(n->type);
         }
     }
 
@@ -488,7 +499,7 @@ impl generic_visitor {
 
     func visit_definition(self, n: ast_definition*) {
         if (n->type != nil) {
-            self.visit_type_def(n->type);
+            self.visit_ast(n->type);
         }
         self.visit_ast(n->value);
     }

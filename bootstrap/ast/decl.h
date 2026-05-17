@@ -59,7 +59,16 @@ public:
     }
 };
 
-class type_def: public decl {
+class type_base: public decl {
+public:
+    type_base(ast_type ty, const span& loc):
+        decl(ty, loc) {}
+    ~type_base() override = default;
+    void accept(visitor*) override;
+    type_base* clone() const override;
+};
+
+class type_def: public type_base {
 private:
     identifier* name;
     generic_type_list* generic_types;
@@ -74,7 +83,7 @@ private:
 
 public:
     type_def(const span& loc):
-        decl(ast_type::ast_type_def, loc),
+        type_base(ast_type::ast_type_def, loc),
         name(nullptr), generic_types(nullptr),
         pointer_depth(0), is_const(false),
         array_length(nullptr), is_array(false),
@@ -96,6 +105,24 @@ public:
     auto get_array_length() const { return array_length; }
     void set_reference() { is_reference = true; }
     bool get_is_reference() const { return is_reference; }
+};
+
+class func_ptr: public type_base {
+private:
+    std::vector<type_base*> types;
+    type_base* return_type;
+
+public:
+    func_ptr(const span& loc):
+        type_base(ast_type::ast_func_ptr, loc),
+        return_type(nullptr) {}
+    ~func_ptr() override;
+    void accept(visitor*) override;
+    func_ptr* clone() const override;
+    void add_type(type_base* node) { types.push_back(node); }
+    const auto& get_types() const { return types; }
+    void set_return_type(type_base* node) { return_type = node; }
+    auto get_return_type() const { return return_type; }
 };
 
 class generic_type_list: public decl {
@@ -156,7 +183,7 @@ public:
 class field_pair: public decl {
 private:
     identifier* name;
-    type_def* type;
+    type_base* type;
 
 public:
     field_pair(const span& loc):
@@ -168,7 +195,7 @@ public:
 
     void set_name(identifier* node) { name = node; }
     auto get_name() { return name; }
-    void set_type(type_def* node) { type = node; }
+    void set_type(type_base* node) { type = node; }
     auto get_type() { return type; }
 };
 
@@ -255,7 +282,7 @@ public:
 class param: public decl {
 private:
     identifier* name;
-    type_def* type;
+    type_base* type;
 
 public:
     param(const span& loc):
@@ -267,7 +294,7 @@ public:
 
     void set_name(identifier* node) { name = node; }
     auto get_name() { return name; }
-    void set_type(type_def* node) { type = node; }
+    void set_type(type_base* node) { type = node; }
     auto get_type() { return type; }
 };
 
@@ -291,7 +318,7 @@ private:
     std::string name;
     generic_type_list* generic_types;
     param_list* parameters;
-    type_def* return_type;
+    type_base* return_type;
     code_block* block;
 
     // conditional compile attribute
@@ -328,7 +355,7 @@ public:
 public:
     void set_params(param_list* node) { parameters = node; }
     auto get_params() { return parameters; }
-    void set_return_type(type_def* node) { return_type = node; }
+    void set_return_type(type_base* node) { return_type = node; }
     auto get_return_type() { return return_type; }
     void set_code_block(code_block* node) { block = node; }
     auto get_code_block() { return block; }

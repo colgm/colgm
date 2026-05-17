@@ -703,7 +703,7 @@ impl sema {
             info.append_str(r_name).append("\" => \"");
             info.append_str(t_name);
             info.append("\"");
-            self.err->error(n->to->base.location, info.c_str);
+            self.err->error(n->to->location, info.c_str);
             return type::error_type();
         }
 
@@ -721,7 +721,7 @@ impl sema {
             info.append_str(r_name).append("\" to \"");
             info.append_str(t_name);
             info.append("\"");
-            self.err->error(n->to->base.location, info.c_str);
+            self.err->error(n->to->location, info.c_str);
             return type::error_type();
         }
 
@@ -738,7 +738,7 @@ impl sema {
             info.append_str(r_name).append("\" to struct \"");
             info.append_str(t_name);
             info.append("\"");
-            self.err->error(n->to->base.location, info.c_str);
+            self.err->error(n->to->location, info.c_str);
             return type::error_type();
         }
 
@@ -815,7 +815,7 @@ impl sema {
             defer types.delete();
 
             foreach (var i; n->generic_types->types) {
-                var ty = self.tr.resolve(i.get() => ast_type_def*);
+                var ty = self.tr.resolve(i.get());
                 defer ty.delete();
 
                 types.push(ty);
@@ -3073,8 +3073,9 @@ impl sema {
             n->variable->content.__ptr__()
         );
 
-        lowered_init->type = ast_type_def::new(n->variable->base.location);
-        lowered_init->type->name = ast_identifier::new(
+        var init_type = ast_type_def::new(n->variable->base.location);
+        lowered_init->type = init_type => ast*;
+        init_type->name = ast_identifier::new(
             n->variable->base.location,
             iter_ty.name
         );

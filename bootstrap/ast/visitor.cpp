@@ -26,6 +26,15 @@ bool visitor::visit_cond_compile(cond_compile* node) {
     return true;
 }
 
+bool visitor::visit_type_base(type_base* node) {
+    if (node->is(ast_type::ast_type_def)) {
+        reinterpret_cast<type_def*>(node)->accept(this);
+    } else if (node->is(ast_type::ast_func_ptr)) {
+        reinterpret_cast<func_ptr*>(node)->accept(this);
+    }
+    return true;
+}
+
 bool visitor::visit_type_def(type_def* node) {
     node->get_name()->accept(this);
     if (node->get_generic_types()) {
@@ -33,6 +42,16 @@ bool visitor::visit_type_def(type_def* node) {
     }
     if (node->get_array_length()) {
         node->get_array_length()->accept(this);
+    }
+    return true;
+}
+
+bool visitor::visit_func_ptr(func_ptr* node) {
+    for (auto i : node->get_types()) {
+        i->accept(this);
+    }
+    if (node->get_return_type()) {
+        node->get_return_type()->accept(this);
     }
     return true;
 }

@@ -109,7 +109,7 @@ public:
 class type_convert: public expr {
 private:
     expr* source;
-    type_def* target;
+    type_base* target;
 
 public:
     type_convert(const span& loc):
@@ -126,7 +126,7 @@ public:
 
 public:
     void set_source(expr* s) { source = s; }
-    void set_target(type_def* t) { target = t; }
+    void set_target(type_base* t) { target = t; }
     auto get_source() const { return source; }
     auto get_target() const { return target; }
 };

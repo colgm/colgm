@@ -54,6 +54,7 @@ private:
     bool visit_array_list(array_list*) override;
     bool visit_cond_compile(cond_compile*) override;
     bool visit_type_def(type_def*) override;
+    bool visit_func_ptr(func_ptr*) override;
     bool visit_generic_type_list(generic_type_list*) override;
     bool visit_enum_decl(enum_decl*) override;
     bool visit_field_pair(field_pair*) override;

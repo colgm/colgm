@@ -536,7 +536,7 @@ impl parser {
             self.match_token(tok_kind::tok_wide_arrow);
             var type_cast_node = ast_type_convert::new(begin_loc);
             type_cast_node->from = result;
-            type_cast_node->to = self.type_def_gen();
+            type_cast_node->to = self.type_gen();
             self.update_location(type_cast_node => ast*);
             return type_cast_node => ast*;
         }
@@ -794,6 +794,13 @@ impl parser {
         return res;
     }
 
+    func type_gen(self) -> ast* {
+        if (self.lookahead(tok_kind::tok_func)) {
+            return self.func_ptr_type_gen() => ast*;
+        }
+        return self.type_def_gen() => ast*;
+    }
+
     func type_def_gen(self) -> ast_type_def* {
         // resolve case like [const i8*; 1024]
         if (self.lookahead(tok_kind::tok_lbracket)) {
@@ -838,6 +845,27 @@ impl parser {
         return res;
     }
 
+    func func_ptr_type_gen(self) -> ast_func_ptr* {
+        var res = ast_func_ptr::new(self.this_tok_loc());
+        self.match_token(tok_kind::tok_func);
+        self.match_token(tok_kind::tok_lparen);
+        while (self.lookahead(tok_kind::tok_id) || self.lookahead(tok_kind::tok_func)) {
+            res->types.push(self.type_gen());
+            if (self.lookahead(tok_kind::tok_comma)) {
+                self.match_token(tok_kind::tok_comma);
+            } else if (self.lookahead(tok_kind::tok_id) || self.lookahead(tok_kind::tok_func)) {
+                self.err->error(self.this_tok_loc(), "expected comma here");
+            }
+        }
+        self.match_token(tok_kind::tok_rparen);
+        if (self.lookahead(tok_kind::tok_arrow)) {
+            self.match_token(tok_kind::tok_arrow);
+            res->return_type = self.type_gen();
+        }
+        self.update_location(res => ast*);
+        return res;
+    }
+
     func generic_type_list_gen(self) -> ast_generic_type_list* {
         var res = ast_generic_type_list::new(self.this_tok_loc());
         self.match_token(tok_kind::tok_less);
@@ -859,7 +887,7 @@ impl parser {
         var res = ast_field_pair::new(self.this_tok_loc());
         res->name = self.identifier_gen();
         self.match_token(tok_kind::tok_colon);
-        res->type = self.type_def_gen();
+        res->type = self.type_gen();
         self.update_location(res => ast*);
         return res;
     }
@@ -1005,7 +1033,7 @@ impl parser {
         res->name = self.identifier_gen();
         if (self.lookahead(tok_kind::tok_colon)) {
             self.match_token(tok_kind::tok_colon);
-            res->type = self.type_def_gen();
+            res->type = self.type_gen();
         }
         self.update_location(res => ast*);
         return res;
@@ -1041,7 +1069,7 @@ impl parser {
         res->params = self.param_list_gen();
         if (self.lookahead(tok_kind::tok_arrow)) {
             self.match_token(tok_kind::tok_arrow);
-            res->return_type = self.type_def_gen();
+            res->return_type = self.type_gen();
         }
         if (self.lookahead(tok_kind::tok_semi)) {
             self.match_token(tok_kind::tok_semi);
@@ -1174,7 +1202,7 @@ impl parser {
         self.match_token(tok_kind::tok_id);
         if (self.lookahead(tok_kind::tok_colon)) {
             self.match_token(tok_kind::tok_colon);
-            res->type = self.type_def_gen();
+            res->type = self.type_gen();
         }
         self.match_token(tok_kind::tok_eq);
         res->value = self.calculation_gen();

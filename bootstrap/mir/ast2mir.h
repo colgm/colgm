@@ -124,7 +124,7 @@ private:
     bool visit_code_block(ast::code_block*) override;
 
 private:
-    type generate_type(ast::type_def*);
+    type generate_type(ast::type_base*);
 
 public:
     ast2mir(error& e, const sema_context& c): err(e), ctx(c), tr(e, c) {}

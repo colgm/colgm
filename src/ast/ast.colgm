@@ -34,6 +34,7 @@ pub enum ast_kind {
     ast_assignment,
     ast_cond_compile,
     ast_type_def,
+    ast_func_ptr,
     ast_generic_type_list,
     ast_enum_member,
     ast_enum_decl,
@@ -88,6 +89,7 @@ pub func ast_kind_name(k: ast_kind) -> i8* {
         ast_kind::ast_assignment => return "ast_assignment";
         ast_kind::ast_cond_compile => return "ast_cond_compile";
         ast_kind::ast_type_def => return "ast_type_def";
+        ast_kind::ast_func_ptr => return "ast_func_ptr";
         ast_kind::ast_generic_type_list => return "ast_generic_type_list";
         ast_kind::ast_enum_member => return "ast_enum_member";
         ast_kind::ast_enum_decl => return "ast_enum_decl";
@@ -282,6 +284,10 @@ impl ast {
             }
             ast_kind::ast_type_def => {
                 var tmp = self.__ptr__() => ast_type_def*;
+                tmp->delete();
+            }
+            ast_kind::ast_func_ptr => {
+                var tmp = self.__ptr__() => ast_func_ptr*;
                 tmp->delete();
             }
             ast_kind::ast_generic_type_list => {
@@ -495,6 +501,10 @@ impl ast {
             }
             ast_kind::ast_type_def => {
                 var tmp = self.__ptr__() => ast_type_def*;
+                return tmp->copy() => ast*;
+            }
+            ast_kind::ast_func_ptr => {
+                var tmp = self.__ptr__() => ast_func_ptr*;
                 return tmp->copy() => ast*;
             }
             ast_kind::ast_generic_type_list => {
@@ -759,7 +769,7 @@ impl ast_binary_operator {
 pub struct ast_type_convert {
     base: ast,
     from: ast*,
-    to: ast_type_def*
+    to: ast*
 }
 
 impl ast_type_convert {
@@ -793,9 +803,8 @@ impl ast_type_convert {
             free(self.from => i8*);
         }
         if (self.to != nil) {
-            var n = self.to => ast*;
-            n->delete();
-            free(n => i8*);
+            self.to->delete();
+            free(self.to => i8*);
         }
     }
 }
@@ -1466,6 +1475,50 @@ impl ast_type_def {
     }
 }
 
+pub struct ast_func_ptr {
+    base: ast,
+    types: vec<ast*>,
+    return_type: ast*,
+}
+
+impl ast_func_ptr {
+    pub func new(loc: span&) -> ast_func_ptr* {
+        var res = ast_func_ptr::__alloc__();
+        res->base = ast::instance(ast_kind::ast_func_ptr, loc);
+        res->types = vec<ast*>::instance();
+        res->return_type = nil;
+        return res;
+    }
+
+    pub func copy(self) -> ast_func_ptr* {
+        var res = ast_func_ptr::__alloc__();
+        res->base = self.base.clone_base();
+        res->types = vec<ast*>::instance();
+        foreach (var i; self.types) {
+            res->types.push(i.get()->copy());
+        }
+
+        if (self.return_type != nil) {
+            res->return_type = self.return_type->copy();
+        } else {
+            res->return_type = nil;
+        }
+        return res;
+    }
+
+    pub func delete(self) {
+        foreach (var i; self.types) {
+            i.get()->delete();
+            free(i.get() => i8*);
+        }
+        self.types.delete();
+        if (self.return_type != nil) {
+            self.return_type->delete();
+            free(self.return_type => i8*);
+        }
+    }
+}
+
 pub struct ast_generic_type_list {
     base: ast,
     types: vec<ast*>
@@ -1603,7 +1656,7 @@ impl ast_enum_decl {
 pub struct ast_field_pair {
     base: ast,
     name: ast_identifier*,
-    type: ast_type_def*
+    type: ast*
 }
 
 impl ast_field_pair {
@@ -1638,9 +1691,8 @@ impl ast_field_pair {
             free(n => i8*);
         }
         if (self.type != nil) {
-            var n = self.type => ast*;
-            n->delete();
-            free(n => i8*);
+            self.type->delete();
+            free(self.type => i8*);
         }
     }
 }
@@ -1796,7 +1848,7 @@ impl ast_union_decl {
 pub struct ast_param {
     base: ast,
     name: ast_identifier*,
-    type: ast_type_def*
+    type: ast*
 }
 
 impl ast_param {
@@ -1831,9 +1883,8 @@ impl ast_param {
             free(n => i8*);
         }
         if (self.type != nil) {
-            var n = self.type => ast*;
-            n->delete();
-            free(n => i8*);
+            self.type->delete();
+            free(self.type => i8*);
         }
     }
 }
@@ -1876,7 +1927,7 @@ pub struct ast_func_decl {
     monomorphic_name: str,
     generic_types: ast_generic_type_list*,
     params: ast_param_list*,
-    return_type: ast_type_def*,
+    return_type: ast*,
     body: ast_code_block*,
     conds: vec<ast_cond_compile*>,
     is_public: bool,
@@ -1947,9 +1998,8 @@ impl ast_func_decl {
             free(n => i8*);
         }
         if (self.return_type != nil) {
-            var n = self.return_type => ast*;
-            n->delete();
-            free(n => i8*);
+            self.return_type->delete();
+            free(self.return_type => i8*);
         }
         if (self.body != nil) {
             var n = self.body => ast*;
@@ -2220,7 +2270,7 @@ impl ast_use_stmt {
 pub struct ast_definition {
     base: ast,
     name: str,
-    type: ast_type_def*,
+    type: ast*,
     value: ast*
 }
 
@@ -2254,9 +2304,8 @@ impl ast_definition {
     pub func delete(self) {
         self.name.delete();
         if (self.type != nil) {
-            var n = self.type => ast*;
-            n->delete();
-            free(n => i8*);
+            self.type->delete();
+            free(self.type => i8*);
         }
         if (self.value != nil) {
             self.value->delete();

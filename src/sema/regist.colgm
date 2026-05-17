@@ -900,7 +900,7 @@ impl regist_pass {
         if (node->generic_types != nil) {
             foreach (var i; node->generic_types->types) {
                 var gt = i.get();
-                var ty = self.tr.resolve(gt => ast_type_def*);
+                var ty = self.tr.resolve(gt);
                 defer ty.delete();
 
                 struct_self_type.generics.push(ty);
@@ -1451,7 +1451,8 @@ impl regist_pass {
         var pms = node->params->params.__ptr__();
         var first_param = pms->get(0) => ast_param*;
         if (first_param->type != nil) {
-            self.err->error(first_param->type->base.location,
+            self.err->error(
+                first_param->type->location,
                 "\"self\" does not need type"
             );
             return;
@@ -1471,7 +1472,7 @@ impl regist_pass {
                 tn->generic_types->types.push(tmp => ast*);
             }
         }
-        first_param->type = tn;
+        first_param->type = tn => ast*;
     }
 
     func generate_impl_method_for_struct(self,
@@ -1572,7 +1573,8 @@ impl regist_pass {
         var pms = node->params->params.__ptr__();
         var first_param = pms->get(0) => ast_param*;
         if (first_param->type != nil) {
-            self.err->error(first_param->type->base.location,
+            self.err->error(
+                first_param->type->location,
                 "\"self\" does not need type"
             );
             return;
@@ -1581,7 +1583,7 @@ impl regist_pass {
         var tn = ast_type_def::new(first_param->base.location);
         tn->name = ast_identifier::new(first_param->base.location, union_info.name);
         tn->is_reference = true;
-        first_param->type = tn;
+        first_param->type = tn => ast*;
     }
 
     func generate_impl_method_for_union(self,

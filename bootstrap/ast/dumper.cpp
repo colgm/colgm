@@ -118,6 +118,29 @@ bool dumper::visit_type_def(type_def* node) {
     return true;
 }
 
+bool dumper::visit_func_ptr(func_ptr* node) {
+    dump_indent();
+    std::cout << "func_ptr" << format_location(node);
+    push_indent();
+    for (auto i : node->get_types()) {
+        if (i == node->get_types().back() && !node->get_return_type()) {
+            set_last();
+        }
+        i->accept(this);
+    }
+    if (node->get_return_type()) {
+        set_last();
+        dump_indent();
+        std::cout << "func_ptr_ret" << format_location(node->get_return_type());
+        push_indent();
+        set_last();
+        node->get_return_type()->accept(this);
+        pop_indent();
+    }
+    pop_indent();
+    return true;
+}
+
 bool dumper::visit_generic_type_list(generic_type_list* node) {
     dump_indent();
     std::cout << "generics" << format_location(node);
