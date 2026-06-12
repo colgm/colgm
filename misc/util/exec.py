@@ -102,11 +102,10 @@ def build_bootstrap_compiler():
     ])
     if is_windows():
         execute([
-            "MSBuild.exe",
-            "colgm.sln",
-            "/p:Configuration=Release",
-            "/p:Platform=x64",
-            "-maxcpucount:{}".format(get_used_cpu_count())
+            cmake,
+            "--build", ".",
+            "--config", "Release",
+            "-j", str(get_used_cpu_count())
         ])
     else:
         execute(["make", "-j{}".format(get_used_cpu_count())])
