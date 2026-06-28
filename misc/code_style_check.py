@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 
 def format_line(line: str) -> str:
     if line.endswith("\n"):
@@ -61,7 +62,7 @@ def operator_without_space_in_line(opr: str, line: str) -> bool:
         return False
     return True
 
-def check_tail_space(lines: list[str], file_path):
+def check_tail_space(lines: list[str], file_path: Path):
     count = 0
     for line in lines:
         count += 1
@@ -70,7 +71,7 @@ def check_tail_space(lines: list[str], file_path):
         if line.endswith(" \n") or line.endswith(" ") or line.endswith(" \t"):
             print(f"[tail-space] {loc} {format_line(line)}")
 
-def check_operator_without_space(lines: list[str], file_path):
+def check_operator_without_space(lines: list[str], file_path: Path):
     oprs = ["==", "!=", "+", "-", "<=", ">="]
     count = 0
     for line in lines:
@@ -83,7 +84,7 @@ def check_operator_without_space(lines: list[str], file_path):
             print(f"[opr-without-space {opr}] {loc} {format_line(line)}")
             break
 
-def check_suffix(file_path):
+def check_suffix(file_path: str):
     suffix = [".colgm", ".c", ".cpp", ".h", ".hpp", ".py", ".nas", ".rs"]
     for s in suffix:
         if file_path.endswith(s):
@@ -94,7 +95,7 @@ for root, dirs, files in os.walk("."):
     for f in files:
         if not check_suffix(f):
             continue
-        file = os.path.join(root, f)
+        file = Path(os.path.join(root, f)).absolute()
         with open(file, "r") as fp:
             lines = fp.readlines()
         check_tail_space(lines, file)
