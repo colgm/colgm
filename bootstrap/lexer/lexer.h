@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 #include "colgm.h"
-#include "report.h"
+#include "error/report.h"
 #include "lexer/token.h"
 
 namespace colgm {

@@ -5,7 +5,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "report.h"
+#include "error/report.h"
 
 namespace colgm {
 

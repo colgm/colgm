@@ -5,7 +5,7 @@
 #include "sir/replace_ptr_call.h"
 #include "sir/control_flow.h"
 #include "sir/simplify_cfg.h"
-#include "report.h"
+#include "error/report.h"
 
 namespace colgm {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "report.h"
+#include "error/report.h"
 #include "ast/visitor.h"
 
 #include <vector>

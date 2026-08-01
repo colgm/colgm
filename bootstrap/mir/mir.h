@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sema/type.h"
-#include "report.h"
+#include "error/report.h"
 
 #include <iostream>
 #include <vector>

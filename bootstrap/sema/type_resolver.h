@@ -1,6 +1,6 @@
 #pragma once
 
-#include "report.h"
+#include "error/report.h"
 #include "ast/ast.h"
 #include "ast/decl.h"
 #include "sema/context.h"

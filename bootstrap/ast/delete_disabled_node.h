@@ -3,7 +3,7 @@
 #include "colgm.h"
 #include "ast/ast.h"
 #include "ast/decl.h"
-#include "report.h"
+#include "error/report.h"
 
 #include <cstring>
 #include <sstream>

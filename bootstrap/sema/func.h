@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 
-#include "report.h"
+#include "error/report.h"
 #include "type.h"
 #include "ast/ast.h"
 #include "ast/decl.h"

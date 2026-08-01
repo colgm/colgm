@@ -7,22 +7,9 @@
 #include <vector>
 
 #include "colgm.h"
+#include "error/span.h"
 
 namespace colgm {
-
-struct span {
-    u32 begin_line;
-    u32 begin_column;
-    u32 end_line;
-    u32 end_column;
-    std::string file;
-
-    static const span null() {
-        return {0, 0, 0, 0, ""};
-    }
-};
-
-std::ostream& operator<<(std::ostream&, const span&);
 
 std::ostream& back_white(std::ostream&);
 std::ostream& red(std::ostream&);
@@ -38,7 +25,7 @@ protected:
     std::vector<std::string> res;
 
 public:
-    flstream():file("") {}
+    flstream(): file("") {}
     void load(const std::string&);
     const auto& operator[](usize n) const { return res[n]; }
     const auto& name() const { return file; }
@@ -46,7 +33,7 @@ public:
     auto size() const { return res.size(); }
 };
 
-class error: public flstream {
+class error : public flstream {
 private:
     u64 cnt; // counter for errors
 
@@ -55,7 +42,7 @@ private:
     }
     std::string leftpad(u32 num, usize len) {
         auto tmp = std::to_string(num);
-        while (tmp.length()<len) {
+        while (tmp.length() < len) {
             tmp = " " + tmp;
         }
         return tmp;

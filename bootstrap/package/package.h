@@ -1,6 +1,6 @@
 #pragma once
 
-#include "report.h"
+#include "error/report.h"
 #include "sema/type.h"
 #include "sema/func.h"
 #include "sema/struct.h"

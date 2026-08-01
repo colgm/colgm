@@ -66,7 +66,8 @@ set(COLGM_OBJECT
     ${CMAKE_SOURCE_DIR}/lexer/lexer.cpp
     ${CMAKE_SOURCE_DIR}/misc.cpp
     ${CMAKE_SOURCE_DIR}/parse/parse.cpp
-    ${CMAKE_SOURCE_DIR}/report.cpp)
+    ${CMAKE_SOURCE_DIR}/error/report.cpp
+    ${CMAKE_SOURCE_DIR}/error/span.cpp)
 
 add_library(colgm-ast STATIC ${COLGM_AST})
 target_include_directories(colgm-ast PRIVATE ${CMAKE_SOURCE_DIR})

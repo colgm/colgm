@@ -3,7 +3,7 @@
 #include <string>
 
 #include "colgm.h"
-#include "report.h"
+#include "error/report.h"
 
 namespace colgm {
 

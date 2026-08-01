@@ -1,5 +1,5 @@
 #include "ast/delete_disabled_node.h"
-#include "report.h"
+#include "error/report.h"
 
 #include <vector>
 #include <unordered_set>

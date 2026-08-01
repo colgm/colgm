@@ -2,7 +2,7 @@
 #include "mir/add_default_func.h"
 #include "mir/adjust_va_arg_func.h"
 #include "mir/type_cast_number_pass.h"
-#include "report.h"
+#include "error/report.h"
 
 #include <iostream>
 

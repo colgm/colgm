@@ -1,5 +1,5 @@
 #include "colgm.h"
-#include "report.h"
+#include "error/report.h"
 #include "sema/type.h"
 #include "package/package.h"
 #include "ast/decl.h"
