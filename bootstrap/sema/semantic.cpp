@@ -1,5 +1,5 @@
 #include "colgm.h"
-#include "lexer.h"
+#include "lexer/lexer.h"
 #include "parse/parse.h"
 #include "sema/semantic.h"
 #include "sema/regist_pass.h"

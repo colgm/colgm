@@ -63,7 +63,7 @@ set(COLGM_SEMA
     ${CMAKE_SOURCE_DIR}/sema/type.cpp
     ${CMAKE_SOURCE_DIR}/sema/type_resolver.cpp)
 set(COLGM_OBJECT
-    ${CMAKE_SOURCE_DIR}/lexer.cpp
+    ${CMAKE_SOURCE_DIR}/lexer/lexer.cpp
     ${CMAKE_SOURCE_DIR}/misc.cpp
     ${CMAKE_SOURCE_DIR}/parse/parse.cpp
     ${CMAKE_SOURCE_DIR}/report.cpp)

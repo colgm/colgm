@@ -2,7 +2,7 @@
 
 #include "colgm.h"
 #include "report.h"
-#include "lexer.h"
+#include "lexer/lexer.h"
 #include "ast/ast.h"
 #include "ast/decl.h"
 #include "ast/expr.h"

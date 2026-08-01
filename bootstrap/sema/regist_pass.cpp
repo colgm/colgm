@@ -1,7 +1,7 @@
 #include "ast/stmt.h"
 #include "ast/expr.h"
 #include "sema/regist_pass.h"
-#include "lexer.h"
+#include "lexer/lexer.h"
 #include "parse/parse.h"
 #include "sema/semantic.h"
 #include "mir/ast2mir.h"
