@@ -5,7 +5,7 @@ use sema::type::{ type };
 
 use std::str::{ str };
 use std::io::{ io };
-use std::libc::{ itoa, strlen };
+use std::libc::{ itoa, strlen, isatty };
 use std::fs::{ fs };
 use std::vec::{ vec };
 use std::panic::{ panic };
@@ -394,21 +394,33 @@ impl report {
 
 impl report {
     func highlight(self) -> report& {
+        if (isatty(2) == 0) {
+            return self;
+        }
         self.message_cache.append("\e[97;1m");
         return self;
     }
 
     func cancel_highlight(self) -> report& {
+        if (isatty(2) == 0) {
+            return self;
+        }
         self.message_cache.append("\e[0m");
         return self;
     }
 
     func highlight_note(self) -> report& {
+        if (isatty(2) == 0) {
+            return self;
+        }
         self.note_cache.append("\e[97;1m");
         return self;
     }
 
     func cancel_highlight_note(self) -> report& {
+        if (isatty(2) == 0) {
+            return self;
+        }
         self.note_cache.append("\e[0m");
         return self;
     }

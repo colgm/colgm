@@ -1,41 +1,7 @@
 #include "error/report.h"
+#include "utils/colorful.h"
 
 namespace colgm {
-
-std::ostream& back_white(std::ostream& s) {
-    s << "\033[7m";
-    return s;
-}
-
-std::ostream& red(std::ostream& s) {
-    s << "\033[91;1m";
-    return s;
-}
-
-std::ostream& cyan(std::ostream& s) {
-    s << "\033[36;1m";
-    return s;
-}
-
-std::ostream& green(std::ostream& s) {
-    s << "\033[92;1m";
-    return s;
-}
-
-std::ostream& orange(std::ostream& s) {
-    s << "\033[93;1m";
-    return s;
-}
-
-std::ostream& white(std::ostream& s) {
-    s << "\033[97;1m";
-    return s;
-}
-
-std::ostream& reset(std::ostream& s) {
-    s << "\033[0m";
-    return s;
-}
 
 void flstream::load(const std::string& f) {
     if (file == f) { // don't need to load a loaded file

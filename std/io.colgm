@@ -1,4 +1,4 @@
-use std::libc::{ open, read, write, close, strlen, itoa, utoa, gcvt, free };
+use std::libc::{ open, read, write, close, isatty, strlen, itoa, utoa, gcvt, free };
 use std::str::{ str };
 use std::panic::{ panic };
 
@@ -49,11 +49,11 @@ impl io {
     }
 
     pub func stdout() -> io {
-        return io { fd: 1, color_out: true, cache: nil };
+        return io { fd: 1, color_out: isatty(1) != 0, cache: nil };
     }
 
     pub func stderr() -> io {
-        return io { fd: 2, color_out: true, cache: nil };
+        return io { fd: 2, color_out: isatty(2) != 0, cache: nil };
     }
 
     pub func disable_color(self) -> io& {

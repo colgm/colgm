@@ -3,6 +3,7 @@
 #include "mir/adjust_va_arg_func.h"
 #include "mir/type_cast_number_pass.h"
 #include "error/report.h"
+#include "utils/colorful.h"
 
 #include <iostream>
 

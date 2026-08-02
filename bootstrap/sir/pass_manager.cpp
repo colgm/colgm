@@ -6,6 +6,7 @@
 #include "sir/control_flow.h"
 #include "sir/simplify_cfg.h"
 #include "error/report.h"
+#include "utils/colorful.h"
 
 namespace colgm {
 

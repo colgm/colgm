@@ -5,6 +5,7 @@
 #include "parse/parse.h"
 #include "sema/semantic.h"
 #include "mir/ast2mir.h"
+#include "utils/colorful.h"
 
 #include <cassert>
 #include <cstring>

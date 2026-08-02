@@ -12,6 +12,18 @@ pub extern func open(file: const i8*, flags: i32, mode: u32) -> i32;
 pub extern func read(fd: i32, buf: i8*, nbytes: i64) -> i64;
 pub extern func write(fd: i32, buf: i8*, count: i64) -> i64;
 pub extern func close(fd: i32) -> i32;
+
+#[enable_if(target_os = "linux")]
+pub extern func isatty(fd: i32) -> i32;
+#[enable_if(target_os = "macos")]
+pub extern func isatty(fd: i32) -> i32;
+#[enable_if(target_os = "windows")]
+extern func _isatty(fd: i32) -> i32;
+#[enable_if(target_os = "windows")]
+pub func isatty(fd: i32) -> i32 {
+    return _isatty(fd);
+}
+
 pub extern func exit(code: i32);
 pub extern func abort();
 
