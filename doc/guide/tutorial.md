@@ -8,6 +8,7 @@
   - [Default Literal Type](#default-literal-type)
   - [Auto Type Cast](#auto-type-cast)
   - [Array Initialization](#array-initialization)
+- [Semicolons](#semicolons)
 - [Operators](#operators)
   - [Arithmetic Operator](#arithmetic-operator)
   - [Bitwise Operator](#bitwise-operator)
@@ -157,6 +158,29 @@ func main() -> i32 {
     // error: cannot infer type
     var c = [];
     return 0;
+}
+```
+
+## Semicolons
+
+Colgm does not require semicolons at the end of each statement.
+
+```rust
+func main() -> i32 {
+    var a = 1
+    var b = a + 1
+    return (b - 2) => i32
+}
+```
+
+But return value is required to be in the same line of the return keyword.
+
+```rust
+func main() -> i32 {
+    var a = 1
+    var b = a + 1
+    return         // this will be recognized as (return void)
+    (b - 2) => i32 // after return stmt, ignored
 }
 ```
 

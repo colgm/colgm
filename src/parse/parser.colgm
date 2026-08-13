@@ -205,7 +205,6 @@ impl parser {
             self.next();
             return;
         }
-        self.err->error(self.last_tok_loc(), "expected \";\"");
     }
 
     func match_token(self, kind: tok_kind) {
@@ -1076,7 +1075,9 @@ impl parser {
             self.update_location(res => ast*);
             return res;
         }
-        res->body = self.block_gen(false);
+        if (self.lookahead(tok_kind::tok_lbrace)) {
+            res->body = self.block_gen(false);
+        }
         self.update_location(res => ast*);
         return res;
     }
@@ -1357,8 +1358,11 @@ impl parser {
 
     func return_gen(self) -> ast_ret_stmt* {
         var res = ast_ret_stmt::new(self.this_tok_loc());
+        var ret_loc_line = self.this_tok_loc().begin_line;
         self.match_token(tok_kind::tok_return);
-        if (!self.lookahead(tok_kind::tok_semi)) {
+        // return value should be in the same line with return keyword
+        if (self.this_tok_loc().begin_line == ret_loc_line &&
+            !self.lookahead(tok_kind::tok_semi)) {
             res->value = self.calculation_gen();
         }
         self.update_location(res => ast*);

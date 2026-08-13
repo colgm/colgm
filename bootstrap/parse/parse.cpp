@@ -53,7 +53,6 @@ void parse::try_match_semi() {
         next();
         return;
     }
-    err.err(toks[ptr ? ptr - 1 : ptr].loc, "expected \";\"");
 }
 
 void parse::try_match_rbrace() {
@@ -833,7 +832,9 @@ func_decl* parse::function_gen(std::vector<cond_compile*>& conds,
         update_location(res);
         return res;
     }
-    res->set_code_block(block_gen(false));
+    if (look_ahead(tok::tk_lbrace)) {
+        res->set_code_block(block_gen(false));
+    }
     update_location(res);
     return res;
 }
@@ -1107,8 +1108,10 @@ defer_stmt* parse::defer_gen() {
 
 ret_stmt* parse::return_gen() {
     auto res = new ret_stmt(toks[ptr].loc);
+    const auto ret_loc_line = toks[ptr].loc.begin_line;
     match(tok::tk_ret);
-    if (!look_ahead(tok::tk_semi)) {
+    // return value should be in the same line with return keyword
+    if (toks[ptr].loc.begin_line == ret_loc_line && !look_ahead(tok::tk_semi)) {
         res->set_value(calculation_gen());
     }
     try_match_semi();
