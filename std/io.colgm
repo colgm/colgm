@@ -1,6 +1,6 @@
-use std::libc::{ open, read, write, close, isatty, strlen, itoa, utoa, gcvt, free };
-use std::str::{ str };
-use std::panic::{ panic };
+use std::libc::{ open, read, write, close, isatty, strlen, itoa, utoa, gcvt, free }
+use std::str::{ str }
+use std::panic::{ panic }
 
 #[enable_if(target_os="macos")]
 pub enum flag {
@@ -45,144 +45,144 @@ pub struct io {
 
 impl io {
     pub func stdin() -> io {
-        return io { fd: 0, color_out: false, cache: nil };
+        return io { fd: 0, color_out: false, cache: nil }
     }
 
     pub func stdout() -> io {
-        return io { fd: 1, color_out: isatty(1) != 0, cache: nil };
+        return io { fd: 1, color_out: isatty(1) != 0, cache: nil }
     }
 
     pub func stderr() -> io {
-        return io { fd: 2, color_out: isatty(2) != 0, cache: nil };
+        return io { fd: 2, color_out: isatty(2) != 0, cache: nil }
     }
 
     pub func disable_color(self) -> io& {
-        self.color_out = false;
-        return self;
+        self.color_out = false
+        return self
     }
 
     func force_flush(self) {
-        write(self.fd, self.cache->c_str, self.cache->size => i64);
-        self.cache->clear();
+        write(self.fd, self.cache->c_str, self.cache->size => i64)
+        self.cache->clear()
     }
 
     func check_and_flush(self) {
-        if (self.cache == nil) {
-            return;
+        if self.cache == nil {
+            return
         }
         // 16k threshold
-        if (self.cache->size < 16384) {
-            return;
+        if self.cache->size < 16384 {
+            return
         }
-        self.force_flush();
+        self.force_flush()
     }
 
     pub func out(self, info: const i8*) -> io& {
         // do nothing if is stdin
-        if (self.fd == 0) {
-            return self;
+        if self.fd == 0 {
+            return self
         }
 
-        if (self.cache == nil) {
-            write(self.fd, info, strlen(info));
+        if self.cache == nil {
+            write(self.fd, info, strlen(info))
         } else {
-            self.cache->append(info);
-            self.check_and_flush();
+            self.cache->append(info)
+            self.check_and_flush()
         }
-        return self;
+        return self
     }
 
     pub func out_ch(self, info: i8) -> io& {
         // do nothing if is stdin
-        if (self.fd == 0) {
-            return self;
+        if self.fd == 0 {
+            return self
         }
 
-        if (self.cache == nil) {
-            var buff = [info];
-            write(self.fd, buff, 1);
+        if self.cache == nil {
+            var buff = [info]
+            write(self.fd, buff, 1)
         } else {
-            self.cache->append_char(info);
-            self.check_and_flush();
+            self.cache->append_char(info)
+            self.check_and_flush()
         }
-        return self;
+        return self
     }
 
     pub func out_i64(self, info: i64) -> io& {
         // do nothing if is stdin
-        if (self.fd == 0) {
-            return self;
+        if self.fd == 0 {
+            return self
         }
 
-        var buff: [i8; 256] = [];
-        itoa(info, buff, 10);
-        if (self.cache == nil) {
-            write(self.fd, buff, strlen(buff));
+        var buff: [i8; 256] = []
+        itoa(info, buff, 10)
+        if self.cache == nil {
+            write(self.fd, buff, strlen(buff))
         } else {
-            self.cache->append(buff);
-            self.check_and_flush();
+            self.cache->append(buff)
+            self.check_and_flush()
         }
-        return self;
+        return self
     }
 
     pub func out_u64(self, info: u64) -> io& {
         // do nothing if is stdin
-        if (self.fd == 0) {
-            return self;
+        if self.fd == 0 {
+            return self
         }
 
-        var buff: [i8; 256] = [];
-        utoa(info, buff, 10);
-        if (self.cache == nil) {
-            write(self.fd, buff, strlen(buff));
+        var buff: [i8; 256] = []
+        utoa(info, buff, 10)
+        if self.cache == nil {
+            write(self.fd, buff, strlen(buff))
         } else {
-            self.cache->append(buff);
-            self.check_and_flush();
+            self.cache->append(buff)
+            self.check_and_flush()
         }
-        return self;
+        return self
     }
 
     pub func out_f64(self, info: f64) -> io& {
         // do nothing if is stdin
-        if (self.fd == 0) {
-            return self;
+        if self.fd == 0 {
+            return self
         }
 
-        var buff: [i8; 32] = [];
-        gcvt(info, 4, buff);
-        if (self.cache == nil) {
-            write(self.fd, buff, strlen(buff));
+        var buff: [i8; 32] = []
+        gcvt(info, 4, buff)
+        if self.cache == nil {
+            write(self.fd, buff, strlen(buff))
         } else {
-            self.cache->append(buff);
-            self.check_and_flush();
+            self.cache->append(buff)
+            self.check_and_flush()
         }
-        return self;
+        return self
     }
 
     pub func out_hex(self, info: u64) -> io& {
         // do nothing if is stdin
-        if (self.fd == 0) {
-            return self;
+        if self.fd == 0 {
+            return self
         }
 
-        var buff: [i8; 256] = [];
-        utoa(info, buff, 16);
-        if (self.cache == nil) {
-            write(self.fd, buff, strlen(buff));
+        var buff: [i8; 256] = []
+        utoa(info, buff, 16)
+        if self.cache == nil {
+            write(self.fd, buff, strlen(buff))
         } else {
-            self.cache->append(buff);
-            self.check_and_flush();
+            self.cache->append(buff)
+            self.check_and_flush()
         }
-        return self;
+        return self
     }
 
     pub func endln(self) {
-        if (self.fd != 0) {
-            if (self.cache == nil) {
-                write(self.fd, "\n", 1);
+        if self.fd != 0 {
+            if self.cache == nil {
+                write(self.fd, "\n", 1)
             } else {
-                self.cache->append_char('\n');
-                self.check_and_flush();
+                self.cache->append_char('\n')
+                self.check_and_flush()
             }
         }
     }
@@ -191,108 +191,108 @@ impl io {
 // ANSI escape sequence color
 impl io {
     func color_out_core(self, color_code: i64, light: bool) -> io& {
-        if (!self.color_out) {
-            return self;
+        if !self.color_out {
+            return self
         }
 
-        var sequence = str::from("\e[");
-        defer sequence.delete();
+        var sequence = str::from("\e[")
+        defer sequence.delete()
 
-        sequence.append_i64(color_code);
-        if (!light) {
-            sequence.append(";1");
+        sequence.append_i64(color_code)
+        if !light {
+            sequence.append(";1")
         }
-        sequence.append("m");
-        self.out(sequence.c_str);
-        return self;
+        sequence.append("m")
+        self.out(sequence.c_str)
+        return self
     }
 
     pub func red(self) -> io& {
-        return self.color_out_core(91, false);
+        return self.color_out_core(91, false)
     }
 
     pub func light_red(self) -> io& {
-        return self.color_out_core(91, true);
+        return self.color_out_core(91, true)
     }
 
     pub func green(self) -> io& {
-        return self.color_out_core(92, false);
+        return self.color_out_core(92, false)
     }
 
     pub func light_green(self) -> io& {
-        return self.color_out_core(92, true);
+        return self.color_out_core(92, true)
     }
 
     pub func orange(self) -> io& {
-        return self.color_out_core(93, false);
+        return self.color_out_core(93, false)
     }
 
     pub func light_orange(self) -> io& {
-        return self.color_out_core(93, true);
+        return self.color_out_core(93, true)
     }
 
     pub func blue(self) -> io& {
-        return self.color_out_core(94, false);
+        return self.color_out_core(94, false)
     }
 
     pub func light_blue(self) -> io& {
-        return self.color_out_core(94, true);
+        return self.color_out_core(94, true)
     }
 
     pub func purple(self) -> io& {
-        return self.color_out_core(95, false);
+        return self.color_out_core(95, false)
     }
 
     pub func light_purple(self) -> io& {
-        return self.color_out_core(95, true);
+        return self.color_out_core(95, true)
     }
 
     pub func cyan(self) -> io& {
-        return self.color_out_core(96, false);
+        return self.color_out_core(96, false)
     }
 
     pub func light_cyan(self) -> io& {
-        return self.color_out_core(96, true);
+        return self.color_out_core(96, true)
     }
 
     pub func white(self) -> io& {
-        return self.color_out_core(97, false);
+        return self.color_out_core(97, false)
     }
 
     pub func light_white(self) -> io& {
-        return self.color_out_core(97, true);
+        return self.color_out_core(97, true)
     }
 
     pub func grey(self) -> io& {
-        return self.color_out_core(90, false);
+        return self.color_out_core(90, false)
     }
 
     pub func light_grey(self) -> io& {
-        return self.color_out_core(90, true);
+        return self.color_out_core(90, true)
     }
 
     pub func reset(self) -> io& {
-        return self.color_out_core(0, true);
+        return self.color_out_core(0, true)
     }
 }
 
 impl io {
     func open_append_write_file(file: const i8*) -> i32 {
-        var flags = flag::O_WRONLY | flag::O_APPEND | flag::O_CREAT;
-        var fd = open(file, flags => i32, 0o666); // rw-rw-rw-
-        if (fd < 0) {
-            panic("failed to open file in append mode");
+        var flags = flag::O_WRONLY | flag::O_APPEND | flag::O_CREAT
+        var fd = open(file, flags => i32, 0o666) // rw-rw-rw-
+        if fd < 0 {
+            panic("failed to open file in append mode")
         }
-        return fd;
+        return fd
     }
 
     func open_file(file: const i8*) -> i32 {
-        var flags = flag::O_WRONLY | flag::O_CREAT | flag::O_TRUNC;
-        var fd = open(file, flags => i32, 0o666); // rw-rw-rw-
-        if (fd < 0) {
-            panic("failed to open file in trunc mode");
+        var flags = flag::O_WRONLY | flag::O_CREAT | flag::O_TRUNC
+        var fd = open(file, flags => i32, 0o666) // rw-rw-rw-
+        if fd < 0 {
+            panic("failed to open file in trunc mode")
         }
-        return fd;
+        return fd
     }
 
     func logger(file: const i8*) -> io {
@@ -300,7 +300,7 @@ impl io {
             fd: io::open_append_write_file(file),
             color_out: false,
             cache: str::new()
-        };
+        }
     }
 
     pub func fileout(file: const i8*) -> io {
@@ -308,19 +308,19 @@ impl io {
             fd: io::open_file(file),
             color_out: false,
             cache: str::new()
-        };
+        }
     }
 
     pub func close(self) {
-        if (self.fd <= 0 || self.fd == 1 || self.fd == 2) {
-            return;
+        if self.fd <= 0 || self.fd == 1 || self.fd == 2 {
+            return
         }
-        if (self.cache != nil) {
-            self.force_flush();
-            self.cache->delete();
-            free(self.cache => i8*);
-            self.cache = nil;
+        if self.cache != nil {
+            self.force_flush()
+            self.cache->delete()
+            free(self.cache => i8*)
+            self.cache = nil
         }
-        close(self.fd);
+        close(self.fd)
     }
 }

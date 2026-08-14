@@ -1,214 +1,214 @@
-use std::math::{ nan, pow };
-use std::libc::{ strlen };
-use std::str::{ str };
-use std::result::{ result };
+use std::math::{ nan, pow }
+use std::libc::{ strlen }
+use std::str::{ str }
+use std::result::{ result }
 
 func hex_to_u64(s: i8*) -> result<u64> {
-    var res: u64 = 0;
-    var len = strlen(s);
+    var res: u64 = 0
+    var len = strlen(s)
     for (var i = 0; i < len; i += 1) {
-        if ('0' <= s[i] && s[i] <= '9') {
-            res = res * 16 + (s[i] - '0') => u64;
-        } else if ('a' <= s[i] && s[i] <= 'f') {
-            res = res * 16 + (s[i] - 'a' + 10) => u64;
-        } else if ('A' <= s[i] && s[i] <= 'F') {
-            res = res * 16 + (s[i] - 'A' + 10) => u64;
+        if '0' <= s[i] && s[i] <= '9' {
+            res = res * 16 + (s[i] - '0') => u64
+        } else if 'a' <= s[i] && s[i] <= 'f' {
+            res = res * 16 + (s[i] - 'a' + 10) => u64
+        } else if 'A' <= s[i] && s[i] <= 'F' {
+            res = res * 16 + (s[i] - 'A' + 10) => u64
         } else {
-            return result<u64>::err();
+            return result<u64>::err()
         }
     }
-    return result<u64>::ok(res);
+    return result<u64>::ok(res)
 }
 
 func oct_to_u64(s: i8*) -> result<u64> {
-    var res: u64 = 0;
-    var len = strlen(s);
+    var res: u64 = 0
+    var len = strlen(s)
     for (var i = 0; i < len; i += 1) {
-        if ('0' <= s[i] && s[i] <= '7') {
-            res = res * 8 + (s[i] - '0') => u64;
+        if '0' <= s[i] && s[i] <= '7' {
+            res = res * 8 + (s[i] - '0') => u64
         } else {
-            return result<u64>::err();
+            return result<u64>::err()
         }
     }
-    return result<u64>::ok(res);
+    return result<u64>::ok(res)
 }
 
 func dec_to_u64(s: i8*) -> result<u64> {
-    var ret: u64 = 0;
-    var len = strlen(s);
+    var ret: u64 = 0
+    var len = strlen(s)
     for (var i = 0; i < len; i += 1) {
-        if ('0' <= s[i] && s[i] <= '9') {
-            ret = ret * 10 + (s[i] - '0') => u64;
+        if '0' <= s[i] && s[i] <= '9' {
+            ret = ret * 10 + (s[i] - '0') => u64
         } else {
-            return result<u64>::err();
+            return result<u64>::err()
         }
     }
-    return result<u64>::ok(ret);
+    return result<u64>::ok(ret)
 }
 
 func hex_to_f64(s: i8*) -> f64 {
-    var res: f64 = 0.0;
-    var len = strlen(s);
+    var res: f64 = 0.0
+    var len = strlen(s)
     for (var i = 0; i < len; i += 1) {
-        if ('0' <= s[i] && s[i] <= '9') {
-            res = res * 16.0 + (s[i] - '0') => f64;
-        } else if ('a' <= s[i] && s[i] <= 'f') {
-            res = res * 16.0 + (s[i] - 'a' + 10) => f64;
-        } else if ('A' <= s[i] && s[i] <= 'F') {
-            res = res * 16.0 + (s[i] - 'A' + 10) => f64;
+        if '0' <= s[i] && s[i] <= '9' {
+            res = res * 16.0 + (s[i] - '0') => f64
+        } else if 'a' <= s[i] && s[i] <= 'f' {
+            res = res * 16.0 + (s[i] - 'a' + 10) => f64
+        } else if 'A' <= s[i] && s[i] <= 'F' {
+            res = res * 16.0 + (s[i] - 'A' + 10) => f64
         } else {
-            return nan("");
+            return nan("")
         }
     }
-    return res;
+    return res
 }
 
 func oct_to_f64(s: i8*) -> f64 {
-    var res: f64 = 0.0;
-    var len = strlen(s);
+    var res: f64 = 0.0
+    var len = strlen(s)
     for (var i = 0; i < len; i += 1) {
-        if ('0' <= s[i] && s[i] <= '7') {
-            res = res * 8.0 + (s[i] - '0') => f64;
+        if '0' <= s[i] && s[i] <= '7' {
+            res = res * 8.0 + (s[i] - '0') => f64
         } else {
-            return nan("");
+            return nan("")
         }
     }
-    return res;
+    return res
 }
 
 func dec_to_f64(s: i8*) -> f64 {
-    var negative_exponent = false;
-    var res: f64 = 0.0;
+    var negative_exponent = false
+    var res: f64 = 0.0
 
-    var i = 0;
-    while (s[i] != 0 and '0' <= s[i] && s[i] <= '9') {
-        res = res * 10.0 + (s[i] - '0') => f64;
-        i += 1;
+    var i = 0
+    while s[i] != 0 and '0' <= s[i] && s[i] <= '9' {
+        res = res * 10.0 + (s[i] - '0') => f64
+        i += 1
     }
-    if (s[i] == 0) {
-        return res;
+    if s[i] == 0 {
+        return res
     }
 
-    if (s[i] == '.') {
-        i += 1;
+    if s[i] == '.' {
+        i += 1
         // number like 123. is not valid
-        if (s[i] == 0) {
-            return nan("");
+        if s[i] == 0 {
+            return nan("")
         }
-        var num_decimal: f64 = 0.1;
-        while (s[i] != 0 and '0' <= s[i] && s[i] <= '9') {
-            res += num_decimal * ((s[i] - '0') => f64);
-            num_decimal *= 0.1;
-            i += 1;
+        var num_decimal: f64 = 0.1
+        while s[i] != 0 and '0' <= s[i] && s[i] <= '9' {
+            res += num_decimal * ((s[i] - '0') => f64)
+            num_decimal *= 0.1
+            i += 1
         }
-        if (s[i] == 0) {
-            return res;
+        if s[i] == 0 {
+            return res
         }
     }
 
     // number like 123x is not valid
-    if (s[i] != 'e' && s[i] != 'E') {
-        return nan("");
+    if s[i] != 'e' && s[i] != 'E' {
+        return nan("")
     }
 
-    i += 1;
+    i += 1
     // number like 123e is not valid
-    if (s[i] == 0) {
-        return nan("");
+    if s[i] == 0 {
+        return nan("")
     }
 
-    if (s[i] == '-' || s[i] == '+') {
-        negative_exponent = (s[i] == '-');
-        i += 1;
+    if s[i] == '-' || s[i] == '+' {
+        negative_exponent = (s[i] == '-')
+        i += 1
     }
     // number like 123e- is not valid
-    if (s[i] == 0) {
-        return nan("");
+    if s[i] == 0 {
+        return nan("")
     }
 
-    var num_pow: f64 = 0.0;
-    while (s[i] != 0 and '0' <= s[i] && s[i] <= '9') {
-        num_pow = num_pow * 10.0 + (s[i] - '0') => f64;
-        i += 1;
+    var num_pow: f64 = 0.0
+    while s[i] != 0 and '0' <= s[i] && s[i] <= '9' {
+        num_pow = num_pow * 10.0 + (s[i] - '0') => f64
+        i += 1
     }
     // number like 123e123x is not valid
-    if (s[i] != 0) {
-        return nan("");
+    if s[i] != 0 {
+        return nan("")
     }
 
-    if (negative_exponent) {
-        res *= pow(10.0, 1.0 - num_pow) * 0.1;
+    if negative_exponent {
+        res *= pow(10.0, 1.0 - num_pow) * 0.1
     } else {
-        res *= pow(10.0, num_pow - 1.0) * 10.0;
+        res *= pow(10.0, num_pow - 1.0) * 10.0
     }
-    return res;
+    return res
 }
 
 pub func to_f64(s: i8*) -> f64 {
-    var flag_is_negative = false;
-    var res: f64 = 0.0;
+    var flag_is_negative = false
+    var res: f64 = 0.0
 
-    if (s[0] == '-' || s[0] == '+') {
-        flag_is_negative = (s[0] == '-');
-        s = ((s => u64) + 1) => i8*;
+    if s[0] == '-' || s[0] == '+' {
+        flag_is_negative = (s[0] == '-')
+        s = ((s => u64) + 1) => i8*
     }
-    if (s[0] == 0) {
-        return nan("");
+    if s[0] == 0 {
+        return nan("")
     }
 
     // here we know s[0] must not be zero,
     // so s[1] could be zero or other,
     // means this memory can be visited
-    if (s[0] == '0' && s[1] == 'x') {
-        res = hex_to_f64(((s => u64) + 2) => i8*);
-    } else if (s[0] == '0' && s[1] == 'o') {
-        res = oct_to_f64(((s => u64) + 2) => i8*);
+    if s[0] == '0' && s[1] == 'x' {
+        res = hex_to_f64(((s => u64) + 2) => i8*)
+    } else if s[0] == '0' && s[1] == 'o' {
+        res = oct_to_f64(((s => u64) + 2) => i8*)
     } else {
-        res = dec_to_f64(s);
+        res = dec_to_f64(s)
     }
 
-    if (flag_is_negative) {
-        return -res;
+    if flag_is_negative {
+        return -res
     } else {
-        return res;
+        return res
     }
 
     // unreachable
-    return nan("");
+    return nan("")
 }
 
 pub func to_u64(s: str&) -> result<u64> {
-    if (s.contains('.')) {
-        return result<u64>::err();
+    if s.contains('.') {
+        return result<u64>::err()
     }
 
-    var res: u64 = 0;
-    if (s.size > 2 && s.c_str[0] == '0' && s.c_str[1] == 'o') {
-        var r = oct_to_u64((s.c_str => u64 + 2) => i8*);
-        if (!r.is_ok()) {
-            return r;
+    var res: u64 = 0
+    if s.size > 2 && s.c_str[0] == '0' && s.c_str[1] == 'o' {
+        var r = oct_to_u64((s.c_str => u64 + 2) => i8*)
+        if !r.is_ok() {
+            return r
         }
-        res = r.unwrap();
-    } else if (s.size > 2 && s.c_str[0] == '0' && s.c_str[1] == 'x') {
-        var r = hex_to_u64((s.c_str => u64 + 2) => i8*);
-        if (!r.is_ok()) {
-            return r;
+        res = r.unwrap()
+    } else if s.size > 2 && s.c_str[0] == '0' && s.c_str[1] == 'x' {
+        var r = hex_to_u64((s.c_str => u64 + 2) => i8*)
+        if !r.is_ok() {
+            return r
         }
-        res = r.unwrap();
+        res = r.unwrap()
     } else {
-        var r = dec_to_u64(s.c_str);
-        if (!r.is_ok()) {
-            return r;
+        var r = dec_to_u64(s.c_str)
+        if !r.is_ok() {
+            return r
         }
-        res = r.unwrap();
+        res = r.unwrap()
     }
-    return result<u64>::ok(res);
+    return result<u64>::ok(res)
 }
 
 pub func to_u32(s: str&) -> result<u32> {
-    var r = to_u64(s);
-    if (!r.is_ok()) {
-        return result<u32>::err();
+    var r = to_u64(s)
+    if !r.is_ok() {
+        return result<u32>::err()
     }
-    return result<u32>::ok(r.unwrap() => u32);
+    return result<u32>::ok(r.unwrap() => u32)
 }

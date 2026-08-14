@@ -1,14 +1,14 @@
-use std::libc::{ malloc, free, memset, memcpy, strlen };
+use std::libc::{ malloc, free, memset, memcpy, strlen }
 
 #[enable_if(target_os = "linux")]
-pub extern func backtrace(buf: i8**, size: i32) -> i32;
+pub extern func backtrace(buf: i8**, size: i32) -> i32
 #[enable_if(target_os = "linux")]
-pub extern func backtrace_symbols(buf: i8**, size: i32) -> i8**;
+pub extern func backtrace_symbols(buf: i8**, size: i32) -> i8**
 
 #[enable_if(target_os = "macos")]
-pub extern func backtrace(buf: i8**, size: i32) -> i32;
+pub extern func backtrace(buf: i8**, size: i32) -> i32
 #[enable_if(target_os = "macos")]
-pub extern func backtrace_symbols(buf: i8**, size: i32) -> i8**;
+pub extern func backtrace_symbols(buf: i8**, size: i32) -> i8**
 
 #[enable_if(target_os = "windows")]
 struct SYMBOL_INFO {
@@ -31,66 +31,66 @@ struct SYMBOL_INFO {
 
 // these are opaque to users
 #[enable_if(target_os = "windows")]
-extern func GetCurrentProcess() -> i8*;
+extern func GetCurrentProcess() -> i8*
 #[enable_if(target_os = "windows")]
-extern func SymInitialize(process: i8*, user_search_path: const i8*, f_invade_process: i32) -> i32;
+extern func SymInitialize(process: i8*, user_search_path: const i8*, f_invade_process: i32) -> i32
 #[enable_if(target_os = "windows")]
-extern func RtlCaptureStackBackTrace(frame_to_skip: u32, frame_to_capture: u32, back_trace: i8**, back_trace_hash: u32*) -> u16;
+extern func RtlCaptureStackBackTrace(frame_to_skip: u32, frame_to_capture: u32, back_trace: i8**, back_trace_hash: u32*) -> u16
 #[enable_if(target_os = "windows")]
-extern func SymFromAddr(process: i8*, address: u64, displacement: u64*, symbol: SYMBOL_INFO*) -> i32;
+extern func SymFromAddr(process: i8*, address: u64, displacement: u64*, symbol: SYMBOL_INFO*) -> i32
 #[enable_if(target_os = "windows")]
-extern func SymCleanup(process: i8*) -> i32;
+extern func SymCleanup(process: i8*) -> i32
 
 // compatible layer for backtrace on windows
 #[enable_if(target_os = "windows")]
 pub func backtrace(buf: i8**, size: i32) -> i32 {
-    var process = GetCurrentProcess();
-    SymInitialize(process, nil, 1);
+    var process = GetCurrentProcess()
+    SymInitialize(process, nil, 1)
 
-    var frames = RtlCaptureStackBackTrace(0, size => u32, buf, nil);
-    SymCleanup(process);
-    return frames => i32;
+    var frames = RtlCaptureStackBackTrace(0, size => u32, buf, nil)
+    SymCleanup(process)
+    return frames => i32
 }
 #[enable_if(target_os = "windows")]
 pub func backtrace_symbols(buf: i8**, size: i32) -> i8** {
-    var process = GetCurrentProcess();
-    SymInitialize(process, nil, 1);
-    defer SymCleanup(process);
+    var process = GetCurrentProcess()
+    SymInitialize(process, nil, 1)
+    defer SymCleanup(process)
 
-    var frames = RtlCaptureStackBackTrace(0, size => u32, buf, nil);
+    var frames = RtlCaptureStackBackTrace(0, size => u32, buf, nil)
 
     // get symbol info
-    var symbols = malloc(SYMBOL_INFO::__size__() + 256) => SYMBOL_INFO*;
-    defer free(symbols => i8*);
-    symbols->MaxNameLen = 255;
-    symbols->SizeOfStruct = SYMBOL_INFO::__size__() => u32;
+    var symbols = malloc(SYMBOL_INFO::__size__() + 256) => SYMBOL_INFO*
+    defer free(symbols => i8*)
+    symbols->MaxNameLen = 255
+    symbols->SizeOfStruct = SYMBOL_INFO::__size__() => u32
 
     var result = malloc(
         (frames => u64) * 8 + // header
         (frames => u64) * 256 // symbol name list
-    ) => i8**;
-    memset(result => i8*, 0, (frames => u64) * 8 + (frames => u64) * 256);
+    ) => i8**
+    memset(result => i8*, 0, (frames => u64) * 8 + (frames => u64) * 256)
     for (var i: u16 = 0; i < frames; i += 1) {
-        var tmp = (result => u64) + (frames => u64) * 8 + (i => u64) * 256;
-        result[i] = tmp => i8*;
+        var tmp = (result => u64) + (frames => u64) * 8 + (i => u64) * 256
+        result[i] = tmp => i8*
     }
 
     for (var i: u16 = 0; i < frames; i += 1) {
-        var displacement: u64 = 0;
-        var current_result = result[i];
+        var displacement: u64 = 0
+        var current_result = result[i]
 
-        if (SymFromAddr(process, buf[i] => u64, displacement.__ptr__(), symbols) != 0) {
-            var name_len = strlen(symbols->Name => i8*) => u64;
-            if (name_len > 255) {
-                name_len = 255; // avoid buffer overrun
+        if SymFromAddr(process, buf[i] => u64, displacement.__ptr__(), symbols) != 0 {
+            var name_len = strlen(symbols->Name => i8*) => u64
+            if name_len > 255 {
+                name_len = 255 // avoid buffer overrun
             }
-            memcpy(current_result, symbols->Name => i8*, name_len);
-            current_result[name_len] = '\0';
+            memcpy(current_result, symbols->Name => i8*, name_len)
+            current_result[name_len] = '\0'
         } else {
-            memcpy(current_result, "???", 3);
-            current_result[3] = '\0';
+            memcpy(current_result, "???", 3)
+            current_result[3] = '\0'
         }
     }
 
-    return result;
+    return result
 }

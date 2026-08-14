@@ -1,134 +1,134 @@
-use std::io::{ flag };
-use std::libc::{ open, close, read, getcwd, strlen};
-use std::libc::{ mkdir, chdir, rmdir };
-use std::sys::{ timespec, stat_flag, stat_info_t, stat };
+use std::io::{ flag }
+use std::libc::{ open, close, read, getcwd, strlen}
+use std::libc::{ mkdir, chdir, rmdir }
+use std::sys::{ timespec, stat_flag, stat_info_t, stat }
 
-use std::str::{ str };
-use std::vec::{ vec };
-use std::os::{ os };
+use std::str::{ str }
+use std::vec::{ vec }
+use std::os::{ os }
 
-use std::util::platform::{ is_windows };
+use std::util::platform::{ is_windows }
 
-pub struct fs {}
+pub struct fs { /* */ }
 
 impl fs {
     pub func exists(file: const i8*) -> bool {
-        var fd = open(file, flag::O_RDONLY => i32, 0);
-        if (fd < 0) {
-            return false;
+        var fd = open(file, flag::O_RDONLY => i32, 0)
+        if fd < 0 {
+            return false
         }
-        close(fd);
-        return true;
+        close(fd)
+        return true
     }
 
     pub func is_dir(filename: const i8*) -> bool {
-        var info = stat_info_t {};
-        if (stat(filename, info.__ptr__()) == -1) {
-            return false;
+        var info = stat_info_t {}
+        if stat(filename, info.__ptr__()) == -1 {
+            return false
         }
-        var ifmt = (info.st_mode => u32) & (stat_flag::S_IFMT => u32);
-        return (ifmt => stat_flag) == stat_flag::S_IFDIR;
+        var ifmt = (info.st_mode => u32) & (stat_flag::S_IFMT => u32)
+        return (ifmt => stat_flag) == stat_flag::S_IFDIR
     }
 
     pub func read_to_string(filename: const i8*) -> str {
-        var fd = open(filename, flag::O_RDONLY => i32, 0);
-        if (fd < 0) {
-            return str::from("");
+        var fd = open(filename, flag::O_RDONLY => i32, 0)
+        if fd < 0 {
+            return str::from("")
         }
 
-        var dst = str::instance();
-        var buff: [i8; 8192] = [];
-        var readcount = read(fd, buff, 8191);
-        buff[readcount] = 0;
-        dst.append(buff);
+        var dst = str::instance()
+        var buff: [i8; 8192] = []
+        var readcount = read(fd, buff, 8191)
+        buff[readcount] = 0
+        dst.append(buff)
 
-        while (readcount != 0) {
-            readcount = read(fd, buff, 8191);
-            buff[readcount] = 0;
-            dst.append(buff);
+        while readcount != 0 {
+            readcount = read(fd, buff, 8191)
+            buff[readcount] = 0
+            dst.append(buff)
         }
 
-        close(fd);
-        return dst;
+        close(fd)
+        return dst
     }
 }
 
 #[enable_if(target_os = "windows")]
 func mtime(info: stat_info_t&) -> timespec {
-    return timespec { tv_sec: info.st_mtime, tv_nsec: 0 };
+    return timespec { tv_sec: info.st_mtime, tv_nsec: 0 }
 }
 
 #[enable_if(target_os = "linux")]
 func mtime(info: stat_info_t&) -> timespec {
-    return info.st_mtime;
+    return info.st_mtime
 }
 
 #[enable_if(target_os = "macos")]
 func mtime(info: stat_info_t&) -> timespec {
-    return info.st_mtime;
+    return info.st_mtime
 }
 
 impl fs {
     pub func get_mtime(filename: const i8*) -> timespec {
-        var info = stat_info_t {};
-        if (stat(filename, info.__ptr__()) == -1) {
-            return timespec {};
+        var info = stat_info_t {}
+        if stat(filename, info.__ptr__()) == -1 {
+            return timespec {}
         }
-        return mtime(info);
+        return mtime(info)
     }
 }
 
 impl fs {
     pub func getpath() -> vec<str> {
-        var path = os::getenv("PATH");
-        var tmp = str::from("");
+        var path = os::getenv("PATH")
+        var tmp = str::from("")
         defer {
-            path.delete();
-            tmp.delete();
+            path.delete()
+            tmp.delete()
         }
 
-        var res = vec<str>::instance();
+        var res = vec<str>::instance()
 
-        var separator = ':';
+        var separator = ':'
         if (is_windows()) {
             // PATH on windows uses ; as separator
-            separator = ';';
+            separator = ';'
         }
 
         foreach (var c; path) {
-            if (c.get() == separator) {
-                res.push(tmp);
-                tmp.clear();
+            if c.get() == separator {
+                res.push(tmp)
+                tmp.clear()
             } else {
-                tmp.append_char(c.get());
+                tmp.append_char(c.get())
             }
         }
-        if (tmp.size > 0) {
-            res.push(tmp);
+        if tmp.size > 0 {
+            res.push(tmp)
         }
 
-        return res;
+        return res
     }
 
     pub func getcwd() -> str {
-        var buffer: [i8; 1024] = [];
-        if (getcwd(buffer, 1023) != nil) {
-            return str::from(buffer);
+        var buffer: [i8; 1024] = []
+        if getcwd(buffer, 1023) != nil {
+            return str::from(buffer)
         }
-        return str::from("");
+        return str::from("")
     }
 }
 
 impl fs {
     pub func mkdir(path: const i8*) -> bool {
-        return mkdir(path, 0o755) == 0;
+        return mkdir(path, 0o755) == 0
     }
 
     pub func chdir(path: const i8*) -> bool {
-        return chdir(path) == 0;
+        return chdir(path) == 0
     }
 
     pub func rmdir(path: const i8*) -> bool {
-        return rmdir(path) == 0;
+        return rmdir(path) == 0
     }
 }

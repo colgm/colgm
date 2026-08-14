@@ -1,5 +1,5 @@
-use std::libc::{ strlen, memcpy, free };
-use std::str::{ str };
+use std::libc::{ strlen, memcpy, free }
+use std::str::{ str }
 
 #[enable_if(target_os = "linux")]
 struct DIR { /* opaque to user */ }
@@ -79,60 +79,60 @@ struct DIR {
 } // fake
 
 #[enable_if(target_os = "linux")]
-extern pub func opendir(name: const i8*) -> DIR*;
+extern pub func opendir(name: const i8*) -> DIR*
 #[enable_if(target_os = "linux")]
-extern pub func readdir(dirp: DIR*) -> dirent*;
+extern pub func readdir(dirp: DIR*) -> dirent*
 #[enable_if(target_os = "linux")]
-extern pub func closedir(dirp: DIR*) -> i32;
+extern pub func closedir(dirp: DIR*) -> i32
 
 #[enable_if(target_os = "macos", arch = "aarch64")]
-extern pub func opendir(name: const i8*) -> DIR*;
+extern pub func opendir(name: const i8*) -> DIR*
 #[enable_if(target_os = "macos", arch = "aarch64")]
-extern pub func readdir(dirp: DIR*) -> dirent*;
+extern pub func readdir(dirp: DIR*) -> dirent*
 #[enable_if(target_os = "macos", arch = "aarch64")]
-extern pub func closedir(dirp: DIR*) -> i32;
+extern pub func closedir(dirp: DIR*) -> i32
 
 #[enable_if(target_os = "windows")]
-extern func FindFirstFileA(lpFileName: const i8*, lpFindFileData: WIN32_FIND_DATAA*) -> i8*;
+extern func FindFirstFileA(lpFileName: const i8*, lpFindFileData: WIN32_FIND_DATAA*) -> i8*
 #[enable_if(target_os = "windows")]
-extern func FindNextFileA(hFindFile: i8*, lpFindFileData: WIN32_FIND_DATAA*) -> i32;
+extern func FindNextFileA(hFindFile: i8*, lpFindFileData: WIN32_FIND_DATAA*) -> i32
 #[enable_if(target_os = "windows")]
-extern func FindClose(hFindFile: i8*);
+extern func FindClose(hFindFile: i8*)
 #[enable_if(target_os = "windows")]
 pub func opendir(name: const i8*) -> DIR* {
-    var find_data = WIN32_FIND_DATAA {};
+    var find_data = WIN32_FIND_DATAA {}
 
-    var pattern = str::from(name);
-    pattern.append("\\*.*");
-    defer pattern.delete();
+    var pattern = str::from(name)
+    pattern.append("\\*.*")
+    defer pattern.delete()
 
-    var handle = FindFirstFileA(pattern.c_str, find_data.__ptr__());
-    if (handle == nil) {
-        return nil;
+    var handle = FindFirstFileA(pattern.c_str, find_data.__ptr__())
+    if handle == nil {
+        return nil
     }
 
-    var res = DIR::__alloc__();
-    res->fd = handle;
-    return res;
+    var res = DIR::__alloc__()
+    res->fd = handle
+    return res
 }
 #[enable_if(target_os = "windows")]
 pub func readdir(dirp: DIR*) -> dirent* {
-    var find_data = WIN32_FIND_DATAA {};
-    if (FindNextFileA(dirp->fd, find_data.__ptr__()) == 0) {
-        return nil;
+    var find_data = WIN32_FIND_DATAA {}
+    if FindNextFileA(dirp->fd, find_data.__ptr__()) == 0 {
+        return nil
     }
 
-    dirp->entry.d_ino = 0;
-    dirp->entry.d_reclen = 260;
-    dirp->entry.d_namlen = strlen(find_data.cFileName) => u16;
-    dirp->entry.d_type = 0;
-    memcpy(dirp->entry.d_name, find_data.cFileName, dirp->entry.d_namlen => u64);
-    dirp->entry.d_name[dirp->entry.d_namlen] = 0;
-    return dirp->entry.__ptr__();
+    dirp->entry.d_ino = 0
+    dirp->entry.d_reclen = 260
+    dirp->entry.d_namlen = strlen(find_data.cFileName) => u16
+    dirp->entry.d_type = 0
+    memcpy(dirp->entry.d_name, find_data.cFileName, dirp->entry.d_namlen => u64)
+    dirp->entry.d_name[dirp->entry.d_namlen] = 0
+    return dirp->entry.__ptr__()
 }
 #[enable_if(target_os = "windows")]
 pub func closedir(dirp: DIR*) -> i32 {
-    FindClose(dirp->fd);
-    free(dirp => i8*);
-    return 0;
+    FindClose(dirp->fd)
+    free(dirp => i8*)
+    return 0
 }
