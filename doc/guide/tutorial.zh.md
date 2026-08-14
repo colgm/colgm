@@ -280,6 +280,11 @@ While 循环与 C 语言中的相同。
 while (1 == 1) {
     ...
     continue;
+}
+
+// 条件不用括号也是可以的
+while 1 == 1 {
+    ...
     break;
 }
 ```
@@ -295,7 +300,7 @@ if (1 == 1) {
     ...
 } elsif (1 == 1) {
     ...
-} else if (1 == 1) {
+} else if 1 == 1 { // 条件不用括号也是可以的
     ...
 } else {
     ...
@@ -310,6 +315,13 @@ Match 语句仅接受枚举类型。每个分支都不会 fall through。
 
 ```rust
 match (variable) {
+    EnumType::a => ...;
+    EnumType::b => { ... }
+    _ => { ... }
+}
+
+// 表达式不用括号也是可以的
+match variable {
     EnumType::a => ...;
     EnumType::b => { ... }
     _ => { ... }

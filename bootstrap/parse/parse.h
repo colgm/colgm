@@ -126,6 +126,8 @@ private:
     bool look_ahead_generic() {
         return generic_list_look_ahead(toks, ptr).check();
     }
+    // used to check if next token sequence matches struct initializer
+    bool look_ahead_initializer();
     void update_location(node* n) {
         n->update_location(toks[ptr - 1].loc);
     }
@@ -133,7 +135,7 @@ private:
 private:
     cond_compile* conditional_compile();
     identifier* identifier_gen();
-    call* call_gen();
+    call* call_gen(bool allow_initializer);
     call_id* call_id_gen();
     initializer* initializer_gen();
     nil_literal* nil_gen();
@@ -142,20 +144,20 @@ private:
     char_literal* char_gen();
     bool_literal* bool_gen();
     array_list* array_list_gen();
-    expr* scalar_gen();
-    unary_operator* unary_neg_gen();
-    unary_operator* unary_bnot_gen();
-    expr* type_convert_gen();
-    expr* multive_gen();
-    expr* additive_gen();
-    expr* bitwise_and_gen();
-    expr* bitwise_xor_gen();
-    expr* bitwise_or_gen();
-    expr* compare_gen();
-    expr* not_expression_gen();
-    expr* and_expression_gen();
-    expr* or_expression_gen();
-    expr* calculation_gen();
+    expr* scalar_gen(bool allow_initializer);
+    unary_operator* unary_neg_gen(bool allow_initializer);
+    unary_operator* unary_bnot_gen(bool allow_initializer);
+    expr* type_convert_gen(bool allow_initializer);
+    expr* multive_gen(bool allow_initializer);
+    expr* additive_gen(bool allow_initializer);
+    expr* bitwise_and_gen(bool allow_initializer);
+    expr* bitwise_xor_gen(bool allow_initializer);
+    expr* bitwise_or_gen(bool allow_initializer);
+    expr* compare_gen(bool allow_initializer);
+    expr* not_expression_gen(bool allow_initializer);
+    expr* and_expression_gen(bool allow_initializer);
+    expr* or_expression_gen(bool allow_initializer);
+    expr* calculation_gen(bool allow_initializer = true);
     type_def* array_type_gen();
     type_base* type_gen();
     type_def* type_def_gen();

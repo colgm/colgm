@@ -280,6 +280,11 @@ While loops are the same in C language.
 while (1 == 1) {
     ...
     continue;
+}
+
+// conditions not arounded by parentheses also allowed
+while 1 == 1 {
+    ...
     break;
 }
 ```
@@ -295,7 +300,7 @@ if (1 == 1) {
     ...
 } elsif (1 == 1) {
     ...
-} else if (1 == 1) {
+} else if 1 == 1 { // conditions not arounded by parentheses also allowed
     ...
 } else {
     ...
@@ -311,6 +316,13 @@ The default branch is `_`.
 
 ```rust
 match (variable) {
+    EnumType::a => ...;
+    EnumType::b => { ... }
+    _ => { ... }
+}
+
+// expressions not arounded by parentheses also allowed
+match variable {
     EnumType::a => ...;
     EnumType::b => { ... }
     _ => { ... }

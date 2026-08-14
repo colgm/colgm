@@ -301,7 +301,7 @@ impl parser {
             var pair_node = ast_init_pair::new(self.this_tok_loc());
             pair_node->field = self.identifier_gen();
             self.match_token(tok_kind::tok_colon);
-            pair_node->value = self.calculation_gen();
+            pair_node->value = self.calculation_gen(true);
             self.update_location(pair_node => ast*);
             res->pairs.push(pair_node => ast*);
             if (self.lookahead(tok_kind::tok_comma)) {
@@ -329,7 +329,7 @@ impl parser {
         var call_func = ast_call_func_args::new(self.this_tok_loc());
         self.match_token(tok_kind::tok_lparen);
         while (!self.lookahead(tok_kind::tok_rparen)) {
-            call_func->args.push(self.calculation_gen());
+            call_func->args.push(self.calculation_gen(true));
             call_func->args_is_ref.push(false);
             if (self.lookahead(tok_kind::tok_comma)) {
                 self.match_token(tok_kind::tok_comma);
@@ -345,13 +345,30 @@ impl parser {
     func call_index_gen(self) -> ast_call_index* {
         self.match_token(tok_kind::tok_lbracket);
         var call_index = ast_call_index::new(self.this_tok_loc());
-        call_index->index = self.calculation_gen();
+        call_index->index = self.calculation_gen(true);
         self.update_location(call_index => ast*);
         self.match_token(tok_kind::tok_rbracket);
         return call_index;
     }
 
-    func call_gen(self) -> ast_call* {
+    // used to check if next token sequence matches struct initializer
+    func look_ahead_initializer(self) -> bool {
+        var curr = self.index;
+        if (self.get_tok(curr)->kind != tok_kind::tok_lbrace) {
+            return true;
+        }
+        curr += 1;
+        if (self.get_tok(curr)->kind != tok_kind::tok_id) {
+            return false;
+        }
+        curr += 1;
+        if (self.get_tok(curr)->kind != tok_kind::tok_colon) {
+            return false;
+        }
+        return true;
+    }
+
+    func call_gen(self, allow_initializer: bool) -> ast_call* {
         var res = ast_call::new(self.this_tok_loc());
         res->head = self.call_id_gen();
         while (self.lookahead(tok_kind::tok_lparen) ||
@@ -368,6 +385,17 @@ impl parser {
                     res->chain.push(self.call_index_gen() => ast*);
                 }
                 tok_kind::tok_lbrace => {
+                    if (!allow_initializer) {
+                        if (self.look_ahead_initializer()) {
+                            var ini = self.initializer_gen() => ast*;
+                            self.err->error_with_note(
+                                ini->location,
+                                "struct initializer not allowed in condition expressions",
+                                "if needed, use `(` and `)` around it"
+                            );
+                        }
+                        break;
+                    }
                     res->chain.push(self.initializer_gen() => ast*);
                 }
                 tok_kind::tok_dot => {
@@ -461,7 +489,7 @@ impl parser {
             if (self.lookahead(tok_kind::tok_eof)) {
                 break;
             }
-            res->value.push(self.calculation_gen());
+            res->value.push(self.calculation_gen(true));
             if (self.lookahead(tok_kind::tok_comma)) {
                 self.match_token(tok_kind::tok_comma);
             } else if (!self.lookahead(tok_kind::tok_rbracket)) {
@@ -473,17 +501,17 @@ impl parser {
         return res;
     }
 
-    func scalar_gen(self) -> ast* {
+    func scalar_gen(self, allow_initializer: bool) -> ast* {
         if (self.lookahead(tok_kind::tok_lparen)) {
             self.match_token(tok_kind::tok_lparen);
-            var res = self.calculation_gen();
+            var res = self.calculation_gen(true);
             self.match_token(tok_kind::tok_rparen);
             return res;
         }
         if (self.lookahead(tok_kind::tok_sub)) {
-            return self.unary_neg_gen() => ast*;
+            return self.unary_neg_gen(allow_initializer) => ast*;
         } elsif (self.lookahead(tok_kind::tok_floater)) {
-            return self.unary_bnot_gen() => ast*;
+            return self.unary_bnot_gen(allow_initializer) => ast*;
         } elsif (self.lookahead(tok_kind::tok_nil)) {
             return self.nil_gen() => ast*;
         } elsif (self.lookahead(tok_kind::tok_num)) {
@@ -498,7 +526,7 @@ impl parser {
         } elsif (self.lookahead(tok_kind::tok_lbracket)) {
             return self.array_list_gen() => ast*;
         } elsif (self.lookahead(tok_kind::tok_id)) {
-            return self.call_gen() => ast*;
+            return self.call_gen(allow_initializer) => ast*;
         }
 
         self.err->error(self.this_tok_loc(), "expected scalar here");
@@ -506,31 +534,31 @@ impl parser {
         return ast_null::new() => ast*;
     }
 
-    func unary_neg_gen(self) -> ast_unary_operator* {
+    func unary_neg_gen(self, allow_initializer: bool) -> ast_unary_operator* {
         var res = ast_unary_operator::new(
             self.this_tok_loc(),
             unary_kind::neg
         );
         self.match_token(tok_kind::tok_sub);
-        res->value = self.scalar_gen();
+        res->value = self.scalar_gen(allow_initializer);
         self.update_location(res => ast*);
         return res;
     }
 
-    func unary_bnot_gen(self) -> ast_unary_operator* {
+    func unary_bnot_gen(self, allow_initializer: bool) -> ast_unary_operator* {
         var res = ast_unary_operator::new(
             self.this_tok_loc(),
             unary_kind::bnot
         );
         self.match_token(tok_kind::tok_floater);
-        res->value = self.scalar_gen();
+        res->value = self.scalar_gen(allow_initializer);
         self.update_location(res => ast*);
         return res;
     }
 
-    func type_convert_gen(self) -> ast* {
+    func type_convert_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var result = self.scalar_gen();
+        var result = self.scalar_gen(allow_initializer);
         if (self.lookahead(tok_kind::tok_wide_arrow)) {
             self.match_token(tok_kind::tok_wide_arrow);
             var type_cast_node = ast_type_convert::new(begin_loc);
@@ -542,9 +570,9 @@ impl parser {
         return result;
     }
 
-    func multive_gen(self) -> ast* {
+    func multive_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var res = self.type_convert_gen();
+        var res = self.type_convert_gen(allow_initializer);
         while (self.lookahead(tok_kind::tok_mul) ||
                self.lookahead(tok_kind::tok_div) ||
                self.lookahead(tok_kind::tok_rem)) {
@@ -558,16 +586,16 @@ impl parser {
             var binary = ast_binary_operator::new(begin_loc, kind);
             self.match_token(self.this_tok()->kind);
             binary->left = res;
-            binary->right = self.type_convert_gen();
+            binary->right = self.type_convert_gen(allow_initializer);
             res = binary => ast*;
         }
         self.update_location(res);
         return res;
     }
 
-    func additive_gen(self) -> ast* {
+    func additive_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var res = self.multive_gen();
+        var res = self.multive_gen(allow_initializer);
         while (self.lookahead(tok_kind::tok_add) ||
                self.lookahead(tok_kind::tok_sub)) {
             var binary: ast_binary_operator* = nil;
@@ -588,16 +616,16 @@ impl parser {
             }
             self.match_token(self.this_tok()->kind);
             binary->left = res;
-            binary->right = self.multive_gen();
+            binary->right = self.multive_gen(allow_initializer);
             res = binary => ast*;
         }
         self.update_location(res);
         return res;
     }
 
-    func bitwise_and_gen(self) -> ast* {
+    func bitwise_and_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var res = self.additive_gen();
+        var res = self.additive_gen(allow_initializer);
         while (self.lookahead(tok_kind::tok_bit_and)) {
             var binary = ast_binary_operator::new(
                 begin_loc,
@@ -605,16 +633,16 @@ impl parser {
             );
             self.match_token(tok_kind::tok_bit_and);
             binary->left = res;
-            binary->right = self.additive_gen();
+            binary->right = self.additive_gen(allow_initializer);
             res = binary => ast*;
         }
         self.update_location(res);
         return res;
     }
 
-    func bitwise_xor_gen(self) -> ast* {
+    func bitwise_xor_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var res = self.bitwise_and_gen();
+        var res = self.bitwise_and_gen(allow_initializer);
         while (self.lookahead(tok_kind::tok_bit_xor)) {
             var binary = ast_binary_operator::new(
                 begin_loc,
@@ -622,16 +650,16 @@ impl parser {
             );
             self.match_token(tok_kind::tok_bit_xor);
             binary->left = res;
-            binary->right = self.bitwise_and_gen();
+            binary->right = self.bitwise_and_gen(allow_initializer);
             res = binary => ast*;
         }
         self.update_location(res);
         return res;
     }
 
-    func bitwise_or_gen(self) -> ast* {
+    func bitwise_or_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var res = self.bitwise_xor_gen();
+        var res = self.bitwise_xor_gen(allow_initializer);
         while (self.lookahead(tok_kind::tok_bit_or)) {
             var binary = ast_binary_operator::new(
                 begin_loc,
@@ -639,16 +667,16 @@ impl parser {
             );
             self.match_token(tok_kind::tok_bit_or);
             binary->left = res;
-            binary->right = self.bitwise_xor_gen();
+            binary->right = self.bitwise_xor_gen(allow_initializer);
             res = binary => ast*;
         }
         self.update_location(res);
         return res;
     }
 
-    func compare_gen(self) -> ast* {
+    func compare_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var res = self.bitwise_or_gen();
+        var res = self.bitwise_or_gen(allow_initializer);
         while (self.lookahead(tok_kind::tok_cmp_eq) ||
                self.lookahead(tok_kind::tok_neq) ||
                self.lookahead(tok_kind::tok_less) ||
@@ -668,29 +696,29 @@ impl parser {
             var binary = ast_binary_operator::new(begin_loc, kind);
             self.match_token(self.this_tok()->kind);
             binary->left = res;
-            binary->right = self.bitwise_or_gen();
+            binary->right = self.bitwise_or_gen(allow_initializer);
             res = binary => ast*;
         }
         self.update_location(res);
         return res;
     }
 
-    func not_expression_gen(self) -> ast* {
+    func not_expression_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
         if (!self.lookahead(tok_kind::tok_op_not)) {
-            return self.compare_gen();
+            return self.compare_gen(allow_initializer);
         }
         self.match_token(tok_kind::tok_op_not);
-        var value = self.compare_gen();
+        var value = self.compare_gen(allow_initializer);
         var res = ast_unary_operator::new(begin_loc, unary_kind::lnot);
         res->value = value;
         self.update_location(res => ast*);
         return res => ast*;
     }
 
-    func and_expression_gen(self) -> ast* {
+    func and_expression_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var res = self.not_expression_gen();
+        var res = self.not_expression_gen(allow_initializer);
         if (!self.lookahead(tok_kind::tok_op_and)) {
             return res;
         }
@@ -700,14 +728,14 @@ impl parser {
         );
         binary->left = res;
         self.match_token(tok_kind::tok_op_and);
-        binary->right = self.and_expression_gen();
+        binary->right = self.and_expression_gen(allow_initializer);
         self.update_location(binary => ast*);
         return binary => ast*;
     }
 
-    func or_expression_gen(self) -> ast* {
+    func or_expression_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var res = self.and_expression_gen();
+        var res = self.and_expression_gen(allow_initializer);
         if (!self.lookahead(tok_kind::tok_op_or)) {
             return res;
         }
@@ -717,14 +745,14 @@ impl parser {
         );
         binary->left = res;
         self.match_token(tok_kind::tok_op_or);
-        binary->right = self.or_expression_gen();
+        binary->right = self.or_expression_gen(allow_initializer);
         self.update_location(binary => ast*);
         return binary => ast*;
     }
 
-    func calculation_gen(self) -> ast* {
+    func calculation_gen(self, allow_initializer: bool) -> ast* {
         var begin_loc = self.this_tok_loc();
-        var res = self.or_expression_gen();
+        var res = self.or_expression_gen(allow_initializer);
         // if is not ast_call, do not check assignment syntax
         if (!res->is(ast_kind::ast_call)) {
             return res;
@@ -754,7 +782,7 @@ impl parser {
                 _ => {}
             }
             self.match_token(self.this_tok()->kind);
-            assignment->right = self.calculation_gen();
+            assignment->right = self.calculation_gen(allow_initializer);
             self.update_location(assignment => ast*);
             return assignment => ast*;
         }
@@ -1206,7 +1234,7 @@ impl parser {
             res->type = self.type_gen();
         }
         self.match_token(tok_kind::tok_eq);
-        res->value = self.calculation_gen();
+        res->value = self.calculation_gen(true);
         self.update_location(res => ast*);
         self.try_match_semi();
         return res;
@@ -1217,9 +1245,7 @@ impl parser {
 
         var new_if = ast_if_stmt::new(self.this_tok_loc());
         self.match_token(tok_kind::tok_if);
-        self.match_token(tok_kind::tok_lparen);
-        new_if->condition = self.calculation_gen();
-        self.match_token(tok_kind::tok_rparen);
+        new_if->condition = self.calculation_gen(false);
         new_if->body = self.block_gen(true);
         self.update_location(new_if => ast*);
         res->stmts.push(new_if => ast*);
@@ -1227,9 +1253,7 @@ impl parser {
         while (self.lookahead(tok_kind::tok_elsif)) {
             var new_elsif = ast_if_stmt::new(self.this_tok_loc());
             self.match_token(tok_kind::tok_elsif);
-            self.match_token(tok_kind::tok_lparen);
-            new_elsif->condition = self.calculation_gen();
-            self.match_token(tok_kind::tok_rparen);
+            new_elsif->condition = self.calculation_gen(false);
             new_elsif->body = self.block_gen(true);
             self.update_location(new_elsif => ast*);
             res->stmts.push(new_elsif => ast*);
@@ -1250,14 +1274,12 @@ impl parser {
     func match_stmt_gen(self) -> ast_match_stmt* {
         var res = ast_match_stmt::new(self.this_tok_loc());
         self.match_token(tok_kind::tok_match);
-        self.match_token(tok_kind::tok_lparen);
-        res->value = self.calculation_gen();
-        self.match_token(tok_kind::tok_rparen);
+        res->value = self.calculation_gen(false);
 
         self.match_token(tok_kind::tok_lbrace);
         while (!self.lookahead(tok_kind::tok_rbrace)) {
             var new_case = ast_match_case::new(self.this_tok_loc());
-            new_case->pattern = self.call_gen();
+            new_case->pattern = self.call_gen(true);
             // cover case: = >
             //             -^- aware of the space here
             // expect case is: =>
@@ -1282,9 +1304,7 @@ impl parser {
     func while_stmt_gen(self) -> ast_while_stmt* {
         var res = ast_while_stmt::new(self.this_tok_loc());
         self.match_token(tok_kind::tok_while);
-        self.match_token(tok_kind::tok_lparen);
-        res->condition = self.calculation_gen();
-        self.match_token(tok_kind::tok_rparen);
+        res->condition = self.calculation_gen(false);
         res->body = self.block_gen(true);
         self.update_location(res => ast*);
         return res;
@@ -1300,11 +1320,11 @@ impl parser {
             self.match_token(tok_kind::tok_semi);
         }
         if (!self.lookahead(tok_kind::tok_semi)) {
-            res->condition = self.calculation_gen();
+            res->condition = self.calculation_gen(true);
         }
         self.match_token(tok_kind::tok_semi);
         if (!self.lookahead(tok_kind::tok_rparen)) {
-            res->update = self.calculation_gen();
+            res->update = self.calculation_gen(true);
         }
         self.match_token(tok_kind::tok_rparen);
         res->body = self.block_gen(true);
@@ -1319,7 +1339,7 @@ impl parser {
         self.match_token(tok_kind::tok_var);
         res->variable = self.identifier_gen();
         self.match_token(tok_kind::tok_semi);
-        res->container = self.call_gen();
+        res->container = self.call_gen(true);
         self.match_token(tok_kind::tok_rparen);
         res->body = self.block_gen(true);
         self.update_location(res => ast*);
@@ -1333,7 +1353,7 @@ impl parser {
         self.match_token(tok_kind::tok_var);
         res->variable = self.identifier_gen();
         self.match_token(tok_kind::tok_semi);
-        res->container = self.call_gen();
+        res->container = self.call_gen(true);
         self.match_token(tok_kind::tok_rparen);
         res->body = self.block_gen(true);
         self.update_location(res => ast*);
@@ -1342,7 +1362,7 @@ impl parser {
 
     func in_stmt_expr_gen(self) -> ast_in_stmt_expr* {
         var res = ast_in_stmt_expr::new(self.this_tok_loc());
-        res->value = self.calculation_gen();
+        res->value = self.calculation_gen(true);
         self.try_match_semi();
         self.update_location(res => ast*);
         return res;
@@ -1363,7 +1383,7 @@ impl parser {
         // return value should be in the same line with return keyword
         if (self.this_tok_loc().begin_line == ret_loc_line &&
             !self.lookahead(tok_kind::tok_semi)) {
-            res->value = self.calculation_gen();
+            res->value = self.calculation_gen(true);
         }
         self.update_location(res => ast*);
         self.try_match_semi();

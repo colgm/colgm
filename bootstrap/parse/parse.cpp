@@ -101,6 +101,22 @@ void parse::match(tok type) {
     return;
 }
 
+bool parse::look_ahead_initializer() {
+    auto curr = ptr;
+    if (!look_ahead(tok::tk_lbrace)) {
+        return false;
+    }
+    curr ++;
+    if (toks[curr].type != tok::tk_id) {
+        return false;
+    }
+    curr ++;
+    if (toks[curr].type != tok::tk_colon) {
+        return false;
+    }
+    return true;
+}
+
 cond_compile* parse::conditional_compile() {
     auto begin_loc = toks[ptr].loc;
     match(tok::tk_sharp);
@@ -137,7 +153,7 @@ identifier* parse::identifier_gen() {
     return res;
 }
 
-call* parse::call_gen() {
+call* parse::call_gen(bool allow_initializer) {
     auto res = new call(toks[ptr].loc);
     res->set_head(call_id_gen());
     while (look_ahead(tok::tk_lcurve) || look_ahead(tok::tk_lbracket) ||
@@ -185,6 +201,18 @@ call* parse::call_gen() {
             update_location(new_call_path);
             res->add_chain(new_call_path);
         } else if (look_ahead(tok::tk_lbrace)) {
+            if (!allow_initializer) {
+                if (look_ahead_initializer()) {
+                    auto ini = initializer_gen();
+                    err.err(
+                        ini->get_location(),
+                        "struct initializer not allowed in condition expressions",
+                        "if needed, use `(` and `)` around it"
+                    );
+                    delete ini;
+                }
+                break;
+            }
             res->add_chain(initializer_gen());
         }
     }
@@ -276,7 +304,7 @@ array_list* parse::array_list_gen() {
     return res;
 }
 
-expr* parse::scalar_gen() {
+expr* parse::scalar_gen(bool allow_initializer) {
     if (look_ahead(tok::tk_lcurve)) {
         match(tok::tk_lcurve);
         auto res = calculation_gen();
@@ -284,9 +312,9 @@ expr* parse::scalar_gen() {
         return res;
     }
     if (look_ahead(tok::tk_sub)) {
-        return unary_neg_gen();
+        return unary_neg_gen(allow_initializer);
     } else if (look_ahead(tok::tk_floater)) {
-        return unary_bnot_gen();
+        return unary_bnot_gen(allow_initializer);
     } else if (look_ahead(tok::tk_nil)) {
         return nil_gen();
     } else if (look_ahead(tok::tk_num)) {
@@ -300,34 +328,34 @@ expr* parse::scalar_gen() {
     } else if (look_ahead(tok::tk_lbracket)) {
         return array_list_gen();
     } else if (look_ahead(tok::tk_id)) {
-        return call_gen();
+        return call_gen(allow_initializer);
     }
     err.err(toks[ptr].loc, "expected scalar here");
     next();
     return new null();
 }
 
-unary_operator* parse::unary_neg_gen() {
+unary_operator* parse::unary_neg_gen(bool allow_initializer) {
     auto res = new unary_operator(toks[ptr].loc);
     match(tok::tk_sub);
-    res->set_value(scalar_gen());
+    res->set_value(scalar_gen(allow_initializer));
     res->set_opr(unary_operator::kind::neg);
     update_location(res);
     return res;
 }
 
-unary_operator* parse::unary_bnot_gen() {
+unary_operator* parse::unary_bnot_gen(bool allow_initializer) {
     auto res = new unary_operator(toks[ptr].loc);
     match(tok::tk_floater);
-    res->set_value(scalar_gen());
+    res->set_value(scalar_gen(allow_initializer));
     res->set_opr(unary_operator::kind::bnot);
     update_location(res);
     return res;
 }
 
-expr* parse::type_convert_gen() {
+expr* parse::type_convert_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = scalar_gen();
+    auto res = scalar_gen(allow_initializer);
     if (look_ahead(tok::tk_wide_arrow)) {
         match(tok::tk_wide_arrow);
         auto type_cast_node = new type_convert(begin_location);
@@ -340,9 +368,9 @@ expr* parse::type_convert_gen() {
     return res;
 }
 
-expr* parse::multive_gen() {
+expr* parse::multive_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = type_convert_gen();
+    auto res = type_convert_gen(allow_initializer);
     while (look_ahead(tok::tk_mult) ||
         look_ahead(tok::tk_div) ||
         look_ahead(tok::tk_rem)) {
@@ -355,16 +383,16 @@ expr* parse::multive_gen() {
             default: break;
         }
         match(toks[ptr].type);
-        binary->set_right(type_convert_gen());
+        binary->set_right(type_convert_gen(allow_initializer));
         res = binary;
     }
     update_location(res);
     return res;
 }
 
-expr* parse::additive_gen() {
+expr* parse::additive_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = multive_gen();
+    auto res = multive_gen(allow_initializer);
     while (look_ahead(tok::tk_add) || look_ahead(tok::tk_sub)) {
         auto binary = new binary_operator(begin_location);
         binary->set_left(res);
@@ -374,61 +402,61 @@ expr* parse::additive_gen() {
             default: break;
         }
         match(toks[ptr].type);
-        binary->set_right(multive_gen());
+        binary->set_right(multive_gen(allow_initializer));
         res = binary;
     }
     update_location(res);
     return res;
 }
 
-expr* parse::bitwise_and_gen() {
+expr* parse::bitwise_and_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = additive_gen();
+    auto res = additive_gen(allow_initializer);
     while (look_ahead(tok::tk_btand)) {
         auto binary = new binary_operator(begin_location);
         binary->set_left(res);
         binary->set_opr(binary_operator::kind::band);
         match(toks[ptr].type);
-        binary->set_right(additive_gen());
+        binary->set_right(additive_gen(allow_initializer));
         res = binary;
     }
     update_location(res);
     return res;
 }
 
-expr* parse::bitwise_xor_gen() {
+expr* parse::bitwise_xor_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = bitwise_and_gen();
+    auto res = bitwise_and_gen(allow_initializer);
     while (look_ahead(tok::tk_btxor)) {
         auto binary = new binary_operator(begin_location);
         binary->set_left(res);
         binary->set_opr(binary_operator::kind::bxor);
         match(toks[ptr].type);
-        binary->set_right(bitwise_and_gen());
+        binary->set_right(bitwise_and_gen(allow_initializer));
         res = binary;
     }
     update_location(res);
     return res;
 }
 
-expr* parse::bitwise_or_gen() {
+expr* parse::bitwise_or_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = bitwise_xor_gen();
+    auto res = bitwise_xor_gen(allow_initializer);
     while (look_ahead(tok::tk_btor)) {
         auto binary = new binary_operator(begin_location);
         binary->set_left(res);
         binary->set_opr(binary_operator::kind::bor);
         match(toks[ptr].type);
-        binary->set_right(bitwise_xor_gen());
+        binary->set_right(bitwise_xor_gen(allow_initializer));
         res = binary;
     }
     update_location(res);
     return res;
 }
 
-expr* parse::compare_gen() {
+expr* parse::compare_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = bitwise_or_gen();
+    auto res = bitwise_or_gen(allow_initializer);
     while (look_ahead(tok::tk_cmpeq) || look_ahead(tok::tk_neq) ||
         look_ahead(tok::tk_less) || look_ahead(tok::tk_leq) ||
         look_ahead(tok::tk_grt) || look_ahead(tok::tk_geq)) {
@@ -444,20 +472,20 @@ expr* parse::compare_gen() {
             default: break;
         }
         match(toks[ptr].type);
-        binary->set_right(bitwise_or_gen());
+        binary->set_right(bitwise_or_gen(allow_initializer));
         res = binary;
     }
     update_location(res);
     return res;
 }
 
-expr* parse::not_expression_gen() {
+expr* parse::not_expression_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
     if (!look_ahead(tok::tk_opnot)) {
-        return compare_gen();
+        return compare_gen(allow_initializer);
     }
     match(tok::tk_opnot);
-    auto value = compare_gen();
+    auto value = compare_gen(allow_initializer);
     auto res = new unary_operator(begin_location);
     res->set_opr(unary_operator::kind::lnot);
     res->set_value(value);
@@ -465,9 +493,9 @@ expr* parse::not_expression_gen() {
     return res;
 }
 
-expr* parse::and_expression_gen() {
+expr* parse::and_expression_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = not_expression_gen();
+    auto res = not_expression_gen(allow_initializer);
     if (!look_ahead(tok::tk_opand)) {
         return res;
     }
@@ -476,15 +504,15 @@ expr* parse::and_expression_gen() {
     binary->set_left(res);
     binary->set_opr(binary_operator::kind::cmpand);
     match(tok::tk_opand);
-    binary->set_right(and_expression_gen());
+    binary->set_right(and_expression_gen(allow_initializer));
     res = binary;
     update_location(res);
     return res;
 }
 
-expr* parse::or_expression_gen() {
+expr* parse::or_expression_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = and_expression_gen();
+    auto res = and_expression_gen(allow_initializer);
     if (!look_ahead(tok::tk_opor)) {
         return res;
     }
@@ -493,15 +521,15 @@ expr* parse::or_expression_gen() {
     binary->set_left(res);
     binary->set_opr(binary_operator::kind::cmpor);
     match(tok::tk_opor);
-    binary->set_right(or_expression_gen());
+    binary->set_right(or_expression_gen(allow_initializer));
     res = binary;
     update_location(res);
     return res;
 }
 
-expr* parse::calculation_gen() {
+expr* parse::calculation_gen(bool allow_initializer) {
     const auto begin_location = toks[ptr].loc;
-    auto res = or_expression_gen();
+    auto res = or_expression_gen(allow_initializer);
     if (!res) {
         return res;
     }
@@ -529,7 +557,7 @@ expr* parse::calculation_gen() {
             default: break;
         }
         match(toks[ptr].type);
-        new_assignment->set_right(calculation_gen());
+        new_assignment->set_right(calculation_gen(allow_initializer));
         update_location(new_assignment);
         return new_assignment;
     }
@@ -932,18 +960,14 @@ cond_stmt* parse::cond_stmt_gen() {
     auto res = new cond_stmt(toks[ptr].loc);
     auto new_if = new if_stmt(toks[ptr].loc);
     match(tok::tk_if);
-    match(tok::tk_lcurve);
-    new_if->set_condition(calculation_gen());
-    match(tok::tk_rcurve);
+    new_if->set_condition(calculation_gen(false));
     new_if->set_block(block_gen(true));
     update_location(new_if);
     res->add_stmt(new_if);
     while (look_ahead(tok::tk_elsif)) {
         auto new_elsif = new if_stmt(toks[ptr].loc);
         match(tok::tk_elsif);
-        match(tok::tk_lcurve);
-        new_elsif->set_condition(calculation_gen());
-        match(tok::tk_rcurve);
+        new_elsif->set_condition(calculation_gen(false));
         new_elsif->set_block(block_gen(true));
         update_location(new_elsif);
         res->add_stmt(new_elsif);
@@ -962,14 +986,12 @@ cond_stmt* parse::cond_stmt_gen() {
 match_stmt* parse::match_stmt_gen() {
     auto res = new match_stmt(toks[ptr].loc);
     match(tok::tk_match);
-    match(tok::tk_lcurve);
-    res->set_value(calculation_gen());
-    match(tok::tk_rcurve);
+    res->set_value(calculation_gen(false));
 
     match(tok::tk_lbrace);
     while (!look_ahead(tok::tk_rbrace)) {
         auto new_case = new match_case(toks[ptr].loc);
-        new_case->set_value(call_gen());
+        new_case->set_value(call_gen(true));
         match(tok::tk_wide_arrow);
         new_case->set_block(block_gen(true));
         update_location(new_case);
@@ -983,9 +1005,7 @@ match_stmt* parse::match_stmt_gen() {
 while_stmt* parse::while_stmt_gen() {
     auto res = new while_stmt(toks[ptr].loc);
     match(tok::tk_while);
-    match(tok::tk_lcurve);
-    res->set_condition(calculation_gen());
-    match(tok::tk_rcurve);
+    res->set_condition(calculation_gen(false));
     res->set_block(block_gen(true));
     update_location(res);
     return res;
@@ -1020,7 +1040,7 @@ forindex* parse::forindex_gen() {
     match(tok::tk_var);
     res->set_variable(identifier_gen());
     match(tok::tk_semi);
-    res->set_container(call_gen());
+    res->set_container(call_gen(true));
     match(tok::tk_rcurve);
     res->set_body(block_gen(true));
     update_location(res);
@@ -1034,7 +1054,7 @@ foreach* parse::foreach_gen() {
     match(tok::tk_var);
     res->set_variable(identifier_gen());
     match(tok::tk_semi);
-    res->set_container(call_gen());
+    res->set_container(call_gen(true));
     match(tok::tk_rcurve);
     res->set_body(block_gen(true));
     update_location(res);
