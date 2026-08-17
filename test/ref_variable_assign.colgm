@@ -1,24 +1,24 @@
-use std::panic::{ assert };
-use std::io::{ io };
+use std::panic::{ assert }
+use std::io::{ io }
 
 func test_sub(a: i64&) {
-    a -= 1;
+    a -= 1
 }
 
 func test_add(a: i64&) {
-    a += 1;
+    a += 1
 }
 
 func test_mul(a: i64&) {
-    a *= 2;
+    a *= 2
 }
 
 func test_div(a: i64&) {
-    a /= 2;
+    a /= 2
 }
 
 func test_assign(a: i64&) {
-    a = 114;
+    a = 114
 }
 
 struct s {
@@ -27,114 +27,114 @@ struct s {
 
 impl s {
     pub func test_method(self, a: i64&) {
-        a += 1;
+        a += 1
     }
 }
 
 func test_replace_struct(a: s&) {
-    a = s { a: 1919810 };
+    a = s { a: 1919810 }
 }
 
 func test_ref_struct(a: s&) {
-    a.a = 114514;
+    a.a = 114514
 }
 
 func test_ref_return(a: s&) -> i64& {
-    return a.a;
+    return a.a
 }
 
 func test_ref_arg(a: i64&) -> i64& {
-    return a;
+    return a
 }
 
 func test_ref_arg_to_deref(a: i64&) -> i64 {
-    return a;
+    return a
 }
 
 func main() -> i32 {
     // test ref of primitive type
-    var a = 1;
-    test_sub(a);
-    assert(a == 0, "a != 0");
-    test_add(a);
-    assert(a == 1, "a != 1");
-    test_mul(a);
-    assert(a == 2, "a != 2");
-    test_div(a);
-    assert(a == 1, "a != 1");
-    test_assign(a);
-    assert(a == 114, "a != 114");
+    var a = 1
+    test_sub(a)
+    assert(a == 0, "a != 0")
+    test_add(a)
+    assert(a == 1, "a != 1")
+    test_mul(a)
+    assert(a == 2, "a != 2")
+    test_div(a)
+    assert(a == 1, "a != 1")
+    test_assign(a)
+    assert(a == 114, "a != 114")
 
     // test ref of struct
-    var b = s { a: 1 };
-    test_sub(b.a);
-    assert(b.a == 0, "b.a != 0");
-    test_add(b.a);
-    assert(b.a == 1, "b.a != 1");
-    test_mul(b.a);
-    assert(b.a == 2, "b.a != 2");
-    test_div(b.a);
-    assert(b.a == 1, "b.a != 1");
-    test_assign(b.a);
-    assert(b.a == 114, "b.a != 114");
-    test_ref_struct(b);
-    assert(b.a == 114514, "b.a != 114514");
-    test_replace_struct(b);
-    assert(b.a == 1919810, "b.a != 1919810");
+    var b = s { a: 1 }
+    test_sub(b.a)
+    assert(b.a == 0, "b.a != 0")
+    test_add(b.a)
+    assert(b.a == 1, "b.a != 1")
+    test_mul(b.a)
+    assert(b.a == 2, "b.a != 2")
+    test_div(b.a)
+    assert(b.a == 1, "b.a != 1")
+    test_assign(b.a)
+    assert(b.a == 114, "b.a != 114")
+    test_ref_struct(b)
+    assert(b.a == 114514, "b.a != 114514")
+    test_replace_struct(b)
+    assert(b.a == 1919810, "b.a != 1919810")
 
     // test return ref type
-    test_ref_return(b) = 114514;
-    assert(b.a == 114514, "b.a != 114514");
-    test_ref_return(b) = 1919810;
-    assert(b.a == 1919810, "b.a != 1919810");
+    test_ref_return(b) = 114514
+    assert(b.a == 114514, "b.a != 114514")
+    test_ref_return(b) = 1919810
+    assert(b.a == 1919810, "b.a != 1919810")
 
     // test ref type argument of static function call
-    test_ref_arg(test_ref_return(b)) = 0;
-    assert(b.a == 0, "b.a != 0");
-    test_add(test_ref_arg(test_ref_return(b)));
-    assert(b.a == 1, "b.a != 1");
-    test_mul(test_ref_arg(test_ref_return(b)));
-    assert(b.a == 2, "b.a != 2");
-    test_div(test_ref_arg(test_ref_return(b)));
-    assert(b.a == 1, "b.a != 1");
-    test_sub(test_ref_arg(test_ref_return(b)));
-    assert(b.a == 0, "b.a != 0");
+    test_ref_arg(test_ref_return(b)) = 0
+    assert(b.a == 0, "b.a != 0")
+    test_add(test_ref_arg(test_ref_return(b)))
+    assert(b.a == 1, "b.a != 1")
+    test_mul(test_ref_arg(test_ref_return(b)))
+    assert(b.a == 2, "b.a != 2")
+    test_div(test_ref_arg(test_ref_return(b)))
+    assert(b.a == 1, "b.a != 1")
+    test_sub(test_ref_arg(test_ref_return(b)))
+    assert(b.a == 0, "b.a != 0")
 
-    test_ref_arg(test_ref_return(b)) = 114514;
-    assert(b.a == 114514, "b.a != 114514");
-    test_ref_arg(test_ref_return(b)) = 1919810;
-    assert(b.a == 1919810, "b.a != 1919810");
+    test_ref_arg(test_ref_return(b)) = 114514
+    assert(b.a == 114514, "b.a != 114514")
+    test_ref_arg(test_ref_return(b)) = 1919810
+    assert(b.a == 1919810, "b.a != 1919810")
 
     // test ref type argument of method call
-    a = 0;
-    b.test_method(a);
-    assert(a == 1, "a != 1");
-    assert(test_ref_arg_to_deref(a) == 1, "test_ref_arg_to_deref(a) != 1");
+    a = 0
+    b.test_method(a)
+    assert(a == 1, "a != 1")
+    assert(test_ref_arg_to_deref(a) == 1, "test_ref_arg_to_deref(a) != 1")
 
-    var a_ref = test_ref_arg(a);
-    a_ref = 0;
-    assert(a == 0, "a != 0");
-    a_ref += 1;
-    assert(a == 1, "a != 1");
-    a_ref *= 2;
-    assert(a == 2, "a != 2");
-    a_ref /= 2;
-    assert(a == 1, "a != 1");
-    a_ref -= 1;
-    assert(a == 0, "a != 0");
+    var a_ref = test_ref_arg(a)
+    a_ref = 0
+    assert(a == 0, "a != 0")
+    a_ref += 1
+    assert(a == 1, "a != 1")
+    a_ref *= 2
+    assert(a == 2, "a != 2")
+    a_ref /= 2
+    assert(a == 1, "a != 1")
+    a_ref -= 1
+    assert(a == 0, "a != 0")
 
-    var a_not_ref: i64 = test_ref_arg(a);
-    a_not_ref = 1;
-    assert(a == 0, "a != 0");
+    var a_not_ref: i64 = test_ref_arg(a)
+    a_not_ref = 1
+    assert(a == 0, "a != 0")
 
-    var a_defined_ref: i64& = test_ref_arg(a);
-    a_defined_ref = 1;
-    assert(a == 1, "a != 1");
+    var a_defined_ref: i64& = test_ref_arg(a)
+    a_defined_ref = 1
+    assert(a == 1, "a != 1")
 
-    var a_defined_ref2: i64& = a;
-    a_defined_ref2 = 2;
-    assert(a == 2, "a != 2");
+    var a_defined_ref2: i64& = a
+    a_defined_ref2 = 2
+    assert(a == 2, "a != 2")
 
-    io::stdout().out("[ref_variable_assign] ok\n");
-    return 0;
+    io::stdout().out("[ref_variable_assign] ok\n")
+    return 0
 }

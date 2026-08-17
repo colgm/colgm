@@ -54,17 +54,17 @@ Literals in colgm all have default type.
 
 ```rust
 func main() -> i32 {
-    var a = 1;              // i64
-    var b = 2.0;            // f64
-    var c = "hello world!"; // const i8*
-    var d = 'd';            // i8
-    var e = ['0', '1'];     // (array [2 x i8]) i8*
-    var f = true;           // bool
-    var g = nil;            // i8*
+    var a = 1              // i64
+    var b = 2.0            // f64
+    var c = "hello world!" // const i8*
+    var d = 'd'            // i8
+    var e = ['0', '1']     // (array [2 x i8]) i8*
+    var f = true           // bool
+    var g = nil            // i8*
 
-    var h = 0x7fffffff;     // u64
-    var i = 0o777;          // u64
-    return 0;
+    var h = 0x7fffffff     // u64
+    var i = 0o777          // u64
+    return 0
 }
 ```
 
@@ -78,19 +78,19 @@ it will be casted to `i32` when used in these cases:
 1. definition with type declaration:
 
     ```rust
-    var a: i32 = 1;    // i64 to i32
-    var b: i64* = nil; // i8* to i64*
+    var a: i32 = 1    // i64 to i32
+    var b: i64* = nil // i8* to i64*
     ```
 
 2. function call:
 
     ```rust
     pub func foo(a: i32, b: i32) -> i32 {
-        return a + b;
+        return a + b
     }
 
     func main() -> i32 {
-        return foo(1, 2); // 1 i64 => i32, 2 i64 => i32
+        return foo(1, 2) // 1 i64 => i32, 2 i64 => i32
     }
     ```
 
@@ -102,25 +102,25 @@ Total examples:
 
 ```rust
 pub func test(arg: u32) -> u8 {
-    return arg => u8;
+    return arg => u8
 }
 
 pub func main() -> i32 {
-    var a: i32 = 1;      // i64(1)    => i32
-    var b: i64* = nil;   // i8*(nil)  => i64*
-    if (a < 10) {        // i64(10)   => i32
-        return 1;        // i64(1)    => i32
-    } else if (a != 1) { // i64(1)    => i32
-        return -1;       // i64(-1)   => i32
-    }                    //
-    var c = 'a';         //
-    c += 1;              // i64(1)    => i8
-                         //
-    var d = 1.0;         // f64
-    var e: f32 = 2.71;   // f64(2.71) => f32
-                         //
-    test(42);            // i64(42) => u32
-    return 0;            // i64       => i32
+    var a: i32 = 1      // i64(1)    => i32
+    var b: i64* = nil   // i8*(nil)  => i64*
+    if a < 10 {         // i64(10)   => i32
+        return 1        // i64(1)    => i32
+    } else if a != 1 {  // i64(1)    => i32
+        return -1       // i64(-1)   => i32
+    }                   //
+    var c = 'a'         //
+    c += 1              // i64(1)    => i8
+                        //
+    var d = 1.0         // f64
+    var e: f32 = 2.71   // f64(2.71) => f32
+                        //
+    test(42)            // i64(42) => u32
+    return 0            // i64       => i32
 }
 ```
 
@@ -136,8 +136,8 @@ func main() -> i32 {
     var s = Example {
         a: 1,     // i64(1)  => u64
         next: nil // i8*(nil) => Example*
-    };            //
-    return 0;     // i64(0)  => i32
+    }             //
+    return 0      // i64(0)  => i32
 }
 ```
 
@@ -148,16 +148,16 @@ But be ware that empty array bind to variable without type declaration is not al
 
 ```rust
 func main() -> i32 {
-    var a = [1, 2, 3]; // [i64; 3]
+    var a = [1, 2, 3] // [i64; 3]
     //       ^       => base type is determined by first element
     //       ^^^^^^^ => array size is determined by number of elements
 
     // [i32; 1024] with first element set to 0
-    var b: [i32; 1024] = [0 => i32];
+    var b: [i32; 1024] = [0 => i32]
 
     // error: cannot infer type
-    var c = [];
-    return 0;
+    var c = []
+    return 0
 }
 ```
 
@@ -169,7 +169,7 @@ Colgm does not require semicolons at the end of each statement.
 func main() -> i32 {
     var a = 1
     var b = a + 1
-    return (b - 2) => i32
+    return (b - 2) => i32;
 }
 ```
 
@@ -191,11 +191,11 @@ func main() -> i32 {
 Colgm allows these arithmetic operators:
 
 ```rust
-a + b; // add
-a - b; // sub
-a * b; // mul
-a / b; // div
-a % b; // mod, only used on integer type
+a + b // add
+a - b // sub
+a * b // mul
+a / b // div
+a % b // mod, only used on integer type
 ```
 
 ### Bitwise Operator
@@ -203,9 +203,9 @@ a % b; // mod, only used on integer type
 Colgm supports these bitwise operators, only integer type is supported:
 
 ```rust
-a | b; // bit or
-a ^ b; // bit xor
-a & b; // bit and
+a | b // bit or
+a ^ b // bit xor
+a & b // bit and
 ```
 
 ### Logical Operator
@@ -216,9 +216,9 @@ Only boolean type is allowed.
 Logical operators for `and`/`or` all have two syntax:
 
 ```rust
-1 == 1 and 2 == 2 && 3 == 3;
+1 == 1 and 2 == 2 && 3 == 3
 //     ^^^        ^^ same logical and
-1 == 1 or 2 == 2 || 3==3;
+1 == 1 or 2 == 2 || 3 == 3
 //     ^^        ^^  same logical or
 ```
 
@@ -229,8 +229,8 @@ Definitions without type declaration will use type inference,
 so make sure the init value's type is what you want.
 
 ```rust
-var variable: type = expression; // with type
-var variable = expression;       // without type
+var variable: type = expression // with type
+var variable = expression       // without type
 ```
 
 ### Name Shadowing
@@ -238,9 +238,9 @@ var variable = expression;       // without type
 Colgm does not allow variable shadowing.
 
 ```rust
-var a: i32 = 1;
-if (1 == 1) {
-    var a: f64 = 1;
+var a: i32 = 1
+if 1 == 1 {
+    var a: f64 = 1
     //  ^^^^^^ name shadowing, will trigger an error
 }
 ```
@@ -248,10 +248,10 @@ if (1 == 1) {
 But this case is acceptable.
 
 ```rust
-if (1 == 1) {
-    var b = 1;
+if 1 == 1 {
+    var b = 1
 } else {
-    var b = 1.0;
+    var b = 1.0
 }
 ```
 
@@ -260,14 +260,14 @@ if (1 == 1) {
 Colgm allows these assignment operators:
 
 ```rust
-a += b; // add
-a -= b; // sub
-a *= b; // mul
-a /= b; // div
-a %= b; // mod, only used on integer type
-a |= b; // bit or, only used on integer type
-a ^= b; // bit xor, only used on integer type
-a &= b; // bit and, only used on integer type
+a += b // add
+a -= b // sub
+a *= b // mul
+a /= b // div
+a %= b // mod, only used on integer type
+a |= b // bit or, only used on integer type
+a ^= b // bit xor, only used on integer type
+a &= b // bit and, only used on integer type
 ```
 
 ## Control Flow

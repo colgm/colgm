@@ -19,11 +19,11 @@ Now nightly-builds are available:
 - [__windows-x86_64-nightly-build__](https://github.com/colgm/colgm/releases/tag/windows_nightly)
 
 ```rust
-use std::io::{ io };
+use std::io::{ io }
 
 pub func main() -> i32 {
-    io::stdout().out("hello world!").endln();
-    return 0;
+    io::stdout().out("hello world!").endln()
+    return 0
 }
 ```
 

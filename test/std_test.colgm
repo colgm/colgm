@@ -1,11 +1,11 @@
-use std::libc::{ srand, rand };
-use std::time::{ time };
-use std::list::{ list };
-use std::vec::{ vec };
-use std::map::{ hashmap };
-use std::set::{ hashset };
-use std::queue::{ queue };
-use std::str::{ str };
+use std::libc::{ srand, rand }
+use std::time::{ time }
+use std::list::{ list }
+use std::vec::{ vec }
+use std::map::{ hashmap }
+use std::set::{ hashset }
+use std::queue::{ queue }
+use std::str::{ str }
 use std::string_utils::{
     is_alpha_letter,
     is_alpha_lowercase,
@@ -14,258 +14,258 @@ use std::string_utils::{
     is_hexdigit,
     is_octdigit,
     is_punctuation,
-};
-use std::range::{ range };
-use std::io::{ io };
-use std::panic::{ assert };
+}
+use std::range::{ range }
+use std::io::{ io }
+use std::panic::{ assert }
 
 func test_set() -> bool {
-    var set = hashset<str>::instance();
+    var set = hashset<str>::instance()
     for (var i = 0; i < 8192; i += 1) {
-        var n = str::instance();
-        n.append_i64(i);
-        set.insert(n);
-        n.delete();
+        var n = str::instance()
+        n.append_i64(i)
+        set.insert(n)
+        n.delete()
     }
 
-    var result = true;
+    var result = true
     foreach (var i; set) {
-        var n = i.elem();
-        if (set.has(n)) {
-            io::stdout().green().out("[test]").reset().out(" hashset: \"");
-            io::stdout().out(n.c_str).out("\" found in bucket ");
-            io::stdout().out_u64(i.bucket_index).out(" hash: ");
-            io::stdout().out_u64(n.hash()).endln();
+        var n = i.elem()
+        if set.has(n) {
+            io::stdout().green().out("[test]").reset().out(" hashset: \"")
+            io::stdout().out(n.c_str).out("\" found in bucket ")
+            io::stdout().out_u64(i.bucket_index).out(" hash: ")
+            io::stdout().out_u64(n.hash()).endln()
         } else {
-            io::stdout().red().out("[test]").reset().out(" hashset: ");
-            io::stdout().out(n.c_str).out(" not found\n");
-            result = false;
+            io::stdout().red().out("[test]").reset().out(" hashset: ")
+            io::stdout().out(n.c_str).out(" not found\n")
+            result = false
         }
     }
 
-    set.delete();
-    return result;
+    set.delete()
+    return result
 }
 
 func test_hashmap() -> bool {
-    var map = hashmap<str, str>::instance();
-    var stored = vec<str>::instance();
+    var map = hashmap<str, str>::instance()
+    var stored = vec<str>::instance()
 
     foreach (var i; range(0, 1024)) {
-        var num = rand() % 4096;
-        var k = str::instance();
-        var v = str::instance();
-        k.append_i64(num => i64);
-        v.append("[test ");
-        v.append_i64(num => i64).append("]");
-        map.insert(k, v);
-        stored.push(k);
-        k.delete();
-        v.delete();
+        var num = rand() % 4096
+        var k = str::instance()
+        var v = str::instance()
+        k.append_i64(num => i64)
+        v.append("[test ")
+        v.append_i64(num => i64).append("]")
+        map.insert(k, v)
+        stored.push(k)
+        k.delete()
+        v.delete()
     }
 
     var result = true;
     for (var i: u64 = 0; i < 1024; i += 1) {
-        var key: str& = stored.get(i);
-        if (map.has(key)) {
-            io::stdout().green().out("[test]").reset().out(" hashmap: \"");
-            io::stdout().out(key.c_str).out("\" found -> \"");
-            io::stdout().out(map.get(key).c_str).out("\" hash: ");
-            io::stdout().out_u64(key.hash()).endln();
+        var key: str& = stored.get(i)
+        if map.has(key) {
+            io::stdout().green().out("[test]").reset().out(" hashmap: \"")
+            io::stdout().out(key.c_str).out("\" found -> \"")
+            io::stdout().out(map.get(key).c_str).out("\" hash: ")
+            io::stdout().out_u64(key.hash()).endln()
         } else {
-            io::stdout().red().out("[test]").reset().out(" hashmap: \"");
-            io::stdout().out(key.c_str).out("\" not found\n");
-            result = false;
+            io::stdout().red().out("[test]").reset().out(" hashmap: \"")
+            io::stdout().out(key.c_str).out("\" not found\n")
+            result = false
         }
     }
 
     foreach (var i; map) {
-        io::stdout().green().out("[test]").reset();
-        io::stdout().out(" hashmap::iter \"");
-        io::stdout().out(i.key().c_str).out("\" -> \"").out(i.value().c_str);
-        io::stdout().out("\" in bucket ").out_u64(i.bucket_index).out(" hash: ");
-        io::stdout().out_u64(i.key().hash()).endln();
+        io::stdout().green().out("[test]").reset()
+        io::stdout().out(" hashmap::iter \"")
+        io::stdout().out(i.key().c_str).out("\" -> \"").out(i.value().c_str)
+        io::stdout().out("\" in bucket ").out_u64(i.bucket_index).out(" hash: ")
+        io::stdout().out_u64(i.key().hash()).endln()
     }
 
     for (var i: u64 = 0; i < 1024; i += 1) {
-        var key: str& = stored.get(i);
-        map.remove(key);
-        assert(!map.has(key), "remove failed!");
+        var key: str& = stored.get(i)
+        map.remove(key)
+        assert(!map.has(key), "remove failed!")
     }
 
-    map.delete();
-    stored.delete();
-    return result;
+    map.delete()
+    stored.delete()
+    return result
 }
 
 func list_dump(list: list<str>*) {
     foreach (var i; list) {
-        io::stdout().green().out("[test]").reset().out(" list<str>: ");
-        io::stdout().out(i.elem().c_str).endln();
+        io::stdout().green().out("[test]").reset().out(" list<str>: ")
+        io::stdout().out(i.elem().c_str).endln()
     }
 }
 
 func primitive_list_dump(list: list<i64>*) {
     foreach (var i; list) {
-        io::stdout().green().out("[test]").reset().out(" list<i64>: ");
-        io::stdout().out_i64(i.elem()).endln();
+        io::stdout().green().out("[test]").reset().out(" list<i64>: ")
+        io::stdout().out_i64(i.elem()).endln()
     }
 }
 
 func test_list() {
-    var s = str::instance();
-    var str_list = list<str>::instance();
-    var int_list = list<i64>::instance();
+    var s = str::instance()
+    var str_list = list<str>::instance()
+    var int_list = list<i64>::instance()
 
     for (var i = 0; i < 32; i += 1) {
-        var num = rand() % 4096;
-        s.clear();
-        s.append("test list<str> ");
-        s.append_i64(num => i64);
-        str_list.insert(s);
-        int_list.insert(num => i64);
+        var num = rand() % 4096
+        s.clear()
+        s.append("test list<str> ")
+        s.append_i64(num => i64)
+        str_list.insert(s)
+        int_list.insert(num => i64)
     }
 
-    list_dump(str_list.__ptr__());
-    primitive_list_dump(int_list.__ptr__());
+    list_dump(str_list.__ptr__())
+    primitive_list_dump(int_list.__ptr__())
 
-    s.delete();
-    str_list.delete();
-    int_list.delete();
+    s.delete()
+    str_list.delete()
+    int_list.delete()
 }
 
 func queue_dump(q: queue<str>*) {
-    while (!q->empty()) {
-        io::stdout().green().out("[test]").reset().out(" queue<str>: ").out(q->front().c_str).endln();
-        q->pop();
+    while !q->empty() {
+        io::stdout().green().out("[test]").reset().out(" queue<str>: ").out(q->front().c_str).endln()
+        q->pop()
     }
 }
 
 func primitive_queue_dump(q: queue<i64>*) {
-    while (!q->empty()) {
-        io::stdout().green().out("[test]").reset().out(" queue<i64>: ").out_i64(q->front()).endln();
-        q->pop();
+    while !q->empty() {
+        io::stdout().green().out("[test]").reset().out(" queue<i64>: ").out_i64(q->front()).endln()
+        q->pop()
     }
 }
 
 func test_queue() {
-    var str_queue = queue<str>::instance();
-    var int_queue = queue<i64>::instance();
+    var str_queue = queue<str>::instance()
+    var int_queue = queue<i64>::instance()
 
     for (var i = 0; i < 32; i += 1) {
-        var num = rand() % 4096;
-        var s = str::from("test queue<str> ");
-        s.append_i64(num => i64);
-        str_queue.push(s);
-        int_queue.push(num => i64);
+        var num = rand() % 4096
+        var s = str::from("test queue<str> ")
+        s.append_i64(num => i64)
+        str_queue.push(s)
+        int_queue.push(num => i64)
 
-        s.delete();
+        s.delete()
     }
 
-    queue_dump(str_queue.__ptr__());
-    primitive_queue_dump(int_queue.__ptr__());
+    queue_dump(str_queue.__ptr__())
+    primitive_queue_dump(int_queue.__ptr__())
 
-    str_queue.delete();
-    int_queue.delete();
+    str_queue.delete()
+    int_queue.delete()
 }
 
 func vec_dump(vec: vec<str>*) {
     foreach (var i; vec) {
-        io::stdout().green().out("[test]").reset().out(" vec<str> [");
-        io::stdout().out_u64(i.index()).out("]: ");
-        io::stdout().out(i.get().c_str).endln();
+        io::stdout().green().out("[test]").reset().out(" vec<str> [")
+        io::stdout().out_u64(i.index()).out("]: ")
+        io::stdout().out(i.get().c_str).endln()
     }
 }
 
 func primitive_vec_dump(vec: vec<i64>*) {
     foreach (var i; vec) {
-        io::stdout().green().out("[test]").reset().out(" vec<i64> [");
-        io::stdout().out_u64(i.index()).out("]: ");
-        io::stdout().out_i64(i.get()).endln();
+        io::stdout().green().out("[test]").reset().out(" vec<i64> [")
+        io::stdout().out_u64(i.index()).out("]: ")
+        io::stdout().out_i64(i.get()).endln()
     }
 }
 
 func test_vector() {
-    var s = str::instance();
-    var str_vec = vec<str>::instance();
-    var int_vec = vec<i64>::instance();
+    var s = str::instance()
+    var str_vec = vec<str>::instance()
+    var int_vec = vec<i64>::instance()
     for (var i = 0; i < 32; i += 1) {
-        var num = rand() % 4096;
-        s.clear();
-        s.append("test vec<str> ");
-        s.append_i64(num => i64);
-        str_vec.push(s);
-        int_vec.push(num => i64);
+        var num = rand() % 4096
+        s.clear()
+        s.append("test vec<str> ")
+        s.append_i64(num => i64)
+        str_vec.push(s)
+        int_vec.push(num => i64)
     }
 
-    vec_dump(str_vec.__ptr__());
-    primitive_vec_dump(int_vec.__ptr__());
+    vec_dump(str_vec.__ptr__())
+    primitive_vec_dump(int_vec.__ptr__())
 
-    s.delete();
-    str_vec.delete();
-    int_vec.delete();
+    s.delete()
+    str_vec.delete()
+    int_vec.delete()
 }
 
 func test_string() {
-    var s = str::from("hello world");
-    defer s.delete();
+    var s = str::from("hello world")
+    defer s.delete()
 
-    assert(s.endswith("world"), "s.endswith(\"world\")");
-    assert(s.endswith(""), "s.endswith(\"\")");
+    assert(s.endswith("world"), "s.endswith(\"world\")")
+    assert(s.endswith(""), "s.endswith(\"\")")
 }
 
 func test_string_utils() {
-    assert(!is_digit('f'), "f is not digit");
-    assert(is_digit('0'), "0 is digit");
+    assert(!is_digit('f'), "f is not digit")
+    assert(is_digit('0'), "0 is digit")
 
-    assert(is_hexdigit('0'), "0 is hex digit");
-    assert(is_hexdigit('a'), "a is hex digit");
-    assert(is_hexdigit('A'), "A is hex digit");
-    assert(!is_hexdigit('g'), "g is not hex digit");
+    assert(is_hexdigit('0'), "0 is hex digit")
+    assert(is_hexdigit('a'), "a is hex digit")
+    assert(is_hexdigit('A'), "A is hex digit")
+    assert(!is_hexdigit('g'), "g is not hex digit")
 
-    assert(is_octdigit('0'), "0 is oct digit");
-    assert(!is_octdigit('8'), "8 is not oct digit");
+    assert(is_octdigit('0'), "0 is oct digit")
+    assert(!is_octdigit('8'), "8 is not oct digit")
 
-    assert(is_alpha_letter('a'), "a is alpha letter");
-    assert(is_alpha_letter('A'), "A is alpha letter");
-    assert(!is_alpha_letter(':'), ": is not alpha letter");
+    assert(is_alpha_letter('a'), "a is alpha letter")
+    assert(is_alpha_letter('A'), "A is alpha letter")
+    assert(!is_alpha_letter(':'), ": is not alpha letter")
 
-    assert(is_alpha_lowercase('b'), "b is lowercase");
-    assert(!is_alpha_lowercase('B'), "B is not lowercase");
+    assert(is_alpha_lowercase('b'), "b is lowercase")
+    assert(!is_alpha_lowercase('B'), "B is not lowercase")
 
-    assert(!is_alpha_uppercase('c'), "c is not uppercase");
-    assert(is_alpha_uppercase('C'), "C is uppercase");
+    assert(!is_alpha_uppercase('c'), "c is not uppercase")
+    assert(is_alpha_uppercase('C'), "C is uppercase")
 
-    assert(is_punctuation(';'), "; is punctuation");
-    assert(is_punctuation('"'), "\" is punctuation");
-    assert(!is_punctuation('0'), "0 is not punctuation");
-    assert(!is_punctuation('1'), "1 is not punctuation");
+    assert(is_punctuation(';'), "; is punctuation")
+    assert(is_punctuation('"'), "\" is punctuation")
+    assert(!is_punctuation('0'), "0 is not punctuation")
+    assert(!is_punctuation('1'), "1 is not punctuation")
 
     io::stdout().green().out("[test] ").reset()
-        .out("string utils test passed").endln();
+        .out("string utils test passed").endln()
 }
 
 func TEST_ALL() -> bool {
-    srand(time(nil).to_u32());
+    srand(time(nil).to_u32())
 
-    var result = true;
-    if (!test_hashmap()) {
-        result = false;
+    var result = true
+    if !test_hashmap() {
+        result = false
     }
-    test_list();
-    test_queue();
-    test_vector();
-    if (!test_set()) {
-        result = false;
+    test_list()
+    test_queue()
+    test_vector()
+    if !test_set() {
+        result = false
     }
-    test_string();
-    test_string_utils();
-    return result;
+    test_string()
+    test_string_utils()
+    return result
 }
 
 func main() -> i32 {
-    if (!TEST_ALL()) {
-        return -1;
+    if !TEST_ALL() {
+        return -1
     }
-    return 0;
+    return 0
 }

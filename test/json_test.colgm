@@ -1,233 +1,233 @@
-use std::json::{ json };
-use std::str::{ str };
-use std::io::{ io };
-use std::libc::{ free };
-use std::util::timestamp::{ maketimestamp };
+use std::json::{ json }
+use std::str::{ str }
+use std::io::{ io }
+use std::libc::{ free }
+use std::util::timestamp::{ maketimestamp }
 
 func dump_raw_str(input: str&) {
     for (var i: u64 = 0; i < input.size; i += 1) {
-        if (input.c_str[i] == '\n') {
-            io::stdout().out("\\n");
-        } else if (input.c_str[i] == '\r') {
-            io::stdout().out("\\r");
-        } else if (input.c_str[i] == '\t') {
-            io::stdout().out("\\t");
-        } else if (input.c_str[i] == '\"') {
-            io::stdout().out("\\\"");
-        } else if (input.c_str[i] == '\\') {
-            io::stdout().out("\\\\");
+        if input.c_str[i] == '\n' {
+            io::stdout().out("\\n")
+        } else if input.c_str[i] == '\r' {
+            io::stdout().out("\\r")
+        } else if input.c_str[i] == '\t' {
+            io::stdout().out("\\t")
+        } else if input.c_str[i] == '\"' {
+            io::stdout().out("\\\"")
+        } else if input.c_str[i] == '\\' {
+            io::stdout().out("\\\\")
         } else {
-            io::stdout().out_ch(input.c_str[i]);
+            io::stdout().out_ch(input.c_str[i])
         }
     }
 }
 
 func dump_json_value(input: str&) {
-    var j = json::parse(input);
+    var j = json::parse(input)
     defer {
-        j->delete();
-        free(j => i8*);
+        j->delete()
+        free(j => i8*)
     }
 
-    io::stdout().out("[json test] raw  : ");
-    dump_raw_str(input);
-    io::stdout().endln();
-    if (j->is_invalid()) {
-        io::stdout().out("[json test] error: ");
-        io::stdout().out(j->get_error()->c_str).endln();
+    io::stdout().out("[json test] raw  : ")
+    dump_raw_str(input)
+    io::stdout().endln()
+    if j->is_invalid() {
+        io::stdout().out("[json test] error: ")
+        io::stdout().out(j->get_error()->c_str).endln()
     } else {
-        var s = j->to_string();
-        defer s.delete();
-        io::stdout().out("[json test] json : ");
-        dump_raw_str(s);
-        io::stdout().endln();
+        var s = j->to_string()
+        defer s.delete()
+        io::stdout().out("[json test] json : ")
+        dump_raw_str(s)
+        io::stdout().endln()
     }
 }
 
 func test_json_parse() {
-    var input = str::instance();
-    defer input.delete();
+    var input = str::instance()
+    defer input.delete()
 
-    input.append("{\"vec<num>\": [0, 0.0, -1.01, +2.0e4, 2.1e+2, 2.2e-2]}");
-    dump_json_value(input);
-    input.clear();
+    input.append("{\"vec<num>\": [0, 0.0, -1.01, +2.0e4, 2.1e+2, 2.2e-2]}")
+    dump_json_value(input)
+    input.clear()
 
-    input.append("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null, true, false, \"\\\"\\\\\\/\\b\\f\\n\\r\\t\"]");
-    dump_json_value(input);
-    input.clear();
+    input.append("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null, true, false, \"\\\"\\\\\\/\\b\\f\\n\\r\\t\"]")
+    dump_json_value(input)
+    input.clear()
 
-    input.append("[\"\\\"\\\'\"]");
-    dump_json_value(input);
-    input.clear();
+    input.append("[\"\\\"\\\'\"]")
+    dump_json_value(input)
+    input.clear()
 
-    input.append("[  \n\n\n\r\r\r\t\t\t  ]");
-    dump_json_value(input);
-    input.clear();
+    input.append("[  \n\n\n\r\r\r\t\t\t  ]")
+    dump_json_value(input)
+    input.clear()
 
-    input.append("[\"\\n\\r\\t\"]");
-    dump_json_value(input);
-    input.clear();
+    input.append("[\"\\n\\r\\t\"]")
+    dump_json_value(input)
+    input.clear()
 
     // invalid identifier
-    input.append("[ foo_bar ]");
-    dump_json_value(input);
-    input.clear();
+    input.append("[ foo_bar ]")
+    dump_json_value(input)
+    input.clear()
 
     // invalid array, expect ']'
-    input.append("[ null");
-    dump_json_value(input);
-    input.clear();
+    input.append("[ null")
+    dump_json_value(input)
+    input.clear()
 
     // invalid object, expect '}'
-    input.append("{ \"null\": 1");
-    dump_json_value(input);
-    input.clear();
+    input.append("{ \"null\": 1")
+    dump_json_value(input)
+    input.clear()
 
     // unterminated string
-    input.append("[\"\\ \\\'");
-    dump_json_value(input);
-    input.clear();
+    input.append("[\"\\ \\\'")
+    dump_json_value(input)
+    input.clear()
 
     // invalid escape sequence
-    input.append("[\"\\");
-    dump_json_value(input);
-    input.clear();
+    input.append("[\"\\")
+    dump_json_value(input)
+    input.clear()
 
     // invalid array
-    input.append("[,");
-    dump_json_value(input);
-    input.clear();
+    input.append("[,")
+    dump_json_value(input)
+    input.clear()
 
     // invalid token
-    input.append(",");
-    dump_json_value(input);
-    input.clear();
+    input.append(",")
+    dump_json_value(input)
+    input.clear()
 }
 
 func make_num_arr() -> json* {
-    var arr = json::arr();
+    var arr = json::arr()
     for (var i = 0; i < 10; i += 1) {
-        arr->json_array.push(json::num(i => f64));
+        arr->json_array.push(json::num(i => f64))
     }
-    return arr;
+    return arr
 }
 
 func make_bool_arr() -> json* {
-    var arr = json::arr();
+    var arr = json::arr()
     for (var i = 0; i < 10; i += 1) {
-        arr->json_array.push(json::bool(i % 2 == 0));
+        arr->json_array.push(json::bool(i % 2 == 0))
     }
-    return arr;
+    return arr
 }
 
 func make_str_arr() -> json* {
-    var arr = json::arr();
+    var arr = json::arr()
     for (var i = 0; i < 10; i += 1) {
-        var s = json::str("hello world - ");
-        s->json_string.append_i64(i);
-        arr->json_array.push(s);
+        var s = json::str("hello world - ")
+        s->json_string.append_i64(i)
+        arr->json_array.push(s)
     }
-    return arr;
+    return arr
 }
 
 func smoke_testing_parse(input: str&) {
-    io::stdout().out("[json test] smoke test: ").out_u64(input.size / 1024 / 1024).out(" MB");
-    var ts = maketimestamp();
-    ts.stamp();
+    io::stdout().out("[json test] smoke test: ").out_u64(input.size / 1024 / 1024).out(" MB")
+    var ts = maketimestamp()
+    ts.stamp()
 
-    var j = json::parse(input);
+    var j = json::parse(input)
     defer {
-        j->delete();
-        free(j => i8*);
+        j->delete()
+        free(j => i8*)
     }
 
-    var sec = ts.elapsed_sec();
-    var mbps = (input.size => f64) / 1024.0 / 1024.0 / sec;
-    io::stdout().out("\t").out_f64(mbps).out(" MB/s\n");
+    var sec = ts.elapsed_sec()
+    var mbps = (input.size => f64) / 1024.0 / 1024.0 / sec
+    io::stdout().out("\t").out_f64(mbps).out(" MB/s\n")
 }
 
 func generate_vec_str(input: str&, size: i64) {
-    input.append("[0,");
+    input.append("[0,")
     for (var i = 1; i < size; i += 1) {
-        input.append(", ").append_i64(i);
+        input.append(", ").append_i64(i)
     }
-    input.append("]");
+    input.append("]")
 }
 
 func generate_hash_str(input: str&, size: i64) {
-    input.append("{");
+    input.append("{")
     for (var i = 0; i < size; i += 1) {
-        input.append("\"hash-").append_i64(i).append("\": ").append_i64(i).append(", ");
+        input.append("\"hash-").append_i64(i).append("\": ").append_i64(i).append(", ")
     }
-    input.append("}");
+    input.append("}")
 }
 
 func smoke_testing() {
     for (var outer = 1; outer <= 10; outer += 1) {
-        var input = str::from("{\"str\": \"smoke testing\"");
-        defer input.delete();
+        var input = str::from("{\"str\": \"smoke testing\"")
+        defer input.delete()
         for (var i = 0; i < 128 * outer; i += 1) {
-            input.append(", \"vec-");
-            input.append_i64(i).append("\": ");
-            generate_vec_str(input, 8192);
+            input.append(", \"vec-")
+            input.append_i64(i).append("\": ")
+            generate_vec_str(input, 8192)
         }
         for (var i = 0; i < 128 * outer; i += 1) {
-            input.append(", \"hash-");
-            input.append_i64(i).append("\": ");
-            generate_hash_str(input, 4096);
+            input.append(", \"hash-")
+            input.append_i64(i).append("\": ")
+            generate_hash_str(input, 4096)
         }
-        input.append("}");
-        smoke_testing_parse(input);
+        input.append("}")
+        smoke_testing_parse(input)
     }
 }
 
 func main() -> i32 {
-    var obj = json::obj();
+    var obj = json::obj()
     defer {
-        obj->delete();
-        free(obj => i8*);
+        obj->delete()
+        free(obj => i8*)
     }
 
-    var another_obj = json::obj();
+    var another_obj = json::obj()
 
-    var key_obj = str::from("json_object");
-    defer key_obj.delete();
-    obj->json_object.insert(key_obj, another_obj);
+    var key_obj = str::from("json_object")
+    defer key_obj.delete()
+    obj->json_object.insert(key_obj, another_obj)
 
-    var key_num_arr = str::from("json_num_array");
-    var key_bool_arr = str::from("json_bool_array");
-    var key_str_arr = str::from("json_str_array");
-    defer key_num_arr.delete();
-    defer key_bool_arr.delete();
-    defer key_str_arr.delete();
-    obj->json_object.insert(key_num_arr, make_num_arr());
-    obj->json_object.insert(key_bool_arr, make_bool_arr());
-    obj->json_object.insert(key_str_arr, make_str_arr());
-    another_obj->json_object.insert(key_num_arr, make_num_arr());
-    another_obj->json_object.insert(key_bool_arr, make_bool_arr());
-    another_obj->json_object.insert(key_str_arr, make_str_arr());
+    var key_num_arr = str::from("json_num_array")
+    var key_bool_arr = str::from("json_bool_array")
+    var key_str_arr = str::from("json_str_array")
+    defer key_num_arr.delete()
+    defer key_bool_arr.delete()
+    defer key_str_arr.delete()
+    obj->json_object.insert(key_num_arr, make_num_arr())
+    obj->json_object.insert(key_bool_arr, make_bool_arr())
+    obj->json_object.insert(key_str_arr, make_str_arr())
+    another_obj->json_object.insert(key_num_arr, make_num_arr())
+    another_obj->json_object.insert(key_bool_arr, make_bool_arr())
+    another_obj->json_object.insert(key_str_arr, make_str_arr())
 
-    var key_num = str::from("json_num");
-    defer key_num.delete();
-    obj->json_object.insert(key_num, json::num(114.514));
+    var key_num = str::from("json_num")
+    defer key_num.delete()
+    obj->json_object.insert(key_num, json::num(114.514))
 
-    var key_str = str::from("json_str");
-    defer key_str.delete();
-    obj->json_object.insert(key_str, json::str("hello world"));
+    var key_str = str::from("json_str")
+    defer key_str.delete()
+    obj->json_object.insert(key_str, json::str("hello world"))
 
-    var key_empty_obj = str::from("empty_object");
-    defer key_empty_obj.delete();
-    obj->json_object.insert(key_empty_obj, json::obj());
+    var key_empty_obj = str::from("empty_object")
+    defer key_empty_obj.delete()
+    obj->json_object.insert(key_empty_obj, json::obj())
 
-    var key_empty_arr = str::from("empty_array");
-    defer key_empty_arr.delete();
-    obj->json_object.insert(key_empty_arr, json::arr());
+    var key_empty_arr = str::from("empty_array")
+    defer key_empty_arr.delete()
+    obj->json_object.insert(key_empty_arr, json::arr())
 
-    var res = obj->to_string_indented(2);
-    defer res.delete();
-    io::stdout().out(res.c_str).endln();
+    var res = obj->to_string_indented(2)
+    defer res.delete()
+    io::stdout().out(res.c_str).endln()
 
-    test_json_parse();
-    smoke_testing();
-    return 0;
+    test_json_parse()
+    smoke_testing()
+    return 0
 }

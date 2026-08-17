@@ -54,17 +54,17 @@ Colgm 中的字面量都有默认类型。
 
 ```rust
 func main() -> i32 {
-    var a = 1;              // i64
-    var b = 2.0;            // f64
-    var c = "hello world!"; // const i8*
-    var d = 'd';            // i8
-    var e = [i8; 128];      // (array) i8*
-    var f = true;           // bool
-    var g = nil;            // i8*
+    var a = 1              // i64
+    var b = 2.0            // f64
+    var c = "hello world!" // const i8*
+    var d = 'd'            // i8
+    var e = [i8; 128]      // (array) i8*
+    var f = true           // bool
+    var g = nil            // i8*
 
-    var h = 0x7fffffff;     // u64
-    var i = 0o777;          // u64
-    return 0;
+    var h = 0x7fffffff     // u64
+    var i = 0o777          // u64
+    return 0
 }
 ```
 
@@ -78,19 +78,19 @@ Colgm 支持一种名为自动类型转换的特性。
 1. 带有类型声明的定义：
 
     ```rust
-    var a: i32 = 1;    // i64 转 i32
-    var b: i64* = nil; // i8* 转 i64*
+    var a: i32 = 1    // i64 转 i32
+    var b: i64* = nil // i8* 转 i64*
     ```
 
 2. 函数调用：
 
     ```rust
     pub func foo(a: i32, b: i32) -> i32 {
-        return a + b;
+        return a + b
     }
 
     func main() -> i32 {
-        return foo(1, 2); // 1 i64 => i32, 2 i64 => i32
+        return foo(1, 2) // 1 i64 => i32, 2 i64 => i32
     }
     ```
 
@@ -102,25 +102,25 @@ Colgm 支持一种名为自动类型转换的特性。
 
 ```rust
 pub func test(arg: u32) -> u8 {
-    return arg => u8;
+    return arg => u8
 }
 
 pub func main() -> i32 {
-    var a: i32 = 1;      // i64(1)    => i32
-    var b: i64* = nil;   // i8*(nil)  => i64*
-    if (a < 10) {        // i64(10)   => i32
-        return 1;        // i64(1)    => i32
-    } else if (a != 1) { // i64(1)    => i32
-        return -1;       // i64(-1)   => i32
-    }                    //
-    var c = 'a';         //
-    c += 1;              // i64(1)    => i8
-                         //
-    var d = 1.0;         // f64
-    var e: f32 = 2.71;   // f64(2.71) => f32
-                         //
-    test(42);            // i64(42) => u32
-    return 0;            // i64       => i32
+    var a: i32 = 1      // i64(1)    => i32
+    var b: i64* = nil   // i8*(nil)  => i64*
+    if a < 10 {         // i64(10)   => i32
+        return 1        // i64(1)    => i32
+    } else if a != 1 {  // i64(1)    => i32
+        return -1       // i64(-1)   => i32
+    }                   //
+    var c = 'a'         //
+    c += 1              // i64(1)    => i8
+                        //
+    var d = 1.0         // f64
+    var e: f32 = 2.71   // f64(2.71) => f32
+                        //
+    test(42)            // i64(42) => u32
+    return 0            // i64       => i32
 }
 ```
 
@@ -136,8 +136,8 @@ func main() -> i32 {
     var s = Example {
         a: 1,     // i64(1)  => u64
         next: nil // i8*(nil) => Example*
-    };            //
-    return 0;     // i64(0)  => i32
+    }             //
+    return 0      // i64(0)  => i32
 }
 ```
 
@@ -148,16 +148,16 @@ Colgm 支持数组的写法。数组可以通过多种方法来初始化。
 
 ```rust
 func main() -> i32 {
-    var a = [1, 2, 3]; // [i64; 3]
+    var a = [1, 2, 3] // [i64; 3]
     //       ^       => 基础类型由第一个元素的类型决定
     //       ^^^^^^^ => 数组大小由元素数量决定
 
     // [i32; 1024] 并且第一个元素是 0
-    var b: [i32; 1024] = [0 => i32];
+    var b: [i32; 1024] = [0 => i32]
 
     // error: 无法推导数组类型
-    var c = [];
-    return 0;
+    var c = []
+    return 0
 }
 ```
 
@@ -169,7 +169,7 @@ Colgm 不强制在语句后使用分号。
 func main() -> i32 {
     var a = 1
     var b = a + 1
-    return (b - 2) => i32
+    return (b - 2) => i32;
 }
 ```
 
@@ -191,11 +191,11 @@ func main() -> i32 {
 Colgm 允许以下算术运算符：
 
 ```rust
-a + b; // 加
-a - b; // 减
-a * b; // 乘
-a / b; // 除
-a % b; // 模，仅用于整数类型
+a + b // 加
+a - b // 减
+a * b // 乘
+a / b // 除
+a % b // 模，仅用于整数类型
 ```
 
 ### 位运算符
@@ -203,9 +203,9 @@ a % b; // 模，仅用于整数类型
 Colgm 支持以下位运算符，仅支持整数类型：
 
 ```rust
-a | b; // 位或
-a ^ b; // 位异或
-a & b; // 位与
+a | b // 位或
+a ^ b // 位异或
+a & b // 位与
 ```
 
 ### 逻辑运算符
@@ -216,9 +216,9 @@ Colgm 支持基本逻辑运算符：`==` `!=` `<` `<=` `>` `>=`。
 `and`/`or` 的逻辑运算符都有两种语法：
 
 ```rust
-1 == 1 and 2 == 2 && 3 == 3;
+1 == 1 and 2 == 2 && 3 == 3
 //     ^^^        ^^ 相同的逻辑与
-1 == 1 or 2 == 2 || 3 == 3;
+1 == 1 or 2 == 2 || 3 == 3
 //     ^^        ^^  相同的逻辑或
 ```
 
@@ -229,8 +229,8 @@ Colgm 允许两种定义方式。
 所以确保初始值的类型是您想要的。
 
 ```rust
-var variable: type = expression; // 带类型
-var variable = expression;       // 不带类型
+var variable: type = expression // 带类型
+var variable = expression       // 不带类型
 ```
 
 ### 变量名覆盖
@@ -238,9 +238,9 @@ var variable = expression;       // 不带类型
 Colgm 不允许变量名覆盖。
 
 ```rust
-var a: i32 = 1;
-if (1 == 1) {
-    var a: f64 = 1;
+var a: i32 = 1
+if 1 == 1 {
+    var a: f64 = 1
     //  ^^^^^^ 变量名覆盖(name shadowing)
 }
 ```
@@ -248,10 +248,10 @@ if (1 == 1) {
 但是下面这个样例是允许的。
 
 ```rust
-if (1 == 1) {
-    var b = 1;
+if 1 == 1 {
+    var b = 1
 } else {
-    var b = 1.0;
+    var b = 1.0
 }
 ```
 
@@ -260,14 +260,14 @@ if (1 == 1) {
 Colgm 允许以下赋值运算符：
 
 ```rust
-a += b; // 加
-a -= b; // 减
-a *= b; // 乘
-a /= b; // 除
-a %= b; // 模，仅用于整数类型
-a |= b; // 位或，仅用于整数类型
-a ^= b; // 位异或，仅用于整数类型
-a &= b; // 位与，仅用于整数类型
+a += b // 加
+a -= b // 减
+a *= b // 乘
+a /= b // 除
+a %= b // 模，仅用于整数类型
+a |= b // 位或，仅用于整数类型
+a ^= b // 位异或，仅用于整数类型
+a &= b // 位与，仅用于整数类型
 ```
 
 ## 控制流

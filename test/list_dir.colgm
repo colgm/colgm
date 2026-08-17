@@ -1,56 +1,56 @@
-use std::dirent::{ opendir, readdir, closedir };
-use std::fs::{ fs };
-use std::str::{ str };
-use std::io::{ io };
-use std::libc::{ streq };
+use std::dirent::{ opendir, readdir, closedir }
+use std::fs::{ fs }
+use std::str::{ str }
+use std::io::{ io }
+use std::libc::{ streq }
 
-use std::util::platform::{ is_windows };
+use std::util::platform::{ is_windows }
 
 func recursive_list(path: const i8*, depth: i64) {
-    var dir = opendir(path);
-    if (dir == nil) {
-        return;
+    var dir = opendir(path)
+    if dir == nil {
+        return
     }
 
-    while (true) {
-        var entry = readdir(dir);
-        if (entry == nil) {
-            break;
+    while true {
+        var entry = readdir(dir)
+        if entry == nil {
+            break
         }
 
-        if (streq(entry->d_name, ".") || streq(entry->d_name, "..")) {
-            continue;
+        if streq(entry->d_name, ".") || streq(entry->d_name, "..") {
+            continue
         }
 
         for (var i = 0; i < depth; i += 1) {
-            io::stdout().out("| ");
+            io::stdout().out("| ")
         }
-        io::stdout().out("[").out(entry->d_name).out("]");
+        io::stdout().out("[").out(entry->d_name).out("]")
 
-        var name = str::from(path);
-        if (is_windows()) {
-            name.append("\\").append(entry->d_name);
+        var name = str::from(path)
+        if is_windows() {
+            name.append("\\").append(entry->d_name)
         } else {
-            name.append("/").append(entry->d_name);
+            name.append("/").append(entry->d_name)
         }
-        defer name.delete();
+        defer name.delete()
 
-        if (fs::is_dir(name.c_str)) {
-            io::stdout().out("/\n");
-            recursive_list(name.c_str, depth + 1);
+        if fs::is_dir(name.c_str) {
+            io::stdout().out("/\n")
+            recursive_list(name.c_str, depth + 1)
         } else {
-            io::stdout().out("\n");
+            io::stdout().out("\n")
         }
     }
-    closedir(dir);
+    closedir(dir)
 }
 
 func main(argc: i32, argv: const i8**) -> i32 {
-    if (argc != 2) {
-        io::stdout().out("Usage: list_dir <path>\n");
-        return -1;
+    if argc != 2 {
+        io::stdout().out("Usage: list_dir <path>\n")
+        return -1
     }
 
-    recursive_list(argv[1], 1);
-    return 0;
+    recursive_list(argv[1], 1)
+    return 0
 }
