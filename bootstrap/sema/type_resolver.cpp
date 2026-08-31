@@ -40,7 +40,7 @@ u64 type_resolver::get_array_length(ast::number_literal* n) {
 
 type type_resolver::resolve(ast::type_base* node) {
     if (node->is(ast::ast_type::ast_func_ptr)) {
-        rp.report(node, "unimplemented");
+        rp.report(node, "unimplemented type node");
         return type::error_type();
     }
 

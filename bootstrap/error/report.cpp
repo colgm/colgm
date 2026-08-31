@@ -27,11 +27,11 @@ void flstream::load(const std::string& f) {
 
 void error::err(const std::string& info) {
     ++cnt;
-    std::cerr << red << "Error: " << white << info << reset << "\n\n";
+    std::cerr << red << "Error: " << reset << info << "\n\n";
 }
 
 void error::warn(const std::string& info) {
-    std::clog << orange << "Warning: " << white << info << reset << "\n\n";
+    std::clog << orange << "Warning: " << reset << info << "\n\n";
 }
 
 void error::err(const span& loc, const std::string& info, const std::string& note) {
@@ -41,7 +41,7 @@ void error::err(const span& loc, const std::string& info, const std::string& not
     ++cnt;
 
     std::cerr
-    << red << "Error: " << white << info << reset << "\n" << cyan << "  --> "
+    << red << "Error: " << reset << info << "\n" << cyan << "  --> "
     << red << loc << reset << "\n";
 
     const usize maxlen = std::to_string(loc.end_line).length();
@@ -117,8 +117,7 @@ void error::warn(const span& loc, const std::string& info, const std::string& no
     load(loc.file);
 
     std::cerr
-    << orange << "Warning: " << white << info << reset
-    << "\n" << cyan << "  --> "
+    << orange << "Warning: " << reset << info << "\n" << cyan << "  --> "
     << orange << loc << reset << "\n";
 
     const usize maxlen = std::to_string(loc.end_line).length();
